@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    exclude: ["@apollo/client"],
+    include: ["@apollo/client/react"],
   },
   build: {
     rollupOptions: {

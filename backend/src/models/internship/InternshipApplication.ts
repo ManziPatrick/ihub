@@ -8,6 +8,7 @@ export interface IInternshipApplication extends Document {
   portfolioUrl?: string;
   resumeUrl?: string;
   availability: string;
+  selectedDeliveryMode?: string;
   applicationAnswers: {
     questionLabel: string;
     answer: string;
@@ -32,6 +33,7 @@ const InternshipApplicationSchema: Schema = new Schema(
     portfolioUrl: { type: String },
     resumeUrl: { type: String },
     availability: { type: String }, // e.g., "Full-time", "Part-time"
+    selectedDeliveryMode: { type: String, enum: ['online', 'physical', 'hybrid'] },
     applicationAnswers: [
       {
         questionLabel: { type: String, required: true },

@@ -29,6 +29,10 @@ export const GET_USER_PROFILE = gql`
       bio
       isOnline
       lastActive
+      level
+      xp
+      streak
+      academicStatus
       enrolledCourses {
         id
         title
@@ -68,8 +72,8 @@ export const GET_STATS = gql`
 
 
 export const GET_USERS = gql`
-  query GetUsers($page: Int, $limit: Int) {
-    users(page: $page, limit: $limit) {
+  query GetUsers($page: Int, $limit: Int, $createdBy: ID) {
+    users(page: $page, limit: $limit, createdBy: $createdBy) {
       items {
         id
         username
@@ -164,6 +168,8 @@ export const GET_COURSES = gql`
         level
         category
         status
+        enrollmentMode
+        allowedDeliveryModes
         submissionRequired
         instructor {
           id
@@ -173,6 +179,12 @@ export const GET_COURSES = gql`
           id
         }
         createdAt
+        applicationQuestions {
+          label
+          type
+          required
+          options
+        }
         modules {
           id
           title
@@ -210,10 +222,17 @@ export const GET_COURSE = gql`
       discountPrice
       level
       category
+      allowedDeliveryModes
       submissionRequired
       instructor {
         id
         username
+      }
+      applicationQuestions {
+        label
+        type
+        required
+        options
       }
       modules {
         id
@@ -282,6 +301,9 @@ export const GET_ME = gql`
         courseId
         lessonId
       }
+      completedCourses {
+        id
+      }
       badges {
         badge {
           id
@@ -300,6 +322,7 @@ export const GET_ME = gql`
         gradedAt
       }
       level
+      xp
       academicStatus
       streak
       themePreference {
@@ -455,6 +478,16 @@ export const GET_MY_PAYMENTS = gql`
       method
       proofOfPaymentUrl
       adminNotes
+      courses {
+        id
+        title
+        price
+      }
+      internships {
+        id
+        title
+        price
+      }
     }
   }
 `;
@@ -684,6 +717,14 @@ export const GET_ALL_PROJECTS = gql`
         }
         createdAt
         updatedAt
+        stats {
+          totalApplications
+          approvedApplications
+          rejectedApplications
+          pendingApplications
+          enrolledStudents
+          totalRevenue
+        }
       }
       pagination {
         ...PaginationFragment
@@ -714,6 +755,9 @@ export const GET_MY_CERTIFICATES = gql`
       }
       createdAt
       updatedAt
+      signerName
+      signerSignature
+      recipientName
     }
   }
 `;
@@ -727,6 +771,9 @@ export const GET_CERTIFICATE = gql`
       credentialId
       status
       progress
+      signerName
+      signerSignature
+      recipientName
       requirements {
         title
         completed
@@ -1058,8 +1105,8 @@ export const GET_TRAINER_STATS = gql`
 `;
 
 export const GET_ADMIN_DASHBOARD_DATA = gql`
-  query GetAdminDashboardData {
-    adminDashboardData {
+  query GetAdminDashboardData($createdBy: ID) {
+    adminDashboardData(createdBy: $createdBy) {
       stats {
         totalUsers
         totalCourses
@@ -1132,11 +1179,6 @@ export const GET_INTERNSHIP_PROGRAMS = gql`
         ...PaginationFragment
       }
     }
-    myInternshipApplications {
-      id
-      internshipProgramId
-      status
-    }
   }
   ${PAGINATION_FRAGMENT}
 `;
@@ -1175,6 +1217,10 @@ export const GET_INTERNSHIP_APPLICATIONS = gql`
         skills
         availability
         portfolioUrl
+        applicationAnswers {
+          questionLabel
+          answer
+        }
         rejectionReason
         createdAt
         user {
@@ -1182,13 +1228,21 @@ export const GET_INTERNSHIP_APPLICATIONS = gql`
           username
           email
           fullName
+          avatar
+          phone
           studentProfile {
             school
+            fieldOfStudy
+            educationLevel
+            githubUrl
+            linkedinUrl
           }
         }
         internshipProgram {
           id
           title
+          price
+          duration
         }
       }
       pagination {
@@ -1217,7 +1271,6 @@ export const GET_MY_INTERNSHIP_APPLICATIONS = gql`
         status
         amount
         currency
-        paymentProofUrl
       }
       createdAt
     }
@@ -2003,4 +2056,58 @@ export const GET_INTERNSHIP_ACTIVITY_LOGS = gql`
     }
   }
   ${PAGINATION_FRAGMENT}
+`;
+export const GET_COURSE_APPLICATIONS = gql`
+  query GetCourseApplications($courseId: ID, $status: String, $page: Int, $limit: Int) {
+    courseApplications(courseId: $courseId, status: $status, page: $page, limit: $limit) {
+      items {
+        id
+        courseId
+        course {
+          id
+          title
+        }
+        userId
+        user {
+          id
+          username
+          fullName
+          email
+        }
+        status
+        selectedDeliveryMode
+        applicationAnswers {
+          questionLabel
+          answer
+        }
+        rejectionReason
+        createdAt
+      }
+      pagination {
+        ...PaginationFragment
+      }
+    }
+  }
+  ${PAGINATION_FRAGMENT}
+`;
+
+export const MY_COURSE_APPLICATIONS = gql`
+  query MyCourseApplications {
+    myCourseApplications {
+      id
+      courseId
+      course {
+        id
+        title
+        thumbnail
+      }
+      status
+      applicationAnswers {
+        questionLabel
+        answer
+      }
+      rejectionReason
+      createdAt
+    }
+  }
 `;

@@ -11,8 +11,10 @@ export interface IPaymentTransaction extends Document {
   paypackRef: string; // Reference from Paypack API
   description?: string; // What the payment is for (course, subscription, etc)
   courseId?: mongoose.Types.ObjectId | null;
+  courseIds?: mongoose.Types.ObjectId[];
   subscriptionId?: mongoose.Types.ObjectId | null;
   internshipProgramId?: mongoose.Types.ObjectId | null;
+  internshipIds?: mongoose.Types.ObjectId[];
   createdAt: Date;
   processedAt?: Date;
   metadata?: Record<string, any>;
@@ -77,6 +79,10 @@ const PaymentTransactionSchema = new Schema<IPaymentTransaction>(
       ref: 'Course',
       default: null,
     },
+    courseIds: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Course',
+    }],
     subscriptionId: {
       type: Schema.Types.ObjectId,
       ref: 'Subscription',
@@ -87,6 +93,10 @@ const PaymentTransactionSchema = new Schema<IPaymentTransaction>(
       ref: 'InternshipProgram',
       default: null,
     },
+    internshipIds: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Internship',
+    }],
     createdAt: {
       type: Date,
       default: Date.now,

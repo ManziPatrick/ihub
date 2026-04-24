@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from "@apollo/client/react";
 import { CREATE_INTERNSHIP_PROGRAM } from '@/lib/graphql/mutations';
-import { GET_INTERNSHIP_PROGRAMS } from '@/lib/graphql/queries';
+import { GET_INTERNSHIP_PROGRAMS, GET_ADMIN_DASHBOARD_DATA } from '@/lib/graphql/queries';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,11 +26,14 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
     price: 0,
     currency: 'RWF',
     image: '',
+    signerName: '',
+    signerSignature: '',
+    allowedDeliveryModes: ['online'],
     applicationQuestions: [] as { label: string, type: string, required: boolean }[]
   });
 
   const [createProgram, { loading }] = useMutation(CREATE_INTERNSHIP_PROGRAM, {
-    refetchQueries: [{ query: GET_INTERNSHIP_PROGRAMS }],
+    refetchQueries: [{ query: GET_INTERNSHIP_PROGRAMS }, { query: GET_ADMIN_DASHBOARD_DATA }],
     onCompleted: () => {
       toast.success('Internship program created successfully');
       onOpenChange(false);
@@ -44,6 +47,9 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
         price: 0,
         currency: 'RWF',
         image: '',
+        signerName: '',
+        signerSignature: '',
+        allowedDeliveryModes: ['online'],
         applicationQuestions: []
       });
     },
@@ -164,6 +170,67 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
               onChange={(e) => setFormData({ ...formData, applicationDeadline: e.target.value })}
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Delivery Modes</Label>
+            <div className="flex flex-col gap-2 border p-3 rounded-md">
+              {['online', 'physical', 'hybrid'].map((mode) => (
+                <label key={mode} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={formData.allowedDeliveryModes.includes(mode)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      const modes = formData.allowedDeliveryModes;
+                      setFormData({
+                        ...formData,
+                        allowedDeliveryModes: checked ? [...modes, mode] : modes.filter(m => m !== mode)
+                      });
+                    }}
+                  />
+                  <span className="capitalize">{mode}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t border-border/50">
+             <Label className="text-base font-bold">Certificate Configuration</Label>
+             <div className="grid grid-cols-1 gap-4">
+               <div className="space-y-2">
+                 <Label htmlFor="signerName">Signer Full Name</Label>
+                 <Input
+                   id="signerName"
+                   value={formData.signerName}
+                   onChange={(e) => setFormData({ ...formData, signerName: e.target.value })}
+                   placeholder="e.g. Dr. John Smith"
+                 />
+               </div>
+               <div className="space-y-2">
+                 <Label>Signer Signature</Label>
+                 {formData.signerSignature ? (
+                   <div className="relative h-20 rounded-lg overflow-hidden border bg-white p-2">
+                     <img src={formData.signerSignature} className="h-full mx-auto object-contain" />
+                     <Button
+                       type="button"
+                       variant="destructive"
+                       size="sm"
+                       className="absolute top-1 right-1 h-6 px-1.5 text-[9px]"
+                       onClick={() => setFormData({ ...formData, signerSignature: '' })}
+                     >
+                       Remove
+                     </Button>
+                   </div>
+                 ) : (
+                   <FileUpload
+                     folder="signatures"
+                     label="Upload Signature (PNG)"
+                     onUploadComplete={(url) => setFormData({ ...formData, signerSignature: url })}
+                   />
+                 )}
+               </div>
+             </div>
           </div>
 
           <div className="space-y-4 pt-4 border-t border-border/50">

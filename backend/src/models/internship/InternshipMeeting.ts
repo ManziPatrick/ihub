@@ -6,7 +6,9 @@ export interface IInternshipMeeting extends Document {
   title: string;
   description?: string;
   type: MeetingFrequency;
+  deliveryMode: 'online' | 'physical';
   meetLink?: string;
+  location?: string;
   startTime: Date;
   endTime: Date;
   teamIds: mongoose.Types.ObjectId[];
@@ -28,7 +30,9 @@ const InternshipMeetingSchema: Schema = new Schema(
       enum: ['ONCE', 'DAILY', 'WEEKLY', 'MONTHLY'],
       default: 'ONCE',
     },
-    meetLink: { type: String },
+    deliveryMode: { type: String, enum: ['online', 'physical'], default: 'online' },
+    meetLink: { type: String }, // For online
+    location: { type: String }, // For physical
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
     recurrenceDays: [{ type: Number, min: 0, max: 6 }], // 0=Sun,1=Mon...6=Sat

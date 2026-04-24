@@ -64,6 +64,8 @@ export interface IInternship extends Document {
   }>;
   cohort?: string; // Grouping interns into cohorts
   groupId?: string; // specific isolated group for pacing
+  signerName?: string;
+  signerSignature?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -146,6 +148,8 @@ const InternshipSchema: Schema = new Schema(
       }
     ],
     groupId: { type: String },
+    signerName: { type: String },
+    signerSignature: { type: String },
   },
   { timestamps: true }
 );

@@ -48,7 +48,8 @@ export default function AdminPayments() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const { data, loading } = useQuery(GET_PAYMENTS, {
-    variables: { page: currentPage, limit: pageSize }
+    variables: { page: currentPage, limit: pageSize },
+    pollInterval: 30000 // auto-refresh every 30 seconds
   });
 
 
@@ -186,53 +187,16 @@ export default function AdminPayments() {
                       </thead>
                       <tbody>
                         {filteredPayments.length === 0 ? (
-                          <tr><td colSpan={7} className="p-4 text-center text-muted-foreground">No payments found.</td></tr>
+                          <tr><td colSpan={8} className="p-4 text-center text-muted-foreground">No payments found.</td></tr>
                         ) : (
-                          filteredPayments.map((payment: any) => {
-                            const StatusIcon = statusIcons[payment.status] || Clock;
-                            return (
-                              <tr key={payment.id} className="border-b border-border/30 hover:bg-background/50">
-                                <td className="p-4">
-                                  <p className="font-medium text-card-foreground">{payment.studentName}</p>
-                                </td>
-                                <td className="p-4">
-                                  <Badge variant="secondary">{payment.type}</Badge>
-                                </td>
-                                <td className="p-4 text-sm text-card-foreground/70">{payment.itemTitle}</td>
-                                <td className="p-4 text-right">
-                                  <span className="font-medium text-accent">{payment.amount.toLocaleString()} {payment.currency}</span>
-                                </td>
-                                <td className="p-4 text-center text-sm text-card-foreground/70">{new Date(payment.date).toLocaleDateString()}</td>
-                                <td className="p-4 text-center">
-                                  <Badge className={statusColors[payment.status] || "bg-gray-500/20 text-gray-400"}>
-                                    <StatusIcon className="w-3 h-3 mr-1" />
-                                    {payment.status}
-                                  </Badge>
-                                </td>
-                                <td className="p-4 text-center text-sm text-card-foreground/70">{payment.method}</td>
-                                <td className="p-4 text-right">
-                                  <div className="flex justify-end gap-2">
-                                    {payment.status === 'pending' && (
-                                      <Button
-                                        variant="gold"
-                                        size="sm"
-                                        className="h-8 text-xs font-bold"
-                                        onClick={() => setVerifyingPayment(payment)}
-                                      >
-                                        Verify
-                                      </Button>
-                                    )}
-                                    {(payment.status === 'completed' || payment.status === 'paid' || payment.status === 'successful') && (
-                                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                        <Download className="w-4 h-4" />
-                                      </Button>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-
-                            );
-                          }))}
+                          filteredPayments.map((payment: any) => (
+                            <AdminPaymentRow 
+                              key={payment.id} 
+                              payment={payment} 
+                              setVerifyingPayment={setVerifyingPayment} 
+                            />
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -348,5 +312,104 @@ export default function AdminPayments() {
       </div>
 
     </PortalLayout>
+  );
+}
+
+function AdminPaymentRow({ payment, setVerifyingPayment }: { payment: any, setVerifyingPayment: (p: any) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const StatusIcon = statusIcons[payment.status] || Clock;
+  
+  const allItems = [...(payment.courses || []), ...(payment.internships || [])];
+  // If we don't have nested items, try to use the itemTitle
+  const hasItems = allItems.length > 0;
+  const visibleItems = expanded ? allItems : allItems.slice(0, 1);
+
+  // Compute a smart display title from actual item names
+  const displayTitle = allItems.length > 0
+    ? allItems[0].title
+    : payment.itemTitle;
+  const extraCount = allItems.length > 1 ? allItems.length - 1 : 0;
+
+  return (
+    <tr className="border-b border-border/10 transition-colors group">
+      <td className="p-4">
+        <p className="font-bold group-hover:text-foreground dark:group-hover:text-white transition-colors">
+          {payment.studentName}
+        </p>
+      </td>
+      <td className="p-4">
+        <Badge variant="outline" className="text-[10px] font-bold border-border/50 uppercase tracking-tighter group-hover:border-white/30 group-hover:text-foreground dark:group-hover:text-white transition-colors">
+          {payment.type}
+        </Badge>
+      </td>
+      <td className="p-4">
+        <div className="flex flex-col">
+          <p className="text-sm font-medium group-hover:text-foreground dark:group-hover:text-white transition-colors flex items-center gap-1.5 flex-wrap">
+            {displayTitle}
+            {extraCount > 0 && !expanded && (
+              <span className="text-[9px] font-black text-accent bg-accent/10 border border-accent/20 px-1.5 py-0.5 rounded-full uppercase tracking-widest">
+                +{extraCount} more
+              </span>
+            )}
+          </p>
+          {hasItems && (
+            <div className="mt-1 flex flex-wrap gap-1 items-center">
+              {visibleItems.map((item: any, idx: number) => (
+                <span key={item.id || idx} className="text-[9px] px-1.5 py-0.5 bg-accent/5 text-accent group-hover:bg-white/10 group-hover:text-white group-hover:border-white/20 border border-accent/10 rounded font-medium transition-colors">
+                  {item.title}
+                </span>
+              ))}
+              {allItems.length > 1 && (
+                <button 
+                  onClick={() => setExpanded(!expanded)}
+                  className="text-[9px] font-black text-accent hover:text-white transition-colors ml-1 uppercase tracking-widest"
+                >
+                  {expanded ? '[ Minimise ]' : `[ +${allItems.length - 1} more ]`}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </td>
+      <td className="p-4 text-right">
+        <span className="font-bold text-accent group-hover:text-white transition-colors">
+          {payment.amount.toLocaleString()} {payment.currency}
+        </span>
+      </td>
+      <td className="p-4 text-center">
+        <div className="flex flex-col items-center">
+          <span className="text-xs font-medium group-hover:text-white transition-colors">{new Date(payment.date).toLocaleDateString()}</span>
+          <span className="text-[10px] text-muted-foreground group-hover:text-foreground/60 dark:group-hover:text-white/60 transition-colors">{new Date(payment.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+      </td>
+      <td className="p-4 text-center">
+        <Badge className={`${statusColors[payment.status] || "bg-gray-500/20 text-gray-400"} flex items-center gap-1 mx-auto w-fit px-2 group-hover:bg-foreground/20 dark:group-hover:bg-white/20 group-hover:text-white group-hover:border-foreground/30 dark:group-hover:border-white/30 transition-colors shadow-none`}>
+          <StatusIcon className="w-3 h-3" />
+          <span className="capitalize text-[10px] font-bold">{payment.status}</span>
+        </Badge>
+      </td>
+      <td className="p-4 text-center">
+        <span className="text-xs font-medium group-hover:text-white transition-colors">{payment.method}</span>
+      </td>
+      <td className="p-4 text-right">
+        <div className="flex justify-end gap-2">
+          {payment.status === 'pending' && (
+            <Button
+              variant="gold"
+              size="sm"
+              className="h-8 text-[10px] font-black uppercase tracking-widest shadow-gold hover:scale-[1.05] transition-all"
+              onClick={() => setVerifyingPayment(payment)}
+            >
+              Verify
+            </Button>
+          )}
+          {(payment.status === 'completed' || payment.status === 'paid' || payment.status === 'successful') && (
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-white transition-colors">
+              <Download className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      </td>
+    </tr>
   );
 }

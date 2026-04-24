@@ -11,6 +11,8 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { BrandingProvider } from "@/components/BrandingProvider";
 import { ChatBot } from "@/components/chatbot/ChatBot";
 import { GoogleOneTap } from "@/components/auth/GoogleOneTap";
+import { CartProvider } from "@/contexts/CartContext";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 
 import { HelmetProvider } from "react-helmet-async";
 
@@ -23,15 +25,18 @@ const App = () => (
         <GoogleOneTap />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} storageKey="codemande-theme">
           <BrandingProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <ScrollToTop />
-                <AnimatedRoutes />
-                <ChatBot />
-              </BrowserRouter>
-            </TooltipProvider>
+            <CartProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <ScrollToTop />
+                  <AnimatedRoutes />
+                  <ChatBot />
+                  <CartDrawer />
+                </BrowserRouter>
+              </TooltipProvider>
+            </CartProvider>
           </BrandingProvider>
         </ThemeProvider>
       </AuthProvider>

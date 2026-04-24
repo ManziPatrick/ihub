@@ -17,6 +17,8 @@ interface Payment {
   status: string;
   paymentMethod: string;
   transactionId: string;
+  courses?: Array<{ id: string; title: string; price: number }>;
+  internships?: Array<{ id: string; title: string; price: number }>;
 }
 
 interface ViewReceiptDialogProps {
@@ -177,11 +179,48 @@ export function ViewReceiptDialog({
 
                   <h4 className="text-[10px] font-black text-accent uppercase tracking-[0.3em] mb-6">Service Description</h4>
                   <div className="space-y-6">
-                    <div className="space-y-1">
-                      <h5 className="font-heading font-bold text-lg text-foreground leading-tight">
-                        {payment.itemTitle}
-                      </h5>
-                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">{payment.type}</p>
+                    {/* Item List */}
+                    <div className="space-y-4">
+                      {payment.courses && payment.courses.length > 0 ? (
+                        payment.courses.map((course: any) => (
+                          <div key={course.id} className="flex justify-between items-start gap-4">
+                            <div className="space-y-0.5">
+                              <h5 className="font-heading font-bold text-sm text-foreground leading-tight">
+                                {course.title}
+                              </h5>
+                              <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest">Course Enrollment</p>
+                            </div>
+                            <span className="text-xs font-bold text-foreground">
+                              {course.price?.toLocaleString() || '---'} RWF
+                            </span>
+                          </div>
+                        ))
+                      ) : null}
+
+                      {payment.internships && payment.internships.length > 0 ? (
+                        payment.internships.map((internship: any) => (
+                          <div key={internship.id} className="flex justify-between items-start gap-4">
+                            <div className="space-y-0.5">
+                              <h5 className="font-heading font-bold text-sm text-foreground leading-tight">
+                                {internship.title}
+                              </h5>
+                              <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest">Internship Fee</p>
+                            </div>
+                            <span className="text-xs font-bold text-foreground">
+                              {internship.price?.toLocaleString() || '---'} RWF
+                            </span>
+                          </div>
+                        ))
+                      ) : null}
+
+                      {(!payment.courses || payment.courses.length === 0) && (!payment.internships || payment.internships.length === 0) && (
+                        <div className="space-y-1">
+                          <h5 className="font-heading font-bold text-lg text-foreground leading-tight">
+                            {payment.itemTitle}
+                          </h5>
+                          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">{payment.type}</p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="pt-6 border-t border-border/50">

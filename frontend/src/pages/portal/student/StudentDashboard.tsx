@@ -20,10 +20,24 @@ import {
   Flame,
   ExternalLink,
   MessageSquare,
-  CreditCard
+  CreditCard,
+  Star,
+  Trophy,
+  Info,
+  XCircle,
 } from "lucide-react";
 import { useQuery } from "@apollo/client/react";
-import { GET_ME, GET_MY_BOOKINGS, GET_CONVERSATIONS, GET_MY_PAYMENTS, GET_MY_PROJECTS } from "@/lib/graphql/queries";
+import { 
+  GET_ME, 
+  GET_MY_BOOKINGS, 
+  GET_CONVERSATIONS, 
+  GET_MY_PAYMENTS, 
+  GET_MY_PROJECTS,
+  MY_COURSE_APPLICATIONS,
+  GET_MY_INTERNSHIP_APPLICATIONS
+} from "@/lib/graphql/queries";
+import { ApplyCourseDialog, ApplyInternshipDialog } from "@/components/portal/dialogs";
+import { useState } from "react";
 
 // No static achievements needed
 
@@ -34,6 +48,11 @@ export default function StudentDashboard() {
   const { data: conversationsData } = useQuery(GET_CONVERSATIONS);
   const { data: paymentsData } = useQuery(GET_MY_PAYMENTS);
   const { data: projectsData, loading: projectsLoading } = useQuery(GET_MY_PROJECTS);
+  const { data: appData, refetch: refetchApps } = useQuery(MY_COURSE_APPLICATIONS);
+  const { data: internAppData, refetch: refetchInternApps } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS);
+
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [selectedInternshipId, setSelectedInternshipId] = useState<string | null>(null);
 
   if (meLoading || bookingsLoading || projectsLoading) {
     return (
@@ -60,6 +79,12 @@ export default function StudentDashboard() {
   };
 
   const totalCompleted = completedLessons.length;
+  const myApplications = (appData as any)?.myCourseApplications || [];
+  const myInternApplications = (internAppData as any)?.myInternshipApplications || [];
+
+  // Find latest interacted course (for now just take the first enrolled)
+  const latestCourse = enrolledCourses[0];
+  const latestApp = myApplications.find((app: any) => app.status === 'pending' || app.status === 'rejected');
 
   return (
     <PortalLayout>
@@ -89,6 +114,174 @@ export default function StudentDashboard() {
             </div>
           </div>
         </motion.div>
+
+        {/* Level Progress Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="p-5 bg-gradient-to-r from-gold/10 to-accent/10 border border-gold/20 rounded-2xl shadow-sm"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-gold" />
+              </div>
+              <div>
+                <h4 className="text-sm font-black uppercase tracking-tight text-foreground">Level {me?.level || 1} Journey</h4>
+                <p className="text-[10px] text-muted-foreground font-bold uppercase">Master more lessons to reach Level {(me?.level || 1) + 1}!</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-lg font-black text-gold">{(me?.xp || 0) % 100}</span>
+              <span className="text-sm font-bold text-muted-foreground ml-1">/ 100 XP</span>
+            </div>
+          </div>
+          <Progress value={(me?.xp || 0) % 100} className="h-3 bg-muted/20 shadow-inner" />
+        </motion.div>
+
+        {/* Latest Activity / Application Status */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          {latestCourse ? (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card className="border-accent/30 bg-gradient-to-br from-card to-accent/5 overflow-hidden group hover:shadow-lg transition-all duration-300">
+                <CardContent className="p-0">
+                  <div className="flex flex-col sm:flex-row h-full">
+                    <div className="w-full sm:w-1/3 bg-accent/10 flex items-center justify-center p-6 border-b sm:border-b-0 sm:border-r border-accent/20">
+                      <div className="w-20 h-20 rounded-2xl bg-background shadow-xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-500">
+                        <BookOpen className="w-10 h-10 text-accent" />
+                      </div>
+                    </div>
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20 text-[10px] uppercase font-bold tracking-widest">Active Course</Badge>
+                          <span className="text-[10px] text-muted-foreground font-bold uppercase">{getCourseProgress(latestCourse)}% Complete</span>
+                        </div>
+                        <h3 className="text-xl font-black text-foreground mb-2 line-clamp-1 group-hover:text-accent transition-colors">{latestCourse.title}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">{latestCourse.description}</p>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-[10px] font-bold uppercase">
+                            <span>Overall Progress</span>
+                            <span className="text-accent">{getCourseProgress(latestCourse)}%</span>
+                          </div>
+                          <Progress value={getCourseProgress(latestCourse)} className="h-2 bg-muted/20" />
+                        </div>
+                        <Link to={`/portal/student/courses/${latestCourse.id || latestCourse._id}`}>
+                          <Button variant="gold" className="w-full rounded-xl font-bold h-11 group shadow-lg shadow-gold/20">
+                            Continue Learning
+                            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : latestApp ? (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card className={`border-2 overflow-hidden ${
+                latestApp.status === 'pending' ? 'border-amber-500/30 bg-amber-500/5' : 'border-red-500/30 bg-red-500/5'
+              }`}>
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                      latestApp.status === 'pending' ? 'bg-amber-500/20' : 'bg-red-500/20'
+                    }`}>
+                      {latestApp.status === 'pending' ? <Clock className="w-6 h-6 text-amber-500" /> : <XCircle className="w-6 h-6 text-red-500" />}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-lg font-bold">Application Status</h3>
+                        <Badge variant="outline" className={`text-[10px] uppercase font-black ${
+                          latestApp.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
+                        }`}>
+                          {latestApp.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm font-medium text-foreground mb-1">{latestApp.courseTitle}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {latestApp.status === 'pending' 
+                          ? "We've received your application and it's currently under review. Check back soon for updates!" 
+                          : `Unfortunately, your application was not accepted. Reason: ${latestApp.rejectionReason || 'No reason provided.'}`}
+                      </p>
+                      {latestApp.status === 'rejected' && (
+                        <Link to="/training">
+                          <Button variant="outline" size="sm" className="mt-4 rounded-lg font-bold">Explore Other Courses</Button>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : (
+             <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card className="border-dashed border-2 border-muted-foreground/20 bg-muted/5 flex flex-col items-center justify-center p-8 text-center h-full">
+                <div className="w-16 h-16 rounded-full bg-muted/10 flex items-center justify-center mb-4">
+                  <BookOpen className="w-8 h-8 text-muted-foreground/40" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Ready to start?</h3>
+                <p className="text-sm text-muted-foreground max-w-[250px] mx-auto mt-1 mb-6">Enroll in a course to start your learning journey and earn certificates.</p>
+                <Link to="/training">
+                  <Button variant="gold" className="rounded-xl px-8 font-bold h-11">Explore Catalog</Button>
+                </Link>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Quick Stats / Recent Achievement */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="border-border/50 bg-card h-full overflow-hidden">
+              <CardHeader className="pb-2 border-b border-border/50 bg-muted/5">
+                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-gold" />
+                  Recent Milestone
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center p-2 shrink-0">
+                      <Star className="w-full h-full text-gold fill-current" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gold uppercase tracking-wider mb-0.5">Knowledge Hunter</p>
+                      <h4 className="text-sm font-bold text-foreground leading-snug">Completed {totalCompleted} lessons this month</h4>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-muted/30 rounded-xl space-y-3">
+                    <div className="flex justify-between items-center text-[10px] font-bold uppercase text-muted-foreground">
+                      <span>Monthly Goal</span>
+                      <span>{Math.min(100, (totalCompleted / 20) * 100).toFixed(0)}%</span>
+                    </div>
+                    <Progress value={(totalCompleted / 20) * 100} className="h-1.5" />
+                    <p className="text-[10px] text-muted-foreground italic text-center">Master 20 lessons to unlock the "Scholar" badge</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
 
         {/* Stats Grid */}
         <motion.div
@@ -136,6 +329,19 @@ export default function StudentDashboard() {
               </div>
             </CardContent>
           </Card>
+          <Card className="border-border/50 bg-gold/5">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
+                  <Star className="w-5 h-5 text-gold fill-current" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-card-foreground">{me?.xp || 0}</p>
+                  <p className="text-xs text-card-foreground/60">Total XP Points</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           <Card className="border-border/50">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -143,7 +349,7 @@ export default function StudentDashboard() {
                   <Award className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-card-foreground">{Math.floor(totalCompleted / 5)}</p>
+                  <p className="text-2xl font-bold text-card-foreground">{me?.badges?.length || 0}</p>
                   <p className="text-xs text-card-foreground/60">Achievements</p>
                 </div>
               </div>
@@ -170,14 +376,16 @@ export default function StudentDashboard() {
                 </Link>
               </CardHeader>
               <CardContent className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
-                {enrolledCourses.length === 0 && (
+                {enrolledCourses.length === 0 && myApplications.length === 0 && (
                   <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">You haven't enrolled in any courses yet.</p>
+                    <p className="text-muted-foreground mb-4">You haven't enrolled in any courses or applied yet.</p>
                     <Link to="/training">
                       <Button variant="gold">Browse Courses</Button>
                     </Link>
                   </div>
                 )}
+                
+                {/* Enrolled Courses */}
                 {enrolledCourses.map((course: any, index: number) => {
                   const courseId = course.id || course._id;
                   const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
@@ -198,8 +406,8 @@ export default function StudentDashboard() {
                             {lastCompletedLesson ? "Continue where you left off" : "Start your first lesson"}
                           </p>
                         </div>
-                        <span className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full">
-                          {progress}% complete
+                        <span className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full font-bold">
+                          {progress}% COMPLETE
                         </span>
                       </div>
                       <Progress value={progress} className="h-2 mb-3" />
@@ -211,7 +419,7 @@ export default function StudentDashboard() {
                           </span>
                         </div>
                         <Link to={`/portal/student/courses/${course.id || course._id}`}>
-                          <Button variant="gold" size="sm">
+                          <Button variant="gold" size="sm" className="rounded-xl h-8 px-4 font-bold">
                             <PlayCircle className="w-4 h-4 mr-1" />
                             Continue
                           </Button>
@@ -220,6 +428,34 @@ export default function StudentDashboard() {
                     </div>
                   );
                 })}
+
+                {/* Applications (Pending/Rejected) */}
+                {myApplications.filter((app: any) => app.status !== 'approved').map((app: any) => (
+                  <div
+                    key={app.id}
+                    onClick={() => setSelectedCourse({ id: app.courseId, title: app.course?.title || "Course" })}
+                    className="p-4 bg-background/50 rounded-lg border border-dashed border-border/50 hover:border-accent/30 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clock className={`w-3.5 h-3.5 ${app.status === 'pending' ? 'text-amber-500' : 'text-red-500'}`} />
+                          <h3 className="font-heading font-semibold text-card-foreground text-sm line-clamp-1">
+                            {app.course?.title || "Course Application"}
+                          </h3>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
+                          Application Status: <span className={`ml-1 ${
+                            app.status === 'pending' ? 'text-amber-500' : 'text-red-500'
+                          }`}>{app.status}</span>
+                        </p>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full group-hover:bg-accent/10">
+                        <Info className="w-4 h-4 text-accent" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
 
@@ -445,25 +681,79 @@ export default function StudentDashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <Card className="border-border/50 bg-gradient-to-br from-card to-accent/5">
+              <Card className="border-border/50 bg-gradient-to-br from-card to-accent/5 overflow-hidden">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
                       <Briefcase className="w-5 h-5 text-accent" />
                     </div>
-                    <div>
-                      <p className="font-heading font-semibold text-card-foreground">Internship Ready</p>
-                      <p className="text-xs text-card-foreground/60">Complete 80% to unlock</p>
+                    <div className="min-w-0">
+                      <p className="font-heading font-semibold text-card-foreground text-sm truncate">
+                        {myInternApplications.length > 0 ? "Internship Application" : "Internship Ready"}
+                      </p>
+                      <p className="text-[10px] text-card-foreground/60">
+                        {myInternApplications.length > 0 ? "Track your placement status" : "Complete 80% to unlock"}
+                      </p>
                     </div>
                   </div>
-                  <Progress value={Math.min(totalCompleted * 5, 100)} className="h-2 mb-2" />
-                  <p className="text-xs text-card-foreground/70">{Math.max(0, 80 - totalCompleted * 5)}% more to qualify for internship placement</p>
+
+                  {myInternApplications.length > 0 ? (
+                    <div className="space-y-3">
+                      {myInternApplications.slice(0, 1).map((app: any) => (
+                        <div key={app.id} className="p-2.5 bg-background/40 rounded-lg border border-accent/10">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-bold text-card-foreground/70 truncate">
+                              {app.internshipProgram?.title || "Internship"}
+                            </span>
+                            <Badge variant="outline" className={`text-[9px] h-4 px-1.5 uppercase ${
+                              app.status === 'approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                              app.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                              'bg-red-500/10 text-red-500 border-red-500/20'
+                            }`}>
+                              {app.status}
+                            </Badge>
+                          </div>
+                          <Button 
+                            variant="link" 
+                            size="sm" 
+                            className="p-0 h-auto text-[10px] text-accent font-bold"
+                            onClick={() => setSelectedInternshipId(app.internshipProgram?.id)}
+                          >
+                            View Details <ArrowRight className="w-3 h-3 ml-1" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      <Progress value={Math.min(totalCompleted * 5, 100)} className="h-2 mb-2" />
+                      <p className="text-[10px] text-card-foreground/70">
+                        {Math.max(0, 80 - totalCompleted * 5)}% more to qualify for internship placement
+                      </p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
           </div>
         </div>
       </div>
+
+      <ApplyCourseDialog
+        open={!!selectedCourse}
+        onOpenChange={(open) => !open && setSelectedCourse(null)}
+        course={selectedCourse}
+        onSuccess={() => refetchApps()}
+      />
+      
+      {selectedInternshipId && (
+        <ApplyInternshipDialog
+          open={!!selectedInternshipId}
+          onOpenChange={(open) => !open && setSelectedInternshipId(null)}
+          internshipProgramId={selectedInternshipId}
+          onSuccess={() => refetchInternApps()}
+        />
+      )}
     </PortalLayout>
   );
 }

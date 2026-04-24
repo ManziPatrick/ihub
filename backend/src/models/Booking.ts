@@ -9,7 +9,9 @@ const bookingSchema = new mongoose.Schema({
   topic: { type: String },
   notes: { type: String },
   status: { type: String, enum: ['pending', 'confirmed', 'cancelled', 'completed'], default: 'pending' },
-  meetingLink: { type: String },
+  deliveryMode: { type: String, enum: ['online', 'physical'], default: 'online' },
+  meetingLink: { type: String }, // For online
+  location: { type: String }, // For physical
   isDeleted: { type: Boolean, default: false },
 }, { timestamps: true });
 

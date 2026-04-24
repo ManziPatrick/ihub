@@ -22,9 +22,11 @@ import {
   Video,
   ExternalLink,
   ArrowRight,
-  Expand
+  Expand,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
-import { format, addDays, isBefore, isSameDay, getDay, isToday, startOfToday } from "date-fns";
+import { format, addDays, isBefore, isSameDay, getDay, isToday, startOfToday, isSameWeek, isSameMonth } from "date-fns";
 import { useQuery } from "@apollo/client/react";
 import { GET_MY_INTERNSHIP_MEETINGS, GET_INTERNSHIP_SUBMISSIONS } from "@/lib/graphql/queries";
 import { useState } from "react";
@@ -175,6 +177,9 @@ export function MyInternshipDashboard({ team, loading, enrolledCount = 0, onBrow
 
    const { data: meetingsData } = useQuery(GET_MY_INTERNSHIP_MEETINGS);
    const meetings = (meetingsData as any)?.getMyInternshipMeetings || [];
+   
+   const [timeFilter, setTimeFilter] = useState<'3days' | 'week' | 'month' | 'all'>('3days');
+   const [viewDate, setViewDate] = useState(startOfToday());
 
    const { data: submissionsData } = useQuery(GET_INTERNSHIP_SUBMISSIONS, {
       variables: { teamId: team?.id },
@@ -191,8 +196,8 @@ export function MyInternshipDashboard({ team, loading, enrolledCount = 0, onBrow
       if (isNaN(startDateObj.getTime())) return [];
 
       const now = new Date();
-      const rangeStart = addDays(now, -7); 
-      let rangeEnd = addDays(now, 60);
+      const rangeStart = addDays(now, -30); 
+      let rangeEnd = addDays(now, 90);
 
       const recurrenceEnd = m.recurrenceEndDate ? new Date(isNaN(Number(m.recurrenceEndDate)) ? m.recurrenceEndDate : Number(m.recurrenceEndDate)) : null;
       if (recurrenceEnd && !isNaN(recurrenceEnd.getTime())) {
@@ -205,9 +210,11 @@ export function MyInternshipDashboard({ team, loading, enrolledCount = 0, onBrow
         let current = startDateObj;
         if (isBefore(current, rangeStart)) current = rangeStart;
         while (isBefore(current, rangeEnd) || isSameDay(current, rangeEnd)) {
-          instances.push({ ...baseEvent, id: `${m.id}-${format(current, "yyyy-MM-dd")}`, startTime: `${format(current, "yyyy-MM-dd")}T${format(startDateObj, "HH:mm")}:00` });
+          if (m.recurrenceDays?.length === 0 || m.recurrenceDays?.includes(getDay(current))) {
+            instances.push({ ...baseEvent, id: `${m.id}-${format(current, "yyyy-MM-dd")}`, startTime: `${format(current, "yyyy-MM-dd")}T${format(startDateObj, "HH:mm")}:00` });
+          }
           current = addDays(current, 1);
-          if (instances.length > 100) break;
+          if (instances.length > 200) break;
         }
       } else if (m.type === 'WEEKLY' && m.recurrenceDays?.length > 0) {
         let current = startDateObj;
@@ -217,7 +224,7 @@ export function MyInternshipDashboard({ team, loading, enrolledCount = 0, onBrow
             instances.push({ ...baseEvent, id: `${m.id}-${format(current, "yyyy-MM-dd")}`, startTime: `${format(current, "yyyy-MM-dd")}T${format(startDateObj, "HH:mm")}:00` });
           }
           current = addDays(current, 1);
-          if (instances.length > 100) break;
+          if (instances.length > 200) break;
         }
       } else {
         instances.push(baseEvent);
@@ -226,9 +233,32 @@ export function MyInternshipDashboard({ team, loading, enrolledCount = 0, onBrow
    }).sort((a: any, b: any) => new Date(!isNaN(Number(a.startTime)) ? Number(a.startTime) : a.startTime).getTime() - new Date(!isNaN(Number(b.startTime)) ? Number(b.startTime) : b.startTime).getTime())
    .filter((m: any) => {
       const eventDate = new Date(!isNaN(Number(m.startTime)) ? Number(m.startTime) : m.startTime);
-      // Show today and future on sidebar (delect after that day)
-      return eventDate >= startOfToday();
+      const today = startOfToday();
+      
+      if (isBefore(eventDate, today)) return false;
+
+      if (timeFilter === 'all') return true;
+      if (timeFilter === '3days') {
+          const endDate = addDays(viewDate, 3);
+          return (isSameDay(eventDate, viewDate) || isBefore(eventDate, endDate)) && (isSameDay(eventDate, viewDate) || !isBefore(eventDate, viewDate));
+      }
+      if (timeFilter === 'week') return isSameWeek(eventDate, viewDate);
+      if (timeFilter === 'month') return isSameMonth(eventDate, viewDate);
+      
+      return true;
    });
+
+   const handleNext = () => {
+      if (timeFilter === '3days') setViewDate(addDays(viewDate, 3));
+      else if (timeFilter === 'week') setViewDate(addDays(viewDate, 7));
+      else if (timeFilter === 'month') setViewDate(addDays(viewDate, 30));
+   };
+
+   const handlePrev = () => {
+      if (timeFilter === '3days') setViewDate(addDays(viewDate, -3));
+      else if (timeFilter === 'week') setViewDate(addDays(viewDate, -7));
+      else if (timeFilter === 'month') setViewDate(addDays(viewDate, -30));
+   };
 
    return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -510,13 +540,38 @@ export function MyInternshipDashboard({ team, loading, enrolledCount = 0, onBrow
             {/* Upcoming Meetings */}
             <Card className="border-border/50 rounded-[32px] overflow-hidden shadow-large bg-gradient-to-br from-gold/5 to-background">
                <CardHeader className="p-8 pb-4">
-                  <div className="flex justify-between items-center">
-                     <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest leading-none mb-1">Upcoming Syncs</p>
-                     <div className="w-8 h-8 rounded-xl bg-gold/10 flex items-center justify-center">
-                        <Calendar className="w-4 h-4 text-gold" />
-                     </div>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                       <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest leading-none mb-1">Upcoming Syncs</p>
+                       <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-6 w-6 rounded-lg" onClick={handlePrev}>
+                             <ChevronLeft className="w-3 h-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 rounded-lg" onClick={handleNext}>
+                             <ChevronRight className="w-4 h-4" />
+                          </Button>
+                       </div>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-1.5 p-1 bg-muted/30 rounded-xl border border-border/40">
+                       {['3days', 'week', 'month'].map((f) => (
+                          <Button
+                            key={f}
+                            onClick={() => { setTimeFilter(f as any); setViewDate(startOfToday()); }}
+                            variant={timeFilter === f ? 'gold' : 'ghost'}
+                            className={`h-7 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${timeFilter === f ? 'shadow-lg shadow-gold/20' : 'text-muted-foreground hover:text-foreground'}`}
+                          >
+                            {f === '3days' ? '3 Days' : f === 'week' ? 'Weekly' : 'Monthly'}
+                          </Button>
+                       ))}
+                    </div>
                   </div>
-                  <CardTitle className="text-xl font-black tracking-tight">Meeting Schedule</CardTitle>
+                  <CardTitle className="text-xl font-black tracking-tight mt-4">Meeting Schedule</CardTitle>
+                  <p className="text-[10px] font-bold text-accent uppercase tracking-widest mt-1">
+                     {timeFilter === '3days' ? `${format(viewDate, "MMM d")} - ${format(addDays(viewDate, 2), "MMM d")}` : 
+                      timeFilter === 'week' ? `Week of ${format(viewDate, "MMM d")}` : 
+                      format(viewDate, "MMMM yyyy")}
+                  </p>
                </CardHeader>
                <CardContent className="p-8 pt-0 space-y-4">
                   {meetings.length === 0 ? (
@@ -599,7 +654,14 @@ export function MyInternshipDashboard({ team, loading, enrolledCount = 0, onBrow
       </div>
 
       <LogTimeDialog open={showLogTime} onOpenChange={setShowLogTime} teamId={team?.id} />
-      <SubmitWorkDialog open={showSubmitWork} onOpenChange={setShowSubmitWork} teamId={team?.id} milestoneId={selectedMilestone?.id} milestoneTitle={selectedMilestone?.title} />
+      <SubmitWorkDialog 
+        open={showSubmitWork} 
+        onOpenChange={setShowSubmitWork} 
+        teamId={team?.id} 
+        milestoneId={selectedMilestone?.id} 
+        milestoneTitle={selectedMilestone?.title} 
+        status={submissions.find((s: any) => s.milestoneId === selectedMilestone?.id)?.status}
+      />
       <ExplainTaskDialog open={showExplainTask} onOpenChange={(open) => { setShowExplainTask(open); if (!open) setSelectedMilestone(null); }} taskTitle={selectedMilestone?.title || ""} description={selectedMilestone?.description || ""} />
       
       {team.internshipProjectId && (

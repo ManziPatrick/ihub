@@ -36,7 +36,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
-import { InternshipPaymentDialog } from "../student/internship/InternshipPaymentDialog";
+import { useCart } from "@/contexts/CartContext";
 
 type Step = "info" | "success";
 
@@ -44,23 +44,27 @@ interface ApplyInternshipDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   internshipProgramId: string;
+  onSuccess?: () => void;
 }
 
 export function ApplyInternshipDialog({
   open,
   onOpenChange,
   internshipProgramId,
+  onSuccess
 }: ApplyInternshipDialogProps) {
   const [step, setStep] = useState<Step>("info");
   const [isRestored, setIsRestored] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
-  const [paymentData, setPaymentData] = useState<any>(null);
+  
+  const { addToCart } = useCart();
 
   // Form State
   const [skills, setSkills] = useState<string>("");
   const [portfolioUrl, setPortfolioUrl] = useState<string>("");
   const [resumeUrl, setResumeUrl] = useState<string>("");
   const [availability, setAvailability] = useState<string>("");
+  const [selectedDeliveryMode, setSelectedDeliveryMode] = useState<string>("");
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
   // Fetch program details (no auth required)
@@ -90,6 +94,7 @@ export function ApplyInternshipDialog({
           setPortfolioUrl(draft.portfolioUrl || "");
           setResumeUrl(draft.resumeUrl || "");
           setAvailability(draft.availability || "");
+          setSelectedDeliveryMode(draft.selectedDeliveryMode || "");
           setAnswers(draft.answers || {});
           setIsRestored(true);
           setTimeout(() => setIsRestored(false), 3000);
@@ -107,12 +112,13 @@ export function ApplyInternshipDialog({
         portfolioUrl,
         resumeUrl,
         availability,
+        selectedDeliveryMode,
         answers,
         updatedAt: new Date().toISOString()
       };
       localStorage.setItem(`internship_draft_${internshipProgramId}`, JSON.stringify(draft));
     }
-  }, [skills, portfolioUrl, resumeUrl, availability, answers, open, internshipProgramId, step]);
+  }, [skills, portfolioUrl, resumeUrl, availability, selectedDeliveryMode, answers, open, internshipProgramId, step]);
 
   const [applyMutation, { loading: isSubmitting }] = useMutation(APPLY_TO_INTERNSHIP_PROGRAM, {
     onCompleted: (data) => {
@@ -120,10 +126,16 @@ export function ApplyInternshipDialog({
       setStep("success");
       localStorage.removeItem(`internship_draft_${internshipProgramId}`);
       toast.success("Application submitted successfully!");
+      if (onSuccess) onSuccess();
       
       // If program requires payment, prepare it
       if (application?.payment && application.payment.status !== 'paid') {
-          setPaymentData(application.payment);
+          addToCart({
+            id: internshipProgramId,
+            title: `Application: ${program.title}`,
+            price: application.payment.amount,
+            type: "internship"
+          });
       }
     },
     onError: (error) => {
@@ -162,6 +174,7 @@ export function ApplyInternshipDialog({
         portfolioUrl,
         resumeUrl,
         availability,
+        selectedDeliveryMode,
         applicationAnswers,
       },
     });
@@ -214,25 +227,21 @@ export function ApplyInternshipDialog({
             <Loader2 className="w-8 h-8 animate-spin text-accent" />
             <p className="text-sm text-muted-foreground font-medium">Initializing application tracker...</p>
           </div>
-        ) : hasAlreadyApplied ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-10 text-center space-y-6 animate-in fade-in zoom-in duration-300">
-                <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center">
-                    <Info className="w-8 h-8 text-blue-500" />
-                </div>
-                <div className="space-y-2">
-                    <h3 className="text-xl font-bold">Already Applied</h3>
-                    <p className="text-sm text-muted-foreground max-w-sm leading-relaxed px-4">
-                        You have already submitted an application for this internship program. 
-                        You can track its status in your dashboard.
-                    </p>
-                </div>
-                <Button variant="outline" className="w-full max-w-xs h-11 rounded-xl font-bold" onClick={handleClose}>
-                    Close View
-                </Button>
-            </div>
-        ) : (
+                ) : (
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
               <div className="flex-1 overflow-y-auto px-6 py-6">
+                {hasAlreadyApplied && (
+                  <div className="mb-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                    <Info className="w-5 h-5 text-blue-500 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Application Submitted</p>
+                      <p className="text-[11px] text-blue-700 dark:text-blue-300 leading-relaxed">
+                        You have already submitted an application for this internship program. 
+                        You can view your submitted details below, but editing is disabled while pending.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 {step === "info" ? (
                   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {/* Candidate Profile */}
@@ -252,13 +261,14 @@ export function ApplyInternshipDialog({
                                     onChange={(e) => setSkills(e.target.value)}
                                     placeholder="React, TypeScript, UI Design, etc."
                                     className="h-11 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-accent/40 rounded-xl"
+                                    disabled={hasAlreadyApplied}
                                 />
                                 <p className="text-[10px] text-muted-foreground pl-1">List major skills separated by commas</p>
                             </div>
 
                             <div className="space-y-2.5">
                                 <Label className="text-xs font-bold text-foreground/80">Availability Status <span className="text-red-500 font-black">•</span></Label>
-                                <Select value={availability} onValueChange={setAvailability}>
+                                <Select value={availability} onValueChange={setAvailability} disabled={hasAlreadyApplied}>
                                     <SelectTrigger className="h-11 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-accent/40 rounded-xl">
                                         <SelectValue placeholder="How much time can you commit?" />
                                     </SelectTrigger>
@@ -270,6 +280,24 @@ export function ApplyInternshipDialog({
                                     </SelectContent>
                                 </Select>
                             </div>
+
+                            {program?.allowedDeliveryModes?.length > 0 && (
+                                <div className="space-y-2.5">
+                                    <Label className="text-xs font-bold text-foreground/80 flex items-center gap-1.5 leading-relaxed">
+                                        Preferred Delivery Mode <span className="text-red-500 font-black">•</span>
+                                    </Label>
+                                    <Select value={selectedDeliveryMode} onValueChange={setSelectedDeliveryMode} disabled={hasAlreadyApplied}>
+                                        <SelectTrigger className="h-11 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-accent/40 rounded-xl">
+                                            <SelectValue placeholder="How do you want to attend?" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {program.allowedDeliveryModes.map((mode: string) => (
+                                                <SelectItem key={mode} value={mode} className="capitalize">{mode}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
 
                             <div className="grid sm:grid-cols-2 gap-4">
                                 <div className="space-y-2.5">
@@ -398,28 +426,24 @@ export function ApplyInternshipDialog({
                         <h3 className="text-2xl font-black">Application Received!</h3>
                         <p className="text-sm text-muted-foreground leading-relaxed">
                             Your application for <strong>{program?.title}</strong> was submitted successfully. 
-                            {paymentData 
-                                ? "The final step is to secure your enrollment by paying the fee." 
-                                : "Our team will review your profile and get back to you within 3-5 business days."}
+                            {program?.price > 0 
+                                ? " It has been added to your cart for checkout." 
+                                : " Our team will review your profile and get back to you within 3-5 business days."}
                         </p>
                     </div>
                     <Button 
                         variant="gold" 
                         className="w-full h-12 rounded-xl text-sm font-bold shadow-premium flex items-center gap-2 group" 
                         onClick={() => {
-                            if (paymentData) {
-                                handleClose();
-                            } else {
-                                handleClose();
-                            }
+                            handleClose();
                         }}
                     >
-                        {paymentData ? (
+                        {program?.price > 0 ? (
                             <>
-                                Go to Secure Payment
+                                View Cart & Checkout
                                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </>
-                        ) : "Back to Portal"}
+                        ) : "Close"}
                     </Button>
                   </div>
                 )}
@@ -454,25 +478,6 @@ export function ApplyInternshipDialog({
             </div>
         )}
       </DialogContent>
-
-      {/* The ONE and only Payment Dialog */}
-      {paymentData && (
-          <InternshipPaymentDialog
-            open={!!paymentData}
-            onOpenChange={(open) => {
-                if (!open) setPaymentData(null);
-            }}
-            paymentId={paymentData.id}
-            internshipProgramId={internshipProgramId}
-            programTitle={program?.title}
-            amount={paymentData.amount}
-            currency={paymentData.currency}
-            onSuccess={() => {
-                setPaymentData(null);
-                handleClose();
-            }}
-          />
-      )}
     </Dialog>
   );
 }

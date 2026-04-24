@@ -27,8 +27,12 @@ export const typeDefs = `#graphql
     courseId: ID!
     lessons: [LessonProgress]
     totalTimeSpent: Int
-    overallProgress: Int
+    maxStudents: Int
     status: String
+    allowedDeliveryModes: [String!]
+    enrollmentMode: String
+    githubClassroom: String
+    overallProgress: Int
     lastAccessed: String
   }
 
@@ -74,6 +78,7 @@ export const typeDefs = `#graphql
     role: String!
     enrolledCourses: [Course]
     completedLessons: [CompletedLesson]
+    completedCourses: [Course]
     activityLog: [Activity]
     badges: [UserBadge]
     grades: [Grade]
@@ -81,6 +86,7 @@ export const typeDefs = `#graphql
     academicStatus: String
     permissions: [String]
     streak: Int
+    xp: Int
     themePreference: ThemePreference
     fullName: String
     bio: String
@@ -90,7 +96,8 @@ export const typeDefs = `#graphql
     title: String
     studentProfile: StudentProfile
     notes: String
-    paymentProofUrl: String
+    meetingLink: String
+    deliveryMode: String
     isDeleted: Boolean
     lastActive: String
     isOnline: Boolean
@@ -100,6 +107,7 @@ export const typeDefs = `#graphql
     createdAt: String
     updatedAt: String
     bookings: [Booking]
+    certificateName: String
   }
 
   type PaginationInfo {
@@ -227,6 +235,25 @@ export const typeDefs = `#graphql
     order: Int
   }
 
+  type CourseApplication {
+    id: ID!
+    courseId: ID!
+    course: Course
+    userId: ID!
+    user: User
+    status: String!
+    applicationAnswers: [ApplicationAnswer]!
+    selectedDeliveryMode: String
+    rejectionReason: String
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type CourseApplicationResponse {
+    items: [CourseApplication]
+    pagination: PaginationInfo
+  }
+
   type Module {
     id: ID!
     title: String!
@@ -255,9 +282,14 @@ export const typeDefs = `#graphql
     level: String
     category: String
     status: String
+    allowedDeliveryModes: [String!]
+    enrollmentMode: String
+    applicationQuestions: [ApplicationQuestion]
     modules: [Module!]!
     studentsEnrolled: [User]!
     submissionRequired: Boolean
+    signerName: String
+    signerSignature: String
     createdAt: String!
     updatedAt: String!
   }
@@ -293,24 +325,35 @@ export const typeDefs = `#graphql
     courseId: ID!
     lessonId: ID
     questionText: String!
+    imageUrl: String
     options: [String!]!
     correctOptionIndex: Int!
     explanation: String
     createdAt: String!
   }
 
+  type PaymentLineItem {
+    id: ID!
+    title: String!
+    price: Float
+  }
+
   type PaymentTransaction {
     id: ID!
     studentName: String!
-    type: String! # 'Course Enrollment' or 'Internship Fee'
+    type: String! # 'Course Enrollment', 'Internship Fee', or 'Bulk Enrollment'
     itemTitle: String!
     amount: Float!
     currency: String!
     date: String!
     status: String!
-    method: String
+    selectedDeliveryMode: String
     proofOfPaymentUrl: String
     adminNotes: String
+    courseIds: [ID]
+    internshipIds: [ID]
+    courses: [PaymentLineItem]
+    internships: [PaymentLineItem]
   }
 
   type Booking {
@@ -326,6 +369,7 @@ export const typeDefs = `#graphql
     notes: String
     status: String
     meetingLink: String
+    deliveryMode: String
     createdAt: String
   }
 
@@ -436,9 +480,12 @@ export const typeDefs = `#graphql
     courseTitle: String!
     issueDate: String
     credentialId: String
+    recipientName: String
     status: String!
     progress: Int
     requirements: [Requirement]
+    signerName: String
+    signerSignature: String
     createdAt: String!
     updatedAt: String!
   }
@@ -451,6 +498,7 @@ export const typeDefs = `#graphql
     discount: Int
     isPaidProgram: Boolean
     installmentsAllowed: Boolean
+    deliveryMode: String
   }
 
   type ApplicationDetails {
@@ -478,6 +526,7 @@ export const typeDefs = `#graphql
     time: String!
     type: String!
     url: String
+    deliveryMode: String
     attendees: [String]
   }
 
@@ -539,6 +588,8 @@ export const typeDefs = `#graphql
     tasks: [InternshipTask]
     meetings: [Meeting]
     sprintReviews: [SprintReview]
+    signerName: String
+    signerSignature: String
     createdAt: String!
     updatedAt: String!
   }
@@ -637,7 +688,7 @@ export const typeDefs = `#graphql
     getResources(linkedTo: ID, onModel: String): [Resource!]!
     getResource(id: ID!): Resource!
     hello: String
-    users(page: Int, limit: Int): UserResponse
+    users(page: Int, limit: Int, createdBy: ID): UserResponse
     conversations: [Conversation]
     messages(conversationId: ID!): [Message]
     courses(page: Int, limit: Int): CourseResponse
@@ -650,7 +701,7 @@ export const typeDefs = `#graphql
     questions(courseId: ID!, lessonId: ID): [Question]
     bookings(page: Int, limit: Int): BookingResponse
     payments(page: Int, limit: Int): PaymentResponse
-    analytics: AnalyticsData
+    analytics(createdBy: ID): AnalyticsData
     branding: BrandingConfig
     configs: [Config]
     myPayments: [PaymentTransaction]
@@ -658,7 +709,7 @@ export const typeDefs = `#graphql
     badges(page: Int, limit: Int): BadgeResponse
     
     trainerStats: TrainerStats
-    adminDashboardData: AdminDashboardData
+    adminDashboardData(createdBy: ID): AdminDashboardData
 
     # Projects
     projects(page: Int, limit: Int): ProjectResponse
@@ -696,6 +747,10 @@ export const typeDefs = `#graphql
     
     # Assignments
     getAssignmentSubmissions(courseId: ID, lessonId: String, page: Int, limit: Int): AssignmentSubmissionResponse
+    
+    # Course Applications
+    courseApplications(courseId: ID, status: String, page: Int, limit: Int): CourseApplicationResponse
+    myCourseApplications: [CourseApplication]
   }
 
   type DailyDashboard {
@@ -847,6 +902,7 @@ export const typeDefs = `#graphql
     chatWithAI(message: String!): ChatResponse
     explainTask(taskTitle: String!, description: String!): ChatResponse
     reviewSubmission(taskTitle: String!, submissionContent: String!): ChatResponse
+    generateAIQuiz(courseId: ID!, lessonId: ID!, questionCount: Int, prompt: String): [Question]
 
     # Uploads
     getUploadSignature(folder: String, resourceType: String): UploadSignature!
@@ -860,22 +916,8 @@ export const typeDefs = `#graphql
     resetPassword(token: String!, newPassword: String!): Boolean
     
     # Questions
-    createQuestion(
-      courseId: ID!
-      lessonId: ID
-      questionText: String!
-      options: [String!]!
-      correctOptionIndex: Int!
-      explanation: String
-    ): Question
-
-    updateQuestion(
-      id: ID!
-      questionText: String
-      options: [String!]
-      correctOptionIndex: Int
-      explanation: String
-    ): Question
+    createQuestion(courseId: ID!, lessonId: ID, questionText: String!, imageUrl: String, options: [String!]!, correctOptionIndex: Int!, explanation: String): Question
+    updateQuestion(id: ID!, questionText: String, imageUrl: String, options: [String!], correctOptionIndex: Int, explanation: String): Question
 
     deleteQuestion(id: ID!): Boolean
 
@@ -894,7 +936,7 @@ export const typeDefs = `#graphql
     toggleProjectTemplate(id: ID!, visibility: String): Project
     assignProjectToUsers(projectId: ID!, userIds: [ID!]!, type: String!, deadline: String): [Project]
 
-    enroll(courseId: ID!): Course
+    enroll(courseId: ID!, selectedDeliveryMode: String): Course
     createCourse(
       title: String!
       description: String!
@@ -905,7 +947,11 @@ export const typeDefs = `#graphql
       category: String
       instructorId: ID
       status: String
+      enrollmentMode: String
       submissionRequired: Boolean
+      signerName: String
+      signerSignature: String
+      applicationQuestions: [ApplicationQuestionInput]
       modules: [ModuleInput!]!
     ): Course
     updateCourse(
@@ -919,7 +965,11 @@ export const typeDefs = `#graphql
       category: String
       instructorId: ID
       status: String
+      enrollmentMode: String
       submissionRequired: Boolean
+      signerName: String
+      signerSignature: String
+      applicationQuestions: [ApplicationQuestionInput]
       modules: [ModuleInput!]
     ): Course
     deleteCourse(id: ID!): Boolean
@@ -931,6 +981,7 @@ export const typeDefs = `#graphql
     updateLessonProgress(courseId: ID!, lessonId: String!, timeSpent: Int!, completed: Boolean): Boolean
     
     completeLesson(courseId: ID!, lessonId: String!): User
+    rewardStudent(xp: Int!, streak: Int): User
     trackActivity(action: String!, details: String): User
 
     
@@ -1018,6 +1069,7 @@ export const typeDefs = `#graphql
       requirements: [RequirementInput]
     ): Certificate
     issueCertificate(id: ID!, credentialId: String!): Certificate
+    updateCertificateRecipientName(id: ID!, recipientName: String!): Certificate
     deleteCertificate(id: ID!): Boolean
 
     # Internships
@@ -1045,6 +1097,8 @@ export const typeDefs = `#graphql
       phoneNumber: String
       portfolioUrl: String
       mentorIds: [ID]
+      signerName: String
+      signerSignature: String
     ): Internship
     updateInternship(
       id: ID!
@@ -1072,6 +1126,8 @@ export const typeDefs = `#graphql
       phoneNumber: String
       portfolioUrl: String
       mentorIds: [ID]
+      signerName: String
+      signerSignature: String
     ): Internship
     deleteInternship(id: ID!): Boolean
     applyForInternship(internshipId: ID!): Internship
@@ -1096,8 +1152,8 @@ export const typeDefs = `#graphql
 
 
     # New Internship Module Mutations
-    createInternshipProgram(title: String!, description: String!, duration: String!, startDate: String!, endDate: String!, applicationDeadline: String!, eligibility: [String], rules: String, price: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput]): InternshipProgram
-    updateInternshipProgram(id: ID!, title: String, description: String, duration: String, startDate: String, endDate: String, applicationDeadline: String, status: String, eligibility: [String], rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput]): InternshipProgram
+    createInternshipProgram(title: String!, description: String!, duration: String!, startDate: String!, endDate: String!, applicationDeadline: String!, eligibility: [String], rules: String, price: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
+    updateInternshipProgram(id: ID!, title: String, description: String, duration: String, startDate: String, endDate: String, applicationDeadline: String, status: String, eligibility: [String], rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
     deleteInternshipProgram(id: ID!): Boolean
 
     applyToInternshipProgram(internshipProgramId: ID!, skills: [String]!, portfolioUrl: String, resumeUrl: String, availability: String!, applicationAnswers: [ApplicationAnswerInput]): InternshipApplication
@@ -1120,6 +1176,10 @@ export const typeDefs = `#graphql
 
     logInternshipTime(teamId: ID!, description: String!, minutes: Int!, date: String): InternshipTimeLog
     submitMentorFeedback(userId: ID!, teamId: ID, score: Int!, comments: String!): InternshipMentorFeedback
+    
+    # Course Applications
+    applyToCourse(courseId: ID!, applicationAnswers: [ApplicationAnswerInput], selectedDeliveryMode: String): CourseApplication
+    updateCourseApplicationStatus(applicationId: ID!, status: String!, rejectionReason: String): CourseApplication
   }
 
   # New Internship Module Types
@@ -1138,13 +1198,21 @@ export const typeDefs = `#graphql
   }
 
   type ApplicationAnswer {
-    questionLabel: String!
-    answer: String!
+    questionLabel: String
+    answer: String
   }
 
   input ApplicationAnswerInput {
     questionLabel: String!
     answer: String!
+  }
+  type InternshipProgramStats {
+    totalApplications: Int!
+    approvedApplications: Int!
+    rejectedApplications: Int!
+    pendingApplications: Int!
+    enrolledStudents: Int!
+    totalRevenue: Float!
   }
 
   type InternshipProgram {
@@ -1164,9 +1232,13 @@ export const typeDefs = `#graphql
     maxSpots: Int
     applicationQuestions: [ApplicationQuestion]
     status: String!
+    allowedDeliveryModes: [String!]
     isDeleted: Boolean
+    signerName: String
+    signerSignature: String
     createdAt: String
     updatedAt: String
+    stats: InternshipProgramStats
   }
 
   type InternshipApplication {
@@ -1180,7 +1252,8 @@ export const typeDefs = `#graphql
     portfolioUrl: String
     resumeUrl: String
     availability: String
-    applicationAnswers: [ApplicationAnswer]
+    selectedDeliveryMode: String
+    applicationAnswers: [ApplicationAnswer!]
     rejectionReason: String
     payment: InternshipPayment
     createdAt: String
@@ -1368,11 +1441,11 @@ export const typeDefs = `#graphql
     id: ID!
     userId: ID!
     user: User
-    school: String!
-    educationLevel: String!
-    fieldOfStudy: String!
-    skills: [String!]!
-    availability: String!
+    school: String
+    educationLevel: String
+    fieldOfStudy: String
+    skills: [String!]
+    availability: String
     bio: String
     linkedinUrl: String
     githubUrl: String
@@ -1549,7 +1622,9 @@ export const typeDefs = `#graphql
     title: String!
     description: String
     type: MeetingFrequency!
+    deliveryMode: String!
     meetLink: String
+    location: String
     startTime: String!
     endTime: String!
     recurrenceDays: [Int]

@@ -27,6 +27,9 @@ interface Certificate {
   courseTitle: string;
   issueDate: string | null;
   credentialId?: string;
+  recipientName?: string;
+  signerName?: string;
+  signerSignature?: string;
   status: string;
   progress?: number;
   requirements?: Array<{
@@ -59,7 +62,10 @@ export default function StudentCertificates() {
             id: cert.id,
             courseTitle: cert.courseTitle,
             issueDate: cert.issueDate,
-            credentialId: cert.credentialId || 'PENDING'
+            credentialId: cert.credentialId || 'PENDING',
+            recipientName: cert.recipientName,
+            signerName: cert.signerName,
+            signerSignature: cert.signerSignature
         });
     } else {
         toast.error("Certificate not yet available for download");

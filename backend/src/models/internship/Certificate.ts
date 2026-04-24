@@ -165,7 +165,7 @@ InternshipCertificateSchema.pre('validate', async function() {
       
       let sequence = 1;
       if (lastCertificate) {
-        const lastSequence = parseInt(lastCertificate.certificateNumber.split('-')[2]);
+        const lastSequence = parseInt((lastCertificate as any).certificateNumber.split('-')[2]);
         sequence = lastSequence + 1;
       }
       

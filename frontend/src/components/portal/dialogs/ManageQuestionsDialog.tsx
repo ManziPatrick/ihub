@@ -3,10 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Trash2, CheckCircle2, AlertCircle, Loader2, Pencil } from "lucide-react";
+import { Plus, Trash2, CheckCircle2, AlertCircle, Loader2, Pencil, Sparkles, Save, X } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_QUESTIONS } from "@/lib/graphql/queries";
-import { CREATE_QUESTION, UPDATE_QUESTION, DELETE_QUESTION } from "@/lib/graphql/mutations";
+import { CREATE_QUESTION, UPDATE_QUESTION, DELETE_QUESTION, GENERATE_AI_QUIZ } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 
 interface ManageQuestionsDialogProps {
@@ -29,6 +29,7 @@ export function ManageQuestionsDialog({
 
   const [formData, setFormData] = useState({
     questionText: "",
+    imageUrl: "",
     options: ["", "", "", ""],
     correctOptionIndex: 0,
     explanation: ""
@@ -42,6 +43,12 @@ export function ManageQuestionsDialog({
   const [createQuestion] = useMutation(CREATE_QUESTION);
   const [updateQuestion] = useMutation(UPDATE_QUESTION);
   const [deleteQuestion] = useMutation(DELETE_QUESTION);
+  const [generateAIQuiz] = useMutation(GENERATE_AI_QUIZ);
+
+  const [draftQuestions, setDraftQuestions] = useState<any[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiQuestionCount, setAiQuestionCount] = useState(3);
+  const [aiPrompt, setAiPrompt] = useState("");
 
   const questions = (data as any)?.questions || [];
 
@@ -71,7 +78,7 @@ export function ManageQuestionsDialog({
         toast.success("Question added!");
       }
 
-      setFormData({ questionText: "", options: ["", "", "", ""], correctOptionIndex: 0, explanation: "" });
+      setFormData({ questionText: "", imageUrl: "", options: ["", "", "", ""], correctOptionIndex: 0, explanation: "" });
       setIsAdding(false);
       setEditingId(null);
       refetch();
@@ -94,11 +101,71 @@ export function ManageQuestionsDialog({
   const startEdit = (q: any) => {
     setFormData({
       questionText: q.questionText,
+      imageUrl: q.imageUrl || "",
       options: [...q.options],
       correctOptionIndex: q.correctOptionIndex,
       explanation: q.explanation || ""
     });
     setEditingId(q.id);
+    setIsAdding(true);
+  };
+
+  const handleGenerateAI = async () => {
+    if (!lessonId) {
+      toast.error("AI Generation requires a specific lesson.");
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      if (!courseId) {
+        toast.error("Course ID is missing. Please save the course first.");
+        return;
+      }
+      const { data } = await generateAIQuiz({
+        variables: { courseId, lessonId, questionCount: aiQuestionCount, prompt: aiPrompt }
+      }) as any;
+      
+      if (data?.generateAIQuiz) {
+        setDraftQuestions(prev => [...prev, ...data.generateAIQuiz]);
+        toast.success(`Generated ${data.generateAIQuiz.length} questions!`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate questions");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSaveDraft = async (draft: any, index: number) => {
+    try {
+      await createQuestion({
+        variables: {
+          courseId,
+          lessonId: lessonId || null,
+          questionText: draft.questionText,
+          imageUrl: draft.imageUrl || "",
+          options: draft.options,
+          correctOptionIndex: draft.correctOptionIndex,
+          explanation: draft.explanation
+        }
+      });
+      toast.success("Draft saved to course!");
+      setDraftQuestions(prev => prev.filter((_, i) => i !== index));
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save draft");
+    }
+  };
+
+  const handleEditDraft = (draft: any, index: number) => {
+    setFormData({
+      questionText: draft.questionText,
+      imageUrl: draft.imageUrl || "",
+      options: [...draft.options],
+      correctOptionIndex: draft.correctOptionIndex,
+      explanation: draft.explanation || ""
+    });
+    setDraftQuestions(prev => prev.filter((_, i) => i !== index));
     setIsAdding(true);
   };
 
@@ -125,6 +192,22 @@ export function ManageQuestionsDialog({
                     onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
                     placeholder="Enter the question here..."
                   />
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium mb-1.5 block flex items-center justify-between">
+                    <span>Image URL (Optional)</span>
+                  </label>
+                  <Input
+                    value={formData.imageUrl}
+                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                    placeholder="https://example.com/image.png"
+                  />
+                  {formData.imageUrl && (
+                    <div className="mt-2 relative w-full h-32 bg-muted/50 rounded overflow-hidden">
+                      <img src={formData.imageUrl} alt="Question preview" className="w-full h-full object-contain" />
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -174,7 +257,7 @@ export function ManageQuestionsDialog({
                     onClick={() => {
                       setIsAdding(false);
                       setEditingId(null);
-                      setFormData({ questionText: "", options: ["", "", "", ""], correctOptionIndex: 0, explanation: "" });
+                      setFormData({ questionText: "", imageUrl: "", options: ["", "", "", ""], correctOptionIndex: 0, explanation: "" });
                     }}
                   >
                     Cancel
@@ -182,13 +265,123 @@ export function ManageQuestionsDialog({
                 </div>
               </div>
             ) : (
-              <Button
-                variant="outline"
-                className="w-full border-dashed py-8 border-2"
-                onClick={() => setIsAdding(true)}
-              >
-                <Plus className="w-5 h-5 mr-2" /> Add Your First Question
-              </Button>
+              <div className="space-y-4">
+                {lessonId && (
+                  <div className="bg-gradient-to-br from-accent/10 to-accent/5 p-5 rounded-xl border border-accent/20 space-y-4">
+                    <div>
+                      <h4 className="text-sm font-semibold text-accent flex items-center gap-2">
+                        <Sparkles className="w-5 h-5" /> AI Quiz Generator
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Automatically generate multiple-choice questions based on this lesson's content.
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-end gap-3">
+                      <div className="flex-1">
+                        <label className="text-xs font-medium mb-1.5 block">Number of Questions</label>
+                        <Input 
+                          type="number" 
+                          min={1} max={20} 
+                          value={aiQuestionCount} 
+                          onChange={e => setAiQuestionCount(parseInt(e.target.value) || 3)}
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="flex-[2]">
+                        <label className="text-xs font-medium mb-1.5 block">Custom Instructions (Optional)</label>
+                        <Input 
+                          placeholder="e.g. Focus on X, easy/hard, etc." 
+                          value={aiPrompt}
+                          onChange={e => setAiPrompt(e.target.value)}
+                          className="h-9"
+                        />
+                      </div>
+                      <Button 
+                        variant="default" 
+                        className="bg-accent hover:bg-accent/90 text-accent-foreground h-9 px-6"
+                        onClick={handleGenerateAI}
+                        disabled={isGenerating}
+                      >
+                        {isGenerating ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" /> Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" /> Generate
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                <Button
+                  variant="outline"
+                  className="w-full border-dashed py-8 border-2"
+                  onClick={() => setIsAdding(true)}
+                >
+                  <Plus className="w-5 h-5 mr-2" /> Add Your First Question
+                </Button>
+              </div>
+            )}
+
+            {draftQuestions.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm flex items-center gap-2 text-accent">
+                  AI Draft Questions
+                  <span className="text-xs font-normal bg-accent/20 text-accent px-2 py-0.5 rounded-full">
+                    {draftQuestions.length}
+                  </span>
+                </h3>
+                  <ScrollArea className="h-[400px] w-full rounded-md border p-4 custom-scrollbar">
+                    <div className="space-y-4">
+                      {draftQuestions.map((q: any, idx: number) => (
+                        <div
+                          key={q.id || idx}
+                          className="p-4 bg-accent/5 border border-accent/30 rounded-xl hover:shadow-card transition-all group"
+                        >
+                          <div className="flex justify-between gap-4 mb-3">
+                            <div className="flex-1">
+                              <span className="text-[10px] font-bold text-accent uppercase tracking-wider mb-1 block">Draft {idx + 1}</span>
+                              <h4 className="font-medium text-card-foreground leading-snug">{q.questionText}</h4>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-green-500 hover:text-green-600 hover:bg-green-500/10" onClick={() => handleSaveDraft(q, idx)} title="Save to Course">
+                                <Save className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10" onClick={() => handleEditDraft(q, idx)} title="Edit Draft">
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => setDraftQuestions(prev => prev.filter((_, i) => i !== idx))} title="Discard">
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 mb-3">
+                            {q.options.map((opt: string, i: number) => (
+                              <div
+                                key={i}
+                                className={`text-xs p-2 rounded-lg border flex items-center gap-2 ${i === q.correctOptionIndex
+                                    ? "bg-green-500/10 border-green-500/30 text-green-400"
+                                    : "bg-muted/30 border-transparent text-muted-foreground"
+                                  }`}
+                              >
+                                {i === q.correctOptionIndex && <CheckCircle2 className="w-3 h-3" />}
+                                <span className="truncate">{opt}</span>
+                              </div>
+                            ))}
+                          </div>
+                          {q.explanation && (
+                            <div className="text-[10px] text-muted-foreground bg-muted/20 p-2 rounded italic">
+                              Explanation: {q.explanation}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+              </div>
             )}
 
             <div className="space-y-4">
@@ -219,6 +412,9 @@ export function ManageQuestionsDialog({
                         <div className="flex-1">
                           <span className="text-[10px] font-bold text-accent uppercase tracking-wider mb-1 block">Question {idx + 1}</span>
                           <h4 className="font-medium text-card-foreground leading-snug">{q.questionText}</h4>
+                          {q.imageUrl && (
+                             <img src={q.imageUrl} alt="Question" className="mt-2 rounded-md max-h-32 object-contain bg-muted/30" />
+                          )}
                         </div>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(q)}>

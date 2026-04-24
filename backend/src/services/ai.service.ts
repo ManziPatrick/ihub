@@ -160,6 +160,53 @@ export const reviewSubmissionService = async (taskTitle: string, submissionConte
     }
 };
 
+export const generateAIQuizService = async (courseTitle: string, lessonTitle: string, content: string, questionCount: number = 3, userPrompt: string = "") => {
+    const prompt = `You are an educator at CODEMANDE Academy, specialized in making learning effective for students.
+    Generate a ${questionCount}-question quiz for the following lesson.
+    
+    Course: ${courseTitle}
+    Lesson: ${lessonTitle}
+    Content Context: ${content}
+    ${userPrompt ? `SPECIFIC FOCUS POINTS FROM TRAINER: ${userPrompt}` : ""}
+    
+    STRICT INSTRUCTIONS:
+    1. Tone: Professional, encouraging, and clear. DO NOT use emojis.
+    2. Format: Return ONLY a valid JSON array of objects.
+    3. Object Structure:
+       {
+         "questionText": "...",
+         "options": ["...", "...", "...", "..."],
+         "correctOptionIndex": 0,
+         "explanation": "..."
+       }
+    4. Explanation: The explanation must be clear and directly explain why the option is correct.
+    
+    Goal: Test the core concept while keeping the student engaged.`;
+
+    try {
+        const response = await axios.post(
+            'https://router.huggingface.co/v1/chat/completions',
+            {
+                model: "Qwen/Qwen3-Coder-Next:novita",
+                messages: [{ role: 'user', content: prompt }],
+                stream: false
+            },
+            { headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' } }
+        );
+
+        const aiContent = response.data.choices[0].message.content;
+        // Extract JSON if AI wrapped it in markdown
+        const jsonMatch = aiContent.match(/\[\s*\{.*\}\s*\]/s);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+        return JSON.parse(aiContent);
+    } catch (error: any) {
+        console.error('AI Quiz Generation Error:', error);
+        return [];
+    }
+};
+
 const parseAIResponse = async (aiContent: string, contextUser: any) => {
     let action = null;
     let actionData = null;

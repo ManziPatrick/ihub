@@ -6,16 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   BookOpen,
   Users,
@@ -40,11 +31,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ViewCourseDialog, EditCourseDialog, DeleteConfirmDialog } from "@/components/portal/dialogs";
 import { QuestionManagerDialog } from "@/components/portal/QuestionManagerDialog";
-import { FileUpload } from "@/components/FileUpload";
 import { toast } from "sonner";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
-import { GET_COURSES, GET_STATS, GET_USERS, GET_COURSE } from "@/lib/graphql/queries";
-import { CREATE_COURSE, UPDATE_COURSE, DELETE_COURSE } from "@/lib/graphql/mutations";
+import { GET_COURSES, GET_STATS, GET_USERS, GET_COURSE, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
+import { UPDATE_COURSE, DELETE_COURSE } from "@/lib/graphql/mutations";
 
 export default function AdminCourses() {
   const navigate = useNavigate();
@@ -61,12 +51,16 @@ export default function AdminCourses() {
 
   // Queries & Mutations
   const { data, loading, refetch } = useQuery(GET_COURSES, {
-    variables: { page: currentPage, limit: pageSize }
+    variables: { page: currentPage, limit: pageSize },
+    pollInterval: 30000
   });
   const [loadCourse, { data: fullCourseData, loading: courseLoading }] = useLazyQuery(GET_COURSE);
-  const [createCourseMutation] = useMutation(CREATE_COURSE);
-  const [updateCourseMutation] = useMutation(UPDATE_COURSE);
-  const [deleteCourseMutation] = useMutation(DELETE_COURSE);
+  const [updateCourseMutation] = useMutation(UPDATE_COURSE, {
+    refetchQueries: [{ query: GET_COURSES }, { query: GET_STATS }, { query: GET_ADMIN_DASHBOARD_DATA }]
+  });
+  const [deleteCourseMutation] = useMutation(DELETE_COURSE, {
+    refetchQueries: [{ query: GET_COURSES }, { query: GET_STATS }, { query: GET_ADMIN_DASHBOARD_DATA }]
+  });
 
   useEffect(() => {
     const fullData = fullCourseData as any;
@@ -79,9 +73,12 @@ export default function AdminCourses() {
   const pagination = (data as any)?.courses?.pagination;
 
   const { data: usersData } = useQuery(GET_USERS);
-  const trainers = (usersData as any)?.users?.items?.filter((u: any) => u.role === 'trainer' || u.role === 'admin' || u.role === 'super_admin') || [];
+  const trainers = (usersData as any)?.users?.items?.filter((u: any) =>
+    u.role === 'trainer' || u.role === 'admin' || u.role === 'super_admin'
+  ) || [];
 
-  // Removed handleCreateCourse as it is now in CreateCourse.tsx
+  const { data: statsData } = useQuery(GET_STATS, { pollInterval: 30000 });
+  const liveStats = (statsData as any)?.stats || { totalUsers: 0, totalCourses: 0, totalStudents: 0, totalRevenue: 0 };
 
   const handleDeleteCourse = async () => {
     if (!deleteCourse) return;
@@ -94,9 +91,6 @@ export default function AdminCourses() {
       toast.error(err.message);
     }
   };
-
-   const { data: statsData } = useQuery(GET_STATS);
-   const liveStats = (statsData as any)?.stats || { totalUsers: 0, totalCourses: 0, totalStudents: 0, totalRevenue: 0 };
 
   const handleSaveCourse = async (updatedCourse: any) => {
     try {
@@ -112,6 +106,7 @@ export default function AdminCourses() {
           instructorId: updatedCourse.instructorId,
           thumbnail: updatedCourse.thumbnail,
           status: updatedCourse.status,
+          enrollmentMode: updatedCourse.enrollmentMode || 'direct',
           submissionRequired: updatedCourse.submissionRequired,
           modules: updatedCourse.modules
         }
@@ -127,12 +122,7 @@ export default function AdminCourses() {
 
   const handleUpdateStatus = async (courseId: string, newStatus: string) => {
     try {
-      await updateCourseMutation({
-        variables: {
-          id: courseId,
-          status: newStatus
-        }
-      });
+      await updateCourseMutation({ variables: { id: courseId, status: newStatus } });
       toast.success(`Course status updated to ${newStatus}`);
       refetch();
     } catch (err: any) {
@@ -141,23 +131,20 @@ export default function AdminCourses() {
   };
 
   const handleEditClick = (course: any) => {
-    setEditCourse(course); // Set immediately to show basic info
+    setEditCourse(course);
     const toastId = toast.loading("Fetching latest curriculum...");
-    loadCourse({
-      variables: { id: course.id }
-    }).then(() => {
-      toast.dismiss(toastId);
-    }).catch((err) => {
-      toast.error("Curriculum sync failed: " + err.message);
-      toast.dismiss(toastId);
-    });
+    loadCourse({ variables: { id: course.id } })
+      .then(() => toast.dismiss(toastId))
+      .catch((err) => {
+        toast.error("Curriculum sync failed: " + err.message);
+        toast.dismiss(toastId);
+      });
   };
 
   const filteredCourses = (courses || []).filter((course: any) =>
     course.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     course.instructor?.username?.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
 
   return (
     <PortalLayout>
@@ -173,7 +160,7 @@ export default function AdminCourses() {
               Course Management
             </h1>
             <p className="text-muted-foreground mt-1">
-              Create, manage, and configure courses and pricing
+              Create, manage, and configure courses — students enroll directly
             </p>
           </div>
           <Button variant="gold" onClick={() => navigate("/portal/admin/courses/create")}>
@@ -189,60 +176,26 @@ export default function AdminCourses() {
           transition={{ delay: 0.1 }}
           className="grid grid-cols-2 lg:grid-cols-4 gap-4"
         >
-          <Card className="border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-accent" />
+          {[
+            { icon: BookOpen, label: "Total Courses", value: liveStats.totalCourses },
+            { icon: Users, label: "Total Students", value: liveStats.totalStudents },
+            { icon: DollarSign, label: "Revenue (RWF)", value: (liveStats.totalRevenue || 0).toLocaleString() },
+            { icon: TrendingUp, label: "Avg. Completion", value: "0%" },
+          ].map(({ icon: Icon, label, value }) => (
+            <Card key={label} className="border-border/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-card-foreground">{value}</p>
+                    <p className="text-xs text-card-foreground/60">{label}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-card-foreground">{liveStats.totalCourses}</p>
-                  <p className="text-xs text-card-foreground/60">Total Courses</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-accent" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-card-foreground">
-                    {liveStats.totalStudents}
-                  </p>
-                  <p className="text-xs text-card-foreground/60">Total Students</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-accent" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-card-foreground">{(liveStats.totalRevenue || 0).toLocaleString()}</p>
-                  <p className="text-xs text-card-foreground/60">Total Revenue (RWF)</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border/50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-accent" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-card-foreground">0%</p>
-                  <p className="text-xs text-card-foreground/60">Avg. Completion</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ))}
         </motion.div>
 
         {/* Search */}
@@ -250,19 +203,18 @@ export default function AdminCourses() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className="relative max-w-md"
         >
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              placeholder="Search courses..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            placeholder="Search courses..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
         </motion.div>
 
-        {/* Courses List */}
+        {/* Courses Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -270,142 +222,160 @@ export default function AdminCourses() {
         >
           <Card className="border-border/50">
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border/50">
-                      <th className="text-left p-4 text-sm font-medium text-card-foreground/70">Course</th>
-                      <th className="text-left p-4 text-sm font-medium text-card-foreground/70">Instructor</th>
-                      <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Students</th>
-                      <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Price</th>
-                      <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Revenue</th>
-                      <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Status</th>
-                      <th className="text-right p-4 text-sm font-medium text-card-foreground/70">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredCourses.length > 0 ? (
-                      filteredCourses.map((course: any) => (
-                        <tr key={course.id} className="border-b border-border/30 hover:bg-background/50">
-                          <td className="p-4">
-                            <div>
-                              <p className="font-medium text-card-foreground">{course.title}</p>
-                              <p className="text-xs text-card-foreground/60 mt-0.5">
-                                {course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0} lessons
-                              </p>
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border/50">
+                        <th className="text-left p-4 text-sm font-medium text-card-foreground/70">Course</th>
+                        <th className="text-left p-4 text-sm font-medium text-card-foreground/70">Instructor</th>
+                        <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Students</th>
+                        <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Price</th>
+                        <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Mode</th>
+                        <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Status</th>
+                        <th className="text-right p-4 text-sm font-medium text-card-foreground/70">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredCourses.length > 0 ? (
+                        filteredCourses.map((course: any) => (
+                          <tr key={course.id} className="border-b border-border/10 transition-colors group">
+                            <td className="p-4">
+                              <div>
+                                <p className="font-bold group-hover:text-foreground dark:group-hover:text-white transition-colors">
+                                  {course.title}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-0.5">
+                                  {course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0} units
+                                </p>
+                              </div>
+                            </td>
+                            <td className="p-4 text-sm text-card-foreground/70 group-hover:text-foreground dark:group-hover:text-white transition-colors">
+                              {course.instructor?.username || <span className="text-destructive/60 italic">TBD</span>}
+                            </td>
+                            <td className="p-4 text-center">
+                              <span className="text-sm font-bold">{course.studentsEnrolled?.length || 0}</span>
+                            </td>
+                            <td className="p-4 text-center">
+                              {course.price === 0 ? (
+                                <Badge className="bg-green-500/10 text-green-500 border-green-500/20 font-black">Free</Badge>
+                              ) : (
+                                <div className="flex flex-col items-center">
+                                  {course.discountPrice > 0 ? (
+                                    <>
+                                      <span className="text-[10px] text-card-foreground/40 line-through">{course.price.toLocaleString()}</span>
+                                      <span className="text-sm text-accent font-black">{course.discountPrice.toLocaleString()} RWF</span>
+                                    </>
+                                  ) : (
+                                    <span className="text-sm text-accent font-black">{course.price.toLocaleString()} RWF</span>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-4 text-center">
+                              <Badge
+                                className={cn(
+                                  "text-[10px] font-black uppercase tracking-widest",
+                                  course.enrollmentMode === 'application'
+                                    ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                                    : "bg-green-500/10 text-green-500 border-green-500/20"
+                                )}
+                              >
+                                {course.enrollmentMode === 'application' ? 'Application' : 'Direct'}
+                              </Badge>
+                            </td>
+                            <td className="p-4 text-center">
+                              <Badge
+                                className={cn(
+                                  "text-[10px] font-black uppercase tracking-widest",
+                                  course.status === 'draft' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                                  course.status === 'archived' ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                                  "bg-green-500/10 text-green-500 border-green-500/20"
+                                )}
+                              >
+                                {course.status === 'published' ? 'Live' : course.status === 'draft' ? 'Draft' : 'Archived'}
+                              </Badge>
+                            </td>
+                            <td className="p-4 text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/50">
+                                  <DropdownMenuItem onClick={() => setViewCourse(course)}>
+                                    <Eye className="w-4 h-4 mr-2" /> Quick View
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => window.open(`/courses/${course.id}`, '_blank')}>
+                                    <ExternalLink className="w-4 h-4 mr-2" /> Public Preview
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleEditClick(course)}>
+                                    <Edit className="w-4 h-4 mr-2" /> Edit Course
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => setManageQuestionsCourse(course)}>
+                                    <HelpCircle className="w-4 h-4 mr-2" /> Manage Quizzes
+                                  </DropdownMenuItem>
+                                  <div className="h-px bg-border/50 my-1" />
+                                  <div className="px-2 py-1.5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">Set Status</div>
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(course.id, 'published')} disabled={course.status === 'published'}>
+                                    <div className="w-2 h-2 rounded-full bg-green-500 mr-2" /> Go Live
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(course.id, 'draft')} disabled={course.status === 'draft'}>
+                                    <div className="w-2 h-2 rounded-full bg-amber-500 mr-2" /> Back to Draft
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(course.id, 'archived')} disabled={course.status === 'archived'}>
+                                    <div className="w-2 h-2 rounded-full bg-red-500 mr-2" /> Archive
+                                  </DropdownMenuItem>
+                                  <div className="h-px bg-border/50 my-1" />
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                    onClick={() => setDeleteCourse(course)}
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" /> Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="p-12 text-center">
+                            <div className="flex flex-col items-center justify-center space-y-3">
+                              <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
+                                <BookOpen className="w-8 h-8 text-accent/40" />
+                              </div>
+                              <p className="text-sm font-semibold text-muted-foreground">No courses found</p>
+                              <p className="text-xs text-muted-foreground/60">Create your first course to get started.</p>
+                              <Button variant="gold" size="sm" onClick={() => navigate("/portal/admin/courses/create")}>
+                                <Plus className="w-4 h-4 mr-2" /> Create Course
+                              </Button>
                             </div>
                           </td>
-                          <td className="p-4 text-sm text-card-foreground/70">{course.instructor?.username || <span className="text-destructive/60 italic">Unknown Instructor</span>}</td>
-                          <td className="p-4 text-center">
-                            <span className="text-sm font-medium text-card-foreground">{course.studentsEnrolled?.length || 0}</span>
-                          </td>
-                          <td className="p-4 text-center">
-                            {course.price === 0 ? (
-                              <Badge className="bg-green-500/20 text-green-400">Free</Badge>
-                            ) : (
-                              <div className="flex flex-col items-center">
-                                {course.discountPrice > 0 ? (
-                                  <>
-                                    <span className="text-xs text-card-foreground/40 line-through">${course.price}</span>
-                                    <span className="text-sm text-accent font-medium">${course.discountPrice}</span>
-                                  </>
-                                ) : (
-                                  <span className="text-sm text-accent font-medium">${course.price}</span>
-                                )}
-                              </div>
-                            )}
-                          </td>
-                          <td className="p-4 text-center text-sm text-card-foreground/70">$0</td>
-                          <td className="p-4 text-center">
-                            <Badge
-                              variant={course.status === 'published' ? 'default' : 'secondary'}
-                              className={
-                                course.status === 'draft' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
-                                  course.status === 'archived' ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                                    "bg-green-500/10 text-green-500 border-green-500/20"
-                              }
-                            >
-                              {course.status === 'published' ? 'Live' : course.status === 'draft' ? 'Draft' : 'Archived'}
-                            </Badge>
-                          </td>
-                          <td className="p-4 text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreVertical className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setViewCourse(course)}>
-                                  <Eye className="w-4 h-4 mr-2" /> Quick View
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => window.open(`/courses/${course.id}`, '_blank')}>
-                                  <ExternalLink className="w-4 h-4 mr-2" /> Public Preview
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleEditClick(course)}>
-                                  <Edit className="w-4 h-4 mr-2" /> Edit Content
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleEditClick(course)}>
-                                  <DollarSign className="w-4 h-4 mr-2" /> Edit Pricing
-                                </DropdownMenuItem>
-
-                                <DropdownMenuItem onClick={() => setManageQuestionsCourse(course)}>
-                                  <HelpCircle className="w-4 h-4 mr-2" /> Manage Questions
-                                </DropdownMenuItem>
-
-                                <div className="h-px bg-border/50 my-1" />
-                                <div className="px-2 py-1.5 text-[10px] font-bold text-muted-foreground uppercase">Set Status</div>
-                                <DropdownMenuItem onClick={() => handleUpdateStatus(course.id, 'published')} disabled={course.status === 'published'}>
-                                  <div className="w-2 h-2 rounded-full bg-green-500 mr-2" /> Go Live
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleUpdateStatus(course.id, 'draft')} disabled={course.status === 'draft'}>
-                                  <div className="w-2 h-2 rounded-full bg-amber-500 mr-2" /> Back to Draft
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleUpdateStatus(course.id, 'archived')} disabled={course.status === 'archived'}>
-                                  <div className="w-2 h-2 rounded-full bg-red-500 mr-2" /> Archive
-                                </DropdownMenuItem>
-
-                                <div className="h-px bg-border/50 my-1" />
-                                <DropdownMenuItem
-                                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                  onClick={() => setDeleteCourse(course)}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" /> Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={7} className="p-8 text-center">
-                          <div className="flex flex-col items-center justify-center space-y-2">
-                            <BookOpen className="w-8 h-8 text-muted-foreground/20" />
-                            <p className="text-sm text-muted-foreground">No standard academic courses found.</p>
-                            <p className="text-xs text-muted-foreground/60 italic">
-                              Check "Internship Management" for your 9 internship programs.
-                            </p>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Pagination UI */}
+          {/* Pagination */}
           {pagination && pagination.totalPages > 1 && (
             <div className="flex items-center justify-between mt-6">
               <p className="text-sm text-muted-foreground">
-                Showing page <span className="font-semibold">{pagination.currentPage}</span> of <span className="font-semibold">{pagination.totalPages}</span> ({pagination.totalCount} total)
+                Page <span className="font-semibold">{pagination.currentPage}</span> of{" "}
+                <span className="font-semibold">{pagination.totalPages}</span> ({pagination.totalCount} total)
               </p>
               <div className="flex gap-2">
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="outline" size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={!pagination.hasPreviousPage}
                 >
@@ -432,8 +402,7 @@ export default function AdminCourses() {
                     })}
                 </div>
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="outline" size="sm"
                   onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
                   disabled={!pagination.hasNextPage}
                 >
@@ -454,10 +423,7 @@ export default function AdminCourses() {
       <EditCourseDialog
         open={!!editCourse || !!editPricingCourse}
         onOpenChange={(open) => {
-          if (!open) {
-            setEditCourse(null);
-            setEditPricingCourse(null);
-          }
+          if (!open) { setEditCourse(null); setEditPricingCourse(null); }
         }}
         course={editCourse || editPricingCourse}
         trainers={trainers}
@@ -468,7 +434,7 @@ export default function AdminCourses() {
         open={!!deleteCourse}
         onOpenChange={(open) => !open && setDeleteCourse(null)}
         title="Delete Course"
-        description={`Are you sure you want to delete "${deleteCourse?.title}"? This action cannot be undone and will remove all associated data.`}
+        description={`Are you sure you want to delete "${deleteCourse?.title}"? This cannot be undone.`}
         onConfirm={handleDeleteCourse}
       />
       <QuestionManagerDialog

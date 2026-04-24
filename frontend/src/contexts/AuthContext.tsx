@@ -24,6 +24,19 @@ export interface User {
     lightBg?: string;
     darkBg?: string;
   };
+  xp?: number;
+  level?: number;
+  streak?: number;
+  badges?: Array<{
+    badge: {
+      id: string;
+      title: string;
+      icon: string;
+      description: string;
+    };
+    awardedAt: string;
+  }>;
+  certificateName?: string;
 }
 
 interface AuthContextType {
@@ -145,7 +158,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: userData.title,
         bio: userData.bio,
         phone: userData.phone,
-        location: userData.location
+        location: userData.location,
+        xp: userData.xp,
+        level: userData.level,
+        streak: userData.streak,
+        badges: userData.badges,
+        certificateName: userData.certificateName,
+        completedCourses: userData.completedCourses?.map((c: any) => (c.id || c)) || [],
+        enrolledCourses: userData.enrolledCourses?.map((c: any) => (c.id || c)) || []
       };
 
       setUser(appUser);
@@ -181,7 +201,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: "student",
         createdAt: new Date().toISOString(),
         themePreference: userData.themePreference,
-        avatar: userData.avatar
+        avatar: userData.avatar,
+        xp: userData.xp || 0,
+        level: userData.level || 1,
+        streak: userData.streak || 0,
+        badges: [],
+        certificateName: ""
       };
 
       setUser(appUser);
@@ -221,7 +246,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       title: userData.title,
       bio: userData.bio,
       phone: userData.phone,
-      location: userData.location
+      location: userData.location,
+      xp: userData.xp,
+      level: userData.level,
+      streak: userData.streak,
+      badges: userData.badges,
+      certificateName: userData.certificateName,
+      completedCourses: userData.completedCourses?.map((c: any) => (c.id || c)) || [],
+      enrolledCourses: userData.enrolledCourses?.map((c: any) => (c.id || c)) || []
     };
     setUser(appUser);
     localStorage.setItem("codemande_user", JSON.stringify(appUser));

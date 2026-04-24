@@ -59,7 +59,12 @@ export function EditCourseDialog({
     category: "Development",
     instructorId: "",
     status: "draft",
+    allowedDeliveryModes: ["online"],
+    enrollmentMode: "direct",
     submissionRequired: true,
+    signerName: "",
+    signerSignature: "",
+    applicationQuestions: [],
     modules: []
   });
 
@@ -95,7 +100,17 @@ export function EditCourseDialog({
             category: course.category || "Development",
             instructorId: course.instructor?.id || course.instructor || "",
             status: course.status || "draft",
+            allowedDeliveryModes: course.allowedDeliveryModes || ["online"],
+            enrollmentMode: course.enrollmentMode || "direct",
             submissionRequired: course.submissionRequired !== false,
+            signerName: course.signerName || "",
+            signerSignature: course.signerSignature || "",
+            applicationQuestions: course.applicationQuestions?.map((q: any) => ({
+              label: q.label || "",
+              type: q.type || "text",
+              required: !!q.required,
+              options: q.options || []
+            })) || [],
             modules: course.modules?.map((m: any) => ({
               ...m,
               title: m.title || "",
@@ -171,7 +186,17 @@ export function EditCourseDialog({
       category: formData.category,
       instructorId: formData.instructorId,
       status: formData.status,
+      allowedDeliveryModes: formData.allowedDeliveryModes,
+      enrollmentMode: formData.enrollmentMode,
       submissionRequired: formData.submissionRequired,
+      signerName: formData.signerName,
+      signerSignature: formData.signerSignature,
+      applicationQuestions: formData.applicationQuestions.map((q: any) => ({
+        label: q.label,
+        type: q.type,
+        required: q.required,
+        options: q.options || []
+      })),
       modules: formData.modules.map((m: any) => ({
         id: m.id || m._id,
         title: m.title,
@@ -246,6 +271,12 @@ export function EditCourseDialog({
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-accent rounded-none shadow-none text-xs font-bold gap-2 px-1"
               >
                 <DollarSign className="w-4 h-4" /> Pricing & Access
+              </TabsTrigger>
+              <TabsTrigger
+                value="application"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-accent rounded-none shadow-none text-xs font-bold gap-2 px-1"
+              >
+                <HelpCircle className="w-4 h-4" /> Application Questions
               </TabsTrigger>
               <TabsTrigger
                 value="curriculum"
@@ -340,6 +371,42 @@ export function EditCourseDialog({
                             {formData.status === 'published' ? 'Visible to students on the platform.' : 'Private and cannot be accessed by students.'}
                           </p>
                         </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs font-bold mb-1.5 block text-muted-foreground">Delivery Modes</label>
+                            <div className="flex flex-col gap-2">
+                              {['online', 'physical', 'hybrid'].map((mode) => (
+                                <label key={mode} className="flex items-center gap-2 text-xs">
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.allowedDeliveryModes?.includes(mode) || false}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+                                      const modes = formData.allowedDeliveryModes || [];
+                                      setFormData({
+                                        ...formData,
+                                        allowedDeliveryModes: checked ? [...modes, mode] : modes.filter((m: string) => m !== mode)
+                                      });
+                                    }}
+                                  />
+                                  <span className="capitalize">{mode}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold mb-1.5 block text-muted-foreground">Enrollment Mode</label>
+                            <select
+                              className="w-full h-10 px-3 rounded-lg border border-accent/10 bg-background text-sm font-medium focus:ring-2 focus:ring-accent/20 outline-none transition-all"
+                              value={formData.enrollmentMode || "direct"}
+                              onChange={(e) => setFormData({ ...formData, enrollmentMode: e.target.value })}
+                            >
+                              <option value="direct">Direct Enrollment (Pay & Join)</option>
+                              <option value="application">Application Required</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -408,6 +475,41 @@ export function EditCourseDialog({
                                   folder="courses"
                                   label="Drag & Drop Cover Image"
                                   onUploadComplete={(url) => setFormData({ ...formData, thumbnail: url })}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="p-4 bg-accent/5 rounded-2xl border border-accent/10 space-y-4">
+                          <div className="flex items-center gap-2 border-b border-accent/10 pb-2">
+                            <Plus className="w-4 h-4 text-accent" />
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-accent">Certificate Setup</h4>
+                          </div>
+                          <div className="space-y-3">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase">Signer Name</label>
+                            <Input
+                              placeholder="e.g. CEO or Program Manager"
+                              className="h-9 text-xs bg-background border-accent/10"
+                              value={formData.signerName}
+                              onChange={(e) => setFormData({ ...formData, signerName: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase">Official Signature</label>
+                            {formData.signerSignature ? (
+                              <div className="relative h-10 rounded-lg overflow-hidden border border-border/20 bg-white p-1 flex items-center justify-between">
+                                <img src={formData.signerSignature} className="h-full object-contain" />
+                                <Button variant="ghost" size="icon" onClick={() => setFormData({ ...formData, signerSignature: "" })} className="h-6 w-6 text-destructive">
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="h-10">
+                                <FileUpload 
+                                  folder="signatures" 
+                                  label="Upload PNG Signature"
+                                  onUploadComplete={(url) => setFormData({ ...formData, signerSignature: url })}
                                 />
                               </div>
                             )}
@@ -489,6 +591,131 @@ export function EditCourseDialog({
                         />
                       </div>
                     </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="application" className="m-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold flex items-center gap-2">
+                        <HelpCircle className="w-5 h-5 text-accent" />
+                        Application Questions
+                      </h3>
+                      <p className="text-xs text-muted-foreground">Define the information you need from students who apply for this course.</p>
+                    </div>
+                    <Button
+                      variant="gold"
+                      size="sm"
+                      className="h-9 gap-2 font-bold text-xs rounded-xl"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          applicationQuestions: [
+                            ...formData.applicationQuestions,
+                            { label: "", type: "text", required: true, options: [] }
+                          ]
+                        });
+                      }}
+                    >
+                      <Plus className="w-4 h-4" /> Add Question
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {formData.applicationQuestions?.map((question: any, qIdx: number) => (
+                      <div key={qIdx} className="p-4 bg-muted/20 rounded-2xl border border-accent/10 space-y-4">
+                        <div className="flex items-start gap-4">
+                          <div className="flex-1 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Question Label</label>
+                                <Input
+                                  placeholder="e.g. Why do you want to join this course?"
+                                  className="h-9 text-sm bg-background border-accent/10"
+                                  value={question.label}
+                                  onChange={(e) => {
+                                    const newQuestions = [...formData.applicationQuestions];
+                                    newQuestions[qIdx] = { ...question, label: e.target.value };
+                                    setFormData({ ...formData, applicationQuestions: newQuestions });
+                                  }}
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Input Type</label>
+                                <select
+                                  className="w-full h-9 px-3 rounded-lg border border-accent/10 bg-background text-sm font-medium focus:ring-2 focus:ring-accent/20 outline-none"
+                                  value={question.type}
+                                  onChange={(e) => {
+                                    const newQuestions = [...formData.applicationQuestions];
+                                    newQuestions[qIdx] = { ...question, type: e.target.value };
+                                    setFormData({ ...formData, applicationQuestions: newQuestions });
+                                  }}
+                                >
+                                  <option value="text">Short Answer</option>
+                                  <option value="textarea">Long Answer</option>
+                                  <option value="link">URL / Link</option>
+                                  <option value="select">Multiple Choice</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            {question.type === 'select' && (
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase block">Options (comma separated)</label>
+                                <Input
+                                  placeholder="Option 1, Option 2, Option 3"
+                                  className="h-9 text-sm bg-background border-accent/10"
+                                  value={question.options?.join(', ')}
+                                  onChange={(e) => {
+                                    const options = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                                    const newQuestions = [...formData.applicationQuestions];
+                                    newQuestions[qIdx] = { ...question, options };
+                                    setFormData({ ...formData, applicationQuestions: newQuestions });
+                                  }}
+                                />
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={question.required}
+                                onCheckedChange={(checked) => {
+                                  const newQuestions = [...formData.applicationQuestions];
+                                  newQuestions[qIdx] = { ...question, required: checked };
+                                  setFormData({ ...formData, applicationQuestions: newQuestions });
+                                }}
+                                className="scale-75"
+                              />
+                              <label className="text-xs font-medium text-muted-foreground">Required Question</label>
+                            </div>
+                          </div>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive/50 hover:text-destructive hover:bg-destructive/5"
+                            onClick={() => {
+                              const newQuestions = formData.applicationQuestions.filter((_: any, i: number) => i !== qIdx);
+                              setFormData({ ...formData, applicationQuestions: newQuestions });
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {(!formData.applicationQuestions || formData.applicationQuestions.length === 0) && (
+                      <div className="text-center py-12 bg-muted/10 rounded-3xl border border-dashed border-accent/10">
+                        <div className="w-12 h-12 rounded-2xl bg-accent/5 flex items-center justify-center mx-auto mb-4">
+                          <HelpCircle className="w-6 h-6 text-accent/40" />
+                        </div>
+                        <h4 className="font-bold text-sm">No questions added</h4>
+                        <p className="text-xs text-muted-foreground mt-1 max-w-[200px] mx-auto">
+                          Click "Add Question" to start building your application form.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_INTERNSHIP_PROJECTS_NEW, GET_INTERNSHIP_PROGRAMS } from '@/lib/graphql/queries';
+import { GET_INTERNSHIP_PROJECTS_NEW, GET_INTERNSHIP_PROGRAMS, GET_ADMIN_DASHBOARD_DATA } from '@/lib/graphql/queries';
 import { DELETE_INTERNSHIP_PROJECT } from '@/lib/graphql/mutations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +24,7 @@ export default function InternshipProjectList() {
     });
 
     const [deleteProject] = useMutation(DELETE_INTERNSHIP_PROJECT, {
+        refetchQueries: [{ query: GET_INTERNSHIP_PROJECTS_NEW }, { query: GET_ADMIN_DASHBOARD_DATA }],
         onCompleted: () => {
             toast.success('Project deleted successfully');
             refetch();

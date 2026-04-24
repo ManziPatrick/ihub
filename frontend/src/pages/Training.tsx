@@ -17,7 +17,7 @@ import { useQuery } from "@apollo/client/react";
 import { GET_COURSES } from "@/lib/graphql/queries";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { EnrollCourseDialog } from "@/components/portal/dialogs";
+import { EnrollCourseDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
 
 interface AICourse {
   _id: string;
@@ -80,6 +80,7 @@ const Training = () => {
   const [aiLoading, setAILoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
   const [enrollCourse, setEnrollCourse] = useState<any>(null);
+  const [applyCourse, setApplyCourse] = useState<any>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -89,7 +90,11 @@ const Training = () => {
       navigate(`/auth?redirect=/training`);
       return;
     }
-    setEnrollCourse(course);
+    if (course.enrollmentMode === 'application') {
+      setApplyCourse(course);
+    } else {
+      setEnrollCourse(course);
+    }
   };
 
   const departments = ["ALL", "GENERAL", "HEALTHCARE", "FINANCE", "EDUCATION", "MARKETING", "MANUFACTURING", "HR", "CYBERSECURITY"];
@@ -575,6 +580,11 @@ const Training = () => {
           open={!!enrollCourse} 
           onOpenChange={(open) => !open && setEnrollCourse(null)} 
           course={enrollCourse} 
+        />
+        <ApplyCourseDialog
+          open={!!applyCourse}
+          onOpenChange={(open) => !open && setApplyCourse(null)}
+          course={applyCourse}
         />
       <Footer />
     </div>

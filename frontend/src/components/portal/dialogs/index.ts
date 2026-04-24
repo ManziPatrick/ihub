@@ -22,6 +22,7 @@ export { ViewCourseDetailDialog } from "./ViewCourseDetailDialog";
 export { RequestHelpDialog } from "./RequestHelpDialog";
 export { BookCallDialog } from "./BookCallDialog";
 export { ApplyInternshipDialog } from "./ApplyInternshipDialog";
+export { ApplyCourseDialog } from "./ApplyCourseDialog";
 export { ShareCertificateDialog } from "./ShareCertificateDialog";
 export { AddLessonDialog } from "./AddLessonDialog";
 export { AddModuleDialog } from "./AddModuleDialog";

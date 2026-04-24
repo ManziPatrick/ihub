@@ -12,6 +12,7 @@ import { ENROLL_COURSE, PAY_FOR_COURSE, SUBMIT_PAYMENT_PROOF } from "@/lib/graph
 import { GET_ME, GET_COURSES } from "@/lib/graphql/queries";
 import { FileUpload } from "@/components/FileUpload";
 import { PaymentForm } from "@/components/PaymentForm";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
@@ -19,6 +20,7 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [selectedDeliveryMode, setSelectedDeliveryMode] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"paypack" | "manual">("paypack");
 
 
@@ -37,7 +39,17 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
   const finalPrice = course.discountPrice > 0 ? course.discountPrice : course.price;
   const isFree = finalPrice === 0;
 
+  const { user } = useAuth();
+
   const handleEnroll = async () => {
+    // Check if user is already enrolled
+    const isEnrolled = user?.enrolledCourses?.includes(course.id || course._id);
+    if (isEnrolled) {
+      toast.info("You are already enrolled in this course!");
+      // We still allow them to see the info, so we don't close it
+      return;
+    }
+
     setIsProcessing(true);
     try {
       if (isFree) {
@@ -45,7 +57,7 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
         if (!targetCourseId) throw new Error("Course ID missing");
 
         await enrollMutation({
-          variables: { courseId: targetCourseId }
+          variables: { courseId: targetCourseId, selectedDeliveryMode }
         });
         toast.success(`Successfully enrolled in ${course.title}!`);
         onOpenChange(false);
@@ -58,7 +70,8 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
             variables: {
               courseId: targetCourseId,
               amount: finalPrice,
-              paymentMethod: 'Manual Payment (MoMo/PayPal)'
+              paymentMethod: 'Manual Payment (MoMo/PayPal)',
+              selectedDeliveryMode
             }
           });
 
@@ -80,8 +93,6 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
   };
 
   const handlePaypackSuccess = async () => {
-    // Optimistically set to step 4 (Success) immediately when payment is confirmed
-    setStep(4);
     setIsProcessing(true);
     
     try {
@@ -96,10 +107,12 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
         variables: { courseId: targetCourseId }
       });
 
+      setStep(4);
       toast.success(`Welcome to the course: ${course.title}!`);
     } catch (err: any) {
       console.error('Refetch/Enrollment confirmation error:', err);
-      // Don't revert the step - the user definitely paid
+      // Even if mutation fails (maybe already enrolled), we show success if payment was confirmed
+      setStep(4);
       toast.info("Enrolled! Please refresh if the course doesn't appear in your dashboard.");
     } finally {
       setIsProcessing(false);
@@ -209,7 +222,26 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
                     </div>
                     <p className="text-xs text-muted-foreground">Lifetime access + Certificate of completion</p>
                   </div>
-                </div>
+                  </div>
+                
+                {course.allowedDeliveryModes?.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-foreground">Preferred Delivery Mode</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {course.allowedDeliveryModes.map((mode: string) => (
+                        <Button
+                          key={mode}
+                          type="button"
+                          variant={selectedDeliveryMode === mode ? "gold" : "outline"}
+                          onClick={() => setSelectedDeliveryMode(mode)}
+                          className={selectedDeliveryMode === mode ? "bg-accent text-accent-foreground border-none capitalize" : "capitalize"}
+                        >
+                          {mode}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {!isFree && (
                   <div className="space-y-3">
@@ -320,6 +352,7 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
                   amount={finalPrice}
                   description={`Course enrollment - ${course.title}`}
                   courseId={course.id || course._id}
+                  selectedDeliveryMode={selectedDeliveryMode}
                   onSuccess={handlePaypackSuccess}
                 />
               </div>
@@ -363,8 +396,8 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
               <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
                 Maybe Later
               </Button>
-              <Button variant="gold" className="flex-1" onClick={handleEnroll} disabled={isProcessing}>
-                {isProcessing ? "Processing..." : isFree ? "Enroll Free" : "Next: Payment"}
+              <Button variant="gold" className="flex-1" onClick={handleEnroll} disabled={isProcessing || !!user?.enrolledCourses?.includes(course.id || course._id)}>
+                {isProcessing ? "Processing..." : user?.enrolledCourses?.includes(course.id || course._id) ? "Already Enrolled" : isFree ? "Enroll Free" : "Next: Payment"}
               </Button>
             </div>
           )}

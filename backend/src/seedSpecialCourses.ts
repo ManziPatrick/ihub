@@ -14,6 +14,7 @@ interface CourseData {
     title: string;
     description: string;
     instructor: mongoose.Types.ObjectId;
+    createdBy?: mongoose.Types.ObjectId;
     price: number;
     discountPrice?: number;
     category: string;
@@ -348,6 +349,9 @@ const seedCourses = async () => {
         // Seed Users
         const { trainer, students } = await seedUsers();
 
+        // Get an admin user for createdBy
+        const admin = await User.findOne({ role: 'admin' });
+
         const coursesData: CourseData[] = [
             // ===================================================================
             // COURSE 1: COMPLETE REACT.JS MASTERY
@@ -356,6 +360,7 @@ const seedCourses = async () => {
                 title: 'Complete React.js Mastery: From Zero to Expert',
                 description: `Learn React.js from the ground up. Build modern, fast, and scalable web applications using hooks, context, and the latest React patterns. Perfect for beginners and experienced developers looking to level up.`,
                 instructor: trainer._id,
+                createdBy: admin ? admin._id : trainer._id,
                 price: 49900,
                 discountPrice: 29900,
                 category: 'Frontend Development',
@@ -962,6 +967,7 @@ const seedCourses = async () => {
                 title: 'Node.js & Express: Build Scalable Backend APIs',
                 description: `Master backend development with Node.js and Express. Build RESTful APIs, integrate databases, implement authentication, and deploy to production.`,
                 instructor: trainer._id,
+                createdBy: admin ? admin._id : trainer._id,
                 price: 59900,
                 discountPrice: 34900,
                 category: 'Backend Development',

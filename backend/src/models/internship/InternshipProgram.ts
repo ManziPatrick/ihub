@@ -18,6 +18,7 @@ export interface IInternshipProgram extends Document {
   isActive: boolean;
   batches: { name: string; startDate: Date; endDate: Date }[];
   status: 'active' | 'inactive' | 'closed' | 'upcoming';
+  allowedDeliveryModes: ('online' | 'physical' | 'hybrid')[];
   applicationQuestions: {
     label: string;
     type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox';
@@ -25,6 +26,9 @@ export interface IInternshipProgram extends Document {
     options?: string[];
   }[];
   isDeleted: boolean;
+  createdBy?: mongoose.Types.ObjectId;
+  signerName?: string;
+  signerSignature?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,7 +64,11 @@ const InternshipProgramSchema: Schema = new Schema(
       }
     ],
     status: { type: String, enum: ['active', 'inactive', 'closed', 'upcoming'], default: 'active', index: true },
+    allowedDeliveryModes: [{ type: String, enum: ['online', 'physical', 'hybrid'] }],
     isDeleted: { type: Boolean, default: false, index: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    signerName: { type: String },
+    signerSignature: { type: String },
   },
   { timestamps: true }
 );

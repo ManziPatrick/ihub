@@ -8,7 +8,7 @@ import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_BRANDING } from "@/lib/graphql/queries";
 import { UPDATE_BRANDING } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
-import { Palette, Save, Layout, Type, Image as ImageIcon, Globe, Sparkles, Eye, RotateCcw } from "lucide-react";
+import { Palette, Save, Layout, Type, Image as ImageIcon, Globe, Sparkles, Eye, RotateCcw, Award } from "lucide-react";
 
 export default function AdminBranding() {
   const { data, loading } = useQuery(GET_BRANDING);
@@ -22,31 +22,75 @@ export default function AdminBranding() {
     accentColor: "#C9A24D",
     logoUrl: "",
     siteName: "CODEMANDE",
-    portalTitle: "Academy Hub"
+    portalTitle: "Academy Hub",
+    signerName: "Patrick Manzi",
+    signerSignature: ""
   });
 
   useEffect(() => {
     const branding = (data as any)?.branding;
     if (branding) {
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         primaryColor: branding.primaryColor || "#BC9229",
         secondaryColor: branding.secondaryColor || "#E6B94D",
         accentColor: branding.accentColor || "#BC9229",
         logoUrl: branding.logoUrl || "",
         siteName: branding.siteName || "CODEMANDE",
-        portalTitle: branding.portalTitle || "Academy Hub"
-      });
+        portalTitle: branding.portalTitle || "Academy Hub",
+        signerName: prev.signerName,
+        signerSignature: prev.signerSignature
+      }));
     }
+    
+    // Fetch certificate signer settings via REST
+    fetch('/api/certificates/signer-settings', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.signerName || data.signerSignature) {
+            setFormData(prev => ({
+                ...prev,
+                signerName: data.signerName || "Patrick Manzi",
+                signerSignature: data.signerSignature || ""
+            }));
+        }
+    })
+    .catch(err => console.error("Failed to fetch signer settings", err));
   }, [data]);
 
   const handleSave = async () => {
     try {
       await updateBranding({
-        variables: { ...formData }
+        variables: { 
+            primaryColor: formData.primaryColor,
+            secondaryColor: formData.secondaryColor,
+            accentColor: formData.accentColor,
+            logoUrl: formData.logoUrl,
+            siteName: formData.siteName,
+            portalTitle: formData.portalTitle
+        }
       });
-      toast.success("Branding updated successfully!");
+      
+      // Save signer settings via REST
+      await fetch('/api/certificates/signer-settings', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+              signerName: formData.signerName,
+              signerSignature: formData.signerSignature
+          })
+      });
+      
+      toast.success("Branding and Certificate settings updated successfully!");
     } catch (error: any) {
-      toast.error(error.message || "Failed to update branding");
+      toast.error(error.message || "Failed to update settings");
     }
   };
 
@@ -78,7 +122,9 @@ export default function AdminBranding() {
                 accentColor: "#C9A24D",
                 logoUrl: "",
                 siteName: "CODEMANDE",
-                portalTitle: "Academy Hub"
+                portalTitle: "Academy Hub",
+                signerName: "Patrick Manzi",
+                signerSignature: ""
               })}
               className="flex items-center gap-2"
             >
@@ -238,6 +284,45 @@ export default function AdminBranding() {
                         </div>
                      </div>
                    </div>
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* Certificate Settings Section */}
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                <Award className="w-5 h-5 text-primary" />
+                <h3 className="font-heading text-xl font-medium">Certification Settings</h3>
+              </div>
+              <Card className="border-border/50 shadow-sm overflow-hidden">
+                <CardContent className="p-6 space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Default Authorized Signatory</label>
+                      <Input 
+                        value={formData.signerName} 
+                        onChange={(e) => setFormData({...formData, signerName: e.target.value})}
+                        placeholder="e.g. Patrick Manzi"
+                        className="bg-muted/30"
+                      />
+                      <p className="text-xs text-muted-foreground">The name that appears on all auto-generated certificates.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Signature Image URL</label>
+                      <div className="flex gap-2">
+                        <Input 
+                          value={formData.signerSignature} 
+                          onChange={(e) => setFormData({...formData, signerSignature: e.target.value})}
+                          placeholder="https://..."
+                          className="bg-muted/30"
+                        />
+                        <div className="p-2 border border-border rounded-md bg-white flex items-center justify-center w-12 shrink-0">
+                          {formData.signerSignature ? <img src={formData.signerSignature} className="max-h-6 w-auto" /> : <Palette className="w-4 h-4 text-muted-foreground" />}
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Transparent PNG recommended for signatures.</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </section>

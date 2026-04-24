@@ -53,7 +53,8 @@ import { Input } from "@/components/ui/input";
 import {
   GET_INTERNSHIP_TEAMS,
   GET_INTERNSHIP_PROGRAMS,
-  GET_INTERNSHIP_PROJECTS_NEW
+  GET_INTERNSHIP_PROJECTS_NEW,
+  GET_ADMIN_DASHBOARD_DATA
 } from '@/lib/graphql/queries';
 import {
   CREATE_PROJECT,
@@ -104,8 +105,11 @@ export default function TeamManagement() {
     links: [{ title: "", url: "" }]
   });
 
-  const [createProject, { loading: creatingProject }] = useMutation(CREATE_PROJECT);
+  const [createProject, { loading: creatingProject }] = useMutation(CREATE_PROJECT, {
+    refetchQueries: [{ query: GET_INTERNSHIP_TEAMS }, { query: GET_ADMIN_DASHBOARD_DATA }]
+  });
   const [assignProject, { loading: assigningProject }] = useMutation(ASSIGN_PROJECT_TO_TEAM, {
+    refetchQueries: [{ query: GET_INTERNSHIP_TEAMS }, { query: GET_ADMIN_DASHBOARD_DATA }],
     onCompleted: () => {
       toast.success('Project assigned and tickets cloned successfully');
       setAssignmentOpen(false);
@@ -117,6 +121,7 @@ export default function TeamManagement() {
   });
 
   const [updateTeam, { loading: updatingTeam }] = useMutation(UPDATE_INTERNSHIP_TEAM_NEW, {
+    refetchQueries: [{ query: GET_INTERNSHIP_TEAMS }, { query: GET_ADMIN_DASHBOARD_DATA }],
     onCompleted: () => {
       toast.success('Team updated');
       refetch();
@@ -125,6 +130,7 @@ export default function TeamManagement() {
   });
 
   const [deleteTeam] = useMutation(DELETE_INTERNSHIP_TEAM_NEW, {
+    refetchQueries: [{ query: GET_INTERNSHIP_TEAMS }, { query: GET_ADMIN_DASHBOARD_DATA }],
     onCompleted: () => {
       toast.success('Team deleted');
       refetch();

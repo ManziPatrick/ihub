@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_INTERNSHIP_PROGRAMS } from '@/lib/graphql/queries';
+import { GET_INTERNSHIP_PROGRAMS, GET_ADMIN_DASHBOARD_DATA } from '@/lib/graphql/queries';
 import { UPDATE_INTERNSHIP_PROGRAM_NEW, DELETE_INTERNSHIP_PROGRAM_NEW } from '@/lib/graphql/mutations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,10 +63,12 @@ export default function ProgramList() {
   const pageSize = 12; // Grid layout usually looks better with 3 or 4 columns, so 12 is a good multiple
 
   const { data, loading, error, refetch } = useQuery(GET_INTERNSHIP_PROGRAMS, {
-    variables: { page: currentPage, limit: pageSize }
+    variables: { page: currentPage, limit: pageSize },
+    pollInterval: 30000 // auto-refresh every 30 seconds
   });
 
   const [updateProgram, { loading: isSaving }] = useMutation(UPDATE_INTERNSHIP_PROGRAM_NEW, {
+    refetchQueries: [{ query: GET_INTERNSHIP_PROGRAMS }, { query: GET_ADMIN_DASHBOARD_DATA }],
     onCompleted: () => {
       toast.success('Program updated');
       setEditingId(null);
@@ -76,6 +78,7 @@ export default function ProgramList() {
   });
 
   const [deleteProgram] = useMutation(DELETE_INTERNSHIP_PROGRAM_NEW, {
+    refetchQueries: [{ query: GET_INTERNSHIP_PROGRAMS }, { query: GET_ADMIN_DASHBOARD_DATA }],
     onCompleted: () => { toast.success('Program deleted'); refetch(); },
     onError: (err) => toast.error(err.message),
   });
@@ -201,6 +204,22 @@ export default function ProgramList() {
                   <div className="flex items-center gap-2">
                     <Clock className="w-3.5 h-3.5 text-accent shrink-0" />
                     <span>Apply by: <strong className="text-foreground">{formatDate(program.applicationDeadline)}</strong></span>
+                  </div>
+                </div>
+
+                {/* Program Stats Summary */}
+                <div className="grid grid-cols-2 gap-y-2 gap-x-4 p-3 bg-muted/30 rounded-2xl border border-border/30">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Applications</span>
+                    <span className="text-sm font-black text-foreground">{program.stats?.totalApplications || 0}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Enrolled</span>
+                    <span className="text-sm font-black text-foreground">{program.stats?.enrolledStudents || 0}</span>
+                  </div>
+                  <div className="flex flex-col col-span-2">
+                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Total Revenue</span>
+                    <span className="text-sm font-black text-accent">{program.stats?.totalRevenue?.toLocaleString() || 0} RWF</span>
                   </div>
                 </div>
 

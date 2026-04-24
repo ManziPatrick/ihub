@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema({
     enum: ['local', 'google', 'github', 'firebase'],
     default: 'local'
   },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   isEmailVerified: {
     type: Boolean,
     default: false
@@ -41,6 +42,10 @@ const userSchema = new mongoose.Schema({
   completedLessons: [{
     courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
     lessonId: { type: String }
+  }],
+  completedCourses: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course'
   }],
   activityLog: [{
     action: { type: String, required: true },
@@ -60,6 +65,8 @@ const userSchema = new mongoose.Schema({
     gradedAt: { type: Date, default: Date.now }
   }],
   level: { type: Number, default: 1 },
+  xp: { type: Number, default: 0 },
+  streak: { type: Number, default: 0 },
   academicStatus: { type: String, enum: ['active', 'intern', 'graduate', 'alumni'], default: 'active' },
   permissions: [{ type: String }],
   // Account Status & Soft Delete
@@ -99,7 +106,8 @@ const userSchema = new mongoose.Schema({
   twoFactorSecret: { type: String },
   twoFactorBackupCodes: [{ type: String }],
   loginOTP: { type: String },
-  loginOTPExpires: { type: Date }
+  loginOTPExpires: { type: Date },
+  certificateName: { type: String },
 }, { timestamps: true });
 
 export const User = mongoose.model('User', userSchema);

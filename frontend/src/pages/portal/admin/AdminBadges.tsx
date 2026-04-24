@@ -62,6 +62,7 @@ export default function AdminBadges() {
   const pagination = data?.badges?.pagination;
 
   const [createBadge] = useMutation(CREATE_BADGE, {
+    refetchQueries: [{ query: GET_BADGES }],
     onCompleted: () => {
       toast.success("Badge created successfully!");
       setIsDialogOpen(false);
@@ -71,6 +72,7 @@ export default function AdminBadges() {
   });
 
   const [updateBadge] = useMutation(UPDATE_BADGE, {
+    refetchQueries: [{ query: GET_BADGES }],
     onCompleted: () => {
       toast.success("Badge updated successfully!");
       setIsDialogOpen(false);
@@ -80,6 +82,7 @@ export default function AdminBadges() {
   });
 
   const [deleteBadge] = useMutation(DELETE_BADGE, {
+    refetchQueries: [{ query: GET_BADGES }],
     onCompleted: () => {
       toast.success("Badge deleted successfully!");
       refetch();

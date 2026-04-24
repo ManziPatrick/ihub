@@ -44,6 +44,10 @@ import {
   Circle,
   Clock,
   ExternalLink,
+  Star,
+  Flame,
+  Trophy,
+  ClipboardList,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePusher } from "@/hooks/use-pusher";
@@ -67,7 +71,6 @@ const studentNavItems: NavItem[] = [
   { label: "Billing", href: "/portal/student/billing", icon: CreditCard },
   { label: "Messages", href: "/chat", icon: MessageSquare },
   { label: "Profile", href: "/portal/student/profile", icon: UserCog },
-  { label: "Support", href: "/portal/student/support", icon: HelpCircle },
 ];
 
 const trainerNavItems: NavItem[] = [
@@ -86,6 +89,7 @@ const adminNavItems: NavItem[] = [
   { label: "Dashboard", href: "/portal/admin", icon: LayoutDashboard },
   { label: "Users", href: "/portal/admin/users", icon: Users },
   { label: "Courses", href: "/portal/admin/courses", icon: BookOpen },
+  { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
   { label: "Internships", href: "/portal/admin/internships", icon: Briefcase },
   { label: "Schedule", href: "/portal/admin/schedule", icon: Calendar },
   { label: "Projects", href: "/portal/admin/projects", icon: FolderOpen },
@@ -133,7 +137,7 @@ interface PortalLayoutProps {
 }
 
 import { useBranding } from "@/components/BrandingProvider";
-import { GET_NOTIFICATIONS } from "@/lib/graphql/queries";
+import { GET_NOTIFICATIONS, GET_ME } from "@/lib/graphql/queries";
 import { MARK_NOTIFICATION_READ, MARK_ALL_NOTIFICATIONS_READ } from "@/lib/graphql/mutations";
 import { formatDistanceToNow } from "date-fns";
 import { usePresence } from "@/hooks/use-presence";
@@ -154,6 +158,11 @@ export function PortalLayout({ children }: PortalLayoutProps) {
   const { data: notifData } = useQuery<{ notifications: any[] }>(GET_NOTIFICATIONS, {
     skip: !user,
     pollInterval: 60000,
+  });
+
+  const { data: meData } = useQuery(GET_ME, {
+    skip: !user || user.role !== 'student',
+    pollInterval: 30000, // Refresh stats every 30s
   });
 
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -329,17 +338,6 @@ export function PortalLayout({ children }: PortalLayoutProps) {
             })}
           </ul>
         </nav>
-
-        {/* Help Link */}
-        <div className="p-4 border-t border-border/50">
-          <Link
-            to="/portal/help"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-card-foreground/70 hover:bg-background/50 hover:text-card-foreground transition-all"
-          >
-            <HelpCircle className="w-5 h-5" strokeWidth={1.5} />
-            Help & Support
-          </Link>
-        </div>
       </aside>
 
       {/* Mobile Sidebar Overlay */}
@@ -446,6 +444,24 @@ export function PortalLayout({ children }: PortalLayoutProps) {
               />
             </div>
           </div>
+
+          {/* Student Stats - Live Tracking */}
+          {user.role === 'student' && (
+            <div className="hidden md:flex items-center gap-4 px-4 h-10 bg-background/50 border border-border/50 rounded-xl">
+              <div className="flex items-center gap-1.5 pr-4 border-r border-border/50">
+                <Star className="w-4 h-4 text-gold fill-current" />
+                <span className="text-sm font-black text-gold">{(meData as any)?.me?.xp || 0} XP</span>
+              </div>
+              <div className="flex items-center gap-1.5 pr-4 border-r border-border/50">
+                <Flame className="w-4 h-4 text-accent fill-current" />
+                <span className="text-sm font-black text-accent">{(meData as any)?.me?.streak || 0}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Trophy className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight">LVL {(meData as any)?.me?.level || 1}</span>
+              </div>
+            </div>
+          )}
 
           {/* Right Actions */}
           <div className="flex items-center gap-1 sm:gap-3">

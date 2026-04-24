@@ -43,6 +43,7 @@ const courseSchema = new mongoose.Schema({
   description: { type: String, required: true },
   thumbnail: { type: String },
   instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   price: { type: Number, default: 0 },
   discountPrice: { type: Number },
   level: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced'], default: 'Beginner' },
@@ -54,6 +55,14 @@ const courseSchema = new mongoose.Schema({
   maxStudents: { type: Number }, // If null, unlimited
   status: { type: String, enum: ['draft', 'published', 'archived'], default: 'published' },
   isDeleted: { type: Boolean, default: false },
+  allowedDeliveryModes: [{ type: String, enum: ['online', 'physical', 'hybrid'] }],
+  enrollmentMode: { type: String, enum: ['direct', 'application'], default: 'direct' },
+  applicationQuestions: [{
+    label: { type: String, required: true },
+    required: { type: Boolean, default: true },
+    type: { type: String, enum: ['text', 'textarea', 'link', 'select'], default: 'text' },
+    options: [{ type: String }]
+  }],
 
   // TVET / Rwanda Special fields
   githubClassroom: { type: String },
@@ -71,6 +80,8 @@ const courseSchema = new mongoose.Schema({
     tvetCode: { type: String }
   },
   submissionRequired: { type: Boolean, default: true },
+  signerName: { type: String },
+  signerSignature: { type: String },
 }, { timestamps: true });
 
 export const Course = mongoose.model('Course', courseSchema);

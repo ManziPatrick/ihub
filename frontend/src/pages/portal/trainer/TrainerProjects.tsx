@@ -21,6 +21,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -164,6 +172,23 @@ export default function TrainerProjects() {
     const assignPagination = assignmentsData?.getAssignmentSubmissions?.pagination;
     const pendingSubmissions = submissions.filter((s: AssignmentSubmission) => s.status === "pending");
     const gradedSubmissions = submissions.filter((s: AssignmentSubmission) => s.status === "reviewed" || s.status === "graded" || s.status === "revision_requested");
+
+    const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("all");
+    
+    // Extract unique course titles
+    const availableCourses = Array.from(new Set(submissions.map((s: any) => s.course?.title || (s.courseId && typeof s.courseId === 'object' ? s.courseId.title : null)))).filter(Boolean) as string[];
+
+    const filteredPending = pendingSubmissions.filter((s: any) => {
+        if (selectedCourseFilter === "all") return true;
+        const cTitle = s.course?.title || (s.courseId && typeof s.courseId === 'object' ? s.courseId.title : null);
+        return cTitle === selectedCourseFilter;
+    });
+
+    const filteredGraded = gradedSubmissions.filter((s: any) => {
+        if (selectedCourseFilter === "all") return true;
+        const cTitle = s.course?.title || (s.courseId && typeof s.courseId === 'object' ? s.courseId.title : null);
+        return cTitle === selectedCourseFilter;
+    });
 
     const projects = projectsData?.myProjects || [];
 
@@ -353,62 +378,69 @@ export default function TrainerProjects() {
 
                         <Tabs defaultValue="pending" className="space-y-6">
                             <TabsList className="bg-muted/20 p-1 rounded-xl h-10 border border-border/30 w-fit">
-                                <TabsTrigger value="pending" className="rounded-lg text-sm">Pending ({pendingSubmissions.length})</TabsTrigger>
-                                <TabsTrigger value="graded" className="rounded-lg text-sm">Graded ({gradedSubmissions.length})</TabsTrigger>
+                                <TabsTrigger value="pending" className="rounded-lg text-sm">Pending ({filteredPending.length})</TabsTrigger>
+                                <TabsTrigger value="graded" className="rounded-lg text-sm">Graded ({filteredGraded.length})</TabsTrigger>
                             </TabsList>
 
+                            {availableCourses.length > 0 && (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-bold text-muted-foreground">Filter by Course:</span>
+                                    <Select value={selectedCourseFilter} onValueChange={setSelectedCourseFilter}>
+                                        <SelectTrigger className="w-[250px] h-9 text-xs">
+                                            <SelectValue placeholder="All Courses" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Courses</SelectItem>
+                                            {availableCourses.map((course: string) => (
+                                                <SelectItem key={course} value={course}>{course}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+
                             <TabsContent value="pending" className="space-y-4">
-                                {pendingSubmissions.length === 0 ? (
+                                {filteredPending.length === 0 ? (
                                     <Card className="border-border/50">
                                         <CardContent className="p-12 text-center">
                                             <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-4" />
-                                            <p className="text-muted-foreground">All caught up! No pending submissions.</p>
+                                            <p className="text-muted-foreground">All caught up! No pending submissions for this filter.</p>
                                         </CardContent>
                                     </Card>
                                 ) : (
                                     <div className="grid lg:grid-cols-2 gap-6">
-                                        <ScrollArea className="h-[calc(100vh-350px)]">
-                                            <div className="space-y-4 pr-4">
-                                                {pendingSubmissions.map((submission: AssignmentSubmission) => (
-                                                    <Card
-                                                        key={submission.id}
-                                                        className={`cursor-pointer transition-all hover:border-accent/50 ${selectedSubmission?.id === submission.id ? "border-accent bg-accent/5" : "border-border/50"}`}
-                                                        onClick={() => setSelectedSubmission(submission)}
-                                                    >
-                                                        <CardHeader className="pb-3">
-                                                            <div className="flex items-start justify-between">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                                                                        <User className="w-5 h-5 text-accent" />
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <h4 className="font-semibold text-sm truncate">{submission.user?.fullName || submission.user?.username}</h4>
-                                                                        <div className="flex flex-col gap-0.5">
-                                                                            <p className="text-[10px] font-bold text-accent truncate">{submission.course?.title || "Course ID: " + (submission.courseId?._id || submission.courseId)}</p>
-                                                                            <p className="text-[10px] text-muted-foreground">Lesson: {submission.lessonId}</p>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex flex-col items-end gap-1 shrink-0">
-                                                                    <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20 text-[10px] py-0 h-4">Pending</Badge>
-                                                                    {submission.course?.instructor?.id !== user?.id && submission.course?.instructor && (
-                                                                        <Badge variant="outline" className="text-[10px] py-0 h-4 border-blue-500/30 text-blue-500/70">
-                                                                            By: {submission.course.instructor.fullName || submission.course.instructor.username}
-                                                                        </Badge>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </CardHeader>
-                                                        <CardContent className="space-y-2">
-                                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                                <Calendar className="w-3 h-3" />
-                                                                {new Date(parseInt(submission.createdAt)).toLocaleDateString()}
-                                                            </div>
-                                                            <p className="text-sm line-clamp-2 text-muted-foreground">{submission.content}</p>
-                                                        </CardContent>
-                                                    </Card>
-                                                ))}
-                                            </div>
+                                        <ScrollArea className="h-[calc(100vh-350px)] rounded-md border border-border/50">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>Student</TableHead>
+                                                        <TableHead>Course</TableHead>
+                                                        <TableHead>Lesson</TableHead>
+                                                        <TableHead>Date</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {filteredPending.map((submission: AssignmentSubmission) => (
+                                                        <TableRow 
+                                                            key={submission.id}
+                                                            className={`cursor-pointer transition-colors hover:bg-accent/5 ${selectedSubmission?.id === submission.id ? "bg-accent/10" : ""}`}
+                                                            onClick={() => setSelectedSubmission(submission)}
+                                                        >
+                                                            <TableCell className="font-medium text-sm">
+                                                                {submission.user?.fullName || submission.user?.username}
+                                                                {submission.course?.instructor?.id !== user?.id && submission.course?.instructor && (
+                                                                    <Badge variant="outline" className="ml-2 text-[10px] py-0 h-4 border-blue-500/30 text-blue-500/70">
+                                                                        By: {submission.course.instructor.fullName || submission.course.instructor.username}
+                                                                    </Badge>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className="text-xs text-muted-foreground">{submission.course?.title || "Unknown"}</TableCell>
+                                                            <TableCell className="text-xs">{submission.lessonId}</TableCell>
+                                                            <TableCell className="text-xs">{new Date(parseInt(submission.createdAt)).toLocaleDateString()}</TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
                                         </ScrollArea>
 
                                         <Card className="border-border/50 sticky top-6 h-fit">
@@ -570,46 +602,50 @@ export default function TrainerProjects() {
                             </TabsContent>
 
                     <TabsContent value="graded" className="space-y-4">
-                        {gradedSubmissions.length === 0 ? (
+                        {filteredGraded.length === 0 ? (
                             <Card className="border-border/50">
                                 <CardContent className="p-12 text-center">
-                                    <p className="text-muted-foreground">No graded submissions yet.</p>
+                                    <p className="text-muted-foreground">No graded submissions for this filter.</p>
                                 </CardContent>
                             </Card>
                         ) : (
-                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {gradedSubmissions.map((submission: AssignmentSubmission) => (
-                                    <Card key={submission.id} className="border-border/50">
-                                        <CardHeader>
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                                                        <User className="w-5 h-5 text-accent" />
-                                                    </div>
-                                                    <div>
-                                                        <CardTitle className="text-base">{submission.user?.fullName || submission.user?.username}</CardTitle>
-                                                        <p className="text-xs text-muted-foreground">Lesson: {submission.lessonId}</p>
-                                                    </div>
-                                                </div>
-                                                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
-                                                    {submission.grade}/100
-                                                </Badge>
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent className="space-y-2">
-                                            {submission.feedback && (
-                                                <div className="p-3 bg-muted/20 rounded-lg border border-border/30">
-                                                    <p className="text-xs font-bold text-accent mb-1">Feedback</p>
-                                                    <p className="text-sm italic text-muted-foreground">"{submission.feedback}"</p>
-                                                </div>
-                                            )}
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <Calendar className="w-3 h-3" />
-                                                {new Date(parseInt(submission.createdAt)).toLocaleDateString()}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                            <div className="rounded-md border border-border/50">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Student</TableHead>
+                                            <TableHead>Course</TableHead>
+                                            <TableHead>Lesson</TableHead>
+                                            <TableHead>Grade</TableHead>
+                                            <TableHead>Feedback</TableHead>
+                                            <TableHead>Date</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredGraded.map((submission: AssignmentSubmission) => (
+                                            <TableRow key={submission.id}>
+                                                <TableCell className="font-medium text-sm">{submission.user?.fullName || submission.user?.username}</TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">{submission.course?.title || "Unknown"}</TableCell>
+                                                <TableCell className="text-xs">{submission.lessonId}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
+                                                        {submission.grade}/100
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="max-w-[200px]">
+                                                    {submission.feedback ? (
+                                                        <p className="text-xs text-muted-foreground truncate" title={submission.feedback}>
+                                                            {submission.feedback}
+                                                        </p>
+                                                    ) : (
+                                                        <span className="text-xs text-muted-foreground/50">-</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-xs">{new Date(parseInt(submission.createdAt)).toLocaleDateString()}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
                             </div>
                         )}
                     </TabsContent>

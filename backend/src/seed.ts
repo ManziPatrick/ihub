@@ -34,37 +34,21 @@ const createLessons = (baseTitle: string, count: number) => {
   const lessons = [];
   for (let i = 1; i <= count; i++) {
     const isActuallyAssignment = i % 5 === 0;
-    const type = isActuallyAssignment ? 'assignment' : types[i % types.length];
-    const unitTitle = `${baseTitle} - Unit ${i}`;
-
-    // Rich HTML Content
-    const htmlContent = `
-      <div class="space-y-6">
-        <section>
-          <h2 class="text-2xl font-bold text-accent mb-4">${isActuallyAssignment ? 'Assignment:' : 'Introduction to'} ${unitTitle}</h2>
-          <p class="text-lg leading-relaxed">
-            ${isActuallyAssignment ? 'This is a mandatory assignment to test your skills.' : `Welcome to this comprehensive unit where we deep dive into the core principles of <strong>${baseTitle}</strong>.`} 
-          </p>
-        </section>
-
-        <section class="bg-card p-6 rounded-xl border border-border/50">
-          <h3 class="text-xl font-semibold mb-3">Unit Context</h3>
-          <p>This unit covers advanced implementation of ${baseTitle}. ${isActuallyAssignment ? 'Successful submission is required to proceed.' : ''}</p>
-        </section>
-      </div>
-    `;
+    const isQuiz = i % 4 === 0 && !isActuallyAssignment;
+    const type = isActuallyAssignment ? 'assignment' : isQuiz ? 'quiz' : types[i % types.length];
+    const unitTitle = `${baseTitle} - Unit ${i}: ${isActuallyAssignment ? 'Practical Lab' : isQuiz ? 'Knowledge Check' : 'Concepts'}`;
 
     lessons.push({
       title: unitTitle,
-      content: htmlContent,
+      content: `## ${unitTitle}\n\nDeep dive into ${baseTitle}.`,
       duration: 15 + (i * 5),
-      type: isActuallyAssignment ? 'assignment' : type,
+      type: type,
       videoUrl: type === 'video' ? 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' : null,
       fileUrl: type === 'pdf' ? 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' : null,
       isAssignment: isActuallyAssignment,
       requiredAssignment: isActuallyAssignment,
-      assignmentDescription: isActuallyAssignment ? `Submit your project implementation for ${unitTitle}. Include all source code and documentation.` : null,
-      assignmentDeliverables: isActuallyAssignment ? ['GitHub Repository URL', 'Live Demo Link', 'Implementation Report (PDF)'] : []
+      assignmentDescription: isActuallyAssignment ? `Submit your project implementation for ${unitTitle}.` : null,
+      assignmentDeliverables: isActuallyAssignment ? ['GitHub Repository URL', 'Live Demo Link'] : []
     });
   }
   return lessons;
@@ -88,6 +72,16 @@ const seedData = async () => {
 
     console.log('👤 Creating Users...');
     const hashedPassword = await bcrypt.hash('password123', 10);
+
+    const superAdmin = await new User({
+      username: 'super_admin',
+      email: 'superadmin@codemande.com',
+      password: hashedPassword,
+      role: 'super_admin',
+      fullName: 'System Super Admin',
+      title: 'Chief Operations',
+      avatar: 'https://i.pravatar.cc/150?u=superadmin'
+    }).save();
 
     const admin = await new User({
       username: 'admin',
@@ -150,6 +144,7 @@ const seedData = async () => {
       title: 'Full Stack Masterclass: React & Node.js',
       description: 'The ultimate guide to building scalable web applications. From zero to hero with modern stack.',
       instructor: trainer1._id,
+      createdBy: admin._id,
       price: 0, // Free course
       category: 'Development',
       level: 'Advanced',
@@ -161,7 +156,8 @@ const seedData = async () => {
           lessons: createLessons('Full Stack', 10)
         }
       ],
-      published: true,
+      status: 'published',
+      enrollmentMode: 'direct',
       studentsEnrolled: [student1._id, student2._id]
     } as any).save();
 
@@ -169,6 +165,7 @@ const seedData = async () => {
       title: 'Data Science Bootcamp',
       description: 'Master Python and Machine Learning. Real world projects and datasets.',
       instructor: trainer2._id,
+      createdBy: admin._id,
       price: 49.99,
       category: 'Data Science',
       level: 'Intermediate',
@@ -180,7 +177,8 @@ const seedData = async () => {
           lessons: createLessons('Data Science', 8)
         }
       ],
-      published: true,
+      status: 'published',
+      enrollmentMode: 'direct',
       studentsEnrolled: [student2._id]
     } as any).save();
 
@@ -188,6 +186,7 @@ const seedData = async () => {
       title: 'Generative AI for Creative Professionals',
       description: 'Learn to use ChatGPT, Midjourney, and DALL-E to revolutionize your creative workflow. Scale your output with AI.',
       instructor: trainer1._id,
+      createdBy: admin._id,
       price: 150000,
       discountPrice: 85000,
       category: 'Specialization',
@@ -200,7 +199,8 @@ const seedData = async () => {
           lessons: createLessons('Generative AI', 6)
         }
       ],
-      published: true,
+      status: 'published',
+      enrollmentMode: 'direct',
       studentsEnrolled: []
     } as any).save();
 
@@ -208,6 +208,7 @@ const seedData = async () => {
       title: 'Prompt Engineering for Software Developers',
       description: 'Master the art of prompt engineering to build smarter AI-integrated applications and leverage LLMs in your code.',
       instructor: trainer1._id,
+      createdBy: admin._id,
       price: 0,
       category: 'Development',
       level: 'Intermediate',
@@ -219,7 +220,8 @@ const seedData = async () => {
           lessons: createLessons('Prompt Engineering', 8)
         }
       ],
-      published: true,
+      status: 'published',
+      enrollmentMode: 'direct',
       studentsEnrolled: []
     } as any).save();
 
@@ -227,10 +229,12 @@ const seedData = async () => {
       title: 'AI Strategic Leadership',
       description: 'Lead your organization through the AI revolution. Understand the strategic, ethical, and operational shifts required for AI success.',
       instructor: admin._id,
+      createdBy: admin._id,
       price: 250000,
       discountPrice: 195000,
       category: 'Business',
       level: 'Advanced',
+      enrollmentMode: 'application',
       thumbnail: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=2000&auto=format&fit=crop',
       modules: [
         {
@@ -239,9 +243,38 @@ const seedData = async () => {
           lessons: createLessons('AI Leadership', 5)
         }
       ],
-      published: true,
+      status: 'published',
       studentsEnrolled: []
     } as any).save();
+
+    // ── Seed Quiz Questions for all courses ──
+    const allCourses = [fullStackCourse, dataScienceCourse, generativeAICourse, promptEngCourse, aiLeadershipCourse];
+    console.log('❓ Seeding Quiz Questions...');
+    for (const course of allCourses) {
+      for (const mod of (course as any).modules) {
+        for (const lesson of mod.lessons) {
+          if (lesson.type === 'quiz') {
+            await new Question({
+              courseId: (course as any)._id,
+              lessonId: lesson._id,
+              questionText: `What is a primary goal of "${(course as any).title}"?`,
+              options: ['Efficiency', 'Scalability', 'Reliability', 'All of the above'],
+              correctOptionIndex: 3,
+              explanation: 'In modern software engineering, we strive for all these qualities simultaneously.'
+            }).save();
+            await new Question({
+              courseId: (course as any)._id,
+              lessonId: lesson._id,
+              questionText: `Which concept is covered in: "${lesson.title}"?`,
+              options: ['Advanced Architecture', 'Basic Syntax', 'Deployment Pipelines', 'Testing Strategies'],
+              correctOptionIndex: 0,
+              explanation: 'This lesson focuses on high-level architectural patterns.'
+            }).save();
+          }
+        }
+      }
+    }
+
 
     console.log('🎓 Creating Student Profiles...');
     // Create rich profiles for students
@@ -277,6 +310,7 @@ const seedData = async () => {
       title: 'Advanced Full Stack Internship',
       description: `Join our elite engineering team and work on production-grade applications. 
       Prerequisites: Completion of '${fullStackCourse.title}' is highly recommended.`, // Reference to course
+      createdBy: admin._id,
       duration: '3 months',
       startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Starts in 1 week
       endDate: new Date(Date.now() + 97 * 24 * 60 * 60 * 1000),
@@ -294,6 +328,7 @@ const seedData = async () => {
     const program2 = await new InternshipProgram({
       title: 'Data Analytics For Business',
       description: 'Learn to drive business decisions with data.',
+      createdBy: admin._id,
       duration: '2 months',
       startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
       endDate: new Date(Date.now() + 74 * 24 * 60 * 60 * 1000),

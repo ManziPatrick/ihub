@@ -28,7 +28,11 @@ import {
   RotateCcw,
   Layout,
   Globe,
-  Briefcase
+  Briefcase,
+  Trophy,
+  Award,
+  Flame,
+  Star,
 } from "lucide-react";
 
 const colorPresets = [
@@ -53,6 +57,7 @@ export default function PortalSettings() {
     phone: user?.phone || "",
     location: user?.location || "",
     avatar: user?.avatar || "",
+    certificateName: user?.certificateName || "",
   });
 
   // --- Theme State ---
@@ -82,6 +87,7 @@ export default function PortalSettings() {
         phone: user.phone || "",
         location: user.location || "",
         avatar: user.avatar || "",
+        certificateName: user.certificateName || "",
       });
 
       if (user.themePreference) {
@@ -259,6 +265,11 @@ export default function PortalSettings() {
             <TabsTrigger value="preferences" className="flex items-center gap-2">
               <Palette className="w-4 h-4" /> Appearance
             </TabsTrigger>
+            {user?.role === 'student' && (
+              <TabsTrigger value="achievements" className="flex items-center gap-2">
+                <Trophy className="w-4 h-4" /> My Achievements
+              </TabsTrigger>
+            )}
             {user?.role === 'super_admin' && (
               <TabsTrigger value="branding" className="flex items-center gap-2">
                 <Globe className="w-4 h-4" /> Global Branding
@@ -365,6 +376,19 @@ export default function PortalSettings() {
                           className="pl-9"
                         />
                       </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Certificate Display Name</label>
+                      <div className="relative">
+                        <Sparkles className="absolute left-3 top-2.5 w-4 h-4 text-accent" />
+                        <Input
+                          value={profileForm.certificateName || ""}
+                          placeholder="Name as it should appear on certificates"
+                          onChange={(e) => setProfileForm({ ...profileForm, certificateName: e.target.value })}
+                          className="pl-9 border-accent/20 focus:border-accent"
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">If left blank, your Full Name will be used.</p>
                     </div>
                   </div>
 
@@ -554,6 +578,80 @@ export default function PortalSettings() {
                       <Button variant="destructive" onClick={handleSaveBranding} disabled={savingBranding}>
                         {savingBranding ? "Applying..." : "Apply Global Branding"}
                       </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </TabsContent>
+          )}
+
+          {/* === ACHIEVEMENTS TAB (STUDENT ONLY) === */}
+          {user?.role === 'student' && (
+            <TabsContent value="achievements">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <div className="grid md:grid-cols-3 gap-6">
+                  <Card className="border-border/50 bg-gold/5">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-bold uppercase tracking-wider text-gold">Level {user?.level || 1}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-black text-gold">{user?.xp || 0} XP</div>
+                      <p className="text-[10px] text-muted-foreground mt-1 font-bold">Total Experience Points</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-border/50">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-bold uppercase tracking-wider text-accent">Current Streak</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-black text-accent">{user?.streak || 0} Days</div>
+                      <p className="text-[10px] text-muted-foreground mt-1 font-bold">Learning Consistency</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-border/50">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Total Badges</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-black text-card-foreground">{user?.badges?.length || 0}</div>
+                      <p className="text-[10px] text-muted-foreground mt-1 font-bold">Unlocked Achievements</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="border-border/50">
+                  <CardHeader>
+                    <CardTitle>Unlocked Badges</CardTitle>
+                    <CardDescription>Your collection of achievements and mastery tokens</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-6">
+                      {(user?.badges || []).length === 0 ? (
+                        <div className="col-span-full py-12 text-center text-muted-foreground border-2 border-dashed rounded-3xl">
+                           <Award className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                           <p>Keep learning to unlock your first badge!</p>
+                        </div>
+                      ) : (
+                        user?.badges?.map((ub: any) => (
+                          <motion.div 
+                            key={ub.badge.id}
+                            whileHover={{ scale: 1.05 }}
+                            className="flex flex-col items-center gap-3 p-4 bg-muted/10 rounded-3xl border border-border/50"
+                          >
+                            <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center text-3xl shadow-lg border-2 border-accent/10">
+                              {ub.badge.icon || "🏆"}
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs font-black truncate max-w-[100px]">{ub.badge.title}</p>
+                              <p className="text-[8px] text-muted-foreground font-bold">{new Date(parseInt(ub.awardedAt)).toLocaleDateString()}</p>
+                            </div>
+                          </motion.div>
+                        ))
+                      )}
                     </div>
                   </CardContent>
                 </Card>

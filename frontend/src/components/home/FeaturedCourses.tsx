@@ -1,195 +1,924 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@apollo/client/react";
-import { GET_COURSES } from "@/lib/graphql/queries";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-    Sparkles,
-    TrendingUp,
-    ArrowRight,
-    Clock,
-    Tag,
-    Loader2
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  Search,
+  SlidersHorizontal,
+  Cpu,
+  BarChart2,
+  Shield,
+  TrendingUp,
+  Briefcase,
+  BookOpen,
+  Globe,
+  Layers,
+  Zap,
+  Calendar,
+  Clock,
+  Users,
+  X,
+  Filter,
+  ShoppingCart,
+  CheckCircle,
+  ArrowRight,
+  XCircle
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
+import { Link, useNavigate } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import topImage from "@/assets/top.jpg";
+import { GET_COURSES, GET_INTERNSHIP_PROGRAMS, MY_COURSE_APPLICATIONS, GET_MY_INTERNSHIP_APPLICATIONS } from "@/lib/graphql/queries";
+import { ApplyInternshipDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
+
+// ─── Category normalization ────────────────────────────────────────────────
+const CATEGORY_MAP: Record<string, string> = {
+  Technology: "Technology",
+  Backend: "Technology",
+  Frontend: "Technology",
+  "Full Stack": "Technology",
+  "Full-Stack": "Technology",
+  Fullstack: "Technology",
+  "Web Development": "Technology",
+  "Web Dev": "Technology",
+  "Software Development": "Technology",
+  "Software Engineering": "Technology",
+  "Mobile Development": "Technology",
+  "Mobile Dev": "Technology",
+  DevOps: "Technology",
+  "Cloud Computing": "Technology",
+  IoT: "Technology",
+  "Internet of Things": "Technology",
+  Programming: "Technology",
+  Coding: "Technology",
+
+  "Data Science": "Data & AI",
+  "Data Analysis": "Data & AI",
+  "Machine Learning": "Data & AI",
+  "Artificial Intelligence": "Data & AI",
+  AI: "Data & AI",
+  "Deep Learning": "Data & AI",
+  "Data Engineering": "Data & AI",
+  Analytics: "Data & AI",
+  "Business Intelligence": "Data & AI",
+
+  "Business & Economics": "Business",
+  Business: "Business",
+  Entrepreneurship: "Business",
+  Management: "Business",
+  Finance: "Business",
+  Economics: "Business",
+  Marketing: "Business",
+  "Digital Marketing": "Business",
+  Accounting: "Business",
+
+  Cybersecurity: "Cybersecurity",
+  Security: "Cybersecurity",
+  "Information Security": "Cybersecurity",
+  "Network Security": "Cybersecurity",
+
+  Design: "Design",
+  "UI/UX": "Design",
+  "UX Design": "Design",
+  "UI Design": "Design",
+  "Graphic Design": "Design",
+  "Product Design": "Design",
+
+  "Natural Science": "Science",
+  Science: "Science",
+
+  General: "General",
+  Other: "General",
+  Vocational: "Vocational",
+  Hospitality: "Vocational",
+};
+
+function normalizeCategory(raw: string): string {
+  if (!raw) return "General";
+  if (CATEGORY_MAP[raw]) return CATEGORY_MAP[raw];
+  const lower = raw.toLowerCase();
+  for (const key of Object.keys(CATEGORY_MAP)) {
+    if (key.toLowerCase() === lower) return CATEGORY_MAP[key];
+  }
+  for (const key of Object.keys(CATEGORY_MAP)) {
+    if (lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) {
+      return CATEGORY_MAP[key];
+    }
+  }
+  return raw;
+}
+
+// ─── Category visual config ────────────────────────────────────────────────
+type CategoryMeta = { icon: React.ElementType; bg: string; text: string; border: string };
+
+const CATEGORY_META: Record<string, CategoryMeta> = {
+  Technology:    { icon: Cpu,       bg: "bg-blue-50",   text: "text-blue-600",   border: "border-blue-100"   },
+  "Data & AI":   { icon: BarChart2, bg: "bg-violet-50", text: "text-violet-600", border: "border-violet-100" },
+  Business:      { icon: TrendingUp,bg: "bg-amber-50",  text: "text-amber-600",  border: "border-amber-100"  },
+  Cybersecurity: { icon: Shield,    bg: "bg-red-50",    text: "text-red-600",    border: "border-red-100"    },
+  Design:        { icon: Layers,    bg: "bg-pink-50",   text: "text-pink-600",   border: "border-pink-100"   },
+  Science:       { icon: Zap,       bg: "bg-green-50",  text: "text-green-600",  border: "border-green-100"  },
+  Vocational:    { icon: Briefcase, bg: "bg-orange-50", text: "text-orange-600", border: "border-orange-100" },
+  General:       { icon: BookOpen,  bg: "bg-slate-50",  text: "text-slate-600",  border: "border-slate-200"  },
+};
+
+function getCategoryMeta(cat: string): CategoryMeta {
+  return (
+    CATEGORY_META[cat] ?? {
+      icon: Globe,
+      bg: "bg-accent/10",
+      text: "text-accent",
+      border: "border-accent/20",
+    }
+  );
+}
+
+type Section = "programs" | "internships";
 
 export function FeaturedCourses() {
-    const [activeTab, setActiveTab] = useState<"latest" | "sale">("latest");
-    const { data, loading, error } = useQuery(GET_COURSES);
+  const [section, setSection] = useState<Section>("programs");
+  const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedInternshipId, setSelectedInternshipId] = useState<string | null>(null);
+  const [applyCourse, setApplyCourse] = useState<any | null>(null);
+  
+  const { addToCart } = useCart();
+  const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
 
-    if (loading) {
-        return (
-            <div className="py-20 flex justify-center items-center">
-                <Loader2 className="w-8 h-8 animate-spin text-accent" />
+  // Side Filter State
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterPrice, setFilterPrice] = useState<string>("all");
+  const [filterLevel, setFilterLevel] = useState<string>("all");
+
+  const tabScrollRef = useRef<HTMLDivElement>(null);
+
+  // Courses
+  const { data: courseData, loading: courseLoading } = useQuery(GET_COURSES, {
+    variables: { page: 1, limit: 200 },
+  });
+
+  // Internship programs
+  const { data: internData, loading: internLoading } = useQuery(GET_INTERNSHIP_PROGRAMS, {
+    variables: { page: 1, limit: 100 },
+  });
+
+  // User course applications
+  const { data: appData, refetch: refetchApps } = useQuery(MY_COURSE_APPLICATIONS, {
+    skip: !isAuthenticated,
+  });
+
+  // User internship applications
+  const { data: internAppData, refetch: refetchInternApps } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS, {
+    skip: !isAuthenticated,
+  });
+
+  const myApplications = useMemo(() => (appData as any)?.myCourseApplications || [], [appData]);
+  const myInternApplications = useMemo(() => (internAppData as any)?.myInternshipApplications || [], [internAppData]);
+
+  const rawCourses: any[] = useMemo(
+    () => (courseData as any)?.courses?.items || [],
+    [courseData]
+  );
+  const rawInternships: any[] = useMemo(
+    () => (internData as any)?.internshipPrograms?.items || [],
+    [internData]
+  );
+
+  const courses = useMemo(
+    () =>
+      rawCourses.map((c: any) => ({
+        ...c,
+        normalizedCategory: normalizeCategory(c.category || "General"),
+      })),
+    [rawCourses]
+  );
+
+  // Since Internships don't have a strict category in DB yet, infer from title
+  const internships = useMemo(
+    () =>
+      rawInternships.map((i: any) => ({
+        ...i,
+        normalizedCategory: normalizeCategory(i.title || "General"),
+      })),
+    [rawInternships]
+  );
+
+  const courseCategories = useMemo(() => {
+    const seen = new Set<string>();
+    courses.forEach((c: any) => seen.add(c.normalizedCategory));
+    const list = Array.from(seen).sort((a, b) => {
+      if (a === "Technology") return -1;
+      if (b === "Technology") return 1;
+      return a.localeCompare(b);
+    });
+    return ["All", ...list];
+  }, [courses]);
+
+  const internshipCategories = useMemo(() => {
+    const seen = new Set<string>();
+    internships.forEach((i: any) => seen.add(i.normalizedCategory));
+    const list = Array.from(seen).sort((a, b) => {
+      if (a === "Technology") return -1;
+      if (b === "Technology") return 1;
+      return a.localeCompare(b);
+    });
+    return ["All", ...list];
+  }, [internships]);
+
+  const currentCategories = section === "programs" ? courseCategories : internshipCategories;
+
+  const filteredCourses = useMemo(() => {
+    return courses.filter((c: any) => {
+      const matchCat = activeCategory === "All" || c.normalizedCategory === activeCategory;
+      const q = searchQuery.toLowerCase();
+      const matchSearch =
+        !q ||
+        c.title?.toLowerCase().includes(q) ||
+        c.category?.toLowerCase().includes(q) ||
+        c.normalizedCategory?.toLowerCase().includes(q) ||
+        c.instructor?.username?.toLowerCase().includes(q);
+      
+      const matchPrice = filterPrice === "all" ? true : filterPrice === "free" ? c.price === 0 : c.price > 0;
+      const matchLevel = filterLevel === "all" ? true : c.level?.toLowerCase() === filterLevel;
+
+      return matchCat && matchSearch && matchPrice && matchLevel;
+    });
+  }, [courses, activeCategory, searchQuery, filterPrice, filterLevel]);
+
+  const filteredInternships = useMemo(() => {
+    return internships.filter((i: any) => {
+      const matchCat = activeCategory === "All" || i.normalizedCategory === activeCategory;
+      const q = searchQuery.toLowerCase();
+      const matchSearch =
+        !q ||
+        i.title?.toLowerCase().includes(q) ||
+        i.description?.toLowerCase().includes(q);
+      
+      const matchPrice = filterPrice === "all" ? true : filterPrice === "free" ? i.price === 0 : i.price > 0;
+      
+      return matchCat && matchSearch && matchPrice;
+    });
+  }, [internships, activeCategory, searchQuery, filterPrice]);
+
+  const scrollTabs = (dir: "left" | "right") => {
+    tabScrollRef.current?.scrollBy({ left: dir === "left" ? -220 : 220, behavior: "smooth" });
+  };
+
+  const switchSection = (s: Section) => {
+    setSection(s);
+    setActiveCategory("All");
+    setSearchQuery("");
+    setFilterPrice("all");
+    setFilterLevel("all");
+  };
+
+  // Lock body scroll when filter is open
+  useEffect(() => {
+    if (isFilterOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isFilterOpen]);
+
+  const loading = section === "programs" ? courseLoading : internLoading;
+
+  return (
+    <>
+      {/* ── Integrated Hero Banner + Search ── */}
+      <section className="pt-20 pb-8 bg-background transition-colors duration-300">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="relative rounded-3xl overflow-hidden py-12 lg:py-16 px-4 shadow-2xl group border border-border/10">
+            {/* Background Image with Parallax-like effect */}
+            <div className="absolute inset-0 w-full h-full">
+              <img 
+                src={topImage} 
+                alt="Hero Background" 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              {/* Theme-aware overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/50 to-transparent dark:from-black/90 dark:via-black/70" />
+              <div className="absolute inset-0 bg-accent/10 mix-blend-overlay" />
             </div>
-        );
-    }
 
-    if (error) {
-        console.error("Error fetching courses:", error);
-        return null;
-    }
+            {/* Subtle decorative circles */}
+            <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full border border-white/5 opacity-20 pointer-events-none" />
+            <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full border border-white/5 opacity-20 pointer-events-none" />
 
-    const allCourses = (data as any)?.courses?.items || [];
+            <div className="relative z-10 text-center max-w-2xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1">
+                  Explore
+                </h1>
+                <h1 className="text-2xl lg:text-3xl font-bold text-white mb-6">
+                  Programs for Your Future
+                </h1>
 
-    // Filter courses based on active tab
-    const filteredCourses = activeTab === "latest"
-        ? [...allCourses].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3)
-        : allCourses.filter((c: any) => c.discountPrice && c.discountPrice < c.price).slice(0, 3);
-
-    return (
-        <section className="py-20 bg-background relative overflow-hidden">
-            {/* Background Glows */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] -z-10" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px] -z-10" />
-
-            <div className="container mx-auto px-4 lg:px-8">
-                <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-6">
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        className="max-w-2xl"
-                    >
-                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-bold uppercase tracking-wider mb-4 border border-accent/20">
-                            <Sparkles className="w-3 h-3" />
-                            Special Selection
-                        </span>
-                        <h2 className="font-heading text-3xl lg:text-4xl font-medium text-foreground mb-4">
-                            Unlock Your <span className="text-accent italic">Tech Future</span>
-                        </h2>
-                        <p className="text-muted-foreground">
-                            Discover our newest programs and exclusive limited-time offers designed to take your career to the next level.
-                        </p>
-                    </motion.div>
-
-                    <div className="flex bg-muted/30 p-1 rounded-xl border border-border/50 backdrop-blur-sm">
-                        <button
-                            onClick={() => setActiveTab("latest")}
-                            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "latest"
-                                ? "bg-accent text-white shadow-[0_0_15px_rgba(255,184,0,0.4)]"
-                                : "text-muted-foreground hover:text-foreground"
-                                }`}
-                        >
-                            <Clock className="w-4 h-4" />
-                            Latest Arrivals
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("sale")}
-                            className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "sale"
-                                ? "bg-accent text-white shadow-[0_0_15px_rgba(255,184,0,0.4)]"
-                                : "text-muted-foreground hover:text-foreground"
-                                }`}
-                        >
-                            <Tag className="w-4 h-4" />
-                            Hot Offers
-                        </button>
-                    </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <AnimatePresence mode="wait">
-                        {filteredCourses.map((course: any, idx: number) => (
-                            <motion.div
-                                key={course.id + activeTab}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                transition={{ delay: idx * 0.1 }}
-                                viewport={{ once: true }}
-                            >
-                                <Link to={`/courses/${course.id}`}>
-                                    <Card className="group relative bg-card/40 border-border/50 backdrop-blur-md hover:border-accent/50 transition-all duration-500 hover:shadow-[0_0_30px_rgba(255,184,0,0.1)] overflow-hidden h-full flex flex-col">
-                                        {/* Course Image Header */}
-                                        <div className="relative h-48 overflow-hidden">
-                                            <ImageWithSkeleton
-                                                src={course.thumbnail || "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80"}
-                                                alt={course.title}
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                                containerClassName="w-full h-full"
-                                            />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent opacity-60" />
-
-                                            {course.discountPrice && course.discountPrice < course.price && (
-                                                <div className="absolute top-4 left-4">
-                                                    <Badge className="bg-red-500 text-white border-none animate-pulse">
-                                                        {Math.round((1 - course.discountPrice / course.price) * 100)}% OFF
-                                                    </Badge>
-                                                </div>
-                                            )}
-
-                                            <div className="absolute top-4 right-4">
-                                                <Badge variant="outline" className="bg-black/50 backdrop-blur-md border-accent/30 text-accent uppercase font-bold text-[10px]">
-                                                    {course.level}
-                                                </Badge>
-                                            </div>
-                                        </div>
-
-                                        <CardContent className="p-6 flex flex-col flex-1">
-                                            <div className="mb-2">
-                                                <span className="text-[10px] text-accent font-bold tracking-widest uppercase">
-                                                    {course.category}
-                                                </span>
-                                            </div>
-
-                                            <h3 className="font-heading text-xl font-medium text-foreground mb-3 group-hover:text-accent transition-colors">
-                                                {course.title}
-                                            </h3>
-
-                                            <p className="text-sm text-muted-foreground mb-6 line-clamp-2 leading-relaxed">
-                                                {course.description}
-                                            </p>
-
-                                            <div className="mt-auto pt-6 border-t border-border/30 flex items-center justify-between">
-                                                <div>
-                                                    {course.discountPrice ? (
-                                                        <div className="flex flex-col">
-                                                            <span className="text-xs text-muted-foreground line-through decoration-red-500/50">
-                                                                {course.price.toLocaleString()} RWF
-                                                            </span>
-                                                            <span className="text-xl font-bold text-accent">
-                                                                {course.discountPrice.toLocaleString()} RWF
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-xl font-bold text-foreground">
-                                                            {course.price === 0 ? "FREE" : `${course.price.toLocaleString()} RWF`}
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent transition-all duration-300">
-                                                    <ArrowRight className="w-5 h-5 text-accent group-hover:text-white transition-colors" />
-                                                </div>
-                                            </div>
-                                        </CardContent>
-
-                                        {/* Holographic reflection effect */}
-                                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
-                                    </Card>
-                                </Link>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
-                </div>
-
+                {/* Instant Filter Search Bar */}
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="mt-16 text-center"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15, duration: 0.4 }}
+                  className="flex items-center gap-2 max-w-xl mx-auto"
                 >
-                    <Link to="/training">
-                        <Button variant="outline" size="lg" className="px-12 rounded-full border-accent/20 hover:bg-accent/5 gap-2 group">
-                            Explore All Courses
-                            <TrendingUp className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                        </Button>
-                    </Link>
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={
+                        section === "programs"
+                          ? "Search by program, topic, or location..."
+                          : "Search internships..."
+                      }
+                      className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/40 transition-all"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setIsFilterOpen(true)}
+                    className="flex-shrink-0 p-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all"
+                    aria-label="Filter options"
+                  >
+                    <SlidersHorizontal className="w-4 h-4" />
+                  </button>
                 </motion.div>
+              </motion.div>
             </div>
-        </section>
-    );
+          </div>
+        </div>
+      </section>
+
+      {/* ── Side Filter Drawer ── */}
+      <AnimatePresence>
+        {isFilterOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsFilterOpen(false)}
+              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+            />
+            
+            {/* Side Panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-card border-l border-border shadow-2xl z-50 flex flex-col"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-border/50">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-5 h-5 text-accent" />
+                  <h3 className="font-semibold text-foreground">Filters</h3>
+                </div>
+                <button
+                  onClick={() => setIsFilterOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 flex-1 overflow-y-auto space-y-8">
+                {/* Section Toggle inside Filter */}
+                <div>
+                  <h4 className="text-sm font-medium text-foreground mb-3">Program Type</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant={section === "programs" ? "default" : "outline"}
+                      onClick={() => switchSection("programs")}
+                      className="w-full text-xs"
+                    >
+                      <BookOpen className="w-3.5 h-3.5 mr-2" /> Courses
+                    </Button>
+                    <Button
+                      variant={section === "internships" ? "default" : "outline"}
+                      onClick={() => switchSection("internships")}
+                      className="w-full text-xs"
+                    >
+                      <Briefcase className="w-3.5 h-3.5 mr-2" /> Internships
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Price Filter */}
+                <div>
+                  <h4 className="text-sm font-medium text-foreground mb-3">Price</h4>
+                  <div className="flex flex-col gap-2">
+                    {["all", "free", "paid"].map((p) => (
+                      <label 
+                        key={p} 
+                        className="flex items-center gap-3 cursor-pointer group p-1"
+                      >
+                        <input 
+                          type="radio" 
+                          name="price-filter"
+                          value={p}
+                          checked={filterPrice === p}
+                          onChange={() => setFilterPrice(p)}
+                          className="w-4 h-4 text-accent border-muted-foreground/30 focus:ring-accent/30 cursor-pointer"
+                        />
+                        <span className="text-sm text-muted-foreground group-hover:text-foreground capitalize">{p === "all" ? "Any Price" : p}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Level Filter (Only for Courses) */}
+                {section === "programs" && (
+                  <div>
+                    <h4 className="text-sm font-medium text-foreground mb-3">Level</h4>
+                    <div className="flex flex-col gap-2">
+                      {["all", "beginner", "intermediate", "advanced"].map((l) => (
+                        <label 
+                          key={l} 
+                          className="flex items-center gap-3 cursor-pointer group p-1"
+                        >
+                          <input 
+                            type="radio" 
+                            name="level-filter"
+                            value={l}
+                            checked={filterLevel === l}
+                            onChange={() => setFilterLevel(l)}
+                            className="w-4 h-4 text-accent border-muted-foreground/30 focus:ring-accent/30 cursor-pointer"
+                          />
+                          <span className="text-sm text-muted-foreground group-hover:text-foreground capitalize">{l === "all" ? "All Levels" : l}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 border-t border-border/50 bg-muted/20 flex gap-3">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => {
+                    setFilterPrice("all");
+                    setFilterLevel("all");
+                  }}
+                >
+                  Reset
+                </Button>
+                <Button 
+                  className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90"
+                  onClick={() => setIsFilterOpen(false)}
+                >
+                  Show Results
+                </Button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Featured Programs Listing ── */}
+      <section className="pb-12 bg-background" id="featured-programs">
+        <div className="container mx-auto px-4 lg:px-8">
+          
+          {/* Section header */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6"
+          >
+            <div>
+              <h2 className="text-2xl font-semibold text-foreground">Featured Programs</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Browse courses and internships — all in one place.
+              </p>
+            </div>
+
+            {/* Programs / Internships toggle */}
+            <div className="flex bg-muted/40 p-1 rounded-xl border border-border/50 w-fit">
+              <button
+                onClick={() => switchSection("programs")}
+                className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                  section === "programs"
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                Courses
+              </button>
+              <button
+                onClick={() => switchSection("internships")}
+                className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                  section === "internships"
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Briefcase className="w-3.5 h-3.5" />
+                Internships
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Category Tabs (shared for courses & internships) */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center gap-2 mb-8"
+          >
+            <button
+              onClick={() => scrollTabs("left")}
+              aria-label="Scroll left"
+              className="flex-shrink-0 p-1.5 rounded-lg bg-card border border-border hover:border-accent/40 text-muted-foreground hover:text-accent transition-all"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <div
+              ref={tabScrollRef}
+              className="flex items-center gap-2 overflow-x-auto scrollbar-none scroll-smooth flex-1 py-1"
+            >
+              {currentCategories.map((cat) => {
+                const meta = getCategoryMeta(cat);
+                const Icon = meta.icon;
+                const isActive = activeCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      isActive
+                        ? "bg-foreground text-background shadow-sm"
+                        : "bg-card text-muted-foreground border border-border hover:border-accent/40 hover:text-foreground"
+                    }`}
+                  >
+                    {cat !== "All" && (
+                      <Icon className={`w-3.5 h-3.5 ${isActive ? "text-background" : meta.text}`} />
+                    )}
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => scrollTabs("right")}
+              aria-label="Scroll right"
+              className="flex-shrink-0 p-1.5 rounded-lg bg-card border border-border hover:border-accent/40 text-muted-foreground hover:text-accent transition-all"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </motion.div>
+
+          {/* Loading */}
+          {loading && (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-accent" />
+            </div>
+          )}
+
+          {/* COURSES listing */}
+          {!loading && section === "programs" && (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeCategory + searchQuery + filterPrice + filterLevel}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                {filteredCourses.length === 0 ? (
+                  <div className="text-center py-20">
+                    <BookOpen className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">
+                      No programs found{searchQuery ? ` for "${searchQuery}"` : ""}
+                      {activeCategory !== "All" ? ` in ${activeCategory}` : ""}.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredCourses.map((course: any, idx: number) => {
+                      const meta = getCategoryMeta(course.normalizedCategory);
+                      const Icon = meta.icon;
+                      const isEnrolled = user?.enrolledCourses?.includes(course.id || course._id);
+                      const application = myApplications.find((app: any) => app.courseId === (course.id || course._id));
+                      const appStatus = application?.status;
+
+                      return (
+                        <motion.div
+                          key={course.id || course._id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: Math.min(idx * 0.03, 0.3) }}
+                        >
+                          <div 
+                            onClick={() => {
+                              if (isEnrolled || appStatus === 'approved') {
+                                navigate(`/portal/student/courses/${course.id || course._id}`);
+                                return;
+                              }
+                              
+                              if (course.enrollmentMode === 'application') {
+                                if (!isAuthenticated) {
+                                  navigate("/auth", { state: { from: { pathname: "/" } } });
+                                } else {
+                                  setApplyCourse(course);
+                                }
+                                return;
+                              }
+
+                              addToCart({
+                                id: course.id || course._id,
+                                title: course.title,
+                                price: course.price,
+                                discountPrice: course.discountPrice,
+                                type: "course",
+                                image: course.image
+                              });
+                            }}
+                            className={`block group cursor-pointer ${isEnrolled ? 'opacity-90' : ''}`}
+                          >
+                            <div className={`flex items-start gap-4 p-5 bg-card border border-border/50 hover:border-accent/30 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 h-full ${isEnrolled ? 'border-green-500/30' : ''}`}>
+                              <div
+                                className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border ${meta.bg} ${meta.border}`}
+                              >
+                                <Icon className={`w-5 h-5 ${meta.text}`} />
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-sm font-semibold text-foreground leading-snug mb-0.5 group-hover:text-accent transition-colors line-clamp-1">
+                                  {course.title}
+                                </h3>
+                                <p className="text-xs text-muted-foreground mb-2.5 line-clamp-1">
+                                  {course.normalizedCategory}
+                                </p>
+                                <div className="grid grid-cols-2 gap-x-4">
+                                  <div>
+                                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60 font-medium">
+                                      Instructor
+                                    </p>
+                                    <p className="text-xs font-semibold text-foreground/80 line-clamp-1">
+                                      {course.instructor?.username || "Expert Trainer"}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60 font-medium">
+                                      Level
+                                    </p>
+                                    <p className="text-xs font-semibold text-foreground/80 capitalize">
+                                      {course.level?.toLowerCase() || "All levels"}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex-shrink-0 flex flex-col items-end">
+                                {course.discountPrice && course.discountPrice > 0 ? (
+                                  <>
+                                    <p className="text-xs font-bold text-accent">
+                                      {course.discountPrice.toLocaleString()} RWF
+                                    </p>
+                                    <p className="text-[10px] text-muted-foreground line-through mb-1">
+                                      {course.price?.toLocaleString()} RWF
+                                    </p>
+                                  </>
+                                ) : (
+                                  <p className="text-xs font-bold text-foreground mb-1">
+                                    {course.price === 0
+                                      ? "Free"
+                                      : `${course.price?.toLocaleString()} RWF`}
+                                  </p>
+                                )}
+                                {isEnrolled ? (
+                                  <span className="bg-green-500/10 text-green-500 p-1.5 rounded-lg flex items-center gap-1.5">
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    <span className="text-[10px] font-bold uppercase">Learning</span>
+                                  </span>
+                                ) : appStatus === 'approved' ? (
+                                  <span className="bg-green-500/10 text-green-500 p-1.5 rounded-lg flex items-center gap-1.5">
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                    <span className="text-[10px] font-bold uppercase">Continue</span>
+                                  </span>
+                                ) : appStatus === 'pending' ? (
+                                  <span className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg flex items-center gap-1.5">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    <span className="text-[10px] font-bold uppercase">Pending</span>
+                                  </span>
+                                ) : appStatus === 'rejected' ? (
+                                  <span className="bg-red-500/10 text-red-500 p-1.5 rounded-lg flex items-center gap-1.5">
+                                    <XCircle className="w-3.5 h-3.5" />
+                                    <span className="text-[10px] font-bold uppercase">Rejected</span>
+                                  </span>
+                                ) : course.enrollmentMode === 'application' ? (
+                                  <span className="bg-blue-600 text-white p-2 px-3 rounded-xl shadow-md transition-all active:scale-95">
+                                    <span className="text-[10px] font-black uppercase tracking-tight">Apply</span>
+                                  </span>
+                                ) : (
+                                  <span className="bg-accent text-accent-foreground p-2 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5">
+                                    <ShoppingCart className="w-3.5 h-3.5" />
+                                    <span className="text-[10px] font-black uppercase tracking-tight">Cart</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          )}
+
+          {/* INTERNSHIPS listing */}
+          {!loading && section === "internships" && (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={"internships" + searchQuery + activeCategory + filterPrice}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                {filteredInternships.length === 0 ? (
+                  <div className="text-center py-20">
+                    <Briefcase className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">
+                      {searchQuery
+                        ? `No internships found for "${searchQuery}".`
+                        : "No internship programs available right now. Check back soon!"}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredInternships.map((intern: any, idx: number) => {
+                      const meta = getCategoryMeta(intern.normalizedCategory);
+                      const Icon = meta.icon;
+                      const isOpen = intern.status === "OPEN" || intern.status === "ACTIVE";
+                      const deadline = intern.applicationDeadline
+                        ? new Date(parseInt(intern.applicationDeadline)).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : null;
+                      return (
+                        <motion.div
+                          key={intern.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: Math.min(idx * 0.03, 0.3) }}
+                        >
+                          <div 
+                            onClick={() => {
+                              const application = myInternApplications.find((app: any) => app.internshipProgram?.id === intern.id);
+                              const appStatus = application?.status;
+
+                              if (appStatus === 'approved') {
+                                navigate(`/portal/student/internship`);
+                                return;
+                              }
+
+                              if (!isAuthenticated) {
+                                navigate("/auth", { state: { from: { pathname: "/" } } });
+                              } else {
+                                setSelectedInternshipId(intern.id);
+                              }
+                            }} 
+                            className={`block group cursor-pointer h-full`}
+                          >
+                            <div className="flex items-start gap-4 p-5 bg-card border border-border/50 hover:border-accent/30 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 h-full">
+                              <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border ${meta.bg} ${meta.border}`}>
+                                <Icon className={`w-5 h-5 ${meta.text}`} />
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-sm font-semibold text-foreground leading-snug mb-0.5 group-hover:text-accent transition-colors line-clamp-1">
+                                  {intern.title}
+                                </h3>
+                                <p className="text-xs text-muted-foreground mb-2.5 line-clamp-1">
+                                  {intern.normalizedCategory} Internship
+                                </p>
+
+                                <div className="grid grid-cols-2 gap-x-4">
+                                  <div>
+                                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60 font-medium">
+                                      Duration
+                                    </p>
+                                    <p className="text-xs font-semibold text-foreground/80 flex items-center gap-1">
+                                      <Clock className="w-3 h-3 text-muted-foreground/60" />
+                                      {intern.duration || "Flexible"}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60 font-medium">
+                                      Spots
+                                    </p>
+                                    <p className="text-xs font-semibold text-foreground/80 flex items-center gap-1">
+                                      <Users className="w-3 h-3 text-muted-foreground/60" />
+                                      {intern.maxSpots ?? "Open"}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex-shrink-0 text-right space-y-1">
+                                {(() => {
+                                  const application = myInternApplications.find((app: any) => app.internshipProgram?.id === intern.id);
+                                  const appStatus = application?.status;
+
+                                  if (appStatus === 'approved') {
+                                    return (
+                                      <span className="bg-green-500/10 text-green-500 p-1.5 rounded-lg flex items-center gap-1.5">
+                                        <ArrowRight className="w-3.5 h-3.5" />
+                                        <span className="text-[10px] font-bold uppercase">Continue</span>
+                                      </span>
+                                    );
+                                  } else if (appStatus === 'pending') {
+                                    return (
+                                      <span className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg flex items-center gap-1.5">
+                                        <Clock className="w-3.5 h-3.5" />
+                                        <span className="text-[10px] font-bold uppercase">Pending</span>
+                                      </span>
+                                    );
+                                  } else if (appStatus === 'rejected') {
+                                    return (
+                                      <span className="bg-red-500/10 text-red-500 p-1.5 rounded-lg flex items-center gap-1.5">
+                                        <XCircle className="w-3.5 h-3.5" />
+                                        <span className="text-[10px] font-bold uppercase">Rejected</span>
+                                      </span>
+                                    );
+                                  }
+
+                                  return (
+                                    <span
+                                      className={`p-2 px-3 rounded-xl shadow-md transition-all active:scale-95 ${
+                                        isOpen
+                                          ? "bg-blue-600 text-white"
+                                          : "bg-muted text-muted-foreground border border-border"
+                                      }`}
+                                    >
+                                      <span className="text-[10px] font-black uppercase tracking-tight">
+                                        {isOpen ? "Apply" : "Closed"}
+                                      </span>
+                                    </span>
+                                  );
+                                })()}
+                                {deadline && (
+                                  <p className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end">
+                                    <Calendar className="w-3 h-3" />
+                                    {deadline}
+                                  </p>
+                                )}
+                                {intern.price != null && (
+                                  <p className="text-xs font-bold text-foreground">
+                                    {intern.price === 0
+                                      ? "Free"
+                                      : `${intern.price.toLocaleString()} ${intern.currency || "RWF"}`}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </div>
+      </section>
+
+      {selectedInternshipId && (
+        <ApplyInternshipDialog 
+          open={!!selectedInternshipId} 
+          onOpenChange={(open) => !open && setSelectedInternshipId(null)}
+          internshipProgramId={selectedInternshipId}
+          onSuccess={() => refetchInternApps()}
+        />
+      )}
+      <ApplyCourseDialog
+        open={!!applyCourse}
+        onOpenChange={(open) => !open && setApplyCourse(null)}
+        course={applyCourse}
+        onSuccess={() => refetchApps()}
+      />
+    </>
+  );
 }

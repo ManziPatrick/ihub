@@ -6,6 +6,7 @@ import { ModuleAssignment } from '../models/ModuleAssignment';
 import { ModuleProgress } from '../models/ModuleProgress';
 import { ModuleAccessConfig } from '../models/ModuleAccessConfig';
 import { sendNotification } from '../services/notification.service';
+import { autoGenerateCertificate } from './CertificateController';
 
 const TRAINER_OR_ADMIN = ['trainer', 'admin', 'super_admin'];
 
@@ -186,6 +187,21 @@ export const reviewAssignment = async (req: Request, res: Response) => {
         [assignment.moduleId.toString()]: reviewer.id
       };
       await progress.save();
+
+      // Check for Course Completion
+      if (progress.unlockedModules.length >= course.modules.length) {
+          // Check if all assignments are approved
+          const allAssignments = await ModuleAssignment.find({ 
+              studentId: assignment.studentId, 
+              courseId: assignment.courseId 
+          });
+          const allApproved = allAssignments.length === course.modules.length && 
+                              allAssignments.every(a => a.status === 'approved');
+          
+          if (allApproved) {
+              await autoGenerateCertificate(assignment.studentId.toString(), assignment.courseId.toString(), 'course');
+          }
+      }
 
       await sendNotification(assignment.studentId.toString(), {
         type: 'assignment_approved',

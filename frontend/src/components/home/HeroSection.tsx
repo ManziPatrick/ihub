@@ -1,108 +1,71 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
-import { AuthAwareLink } from "@/components/AuthAwareLink";
-import heroImage from "@/assets/hero-training.webp";
-import heroImageMobile from "@/assets/hero-training-mobile.webp";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Search, SlidersHorizontal } from "lucide-react";
+import topImage from "@/assets/top.jpg";
 
 export function HeroSection() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigate(`/training${searchQuery.trim() ? `?q=${encodeURIComponent(searchQuery.trim())}` : ""}`);
+  };
+
   return (
-    <section className="relative min-h-[90vh] flex items-center pt-20 lg:pt-0 overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <ImageWithSkeleton
-          src={heroImage}
-          srcSet={`${heroImageMobile} 600w, ${heroImage} 1920w`}
-          sizes="(max-width: 600px) 100vw, 100vw"
-          alt="CODEMANDE training session"
-          loading="eager"
-          fetchPriority="high"
-          className="w-full h-full object-cover object-center"
-          containerClassName="w-full h-full"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/40" />
-      </div>
-
-      {/* Circuit decoration */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none z-10">
-        <svg
-          viewBox="0 0 1200 120"
-          preserveAspectRatio="none"
-          className="w-full h-full fill-none stroke-accent/30"
+    <section className="pt-20 pb-8 bg-background">
+      <div className="container mx-auto px-4 lg:px-8">
+        <div
+          className="relative rounded-2xl overflow-hidden py-16 lg:py-24 px-4 shadow-2xl bg-cover bg-center border border-white/10"
+          style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.5)), url(${topImage})` }}
         >
-          <path
-            d="M0,100 L200,100 L220,80 L400,80 L420,100 L600,100"
-            strokeWidth="1"
-          />
-          <circle cx="220" cy="80" r="3" className="fill-accent" />
-          <circle cx="420" cy="100" r="3" className="fill-accent" />
-        </svg>
-      </div>
+          {/* Subtle decorative circles */}
+          <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full border border-white/5 opacity-40 pointer-events-none" />
+          <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full border border-white/5 opacity-40 pointer-events-none" />
 
-      <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <div className="max-w-3xl">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="flex flex-col items-center lg:items-start text-center lg:text-left"
-          >
-            {/* Unique Highlight Badge */}
+          <div className="relative z-10 text-center max-w-2xl mx-auto">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/5 border border-accent/10 backdrop-blur-md mb-6 sm:mb-8"
-            >
-              <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-accent">
-                Africa's Leading Professional Hub
-              </span>
-            </motion.div>
-
-            <h1 className="font-heading text-4xl xs:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-[1.05] mb-5 sm:mb-8 text-center lg:text-left">
-              Empowering Africa
-              <br />
-              <span className="text-foreground">Through </span>
-              <span className="relative inline-block">
-                <span className="relative z-10 text-gradient-gold">Excellence</span>
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: "100%" }}
-                  transition={{ delay: 0.8, duration: 1 }}
-                  className="absolute bottom-1 left-0 h-4 bg-accent/20 -rotate-1 z-0"
-                />
-              </span>
-              <br className="sm:hidden" />
-              <span className="italic text-accent ml-1 sm:ml-3">&</span>{" "}
-              <span className="italic font-light">Innovation</span>
-            </h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-              className="text-sm sm:text-xl text-muted-foreground/90 mb-8 sm:mb-12 max-w-xl leading-relaxed font-light"
+              transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              Building high-impact skills. Creating limitless opportunities. Delivering real-world solutions through expert mentorship and hands-on practice.
-            </motion.p>
+              <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1">
+                Explore
+              </h1>
+              <h1 className="text-2xl lg:text-3xl font-bold text-white mb-6">
+                Programs for Your Future
+              </h1>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-              className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center lg:justify-start w-full sm:w-auto pb-12 sm:pb-0"
-            >
-              <AuthAwareLink variant="gold" size="xl" className="w-full sm:w-auto shadow-premium hover:-translate-y-1 h-12 sm:h-14">
-                Explore Programs
-              </AuthAwareLink>
-              <AuthAwareLink variant="heroOutline" size="xl" className="w-full sm:w-auto hover:bg-white/5 backdrop-blur-sm border-2 h-12 sm:h-14">
-                Get Started
-              </AuthAwareLink>
+              {/* Search bar */}
+              <motion.form
+                onSubmit={handleSearch}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.4 }}
+                className="flex items-center gap-2 max-w-xl mx-auto"
+              >
+                <div className="relative flex-1">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
+                  <input
+                    id="hero-search"
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by program, school, or location..."
+                    className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/40 transition-all"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="flex-shrink-0 p-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all"
+                  aria-label="Filter programs"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                </button>
+              </motion.form>
             </motion.div>
-          </motion.div>
-
+          </div>
         </div>
       </div>
     </section>

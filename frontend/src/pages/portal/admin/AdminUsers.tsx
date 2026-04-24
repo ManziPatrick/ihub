@@ -80,11 +80,18 @@ export default function AdminUsers() {
 
   // Queries & Mutations
   const { data, loading, refetch } = useQuery(GET_USERS, {
-    variables: { page: currentPage, limit: pageSize }
+    variables: { page: currentPage, limit: pageSize },
+    pollInterval: 30000 // auto-refresh every 30 seconds
   });
-  const [createUserMutation] = useMutation(CREATE_USER);
-  const [updateUserMutation] = useMutation(UPDATE_USER);
-  const [deleteUserMutation] = useMutation(DELETE_USER);
+  const [createUserMutation] = useMutation(CREATE_USER, {
+    refetchQueries: [{ query: GET_USERS }]
+  });
+  const [updateUserMutation] = useMutation(UPDATE_USER, {
+    refetchQueries: [{ query: GET_USERS }]
+  });
+  const [deleteUserMutation] = useMutation(DELETE_USER, {
+    refetchQueries: [{ query: GET_USERS }]
+  });
 
   const users = (data as any)?.users?.items || [];
   const pagination = (data as any)?.users?.pagination;
@@ -224,35 +231,37 @@ export default function AdminUsers() {
                   </thead>
                   <tbody>
                     {filteredUsers.map((user: any) => (
-                      <tr key={user.id} className="border-b border-border/30 hover:bg-background/50 transition-colors">
+                      <tr key={user.id} className="border-b border-border/10 transition-colors group">
                         <td className="p-4">
                           <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9 border border-border/50">
-                              <AvatarFallback className="bg-accent/10 text-accent">
+                            <Avatar className="h-9 w-9 border border-border/50 group-hover:border-white/30 transition-colors">
+                              <AvatarFallback className="bg-accent/10 text-accent group-hover:bg-white/20 group-hover:text-white transition-colors">
                                 {user.username?.substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-medium text-card-foreground">{user.username}</p>
-                              <p className="text-xs text-card-foreground/60">{user.email}</p>
+                              <p className="font-bold text-card-foreground group-hover:text-white transition-colors">{user.username}</p>
+                              <p className="text-xs text-card-foreground/60 group-hover:text-white/60 transition-colors">{user.email}</p>
                             </div>
                           </div>
                         </td>
                         <td className="p-4">
-                          {getRoleBadge(user.role)}
+                          <div className="group-hover:opacity-80 transition-opacity">
+                            {getRoleBadge(user.role)}
+                          </div>
                         </td>
                         <td className="p-4 text-center">
-                          <span className="text-sm font-medium text-card-foreground">
+                          <span className="text-sm font-bold text-card-foreground group-hover:text-white transition-colors">
                             {user.enrolledCourses?.length || 0}
                           </span>
                         </td>
-                        <td className="p-4 text-sm text-card-foreground/70">
+                        <td className="p-4 text-sm text-card-foreground/70 group-hover:text-white/70 transition-colors">
                           {new Date(parseInt(user.createdAt || Date.now().toString())).toLocaleDateString()}
                         </td>
                         <td className="p-4 text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" className="group-hover:text-white transition-colors">
                                 <MoreVertical className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>

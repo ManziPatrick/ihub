@@ -146,23 +146,23 @@ export const ENROLL_STUDENT_IN_COURSE = gql`
 `;
 
 export const CREATE_COURSE = gql`
-  mutation CreateCourse($title: String!, $description: String!, $thumbnail: String, $price: Float, $discountPrice: Float, $level: String, $category: String, $instructorId: ID, $status: String, $submissionRequired: Boolean, $modules: [ModuleInput!]!) {
-    createCourse(title: $title, description: $description, thumbnail: $thumbnail, price: $price, discountPrice: $discountPrice, level: $level, category: $category, instructorId: $instructorId, status: $status, submissionRequired: $submissionRequired, modules: $modules) {
+  mutation CreateCourse($title: String!, $description: String!, $category: String!, $level: String, $thumbnail: String, $instructorId: ID!, $price: Float, $discountPrice: Float, $modules: [ModuleInput], $submissionRequired: Boolean, $status: String, $enrollmentMode: String, $signerName: String, $signerSignature: String, $applicationQuestions: [ApplicationQuestionInput]) {
+    createCourse(title: $title, description: $description, category: $category, level: $level, thumbnail: $thumbnail, instructorId: $instructorId, price: $price, discountPrice: $discountPrice, modules: $modules, submissionRequired: $submissionRequired, status: $status, enrollmentMode: $enrollmentMode, signerName: $signerName, signerSignature: $signerSignature, applicationQuestions: $applicationQuestions) {
       id
       title
-      status
-      submissionRequired
     }
   }
 `;
 
 export const UPDATE_COURSE = gql`
-  mutation UpdateCourse($id: ID!, $title: String, $description: String, $thumbnail: String, $price: Float, $discountPrice: Float, $level: String, $category: String, $instructorId: ID, $status: String, $submissionRequired: Boolean, $modules: [ModuleInput!]) {
-    updateCourse(id: $id, title: $title, description: $description, thumbnail: $thumbnail, price: $price, discountPrice: $discountPrice, level: $level, category: $category, instructorId: $instructorId, status: $status, submissionRequired: $submissionRequired, modules: $modules) {
+  mutation UpdateCourse($id: ID!, $title: String, $description: String, $thumbnail: String, $price: Float, $discountPrice: Float, $level: String, $category: String, $instructorId: ID, $status: String, $enrollmentMode: String, $submissionRequired: Boolean, $modules: [ModuleInput!], $signerName: String, $signerSignature: String, $applicationQuestions: [ApplicationQuestionInput]) {
+    updateCourse(id: $id, title: $title, description: $description, thumbnail: $thumbnail, price: $price, discountPrice: $discountPrice, level: $level, category: $category, instructorId: $instructorId, status: $status, enrollmentMode: $enrollmentMode, submissionRequired: $submissionRequired, modules: $modules, signerName: $signerName, signerSignature: $signerSignature, applicationQuestions: $applicationQuestions) {
       id
       title
       status
       submissionRequired
+      signerName
+      signerSignature
     }
   }
 `;
@@ -185,8 +185,8 @@ export const CREATE_USER = gql`
 `;
 
 export const UPDATE_USER = gql`
-  mutation UpdateUser($id: ID!, $username: String, $email: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $phone: String, $location: String, $title: String) {
-    updateUser(id: $id, username: $username, email: $email, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, phone: $phone, location: $location, title: $title) {
+  mutation UpdateUser($id: ID!, $username: String, $email: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $phone: String, $location: String, $title: String, $certificateName: String) {
+    updateUser(id: $id, username: $username, email: $email, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, phone: $phone, location: $location, title: $title, certificateName: $certificateName) {
       id
       username
       fullName
@@ -198,6 +198,7 @@ export const UPDATE_USER = gql`
       location
       title
       permissions
+      certificateName
     }
   }
 `;
@@ -216,6 +217,29 @@ export const COMPLETE_LESSON = gql`
         courseId
         lessonId
       }
+    }
+  }
+`;
+
+export const REWARD_STUDENT = gql`
+  mutation RewardStudent($xp: Int!, $streak: Int) {
+    rewardStudent(xp: $xp, streak: $streak) {
+      id
+      xp
+      streak
+      level
+    }
+  }
+`;
+
+export const GENERATE_AI_QUIZ = gql`
+  mutation GenerateAIQuiz($courseId: ID!, $lessonId: ID!, $questionCount: Int, $prompt: String) {
+    generateAIQuiz(courseId: $courseId, lessonId: $lessonId, questionCount: $questionCount, prompt: $prompt) {
+      id
+      questionText
+      options
+      correctOptionIndex
+      explanation
     }
   }
 `;
@@ -520,6 +544,15 @@ export const ISSUE_CERTIFICATE = gql`
   }
 `;
 
+export const UPDATE_CERTIFICATE_NAME = gql`
+  mutation UpdateCertificateRecipientName($id: ID!, $recipientName: String!) {
+    updateCertificateRecipientName(id: $id, recipientName: $recipientName) {
+      id
+      recipientName
+    }
+  }
+`;
+
 export const UPDATE_INTERNSHIP = gql`
   mutation UpdateInternship(
     $id: ID!
@@ -651,12 +684,13 @@ export const DELETE_INTERNSHIP = gql`
 `;
 
 export const PAY_FOR_COURSE = gql`
-  mutation PayForCourse($courseId: ID!, $amount: Float!, $paymentMethod: String!) {
-    payForCourse(courseId: $courseId, amount: $amount, paymentMethod: $paymentMethod) {
+  mutation PayForCourse($courseId: ID!, $amount: Float!, $paymentMethod: String!, $selectedDeliveryMode: String) {
+    payForCourse(courseId: $courseId, amount: $amount, paymentMethod: $paymentMethod, selectedDeliveryMode: $selectedDeliveryMode) {
       id
       status
       amount
       currency
+      selectedDeliveryMode
     }
   }
 `;
@@ -873,6 +907,36 @@ export const UPDATE_INTERNSHIP_PROGRAM_NEW = gql`
 export const DELETE_INTERNSHIP_PROGRAM_NEW = gql`
   mutation DeleteInternshipProgram($id: ID!) {
     deleteInternshipProgram(id: $id)
+  }
+`;
+
+export const APPLY_TO_COURSE = gql`
+  mutation ApplyToCourse($courseId: ID!, $applicationAnswers: [ApplicationAnswerInput], $selectedDeliveryMode: String) {
+    applyToCourse(courseId: $courseId, applicationAnswers: $applicationAnswers, selectedDeliveryMode: $selectedDeliveryMode) {
+      id
+      status
+    }
+  }
+`;
+
+export const UPDATE_COURSE_APPLICATION_STATUS = gql`
+  mutation UpdateCourseApplicationStatus($applicationId: ID!, $status: String!, $rejectionReason: String) {
+    updateCourseApplicationStatus(applicationId: $applicationId, status: $status, rejectionReason: $rejectionReason) {
+      id
+      status
+      rejectionReason
+      user {
+        id
+        username
+        fullName
+        email
+      }
+      course {
+        id
+        title
+      }
+      createdAt
+    }
   }
 `;
 

@@ -36,6 +36,9 @@ import {
   FileBox,
   Calendar,
   AlertCircle,
+  Star,
+  Flame,
+  Trophy,
 } from "lucide-react";
 import { RequestHelpDialog, BookCallDialog } from "@/components/portal/dialogs";
 import { LessonQuiz } from "@/components/portal/LessonQuiz";
@@ -132,8 +135,10 @@ export default function CourseDetail() {
   const currentLesson = allLessons.find(l => (l.id || l._id) === activeLessonId) || allLessons[0];
   const currentIndex = allLessons.findIndex(l => (l.id || l._id) === activeLessonId);
 
-  const completedCount = allLessons.filter(l => completedLessons.some((cl: any) => cl.courseId === courseId && cl.lessonId === (l.id || l._id))).length;
-  const progressPercent = allLessons.length > 0 ? Math.round((completedCount / allLessons.length) * 100) : 0;
+  const totalSatisfied = allLessons.filter(l => completedLessons.some((cl: any) => cl.courseId === courseId && cl.lessonId === (l.id || l._id)) || forcedProgressLessonIds.includes(l.id || l._id)).length;
+  const progressPercent = Math.round((totalSatisfied / allLessons.length) * 100) || 0;
+
+  const isCourseCompleted = me?.completedCourses?.some((cc: any) => cc.id === courseId);
   const currentLessonRequiresAssignment = !!(currentLesson?.type === 'assignment' || currentLesson?.isAssignment);
   const currentLessonSubmission = submissionsData?.getAssignmentSubmissions?.items?.find((submission) => !me?.id || submission.userId === me.id);
   const currentLessonSubmissionStatus = currentLessonSubmission?.status;
@@ -296,12 +301,60 @@ export default function CourseDetail() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="w-48 bg-muted/20 rounded-full h-2">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/20 rounded-2xl">
+              <Star className="w-4 h-4 text-gold fill-current" />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase text-gold/60 leading-none">XP Points</span>
+                <span className="text-sm font-black text-gold">{me?.xp || 0}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/20 rounded-2xl">
+              <Flame className="w-4 h-4 text-accent fill-current" />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase text-accent/60 leading-none">Streak</span>
+                <span className="text-sm font-black text-accent">{me?.streak || 0} Days</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-muted/10 border border-border/20 rounded-2xl">
+              <Trophy className="w-4 h-4 text-muted-foreground" />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground leading-none">Level</span>
+                <span className="text-sm font-black text-foreground">{me?.level || 1}</span>
+              </div>
+            </div>
+            <div className="w-48 bg-muted/20 rounded-full h-2 hidden md:block">
               <div className="bg-gold h-full rounded-full transition-all duration-1000" style={{ width: `${progressPercent}%` }} />
             </div>
           </div>
         </motion.div>
+
+        {/* Course Completion Celebration */}
+        {isCourseCompleted && (
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="p-6 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-3xl mb-8 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative"
+          >
+            <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+              <Trophy className="w-32 h-32 text-green-500" />
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center text-white shadow-xl shadow-green-500/20">
+                <CheckCircle className="w-8 h-8" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black text-foreground">Course Mastered! 🎉</h2>
+                <p className="text-muted-foreground">Congratulations! You've successfully completed every unit in this track.</p>
+              </div>
+            </div>
+            <Link to="/portal/student/certificates">
+              <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 rounded-2xl shadow-lg shadow-green-500/20">
+                View Certificate
+              </Button>
+            </Link>
+          </motion.div>
+        )}
 
         <div className="grid lg:grid-cols-12 gap-6">
           {/* Main Area */}
@@ -531,7 +584,14 @@ export default function CourseDetail() {
                                   className={`w-full text-left p-3 rounded-xl text-sm transition-all flex items-center gap-3 ${isActive ? 'bg-accent/10 border border-accent/20 text-accent font-bold' : isLock ? 'opacity-30 cursor-not-allowed grayscale pointer-events-none' : 'hover:bg-muted/10'}`}
                                 >
                                   {isComp ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : isLock ? <Lock className="w-3.5 h-3.5" /> : React.createElement(getLessonIcon(les.type), { className: "w-3.5 h-3.5" })}
-                                  <span className="truncate">{les.title}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="truncate">{les.title}</p>
+                                    {les.type === 'quiz' && me?.grades?.some((g: any) => g.lessonId === lesId) && (
+                                      <p className="text-[10px] text-accent font-black uppercase">
+                                        Grade: {me.grades.find((g: any) => g.lessonId === lesId).score}%
+                                      </p>
+                                    )}
+                                  </div>
                                 </button>
                               );
                             })}

@@ -184,10 +184,10 @@ export function FileUpload({
                     <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-3">
                         <Upload className="w-6 h-6 text-accent" />
                     </div>
-                    <p className="text-sm font-medium text-foreground mb-1">{label}</p>
-                    <p className="text-xs text-muted-foreground text-center mb-4">
+                    <p className="text-[11px] font-black text-foreground mb-1 uppercase tracking-widest">Click to upload screenshot</p>
+                    <p className="text-[10px] text-muted-foreground text-center mb-4">
                         Drag & drop or click to browse<br />
-                        Max size: {maxSizeMB}MB
+                        Max size: 100MB
                     </p>
                     <input
                         type="file"

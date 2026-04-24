@@ -6,6 +6,9 @@ export interface ICertificate extends Document {
     courseTitle: string;
     issueDate?: Date;
     credentialId?: string;
+    recipientName?: string;
+    signerName?: string;
+    signerSignature?: string;
     status: string; // 'issued', 'in_progress'
     progress?: number;
     requirements?: Array<{
@@ -25,6 +28,9 @@ const CertificateSchema: Schema = new Schema(
         courseTitle: { type: String, required: true },
         issueDate: { type: Date },
         credentialId: { type: String },
+        recipientName: { type: String },
+        signerName: { type: String },
+        signerSignature: { type: String },
         status: { type: String, required: true, enum: ['issued', 'in_progress'], default: 'in_progress' },
         progress: { type: Number, default: 0, min: 0, max: 100 },
         requirements: [

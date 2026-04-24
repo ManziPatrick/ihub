@@ -2,16 +2,26 @@ import { useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { Download, Printer, Award, ShieldCheck, MapPin, Globe, Mail, Phone, Calendar, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useBranding } from "@/components/BrandingProvider";
 import { useAuth } from "@/contexts/AuthContext";
+import { CertificateTemplate } from "../CertificateTemplate";
+import { useMutation } from "@apollo/client/react";
+import { UPDATE_CERTIFICATE_NAME } from "@/lib/graphql/mutations";
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Check, Edit2 } from "lucide-react";
 
 interface Certificate {
   id: string;
   courseTitle: string;
   issueDate: string;
   credentialId: string;
+  recipientName?: string;
+  signerName?: string;
+  signerSignature?: string;
   user?: {
       fullName: string;
   };
@@ -31,8 +41,34 @@ export function ViewCertificateDialog({
   const { branding } = useBranding();
   const { user } = useAuth();
   const certificateRef = useRef<HTMLDivElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  const [updateName, { loading: updating }] = useMutation(UPDATE_CERTIFICATE_NAME);
+
+  useEffect(() => {
+    if (certificate) {
+        setNewName(certificate.recipientName || certificate.user?.fullName || user?.fullName || "");
+    }
+  }, [certificate, user]);
   
   if (!certificate) return null;
+
+  const handleUpdateName = async () => {
+    try {
+        await updateName({
+            variables: {
+                id: certificate.id,
+                recipientName: newName
+            }
+        });
+        toast.success("Certificate name updated successfully");
+        setIsEditing(false);
+        // We might want to refetch or update local state here
+    } catch (error: any) {
+        toast.error(error.message);
+    }
+  };
 
   const handleDownload = () => {
     const content = document.getElementById('certificate-content');
@@ -112,100 +148,59 @@ export function ViewCertificateDialog({
         </DialogHeader>
         
         <ScrollArea className="flex-1 custom-scrollbar">
-          <div className="p-4 md:p-10 flex justify-center bg-zinc-100 dark:bg-zinc-900/50" id="certificate-view">
+          <div className="p-4 md:p-10 flex flex-col items-center bg-zinc-100 dark:bg-zinc-900/50" id="certificate-view">
+            
+            {/* Name Editor */}
+            <div className="w-full max-w-[1000px] mb-6 p-4 bg-white dark:bg-zinc-950 rounded-xl border border-border/50 flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
+                <div className="flex items-center gap-3">
+                    <UserIcon className="w-5 h-5 text-accent" />
+                    <div>
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Recipient Name</p>
+                        {isEditing ? (
+                            <div className="flex items-center gap-2 mt-1">
+                                <Input 
+                                    value={newName} 
+                                    onChange={(e) => setNewName(e.target.value)}
+                                    className="h-8 w-64 bg-muted/50"
+                                    placeholder="Enter full name"
+                                />
+                                <Button size="icon" variant="gold" className="h-8 w-8" onClick={handleUpdateName} disabled={updating}>
+                                    <Check className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        ) : (
+                            <p className="font-bold text-foreground flex items-center gap-2">
+                                {newName || 'Not set'}
+                                <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-accent" onClick={() => setIsEditing(true)}>
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                </Button>
+                            </p>
+                        )}
+                    </div>
+                </div>
+                <div className="text-right">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Verification Status</p>
+                    <Badge className="bg-green-500/20 text-green-500 border-green-500/30 gap-1.5 px-2 py-1">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        Official & Verified
+                    </Badge>
+                </div>
+            </div>
+
             {/* Design for the Certificate */}
             <div 
               id="certificate-content" 
               ref={certificateRef}
-              className="w-full max-w-[1000px] aspect-[1.414/1] bg-white dark:bg-zinc-950 relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] border-[16px] border-double border-accent/20"
+              className="w-full max-w-[1000px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] group"
             >
-                {/* Decorative Corners */}
-                <div className="absolute top-0 left-0 w-32 h-32 border-t-8 border-l-8 border-accent/60 m-8" />
-                <div className="absolute top-0 right-0 w-32 h-32 border-t-8 border-r-8 border-accent/60 m-8" />
-                <div className="absolute bottom-0 left-0 w-32 h-32 border-b-8 border-l-8 border-accent/60 m-8" />
-                <div className="absolute bottom-0 right-0 w-32 h-32 border-b-8 border-r-8 border-accent/60 m-8" />
-
-                {/* Background Patterns */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none select-none flex items-center justify-center">
-                     <Award className="w-[600px] h-[600px] text-accent rotate-[-15deg]" />
-                </div>
-                
-                {/* Main Content Container */}
-                <div className="relative z-10 h-full flex flex-col items-center justify-between p-16 md:p-24 text-center">
-                    {/* Header */}
-                    <div className="space-y-4">
-                         <div className="flex items-center justify-center gap-3 mb-6">
-                            <div className="w-14 h-14 bg-accent flex items-center justify-center rounded-xl shadow-lg">
-                                <span className="text-3xl font-bold text-white tracking-tighter">≪</span>
-                            </div>
-                            <div className="text-left">
-                                <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase leading-none">{branding.siteName}</h2>
-                                <p className="text-[10px] text-accent font-bold tracking-[0.3em] uppercase mt-1">Academy of Innovation</p>
-                            </div>
-                         </div>
-                         <h1 className="text-4xl md:text-6xl font-heading font-black text-foreground tracking-tight uppercase">
-                            Certificate of Achievement
-                         </h1>
-                         <div className="h-1.5 w-48 bg-accent mx-auto rounded-full" />
-                    </div>
-
-                    {/* Body */}
-                    <div className="space-y-8 flex-1 flex flex-col justify-center">
-                        <p className="text-lg md:text-xl text-muted-foreground italic font-medium">
-                            This is to certify that
-                        </p>
-                        <h2 className="text-5xl md:text-7xl font-heading font-black text-accent tracking-tighter break-words px-4">
-                            {certificate.user?.fullName || user?.fullName || 'Valued Student'}
-                        </h2>
-                        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                            has successfully completed the comprehensive training program and met all the professional requirements for
-                        </p>
-                        <h3 className="text-2xl md:text-4xl font-black text-foreground uppercase tracking-tight">
-                            {certificate.courseTitle}
-                        </h3>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="w-full grid grid-cols-3 gap-8 items-end pt-8">
-                        {/* Issued Date */}
-                        <div className="flex flex-col items-center gap-2">
-                            <div className="text-sm font-bold text-foreground border-b-2 border-border/50 pb-2 px-8 w-full">
-                                {new Date(certificate.issueDate).toLocaleDateString(undefined, { dateStyle: 'long' })}
-                            </div>
-                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Date of Issue</span>
-                        </div>
-
-                        {/* Seal */}
-                        <div className="relative flex justify-center">
-                            <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-accent/10 border-4 border-dotted border-accent flex items-center justify-center relative">
-                                <ShieldCheck className="w-16 h-16 md:w-20 md:h-20 text-accent opacity-80" />
-                                <div className="absolute inset-0 flex items-center justify-center animate-[spin_20s_linear_infinite]">
-                                    <div className="w-full h-full border-2 border-accent/20 rounded-full" />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Credential ID */}
-                        <div className="flex flex-col items-center gap-2">
-                             <div className="text-sm font-bold text-foreground border-b-2 border-border/50 pb-2 px-8 w-full font-mono">
-                                {certificate.credentialId}
-                            </div>
-                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Verification ID</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer Badges/Logos */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-8 opacity-40 grayscale group-hover:grayscale-0 transition-all">
-                    <div className="flex items-center gap-1.5">
-                        <MapPin className="w-3 h-3" />
-                        <span className="text-[8px] font-bold">Kigali, Rwanda</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <Globe className="w-3 h-3" />
-                        <span className="text-[8px] font-bold">codemande.com</span>
-                    </div>
-                </div>
+                <CertificateTemplate 
+                    recipientName={newName}
+                    courseTitle={certificate.courseTitle}
+                    issueDate={certificate.issueDate}
+                    credentialId={certificate.credentialId}
+                    signerName={certificate.signerName || "Patrick Manzi"}
+                    signerSignature={certificate.signerSignature}
+                />
             </div>
           </div>
         </ScrollArea>

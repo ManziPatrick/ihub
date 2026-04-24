@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useMutation } from "@apollo/client/react";
 import { APPROVE_PAYMENT, REJECT_PAYMENT } from "@/lib/graphql/mutations";
-import { GET_PAYMENTS } from "@/lib/graphql/queries";
+import { GET_PAYMENTS, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
 import { CheckCircle, XCircle, ExternalLink, Eye } from "lucide-react";
 
 export function VerifyPaymentDialog({ open, onOpenChange, payment }: any) {
@@ -13,11 +13,11 @@ export function VerifyPaymentDialog({ open, onOpenChange, payment }: any) {
     const [isProcessing, setIsProcessing] = useState(false);
 
     const [approveMutation] = useMutation(APPROVE_PAYMENT, {
-        refetchQueries: [{ query: GET_PAYMENTS }]
+        refetchQueries: [{ query: GET_PAYMENTS }, { query: GET_ADMIN_DASHBOARD_DATA }]
     });
 
     const [rejectMutation] = useMutation(REJECT_PAYMENT, {
-        refetchQueries: [{ query: GET_PAYMENTS }]
+        refetchQueries: [{ query: GET_PAYMENTS }, { query: GET_ADMIN_DASHBOARD_DATA }]
     });
 
     const handleApprove = async () => {

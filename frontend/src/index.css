@@ -46,8 +46,8 @@
     --radius: 0.75rem;
     --gold-gradient: linear-gradient(135deg, #E6B94D 0%, #C9A24D 100%);
 
-    --font-heading: 'Playfair Display', Georgia, serif;
-    --font-body: 'Inter', system-ui, sans-serif;
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Outfit', sans-serif;
 
     /* Sidebar stays charcoal even in light mode for professional contrast */
     --sidebar-background: 240 2% 17%;
@@ -127,7 +127,8 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: var(--font-body);
+    font-family: 'Outfit', sans-serif;
+    line-height: 1.5;
     overflow-x: hidden;
     width: 100%;
     position: relative;
@@ -139,8 +140,10 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-heading);
-    @apply font-semibold tracking-tight text-foreground/90;
+    font-family: 'Outfit', sans-serif;
+    @apply font-semibold text-foreground/90;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
   }
 }
 

@@ -21,19 +21,37 @@ import {
   ArrowRight,
   Eye,
   Briefcase,
+  FolderOpen,
+  CheckCircle,
+  AlertCircle,
+  MessageSquare,
+  Upload,
+  FileText,
+  ExternalLink,
+  Layers,
+  Box,
+  Link as LinkIcon,
+  Sparkles
 } from "lucide-react";
 import { 
   EnrollCourseDialog, 
   FilterCoursesDialog,
   ViewCourseDetailDialog,
   ApplyInternshipDialog,
+  ApplyCourseDialog,
+  SubmitProjectDialog,
+  TeamChatDialog,
+  ViewGuidelinesDialog
 } from "@/components/portal/dialogs";
+import { ProjectMarketplace } from "@/components/portal/student/ProjectMarketplace";
+import { AIHelper } from "@/components/portal/AIHelper";
+import { Badge } from "@/components/ui/badge";
 import type { CourseFilters } from "@/components/portal/dialogs/FilterCoursesDialog";
 import { toast } from "sonner";
 
 
 import { useQuery } from "@apollo/client/react";
-import { GET_ME, GET_COURSES } from "@/lib/graphql/queries";
+import { GET_ME, GET_COURSES, GET_MY_PROJECTS } from "@/lib/graphql/queries";
 
 export default function StudentCourses() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,6 +60,7 @@ export default function StudentCourses() {
   // Queries
   const { data: meData, loading: meLoading } = useQuery(GET_ME);
   const { data: coursesData, loading: coursesLoading } = useQuery(GET_COURSES);
+  const { data: projectsData, loading: projectsLoading } = useQuery(GET_MY_PROJECTS);
 
   // Dialog states
   const [enrollCourse, setEnrollCourse] = useState<any | null>(null);
@@ -55,8 +74,31 @@ export default function StudentCourses() {
     priceRange: "Any Price",
   });
   const [applyInternshipOpen, setApplyInternshipOpen] = useState(false);
+  const [applyCourse, setApplyCourse] = useState<any | null>(null);
 
-  if (meLoading || coursesLoading) {
+  // Project dialog states
+  const [submitProject, setSubmitProject] = useState<any | null>(null);
+  const [chatProject, setChatProject] = useState<any | null>(null);
+  const [guidelinesProject, setGuidelinesProject] = useState<any | null>(null);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "in_progress":
+        return <Badge variant="outline" className="bg-accent/20 text-accent border-accent/30">In Progress</Badge>;
+      case "pending_review":
+        return <Badge variant="outline" className="bg-blue-500/20 text-blue-400 border-blue-400/30">Pending Review</Badge>;
+      case "completed":
+        return <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-400/30">Completed</Badge>;
+      case "pending_approval":
+        return <Badge variant="outline" className="bg-yellow-500/20 text-yellow-400 border-yellow-400/30">Pending Approval</Badge>;
+      case "rejected":
+        return <Badge variant="outline" className="bg-red-500/20 text-red-400 border-red-400/30">Rejected</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  if (meLoading || coursesLoading || projectsLoading) {
     return (
       <PortalLayout>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -153,6 +195,7 @@ export default function StudentCourses() {
           <TabsList>
             <TabsTrigger value="enrolled">Enrolled ({enrolledCourses.length})</TabsTrigger>
             <TabsTrigger value="available">Available Courses</TabsTrigger>
+            <TabsTrigger value="projects">My Projects ({(projectsData as any)?.myProjects?.length || 0})</TabsTrigger>
             <TabsTrigger value="completed">Completed</TabsTrigger>
           </TabsList>
 
@@ -320,9 +363,15 @@ export default function StudentCourses() {
                           <Button 
                             variant="gold" 
                             size="sm"
-                            onClick={() => setEnrollCourse(course)}
+                            onClick={() => {
+                              if (course.enrollmentMode === 'application') {
+                                setApplyCourse(course);
+                              } else {
+                                setEnrollCourse(course);
+                              }
+                            }}
                           >
-                            Enroll <ArrowRight className="w-4 h-4 ml-1" />
+                            {course.enrollmentMode === 'application' ? 'Apply' : 'Enroll'} <ArrowRight className="w-4 h-4 ml-1" />
                           </Button>
                         </div>
                       </CardContent>
@@ -331,6 +380,123 @@ export default function StudentCourses() {
                 );
               })}
             </div>
+          </TabsContent>
+
+          {/* Projects Tab */}
+          <TabsContent value="projects" className="space-y-6">
+            <div className="flex items-center gap-4 text-sm mb-4">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-accent/20 rounded-full">
+                <FolderOpen className="w-4 h-4 text-accent" />
+                <span className="text-foreground">{(projectsData as any)?.myProjects?.length || 0} Active Projects</span>
+              </div>
+            </div>
+
+            <Tabs defaultValue="my-projects" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-8 max-w-[400px]">
+                <TabsTrigger value="my-projects">My Projects</TabsTrigger>
+                <TabsTrigger value="browse">Browse Projects</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="my-projects" className="space-y-6">
+                {!(projectsData as any)?.myProjects?.length ? (
+                  <Card className="border-border/50 bg-gradient-to-br from-card to-accent/5 overflow-hidden">
+                    <CardContent className="p-8 lg:p-12">
+                      <div className="max-w-2xl mx-auto text-center">
+                        <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                          <FolderOpen className="w-8 h-8 text-accent" />
+                        </div>
+                        <h2 className="text-2xl font-heading font-bold mb-3">Your Portfolio Journey Starts Here</h2>
+                        <p className="text-muted-foreground mb-8">
+                          Projects are unlocked as you progress through your courses or when you're placed in an internship team.
+                        </p>
+                        <Button variant="gold" onClick={() => {
+                          const trigger = document.querySelector('[value="browse"]') as HTMLElement;
+                          trigger?.click();
+                        }}>
+                          Browse Available Projects
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-6">
+                    {(projectsData as any).myProjects.map((project: any, index: number) => (
+                      <motion.div
+                        key={project.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Card className="border-border/50">
+                          <CardContent className="p-6">
+                            <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div>
+                                    <div className="flex items-center gap-3 mb-1">
+                                      <h3 className="font-heading text-lg font-semibold text-card-foreground">
+                                        {project.title}
+                                      </h3>
+                                      {getStatusBadge(project.status)}
+                                    </div>
+                                    <p className="text-sm text-card-foreground/60">
+                                      {project.course} • {project.type}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div
+                                  className="text-card-foreground/70 text-sm mb-4 line-clamp-3"
+                                  dangerouslySetInnerHTML={{ __html: project.description }}
+                                />
+                                {project.status !== "completed" && (
+                                  <div className="mb-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-sm text-card-foreground/70">Progress</span>
+                                      <span className="text-sm font-medium text-accent">{project.progress}%</span>
+                                    </div>
+                                    <Progress value={project.progress} className="h-2" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="lg:w-64 space-y-4">
+                                <div className="space-y-2">
+                                  {project.status === "in_progress" && (
+                                    <>
+                                      <Button
+                                        variant="gold"
+                                        size="sm"
+                                        className="w-full rounded-xl font-bold"
+                                        onClick={() => setSubmitProject(project)}
+                                      >
+                                        <Upload className="w-4 h-4 mr-2" />
+                                        Submit
+                                      </Button>
+                                    </>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full rounded-xl"
+                                    onClick={() => setGuidelinesProject(project)}
+                                  >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    View Details
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="browse">
+                <ProjectMarketplace />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* Completed Courses */}
@@ -366,6 +532,30 @@ export default function StudentCourses() {
         open={!!viewCourse}
         onOpenChange={(open) => !open && setViewCourse(null)}
         course={viewCourse}
+      />
+      <ApplyCourseDialog
+        open={!!applyCourse}
+        onOpenChange={(open) => !open && setApplyCourse(null)}
+        course={applyCourse}
+      />
+
+      <SubmitProjectDialog
+        open={!!submitProject}
+        onOpenChange={(open) => !open && setSubmitProject(null)}
+        projectTitle={submitProject?.title || ""}
+        projectId={submitProject?.id || ""}
+      />
+      <TeamChatDialog
+        open={!!chatProject}
+        onOpenChange={(open) => !open && setChatProject(null)}
+        projectTitle={chatProject?.title || ""}
+        projectId={chatProject?.id || ""}
+        teamMembers={chatProject?.team || []}
+      />
+      <ViewGuidelinesDialog
+        open={!!guidelinesProject}
+        onOpenChange={(open) => !open && setGuidelinesProject(null)}
+        project={guidelinesProject}
       />
     </PortalLayout>
   );

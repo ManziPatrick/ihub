@@ -126,7 +126,7 @@ InternshipInvoiceSchema.pre('save', async function () {
 
         let sequence = 1;
         if (lastInvoice) {
-            const lastSequence = parseInt(lastInvoice.invoiceNumber.split('-')[2]);
+            const lastSequence = parseInt((lastInvoice as any).invoiceNumber.split('-')[2]);
             sequence = lastSequence + 1;
         }
 

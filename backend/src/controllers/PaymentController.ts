@@ -3,6 +3,7 @@
  * Handles payment initiation, status checks, and webhook processing
  */
 
+import mongoose from 'mongoose';
 import { Request, Response } from 'express';
 import { PaymentTransaction } from '../models/PaymentTransaction';
 import { createPaypackService } from '../services/paypack.service';
@@ -10,6 +11,8 @@ import { User } from '../models/User';
 import { Course } from '../models/Course';
 import { Internship } from '../models/Internship';
 import { Payment } from '../models/Payment';
+import { InternshipProgram } from '../models/internship/InternshipProgram';
+import { CourseProgress } from '../models/CourseProgress';
 
 // Extend Express Request to include user property
 declare global {
@@ -26,8 +29,10 @@ interface PaymentInitiateBody {
   phoneNumber: string;
   description?: string;
   courseId?: string;
+  courseIds?: string[];
   subscriptionId?: string;
   internshipProgramId?: string;
+  internshipIds?: string[];
 }
 
 class PaymentController {
@@ -44,12 +49,60 @@ class PaymentController {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const { amount, phoneNumber, description, courseId, subscriptionId, internshipProgramId } =
-        req.body as PaymentInitiateBody;
+      const { amount, phoneNumber, description, courseId, courseIds, subscriptionId, internshipProgramId, internshipIds, paymentMethod } =
+        req.body as PaymentInitiateBody & { paymentMethod?: string };
 
       // Validate input
       if (!amount || amount <= 0) {
         return res.status(400).json({ error: 'Invalid amount' });
+      }
+
+      if (paymentMethod === 'manual_transfer') {
+        const transactionId = `MANUAL-${Math.random().toString(36).substring(7).toUpperCase()}`;
+
+        // Build a smart itemTitle from actual course/program names
+        let smartTitle = description || 'Payment';
+        const allCourseIds = [...(courseIds || []), ...(courseId ? [courseId] : [])];
+        const allInternshipIds = [...(internshipIds || []), ...(internshipProgramId ? [internshipProgramId] : [])];
+        if (allCourseIds.length > 0) {
+          const firstCourse = await Course.findById(allCourseIds[0]).select('title').lean() as any;
+          if (firstCourse) {
+            smartTitle = allCourseIds.length === 1
+              ? firstCourse.title
+              : `${firstCourse.title} +${allCourseIds.length - 1} more`;
+          }
+        } else if (allInternshipIds.length > 0) {
+          const firstProg = await InternshipProgram.findById(allInternshipIds[0]).select('title').lean() as any;
+          if (firstProg) {
+            smartTitle = allInternshipIds.length === 1
+              ? firstProg.title
+              : `${firstProg.title} +${allInternshipIds.length - 1} more`;
+          }
+        }
+        
+        // Create a PENDING Payment record
+        const pendingPayment = new Payment({
+          userId,
+          amount: Math.floor(amount),
+          currency: 'RWF',
+          status: 'pending',
+          paymentMethod: 'Manual Bank Transfer',
+          transactionId,
+          type: (courseIds && courseIds.length > 0) || (internshipIds && internshipIds.length > 0) ? 'Bulk Enrollment' : (courseId ? 'Course Enrollment' : (internshipProgramId ? 'Internship Fee' : 'Subscription Fee')),
+          itemTitle: smartTitle,
+          courseId: courseId || undefined,
+          courseIds: courseIds && courseIds.length > 0 ? courseIds.map((id: string) => new mongoose.Types.ObjectId(id)) : [],
+          internshipId: subscriptionId || undefined,
+          internshipIds: internshipIds && internshipIds.length > 0 ? internshipIds.map((id: string) => new mongoose.Types.ObjectId(id)) : [],
+        });
+        await pendingPayment.save();
+
+        return res.status(201).json({
+          message: 'Manual payment initiated',
+          transactionId: pendingPayment._id,
+          status: 'pending',
+          instructions: 'Please transfer the amount to our bank account and upload the proof of payment.',
+        });
       }
 
       if (!phoneNumber) {
@@ -81,13 +134,35 @@ class PaymentController {
         paypackRef: paypackResponse.ref,
         description,
         courseId: courseId || null,
+        courseIds: courseIds || [],
         subscriptionId: subscriptionId || null,
         internshipProgramId: internshipProgramId || null,
+        internshipIds: internshipIds || [],
       });
 
       await paymentTransaction.save();
 
       // 3. Create a PENDING Payment record for immediate visibility in "Bills"
+      // Build a smart itemTitle from actual course/program names
+      let smartTitleMomo = description || 'Payment';
+      const allCourseIdsMomo = [...(courseIds || []), ...(courseId ? [courseId] : [])];
+      const allInternshipIdsMomo = [...(internshipIds || []), ...(internshipProgramId ? [internshipProgramId] : [])];
+      if (allCourseIdsMomo.length > 0) {
+        const firstCourse = await Course.findById(allCourseIdsMomo[0]).select('title').lean() as any;
+        if (firstCourse) {
+          smartTitleMomo = allCourseIdsMomo.length === 1
+            ? firstCourse.title
+            : `${firstCourse.title} +${allCourseIdsMomo.length - 1} more`;
+        }
+      } else if (allInternshipIdsMomo.length > 0) {
+        const firstProg = await InternshipProgram.findById(allInternshipIdsMomo[0]).select('title').lean() as any;
+        if (firstProg) {
+          smartTitleMomo = allInternshipIdsMomo.length === 1
+            ? firstProg.title
+            : `${firstProg.title} +${allInternshipIdsMomo.length - 1} more`;
+        }
+      }
+
       const pendingPayment = new Payment({
         userId,
         amount: Math.floor(amount),
@@ -95,10 +170,12 @@ class PaymentController {
         status: 'pending',
         paymentMethod: 'Paypack Mobile Money',
         transactionId: paypackResponse.ref, // Use Paypack ref as unique identifier
-        type: courseId ? 'Course Enrollment' : (internshipProgramId ? 'Internship Fee' : 'Subscription Fee'),
-        itemTitle: description || (courseId ? 'Course' : (internshipProgramId ? 'Internship' : 'Subscription')),
+        type: (courseIds && courseIds.length > 0) || (internshipIds && internshipIds.length > 0) ? 'Bulk Enrollment' : (courseId ? 'Course Enrollment' : (internshipProgramId ? 'Internship Fee' : 'Subscription Fee')),
+        itemTitle: smartTitleMomo,
         courseId: courseId || undefined,
+        courseIds: courseIds && courseIds.length > 0 ? courseIds.map((id: string) => new mongoose.Types.ObjectId(id)) : [],
         internshipId: subscriptionId || undefined,
+        internshipIds: internshipIds && internshipIds.length > 0 ? internshipIds.map((id: string) => new mongoose.Types.ObjectId(id)) : [],
       });
       await pendingPayment.save();
 
@@ -303,14 +380,16 @@ class PaymentController {
    */
   private async handleSuccessfulPayment(transaction: any): Promise<void> {
     try {
-      const { userId, courseId, subscriptionId, internshipProgramId, amount, description } = transaction;
+      const { userId, courseId, courseIds, subscriptionId, internshipProgramId, internshipIds, amount, description } = transaction;
 
       console.log(`Handling successful payment for transaction:`, {
         transactionId: transaction._id,
         userId,
         courseId,
+        courseIds,
         subscriptionId,
-        internshipProgramId
+        internshipProgramId,
+        internshipIds
       });
 
       // 1. Update the Payment record (for accounting/history)
@@ -331,10 +410,12 @@ class PaymentController {
             status: 'completed',
             paymentMethod: 'Paypack Mobile Money',
             transactionId: transaction.paypackRef,
-            type: courseId ? 'Course Enrollment' : (internshipProgramId ? 'Internship Fee' : 'Subscription Fee'),
-            itemTitle: description || (courseId ? 'Course' : (internshipProgramId ? 'Internship' : 'Subscription')),
+            type: courseIds?.length || internshipIds?.length ? 'Bulk Enrollment' : (courseId ? 'Course Enrollment' : (internshipProgramId ? 'Internship Fee' : 'Subscription Fee')),
+            itemTitle: description || (courseIds?.length || internshipIds?.length ? 'Multiple Items' : (courseId ? 'Course' : (internshipProgramId ? 'Internship' : 'Subscription'))),
             courseId: courseId || undefined,
-            internshipId: subscriptionId || undefined, 
+            courseIds: courseIds || [],
+            internshipId: subscriptionId || undefined,
+            internshipIds: internshipIds || [], 
           });
           await paymentRecord.save();
           console.log(`New payment record created for transaction ${transaction._id}`);
@@ -345,35 +426,54 @@ class PaymentController {
 
       // 2. Handle Course Enrollment
       if (courseId) {
-        const [user, course] = await Promise.all([
-          User.findById(userId),
-          Course.findById(courseId)
+        const courseIdObj = new mongoose.Types.ObjectId(courseId);
+        const userIdObj = new mongoose.Types.ObjectId(userId);
+
+        // Atomic updates to prevent race conditions
+        await Promise.all([
+          User.findByIdAndUpdate(userId, { 
+            $addToSet: { enrolledCourses: courseIdObj } 
+          }),
+          Course.findByIdAndUpdate(courseId, { 
+            $addToSet: { studentsEnrolled: userIdObj } 
+          }),
+          // Initialize Course Progress (Idempotent)
+          CourseProgress.findOneAndUpdate(
+            { userId: userIdObj, courseId: courseIdObj },
+            { $setOnInsert: { status: 'active', lessons: [] } },
+            { upsert: true, new: true }
+          )
         ]);
 
-        if (user && course) {
-          // Add course to user's enrolledCourses if not already there
-          const courseIdStr = courseId.toString();
-          const isEnrolled = user.enrolledCourses.some(id => id.toString() === courseIdStr);
-          
-          if (!isEnrolled) {
-            user.enrolledCourses.push(courseId);
-            await user.save();
-          }
-
-          // Add user to course's studentsEnrolled if not already there
-          const userIdStr = userId.toString();
-          const isUserInCourse = course.studentsEnrolled.some(id => id.toString() === userIdStr);
-          
-          if (!isUserInCourse) {
-            course.studentsEnrolled.push(userId);
-            await course.save();
-          }
-
-          console.log(`User ${userId} successfully enrolled in course ${courseId}`);
-        }
+        console.log(`User ${userId} successfully enrolled in course ${courseId} (Atomic)`);
       }
 
-      // 3. Handle Internship / Program
+      // 2.5 Handle Bulk Course Enrollment
+      if (courseIds && courseIds.length > 0) {
+        const courseIdObjs = courseIds.map((id: string) => new mongoose.Types.ObjectId(id));
+        const userIdObj = new mongoose.Types.ObjectId(userId);
+
+        // Atomic update for User
+        await User.findByIdAndUpdate(userId, {
+          $addToSet: { enrolledCourses: { $each: courseIdObjs } }
+        });
+
+        // Atomic updates for each Course
+        await Promise.all(courseIdObjs.flatMap((cId: mongoose.Types.ObjectId) => [
+          Course.findByIdAndUpdate(cId, {
+            $addToSet: { studentsEnrolled: userIdObj }
+          }),
+          CourseProgress.findOneAndUpdate(
+            { userId: userIdObj, courseId: cId },
+            { $setOnInsert: { status: 'active', lessons: [] } },
+            { upsert: true, new: true }
+          )
+        ]));
+
+        console.log(`User ${userId} successfully enrolled in ${courseIds.length} bulk courses (Atomic)`);
+      }
+
+      // 3. Handle Single Internship / Program
       if (subscriptionId) {
         const internship = await Internship.findById(subscriptionId);
         if (internship) {
@@ -388,11 +488,54 @@ class PaymentController {
           console.log(`Internship ${subscriptionId} marked as paid and enrolled`);
         }
       }
+
+      // 4. Handle Bulk Internship Enrollment
+      if (internshipIds && internshipIds.length > 0) {
+        for (const iId of internshipIds) {
+          const internship = await Internship.findById(iId);
+          if (internship) {
+            internship.payment = {
+              ...internship.payment,
+              status: 'paid',
+              paidAt: new Date(),
+              amount: amount / internshipIds.length, // Distribute if needed, or rely on correct itemized prices
+            };
+            internship.status = 'enrolled'; 
+            await internship.save();
+            console.log(`Bulk Internship ${iId} marked as paid and enrolled`);
+          }
+        }
+      }
       
       // If payment was for a program fee (during application)
       if (internshipProgramId) {
-        // Any logic for program-level payments?
-        // E.g. we might want to flag the user as having paid for this program in their metadata
+        const program = await InternshipProgram.findById(internshipProgramId);
+        if (program) {
+          const existingInternship = await Internship.findOne({
+            userId,
+            title: program.title,
+            isDeleted: false
+          });
+
+          if (!existingInternship) {
+            const newInternship = new Internship({
+              userId,
+              title: program.title || 'Internship Program',
+              duration: program.duration || '3 Months',
+              type: 'Online',
+              status: 'enrolled',
+              progress: 0,
+              payment: {
+                amount: amount,
+                currency: 'RWF',
+                status: 'paid'
+              }
+            });
+            await newInternship.save();
+            console.log(`Internship enrollment created for program ${internshipProgramId}`);
+          }
+        }
+
         await User.findByIdAndUpdate(userId, {
           $push: {
             activityLog: {

@@ -38,7 +38,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_USERS } from "@/lib/graphql/queries";
+import { GET_USERS, GET_COURSES, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
 import { CREATE_COURSE } from "@/lib/graphql/mutations";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -72,6 +72,9 @@ export default function CreateCourse() {
     price: 0,
     discountPrice: 0,
     isFree: false,
+    signerName: "",
+    signerSignature: "",
+    enrollmentMode: "direct",
     modules: [] as any[]
   });
 
@@ -79,14 +82,18 @@ export default function CreateCourse() {
   const trainers = (usersData as any)?.users?.items?.filter((u: any) => u.role === 'trainer' || u.role === 'admin' || u.role === 'super_admin') || [];
 
   const [createCourse] = useMutation(CREATE_COURSE, {
-     onCompleted: () => {
-         toast.success("Course launched successfully!");
-         navigate("/portal/admin/courses");
-     },
-     onError: (err) => {
-         toast.error(err.message);
-         setIsSubmitting(false);
-     }
+    refetchQueries: [
+      { query: GET_COURSES, variables: { page: 1, limit: 10 } },
+      { query: GET_ADMIN_DASHBOARD_DATA }
+    ],
+    onCompleted: () => {
+      toast.success("Course launched successfully!");
+      navigate("/portal/admin/courses");
+    },
+    onError: (err) => {
+      toast.error(err.message);
+      setIsSubmitting(false);
+    }
   });
 
   const handleNext = () => {
@@ -667,6 +674,41 @@ export default function CreateCourse() {
                                         <Switch className="data-[state=checked]:bg-accent" checked={formData.submissionRequired} onCheckedChange={(checked) => updateFormData("submissionRequired", checked)} />
                                     </div>
 
+                                    <div className="glass-card rounded-[2.5rem] p-8 space-y-6">
+                                        <div className="flex items-center gap-3 pb-4 border-b border-border/20">
+                                            <Trophy className="w-5 h-5 text-accent" />
+                                            <h4 className="text-lg font-heading font-black">Certificate Configuration</h4>
+                                        </div>
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Signer Full Name</label>
+                                                <Input 
+                                                    placeholder="e.g. Dr. John Smith"
+                                                    value={formData.signerName}
+                                                    onChange={(e) => updateFormData("signerName", e.target.value)}
+                                                    className="h-12 bg-muted/20 border-border/40 rounded-xl"
+                                                />
+                                            </div>
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Signer Signature Image</label>
+                                                {formData.signerSignature ? (
+                                                    <div className="relative h-12 rounded-xl overflow-hidden border border-border/40 bg-white p-1 flex items-center justify-between">
+                                                        <img src={formData.signerSignature} className="h-full object-contain" />
+                                                        <Button variant="ghost" size="sm" onClick={() => updateFormData("signerSignature", "")} className="h-8 text-[9px] font-black uppercase tracking-widest text-destructive">Remove</Button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-12">
+                                                        <FileUpload 
+                                                            folder="signatures" 
+                                                            label="Upload Signature (PNG preferred)"
+                                                            onUploadComplete={(url) => updateFormData("signerSignature", url)}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div className="group flex items-center justify-between p-8 glass-card rounded-[2.5rem] hover:ring-2 ring-accent/20 transition-all">
                                         <div className="space-y-2">
                                             <h4 className="text-lg font-heading font-black flex items-center gap-2">
@@ -674,7 +716,21 @@ export default function CreateCourse() {
                                             </h4>
                                             <p className="text-xs text-muted-foreground max-w-sm">Skip the staging phase. Go live globally the moment you hit the launch button.</p>
                                         </div>
-                                        <Switch className="data-[state=checked]:bg-accent" checked={formData.status === 'published'} onCheckedChange={(checked) => updateFormData("status", checked ? 'published' : 'draft')} />
+                                         <Switch className="data-[state=checked]:bg-accent" checked={formData.status === 'published'} onCheckedChange={(checked) => updateFormData("status", checked ? 'published' : 'draft')} />
+                                     </div>
+
+                                    <div className="group flex items-center justify-between p-8 glass-card rounded-[2.5rem] hover:ring-2 ring-accent/20 transition-all">
+                                        <div className="space-y-2">
+                                            <h4 className="text-lg font-heading font-black flex items-center gap-2">
+                                                <Users className="w-5 h-5 text-accent" /> Require Application
+                                            </h4>
+                                            <p className="text-xs text-muted-foreground max-w-sm">Vet students before they can enroll. If disabled, students can enroll/pay directly.</p>
+                                        </div>
+                                        <Switch 
+                                            className="data-[state=checked]:bg-accent" 
+                                            checked={formData.enrollmentMode === 'application'} 
+                                            onCheckedChange={(checked) => updateFormData("enrollmentMode", checked ? 'application' : 'direct')} 
+                                        />
                                     </div>
                                 </div>
                             </div>

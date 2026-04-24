@@ -16,9 +16,10 @@ interface SubmitWorkDialogProps {
     teamId: string;
     milestoneId?: string;
     milestoneTitle?: string;
+    status?: string;
 }
 
-export function SubmitWorkDialog({ open, onOpenChange, teamId, milestoneId, milestoneTitle }: SubmitWorkDialogProps) {
+export function SubmitWorkDialog({ open, onOpenChange, teamId, milestoneId, milestoneTitle, status }: SubmitWorkDialogProps) {
     const [workUrl, setWorkUrl] = useState("");
     const [description, setDescription] = useState("");
 
@@ -60,7 +61,7 @@ export function SubmitWorkDialog({ open, onOpenChange, teamId, milestoneId, mile
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Upload className="w-5 h-5 text-accent" />
-                        Submit Work {milestoneTitle ? `- ${milestoneTitle}` : ""}
+                        {status && status !== 'pending' ? 'Resubmit Work' : 'Submit Work'} {milestoneTitle ? `- ${milestoneTitle}` : ""}
                     </DialogTitle>
                 </DialogHeader>
 
@@ -115,7 +116,7 @@ export function SubmitWorkDialog({ open, onOpenChange, teamId, milestoneId, mile
                             ) : (
                                 <>
                                     <CheckCircle className="w-4 h-4 mr-2" />
-                                    Submit Work
+                                    {status && status !== 'pending' ? 'Resubmit Proof' : 'Submit Proof'}
                                 </>
                             )}
                         </Button>
