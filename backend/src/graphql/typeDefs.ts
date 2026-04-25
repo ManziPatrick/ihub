@@ -347,6 +347,7 @@ export const typeDefs = `#graphql
     currency: String!
     date: String!
     status: String!
+    method: String
     selectedDeliveryMode: String
     proofOfPaymentUrl: String
     adminNotes: String
@@ -482,6 +483,7 @@ export const typeDefs = `#graphql
     credentialId: String
     recipientName: String
     status: String!
+    grade: Int
     progress: Int
     requirements: [Requirement]
     signerName: String
@@ -661,6 +663,7 @@ export const typeDefs = `#graphql
     courseId: ID!
     course: Course
     lessonId: String!
+    lesson: Lesson
     content: String! # URL or Text
     status: String! # 'pending', 'reviewed', 'revision_requested'
     grade: Int
@@ -902,7 +905,7 @@ export const typeDefs = `#graphql
     chatWithAI(message: String!): ChatResponse
     explainTask(taskTitle: String!, description: String!): ChatResponse
     reviewSubmission(taskTitle: String!, submissionContent: String!): ChatResponse
-    generateAIQuiz(courseId: ID!, lessonId: ID!, questionCount: Int, prompt: String): [Question]
+    generateAIQuiz(courseId: ID, lessonId: ID, courseTitle: String, lessonTitle: String, lessonContent: String, questionCount: Int, prompt: String): [Question]
 
     # Uploads
     getUploadSignature(folder: String, resourceType: String): UploadSignature!

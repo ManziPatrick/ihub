@@ -50,7 +50,8 @@ import {
     FolderOpen,
     Plus,
     Users,
-    FileCode
+    FileCode,
+    Download
 } from "lucide-react";
 
 interface AssignmentSubmission {
@@ -73,6 +74,9 @@ interface AssignmentSubmission {
         }
     };
     lessonId: string;
+    lesson?: {
+        title: string;
+    };
     content: string;
     status: string;
     grade?: number;
@@ -435,7 +439,7 @@ export default function TrainerProjects() {
                                                                 )}
                                                             </TableCell>
                                                             <TableCell className="text-xs text-muted-foreground">{submission.course?.title || "Unknown"}</TableCell>
-                                                            <TableCell className="text-xs">{submission.lessonId}</TableCell>
+                                                            <TableCell className="text-xs">{submission.lesson?.title || submission.lessonId}</TableCell>
                                                             <TableCell className="text-xs">{new Date(parseInt(submission.createdAt)).toLocaleDateString()}</TableCell>
                                                         </TableRow>
                                                     ))}
@@ -458,7 +462,7 @@ export default function TrainerProjects() {
                                                                 <label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Course & Lesson</label>
                                                                 <div className="flex items-center gap-2">
                                                                     <Badge className="bg-accent/10 text-accent border-accent/20">{selectedSubmission.course?.title || "Course: " + selectedSubmission.courseId}</Badge>
-                                                                    <Badge variant="outline" className="border-border/50">Lesson: {selectedSubmission.lessonId}</Badge>
+                                                                    <Badge variant="outline" className="border-border/50">Lesson: {selectedSubmission.lesson?.title || selectedSubmission.lessonId}</Badge>
                                                                 </div>
                                                             </div>
                                                             <div className="text-right">
@@ -494,21 +498,31 @@ export default function TrainerProjects() {
                                                         <div className="space-y-2">
                                                             <label className="text-sm font-bold">Submission Content</label>
                                                             <div className="p-4 bg-muted/20 rounded-lg border border-border/30">
-                                                                <p className="text-sm font-mono whitespace-pre-wrap break-all">{selectedSubmission.content}</p>
+                                                                <div className="mb-4">
+                                                                    <p className="text-sm font-mono whitespace-pre-wrap break-all bg-background/50 p-3 rounded border border-border/20">
+                                                                        {selectedSubmission.content}
+                                                                    </p>
+                                                                </div>
+                                                                
                                                                 {selectedSubmission.content.startsWith("http") && (
-                                                                    <div className="flex gap-2 mt-2">
-                                                                        <Button variant="ghost" size="sm" asChild>
+                                                                    <div className="flex flex-wrap gap-2 mt-4 border-t border-border/30 pt-4">
+                                                                        <Button variant="gold" size="sm" asChild>
                                                                             <a href={selectedSubmission.content} target="_blank" rel="noopener noreferrer">
                                                                                 <ExternalLink className="w-4 h-4 mr-2" />
-                                                                                Open Link
+                                                                                View Submission
                                                                             </a>
                                                                         </Button>
                                                                         <Button variant="outline" size="sm" className="border-border/50" asChild>
                                                                             <a href={selectedSubmission.content} download target="_blank" rel="noopener noreferrer">
-                                                                                <FolderOpen className="w-4 h-4 mr-2" />
-                                                                                Download
+                                                                                <Download className="w-4 h-4 mr-2" />
+                                                                                Download File
                                                                             </a>
                                                                         </Button>
+                                                                        {selectedSubmission.content.toLowerCase().endsWith(".pdf") && (
+                                                                            <p className="text-[10px] text-muted-foreground w-full mt-1 italic">
+                                                                                Tip: This appears to be a PDF file.
+                                                                            </p>
+                                                                        )}
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -626,7 +640,7 @@ export default function TrainerProjects() {
                                             <TableRow key={submission.id}>
                                                 <TableCell className="font-medium text-sm">{submission.user?.fullName || submission.user?.username}</TableCell>
                                                 <TableCell className="text-xs text-muted-foreground">{submission.course?.title || "Unknown"}</TableCell>
-                                                <TableCell className="text-xs">{submission.lessonId}</TableCell>
+                                                <TableCell className="text-xs">{submission.lesson?.title || submission.lessonId}</TableCell>
                                                 <TableCell>
                                                     <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
                                                         {submission.grade}/100

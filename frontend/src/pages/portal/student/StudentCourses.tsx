@@ -31,7 +31,8 @@ import {
   Layers,
   Box,
   Link as LinkIcon,
-  Sparkles
+  Sparkles,
+  XCircle
 } from "lucide-react";
 import { 
   EnrollCourseDialog, 
@@ -51,7 +52,7 @@ import { toast } from "sonner";
 
 
 import { useQuery } from "@apollo/client/react";
-import { GET_ME, GET_COURSES, GET_MY_PROJECTS } from "@/lib/graphql/queries";
+import { GET_ME, GET_COURSES, GET_MY_PROJECTS, MY_COURSE_APPLICATIONS } from "@/lib/graphql/queries";
 
 export default function StudentCourses() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,6 +62,7 @@ export default function StudentCourses() {
   const { data: meData, loading: meLoading } = useQuery(GET_ME);
   const { data: coursesData, loading: coursesLoading } = useQuery(GET_COURSES);
   const { data: projectsData, loading: projectsLoading } = useQuery(GET_MY_PROJECTS);
+  const { data: appsData, loading: appsLoading } = useQuery(MY_COURSE_APPLICATIONS);
 
   // Dialog states
   const [enrollCourse, setEnrollCourse] = useState<any | null>(null);
@@ -111,6 +113,7 @@ export default function StudentCourses() {
   const me = (meData as any)?.me;
   const enrolledCourses = me?.enrolledCourses || [];
   const completedLessons = me?.completedLessons || [];
+  const myApplications = (appsData as any)?.myCourseApplications || [];
   
   const allCoursesData = (coursesData as any)?.courses;
   const allCourses = allCoursesData?.items || [];
@@ -360,19 +363,52 @@ export default function StudentCourses() {
                           <span className="text-sm font-medium text-accent">
                             {isFree ? 'Free' : (course.price.toLocaleString() + ' RWF')}
                           </span>
-                          <Button 
-                            variant="gold" 
-                            size="sm"
-                            onClick={() => {
-                              if (course.enrollmentMode === 'application') {
-                                setApplyCourse(course);
-                              } else {
-                                setEnrollCourse(course);
-                              }
-                            }}
-                          >
-                            {course.enrollmentMode === 'application' ? 'Apply' : 'Enroll'} <ArrowRight className="w-4 h-4 ml-1" />
-                          </Button>
+                          {(() => {
+                            const application = myApplications.find((app: any) => app.courseId === (course.id || course._id));
+                            const appStatus = application?.status;
+
+                            if (appStatus === 'approved') {
+                              return (
+                                <Link to={`/portal/student/courses/${course.id || course._id}`}>
+                                  <Button variant="gold" size="sm">
+                                    Continue <ArrowRight className="w-4 h-4 ml-1" />
+                                  </Button>
+                                </Link>
+                              );
+                            }
+
+                            if (appStatus === 'pending') {
+                              return (
+                                <Button variant="outline" size="sm" disabled className="border-amber-500 text-amber-500">
+                                  Pending <Clock className="w-4 h-4 ml-1" />
+                                </Button>
+                              );
+                            }
+
+                            if (appStatus === 'rejected') {
+                              return (
+                                <Button variant="outline" size="sm" disabled className="border-red-500 text-red-500">
+                                  Rejected <XCircle className="w-4 h-4 ml-1" />
+                                </Button>
+                              );
+                            }
+
+                            return (
+                              <Button 
+                                variant="gold" 
+                                size="sm"
+                                onClick={() => {
+                                  if (course.enrollmentMode === 'application') {
+                                    setApplyCourse(course);
+                                  } else {
+                                    setEnrollCourse(course);
+                                  }
+                                }}
+                              >
+                                {course.enrollmentMode === 'application' ? 'Apply' : 'Enroll'} <ArrowRight className="w-4 h-4 ml-1" />
+                              </Button>
+                            );
+                          })()}
                         </div>
                       </CardContent>
                     </Card>

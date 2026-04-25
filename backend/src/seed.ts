@@ -31,6 +31,22 @@ dotenv.config();
 
 const createLessons = (baseTitle: string, count: number) => {
   const types = ['video', 'article', 'quiz', 'pdf', 'project'];
+  const videoIds = [
+    'bMknfKXIFA8', // React
+    '8hly31CYzvc', // Node.js
+    'PkZNo7MFNFg', // JS
+    'm7fN6X2C8w8', // Hospitality
+    'Z6Id6nQ8eE8', // Agriculture
+    '9He4U764o1s', // Economics
+    'S6L78-Fm0pA'  // Childcare
+  ];
+  
+  const pdfUrls = [
+    'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    'https://pdfobject.com/pdf/sample.pdf',
+    'https://unec.edu.az/application/uploads/2014/12/pdf-sample.pdf'
+  ];
+
   const lessons = [];
   for (let i = 1; i <= count; i++) {
     const isActuallyAssignment = i % 5 === 0;
@@ -40,15 +56,15 @@ const createLessons = (baseTitle: string, count: number) => {
 
     lessons.push({
       title: unitTitle,
-      content: `## ${unitTitle}\n\nDeep dive into ${baseTitle}.`,
+      content: `## ${unitTitle}\n\nThis lesson covers advanced concepts in **${baseTitle}**. \n\n### Learning Objectives:\n1. Understand the core principles of ${baseTitle}.\n2. Apply practical techniques in real-world scenarios.\n3. Master industry-standard workflows.`,
       duration: 15 + (i * 5),
       type: type,
-      videoUrl: type === 'video' ? 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' : null,
-      fileUrl: type === 'pdf' ? 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' : null,
+      videoUrl: type === 'video' ? `https://www.youtube.com/watch?v=${videoIds[i % videoIds.length]}` : null,
+      fileUrl: type === 'pdf' ? pdfUrls[i % pdfUrls.length] : null,
       isAssignment: isActuallyAssignment,
       requiredAssignment: isActuallyAssignment,
-      assignmentDescription: isActuallyAssignment ? `Submit your project implementation for ${unitTitle}.` : null,
-      assignmentDeliverables: isActuallyAssignment ? ['GitHub Repository URL', 'Live Demo Link'] : []
+      assignmentDescription: isActuallyAssignment ? `### Assignment for ${unitTitle}\n\nPlease implement the solution for the following challenge:\n\n1. Design a comprehensive system for ${baseTitle}.\n2. Ensure scalability and security.\n3. Document your decision-making process.` : null,
+      assignmentDeliverables: isActuallyAssignment ? ['Project Repository Link', 'Design Documentation (PDF)', 'Live URL'] : []
     });
   }
   return lessons;

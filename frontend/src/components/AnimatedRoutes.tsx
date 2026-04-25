@@ -37,6 +37,7 @@ const StudentInternships = lazy(() => import("@/pages/portal/student/StudentInte
 const StudentSchedule = lazy(() => import("@/pages/portal/student/StudentSchedule"));
 const StudentSupport = lazy(() => import("@/pages/portal/student/StudentSupport"));
 const StudentPayments = lazy(() => import("@/pages/portal/student/StudentPayments"));
+const StudentGrades = lazy(() => import("@/pages/portal/student/StudentGrades"));
 
 // Trainer Portal
 const TrainerDashboard = lazy(() => import("@/pages/portal/trainer/TrainerDashboard"));
@@ -145,6 +146,7 @@ export function AnimatedRoutes() {
           <Route path="/portal/student/internship" element={<ProtectedRoute allowedRoles={["student"]}><StudentInternships /></ProtectedRoute>} />
           <Route path="/portal/student/schedule" element={<ProtectedRoute allowedRoles={["student"]}><StudentSchedule /></ProtectedRoute>} />
           <Route path="/portal/student/billing" element={<ProtectedRoute allowedRoles={["student"]}><StudentPayments /></ProtectedRoute>} />
+          <Route path="/portal/student/gradings" element={<ProtectedRoute allowedRoles={["student"]}><StudentGrades /></ProtectedRoute>} />
           <Route path="/portal/student/profile" element={<ProtectedRoute allowedRoles={["student"]}><PortalSettings /></ProtectedRoute>} />
           <Route path="/portal/student/module-access" element={<ProtectedRoute allowedRoles={["student"]}><ModuleAccessDashboard /></ProtectedRoute>} />
 

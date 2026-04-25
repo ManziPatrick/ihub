@@ -64,6 +64,7 @@ interface NavItem {
 const studentNavItems: NavItem[] = [
   { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },
   { label: "My Courses", href: "/portal/student/courses", icon: BookOpen },
+  { label: "Gradings", href: "/portal/student/gradings", icon: Star },
   { label: "Projects", href: "/portal/student/projects", icon: FolderOpen },
   { label: "Certificates", href: "/portal/student/certificates", icon: Award },
   { label: "Internship", href: "/portal/student/internship", icon: Briefcase },

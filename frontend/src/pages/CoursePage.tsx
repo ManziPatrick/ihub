@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_COURSE, MY_COURSE_APPLICATIONS } from "@/lib/graphql/queries";
+import { GET_COURSE, MY_COURSE_APPLICATIONS, GET_ME, GET_COURSES } from "@/lib/graphql/queries";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -39,6 +39,7 @@ import { useState } from "react"; export default function CoursePage() {
       });
       refetch();
     },
+    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES }, { query: MY_COURSE_APPLICATIONS }],
     onError: (err) => {
       toast({
         title: "Error",
@@ -54,7 +55,7 @@ import { useState } from "react"; export default function CoursePage() {
   const course = (data as any)?.course;
   if (!course) return <div className="min-h-screen flex items-center justify-center">Course not found</div>;
 
-  const isEnrolled = user?.enrolledCourses?.includes(course.id || course._id) || course.studentsEnrolled.some((s: any) => s.id === user?.id);
+  const isEnrolled = user?.enrolledCourses?.some((c: any) => c.id === (course.id || course._id)) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
   const application = myApplications.find((app: any) => app.courseId === (course.id || course._id));
   const appStatus = application?.status;
   const isInCart = cartItems?.some((item: any) => item.id === (course.id || course._id));
@@ -198,6 +199,21 @@ import { useState } from "react"; export default function CoursePage() {
                         className="w-full h-12 text-lg font-bold shadow-lg shadow-gold/20"
                       >
                         Apply Now <ArrowRight className="w-5 h-5 ml-2" />
+                      </Button>
+                    ) : course.price === 0 ? (
+                      <Button
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            navigate("/auth", { state: { from: { pathname: `/courses/${course.id || course._id}` } } });
+                          } else {
+                            enrollMutation({ variables: { courseId: course.id || course._id } });
+                          }
+                        }}
+                        variant="gold"
+                        className="w-full h-12 text-lg font-bold shadow-lg shadow-gold/20"
+                        disabled={enrolling}
+                      >
+                        {enrolling ? "Enrolling..." : "Enroll Now"} <ArrowRight className="w-5 h-5 ml-2" />
                       </Button>
                     ) : (
                       <Button

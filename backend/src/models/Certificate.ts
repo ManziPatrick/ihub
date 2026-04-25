@@ -10,6 +10,7 @@ export interface ICertificate extends Document {
     signerName?: string;
     signerSignature?: string;
     status: string; // 'issued', 'in_progress'
+    grade?: number;
     progress?: number;
     requirements?: Array<{
         title: string;
@@ -32,6 +33,7 @@ const CertificateSchema: Schema = new Schema(
         signerName: { type: String },
         signerSignature: { type: String },
         status: { type: String, required: true, enum: ['issued', 'in_progress'], default: 'in_progress' },
+        grade: { type: Number },
         progress: { type: Number, default: 0, min: 0, max: 100 },
         requirements: [
             {

@@ -199,61 +199,20 @@ export const resolvers = {
 
       const items = (submissions as any).map((sub: any) => {
         const doc = sub._doc || sub;
-
-        // Safely extract course and instructor
-        let course = null;
-        if (sub.courseId) {
-          const cDoc = sub.courseId._doc || sub.courseId;
-          course = {
-            ...cDoc,
-            id: sub.courseId._id?.toString() || sub.courseId.toString()
-          };
-
-          if (course.instructor) {
-            // Check if it's a raw ObjectId (has _bsontype) or if it's unpopulated
-            if (course.instructor instanceof mongoose.Types.ObjectId || (course.instructor._bsontype === 'ObjectID')) {
-                // Unpopulated ObjectId
-                course.instructor = null;
-            } else if (course.instructor._id) {
-               // Populated Mongoose Document
-               const iDoc = course.instructor._doc || course.instructor;
-               course.instructor = {
-                 ...iDoc,
-                 id: course.instructor._id.toString()
-               };
-            } else {
-               // Some other object without _id? Just set to null to be safe
-               course.instructor = null;
-            }
-            
-            // To guarantee no buffers leak out
-            if (course.instructor) {
-                if (course.instructor.id && typeof course.instructor.id !== 'string') {
-                    course.instructor.id = course.instructor.id.toString();
-                }
-                if (course.instructor._id && typeof course.instructor._id !== 'string') {
-                    course.instructor._id = course.instructor._id.toString();
-                }
-            }
-          }
-        }
-
-        let user = null;
-        if (sub.userId) {
-          const uDoc = sub.userId._doc || sub.userId;
-          user = {
-            ...uDoc,
-            id: sub.userId._id?.toString() || sub.userId.toString()
-          };
-        }
-
         return {
           ...doc,
-          id: sub._id?.toString() || sub.id,
-          user: user,
-          userId: user?.id,
-          course: course,
-          courseId: course?.id
+          id: sub._id.toString(),
+          user: sub.userId,
+          userId: (sub.userId?._id || sub.userId)?.toString(),
+          course: sub.courseId,
+          courseId: (sub.courseId?._id || sub.courseId)?.toString(),
+          lessonId: sub.lessonId,
+          status: sub.status,
+          content: sub.content,
+          grade: sub.grade,
+          feedback: sub.feedback,
+          createdAt: sub.createdAt?.getTime().toString(),
+          updatedAt: sub.updatedAt?.getTime().toString()
         };
       });
 
@@ -1909,8 +1868,8 @@ export const resolvers = {
           return {
             ...obj,
             id: app._id,
-            courseId: (app.courseId as any)._id || app.courseId,
-            userId: app.userId ? (app.userId as any)._id || app.userId : null,
+            courseId: ((app.courseId as any)._id || app.courseId).toString(),
+            userId: app.userId ? ((app.userId as any)._id || app.userId).toString() : null,
             user: obj.userId,
             course: obj.courseId,
           };
@@ -1938,7 +1897,8 @@ export const resolvers = {
         return {
           ...obj,
           id: app._id,
-          courseId: (app.courseId as any)._id || app.courseId,
+          courseId: ((app.courseId as any)._id || app.courseId).toString(),
+          userId: app.userId.toString(),
           course: obj.courseId,
         };
       });
@@ -2266,7 +2226,6 @@ export const resolvers = {
           user.completedLessons.push({ courseId: submission.courseId, lessonId: submission.lessonId });
           await user.save();
 
-          // Update CourseProgress
           const progress = await CourseProgress.findOne({ userId: submission.userId, courseId: submission.courseId });
           if (progress) {
             const lIdx = progress.lessons.findIndex((l: any) => l.lessonId === submission.lessonId);
@@ -2280,6 +2239,44 @@ export const resolvers = {
                 lastAccessed: new Date(),
                 visits: 1
               });
+            }
+
+            // Recalculate overall progress and check for certificate
+            const course = await Course.findById(submission.courseId);
+            if (course) {
+              const allLessons = course.modules.flatMap((m: any) => m.lessons);
+              const completedCount = progress.lessons.filter((l: any) => l.completed).length;
+              progress.overallProgress = Math.round((completedCount / allLessons.length) * 100);
+
+              if (progress.overallProgress === 100 && progress.status !== 'completed') {
+                progress.status = 'completed';
+                progress.completionDate = new Date();
+
+                // Auto-generate Certificate
+                const existingCert = await Certificate.findOne({ userId: submission.userId, courseId: submission.courseId });
+                if (!existingCert) {
+                  // Calculate average grade
+                  const submissions = await AssignmentSubmission.find({ userId: submission.userId, courseId: submission.courseId });
+                  const totalGrade = submissions.reduce((acc, s) => acc + (s.grade || 0), 0);
+                  const avgGrade = submissions.length > 0 ? Math.round(totalGrade / submissions.length) : 100;
+
+                  await new Certificate({
+                    userId: submission.userId,
+                    courseId: submission.courseId,
+                    courseTitle: course.title,
+                    issueDate: new Date(),
+                    credentialId: `CERT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+                    status: 'issued',
+                    progress: 100,
+                    grade: avgGrade,
+                    signerName: course.signerName || 'Academic Director',
+                    signerSignature: course.signerSignature,
+                    recipientName: (user as any).certificateName || (user as any).fullName || user.username
+                  }).save();
+
+                  console.log(`🎓 Certificate issued to ${user.username} for ${course.title} with average grade ${avgGrade}`);
+                }
+              }
             }
             await progress.save();
           }
@@ -2802,25 +2799,44 @@ export const resolvers = {
       return user;
     },
 
-    generateAIQuiz: async (_: any, { courseId, lessonId, questionCount, prompt }: any, context: any) => {
+    generateAIQuiz: async (_: any, { courseId, lessonId, courseTitle, lessonTitle, lessonContent, questionCount, prompt }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
-      if (!courseId || courseId === "") throw new Error("Course ID is required for AI generation");
-      const course = await Course.findById(courseId);
-      if (!course) throw new Error('Course not found');
+      let finalCourseTitle = courseTitle;
+      let finalLessonTitle = lessonTitle;
+      let finalLessonContent = lessonContent;
 
-      const allLessons = course.modules.flatMap((m: any) => m.lessons);
-      const lesson = allLessons.find((l: any) => (l.id || l._id).toString() === lessonId);
-      if (!lesson) throw new Error('Lesson not found');
+      if (courseId && courseId !== "") {
+        const course = await Course.findById(courseId);
+        if (!course) throw new Error('Course not found');
+        finalCourseTitle = course.title;
 
-      const questions = await generateAIQuizService(course.title, lesson.title, lesson.content || '', questionCount || 3, prompt || "");
+        if (lessonId) {
+          const allLessons = course.modules.flatMap((m: any) => m.lessons);
+          const lesson = allLessons.find((l: any) => (l.id || l._id).toString() === lessonId);
+          if (lesson) {
+            finalLessonTitle = lesson.title;
+            finalLessonContent = lesson.content || '';
+          }
+        }
+      }
+
+      if (!finalCourseTitle) throw new Error("Course title or ID is required for AI generation");
+
+      const questions = await generateAIQuizService(
+        finalCourseTitle, 
+        finalLessonTitle || "General Lesson", 
+        finalLessonContent || '', 
+        questionCount || 3, 
+        prompt || ""
+      );
 
       // Return these questions with temporary IDs so the frontend can preview and edit them before saving
       const draftQuestions = questions.map((q: any) => ({
         ...q,
         id: `draft-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        courseId,
-        lessonId
+        courseId: courseId || "new",
+        lessonId: lessonId || "new"
       }));
 
       return draftQuestions;
@@ -6441,8 +6457,61 @@ export const resolvers = {
       return await Message.findById(parent.lastMessage);
     }
   },
+  AssignmentSubmission: {
+    user: async (parent: any) => {
+      if (parent.user && parent.user.username) return parent.user;
+      if (!parent.userId) return null;
+      return await User.findById(parent.userId);
+    },
+    course: async (parent: any) => {
+      if (parent.course && parent.course.title) return parent.course;
+      if (!parent.courseId) return null;
+      return await Course.findById(parent.courseId);
+    },
+    lesson: async (parent: any) => {
+      const course = parent.course && parent.course.modules 
+        ? parent.course 
+        : await Course.findById(parent.courseId);
+      
+      if (!course || !course.modules) return null;
+      
+      for (const mod of course.modules) {
+        const lesson = mod.lessons.find((l: any) => 
+          l.id?.toString() === parent.lessonId?.toString() || 
+          l._id?.toString() === parent.lessonId?.toString() ||
+          l.lessonId?.toString() === parent.lessonId?.toString()
+        );
+        if (lesson) return lesson;
+      }
+      return null;
+    }
+  },
   Course: {
     id: (parent: any) => parent.id || parent._id || parent.toString(),
+    instructor: async (parent: any) => {
+      if (!parent.instructor) return null;
+      
+      // If already populated
+      if (typeof parent.instructor === 'object' && parent.instructor.username) {
+        return parent.instructor;
+      }
+      
+      // If it's an ID (possibly a Buffer)
+      const instId = parent.instructor.toString();
+      
+      // Special case for the "Global Trainer" sequence mentioned by user
+      if (instId.startsWith('6534ab')) {
+        return { 
+          id: instId, 
+          username: 'globel trainer', 
+          fullName: 'Global Trainer',
+          role: 'trainer',
+          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=global'
+        };
+      }
+      
+      return await User.findById(parent.instructor);
+    }
   },
   Module: {
     id: (parent: any) => parent.id || parent._id || parent.toString(),
@@ -6561,17 +6630,7 @@ export const resolvers = {
     trainer: async (parent: any) => await User.findById(parent.trainerId),
     revokedByUser: async (parent: any) => parent.revokedBy ? await User.findById(parent.revokedBy) : null,
   },
-  AssignmentSubmission: {
-    user: async (parent: any) => {
-      if (parent.userId && (parent.userId as any).username) return parent.userId;
-      return await User.findById(parent.userId);
-    },
-    course: async (parent: any) => {
-      if (!parent.courseId) return null;
-      if ((parent.courseId as any).title) return parent.courseId;
-      return await Course.findById(parent.courseId);
-    },
-  },
+
   PaymentTransaction: {
     courses: async (parent: any) => {
       if (!parent.courseIds || parent.courseIds.length === 0) return [];
@@ -6607,6 +6666,7 @@ export const resolvers = {
     messageAdded: {
       subscribe: withFilter(
         () => (pubsub as any).asyncIterator(['MESSAGE_ADDED']),
+
         (payload, variables) => {
           return payload.messageAdded.conversationId.toString() === variables.conversationId;
         }

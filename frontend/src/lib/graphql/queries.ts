@@ -744,6 +744,7 @@ export const GET_MY_CERTIFICATES = gql`
       issueDate
       credentialId
       status
+      grade
       progress
       requirements {
         title
@@ -1906,6 +1907,9 @@ export const GET_ASSIGNMENT_SUBMISSIONS = gql`
           }
         }
         lessonId
+        lesson {
+          title
+        }
         content
         status
         grade

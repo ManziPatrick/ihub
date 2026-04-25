@@ -58,7 +58,7 @@ export default function CreateCourse() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({ 0: true });
-  const [questionLesson, setQuestionLesson] = useState<{ id: string, title: string } | null>(null);
+  const [questionLesson, setQuestionLesson] = useState<{ id: string, title: string, content?: string } | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -594,7 +594,7 @@ export default function CreateCourse() {
                                                                             className="h-11 rounded-xl text-[10px] font-black tracking-widest uppercase gap-2 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10 hover:text-amber-600"
                                                                             onClick={() => {
                                                                                 const lessonId = lesson.id || `${mIdx}-${lIdx}`;
-                                                                                setQuestionLesson({ id: lessonId, title: lesson.title });
+                                                                                setQuestionLesson({ id: lessonId, title: lesson.title, content: lesson.content });
                                                                             }}
                                                                         >
                                                                             <HelpCircle className="w-4 h-4" /> Quiz Builder
@@ -957,8 +957,10 @@ export default function CreateCourse() {
         open={!!questionLesson}
         onOpenChange={(open) => !open && setQuestionLesson(null)}
         courseId=""
+        courseTitle={formData.title}
         lessonId={questionLesson?.id}
         lessonTitle={questionLesson?.title}
+        lessonContent={questionLesson?.content}
       />
     </PortalLayout>
   );

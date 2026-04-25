@@ -15,6 +15,8 @@ interface ManageQuestionsDialogProps {
   courseId: string;
   lessonId?: string;
   lessonTitle?: string;
+  courseTitle?: string;
+  lessonContent?: string;
 }
 
 export function ManageQuestionsDialog({
@@ -22,7 +24,9 @@ export function ManageQuestionsDialog({
   onOpenChange,
   courseId,
   lessonId,
-  lessonTitle
+  lessonTitle,
+  courseTitle,
+  lessonContent
 }: ManageQuestionsDialogProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -111,18 +115,22 @@ export function ManageQuestionsDialog({
   };
 
   const handleGenerateAI = async () => {
-    if (!lessonId) {
+    if (!lessonId && !lessonTitle) {
       toast.error("AI Generation requires a specific lesson.");
       return;
     }
     setIsGenerating(true);
     try {
-      if (!courseId) {
-        toast.error("Course ID is missing. Please save the course first.");
-        return;
-      }
       const { data } = await generateAIQuiz({
-        variables: { courseId, lessonId, questionCount: aiQuestionCount, prompt: aiPrompt }
+        variables: { 
+          courseId: courseId || null, 
+          lessonId: (lessonId && lessonId.includes('-')) ? null : lessonId, // Handle temp IDs like "0-0"
+          courseTitle,
+          lessonTitle,
+          lessonContent,
+          questionCount: aiQuestionCount, 
+          prompt: aiPrompt 
+        }
       }) as any;
       
       if (data?.generateAIQuiz) {

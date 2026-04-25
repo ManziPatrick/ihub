@@ -7,17 +7,19 @@ import { getApiBaseUrl } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
-import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Shield, Building2, Stethoscope, GraduationCap, Landmark, ShoppingBag, Factory, BarChart, ChevronRight, User, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye } from "lucide-react";
+import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Shield, Building2, Stethoscope, GraduationCap, Landmark, ShoppingBag, Factory, BarChart, ChevronRight, User, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye, XCircle } from "lucide-react";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import aboutImage from "@/assets/about-training.webp";
 import aboutImageMobile from "@/assets/about-training-mobile.webp";
 import { useEffect, useState } from "react";
-import { useQuery } from "@apollo/client/react";
-import { GET_COURSES } from "@/lib/graphql/queries";
+import { useQuery, useMutation } from "@apollo/client/react";
+import { GET_COURSES, MY_COURSE_APPLICATIONS, GET_ME } from "@/lib/graphql/queries";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { EnrollCourseDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
+import { ENROLL_COURSE } from "@/lib/graphql/mutations";
+import { useToast } from "@/hooks/use-toast";
 
 interface AICourse {
   _id: string;
@@ -37,6 +39,8 @@ interface AICourse {
   slug: string;
   featured: boolean;
   enrollmentLink?: string;
+  id?: string;
+  studentsEnrolled?: any[];
 }
 
 const getDepartmentIcon = (dept: string) => {
@@ -81,17 +85,45 @@ const Training = () => {
   const [filter, setFilter] = useState("ALL");
   const [enrollCourse, setEnrollCourse] = useState<any>(null);
   const [applyCourse, setApplyCourse] = useState<any>(null);
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const { data: appsData } = useQuery(MY_COURSE_APPLICATIONS, {
+    skip: !isAuthenticated
+  });
+  const myApplications = (appsData as any)?.myCourseApplications || [];
+
+  const [enrollMutation, { loading: enrolling }] = useMutation(ENROLL_COURSE, {
+    onCompleted: () => {
+      toast({
+        title: "Success",
+        description: "You have successfully enrolled in this course!",
+      });
+    },
+    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES }, { query: MY_COURSE_APPLICATIONS }],
+    onError: (err) => {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  });
 
   const handleEnrollClick = (course: any) => {
     if (!user) {
-      toast.info("Please login to enroll in courses");
+      toast({
+        title: "Information",
+        description: "Please login to enroll in courses",
+      });
       navigate(`/auth?redirect=/training`);
       return;
     }
     if (course.enrollmentMode === 'application') {
       setApplyCourse(course);
+    } else if (course.price === 0) {
+      enrollMutation({ variables: { courseId: course.id || course._id } });
     } else {
       setEnrollCourse(course);
     }
@@ -253,14 +285,68 @@ const Training = () => {
                           <span className="text-xs font-semibold">{course.instructor?.username || 'Expert'}</span>
                         </div>
                       </div>
-                      <Button 
-                        variant="gold" 
-                        size="sm" 
-                        className="w-full rounded-xl font-bold h-10 shadow-lg shadow-gold/20"
-                        onClick={() => handleEnrollClick(course)}
-                      >
-                        Enroll Now <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
+
+                      {(() => {
+                        const isEnrolled = user?.enrolledCourses?.some((c: any) => c.id === (course.id || course._id)) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
+                        const application = myApplications.find((app: any) => app.courseId === (course.id || course._id));
+                        const appStatus = application?.status;
+
+                        if (isEnrolled) {
+                          return (
+                            <Button 
+                              className="w-full bg-green-600 hover:bg-green-700 h-10 rounded-xl text-sm font-bold shadow-lg"
+                              onClick={() => navigate(`/portal/student/courses/${course.id || course._id}`)}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" /> Learning
+                            </Button>
+                          );
+                        }
+
+                        if (appStatus === 'approved') {
+                          return (
+                            <Button 
+                              className="w-full bg-green-600 hover:bg-green-700 h-10 rounded-xl text-sm font-bold shadow-lg"
+                              onClick={() => navigate(`/portal/student/courses/${course.id || course._id}`)}
+                            >
+                              <ArrowRight className="w-4 h-4 mr-2" /> Continue
+                            </Button>
+                          );
+                        }
+
+                        if (appStatus === 'pending') {
+                          return (
+                            <Button 
+                              disabled
+                              className="w-full bg-amber-500 h-10 rounded-xl text-sm font-bold"
+                            >
+                              <Clock className="w-4 h-4 mr-2" /> Applied (Pending)
+                            </Button>
+                          );
+                        }
+
+                        if (appStatus === 'rejected') {
+                          return (
+                            <Button 
+                              disabled
+                              className="w-full bg-red-500 h-10 rounded-xl text-sm font-bold"
+                            >
+                              <XCircle className="w-4 h-4 mr-2" /> Rejected
+                            </Button>
+                          );
+                        }
+
+                        return (
+                          <Button 
+                            variant="gold" 
+                            size="sm" 
+                            className="w-full rounded-xl font-bold h-10 shadow-lg shadow-gold/20"
+                            onClick={() => handleEnrollClick(course)}
+                            disabled={enrolling}
+                          >
+                            {enrolling ? "Enrolling..." : "Enroll Now"} <ArrowRight className="w-4 h-4 ml-2" />
+                          </Button>
+                        );
+                      })()}
                     </div>
                   </div>
                 </motion.div>
@@ -405,14 +491,68 @@ const Training = () => {
                                 >
                                   <Eye size={18} />
                                 </Link>
-                                <Button
-                                  variant="gold"
-                                  size="sm"
-                                  className="flex-1 rounded-xl font-bold shadow-lg shadow-gold/20"
-                                  onClick={() => handleEnrollClick(course)}
-                                >
-                                  Enroll Now
-                                </Button>
+                                
+                                {(() => {
+                                  const isEnrolled = user?.enrolledCourses?.some((c: any) => c.id === (course.id || course._id)) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
+                                  const application = myApplications.find((app: any) => app.courseId === (course.id || course._id || course._id));
+                                  const appStatus = application?.status;
+
+                                  if (isEnrolled) {
+                                    return (
+                                      <Button 
+                                        className="flex-1 bg-green-600 hover:bg-green-700 rounded-xl font-bold h-10 shadow-lg"
+                                        onClick={() => navigate(`/portal/student/courses/${course.id || course._id}`)}
+                                      >
+                                        Learning
+                                      </Button>
+                                    );
+                                  }
+
+                                  if (appStatus === 'approved') {
+                                    return (
+                                      <Button 
+                                        className="flex-1 bg-green-600 hover:bg-green-700 rounded-xl font-bold h-10 shadow-lg"
+                                        onClick={() => navigate(`/portal/student/courses/${course.id || course._id}`)}
+                                      >
+                                        Continue
+                                      </Button>
+                                    );
+                                  }
+
+                                  if (appStatus === 'pending') {
+                                    return (
+                                      <Button 
+                                        disabled
+                                        className="flex-1 bg-amber-500 rounded-xl font-bold h-10 shadow-lg"
+                                      >
+                                        Pending
+                                      </Button>
+                                    );
+                                  }
+
+                                  if (appStatus === 'rejected') {
+                                    return (
+                                      <Button 
+                                        disabled
+                                        className="flex-1 bg-red-500 rounded-xl font-bold h-10 shadow-lg"
+                                      >
+                                        Rejected
+                                      </Button>
+                                    );
+                                  }
+
+                                  return (
+                                    <Button
+                                      variant="gold"
+                                      size="sm"
+                                      className="flex-1 rounded-xl font-bold shadow-lg shadow-gold/20"
+                                      onClick={() => handleEnrollClick(course)}
+                                      disabled={enrolling}
+                                    >
+                                      {enrolling ? "Enrolling..." : "Enroll Now"}
+                                    </Button>
+                                  );
+                                })()}
                               </div>
                             </div>
                           </div>

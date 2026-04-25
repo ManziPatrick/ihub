@@ -31,6 +31,7 @@ interface Certificate {
   signerName?: string;
   signerSignature?: string;
   status: string;
+  grade?: number;
   progress?: number;
   requirements?: Array<{
     title: string;
@@ -63,6 +64,7 @@ export default function StudentCertificates() {
             courseTitle: cert.courseTitle,
             issueDate: cert.issueDate,
             credentialId: cert.credentialId || 'PENDING',
+            grade: cert.grade,
             recipientName: cert.recipientName,
             signerName: cert.signerName,
             signerSignature: cert.signerSignature
@@ -159,11 +161,15 @@ export default function StudentCertificates() {
                     </h3>
                     <div className="flex items-center gap-2 text-sm text-card-foreground/60 mb-4">
                       <Calendar className="w-4 h-4" />
-                      Issued on {cert.issueDate}
+                      Issued on {cert.issueDate && !isNaN(Number(cert.issueDate)) 
+                        ? new Date(Number(cert.issueDate)).toLocaleDateString() 
+                        : cert.issueDate}
                     </div>
-                    <p className="text-xs text-card-foreground/50 mb-4">
-                      Credential ID: {cert.credentialId}
-                    </p>
+                    <div className="flex justify-between items-center mb-4">
+                      <p className="text-xs text-card-foreground/50">
+                        Credential ID: {cert.credentialId}
+                      </p>
+                    </div>
                     <div className="flex gap-2">
                       <Button 
                         variant="gold" 

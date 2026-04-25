@@ -6,19 +6,56 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PaymentForm } from "@/components/PaymentForm";
 import { useState } from "react";
+import { useMutation } from "@apollo/client/react";
+import { ENROLL_COURSE } from "@/lib/graphql/mutations";
+import { useToast } from "@/hooks/use-toast";
 
 export function CartDrawer() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const { isCartOpen, setIsCartOpen, cartItems, removeFromCart, cartTotal } = useCart();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleCheckout = () => {
     if (!isAuthenticated) {
       setIsCartOpen(false);
       navigate("/auth");
+    } else if (cartTotal === 0) {
+      handleFreeEnrollment();
     } else {
       setIsCheckingOut(true);
+    }
+  };
+
+  const [enrollMutation, { loading: enrolling }] = useMutation(ENROLL_COURSE, {
+    onCompleted: () => {
+      toast({
+        title: "Success",
+        description: "You have successfully enrolled in your free courses!",
+      });
+      cartItems.forEach(item => removeFromCart(item.id));
+      handleClose();
+      navigate("/portal/student/courses");
+    },
+    onError: (err) => {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleFreeEnrollment = async () => {
+    try {
+      for (const item of cartItems) {
+        if (item.type === 'course') {
+          await enrollMutation({ variables: { courseId: item.id } });
+        }
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -140,9 +177,15 @@ export function CartDrawer() {
                 </div>
                 <Button
                   onClick={handleCheckout}
+                  disabled={enrolling}
                   className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 rounded-xl text-sm font-bold tracking-wide"
                 >
-                  {isAuthenticated ? "Proceed to Checkout" : "Log in to Checkout"}
+                  {!isAuthenticated 
+                    ? "Log in to Checkout" 
+                    : cartTotal === 0 
+                      ? (enrolling ? "Enrolling..." : "Enroll Now")
+                      : "Proceed to Checkout"
+                  }
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>

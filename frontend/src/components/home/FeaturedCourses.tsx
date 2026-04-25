@@ -32,9 +32,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import topImage from "@/assets/top.jpg";
-import { GET_COURSES, GET_INTERNSHIP_PROGRAMS, MY_COURSE_APPLICATIONS, GET_MY_INTERNSHIP_APPLICATIONS } from "@/lib/graphql/queries";
+import { GET_COURSES, GET_INTERNSHIP_PROGRAMS, MY_COURSE_APPLICATIONS, GET_MY_INTERNSHIP_APPLICATIONS, GET_ME } from "@/lib/graphql/queries";
 import { ApplyInternshipDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
+import { ENROLL_COURSE } from "@/lib/graphql/mutations";
+import { useMutation } from "@apollo/client/react";
+import { useToast } from "@/hooks/use-toast";
 
 // ─── Category normalization ────────────────────────────────────────────────
 const CATEGORY_MAP: Record<string, string> = {
@@ -150,6 +153,24 @@ export function FeaturedCourses() {
   const { addToCart, cartItems } = useCart();
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const [enrollMutation, { loading: enrolling }] = useMutation(ENROLL_COURSE, {
+    onCompleted: () => {
+      toast({
+        title: "Success",
+        description: "You have successfully enrolled in this course!",
+      });
+    },
+    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES }, { query: MY_COURSE_APPLICATIONS }],
+    onError: (err) => {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  });
 
   // Side Filter State
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -621,7 +642,7 @@ export function FeaturedCourses() {
                     {filteredCourses.map((course: any, idx: number) => {
                       const meta = getCategoryMeta(course.normalizedCategory);
                       const Icon = meta.icon;
-                      const isEnrolled = user?.enrolledCourses?.includes(course.id || course._id);
+                      const isEnrolled = user?.enrolledCourses?.some((c: any) => c.id === (course.id || course._id));
                       const application = myApplications.find((app: any) => app.courseId === (course.id || course._id));
                       const appStatus = application?.status;
                       const isInCart = cartItems?.some((item: any) => item.id === (course.id || course._id));
@@ -735,6 +756,23 @@ export function FeaturedCourses() {
                                   }}
                                 >
                                   Apply Now <ArrowRight className="w-3 h-3 ml-1.5" />
+                                </Button>
+                              ) : course.price === 0 ? (
+                                <Button 
+                                  variant="gold" 
+                                  size="sm" 
+                                  className="w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20"
+                                  disabled={enrolling}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!isAuthenticated) {
+                                      navigate("/auth", { state: { from: { pathname: "/" } } });
+                                    } else {
+                                      enrollMutation({ variables: { courseId: course.id || course._id } });
+                                    }
+                                  }}
+                                >
+                                  <ArrowRight className="w-3 h-3 mr-1.5" /> Enroll Now
                                 </Button>
                               ) : isInCart ? (
                                 <Button 

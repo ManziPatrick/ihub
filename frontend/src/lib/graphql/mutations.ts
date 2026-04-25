@@ -233,8 +233,8 @@ export const REWARD_STUDENT = gql`
 `;
 
 export const GENERATE_AI_QUIZ = gql`
-  mutation GenerateAIQuiz($courseId: ID!, $lessonId: ID!, $questionCount: Int, $prompt: String) {
-    generateAIQuiz(courseId: $courseId, lessonId: $lessonId, questionCount: $questionCount, prompt: $prompt) {
+  mutation GenerateAIQuiz($courseId: ID, $lessonId: ID, $courseTitle: String, $lessonTitle: String, $lessonContent: String, $questionCount: Int, $prompt: String) {
+    generateAIQuiz(courseId: $courseId, lessonId: $lessonId, courseTitle: $courseTitle, lessonTitle: $lessonTitle, lessonContent: $lessonContent, questionCount: $questionCount, prompt: $prompt) {
       id
       questionText
       options

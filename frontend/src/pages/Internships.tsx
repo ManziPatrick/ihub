@@ -13,36 +13,12 @@ import internshipImage from "@/assets/internship-work.webp";
 import internshipImageMobile from "@/assets/internship-work-mobile.webp";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
+import { useQuery } from "@apollo/client/react";
+import { GET_INTERNSHIP_PROGRAMS, GET_MY_INTERNSHIP_APPLICATIONS, GET_ME } from "@/lib/graphql/queries";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { Clock as ClockIcon, Users as UsersIcon, Calendar as CalendarIcon, CheckCircle as CheckCircleIcon, ArrowRight as ArrowRightIcon } from "lucide-react";
 
-const internships = [
-  {
-    icon: Code,
-    title: "Software Development Intern",
-    duration: "3 months",
-    type: "Online / Hybrid",
-    description: "Work on real web and mobile application projects under the guidance of senior developers.",
-    skills: ["React/Vue.js", "Node.js", "Python", "Git", "Agile"],
-    projects: ["E-commerce platform", "Mobile app features", "API integrations"]
-  },
-  {
-    icon: Database,
-    title: "Data Science Intern",
-    duration: "3 months",
-    type: "Online",
-    description: "Apply data analysis and machine learning techniques to solve real business problems.",
-    skills: ["Python", "SQL", "Machine Learning", "Tableau", "Statistics"],
-    projects: ["Customer analytics", "Predictive models", "Data dashboards"]
-  },
-  {
-    icon: Wifi,
-    title: "IoT Development Intern",
-    duration: "3 months",
-    type: "Hybrid",
-    description: "Design and build connected devices and smart systems for agriculture and industry.",
-    skills: ["Arduino", "Raspberry Pi", "Cloud IoT", "Sensors", "MQTT"],
-    projects: ["Smart agriculture system", "Environmental monitoring", "Automation solutions"]
-  },
-];
 
 const benefits = [
   { icon: FolderOpen, title: "Real Projects", description: "Work on actual client projects and products, not simulated exercises. Your work will have real impact." },
@@ -76,6 +52,25 @@ const testimonials = [
 ];
 
 const Internships = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const { data: internsData, loading: internsLoading } = useQuery(GET_INTERNSHIP_PROGRAMS);
+  const { data: appsData } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS, {
+    skip: !isAuthenticated
+  });
+
+  const internshipPrograms = (internsData as any)?.internshipPrograms?.items || [];
+  const myApplications = (appsData as any)?.myInternshipApplications || [];
+
+  const getCategoryIcon = (category: string) => {
+    switch (category?.toLowerCase()) {
+      case 'software': return Code;
+      case 'data': return Database;
+      case 'iot': return Wifi;
+      default: return Briefcase;
+    }
+  };
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -203,56 +198,102 @@ const Internships = () => {
               </h2>
             </motion.div>
             <div className="grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              {internships.map((internship, index) => (
-                <motion.div
-                  key={internship.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-background p-6 rounded-xl shadow-card border border-border/30 group hover:shadow-card-hover transition-all flex flex-col"
-                >
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 rounded-full bg-card flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                      <internship.icon className="w-7 h-7 text-accent" strokeWidth={1.5} />
-                    </div>
-                    <div>
-                      <h3 className="font-heading font-semibold text-foreground">{internship.title}</h3>
-                      <p className="text-xs text-muted-foreground">{internship.duration} • {internship.type}</p>
-                    </div>
-                  </div>
+              {internshipPrograms.length === 0 && !internsLoading ? (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-muted-foreground">No internship programs available at the moment.</p>
+                </div>
+              ) : (
+                internshipPrograms.map((intern: any, index: number) => {
+                  const Icon = getCategoryIcon(intern.normalizedCategory);
+                  const application = myApplications.find((app: any) => app.internshipProgram?.id === (intern.id || intern._id));
+                  const appStatus = application?.status;
 
-                  <p className="text-sm text-muted-foreground mb-4">{internship.description}</p>
+                  return (
+                    <motion.div
+                      key={intern.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-background p-6 rounded-xl shadow-card border border-border/30 group hover:shadow-card-hover transition-all flex flex-col"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-14 h-14 rounded-full bg-card flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                          <Icon className="w-7 h-7 text-accent" strokeWidth={1.5} />
+                        </div>
+                        <div>
+                          <h3 className="font-heading font-semibold text-foreground">{intern.title}</h3>
+                          <p className="text-xs text-muted-foreground">{intern.duration} • {intern.type || 'Remote'}</p>
+                        </div>
+                      </div>
 
-                  <div className="mb-4">
-                    <p className="text-xs font-medium text-foreground mb-2">Skills You'll Use:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {internship.skills.map((skill) => (
-                        <span key={skill} className="text-xs bg-card px-2 py-1 rounded text-muted-foreground">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3">{intern.description}</p>
 
-                  <div className="mb-6">
-                    <p className="text-xs font-medium text-foreground mb-2">Sample Projects:</p>
-                    <ul className="space-y-1">
-                      {internship.projects.map((project) => (
-                        <li key={project} className="text-xs text-muted-foreground flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3 text-accent" /> {project}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                      <div className="mb-6">
+                        <p className="text-xs font-medium text-foreground mb-2 flex items-center gap-2">
+                          <Target className="w-3 h-3 text-accent" /> Highlights:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          <span className="text-[10px] bg-card px-2 py-0.5 rounded text-muted-foreground border border-border/50">
+                            {intern.normalizedCategory}
+                          </span>
+                          <span className="text-[10px] bg-card px-2 py-0.5 rounded text-muted-foreground border border-border/50">
+                            {intern.maxSpots} Spots
+                          </span>
+                        </div>
+                      </div>
 
-                  <div className="mt-auto">
-                    <AuthAwareLink variant="gold" size="sm" className="w-full" to="/portal/student/internship">
-                      Apply Now <ArrowRight className="w-4 h-4 ml-2" />
-                    </AuthAwareLink>
-                  </div>
-                </motion.div>
-              ))}
+                      <div className="mt-auto">
+                        {(() => {
+                          if (appStatus === 'approved') {
+                            return (
+                              <Button 
+                                className="w-full bg-green-600 hover:bg-green-700 rounded-xl font-bold"
+                                onClick={() => navigate('/portal/student/internship')}
+                              >
+                                Continue <ArrowRightIcon className="w-4 h-4 ml-2" />
+                              </Button>
+                            );
+                          }
+
+                          if (appStatus === 'pending') {
+                            return (
+                              <Button 
+                                disabled
+                                className="w-full bg-amber-500 rounded-xl font-bold"
+                              >
+                                Pending <ClockIcon className="w-4 h-4 ml-2" />
+                              </Button>
+                            );
+                          }
+
+                          if (appStatus === 'rejected') {
+                            return (
+                              <Button 
+                                disabled
+                                className="w-full bg-red-500 rounded-xl font-bold"
+                              >
+                                Rejected <CheckCircleIcon className="w-4 h-4 ml-2" />
+                              </Button>
+                            );
+                          }
+
+                          return (
+                            <AuthAwareLink 
+                              variant="gold" 
+                              size="sm" 
+                              className="w-full" 
+                              to="/portal/student/internship"
+                            >
+                              Apply Now <ArrowRightIcon className="w-4 h-4 ml-2" />
+                            </AuthAwareLink>
+                          );
+                        })()}
+                      </div>
+                    </motion.div>
+                  );
+                })
+              )}
             </div>
           </div>
         </section>
