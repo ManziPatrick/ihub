@@ -12,7 +12,7 @@ services:
         value: 10000
       - key: FRONTEND_URL
         value: https://www.codemande.com
-      - key: MONGODB_URI
+      - key: MONGO_URI
         sync: false
       - key: JWT_SECRET
         sync: false
