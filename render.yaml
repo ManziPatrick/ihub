@@ -11,7 +11,7 @@ services:
       - key: PORT
         value: 10000
       - key: FRONTEND_URL
-        value: https://www.codemande.com
+        value: https://app.codemande.com
       - key: MONGO_URI
         sync: false
       - key: JWT_SECRET
