@@ -43,7 +43,7 @@ const seed = async () => {
           type: 'link',
           required: false
         }
-      ] as any[];
+      ] as any;
       await course.save();
       console.log(`Updated course: ${course.title} to application mode.`);
     }
