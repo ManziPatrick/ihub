@@ -37,6 +37,9 @@ interface EditCourseDialogProps {
   isLoading?: boolean;
 }
 
+import { useQuery } from "@apollo/client/react";
+import { GET_CATEGORIES } from "@/lib/graphql/queries";
+
 export function EditCourseDialog({
   open,
   onOpenChange,
@@ -47,6 +50,8 @@ export function EditCourseDialog({
 }: EditCourseDialogProps) {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+  const { data: categoryData } = useQuery(GET_CATEGORIES);
+  const categories = (categoryData as any)?.categories || [];
 
   const [formData, setFormData] = useState<any>({
     title: "",
@@ -343,11 +348,17 @@ export function EditCourseDialog({
                             <label className="text-xs font-bold mb-1.5 block text-muted-foreground">Subject Category</label>
                             <Input
                               placeholder="Development"
+                              list="course-categories"
                               className="bg-background border-accent/10 h-10 font-medium"
                               value={formData.category}
                               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                               disabled={!isAdmin}
                             />
+                            <datalist id="course-categories">
+                              {categories.map((cat: string) => (
+                                <option key={cat} value={cat} />
+                              ))}
+                            </datalist>
                           </div>
                         </div>
 

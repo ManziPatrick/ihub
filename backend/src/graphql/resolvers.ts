@@ -569,7 +569,7 @@ export const resolvers = {
 
       // Filter for students/guests: Only published courses
       if (!context.user || (context.user.role !== 'admin' && context.user.role !== 'super_admin' && context.user.role !== 'trainer')) {
-        query.status = 'published';
+        query.status = { $nin: ['DRAFT', 'CLOSED', 'ARCHIVED', 'draft', 'closed', 'archived'] };
       }
 
       // Admin isolation: Admins see courses they created or are instructors for

@@ -38,7 +38,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_USERS, GET_COURSES, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
+import { GET_USERS, GET_COURSES, GET_ADMIN_DASHBOARD_DATA, GET_CATEGORIES } from "@/lib/graphql/queries";
 import { CREATE_COURSE } from "@/lib/graphql/mutations";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -80,6 +80,9 @@ export default function CreateCourse() {
 
   const { data: usersData } = useQuery(GET_USERS, { variables: { limit: 100 } });
   const trainers = (usersData as any)?.users?.items?.filter((u: any) => u.role === 'trainer' || u.role === 'admin' || u.role === 'super_admin') || [];
+
+  const { data: categoryData } = useQuery(GET_CATEGORIES);
+  const categories = (categoryData as any)?.categories || [];
 
   const [createCourse] = useMutation(CREATE_COURSE, {
     refetchQueries: [
@@ -251,9 +254,15 @@ export default function CreateCourse() {
                                         <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Specialization</label>
                                         <Input 
                                             value={formData.category}
+                                            list="course-categories"
                                             onChange={(e) => updateFormData("category", e.target.value)}
                                             className="h-12 bg-muted/20 border-border/40 rounded-xl"
                                         />
+                                        <datalist id="course-categories">
+                                          {categories.map((cat: string) => (
+                                            <option key={cat} value={cat} />
+                                          ))}
+                                        </datalist>
                                     </div>
                                     <div className="space-y-3">
                                         <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Difficulty Level</label>

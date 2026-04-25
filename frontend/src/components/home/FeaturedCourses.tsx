@@ -2,6 +2,7 @@ import React, { useState, useRef, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@apollo/client/react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   ChevronRight,
   ChevronLeft,
@@ -33,6 +34,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import topImage from "@/assets/top.jpg";
 import { GET_COURSES, GET_INTERNSHIP_PROGRAMS, MY_COURSE_APPLICATIONS, GET_MY_INTERNSHIP_APPLICATIONS } from "@/lib/graphql/queries";
 import { ApplyInternshipDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
+import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 
 // ─── Category normalization ────────────────────────────────────────────────
 const CATEGORY_MAP: Record<string, string> = {
@@ -145,7 +147,7 @@ export function FeaturedCourses() {
   const [selectedInternshipId, setSelectedInternshipId] = useState<string | null>(null);
   const [applyCourse, setApplyCourse] = useState<any | null>(null);
   
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
@@ -244,23 +246,29 @@ export function FeaturedCourses() {
       
       const matchPrice = filterPrice === "all" ? true : filterPrice === "free" ? c.price === 0 : c.price > 0;
       const matchLevel = filterLevel === "all" ? true : c.level?.toLowerCase() === filterLevel;
+      const statusLower = c.status?.toLowerCase();
+      const isOpen = !c.status || statusLower === "published" || statusLower === "active" || statusLower === "open";
 
-      return matchCat && matchSearch && matchPrice && matchLevel;
+      return matchCat && matchSearch && matchPrice && matchLevel && isOpen;
     });
   }, [courses, activeCategory, searchQuery, filterPrice, filterLevel]);
 
   const filteredInternships = useMemo(() => {
-    return internships.filter((i: any) => {
-      const matchCat = activeCategory === "All" || i.normalizedCategory === activeCategory;
+    return internships.filter((intern: any) => {
+      const matchCat = activeCategory === "All" || intern.normalizedCategory === activeCategory;
       const q = searchQuery.toLowerCase();
       const matchSearch =
         !q ||
-        i.title?.toLowerCase().includes(q) ||
-        i.description?.toLowerCase().includes(q);
+        intern.title?.toLowerCase().includes(q) ||
+        intern.category?.toLowerCase().includes(q) ||
+        intern.normalizedCategory?.toLowerCase().includes(q);
+        
+      const matchPrice = filterPrice === "all" ? true : filterPrice === "free" ? intern.price === 0 : intern.price > 0;
       
-      const matchPrice = filterPrice === "all" ? true : filterPrice === "free" ? i.price === 0 : i.price > 0;
-      
-      return matchCat && matchSearch && matchPrice;
+      const statusLower = intern.status?.toLowerCase();
+      const isOpen = !intern.status || statusLower === "open" || statusLower === "active" || statusLower === "published";
+
+      return matchCat && matchSearch && matchPrice && isOpen;
     });
   }, [internships, activeCategory, searchQuery, filterPrice]);
 
@@ -609,13 +617,14 @@ export function FeaturedCourses() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {filteredCourses.map((course: any, idx: number) => {
                       const meta = getCategoryMeta(course.normalizedCategory);
                       const Icon = meta.icon;
                       const isEnrolled = user?.enrolledCourses?.includes(course.id || course._id);
                       const application = myApplications.find((app: any) => app.courseId === (course.id || course._id));
                       const appStatus = application?.status;
+                      const isInCart = cartItems?.some((item: any) => item.id === (course.id || course._id));
 
                       return (
                         <motion.div
@@ -623,116 +632,142 @@ export function FeaturedCourses() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: Math.min(idx * 0.03, 0.3) }}
+                          onClick={() => navigate(`/courses/${course.id || course._id}`)}
+                          className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 group hover:shadow-xl transition-all h-full flex flex-col cursor-pointer"
                         >
-                          <div 
-                            onClick={() => {
-                              if (isEnrolled || appStatus === 'approved') {
-                                navigate(`/portal/student/courses/${course.id || course._id}`);
-                                return;
-                              }
-                              
-                              if (course.enrollmentMode === 'application') {
-                                if (!isAuthenticated) {
-                                  navigate("/auth", { state: { from: { pathname: "/" } } });
-                                } else {
-                                  setApplyCourse(course);
-                                }
-                                return;
-                              }
+                          <div className="h-36 relative overflow-hidden">
+                            <ImageWithSkeleton
+                              src={course.thumbnail || `https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=300&q=tech,${encodeURIComponent(course.category || 'coding')}`}
+                              alt={course.title}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                            <div className="absolute top-3 left-3">
+                              <Badge className="bg-white/90 text-black hover:bg-white border-0 shadow-sm text-[10px] px-2 py-0">{course.normalizedCategory}</Badge>
+                            </div>
+                            <div className={`absolute top-3 right-3 p-1.5 rounded-md ${meta.bg} border ${meta.border} backdrop-blur-sm opacity-90`}>
+                              <Icon className={`w-3 h-3 ${meta.text}`} />
+                            </div>
+                          </div>
 
-                              addToCart({
-                                id: course.id || course._id,
-                                title: course.title,
-                                price: course.price,
-                                discountPrice: course.discountPrice,
-                                type: "course",
-                                image: course.image
-                              });
-                            }}
-                            className={`block group cursor-pointer ${isEnrolled ? 'opacity-90' : ''}`}
-                          >
-                            <div className={`flex items-start gap-4 p-5 bg-card border border-border/50 hover:border-accent/30 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 h-full ${isEnrolled ? 'border-green-500/30' : ''}`}>
-                              <div
-                                className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border ${meta.bg} ${meta.border}`}
-                              >
-                                <Icon className={`w-5 h-5 ${meta.text}`} />
-                              </div>
+                          <div className="p-4 flex-1 flex flex-col">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-[9px] bg-accent/5 px-2 py-0.5 rounded-full text-accent font-medium uppercase tracking-wider">
+                                {course.level || "All levels"}
+                              </span>
+                            </div>
+                            <h3 className="font-heading text-sm font-bold text-card-foreground mb-1 line-clamp-2 group-hover:text-accent transition-colors">
+                              {course.title}
+                            </h3>
 
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-sm font-semibold text-foreground leading-snug mb-0.5 group-hover:text-accent transition-colors line-clamp-1">
-                                  {course.title}
-                                </h3>
-                                <p className="text-xs text-muted-foreground mb-2.5 line-clamp-1">
-                                  {course.normalizedCategory}
-                                </p>
-                                <div className="grid grid-cols-2 gap-x-4">
-                                  <div>
-                                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60 font-medium">
-                                      Instructor
-                                    </p>
-                                    <p className="text-xs font-semibold text-foreground/80 line-clamp-1">
-                                      {course.instructor?.username || "Expert Trainer"}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60 font-medium">
-                                      Level
-                                    </p>
-                                    <p className="text-xs font-semibold text-foreground/80 capitalize">
-                                      {course.level?.toLowerCase() || "All levels"}
-                                    </p>
+                            <div className="mt-auto pt-3 border-t border-border/30 flex flex-col gap-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex flex-col">
+                                  <span className="text-[9px] text-muted-foreground uppercase font-medium">Investment</span>
+                                  <div className="flex items-baseline gap-1">
+                                    {course.discountPrice > 0 ? (
+                                      <>
+                                        <span className="text-xs font-bold text-accent">{course.discountPrice.toLocaleString()} RWF</span>
+                                        <span className="text-[9px] text-muted-foreground line-through">{course.price?.toLocaleString()}</span>
+                                      </>
+                                    ) : (
+                                      <span className="text-xs font-bold text-accent">
+                                        {course.price === 0 ? "Free" : `${course.price?.toLocaleString()} RWF`}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
+                                <div className="flex flex-col text-right">
+                                  <span className="text-[9px] text-muted-foreground uppercase font-medium">Instructor</span>
+                                  <span className="text-[10px] font-semibold line-clamp-1">{course.instructor?.username || 'Expert'}</span>
+                                </div>
                               </div>
-
-                              <div className="flex-shrink-0 flex flex-col items-end">
-                                {course.discountPrice && course.discountPrice > 0 ? (
-                                  <>
-                                    <p className="text-xs font-bold text-accent">
-                                      {course.discountPrice.toLocaleString()} RWF
-                                    </p>
-                                    <p className="text-[10px] text-muted-foreground line-through mb-1">
-                                      {course.price?.toLocaleString()} RWF
-                                    </p>
-                                  </>
-                                ) : (
-                                  <p className="text-xs font-bold text-foreground mb-1">
-                                    {course.price === 0
-                                      ? "Free"
-                                      : `${course.price?.toLocaleString()} RWF`}
-                                  </p>
-                                )}
-                                {isEnrolled ? (
-                                  <span className="bg-green-500/10 text-green-500 p-1.5 rounded-lg flex items-center gap-1.5">
-                                    <CheckCircle className="w-3.5 h-3.5" />
-                                    <span className="text-[10px] font-bold uppercase">Learning</span>
-                                  </span>
-                                ) : appStatus === 'approved' ? (
-                                  <span className="bg-green-500/10 text-green-500 p-1.5 rounded-lg flex items-center gap-1.5">
-                                    <ArrowRight className="w-3.5 h-3.5" />
-                                    <span className="text-[10px] font-bold uppercase">Continue</span>
-                                  </span>
-                                ) : appStatus === 'pending' ? (
-                                  <span className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg flex items-center gap-1.5">
-                                    <Clock className="w-3.5 h-3.5" />
-                                    <span className="text-[10px] font-bold uppercase">Pending</span>
-                                  </span>
-                                ) : appStatus === 'rejected' ? (
-                                  <span className="bg-red-500/10 text-red-500 p-1.5 rounded-lg flex items-center gap-1.5">
-                                    <XCircle className="w-3.5 h-3.5" />
-                                    <span className="text-[10px] font-bold uppercase">Rejected</span>
-                                  </span>
-                                ) : course.enrollmentMode === 'application' ? (
-                                  <span className="bg-blue-600 text-white p-2 px-3 rounded-xl shadow-md transition-all active:scale-95">
-                                    <span className="text-[10px] font-black uppercase tracking-tight">Apply</span>
-                                  </span>
-                                ) : (
-                                  <span className="bg-accent text-accent-foreground p-2 px-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5">
-                                    <ShoppingCart className="w-3.5 h-3.5" />
-                                    <span className="text-[10px] font-black uppercase tracking-tight">Cart</span>
-                                  </span>
-                                )}
-                              </div>
+                              
+                              {isEnrolled ? (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="w-full rounded-xl font-bold h-8 text-[11px] border-green-500 text-green-500 hover:bg-green-50"
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/portal/student/courses/${course.id || course._id}`); }}
+                                >
+                                  <CheckCircle className="w-3 h-3 mr-1.5" /> Learning
+                                </Button>
+                              ) : appStatus === 'approved' ? (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="w-full rounded-xl font-bold h-8 text-[11px] border-green-500 text-green-500 hover:bg-green-50"
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/portal/student/courses/${course.id || course._id}`); }}
+                                >
+                                  <ArrowRight className="w-3 h-3 mr-1.5" /> Continue
+                                </Button>
+                              ) : appStatus === 'pending' ? (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  disabled
+                                  className="w-full rounded-xl font-bold h-8 text-[11px] border-amber-500 text-amber-500"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Clock className="w-3 h-3 mr-1.5" /> Pending
+                                </Button>
+                              ) : appStatus === 'rejected' ? (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  disabled
+                                  className="w-full rounded-xl font-bold h-8 text-[11px] border-red-500 text-red-500"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <XCircle className="w-3 h-3 mr-1.5" /> Rejected
+                                </Button>
+                              ) : course.enrollmentMode === 'application' ? (
+                                <Button 
+                                  variant="gold" 
+                                  size="sm" 
+                                  className="w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!isAuthenticated) {
+                                      navigate("/auth", { state: { from: { pathname: "/" } } });
+                                    } else {
+                                      setApplyCourse(course);
+                                    }
+                                  }}
+                                >
+                                  Apply Now <ArrowRight className="w-3 h-3 ml-1.5" />
+                                </Button>
+                              ) : isInCart ? (
+                                <Button 
+                                  variant="gold" 
+                                  size="sm" 
+                                  className="w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate("/portal/student/billing");
+                                  }}
+                                >
+                                  <ShoppingCart className="w-3 h-3 mr-1.5" /> Proceed to Cart
+                                </Button>
+                              ) : (
+                                <Button 
+                                  variant="gold" 
+                                  size="sm" 
+                                  className="w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    addToCart({
+                                      id: course.id || course._id,
+                                      title: course.title,
+                                      price: course.price,
+                                      discountPrice: course.discountPrice,
+                                      type: "course",
+                                      image: course.thumbnail || course.image
+                                    });
+                                  }}
+                                >
+                                  <ShoppingCart className="w-3 h-3 mr-1.5" /> Add to Cart
+                                </Button>
+                              )}
                             </div>
                           </div>
                         </motion.div>
@@ -764,11 +799,13 @@ export function FeaturedCourses() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {filteredInternships.map((intern: any, idx: number) => {
                       const meta = getCategoryMeta(intern.normalizedCategory);
                       const Icon = meta.icon;
-                      const isOpen = intern.status === "OPEN" || intern.status === "ACTIVE";
+                      // isOpen is already guaranteed to be true here due to the filter above,
+                      // but we keep the variable for consistency.
+                      const isOpen = true;
                       const deadline = intern.applicationDeadline
                         ? new Date(parseInt(intern.applicationDeadline)).toLocaleDateString("en-GB", {
                             day: "2-digit",
@@ -782,116 +819,129 @@ export function FeaturedCourses() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: Math.min(idx * 0.03, 0.3) }}
-                        >
-                          <div 
-                            onClick={() => {
-                              const application = myInternApplications.find((app: any) => app.internshipProgram?.id === intern.id);
-                              const appStatus = application?.status;
-
-                              if (appStatus === 'approved') {
-                                navigate(`/portal/student/internship`);
-                                return;
-                              }
-
+                          onClick={() => {
+                            if (isOpen) {
                               if (!isAuthenticated) {
                                 navigate("/auth", { state: { from: { pathname: "/" } } });
                               } else {
                                 setSelectedInternshipId(intern.id);
                               }
-                            }} 
-                            className={`block group cursor-pointer h-full`}
-                          >
-                            <div className="flex items-start gap-4 p-5 bg-card border border-border/50 hover:border-accent/30 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 h-full">
-                              <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border ${meta.bg} ${meta.border}`}>
-                                <Icon className={`w-5 h-5 ${meta.text}`} />
-                              </div>
+                            }
+                          }}
+                          className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 group hover:shadow-xl transition-all h-full flex flex-col cursor-pointer"
+                        >
+                          <div className="h-36 relative overflow-hidden">
+                            <ImageWithSkeleton
+                              src={intern.thumbnail || `https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&q=80&w=300&q=internship,${encodeURIComponent(intern.title || 'work')}`}
+                              alt={intern.title}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                            <div className="absolute top-3 left-3">
+                              <Badge className="bg-white/90 text-black hover:bg-white border-0 shadow-sm text-[10px] px-2 py-0">{intern.normalizedCategory} Internship</Badge>
+                            </div>
+                            <div className={`absolute top-3 right-3 p-1.5 rounded-md ${meta.bg} border ${meta.border} backdrop-blur-sm opacity-90`}>
+                              <Icon className={`w-3 h-3 ${meta.text}`} />
+                            </div>
+                          </div>
 
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-sm font-semibold text-foreground leading-snug mb-0.5 group-hover:text-accent transition-colors line-clamp-1">
-                                  {intern.title}
-                                </h3>
-                                <p className="text-xs text-muted-foreground mb-2.5 line-clamp-1">
-                                  {intern.normalizedCategory} Internship
-                                </p>
+                          <div className="p-4 flex-1 flex flex-col">
+                            <h3 className="font-heading text-sm font-bold text-card-foreground mb-2 line-clamp-2 group-hover:text-accent transition-colors">
+                              {intern.title}
+                            </h3>
 
-                                <div className="grid grid-cols-2 gap-x-4">
-                                  <div>
-                                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60 font-medium">
-                                      Duration
-                                    </p>
-                                    <p className="text-xs font-semibold text-foreground/80 flex items-center gap-1">
-                                      <Clock className="w-3 h-3 text-muted-foreground/60" />
-                                      {intern.duration || "Flexible"}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground/60 font-medium">
-                                      Spots
-                                    </p>
-                                    <p className="text-xs font-semibold text-foreground/80 flex items-center gap-1">
-                                      <Users className="w-3 h-3 text-muted-foreground/60" />
-                                      {intern.maxSpots ?? "Open"}
-                                    </p>
-                                  </div>
+                            <div className="mt-auto pt-3 border-t border-border/30 flex flex-col gap-2">
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex flex-col">
+                                  <span className="text-[9px] uppercase tracking-wide text-muted-foreground/60 font-medium">Duration</span>
+                                  <span className="text-[10px] font-semibold text-foreground/80 flex items-center gap-1">
+                                    <Clock className="w-2.5 h-2.5 text-muted-foreground/60" /> {intern.duration || "Flexible"}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col items-end">
+                                  <span className="text-[9px] uppercase tracking-wide text-muted-foreground/60 font-medium">Spots</span>
+                                  <span className="text-[10px] font-semibold text-foreground/80 flex items-center gap-1">
+                                    <Users className="w-2.5 h-2.5 text-muted-foreground/60" /> {intern.maxSpots ?? "Open"}
+                                  </span>
                                 </div>
                               </div>
-
-                              <div className="flex-shrink-0 text-right space-y-1">
-                                {(() => {
-                                  const application = myInternApplications.find((app: any) => app.internshipProgram?.id === intern.id);
-                                  const appStatus = application?.status;
-
-                                  if (appStatus === 'approved') {
-                                    return (
-                                      <span className="bg-green-500/10 text-green-500 p-1.5 rounded-lg flex items-center gap-1.5">
-                                        <ArrowRight className="w-3.5 h-3.5" />
-                                        <span className="text-[10px] font-bold uppercase">Continue</span>
-                                      </span>
-                                    );
-                                  } else if (appStatus === 'pending') {
-                                    return (
-                                      <span className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg flex items-center gap-1.5">
-                                        <Clock className="w-3.5 h-3.5" />
-                                        <span className="text-[10px] font-bold uppercase">Pending</span>
-                                      </span>
-                                    );
-                                  } else if (appStatus === 'rejected') {
-                                    return (
-                                      <span className="bg-red-500/10 text-red-500 p-1.5 rounded-lg flex items-center gap-1.5">
-                                        <XCircle className="w-3.5 h-3.5" />
-                                        <span className="text-[10px] font-bold uppercase">Rejected</span>
-                                      </span>
-                                    );
-                                  }
-
-                                  return (
-                                    <span
-                                      className={`p-2 px-3 rounded-xl shadow-md transition-all active:scale-95 ${
-                                        isOpen
-                                          ? "bg-blue-600 text-white"
-                                          : "bg-muted text-muted-foreground border border-border"
-                                      }`}
-                                    >
-                                      <span className="text-[10px] font-black uppercase tracking-tight">
-                                        {isOpen ? "Apply" : "Closed"}
-                                      </span>
-                                    </span>
-                                  );
-                                })()}
+                              
+                              <div className="flex items-center justify-between pt-2 border-t border-border/10 mb-2">
+                                <div className="flex flex-col">
+                                  <span className="text-[9px] text-muted-foreground uppercase font-medium">Fee</span>
+                                  <span className="text-[10px] font-bold text-foreground">
+                                    {intern.price === 0 || intern.price == null ? "Free" : `${intern.price.toLocaleString()} ${intern.currency || "RWF"}`}
+                                  </span>
+                                </div>
                                 {deadline && (
-                                  <p className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end">
-                                    <Calendar className="w-3 h-3" />
-                                    {deadline}
-                                  </p>
-                                )}
-                                {intern.price != null && (
-                                  <p className="text-xs font-bold text-foreground">
-                                    {intern.price === 0
-                                      ? "Free"
-                                      : `${intern.price.toLocaleString()} ${intern.currency || "RWF"}`}
-                                  </p>
+                                  <div className="flex flex-col items-end">
+                                    <span className="text-[9px] text-muted-foreground uppercase font-medium">Deadline</span>
+                                    <span className="text-[10px] font-medium text-foreground/80 flex items-center gap-1">
+                                      <Calendar className="w-2.5 h-2.5" /> {deadline}
+                                    </span>
+                                  </div>
                                 )}
                               </div>
+
+                              {(() => {
+                                const application = myInternApplications.find((app: any) => app.internshipProgram?.id === intern.id);
+                                const appStatus = application?.status;
+
+                                if (appStatus === 'approved') {
+                                  return (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="w-full rounded-xl font-bold h-8 text-[11px] border-green-500 text-green-500 hover:bg-green-50"
+                                      onClick={(e) => { e.stopPropagation(); navigate(`/portal/student/internship`); }}
+                                    >
+                                      <ArrowRight className="w-3 h-3 mr-1.5" /> Continue
+                                    </Button>
+                                  );
+                                } else if (appStatus === 'pending') {
+                                  return (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      disabled
+                                      className="w-full rounded-xl font-bold h-8 text-[11px] border-amber-500 text-amber-500"
+                                    >
+                                      <Clock className="w-3 h-3 mr-1.5" /> Pending
+                                    </Button>
+                                  );
+                                } else if (appStatus === 'rejected') {
+                                  return (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      disabled
+                                      className="w-full rounded-xl font-bold h-8 text-[11px] border-red-500 text-red-500"
+                                    >
+                                      <XCircle className="w-3 h-3 mr-1.5" /> Rejected
+                                    </Button>
+                                  );
+                                }
+
+                                return (
+                                  <Button 
+                                    variant="gold" 
+                                    size="sm" 
+                                    className={`w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20 ${!isOpen ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={!isOpen}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (isOpen) {
+                                        if (!isAuthenticated) {
+                                          navigate("/auth", { state: { from: { pathname: "/" } } });
+                                        } else {
+                                          setSelectedInternshipId(intern.id);
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    {isOpen ? "Apply Now" : "Closed"} <ArrowRight className="w-3 h-3 ml-1.5" />
+                                  </Button>
+                                );
+                              })()}
                             </div>
                           </div>
                         </motion.div>

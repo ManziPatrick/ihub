@@ -22,7 +22,14 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ["@apollo/client/react"],
+    include: [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+      "@apollo/client",
+      "@apollo/client/react",
+    ],
   },
   build: {
     rollupOptions: {

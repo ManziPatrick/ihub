@@ -222,6 +222,8 @@ export const GET_COURSE = gql`
       discountPrice
       level
       category
+      status
+      enrollmentMode
       allowedDeliveryModes
       submissionRequired
       instructor {

@@ -139,42 +139,52 @@ const seedData = async () => {
     }).save();
 
     console.log('📚 Creating Courses...');
-    // Trainer 1 references this course in his internship project
-    const fullStackCourse = await new Course({
-      title: 'Full Stack Masterclass: React & Node.js',
-      description: 'The ultimate guide to building scalable web applications. From zero to hero with modern stack.',
+    const hotelCourse = await new Course({
+      title: 'Luxury Hotel Management & Operations',
+      description: 'Master the art of hospitality. Learn front desk operations, guest relations, and luxury service standards.',
       instructor: trainer1._id,
       createdBy: admin._id,
-      price: 0, // Free course
-      category: 'Development',
-      level: 'Advanced',
-      thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=2070&auto=format&fit=crop',
+      price: 120000,
+      discountPrice: 95000,
+      category: 'Hospitality',
+      level: 'Intermediate',
+      thumbnail: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop',
       modules: [
         {
-          title: 'Core Fundamentals',
-          description: 'Getting started with the MERN stack',
-          lessons: createLessons('Full Stack', 10)
+          title: 'Guest Experience & Front Office',
+          description: 'Managing the first impression and check-in workflows.',
+          lessons: createLessons('Front Desk Ops', 4)
+        },
+        {
+          title: 'Housekeeping & Maintenance',
+          description: 'Maintaining 5-star luxury standards across the property.',
+          lessons: createLessons('Luxury Maintenance', 4)
         }
       ],
       status: 'published',
       enrollmentMode: 'direct',
-      studentsEnrolled: [student1._id, student2._id]
+      studentsEnrolled: [student1._id]
     } as any).save();
 
-    const dataScienceCourse = await new Course({
-      title: 'Data Science Bootcamp',
-      description: 'Master Python and Machine Learning. Real world projects and datasets.',
+    const techCourse = await new Course({
+      title: 'Advanced Cloud Computing with AWS',
+      description: 'Deploy, manage, and scale secure applications on Amazon Web Services. Prepare for the Solutions Architect exam.',
       instructor: trainer2._id,
       createdBy: admin._id,
-      price: 49.99,
-      category: 'Data Science',
-      level: 'Intermediate',
-      thumbnail: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?q=80&w=2070&auto=format&fit=crop',
+      price: 150000,
+      category: 'Technology',
+      level: 'Advanced',
+      thumbnail: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop',
       modules: [
         {
-          title: 'Python Basics',
-          description: 'Introduction to Python for Data Analysis',
-          lessons: createLessons('Data Science', 8)
+          title: 'Compute & Serverless',
+          description: 'Mastering EC2, Lambda, and ECS.',
+          lessons: createLessons('AWS Compute', 5)
+        },
+        {
+          title: 'Networking & Security',
+          description: 'VPCs, IAM, and secure cloud perimeters.',
+          lessons: createLessons('Cloud Security', 5)
         }
       ],
       status: 'published',
@@ -182,21 +192,26 @@ const seedData = async () => {
       studentsEnrolled: [student2._id]
     } as any).save();
 
-    const generativeAICourse = await new Course({
-      title: 'Generative AI for Creative Professionals',
-      description: 'Learn to use ChatGPT, Midjourney, and DALL-E to revolutionize your creative workflow. Scale your output with AI.',
+    const agricultureCourse = await new Course({
+      title: 'Modern Agri-Tech & Sustainable Farming',
+      description: 'Leverage IoT sensors, drone imaging, and sustainable practices to maximize crop yield while protecting the environment.',
       instructor: trainer1._id,
       createdBy: admin._id,
-      price: 150000,
-      discountPrice: 85000,
-      category: 'Specialization',
+      price: 50000,
+      discountPrice: 35000,
+      category: 'Agriculture',
       level: 'Beginner',
-      thumbnail: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=2000&auto=format&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=2070&auto=format&fit=crop',
       modules: [
         {
-          title: 'AI Tools Overview',
-          description: 'Exploring the generative AI landscape',
-          lessons: createLessons('Generative AI', 6)
+          title: 'Precision Farming',
+          description: 'Using data to optimize irrigation and fertilization.',
+          lessons: createLessons('Agri-Data', 3)
+        },
+        {
+          title: 'Sustainable Soil Management',
+          description: 'Organic techniques and crop rotation.',
+          lessons: createLessons('Soil Health', 4)
         }
       ],
       status: 'published',
@@ -204,51 +219,60 @@ const seedData = async () => {
       studentsEnrolled: []
     } as any).save();
 
-    const promptEngCourse = await new Course({
-      title: 'Prompt Engineering for Software Developers',
-      description: 'Master the art of prompt engineering to build smarter AI-integrated applications and leverage LLMs in your code.',
-      instructor: trainer1._id,
+    const economicsCourse = await new Course({
+      title: 'Global Macroeconomics & Market Trends',
+      description: 'Understand inflation, monetary policy, and how global events shape financial markets.',
+      instructor: trainer2._id,
       createdBy: admin._id,
-      price: 0,
-      category: 'Development',
+      price: 200000,
+      category: 'Economics',
       level: 'Intermediate',
-      thumbnail: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2000&auto=format&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop',
       modules: [
         {
-          title: 'LLM Foundations',
-          description: 'Understanding how models process prompts',
-          lessons: createLessons('Prompt Engineering', 8)
+          title: 'Monetary Policy & Central Banks',
+          description: 'How interest rates dictate market liquidity.',
+          lessons: createLessons('Central Banking', 4)
+        },
+        {
+          title: 'International Trade & Tariffs',
+          description: 'Analyzing supply chains and geopolitical economics.',
+          lessons: createLessons('Global Trade', 4)
         }
       ],
       status: 'published',
-      enrollmentMode: 'direct',
+      enrollmentMode: 'application',
       studentsEnrolled: []
     } as any).save();
 
-    const aiLeadershipCourse = await new Course({
-      title: 'AI Strategic Leadership',
-      description: 'Lead your organization through the AI revolution. Understand the strategic, ethical, and operational shifts required for AI success.',
+    const childcareCourse = await new Course({
+      title: 'Early Childhood Education & Development',
+      description: 'Learn child psychology, cognitive development stages, and how to create engaging learning environments for toddlers.',
       instructor: admin._id,
       createdBy: admin._id,
-      price: 250000,
-      discountPrice: 195000,
-      category: 'Business',
-      level: 'Advanced',
-      enrollmentMode: 'application',
-      thumbnail: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=2000&auto=format&fit=crop',
+      price: 0, // Free community course
+      category: 'Childcare',
+      level: 'Beginner',
+      enrollmentMode: 'direct',
+      thumbnail: 'https://images.unsplash.com/photo-1587691592099-24045742c181?q=80&w=2073&auto=format&fit=crop',
       modules: [
         {
-          title: 'AI Transformation',
-          description: 'Building an AI-first organization',
-          lessons: createLessons('AI Leadership', 5)
+          title: 'Cognitive & Motor Skills',
+          description: 'Understanding developmental milestones.',
+          lessons: createLessons('Child Psychology', 5)
+        },
+        {
+          title: 'Play-Based Learning',
+          description: 'Designing activities that educate and entertain.',
+          lessons: createLessons('Interactive Play', 3)
         }
       ],
       status: 'published',
-      studentsEnrolled: []
+      studentsEnrolled: [student1._id, student2._id]
     } as any).save();
 
     // ── Seed Quiz Questions for all courses ──
-    const allCourses = [fullStackCourse, dataScienceCourse, generativeAICourse, promptEngCourse, aiLeadershipCourse];
+    const allCourses = [hotelCourse, techCourse, agricultureCourse, economicsCourse, childcareCourse];
     console.log('❓ Seeding Quiz Questions...');
     for (const course of allCourses) {
       for (const mod of (course as any).modules) {
@@ -309,7 +333,7 @@ const seedData = async () => {
     const program1 = await new InternshipProgram({
       title: 'Advanced Full Stack Internship',
       description: `Join our elite engineering team and work on production-grade applications. 
-      Prerequisites: Completion of '${fullStackCourse.title}' is highly recommended.`, // Reference to course
+      Prerequisites: Completion of '${techCourse.title}' is highly recommended.`, // Reference to course
       createdBy: admin._id,
       duration: '3 months',
       startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Starts in 1 week
@@ -349,7 +373,7 @@ const seedData = async () => {
       title: 'E-Commerce Microservices Migration',
       description: `
         <p>In this project, you will break down a monolithic e-commerce app into microservices.</p>
-        <p><strong>Reference Material:</strong> Please review Unit 5 of the <a href="/courses/${fullStackCourse._id}/learn">${fullStackCourse.title}</a> course before starting.</p>
+        <p><strong>Reference Material:</strong> Please review Unit 5 of the <a href="/courses/${techCourse._id}/learn">${techCourse.title}</a> course before starting.</p>
         <p>Your mentor for this project will be <strong>${(trainer1 as any).fullName}</strong>, the author of the course.</p>
       `,
       trainerId: trainer1._id,
@@ -450,7 +474,7 @@ const seedData = async () => {
     await new Project({
       userId: student1._id,
       title: 'E-Commerce Frontend Refactor',
-      course: 'Full Stack Masterclass',
+      course: techCourse.title,
       type: 'Individual',
       status: 'in_progress',
       progress: 35,
@@ -468,7 +492,7 @@ const seedData = async () => {
     await new Project({
       userId: student2._id,
       title: 'AI Movie Recommender System',
-      course: 'Data Science Bootcamp',
+      course: economicsCourse.title,
       type: 'Individual',
       status: 'pending_review',
       progress: 90,

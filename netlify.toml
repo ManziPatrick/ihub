@@ -1,0 +1,13 @@
+[build]
+  base = "frontend"
+  publish = "dist"
+  command = "npm install && npm run build"
+
+[build.environment]
+  VITE_API_URL = "https://api.codemande.com/graphql"
+  VITE_WS_URL = "wss://api.codemande.com/graphql"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
