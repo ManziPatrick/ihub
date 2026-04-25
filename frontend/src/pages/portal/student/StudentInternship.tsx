@@ -62,9 +62,22 @@ export default function StudentInternship() {
 
   if (loading) return (
     <PortalLayout>
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
-      </div>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div className="h-8 w-64 bg-muted rounded animate-pulse"></div>
+            <div className="h-8 w-24 bg-muted rounded-full animate-pulse"></div>
+          </div>
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="h-40 bg-muted rounded-xl animate-pulse"></div>
+              <div className="h-64 bg-muted rounded-xl animate-pulse"></div>
+            </div>
+            <div className="space-y-6">
+              <div className="h-48 bg-muted rounded-xl animate-pulse"></div>
+              <div className="h-48 bg-muted rounded-xl animate-pulse"></div>
+            </div>
+          </div>
+        </div>
     </PortalLayout>
   );
 

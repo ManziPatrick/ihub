@@ -420,7 +420,11 @@ export default function StudentSchedule() {
             </div>
 
             {loading ? (
-              <div className="flex justify-center py-20"><Loader2 className="w-12 h-12 animate-spin text-gold" /></div>
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-24 bg-muted rounded-2xl animate-pulse"></div>
+                ))}
+              </div>
             ) : (
               <div className="space-y-4">
                 {filteredEvents.map((booking: any) => (

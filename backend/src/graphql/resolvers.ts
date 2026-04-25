@@ -91,7 +91,7 @@ import {
 import { generateCertificatePDF, generateInvoicePDF } from '../services/pdf.service';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { chatWithAIService, explainTaskService, reviewSubmissionService, generateAIQuizService } from '../services/ai.service';
+import { chatWithAIService, explainTaskService, reviewSubmissionService, generateAIQuizService, hintForQuestionService } from '../services/ai.service';
 
 
 const DEFAULT_WORKFLOW = [
@@ -2852,6 +2852,12 @@ export const resolvers = {
       }));
 
       return draftQuestions;
+    },
+
+    hintForQuestion: async (_: any, { questionText, options }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const hint = await hintForQuestionService(questionText, options || []);
+      return hint;
     },
 
     createUser: async (_: any, { password, ...args }: any, context: any) => {

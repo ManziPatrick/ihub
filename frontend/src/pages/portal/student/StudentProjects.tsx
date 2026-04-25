@@ -98,8 +98,13 @@ export default function StudentProjects() {
   if (loading) {
     return (
       <PortalLayout>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading projects...</p>
+        <div className="space-y-6">
+          <div className="h-8 w-48 bg-muted rounded animate-pulse"></div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-64 bg-muted rounded-xl animate-pulse"></div>
+            ))}
+          </div>
         </div>
       </PortalLayout>
     );

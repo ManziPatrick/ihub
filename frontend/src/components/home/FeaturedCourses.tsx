@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@apollo/client/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
   ChevronRight,
   ChevronLeft,
@@ -32,7 +33,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import topImage from "@/assets/top.jpg";
-import { GET_COURSES, GET_INTERNSHIP_PROGRAMS, MY_COURSE_APPLICATIONS, GET_MY_INTERNSHIP_APPLICATIONS, GET_ME } from "@/lib/graphql/queries";
+import { 
+  GET_COURSES, 
+  GET_INTERNSHIP_PROGRAMS, 
+  MY_COURSE_APPLICATIONS, 
+  GET_MY_INTERNSHIP_APPLICATIONS, 
+  GET_ME, 
+  GET_MY_INTERNSHIP 
+} from "@/lib/graphql/queries";
 import { ApplyInternshipDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
@@ -151,16 +159,33 @@ export function FeaturedCourses() {
   const [applyCourse, setApplyCourse] = useState<any | null>(null);
   
   const { addToCart, cartItems } = useCart();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, updateUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const [enrollMutation, { loading: enrolling }] = useMutation(ENROLL_COURSE, {
-    onCompleted: () => {
+    onCompleted: (data: any) => {
+      const courseId = data.enrollCourse.id;
+      
+      // Update global user state
+      if (user) {
+        const currentEnrolled = user.enrolledCourses || [];
+        if (!currentEnrolled.includes(courseId)) {
+          updateUser({
+            enrolledCourses: [...currentEnrolled, courseId]
+          });
+        }
+      }
+
       toast({
-        title: "Success",
-        description: "You have successfully enrolled in this course!",
+        title: "Course Unlocked! 🚀",
+        description: "Redirecting you to your course...",
       });
+
+      // Redirect immediately
+      setTimeout(() => {
+        navigate(`/portal/student/courses/${courseId}`);
+      }, 1500);
     },
     refetchQueries: [{ query: GET_ME }, { query: GET_COURSES }, { query: MY_COURSE_APPLICATIONS }],
     onError: (err) => {
@@ -189,6 +214,14 @@ export function FeaturedCourses() {
     variables: { page: 1, limit: 100 },
   });
 
+  const { data: meData } = useQuery(GET_ME, {
+    skip: !isAuthenticated,
+  });
+
+  const { data: myInternData } = useQuery(GET_MY_INTERNSHIP, {
+    skip: !isAuthenticated,
+  });
+
   // User course applications
   const { data: appData, refetch: refetchApps } = useQuery(MY_COURSE_APPLICATIONS, {
     skip: !isAuthenticated,
@@ -200,6 +233,9 @@ export function FeaturedCourses() {
   });
 
   const myApplications = useMemo(() => (appData as any)?.myCourseApplications || [], [appData]);
+  const me = (meData as any)?.me;
+  const myInternship = (myInternData as any)?.myInternship;
+  const completedLessons = useMemo(() => me?.completedLessons || [], [me]);
   const myInternApplications = useMemo(() => (internAppData as any)?.myInternshipApplications || [], [internAppData]);
 
   const rawCourses: any[] = useMemo(
@@ -614,8 +650,27 @@ export function FeaturedCourses() {
 
           {/* Loading */}
           {loading && (
-            <div className="flex justify-center items-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-accent" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-[420px] bg-card rounded-2xl border border-border/50 animate-pulse overflow-hidden">
+                  <div className="h-48 bg-muted/50"></div>
+                  <div className="p-6 space-y-4">
+                    <div className="flex gap-2">
+                      <div className="h-5 w-16 bg-muted/50 rounded-full"></div>
+                      <div className="h-5 w-20 bg-muted/50 rounded-full"></div>
+                    </div>
+                    <div className="h-6 w-3/4 bg-muted/50 rounded"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 w-full bg-muted/50 rounded"></div>
+                      <div className="h-4 w-2/3 bg-muted/50 rounded"></div>
+                    </div>
+                    <div className="flex justify-between items-center pt-4 border-t border-border/50">
+                      <div className="h-6 w-20 bg-muted/50 rounded"></div>
+                      <div className="h-9 w-28 bg-muted/50 rounded-xl"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -642,7 +697,7 @@ export function FeaturedCourses() {
                     {filteredCourses.map((course: any, idx: number) => {
                       const meta = getCategoryMeta(course.normalizedCategory);
                       const Icon = meta.icon;
-                      const isEnrolled = user?.enrolledCourses?.some((c: any) => c.id === (course.id || course._id));
+                      const isEnrolled = (me?.enrolledCourses || user?.enrolledCourses)?.some((c: any) => (c.id || c).toString() === (course.id || course._id).toString());
                       const application = myApplications.find((app: any) => app.courseId === (course.id || course._id));
                       const appStatus = application?.status;
                       const isInCart = cartItems?.some((item: any) => item.id === (course.id || course._id));
@@ -679,6 +734,26 @@ export function FeaturedCourses() {
                             <h3 className="font-heading text-sm font-bold text-card-foreground mb-1 line-clamp-2 group-hover:text-accent transition-colors">
                               {course.title}
                             </h3>
+
+                            {isEnrolled && (
+                              <div className="mt-2 mb-2">
+                                {(() => {
+                                  const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
+                                  const completedCount = completedLessons.filter((l: any) => l.courseId === (course.id || course._id)).length;
+                                  const progress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+                                  
+                                  return (
+                                    <div className="space-y-1">
+                                      <div className="flex justify-between items-center text-[9px] font-bold">
+                                        <span className="text-muted-foreground uppercase">Progress</span>
+                                        <span className="text-accent">{progress}%</span>
+                                      </div>
+                                      <Progress value={progress} className="h-1.5" />
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
 
                             <div className="mt-auto pt-3 border-t border-border/30 flex flex-col gap-2">
                               <div className="flex items-center justify-between">
@@ -886,6 +961,25 @@ export function FeaturedCourses() {
                             <h3 className="font-heading text-sm font-bold text-card-foreground mb-2 line-clamp-2 group-hover:text-accent transition-colors">
                               {intern.title}
                             </h3>
+
+                            {(() => {
+                              const isEnrolledIntern = myInternship && myInternship.title === intern.title;
+                              if (!isEnrolledIntern) return null;
+
+                              const progress = myInternship.progress || 0;
+                              
+                              return (
+                                <div className="mt-2 mb-2">
+                                  <div className="space-y-1">
+                                    <div className="flex justify-between items-center text-[9px] font-bold">
+                                      <span className="text-muted-foreground uppercase">Progress</span>
+                                      <span className="text-accent">{progress}%</span>
+                                    </div>
+                                    <Progress value={progress} className="h-1.5" />
+                                  </div>
+                                </div>
+                              );
+                            })()}
 
                             <div className="mt-auto pt-3 border-t border-border/30 flex flex-col gap-2">
                               <div className="flex items-center justify-between mb-1">

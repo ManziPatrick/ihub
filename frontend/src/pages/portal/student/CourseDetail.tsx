@@ -39,6 +39,7 @@ import {
   Star,
   Flame,
   Trophy,
+  Printer,
 } from "lucide-react";
 import { RequestHelpDialog, BookCallDialog } from "@/components/portal/dialogs";
 import { LessonQuiz } from "@/components/portal/LessonQuiz";
@@ -113,8 +114,17 @@ export default function CourseDetail() {
 
   if (loading) return (
     <PortalLayout>
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold"></div>
+      <div className="space-y-6">
+        <div className="h-64 lg:h-96 bg-muted rounded-xl animate-pulse"></div>
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="h-8 w-64 bg-muted rounded animate-pulse"></div>
+            <div className="h-32 bg-muted rounded-xl animate-pulse"></div>
+          </div>
+          <div className="space-y-4">
+            <div className="h-64 bg-muted rounded-xl animate-pulse"></div>
+          </div>
+        </div>
       </div>
     </PortalLayout>
   );
@@ -139,6 +149,58 @@ export default function CourseDetail() {
   const progressPercent = Math.round((totalSatisfied / allLessons.length) * 100) || 0;
 
   const isCourseCompleted = me?.completedCourses?.some((cc: any) => cc.id === courseId);
+
+  const isModuleCompleted = (mod: any) => {
+    const modLessons = mod.lessons || [];
+    if (modLessons.length === 0) return false;
+    return modLessons.every((l: any) => {
+      const lid = l.id || l._id;
+      return completedLessons.some((cl: any) => cl.lessonId === lid) || forcedProgressLessonIds.includes(lid);
+    });
+  };
+
+  const handleDownloadModuleCert = (mod: any) => {
+    const content = `
+      <html>
+      <head>
+        <title>Module Certificate</title>
+        <style>
+          body { font-family: 'Georgia', serif; background: #0d0d0d; color: #fff; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+          .cert { border: 3px solid #d4a843; padding: 60px; max-width: 800px; text-align: center; background: linear-gradient(135deg, #1a1a1a, #111); }
+          .badge { font-size: 48px; margin-bottom: 16px; }
+          .subtitle { color: #d4a843; font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 24px; }
+          h1 { font-size: 42px; font-weight: 900; margin: 8px 0; }
+          h2 { font-size: 28px; color: #d4a843; margin: 16px 0; }
+          .name { font-size: 36px; font-style: italic; color: #f5f5f5; border-bottom: 2px solid #d4a843; display: inline-block; padding-bottom: 4px; margin: 24px 0; }
+          .course { font-size: 18px; color: #aaa; margin-bottom: 8px; }
+          .module-name { font-size: 22px; font-weight: bold; color: #d4a843; margin: 8px 0 32px; }
+          .footer { margin-top: 40px; font-size: 12px; color: #555; }
+          .date { font-size: 14px; color: #888; margin-top: 16px; }
+        </style>
+      </head>
+      <body>
+        <div class="cert">
+          <div class="badge">🏅</div>
+          <div class="subtitle">Module Completion Certificate</div>
+          <div class="name">This certifies that</div>
+          <h1>${me?.username || me?.fullName || 'Student'}</h1>
+          <p class="course">has successfully completed</p>
+          <h2 class="module-name">${mod.title}</h2>
+          <p class="course">in the course</p>
+          <p class="module-name" style="font-size:18px;">${course.title}</p>
+          <div class="date">Completed on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          <div class="footer">CODEMANDE Academy · codemande.com</div>
+        </div>
+      </body>
+      </html>
+    `;
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(content);
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    }
+  };
   const currentLessonRequiresAssignment = !!(currentLesson?.type === 'assignment' || currentLesson?.isAssignment);
   const currentLessonSubmission = submissionsData?.getAssignmentSubmissions?.items?.find((submission) => !me?.id || submission.userId === me.id);
   const currentLessonSubmissionStatus = currentLessonSubmission?.status;
@@ -350,7 +412,7 @@ export default function CourseDetail() {
             </div>
             <Link to="/portal/student/certificates">
               <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 rounded-2xl shadow-lg shadow-green-500/20">
-                View Certificate
+                <Award className="w-5 h-5 mr-2" /> Full Course Certificate
               </Button>
             </Link>
           </motion.div>
@@ -561,9 +623,22 @@ export default function CourseDetail() {
                 <ScrollArea className="h-[600px]">
                   <div className="p-4 space-y-6">
                     {course.modules?.map((mod: any, mIdx: number) => {
+                      const modCompleted = isModuleCompleted(mod);
                       return (
                         <div key={mod.id || mod._id} className="space-y-2">
-                          <h4 className="text-xs font-bold text-accent uppercase px-2">{mod.title}</h4>
+                          <div className="flex items-center justify-between px-2">
+                            <h4 className="text-xs font-bold text-accent uppercase">{mod.title}</h4>
+                            {modCompleted && (
+                              <button
+                                onClick={() => handleDownloadModuleCert(mod)}
+                                title="Download Module Certificate"
+                                className="flex items-center gap-1 text-[10px] font-black text-gold hover:text-gold/80 transition-colors"
+                              >
+                                <Award className="w-3 h-3" />
+                                <span>Cert</span>
+                              </button>
+                            )}
+                          </div>
                           <div className="space-y-1">
                             {mod.lessons?.map((les: any) => {
                               const lesId = les.id || les._id;

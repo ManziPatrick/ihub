@@ -1,11 +1,12 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 import { Link } from "react-router-dom";
 import { getApiBaseUrl } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
 import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Shield, Building2, Stethoscope, GraduationCap, Landmark, ShoppingBag, Factory, BarChart, ChevronRight, User, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye, XCircle } from "lucide-react";
 import heroImage from "@/assets/hero-training.webp";
@@ -41,6 +42,7 @@ interface AICourse {
   enrollmentLink?: string;
   id?: string;
   studentsEnrolled?: any[];
+  modules?: any[];
 }
 
 const getDepartmentIcon = (dept: string) => {
@@ -85,21 +87,40 @@ const Training = () => {
   const [filter, setFilter] = useState("ALL");
   const [enrollCourse, setEnrollCourse] = useState<any>(null);
   const [applyCourse, setApplyCourse] = useState<any>(null);
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, updateUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const { data: appsData } = useQuery(MY_COURSE_APPLICATIONS, {
-    skip: !isAuthenticated
-  });
+  const { data: meData } = useQuery(GET_ME, { skip: !isAuthenticated });
+  const me = (meData as any)?.me;
+  const completedLessons = me?.completedLessons || [];
+
+  const { data: appsData } = useQuery(MY_COURSE_APPLICATIONS, { skip: !isAuthenticated });
   const myApplications = (appsData as any)?.myCourseApplications || [];
 
   const [enrollMutation, { loading: enrolling }] = useMutation(ENROLL_COURSE, {
-    onCompleted: () => {
+    onCompleted: (data: any) => {
+      const courseId = data.enrollCourse.id;
+      
+      // Update global user state
+      if (user) {
+        const currentEnrolled = user.enrolledCourses || [];
+        if (!currentEnrolled.includes(courseId)) {
+          updateUser({
+            enrolledCourses: [...currentEnrolled, courseId]
+          });
+        }
+      }
+
       toast({
-        title: "Success",
-        description: "You have successfully enrolled in this course!",
+        title: "Course Unlocked! 🚀",
+        description: "Redirecting you to your course...",
       });
+
+      // Redirect immediately
+      setTimeout(() => {
+        navigate(`/portal/student/courses/${courseId}`);
+      }, 1500);
     },
     refetchQueries: [{ query: GET_ME }, { query: GET_COURSES }, { query: MY_COURSE_APPLICATIONS }],
     onError: (err) => {
@@ -256,6 +277,26 @@ const Training = () => {
                       className="text-muted-foreground text-sm mb-6 line-clamp-3 prose prose-sm prose-invert max-w-none"
                       dangerouslySetInnerHTML={{ __html: course.description }}
                     />
+
+                    {(() => {
+                      const isEnrolled = (me?.enrolledCourses || user?.enrolledCourses)?.some((c: any) => (c.id || c).toString() === (course.id || course._id).toString()) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
+                      if (!isEnrolled) return null;
+
+                      const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
+                      const completedCount = completedLessons.filter((l: any) => l.courseId === (course.id || course._id)).length;
+                      const progress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
+                      return (
+                        <div className="mb-4 space-y-1">
+                          <div className="flex justify-between items-center text-[10px] font-bold">
+                            <span className="text-muted-foreground uppercase">Progress</span>
+                            <span className="text-accent">{progress}%</span>
+                          </div>
+                          <Progress value={progress} className="h-1.5" />
+                        </div>
+                      );
+                    })()}
+
                     <div className="mt-auto pt-6 border-t border-border/30 flex flex-col gap-3">
                       <div className="flex items-center justify-between">
                         <div className="flex flex-col">
@@ -287,7 +328,7 @@ const Training = () => {
                       </div>
 
                       {(() => {
-                        const isEnrolled = user?.enrolledCourses?.some((c: any) => c.id === (course.id || course._id)) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
+                        const isEnrolled = (me?.enrolledCourses || user?.enrolledCourses)?.some((c: any) => (c.id || c).toString() === (course.id || course._id).toString()) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
                         const application = myApplications.find((app: any) => app.courseId === (course.id || course._id));
                         const appStatus = application?.status;
 
@@ -449,6 +490,25 @@ const Training = () => {
                               {course.description}
                             </p>
 
+                            {(() => {
+                              const isEnrolled = (me?.enrolledCourses || user?.enrolledCourses)?.some((c: any) => (c.id || c).toString() === (course.id || course._id).toString()) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
+                              if (!isEnrolled) return null;
+
+                              const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
+                              const completedCount = completedLessons.filter((l: any) => l.courseId === (course.id || course._id)).length;
+                              const progress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
+                              return (
+                                <div className="mb-4 space-y-1">
+                                  <div className="flex justify-between items-center text-[10px] font-bold">
+                                    <span className="text-muted-foreground uppercase">Progress</span>
+                                    <span className="text-accent">{progress}%</span>
+                                  </div>
+                                  <Progress value={progress} className="h-1.5" />
+                                </div>
+                              );
+                            })()}
+
                             <div className="space-y-2 mb-6 flex-grow">
                               <p className="text-[9px] font-bold text-foreground/50 uppercase tracking-widest flex items-center gap-2">
                                 <CheckCircle size={10} className="text-accent" />
@@ -493,7 +553,7 @@ const Training = () => {
                                 </Link>
                                 
                                 {(() => {
-                                  const isEnrolled = user?.enrolledCourses?.some((c: any) => c.id === (course.id || course._id)) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
+                                  const isEnrolled = (me?.enrolledCourses || user?.enrolledCourses)?.some((c: any) => (c.id || c).toString() === (course.id || course._id).toString()) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
                                   const application = myApplications.find((app: any) => app.courseId === (course.id || course._id || course._id));
                                   const appStatus = application?.status;
 

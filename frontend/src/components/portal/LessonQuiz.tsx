@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_QUESTIONS } from "@/lib/graphql/queries";
-import { REWARD_STUDENT, GENERATE_AI_QUIZ } from "@/lib/graphql/mutations";
-import { CheckCircle2, ChevronRight, RefreshCcw, Loader2, HelpCircle, Star, Flame, Trophy } from "lucide-react";
+import { REWARD_STUDENT, GENERATE_AI_QUIZ, HINT_FOR_QUESTION, CHAT_WITH_AI } from "@/lib/graphql/mutations";
+import { CheckCircle2, ChevronRight, RefreshCcw, Loader2, HelpCircle, Star, Flame, Trophy, Lightbulb, Send, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
@@ -25,6 +25,13 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
   const [streak, setStreak] = useState(0);
   const [expression, setExpression] = useState<AvatarExpression>('normal');
   const [showExplanation, setShowExplanation] = useState(false);
+  const [hint, setHint] = useState<string | null>(null);
+  const [showHint, setShowHint] = useState(false);
+  
+  const [hintChatMessages, setHintChatMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  
+  const [chatWithAI, { loading: sendingChat }] = useMutation<any, any>(CHAT_WITH_AI);
 
   const correctAudio = useRef<HTMLAudioElement | null>(null);
   const incorrectAudio = useRef<HTMLAudioElement | null>(null);
@@ -35,7 +42,6 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
     incorrectAudio.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3");
     completeAudio.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3");
     
-    // Low volume for sounds
     if (correctAudio.current) correctAudio.current.volume = 0.3;
     if (incorrectAudio.current) incorrectAudio.current.volume = 0.3;
     if (completeAudio.current) completeAudio.current.volume = 0.3;
@@ -50,6 +56,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
   const [generateAIQuiz, { loading: generatingQuiz }] = useMutation(GENERATE_AI_QUIZ, {
     refetchQueries: [{ query: GET_QUESTIONS, variables: { courseId, lessonId } }]
   });
+  const [hintForQuestion, { loading: loadingHint }] = useMutation(HINT_FOR_QUESTION);
 
   const questions = (data as any)?.questions || [];
 
@@ -89,9 +96,59 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
     setExpression('thinking');
   };
 
+  const handleGetHint = async () => {
+    if (isAnswered) return;
+    setShowHint(true);
+    setHint(null);
+    setHintChatMessages([]);
+    try {
+      const { data } = await hintForQuestion({
+        variables: {
+          questionText: currentQuestion.questionText,
+          options: currentQuestion.options
+        }
+      });
+      const generatedHint = (data as any)?.hintForQuestion || "Think carefully about the key concepts in this question.";
+      setHint(generatedHint);
+    } catch {
+      setHint("Think about the core concept this question is testing. Review the key terms carefully.");
+    }
+  };
+
+  const handleSendHintChat = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim() || sendingChat) return;
+
+    const userMessage = chatInput.trim();
+    setChatInput("");
+    
+    // Add user message to UI immediately
+    const updatedMessages: {role: 'user' | 'assistant', content: string}[] = [
+      ...hintChatMessages, 
+      { role: 'user', content: userMessage }
+    ];
+    setHintChatMessages(updatedMessages);
+
+    try {
+      // Provide context to the AI about the current question and hint
+      const contextMessage = `Context: The student is asking about this quiz question: "${currentQuestion.questionText}". The hint I was given is: "${hint}". Student asks: ${userMessage}`;
+      
+      const { data } = await chatWithAI({
+        variables: { message: contextMessage }
+      });
+      
+      if (data?.chatWithAI?.content) {
+        setHintChatMessages(prev => [...prev, { role: 'assistant', content: data.chatWithAI.content }]);
+      }
+    } catch (err) {
+      console.error("Chat error", err);
+    }
+  };
+
   const handleSubmitAnswer = () => {
     if (selectedOption === null) return;
     setIsAnswered(true);
+    setShowHint(false);
     
     const isCorrect = selectedOption === currentQuestion.correctOptionIndex;
     
@@ -110,9 +167,10 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
     } else {
       setStreak(0);
       setExpression('sad');
-      setShowExplanation(true);
       incorrectAudio.current?.play().catch(() => {});
     }
+    // Always show explanation so students learn regardless of outcome
+    setShowExplanation(true);
   };
 
   const handleNext = () => {
@@ -121,6 +179,9 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
       setSelectedOption(null);
       setIsAnswered(false);
       setShowExplanation(false);
+      setShowHint(false);
+      setHint(null);
+      setHintChatMessages([]);
       setExpression('normal');
     } else {
       setIsFinished(true);
@@ -131,7 +192,6 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
         spread: 100,
         origin: { y: 0.6 }
       });
-      // Persist Rewards
       rewardStudent({
         variables: {
           xp: xp,
@@ -154,6 +214,9 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
     setIsFinished(false);
     setExpression('normal');
     setShowExplanation(false);
+    setShowHint(false);
+    setHint(null);
+    setHintChatMessages([]);
   };
 
   if (isFinished) {
@@ -258,9 +321,12 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
             animate={{ opacity: 1, x: 0 }}
             className="space-y-6"
           >
-            <h4 className="text-2xl font-bold leading-tight text-foreground">
-              {currentQuestion.questionText}
-            </h4>
+            {/* Question Text */}
+            <div className="flex flex-col gap-4">
+              <h4 className="text-lg font-bold leading-tight text-foreground">
+                {currentQuestion.questionText}
+              </h4>
+            </div>
 
             <div className="grid gap-3">
               {currentQuestion.options.map((option: string, i: number) => {
@@ -291,6 +357,93 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
                 );
               })}
             </div>
+
+            {/* Hint Button and Panel below options */}
+            <div className="pt-2">
+              {!isAnswered && !showHint && (
+                <div className="flex justify-start">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGetHint}
+                    disabled={loadingHint}
+                    className="shrink-0 border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500 rounded-xl gap-1.5 font-bold"
+                  >
+                    {loadingHint ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Lightbulb className="w-3.5 h-3.5" />
+                    )}
+                    Get a Hint
+                  </Button>
+                </div>
+              )}
+
+              <AnimatePresence>
+                {showHint && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="mt-4 p-4 bg-amber-500/5 border-2 border-amber-500/20 rounded-2xl relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 right-0 p-3 opacity-10">
+                      <Lightbulb className="w-10 h-10 text-amber-500" />
+                    </div>
+                    <p className="text-[10px] font-black uppercase text-amber-500 tracking-[0.2em] mb-2">
+                      💡 AI Hint
+                    </p>
+                    {loadingHint || !hint ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+                        Thinking of a hint for you...
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <p className="text-sm font-medium text-foreground leading-relaxed">{hint}</p>
+                        
+                        {/* Hint Chat Interface */}
+                        <div className="mt-4 pt-4 border-t border-amber-500/10 space-y-3">
+                          {hintChatMessages.length > 0 && (
+                            <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                              {hintChatMessages.map((msg, idx) => (
+                                <div key={idx} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                  <div className={`px-3 py-2 rounded-2xl max-w-[85%] text-xs font-medium ${
+                                    msg.role === 'user' 
+                                      ? 'bg-amber-500 text-white rounded-tr-sm' 
+                                      : 'bg-background/50 border border-border/50 rounded-tl-sm text-foreground'
+                                  }`}>
+                                    {msg.content}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <form onSubmit={handleSendHintChat} className="flex gap-2">
+                            <input
+                              type="text"
+                              value={chatInput}
+                              onChange={(e) => setChatInput(e.target.value)}
+                              placeholder="Ask a follow-up question..."
+                              className="flex-1 bg-background/50 border border-amber-500/20 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-amber-500/50"
+                              disabled={sendingChat || isAnswered}
+                            />
+                            <Button 
+                              type="submit" 
+                              size="icon" 
+                              disabled={!chatInput.trim() || sendingChat || isAnswered}
+                              className="shrink-0 bg-amber-500 hover:bg-amber-600 text-white rounded-xl h-9 w-9"
+                            >
+                              {sendingChat ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                            </Button>
+                          </form>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </motion.div>
         </div>
 
@@ -307,13 +460,28 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
             className="space-y-6 pt-6 border-t border-border/50"
           >
             {showExplanation && currentQuestion.explanation && (
-              <div className="p-6 bg-accent/5 rounded-3xl border-2 border-accent/20 relative overflow-hidden">
+              <div className={`p-6 rounded-3xl border-2 relative overflow-hidden ${
+                selectedOption === currentQuestion.correctOptionIndex
+                  ? 'bg-green-500/5 border-green-500/20'
+                  : 'bg-accent/5 border-accent/20'
+              }`}>
                 <div className="absolute top-0 right-0 p-3 opacity-10">
                   <HelpCircle className="w-12 h-12" />
                 </div>
-                <p className="text-[10px] font-black uppercase text-accent tracking-[0.2em] mb-2">Did you know? 🧠</p>
+                <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${
+                  selectedOption === currentQuestion.correctOptionIndex ? 'text-green-500' : 'text-accent'
+                }`}>
+                  {selectedOption === currentQuestion.correctOptionIndex
+                    ? '✅ Why this is correct'
+                    : '💡 Here is why the correct answer is'}
+                </p>
+                {selectedOption !== currentQuestion.correctOptionIndex && (
+                  <p className="text-sm font-black text-green-400 mb-2">
+                    ✓ {currentQuestion.options[currentQuestion.correctOptionIndex]}
+                  </p>
+                )}
                 <p className="text-sm font-bold text-foreground leading-relaxed">
-                  {currentQuestion.explanation.replace(/^[Pp]hotosynthesis/, "🌱 Photosynthesis")}
+                  {currentQuestion.explanation}
                 </p>
               </div>
             )}

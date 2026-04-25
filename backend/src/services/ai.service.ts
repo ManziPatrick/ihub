@@ -207,6 +207,41 @@ export const generateAIQuizService = async (courseTitle: string, lessonTitle: st
     }
 };
 
+export const hintForQuestionService = async (questionText: string, options: string[]) => {
+    const prompt = `You are a helpful tutor at CODEMANDE Academy. A student is taking a quiz and needs a hint for the following question.
+
+Question: ${questionText}
+Options:
+${options.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}
+
+STRICT INSTRUCTIONS:
+- Do NOT reveal the correct answer or which option number is correct.
+- Instead, explain the underlying concept the question is testing.
+- Guide the student to think critically about the topic.
+- Keep your hint to 2-3 sentences maximum.
+- Be encouraging and clear.
+- Suggest what concept or keyword to focus on when thinking about the answer.
+
+Your hint:`;
+
+    try {
+        const response = await axios.post(
+            'https://router.huggingface.co/v1/chat/completions',
+            {
+                model: "Qwen/Qwen3-Coder-Next:novita",
+                messages: [{ role: 'user', content: prompt }],
+                stream: false,
+                max_tokens: 150
+            },
+            { headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' } }
+        );
+        return response.data.choices[0].message.content.trim();
+    } catch (error: any) {
+        console.error('Hint Generation Error:', error);
+        return "Think about the core concept this question is testing. Review the key terms in the question and consider what each option implies.";
+    }
+};
+
 const parseAIResponse = async (aiContent: string, contextUser: any) => {
     let action = null;
     let actionData = null;

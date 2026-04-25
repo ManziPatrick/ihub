@@ -103,8 +103,13 @@ export default function StudentCourses() {
   if (meLoading || coursesLoading || projectsLoading) {
     return (
       <PortalLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+        <div className="space-y-6">
+          <div className="h-8 w-48 bg-muted rounded animate-pulse"></div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-80 bg-muted rounded-xl animate-pulse"></div>
+            ))}
+          </div>
         </div>
       </PortalLayout>
     );

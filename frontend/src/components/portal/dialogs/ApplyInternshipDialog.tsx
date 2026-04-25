@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { APPLY_TO_INTERNSHIP_PROGRAM } from "@/lib/graphql/mutations";
-import { GET_INTERNSHIP_PROGRAM, GET_INTERNSHIP_PROGRAMS, GET_MY_INTERNSHIP_APPLICATIONS } from "@/lib/graphql/queries";
+import { GET_INTERNSHIP_PROGRAM, GET_INTERNSHIP_PROGRAMS, GET_MY_INTERNSHIP_APPLICATIONS, GET_ME, GET_MY_INTERNSHIP } from "@/lib/graphql/queries";
 import {
   Dialog,
   DialogContent,
@@ -147,7 +147,9 @@ export function ApplyInternshipDialog({
     },
     refetchQueries: [
       { query: GET_INTERNSHIP_PROGRAMS },
-      { query: GET_MY_INTERNSHIP_APPLICATIONS }
+      { query: GET_MY_INTERNSHIP_APPLICATIONS },
+      { query: GET_ME },
+      { query: GET_MY_INTERNSHIP },
     ]
   });
 

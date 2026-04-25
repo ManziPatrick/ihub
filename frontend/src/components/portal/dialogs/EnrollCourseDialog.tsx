@@ -13,6 +13,7 @@ import { GET_ME, GET_COURSES } from "@/lib/graphql/queries";
 import { FileUpload } from "@/components/FileUpload";
 import { PaymentForm } from "@/components/PaymentForm";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 
 export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
@@ -39,7 +40,8 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
   const finalPrice = course.discountPrice > 0 ? course.discountPrice : course.price;
   const isFree = finalPrice === 0;
 
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
 
   const handleEnroll = async () => {
     // Check if user is already enrolled
@@ -59,8 +61,16 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
         await enrollMutation({
           variables: { courseId: targetCourseId, selectedDeliveryMode }
         });
-        toast.success(`Successfully enrolled in ${course.title}!`);
+        // Sync global user state immediately
+        if (user) {
+          const currentEnrolled = user.enrolledCourses || [];
+          if (!currentEnrolled.includes(targetCourseId)) {
+            updateUser({ enrolledCourses: [...currentEnrolled, targetCourseId] });
+          }
+        }
+        toast.success(`Course Unlocked! Redirecting...`);
         onOpenChange(false);
+        setTimeout(() => navigate(`/portal/student/courses/${targetCourseId}`), 800);
       } else {
         if (paymentMethod === "manual") {
           const targetCourseId = course.id || course._id;
@@ -106,6 +116,13 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
       await enrollMutation({
         variables: { courseId: targetCourseId }
       });
+      // Sync global user state immediately
+      if (user) {
+        const currentEnrolled = user.enrolledCourses || [];
+        if (!currentEnrolled.includes(targetCourseId)) {
+          updateUser({ enrolledCourses: [...currentEnrolled, targetCourseId] });
+        }
+      }
 
       setStep(4);
       toast.success(`Welcome to the course: ${course.title}!`);
@@ -416,7 +433,12 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
           )}
 
           {step === 4 && (
-            <Button variant="gold" className="w-full" onClick={() => onOpenChange(false)}>
+            <Button variant="gold" className="w-full" onClick={() => {
+              onOpenChange(false);
+              if (paymentMethod !== "manual") {
+                navigate(`/portal/student/courses/${course.id || course._id}`);
+              }
+            }}>
               {paymentMethod === "manual" ? "Got it" : "Start Learning"}
             </Button>
           )}

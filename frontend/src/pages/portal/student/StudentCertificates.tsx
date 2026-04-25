@@ -93,8 +93,15 @@ export default function StudentCertificates() {
   if (loading) {
     return (
       <PortalLayout>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading certificates...</p>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div className="h-8 w-48 bg-muted rounded animate-pulse"></div>
+            <div className="h-8 w-24 bg-muted rounded-full animate-pulse"></div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4 mt-6">
+            <div className="h-48 bg-muted rounded-xl animate-pulse"></div>
+            <div className="h-48 bg-muted rounded-xl animate-pulse"></div>
+          </div>
         </div>
       </PortalLayout>
     );

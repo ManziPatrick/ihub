@@ -27,11 +27,11 @@ import {
   XCircle,
 } from "lucide-react";
 import { useQuery } from "@apollo/client/react";
-import { 
-  GET_ME, 
-  GET_MY_BOOKINGS, 
-  GET_CONVERSATIONS, 
-  GET_MY_PAYMENTS, 
+import {
+  GET_ME,
+  GET_MY_BOOKINGS,
+  GET_CONVERSATIONS,
+  GET_MY_PAYMENTS,
   GET_MY_PROJECTS,
   MY_COURSE_APPLICATIONS,
   GET_MY_INTERNSHIP_APPLICATIONS
@@ -57,8 +57,28 @@ export default function StudentDashboard() {
   if (meLoading || bookingsLoading || projectsLoading) {
     return (
       <PortalLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-pulse">
+            <div className="space-y-2">
+              <div className="h-8 w-64 bg-muted rounded-xl"></div>
+              <div className="h-4 w-40 bg-muted/50 rounded-lg"></div>
+            </div>
+            <div className="flex gap-3">
+              <div className="h-10 w-32 bg-muted rounded-xl"></div>
+              <div className="h-10 w-10 bg-muted rounded-full"></div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-pulse">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-32 bg-muted rounded-2xl"></div>
+            ))}
+          </div>
+          
+          <div className="grid lg:grid-cols-3 gap-6 animate-pulse">
+            <div className="lg:col-span-2 h-64 bg-muted rounded-3xl"></div>
+            <div className="h-64 bg-muted rounded-3xl"></div>
+          </div>
         </div>
       </PortalLayout>
     );
@@ -171,7 +191,7 @@ export default function StudentDashboard() {
                             <span>Overall Progress</span>
                             <span className="text-accent">{getCourseProgress(latestCourse)}%</span>
                           </div>
-                          <Progress value={getCourseProgress(latestCourse)} className="h-2 bg-muted/20" />
+
                         </div>
                         <Link to={`/portal/student/courses/${latestCourse.id || latestCourse._id}`}>
                           <Button variant="gold" className="w-full rounded-xl font-bold h-11 group shadow-lg shadow-gold/20">
@@ -191,29 +211,26 @@ export default function StudentDashboard() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <Card className={`border-2 overflow-hidden ${
-                latestApp.status === 'pending' ? 'border-amber-500/30 bg-amber-500/5' : 'border-red-500/30 bg-red-500/5'
-              }`}>
+              <Card className={`border-2 overflow-hidden ${latestApp.status === 'pending' ? 'border-amber-500/30 bg-amber-500/5' : 'border-red-500/30 bg-red-500/5'
+                }`}>
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                      latestApp.status === 'pending' ? 'bg-amber-500/20' : 'bg-red-500/20'
-                    }`}>
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${latestApp.status === 'pending' ? 'bg-amber-500/20' : 'bg-red-500/20'
+                      }`}>
                       {latestApp.status === 'pending' ? <Clock className="w-6 h-6 text-amber-500" /> : <XCircle className="w-6 h-6 text-red-500" />}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-lg font-bold">Application Status</h3>
-                        <Badge variant="outline" className={`text-[10px] uppercase font-black ${
-                          latestApp.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
-                        }`}>
+                        <Badge variant="outline" className={`text-[10px] uppercase font-black ${latestApp.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
+                          }`}>
                           {latestApp.status}
                         </Badge>
                       </div>
                       <p className="text-sm font-medium text-foreground mb-1">{latestApp.courseTitle}</p>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        {latestApp.status === 'pending' 
-                          ? "We've received your application and it's currently under review. Check back soon for updates!" 
+                        {latestApp.status === 'pending'
+                          ? "We've received your application and it's currently under review. Check back soon for updates!"
                           : `Unfortunately, your application was not accepted. Reason: ${latestApp.rejectionReason || 'No reason provided.'}`}
                       </p>
                       {latestApp.status === 'rejected' && (
@@ -227,7 +244,7 @@ export default function StudentDashboard() {
               </Card>
             </motion.div>
           ) : (
-             <motion.div
+            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
@@ -384,7 +401,7 @@ export default function StudentDashboard() {
                     </Link>
                   </div>
                 )}
-                
+
                 {/* Enrolled Courses */}
                 {enrolledCourses.map((course: any, index: number) => {
                   const courseId = course.id || course._id;
@@ -445,9 +462,8 @@ export default function StudentDashboard() {
                           </h3>
                         </div>
                         <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
-                          Application Status: <span className={`ml-1 ${
-                            app.status === 'pending' ? 'text-amber-500' : 'text-red-500'
-                          }`}>{app.status}</span>
+                          Application Status: <span className={`ml-1 ${app.status === 'pending' ? 'text-amber-500' : 'text-red-500'
+                            }`}>{app.status}</span>
                         </p>
                       </div>
                       <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full group-hover:bg-accent/10">
@@ -705,17 +721,16 @@ export default function StudentDashboard() {
                             <span className="text-[10px] font-bold text-card-foreground/70 truncate">
                               {app.internshipProgram?.title || "Internship"}
                             </span>
-                            <Badge variant="outline" className={`text-[9px] h-4 px-1.5 uppercase ${
-                              app.status === 'approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                            <Badge variant="outline" className={`text-[9px] h-4 px-1.5 uppercase ${app.status === 'approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
                               app.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                              'bg-red-500/10 text-red-500 border-red-500/20'
-                            }`}>
+                                'bg-red-500/10 text-red-500 border-red-500/20'
+                              }`}>
                               {app.status}
                             </Badge>
                           </div>
-                          <Button 
-                            variant="link" 
-                            size="sm" 
+                          <Button
+                            variant="link"
+                            size="sm"
                             className="p-0 h-auto text-[10px] text-accent font-bold"
                             onClick={() => setSelectedInternshipId(app.internshipProgram?.id)}
                           >
@@ -745,7 +760,7 @@ export default function StudentDashboard() {
         course={selectedCourse}
         onSuccess={() => refetchApps()}
       />
-      
+
       {selectedInternshipId && (
         <ApplyInternshipDialog
           open={!!selectedInternshipId}

@@ -41,7 +41,7 @@ export function KidAvatar({ expression }: KidAvatarProps) {
             ease: "easeInOut"
           }
         }}
-        className={`w-28 h-28 ${color} rounded-[2rem] flex items-center justify-center text-6xl shadow-xl border-4 border-white relative overflow-hidden`}
+        className={`w-20 h-20 ${color} rounded-[2rem] flex items-center justify-center text-4xl shadow-xl border-4 border-white relative overflow-hidden mx-auto`}
       >
         <div className="absolute inset-0 bg-white/20 animate-pulse pointer-events-none" />
         <span className="relative z-10">{emoji}</span>

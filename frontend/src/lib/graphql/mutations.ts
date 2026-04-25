@@ -244,6 +244,12 @@ export const GENERATE_AI_QUIZ = gql`
   }
 `;
 
+export const HINT_FOR_QUESTION = gql`
+  mutation HintForQuestion($questionText: String!, $options: [String!]!) {
+    hintForQuestion(questionText: $questionText, options: $options)
+  }
+`;
+
 export const TRACK_ACTIVITY = gql`
   mutation TrackActivity($action: String!, $details: String) {
     trackActivity(action: $action, details: $details) {
