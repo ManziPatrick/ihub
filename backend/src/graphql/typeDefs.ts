@@ -50,6 +50,7 @@ export const typeDefs = `#graphql
   type Grade {
     courseId: ID!
     lessonId: String
+    lesson: Lesson
     score: Int
     feedback: String
     gradedBy: User
@@ -984,7 +985,7 @@ export const typeDefs = `#graphql
     updateLessonProgress(courseId: ID!, lessonId: String!, timeSpent: Int!, completed: Boolean): Boolean
     
     completeLesson(courseId: ID!, lessonId: String!): User
-    rewardStudent(xp: Int!, streak: Int): User
+    rewardStudent(xp: Int!, streak: Int, courseId: ID, lessonId: ID, score: Int): User!
     trackActivity(action: String!, details: String): User
 
     

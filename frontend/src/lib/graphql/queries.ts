@@ -319,6 +319,10 @@ export const GET_ME = gql`
       grades {
         courseId
         lessonId
+        lesson {
+          title
+          type
+        }
         score
         feedback
         gradedAt

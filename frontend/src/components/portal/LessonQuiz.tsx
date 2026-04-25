@@ -135,7 +135,10 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
       rewardStudent({
         variables: {
           xp: xp,
-          streak: streak
+          streak: streak,
+          courseId: courseId,
+          lessonId: lessonId,
+          score: Math.round((score / questions.length) * 100)
         }
       }).catch(err => console.error("Reward Error:", err));
     }

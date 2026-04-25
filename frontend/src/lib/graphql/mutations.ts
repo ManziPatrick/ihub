@@ -222,8 +222,8 @@ export const COMPLETE_LESSON = gql`
 `;
 
 export const REWARD_STUDENT = gql`
-  mutation RewardStudent($xp: Int!, $streak: Int) {
-    rewardStudent(xp: $xp, streak: $streak) {
+  mutation RewardStudent($xp: Int!, $streak: Int, $courseId: ID, $lessonId: ID, $score: Int) {
+    rewardStudent(xp: $xp, streak: $streak, courseId: $courseId, lessonId: $lessonId, score: $score) {
       id
       xp
       streak

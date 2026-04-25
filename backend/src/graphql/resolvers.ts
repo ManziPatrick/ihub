@@ -2708,7 +2708,7 @@ export const resolvers = {
 
           const isFullCourseComplete = allLessonIds.every(id => userCompletedForThisCourse.includes(id));
 
-          if (isFullCourseComplete && !user.completedCourses.includes(targetCourseId as any)) {
+          if (isFullCourseComplete && !user.completedCourses.some(id => id.toString() === targetCourseId.toString())) {
             (user as any).completedCourses.push(targetCourseId as any);
             console.log(`🎉 Course ${targetCourseId} marked as completed for user ${user.id}`);
           }
@@ -2781,7 +2781,7 @@ export const resolvers = {
       return await user.populate('enrolledCourses');
     },
 
-    rewardStudent: async (_: any, { xp, streak }: any, context: any) => {
+    rewardStudent: async (_: any, { xp, streak, courseId, lessonId, score }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
       const user = await User.findById(context.user.id);
       if (!user) throw new Error('User not found');
@@ -2793,6 +2793,18 @@ export const resolvers = {
       const newLevel = Math.floor(user.xp / 100) + 1;
       if (newLevel > (user.level || 1)) {
         user.level = newLevel;
+      }
+
+      // If score is provided, add it to grades
+      if (score !== undefined && courseId && lessonId) {
+        (user as any).grades.push({
+          courseId,
+          lessonId,
+          score,
+          feedback: "Quiz challenge completed",
+          gradedBy: null, // "AI" is handled in the Grade resolver
+          gradedAt: new Date()
+        });
       }
 
       await user.save();
@@ -6457,6 +6469,20 @@ export const resolvers = {
       return await Message.findById(parent.lastMessage);
     }
   },
+  Grade: {
+    lesson: async (parent: any) => {
+      if (!parent.courseId || !parent.lessonId) return null;
+      const course = await Course.findById(parent.courseId);
+      if (!course) return null;
+      const allLessons = course.modules.flatMap((m: any) => m.lessons);
+      return allLessons.find((l: any) => (l.id || l._id).toString() === parent.lessonId);
+    },
+    gradedBy: async (parent: any) => {
+      if (!parent.gradedBy) return { username: 'AI Tutor', fullName: 'Codemande AI' };
+      return await User.findById(parent.gradedBy);
+    }
+  },
+
   AssignmentSubmission: {
     user: async (parent: any) => {
       if (parent.user && parent.user.username) return parent.user;

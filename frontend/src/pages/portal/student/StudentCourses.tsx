@@ -253,9 +253,15 @@ export default function StudentCourses() {
                               <h3 className="font-heading font-semibold text-card-foreground">
                                 {course.title}
                               </h3>
-                              <span className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full">
-                                {progress}%
-                              </span>
+                              {me?.completedCourses?.some((id: any) => id.toString() === courseId.toString()) ? (
+                                <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-400/30">
+                                  Completed
+                                </Badge>
+                              ) : (
+                                <span className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full">
+                                  {progress}%
+                                </span>
+                              )}
                             </div>
                             <p className="text-sm text-card-foreground/60 mb-3 line-clamp-2">
                               {course.description}
@@ -536,18 +542,76 @@ export default function StudentCourses() {
           </TabsContent>
 
           {/* Completed Courses */}
-          <TabsContent value="completed">
-            <Card className="border-border/50">
-              <CardContent className="py-12 text-center">
-                <Award className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-heading text-lg font-medium text-foreground mb-2">
-                  No completed courses yet
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Keep learning! Your completed courses will appear here
-                </p>
-              </CardContent>
-            </Card>
+          <TabsContent value="completed" className="space-y-4">
+            {me?.completedCourses?.length === 0 ? (
+              <Card className="border-border/50">
+                <CardContent className="py-12 text-center">
+                  <Award className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="font-heading text-lg font-medium text-foreground mb-2">
+                    No completed courses yet
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    Keep learning! Your completed courses will appear here
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className={`grid gap-4 ${viewMode === "grid" ? "md:grid-cols-2" : "grid-cols-1"}`}>
+                {me?.completedCourses?.map((course: any, index: number) => {
+                  const courseId = course.id || course._id;
+                  const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
+                  
+                  return (
+                    <motion.div
+                      key={courseId || index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Card className="border-border/50 bg-green-500/5 hover:shadow-card-hover transition-all overflow-hidden border-green-500/20">
+                        <div className={`flex ${viewMode === "list" ? "flex-row" : "flex-col"}`}>
+                          <div className={`bg-green-500/10 ${viewMode === "list" ? "w-48 h-auto" : "h-40"}`}>
+                            <div className="w-full h-full flex items-center justify-center">
+                              {course.thumbnail ? (
+                                <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover opacity-80" />
+                              ) : (
+                                <Award className="w-12 h-12 text-green-500/50" />
+                              )}
+                            </div>
+                          </div>
+                          
+                          <CardContent className="p-4 flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                              <h3 className="font-heading font-semibold text-foreground">
+                                {course.title}
+                              </h3>
+                              <Badge variant="outline" className="bg-green-500/20 text-green-500 border-green-500/30">
+                                <CheckCircle className="w-3 h-3 mr-1" /> Completed
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                              Congratulations on finishing this professional program!
+                            </p>
+                            <div className="flex items-center justify-between mt-auto">
+                              <Link to={`/portal/student/certificates`}>
+                                <Button variant="outline" size="sm" className="border-green-500/50 text-green-500 hover:bg-green-500/10">
+                                  View Certificate
+                                </Button>
+                              </Link>
+                              <Link to={`/portal/student/courses/${courseId}`}>
+                                <Button variant="ghost" size="sm">
+                                  Review Content
+                                </Button>
+                              </Link>
+                            </div>
+                          </CardContent>
+                        </div>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
