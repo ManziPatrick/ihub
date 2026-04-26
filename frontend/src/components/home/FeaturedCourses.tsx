@@ -481,6 +481,29 @@ export function FeaturedCourses() {
                   </div>
                 </div>
 
+                {/* Category Filter */}
+                <div>
+                  <h4 className="text-sm font-medium text-foreground mb-3">Category</h4>
+                  <div className="flex flex-col gap-2">
+                    {currentCategories.map((cat) => (
+                      <label 
+                        key={cat} 
+                        className="flex items-center gap-3 cursor-pointer group p-1"
+                      >
+                        <input 
+                          type="radio" 
+                          name="category-filter"
+                          value={cat}
+                          checked={activeCategory === cat}
+                          onChange={() => setActiveCategory(cat)}
+                          className="w-4 h-4 text-accent border-muted-foreground/30 focus:ring-accent/30 cursor-pointer"
+                        />
+                        <span className="text-sm text-muted-foreground group-hover:text-foreground">{cat}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Price Filter */}
                 <div>
                   <h4 className="text-sm font-medium text-foreground mb-3">Price</h4>
@@ -535,6 +558,7 @@ export function FeaturedCourses() {
                   variant="outline" 
                   className="flex-1"
                   onClick={() => {
+                    setActiveCategory("All");
                     setFilterPrice("all");
                     setFilterLevel("all");
                   }}
