@@ -124,8 +124,8 @@ const renderLessonContent = (
     `;
 };
 
-const CLOUDINARY_SEED_CLOUD = process.env.CLOUDINARY_CLOUD_NAME || 'codemande-academy';
-const CLOUDINARY_SEED_FOLDER = 'codemande-academy/slides';
+const CLOUDINARY_SEED_CLOUD = process.env.CLOUDINARY_CLOUD_NAME || 'ihub-academy';
+const CLOUDINARY_SEED_FOLDER = 'ihub-academy/slides';
 
 const toSeedSlug = (courseTitle: string, moduleTitle: string, lessonTitle: string): string => (
     `${courseTitle}-${moduleTitle}-${lessonTitle}`
@@ -265,7 +265,7 @@ const seedUsers = async (): Promise<{ trainer: any, students: any[] }> => {
     let trainer = await User.findOne({
         $or: [
             { fullName: 'Manzi Alain Patrick' },
-            { email: 'manzi.alain@codemande.com' },
+            { email: 'manzi.alain@ihub.com' },
             { role: 'trainer' }
         ]
     });
@@ -276,7 +276,7 @@ const seedUsers = async (): Promise<{ trainer: any, students: any[] }> => {
         trainer = new User({
             fullName: 'Manzi Alain Patrick',
             username: 'manzi.alain',
-            email: 'manzi.alain@codemande.com',
+            email: 'manzi.alain@ihub.com',
             password: trainerPassword,
             role: 'trainer', // Changed from 'instructor' to 'trainer'
             title: 'Senior Software Engineer',
@@ -361,8 +361,8 @@ const seedCourses = async () => {
                 description: `Learn React.js from the ground up. Build modern, fast, and scalable web applications using hooks, context, and the latest React patterns. Perfect for beginners and experienced developers looking to level up.`,
                 instructor: trainer._id,
                 createdBy: admin ? admin._id : trainer._id,
-                price: 49900,
-                discountPrice: 29900,
+                price: 0,
+                discountPrice: 0,
                 category: 'Frontend Development',
                 level: 'Beginner',
                 thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&q=80&w=2000',
@@ -968,8 +968,8 @@ const seedCourses = async () => {
                 description: `Master backend development with Node.js and Express. Build RESTful APIs, integrate databases, implement authentication, and deploy to production.`,
                 instructor: trainer._id,
                 createdBy: admin ? admin._id : trainer._id,
-                price: 59900,
-                discountPrice: 34900,
+                price: 0,
+                discountPrice: 0,
                 category: 'Backend Development',
                 level: 'Intermediate',
                 thumbnail: 'https://images.unsplash.com/photo-1547394765-185e1e68f34e?auto=format&fit=crop&q=80&w=2000',
@@ -1887,7 +1887,7 @@ Capstone Projects      : ${students.length * preparedCoursesData.length}
 🔐 ACCESS CREDENTIALS:
 ────────────────────────────────────────────────
 Trainer:
-  Email: manzi.alain@codemande.com
+  Email: manzi.alain@ihub.com
   Password: Trainer@2024
 
 Student (sample):

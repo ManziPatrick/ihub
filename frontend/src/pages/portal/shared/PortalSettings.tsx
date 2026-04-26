@@ -145,7 +145,7 @@ export default function PortalSettings() {
     try {
       // Get token from localStorage if available, or rely on cookie if that's how your auth works. 
       // Based on useAuth, we might need to be careful. usually Bearer token is best.
-      const token = localStorage.getItem('codemande_token');
+      const token = localStorage.getItem('ihub_token');
       const headers: HeadersInit = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -185,7 +185,7 @@ export default function PortalSettings() {
     formData.append('image', file);
 
     try {
-      const token = localStorage.getItem('codemande_token');
+      const token = localStorage.getItem('ihub_token');
       const headers: HeadersInit = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 

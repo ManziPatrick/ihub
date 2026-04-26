@@ -1,8 +1,8 @@
 {
-    "title": "About CODEMANDE | Tech Academy & Software House Rwanda",
-    "description": "Learn about CODEMANDE's mission to empower Africa through tech education. Founded by Manzi Alain Patrick and Bizimana Eric.",
+    "title": "About IHUB | Professional Academy & Innovation Hub Rwanda",
+    "description": "Meet with iHub",
     "keywords": [
-        "CODEMANDE",
+        "IHUB",
         "Rwanda Tech",
         "Software Development Kigali",
         "AI Training Africa",
@@ -10,11 +10,11 @@
         "Bizimana Eric",
         "Tech Careers Rwanda"
     ],
-    "author": "CODEMANDE",
+    "author": "IHUB",
     "og": {
         "type": "website",
-        "url": "https://codemande.com/about",
-        "title": "About CODEMANDE - Building the Future of African Tech",
-        "image": "https://codemande.com/og-about.jpg"
+        "url": "https://ihub.com/about",
+        "title": "About IHUB - Building the Future of African Tech",
+        "image": "https://ihub.com/og-about.jpg"
     }
 }

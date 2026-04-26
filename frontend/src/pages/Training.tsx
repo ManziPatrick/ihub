@@ -199,7 +199,7 @@ const Training = () => {
                 Training Programs
               </span>
               <h1 className="font-heading text-3xl lg:text-5xl font-medium text-card-foreground mb-6">
-                Industry-Ready Technology Training
+                Industry-Ready Professional Training
               </h1>
               <p className="text-card-foreground/80 max-w-2xl mx-auto text-lg mb-8">
                 Comprehensive programs designed with industry input, delivered by experts,
@@ -665,7 +665,7 @@ const Training = () => {
                 src={aboutImage}
                 srcSet={`${aboutImageMobile} 600w, ${aboutImage} 1280w`}
                 sizes="(max-width: 1024px) 100vw, 50vw"
-                alt="Training session at CODEMANDE"
+                alt="Training session at IHUB"
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
               />
@@ -693,7 +693,7 @@ const Training = () => {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <span className="text-accent text-sm font-medium uppercase tracking-wider">The CODEMANDE Difference</span>
+              <span className="text-accent text-sm font-medium uppercase tracking-wider">The IHUB Difference</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mt-2">
                 Why Train With Us?
               </h2>
@@ -762,10 +762,10 @@ const Training = () => {
               viewport={{ once: true }}
             >
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mb-4">
-                Start Your Tech Career Today
+                Start Your Professional Career Today
               </h2>
               <p className="text-card-foreground/80 mb-6 max-w-xl mx-auto">
-                Join our next cohort and take the first step toward a rewarding career in technology.
+                Join our next cohort and take the first step toward a rewarding professional career.
                 Enrollment is now open!
               </p>
               <div className="flex flex-wrap justify-center gap-4">

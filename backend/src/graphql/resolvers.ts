@@ -26,7 +26,7 @@ if (!admin.apps.length) {
   } else {
     console.log('🔥 Initializing Firebase Admin with Project ID only');
     admin.initializeApp({
-      projectId: process.env.FIREBASE_PROJECT_ID || "codemande-d218d"
+      projectId: process.env.FIREBASE_PROJECT_ID || "ihub-d218d"
     });
   }
 }
@@ -1465,7 +1465,7 @@ export const resolvers = {
         secondaryColor: '#B08D2A',
         accentColor: '#D4AF37',
         logoUrl: '',
-        siteName: 'CODEMANDE',
+        siteName: 'IHUB',
         portalTitle: 'Academy Hub',
         maintenanceMode: false
       };
@@ -2027,7 +2027,7 @@ export const resolvers = {
 
         const result = await new Promise((resolve, reject) => {
           cloudinary.uploader.upload_large(path, {
-            folder: folder || 'codemande-academy',
+            folder: folder || 'ihub-academy',
             resource_type: effectiveResourceType,
             public_id: `${publicIdBase}_${Date.now()}${extension}`,
             chunk_size: 6000000, // 6MB chunks
@@ -3419,7 +3419,7 @@ export const resolvers = {
 
       const success = await sendEmail({
         to,
-        subject: 'Test Email from CODEMANDE Academy',
+        subject: 'Test Email from IHUB Academy',
         html: `
           <h1>SMTP Configuration Test</h1>
           <p>This is a test email to verify your SMTP settings (Zoho/Gmail/etc.) are working correctly with your App Password.</p>
@@ -3440,7 +3440,7 @@ export const resolvers = {
       if (!user) throw new Error('User not found');
 
       const secret = speakeasy.generateSecret({
-        name: `CODEMANDE Academy (${user.email})`
+        name: `IHUB Academy (${user.email})`
       });
 
       user.twoFactorSecret = secret.base32;
@@ -3911,7 +3911,7 @@ export const resolvers = {
       }
       const internship = new Internship({
         ...args,
-        organization: args.organization || 'Codemande Academy',
+        organization: args.organization || 'Ihub Academy',
         mentors: mentorIds || (args.mentorId ? [args.mentorId] : []),
         status: 'eligible',
         progress: 0,
@@ -4923,7 +4923,7 @@ export const resolvers = {
             secondaryColor: '#B08D2A',
             accentColor: '#D4AF37',
             logoUrl: '',
-            siteName: 'CODEMANDE',
+            siteName: 'IHUB',
             portalTitle: 'Academy Hub',
             maintenanceMode: false
           }
@@ -6484,7 +6484,7 @@ export const resolvers = {
       return allLessons.find((l: any) => (l.id || l._id).toString() === parent.lessonId);
     },
     gradedBy: async (parent: any) => {
-      if (!parent.gradedBy) return { username: 'AI Tutor', fullName: 'Codemande AI' };
+      if (!parent.gradedBy) return { username: 'AI Tutor', fullName: 'Ihub AI' };
       return await User.findById(parent.gradedBy);
     }
   },

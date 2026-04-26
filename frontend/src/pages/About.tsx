@@ -66,9 +66,9 @@ const About = () => {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "CODEMANDE",
-    "url": "https://codemande.com",
-    "logo": "https://codemande.com/logo.png",
+    "name": "IHUB",
+    "url": "https://ihub.com",
+    "logo": "https://ihub.com/logo.png",
     "founder": [
       {
         "@type": "Person",
@@ -79,7 +79,7 @@ const About = () => {
         "name": "Bizimana Eric"
       }
     ],
-    "description": "CODEMANDE is a Rwanda-based professional academy, consultancy, and innovation hub focused on building practical skills and future-ready excellence.",
+    "description": "Meet with iHub",
     "address": {
       "@type": "PostalAddress",
       "addressLocality": "Kigali",
@@ -90,8 +90,8 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>About Us | CODEMANDE - Leaders in Professional Growth</title>
-        <meta name="description" content="CODEMANDE is a Rwanda-based professional training and software solutions company specializing in skills development, internships, and intelligent solutions." />
+        <title>About Us | IHUB - Leaders in Professional Growth</title>
+        <meta name="description" content="Meet with iHub" />
         <script type="application/ld+json">
           {JSON.stringify(jsonLd)}
         </script>
@@ -124,8 +124,7 @@ const About = () => {
                 Empowering Africa through Practical Skills & Excellence
               </h1>
               <p className="text-card-foreground/80 text-lg leading-relaxed">
-                CODEMANDE is a Rwanda-based professional academy, consultancy, and innovation hub
-                building practical skills and intelligent solutions across Kigali and Africa.
+                Meet with iHub.
               </p>
             </motion.div>
           </div>
@@ -146,7 +145,7 @@ const About = () => {
                 </h2>
                 <div className="space-y-4 text-muted-foreground leading-relaxed text-lg">
                   <p>
-                    We believe opportunity should not depend on location. CODEMANDE uses online and
+                    We believe opportunity should not depend on location. IHUB uses online and
                     in-person delivery, remote collaboration, and affordable internet access to serve
                     learners beyond major cities.
                   </p>
@@ -175,7 +174,7 @@ const About = () => {
                     src={aboutImage}
                     srcSet={`${aboutImageMobile} 600w, ${aboutImage} 1280w`}
                     sizes="(max-width: 1024px) 100vw, 50vw"
-                    alt="CODEMANDE training session"
+                    alt="IHUB training session"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                   />
@@ -196,7 +195,7 @@ const About = () => {
             <div className="max-w-4xl mx-auto text-center mb-16">
               <h2 className="font-heading text-2xl lg:text-4xl font-medium text-card-foreground mb-6">Our Story</h2>
               <p className="text-card-foreground/80 text-lg leading-relaxed">
-                CODEMANDE was founded by <strong>Manzi Alain Patrick Munyeshuri</strong>, a Rwandan technologist driven
+                IHUB was founded by <strong>Manzi Alain Patrick Munyeshuri</strong>, a Rwandan technologist driven
                 by the need to close the gap between education and employability. He envisioned a platform where
                 learning is directly connected to real projects and mentorship.
               </p>

@@ -149,7 +149,7 @@ export default function SuperAdminAdmins() {
                   <label className="text-sm font-medium mb-2 block">Email</label>
                   <Input 
                     type="email" 
-                    placeholder="admin@codemande.com" 
+                    placeholder="admin@ihub.com" 
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                   />

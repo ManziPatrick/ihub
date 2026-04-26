@@ -66,9 +66,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Mock user data for UI development
 const mockUsers: Record<string, User & { password: string }> = {
-  "student@codemande.com": {
+  "student@ihub.com": {
     id: "1",
-    email: "student@codemande.com",
+    email: "student@ihub.com",
     fullName: "Jean Baptiste",
     role: "student",
     password: "student123",
@@ -76,25 +76,25 @@ const mockUsers: Record<string, User & { password: string }> = {
     completedCourses: [],
     createdAt: new Date().toISOString(),
   },
-  "trainer@codemande.com": {
+  "trainer@ihub.com": {
     id: "2",
-    email: "trainer@codemande.com",
+    email: "trainer@ihub.com",
     fullName: "Marie Claire",
     role: "trainer",
     password: "trainer123",
     createdAt: new Date().toISOString(),
   },
-  "admin@codemande.com": {
+  "admin@ihub.com": {
     id: "3",
-    email: "admin@codemande.com",
+    email: "admin@ihub.com",
     fullName: "Emmanuel Kwizera",
     role: "admin",
     password: "admin123",
     createdAt: new Date().toISOString(),
   },
-  "superadmin@codemande.com": {
+  "superadmin@ihub.com": {
     id: "4",
-    email: "superadmin@codemande.com",
+    email: "superadmin@ihub.com",
     fullName: "Sarah Uwimana",
     role: "super_admin",
     password: "super123",
@@ -111,20 +111,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check for saved session
-    const savedUser = localStorage.getItem("codemande_user");
-    const savedToken = localStorage.getItem("codemande_token");
+    const savedUser = localStorage.getItem("ihub_user");
+    const savedToken = localStorage.getItem("ihub_token");
 
     if (savedUser && savedToken) {
       try {
         setUser(JSON.parse(savedUser));
       } catch {
-        localStorage.removeItem("codemande_user");
-        localStorage.removeItem("codemande_token");
+        localStorage.removeItem("ihub_user");
+        localStorage.removeItem("ihub_token");
       }
     } else {
       // Clear half-logged sessions
-      localStorage.removeItem("codemande_user");
-      localStorage.removeItem("codemande_token");
+      localStorage.removeItem("ihub_user");
+      localStorage.removeItem("ihub_token");
       setUser(null);
     }
     setIsLoading(false);
@@ -144,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Store Token
-      localStorage.setItem("codemande_token", token);
+      localStorage.setItem("ihub_token", token);
 
       // Adapt backend user to frontend User interface (mapping fields)
       const appUser: User = {
@@ -169,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       setUser(appUser);
-      localStorage.setItem("codemande_user", JSON.stringify(appUser));
+      localStorage.setItem("ihub_user", JSON.stringify(appUser));
       return { token, user: appUser };
     } catch (err: any) {
       throw new Error(err.message || "Login failed");
@@ -192,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { token, user: userData } = (resData as any).register;
 
-      localStorage.setItem("codemande_token", token);
+      localStorage.setItem("ihub_token", token);
 
       const appUser: User = {
         id: userData.id,
@@ -210,7 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       setUser(appUser);
-      localStorage.setItem("codemande_user", JSON.stringify(appUser));
+      localStorage.setItem("ihub_user", JSON.stringify(appUser));
     } catch (err: any) {
       throw new Error(err.message || "Signup failed");
     } finally {
@@ -220,8 +220,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("codemande_user");
-    localStorage.removeItem("codemande_token");
+    localStorage.removeItem("ihub_user");
+    localStorage.removeItem("ihub_token");
     window.location.reload(); // clear apollo cache by force reload or use client.resetStore()
   };
 
@@ -229,12 +229,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       const updatedUser = { ...user, ...data };
       setUser(updatedUser);
-      localStorage.setItem("codemande_user", JSON.stringify(updatedUser));
+      localStorage.setItem("ihub_user", JSON.stringify(updatedUser));
     }
   };
 
   const loginWithToken = (token: string, userData: any) => {
-    localStorage.setItem("codemande_token", token);
+    localStorage.setItem("ihub_token", token);
     const appUser: User = {
       id: userData.id,
       email: userData.email,
@@ -256,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       enrolledCourses: userData.enrolledCourses?.map((c: any) => (c.id || c)) || []
     };
     setUser(appUser);
-    localStorage.setItem("codemande_user", JSON.stringify(appUser));
+    localStorage.setItem("ihub_user", JSON.stringify(appUser));
   };
 
   return (

@@ -1,9 +1,9 @@
 {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "CODEMANDE",
-    "url": "https://codemande.com",
-    "logo": "https://codemande.com/logo.png",
+    "name": "IHUB",
+    "url": "https://ihub.com",
+    "logo": "https://ihub.com/logo.png",
     "founder": [
         {
             "@type": "Person",
@@ -20,8 +20,8 @@
         "addressCountry": "Rwanda"
     },
     "sameAs": [
-        "https://twitter.com/codemande",
-        "https://linkedin.com/company/codemande",
+        "https://twitter.com/ihub",
+        "https://linkedin.com/company/ihub",
         "https://github.com/ManziPatrick"
     ],
     "description": "A leading technology academy and software development firm in Rwanda."

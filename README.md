@@ -1,11 +1,11 @@
-# Codemande Academy Hub  no for cloning 
+# Ihub Academy Hub  no for cloning 
 
 A comprehensive learning management system for tech education in Rwanda, featuring student portals, trainer dashboards, admin management, and super admin configuration.
 
 ## 🏗️ Project Structure
 
 ```
-codemande-academy-hub/
+ihub-academy-hub/
 ├── frontend/          # React + Vite frontend application
 │   ├── src/          # Source code
 │   ├── public/       # Static assets
@@ -28,7 +28,7 @@ codemande-academy-hub/
 1. **Clone the repository**
 ```bash
 git clone <repository-url>
-cd codemande-academy-hub
+cd ihub-academy-hub
 ```
 
 2. **Install Frontend Dependencies**
@@ -54,7 +54,7 @@ VITE_API_URL=http://localhost:4000/graphql
 
 **Backend `.env`:**
 ```env
-MONGODB_URI=mongodb://localhost:27017/codemande-academy
+MONGODB_URI=mongodb://localhost:27017/ihub-academy
 JWT_SECRET=your-secret-key-here
 PORT=4000
 ```
@@ -206,11 +206,11 @@ This project is licensed under the MIT License.
 
 ## 👥 Team
 
-Developed by the Codemande Academy team.
+Developed by the Ihub Academy team.
 
 ## 📞 Support
 
-For support, email support@codemande.com or join our Discord community.
+For support, email support@ihub.com or join our Discord community.
 
 ---
 

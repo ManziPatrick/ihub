@@ -28,8 +28,8 @@ export function ShareCertificateDialog({
   
   if (!certificate) return null;
 
-  const shareUrl = `https://codemande.com/verify/${certificate.credentialId}`;
-  const shareText = `I just earned my ${certificate.courseName} certificate from CODEMANDE! 🎓`;
+  const shareUrl = `https://ihub.com/verify/${certificate.credentialId}`;
+  const shareText = `I just earned my ${certificate.courseName} certificate from IHUB! 🎓`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);

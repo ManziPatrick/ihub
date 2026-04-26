@@ -76,7 +76,7 @@ const currentPartners = [
 
 const testimonials = [
   {
-    quote: "CODEMANDE's training programs have been instrumental in building our technical team. The graduates are well-prepared and hit the ground running.",
+    quote: "IHUB's training programs have been instrumental in building our technical team. The graduates are well-prepared and hit the ground running.",
     name: "Jean Paul M.",
     role: "CTO",
     company: "TechCorp Rwanda"

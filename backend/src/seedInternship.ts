@@ -100,7 +100,7 @@ Centralized through an **Apollo GraphQL** gateway, our backend consists of:
 - Marketing campaign rollout and community onboarding.
 
 ---
-*Authored by the CODEMANDE Visionary Team - April 2026*
+*Authored by the IHUB Visionary Team - April 2026*
 `;
 
 const seedInternshipData = async () => {
@@ -131,19 +131,19 @@ const seedInternshipData = async () => {
 
     const lead = await User.findOneAndUpdate(
       { username: 'student_alice' },
-      { username: 'student_alice', email: 'alice@codemande.com', password, role: 'student', fullName: 'Alice Peterson' },
+      { username: 'student_alice', email: 'alice@ihub.com', password, role: 'student', fullName: 'Alice Peterson' },
       { upsert: true, new: true }
     );
 
     const dev1 = await User.findOneAndUpdate(
       { username: 'student_bob' },
-      { username: 'student_bob', email: 'bob@codemande.com', password, role: 'student', fullName: 'Bob Builder' },
+      { username: 'student_bob', email: 'bob@ihub.com', password, role: 'student', fullName: 'Bob Builder' },
       { upsert: true, new: true }
     );
 
     const dev2 = await User.findOneAndUpdate(
       { username: 'alex.johnson' },
-      { username: 'alex.johnson', email: 'alex@codemande.com', password, role: 'student', fullName: 'Alex Johnson' },
+      { username: 'alex.johnson', email: 'alex@ihub.com', password, role: 'student', fullName: 'Alex Johnson' },
       { upsert: true, new: true }
     );
 
@@ -157,7 +157,7 @@ const seedInternshipData = async () => {
       applicationDeadline: new Date('2026-05-15'),
       eligibility: ['Passionate about sustainability', 'React/Node familiarity'],
       rules: 'Code with impact. Respect the environment.',
-      price: 250000,
+      price: 0,
       currency: 'RWF',
       status: 'active'
     });

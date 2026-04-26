@@ -60,7 +60,7 @@ const AdminTeamManager = () => {
         try {
             const response = await fetch(`${API_BASE_URL}/api/team?page=${page}&limit=${limit}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('codemande_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('ihub_token')}`
                 }
             });
             const data = await response.json();
@@ -83,7 +83,7 @@ const AdminTeamManager = () => {
                 ? `${API_BASE_URL}/api/team/${currentMember._id}`
                 : `${API_BASE_URL}/api/team`;
 
-            const token = localStorage.getItem('codemande_token');
+            const token = localStorage.getItem('ihub_token');
 
             const response = await fetch(url, {
                 method,
@@ -118,7 +118,7 @@ const AdminTeamManager = () => {
             const response = await fetch(`${API_BASE_URL}/api/team/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('codemande_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('ihub_token')}`
                 }
             });
 

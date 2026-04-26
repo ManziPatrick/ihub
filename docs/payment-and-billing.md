@@ -1,7 +1,7 @@
 # Payment and Billing System Documentation
 
 ## Overview
-The Codemande Academy Hub uses a robust payment and billing system designed to handle both local (Rwandan) and international transactions. The system is integrated with **Paypack** for Mobile Money transactions and **Stripe** for card-based payments.
+The Ihub Academy Hub uses a robust payment and billing system designed to handle both local (Rwandan) and international transactions. The system is integrated with **Paypack** for Mobile Money transactions and **Stripe** for card-based payments.
 
 ---
 
@@ -21,7 +21,7 @@ The payment system follows a decoupled architecture where the frontend initiates
 ## 🛠️ Service Integrations
 
 ### 1. Paypack (Mobile Money)
-Managed via [`paypack.service.ts`](file:///Users/andela/projects/codemande-academy-hub/backend/src/services/paypack.service.ts).
+Managed via [`paypack.service.ts`](file:///Users/andela/projects/ihub-academy-hub/backend/src/services/paypack.service.ts).
 
 *   **Authentication**: Uses Client ID and Secret to obtain a Bearer Token. Tokens are cached and refreshed automatically.
 *   **Operations**:
@@ -30,7 +30,7 @@ Managed via [`paypack.service.ts`](file:///Users/andela/projects/codemande-acade
     *   `verifyWebhookSignature`: Ensures inbound webhooks are authentic using HMAC SHA256.
 
 ### 2. Stripe (Card Payments)
-Managed via [`stripe.service.ts`](file:///Users/andela/projects/codemande-academy-hub/backend/src/services/stripe.service.ts).
+Managed via [`stripe.service.ts`](file:///Users/andela/projects/ihub-academy-hub/backend/src/services/stripe.service.ts).
 
 *   **Operations**:
     *   `createPaymentIntent`: Generates a client secret for secure frontend payment processing.

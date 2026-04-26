@@ -12,7 +12,7 @@ cloudinary.config({
  * @param folder The folder to upload to (optional)
  * @returns Object containing the signature, timestamp, and cloud name
  */
-export const generateUploadSignature = (folder: string = 'codemande-academy', resourceType?: string) => {
+export const generateUploadSignature = (folder: string = 'ihub-academy', resourceType?: string) => {
     const timestamp = Math.round((new Date()).getTime() / 1000);
 
     const params: any = {

@@ -11,7 +11,7 @@ const seedSuperAdmin = async () => {
         await connectDB();
         console.log('📦 Connected to MongoDB');
 
-        const email = 'admin@codemande.com';
+        const email = 'admin@ihub.com';
         const existingAdmin = await User.findOne({ email });
 
         if (existingAdmin) {

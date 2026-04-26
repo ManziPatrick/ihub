@@ -386,9 +386,9 @@ const Services = () => {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <span className="text-accent text-sm font-medium uppercase tracking-wider">The CODEMANDE Advantage</span>
+              <span className="text-accent text-sm font-medium uppercase tracking-wider">The IHUB Advantage</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mt-2">
-                Why Choose CODEMANDE?
+                Why Choose IHUB?
               </h2>
             </motion.div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">

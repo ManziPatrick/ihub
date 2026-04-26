@@ -17,7 +17,7 @@ const httpLink = new UploadHttpLink({
 const wsLink = new GraphQLWsLink(createClient({
   url: env.WS_URL || 'ws://localhost:4000/graphql',
   connectionParams: () => {
-    const token = localStorage.getItem('codemande_token');
+    const token = localStorage.getItem('ihub_token');
     return {
       authorization: token ? `Bearer ${token}` : "",
     };
@@ -25,7 +25,7 @@ const wsLink = new GraphQLWsLink(createClient({
 }));
 
 const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem('codemande_token');
+  const token = localStorage.getItem('ihub_token');
   return {
     headers: {
       ...headers,

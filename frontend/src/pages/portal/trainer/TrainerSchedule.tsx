@@ -272,7 +272,7 @@ export default function TrainerSchedule(): JSX.Element {
   const downloadICS = (bookings: any[]) => {
     const confirmedOnes = bookings.filter(b => b.status === "confirmed");
     if (confirmedOnes.length === 0) { toast.error("No confirmed bookings to sync"); return; }
-    let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Codemande//Academy Hub//EN\n";
+    let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Ihub//Academy Hub//EN\n";
     confirmedOnes.forEach(booking => {
       try {
         const dateStr = booking.date.includes('/') ? booking.date.split('/').reverse().join('-') : booking.date;
@@ -284,7 +284,7 @@ export default function TrainerSchedule(): JSX.Element {
         if (isNaN(start.getTime())) return;
         const end = new Date(start.getTime() + 60 * 60 * 1000);
         const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-        icsContent += `BEGIN:VEVENT\nSUMMARY:Codemande: ${booking.type.replace('-', ' ')}\nDTSTART:${fmt(start)}\nDTEND:${fmt(end)}\nEND:VEVENT\n`;
+        icsContent += `BEGIN:VEVENT\nSUMMARY:Ihub: ${booking.type.replace('-', ' ')}\nDTSTART:${fmt(start)}\nDTEND:${fmt(end)}\nEND:VEVENT\n`;
       } catch (e) { /* skip */ }
     });
     icsContent += "END:VCALENDAR";
@@ -292,7 +292,7 @@ export default function TrainerSchedule(): JSX.Element {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "codemande-schedule.ics");
+    link.setAttribute("download", "ihub-schedule.ics");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

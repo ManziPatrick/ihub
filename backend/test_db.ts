@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { Payment } from './src/models/Payment';
 import { Course } from './src/models/Course';
 
-const uri = 'mongodb://localhost:27017/codemande_hub'; 
+const uri = 'mongodb://localhost:27017/ihub_hub'; 
 
 async function run() {
   await mongoose.connect(uri);

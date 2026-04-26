@@ -10,7 +10,7 @@ const users = [
     {
         username: 'superadmin',
         fullName: 'Patrick Manzi',
-        email: 'superadmin@codemande.com',
+        email: 'superadmin@ihub.com',
         password: 'password123',
         role: 'super_admin',
         title: 'Founder & CEO',
@@ -27,7 +27,7 @@ const users = [
     {
         username: 'trainer_sarah',
         fullName: 'Sarah Uwase',
-        email: 'trainer@codemande.com',
+        email: 'trainer@ihub.com',
         password: 'password123',
         role: 'trainer',
         title: 'Lead Frontend Instructor',
@@ -43,7 +43,7 @@ const users = [
     {
         username: 'student_jean',
         fullName: 'Jean Claude',
-        email: 'student@codemande.com',
+        email: 'student@ihub.com',
         password: 'password123',
         role: 'student',
         bio: 'Aspiring Full Stack Developer. Currently learning MERN stack and AI engineering.',

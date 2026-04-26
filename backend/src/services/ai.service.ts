@@ -12,7 +12,7 @@ export const chatWithAIService = async (userMessage: string, contextUser: any) =
     const now = new Date();
     const dateTimeStr = now.toLocaleString();
 
-    let userContext = `You are the "CODEMANDE Brain", a highly intelligent and specialized AI mentor for the CODEMANDE Academy Hub.
+    let userContext = `You are the "IHUB Brain", a highly intelligent and specialized AI mentor for the IHUB Academy Hub.
   
   Your personality:
   - Human-centric, encouraging, and clear.
@@ -26,21 +26,8 @@ export const chatWithAIService = async (userMessage: string, contextUser: any) =
   
   Current Date & Time: ${dateTimeStr}
 
-  What we do (CODEMANDE Academy):
-  - Training: Intensive bootcamps and courses in fields like:
-    - Full Stack Web Development
-    - Data Science with Python
-    - UI/UX Design
-    - Cybersecurity Fundamentals
-    - Cloud Computing (AWS)
-    - Mobile App Development (Flutter)
-    - DevOps & CI/CD
-    - AI & Machine Learning Engineering
-    - Digital Marketing & Content Strategy
-    - Blockchain & Web3 Development
-  - Internships: Hands-on industry experience for students and job seekers through placement and projects.
-  - Mentorship: Direct access to experienced professionals for career and technical guidance.
-  - Projects: Real-world project simulations to build portfolios.
+  What we do:
+  Meet with iHub.
   
   Available Courses:
   ${courses.map(c => `- ${c.title}: ${c.description} ($${c.price})`).join('\n')}
@@ -54,7 +41,7 @@ export const chatWithAIService = async (userMessage: string, contextUser: any) =
   - Role: ${contextUser?.role || 'Guest'}
   
   Instructions:
-  - You are CODEMANDE's brain. Use "we" when referring to the platform.
+  - You are IHUB's brain. Use "we" when referring to the platform.
   - Be proactive, friendly, and professional.
   - Handling Bookings: If a user wants to book a session, check if they are logged in. If not, tell them to log in at /auth. If they are, ask for: 
     1. Mentor name (from the list)
@@ -69,7 +56,7 @@ export const chatWithAIService = async (userMessage: string, contextUser: any) =
     - Courses: /portal/student/courses
     - Internship: /portal/student/internship
     - Schedule: /portal/student/schedule
-  - IMPORTANT: Always answer as "CODEMANDE".
+  - IMPORTANT: Always answer as "IHUB".
   `;
 
     try {
@@ -100,7 +87,7 @@ export const chatWithAIService = async (userMessage: string, contextUser: any) =
 };
 
 export const explainTaskService = async (taskTitle: string, description: string) => {
-    const prompt = `You are a helpful AI mentor at CODEMANDE Academy. 
+    const prompt = `You are a helpful AI mentor at IHUB Academy. 
     Explain the following task in simple, clear words.
     
     Task: ${taskTitle}
@@ -132,7 +119,7 @@ export const explainTaskService = async (taskTitle: string, description: string)
 };
 
 export const reviewSubmissionService = async (taskTitle: string, submissionContent: string) => {
-    const prompt = `You are an expert mentor at CODEMANDE Academy. 
+    const prompt = `You are an expert mentor at IHUB Academy. 
     Review the following task submission. Be encouraging but honest.
     Identify 2 things done well and 2 areas for improvement.
     Use simple language.
@@ -161,7 +148,7 @@ export const reviewSubmissionService = async (taskTitle: string, submissionConte
 };
 
 export const generateAIQuizService = async (courseTitle: string, lessonTitle: string, content: string, questionCount: number = 3, userPrompt: string = "") => {
-    const prompt = `You are an educator at CODEMANDE Academy, specialized in making learning effective for students.
+    const prompt = `You are an educator at IHUB Academy, specialized in making learning effective for students.
     Generate a ${questionCount}-question quiz for the following lesson.
     
     Course: ${courseTitle}
@@ -208,7 +195,7 @@ export const generateAIQuizService = async (courseTitle: string, lessonTitle: st
 };
 
 export const hintForQuestionService = async (questionText: string, options: string[]) => {
-    const prompt = `You are a helpful tutor at CODEMANDE Academy. A student is taking a quiz and needs a hint for the following question.
+    const prompt = `You are a helpful tutor at IHUB Academy. A student is taking a quiz and needs a hint for the following question.
 
 Question: ${questionText}
 Options:

@@ -74,7 +74,7 @@ const InternshipSchema: Schema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true },
-    organization: { type: String, default: 'Codemande Academy' },
+    organization: { type: String, default: 'Ihub Academy' },
     company: { type: String }, // Optional for external partners
     cohort: { type: String }, // For grouping interns
     startDate: { type: Date },

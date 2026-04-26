@@ -58,7 +58,7 @@ interface FileUploadProps {
 
 export function FileUpload({
     onUploadComplete,
-    folder = "codemande-academy",
+    folder = "ihub-academy",
     accept = "image/*,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation",
     maxSizeMB = 100,
     className,

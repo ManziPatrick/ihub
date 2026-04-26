@@ -40,7 +40,7 @@ export function SubmitProjectDialog({ open, onOpenChange, projectTitle, projectI
       const response = await fetch(`${API_BASE_URL}/api/upload/file`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('codemande_token')}`
+          'Authorization': `Bearer ${localStorage.getItem('ihub_token')}`
         },
         body: formData
       });

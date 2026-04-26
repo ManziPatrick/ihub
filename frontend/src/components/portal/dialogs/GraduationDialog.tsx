@@ -73,7 +73,7 @@ export function GraduationDialog({ open, onOpenChange, internship }: GraduationD
                                 Congratulations, {internship.userId?.username || "Scholar"}!
                             </motion.h2>
                             <p className="text-muted-foreground max-w-md mx-auto">
-                                You have successfully completed your {internship.title} internship at CODEMANDE Academy.
+                                You have successfully completed your {internship.title} internship at IHUB Academy.
                                 You've proved your technical competence and professional growth.
                             </p>
                         </div>

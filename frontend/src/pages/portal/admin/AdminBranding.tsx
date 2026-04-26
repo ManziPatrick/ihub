@@ -21,7 +21,7 @@ export default function AdminBranding() {
     secondaryColor: "#2B2B2D",
     accentColor: "#C9A24D",
     logoUrl: "",
-    siteName: "CODEMANDE",
+    siteName: "IHUB",
     portalTitle: "Academy Hub",
     signerName: "Patrick Manzi",
     signerSignature: ""
@@ -36,7 +36,7 @@ export default function AdminBranding() {
         secondaryColor: branding.secondaryColor || "#E6B94D",
         accentColor: branding.accentColor || "#BC9229",
         logoUrl: branding.logoUrl || "",
-        siteName: branding.siteName || "CODEMANDE",
+        siteName: branding.siteName || "IHUB",
         portalTitle: branding.portalTitle || "Academy Hub",
         signerName: prev.signerName,
         signerSignature: prev.signerSignature
@@ -121,7 +121,7 @@ export default function AdminBranding() {
                 secondaryColor: "#2B2B2D",
                 accentColor: "#C9A24D",
                 logoUrl: "",
-                siteName: "CODEMANDE",
+                siteName: "IHUB",
                 portalTitle: "Academy Hub",
                 signerName: "Patrick Manzi",
                 signerSignature: ""
@@ -154,7 +154,7 @@ export default function AdminBranding() {
                       <Input 
                         value={formData.siteName} 
                         onChange={(e) => setFormData({...formData, siteName: e.target.value})}
-                        placeholder="e.g. CODEMANDE"
+                        placeholder="e.g. IHUB"
                         className="bg-muted/30"
                       />
                       <p className="text-xs text-muted-foreground">This appears in the header and copyright sections.</p>

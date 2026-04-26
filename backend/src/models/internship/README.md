@@ -1,6 +1,6 @@
-# CODEMANDE Internship Module
+# IHUB Internship Module
 
-This module provides a production-ready, scalable internship management system for the CODEMANDE Academy Hub.
+This module provides a production-ready, scalable internship management system for the IHUB Academy Hub.
 
 ## Core Features
 
@@ -14,7 +14,7 @@ This module provides a production-ready, scalable internship management system f
 - Admin review, approval, and rejection with reason tracking.
 - Real-time Socket.IO notifications for status changes.
 
-### 3. CODEMANDE-Owned Projects
+### 3. IHUB-Owned Projects
 - Define projects with specific milestones, required skills, and team size ranges.
 - Attach projects to specific internship programs.
 

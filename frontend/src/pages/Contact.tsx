@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const contactInfo = [
   { icon: MapPin, label: "Address", value: "Kigali, Rwanda" },
-  { icon: Mail, label: "Email", value: "info@codemande.com" },
+  { icon: Mail, label: "Email", value: "info@ihub.com" },
   { icon: Phone, label: "Phone", value: "+250 790 706 170" },
   { icon: Clock, label: "Office Hours", value: "Monday - Friday: 8:00 AM - 5:00 PM" },
 ];

@@ -189,7 +189,7 @@ export default function CourseDetail() {
           <p class="course">in the course</p>
           <p class="module-name" style="font-size:18px;">${course.title}</p>
           <div class="date">Completed on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-          <div class="footer">CODEMANDE Academy · codemande.com</div>
+          <div class="footer">IHUB Academy · ihub.com</div>
         </div>
       </body>
       </html>

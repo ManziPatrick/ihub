@@ -23,7 +23,7 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <GoogleOneTap />
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} storageKey="codemande-theme">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} storageKey="ihub-theme">
           <BrandingProvider>
             <CartProvider>
               <TooltipProvider>

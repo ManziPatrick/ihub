@@ -27,7 +27,7 @@ const seedReactCourse = async () => {
       description: "A comprehensive journey through modern React development. Build real-world applications with Hooks, Context API, and state management.",
       thumbnail: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&q=80&w=800",
       instructor: admin._id,
-      price: 49.99,
+      price: 0.99,
       level: "Intermediate",
       category: "Software Development",
       status: "published",

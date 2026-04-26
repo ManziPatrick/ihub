@@ -170,7 +170,7 @@ InternshipCertificateSchema.pre('validate', async function() {
       }
       
       certificate.certificateNumber = `CERT-${year}-${String(sequence).padStart(5, '0')}`;
-      certificate.verificationUrl = `https://codemande.com/verify/${certificate.certificateNumber}`;
+      certificate.verificationUrl = `https://ihub.com/verify/${certificate.certificateNumber}`;
     } catch (error) {
        // Only log error if strictly necessary, otherwise proceed
        console.error("Error generating certificate number", error);

@@ -25,13 +25,13 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem("codemande_cart");
+    const saved = localStorage.getItem("ihub_cart");
     return saved ? JSON.parse(saved) : [];
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem("codemande_cart", JSON.stringify(cartItems));
+    localStorage.setItem("ihub_cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
   const { user } = useAuth();

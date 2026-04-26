@@ -314,7 +314,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
               <img src={branding.logoUrl} alt={branding.siteName} className="h-8 w-auto" />
             ) : (
               <span className="font-heading font-black text-2xl tracking-tighter text-card-foreground">
-                {isSidebarMinimized ? 'C' : 'CODE'}<span className="text-accent">{isSidebarMinimized ? '' : 'MANDE'}</span>
+                {isSidebarMinimized ? 'I' : 'Inzira '}<span className="text-accent">{isSidebarMinimized ? 'H' : 'HUB'}</span>
               </span>
             )}
           </Link>
@@ -387,7 +387,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                     <img src={branding.logoUrl} alt={branding.siteName} className="h-8 w-auto" />
                   ) : (
                     <span className="font-heading font-black text-2xl tracking-tighter text-card-foreground">
-                      CODE<span className="text-accent">MANDE</span>
+                      Inzira <span className="text-accent">HUB</span>
                     </span>
                   )}
                 </Link>

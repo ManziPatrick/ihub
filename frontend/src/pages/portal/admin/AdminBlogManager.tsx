@@ -159,7 +159,7 @@ const AdminBlogManager = () => {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('codemande_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('ihub_token')}`
                 },
                 body: JSON.stringify(payload)
             });
@@ -188,7 +188,7 @@ const AdminBlogManager = () => {
             const response = await fetch(`${API_BASE_URL}/api/blogs/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('codemande_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('ihub_token')}`
                 }
             });
 

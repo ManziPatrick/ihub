@@ -91,7 +91,7 @@ const seedData = async () => {
 
     const superAdmin = await new User({
       username: 'super_admin',
-      email: 'superadmin@codemande.com',
+      email: 'superadmin@ihub.com',
       password: hashedPassword,
       role: 'super_admin',
       fullName: 'System Super Admin',
@@ -101,7 +101,7 @@ const seedData = async () => {
 
     const admin = await new User({
       username: 'admin',
-      email: 'admin@codemande.com',
+      email: 'admin@ihub.com',
       password: hashedPassword,
       role: 'admin',
       fullName: 'System Administrator',
@@ -111,7 +111,7 @@ const seedData = async () => {
 
     const trainer1 = await new User({
       username: 'innovator_john',
-      email: 'john@codemande.com',
+      email: 'john@ihub.com',
       password: hashedPassword,
       role: 'trainer',
       fullName: 'John Innovator',
@@ -123,7 +123,7 @@ const seedData = async () => {
 
     const trainer2 = await new User({
       username: 'sarah_ai',
-      email: 'sarah@codemande.com',
+      email: 'sarah@ihub.com',
       password: hashedPassword,
       role: 'trainer',
       fullName: 'Sarah Data',
@@ -160,8 +160,8 @@ const seedData = async () => {
       description: 'Master the art of hospitality. Learn front desk operations, guest relations, and luxury service standards.',
       instructor: trainer1._id,
       createdBy: admin._id,
-      price: 120000,
-      discountPrice: 95000,
+      price: 0,
+      discountPrice: 0,
       category: 'Hospitality',
       level: 'Intermediate',
       thumbnail: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop',
@@ -187,7 +187,7 @@ const seedData = async () => {
       description: 'Deploy, manage, and scale secure applications on Amazon Web Services. Prepare for the Solutions Architect exam.',
       instructor: trainer2._id,
       createdBy: admin._id,
-      price: 150000,
+      price: 0,
       category: 'Technology',
       level: 'Advanced',
       thumbnail: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop',
@@ -213,8 +213,8 @@ const seedData = async () => {
       description: 'Leverage IoT sensors, drone imaging, and sustainable practices to maximize crop yield while protecting the environment.',
       instructor: trainer1._id,
       createdBy: admin._id,
-      price: 50000,
-      discountPrice: 35000,
+      price: 0,
+      discountPrice: 0,
       category: 'Agriculture',
       level: 'Beginner',
       thumbnail: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=2070&auto=format&fit=crop',
@@ -240,7 +240,7 @@ const seedData = async () => {
       description: 'Understand inflation, monetary policy, and how global events shape financial markets.',
       instructor: trainer2._id,
       createdBy: admin._id,
-      price: 200000,
+      price: 0,
       category: 'Economics',
       level: 'Intermediate',
       thumbnail: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop',
@@ -357,7 +357,7 @@ const seedData = async () => {
       applicationDeadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
       eligibility: ['React', 'Node.js', 'Git'],
       maxParticipants: 10,
-      price: 100000, // 100k RWF
+      price: 0, // 100k RWF
       currency: 'RWF',
       status: 'active',
       isActive: true,

@@ -48,14 +48,14 @@ export default function SuperAdminConfig() {
   };
 
   const [settings, setSettings] = useState({
-    siteName: "Codemande Academy",
+    siteName: "Ihub Academy",
     siteDescription: "Leading tech education in Rwanda.",
-    contactEmail: "contact@codemande.com",
+    contactEmail: "contact@ihub.com",
     maintenanceMode: false,
     registrationEnabled: true,
     emailServer: "smtp.zoho.com",
     emailPort: "465",
-    emailSender: "admin@codemande.com",
+    emailSender: "admin@ihub.com",
     emailAppPassword: "0EN2iaThnZAz",
     paymentGateway: "Mobile Money",
     primaryColor: "#EAB308",

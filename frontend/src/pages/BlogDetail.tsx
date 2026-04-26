@@ -107,7 +107,7 @@ const BlogDetail = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(localStorage.getItem('codemande_token') ? { 'Authorization': `Bearer ${localStorage.getItem('codemande_token')}` } : {})
+                    ...(localStorage.getItem('ihub_token') ? { 'Authorization': `Bearer ${localStorage.getItem('ihub_token')}` } : {})
                 },
                 body: JSON.stringify({ userId })
             });
@@ -128,7 +128,7 @@ const BlogDetail = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(localStorage.getItem('codemande_token') ? { 'Authorization': `Bearer ${localStorage.getItem('codemande_token')}` } : {})
+                    ...(localStorage.getItem('ihub_token') ? { 'Authorization': `Bearer ${localStorage.getItem('ihub_token')}` } : {})
                 },
                 body: JSON.stringify({
                     content: comment,
@@ -168,7 +168,7 @@ const BlogDetail = () => {
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Helmet>
-                <title>{blog?.title ? `${blog.title} | CODEMANDE` : "Blog | CODEMANDE"}</title>
+                <title>{blog?.title ? `${blog.title} | IHUB` : "Blog | IHUB"}</title>
                 <meta name="description" content={blog?.content?.substring(0, 160) || "Read the latest tech insights."} />
             </Helmet>
             <div className="fixed top-0 left-0 w-full h-1 z-50 pointer-events-none">

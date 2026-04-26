@@ -90,7 +90,7 @@ export function PaymentForm({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('codemande_token')}`,
+          Authorization: `Bearer ${localStorage.getItem('ihub_token')}`,
         },
         body: JSON.stringify({
           amount: Math.floor(amount),
@@ -165,7 +165,7 @@ export function PaymentForm({
       const response = await fetch(`${baseUrl}/api/payments/${txId}`, {
         method: 'GET',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('codemande_token')}`,
+          Authorization: `Bearer ${localStorage.getItem('ihub_token')}`,
         },
       });
 
@@ -421,7 +421,7 @@ export function PaymentForm({
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${localStorage.getItem('codemande_token')}`,
+                        Authorization: `Bearer ${localStorage.getItem('ihub_token')}`,
                       },
                       body: JSON.stringify({
                         amount: Math.floor(amount),

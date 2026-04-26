@@ -22,7 +22,7 @@ const generateExtremeLongContent = (title: string, baseContent: string) => {
 
     const fillerParagraphs = [
         "In the rapidly evolving landscape of 2026, the intersection of technology and human potential has never been more critical. As we architect solutions for a global market, the nuances of regional implementation—especially within the African context—demand a deep understanding of local infrastructure, cultural dynamics, and economic aspirations.",
-        "Scalability is not just a technical requirement; it's a social one. When we build systems that can accommodate millions of users across diverse connectivity profiles, we are essentially democratizing access to information and opportunity. This is the core mission of CODEMANDE: to empower the next generation with the tools to build a better future.",
+        "Scalability is not just a technical requirement; it's a social one. When we build systems that can accommodate millions of users across diverse connectivity profiles, we are essentially democratizing access to information and opportunity. This is the core mission of IHUB: to empower the next generation with the tools to build a better future.",
         "From the bustling streets of Kigali to the silicon valleys of the West, the language of innovation remains universal. However, the application of this language must be purposeful. Whether we're leveraging React 18 for high-performance interfaces or implementing robust Node.js backends, the ultimate goal is to solve real-world problems with elegance and efficiency.",
         "Mentorship and continuous learning are the lifeblood of a thriving technical community. By sharing our experiences—both our successes and our failures—we create a repository of knowledge that benefits everyone. This collaborative spirit is what drives the 'Kigali Tech Renaissance' and positions Rwanda as a leader in the digital economy.",
         "Security and privacy are not afterthoughts; they are the foundation upon which trust is built. In an era of increasing data vulnerability, our commitment to best practices in cybersecurity ensures that our users' information remains protected. This is particularly vital for fintech and agritech solutions that handle sensitive transactional data.",
@@ -34,7 +34,7 @@ const generateExtremeLongContent = (title: string, baseContent: string) => {
         content += `## Section ${i + 1}: Deep Dive into Innovation\n\n`;
         content += fillerParagraphs[i % fillerParagraphs.length] + "\n\n";
         content += "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim anim id est laborum.\n\n";
-        content += "Furthermore, as we examine the long-term implications of this technology, we must consider the ethical boundaries and the impact on local communities. CODEMANDE is dedicated to a people-first approach, ensuring that our technical advancements contribute to sustainable growth and social equity.\n\n";
+        content += "Furthermore, as we examine the long-term implications of this technology, we must consider the ethical boundaries and the impact on local communities. IHUB is dedicated to a people-first approach, ensuring that our technical advancements contribute to sustainable growth and social equity.\n\n";
         if (i % 5 === 0) {
             content += "### Practical Key Takeaways\n";
             content += "1. Always prioritize user experience in low-bandwidth environments.\n";
@@ -56,7 +56,7 @@ Rwanda has long been defined by its geography. A beautiful, mountainous, landloc
 
 The problem is clear: for many African nations, the transition from an agrarian economy to a digital one is fraught with "digital divide" challenges—lack of high-speed internet, expensive hardware, and a severe shortage of high-level technical talent. But where others see problems, Rwanda sees an unprecedented opportunity. By 2030, Kigali aims to be the undisputed leading tech hub of the continent.
 
-This isn't just about buildling shiny buildings in the Kigali Innovation City. It’s about building a sustainable ecosystem. At CODEMANDE, we believe that for this renaissance to be real, it must be architected from the ground up, starting with the most valuable resource: human capital.
+This isn't just about buildling shiny buildings in the Kigali Innovation City. It’s about building a sustainable ecosystem. At IHUB, we believe that for this renaissance to be real, it must be architected from the ground up, starting with the most valuable resource: human capital.
 
 ## The Infrastructure Pillar: Beyond Fiber Optics
 
@@ -69,14 +69,14 @@ KIC is more than just a real estate project. It is a cluster of universities (li
 
 You can buy hardware and rent cloud space, but you cannot "download" an experienced engineering team. The global shortage of senior developers is well-known, but in Africa, the challenge is compounded by the "Junior Gap." We have many young people interested in tech, but few have been through the rigorous, project-based training required to build enterprise-grade software.
 
-### The CODEMANDE Approach: Bridge the Gap
-This is why CODEMANDE’s Internship Programs are designed the way they are. We don't just teach syntax; we teach "Architecture." We believe a senior software writer isn't someone who knows a library, but someone who knows how to solve a business problem using technology.`,
+### The IHUB Approach: Bridge the Gap
+This is why IHUB’s Internship Programs are designed the way they are. We don't just teach syntax; we teach "Architecture." We believe a senior software writer isn't someone who knows a library, but someone who knows how to solve a business problem using technology.`,
         cat: 'Rwanda Tech',
         img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab"
     },
     {
         title: "Introduction to React 18 and Concurrent Mode",
-        content: "React 18 introduced a powerful new concept called Concurrent Mode. This allows React to interrupt a long-running render to handle a high-priority event, like a user click or an animation. Understanding transitions (useTransition) and deferred values (useDeferredValue) is crucial for building butter-smooth interfaces in 2026. At CODEMANDE, we use these features to ensure our academy's platform remains responsive even with complex data visualizations.",
+        content: "React 18 introduced a powerful new concept called Concurrent Mode. This allows React to interrupt a long-running render to handle a high-priority event, like a user click or an animation. Understanding transitions (useTransition) and deferred values (useDeferredValue) is crucial for building butter-smooth interfaces in 2026. At IHUB, we use these features to ensure our academy's platform remains responsive even with complex data visualizations.",
         cat: 'Software Engineering',
         img: "https://images.unsplash.com/photo-1633356122544-f134324a6cee"
     },

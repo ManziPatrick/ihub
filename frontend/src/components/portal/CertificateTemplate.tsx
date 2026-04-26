@@ -43,7 +43,7 @@ export const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
             <div className="w-16 h-16 rounded-full bg-[#1a3d3d] flex items-center justify-center p-3">
               <img 
                 src="/assets/logo.png" 
-                alt="Codemande Logo" 
+                alt="Ihub Logo" 
                 className="w-full h-full object-contain brightness-0 invert" 
               />
             </div>
@@ -109,10 +109,10 @@ export const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
         <div className="mt-8 pt-6 border-t border-[#d4af37]/10 w-full flex justify-between items-center text-[10px] font-bold text-[#1a3d3d]/40 uppercase tracking-[0.2em]">
           <div className="flex items-center gap-2">
             <Globe className="w-3 h-3" />
-            verify.codemande.com/{credentialId}
+            verify.ihub.com/{credentialId}
           </div>
           <div>
-            CODEMANDE ACADEMY • KIGALI, RWANDA
+            IHUB ACADEMY • KIGALI, RWANDA
           </div>
         </div>
       </div>

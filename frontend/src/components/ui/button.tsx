@@ -15,9 +15,9 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // CODEMANDE Primary Button - Gold background, dark text
+        // IHUB Primary Button - Gold background, dark text
         hero: "bg-primary text-primary-foreground hover:bg-primary-hover hover:shadow-lg transition-all",
-        // CODEMANDE Secondary Button - Transparent, gold border
+        // IHUB Secondary Button - Transparent, gold border
         heroOutline: "bg-transparent text-primary border-2 border-primary hover:bg-primary/10 transition-all",
         // Gold accent button for CTAs
         gold: "bg-accent text-accent-foreground border border-accent hover:bg-accent/90 hover:shadow-gold-glow rounded-md font-semibold",

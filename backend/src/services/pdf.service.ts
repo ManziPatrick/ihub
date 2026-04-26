@@ -90,11 +90,11 @@ export const generateCertificatePDF = async (data: CertificateData): Promise<str
                 .lineTo(pageWidth - 25, pageHeight - 25 - cornerSize)
                 .stroke('#667eea');
 
-            // Header - CODEMANDE Logo area
+            // Header - IHUB Logo area
             doc.fontSize(16)
                 .font('Helvetica-Bold')
                 .fillColor('#667eea')
-                .text('CODEMANDE', centerX - 60, 60, { width: 120, align: 'center' });
+                .text('IHUB', centerX - 60, 60, { width: 120, align: 'center' });
 
             doc.fontSize(10)
                 .font('Helvetica')
@@ -241,7 +241,7 @@ export const generateCertificatePDF = async (data: CertificateData): Promise<str
                 .font('Helvetica')
                 .fillColor('#999999')
                 .text(
-                    `Verify at: https://codemande.com/verify/${data.certificateNumber}`,
+                    `Verify at: https://ihub.com/verify/${data.certificateNumber}`,
                     centerX - 150, pageHeight - 50, { width: 300, align: 'center' }
                 );
 
@@ -297,7 +297,7 @@ export const generateInvoicePDF = async (data: {
             doc.fontSize(24)
                 .font('Helvetica-Bold')
                 .fillColor('#667eea')
-                .text('CODEMANDE', 50, 50);
+                .text('IHUB', 50, 50);
 
             doc.fontSize(10)
                 .font('Helvetica')
@@ -374,8 +374,8 @@ export const generateInvoicePDF = async (data: {
             doc.fontSize(10)
                 .font('Helvetica')
                 .fillColor('#999999')
-                .text('Thank you for choosing CODEMANDE Academy!', 50, 700, { align: 'center', width: 500 })
-                .text('For questions, contact: support@codemande.com', 50, 715, { align: 'center', width: 500 });
+                .text('Thank you for choosing IHUB Academy!', 50, 700, { align: 'center', width: 500 })
+                .text('For questions, contact: support@ihub.com', 50, 715, { align: 'center', width: 500 });
 
             doc.end();
 

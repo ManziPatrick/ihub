@@ -185,7 +185,7 @@ export default function PortalHelp() {
                     </div>
                     <div>
                       <p className="text-sm text-card-foreground/60">Email</p>
-                      <p className="text-card-foreground">support@codemande.com</p>
+                      <p className="text-card-foreground">support@ihub.com</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">

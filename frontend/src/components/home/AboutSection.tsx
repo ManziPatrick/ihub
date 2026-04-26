@@ -11,7 +11,7 @@ export function AboutSection() {
         <div className="flex items-center justify-center gap-4 mb-10">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/50" />
           <h2 className="font-heading text-2xl lg:text-3xl font-medium text-foreground text-center">
-            About CODEMANDE
+            About IHUB
           </h2>
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/50" />
         </div>
@@ -73,7 +73,7 @@ export function AboutSection() {
             <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-card shadow-card relative border border-border/50">
               <ImageWithSkeleton
                 src={aboutImage}
-                alt="CODEMANDE training center"
+                alt="IHUB training center"
                 className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                 containerClassName="w-full h-full"
               />

@@ -4,9 +4,9 @@ import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCXbis7wKU3IAcUrjyLTrVXKiIoW1CSpuM",
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "codemande-d218d.firebaseapp.com",
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "codemande-d218d",
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "codemande-d218d.firebasestorage.app",
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "ihub-d218d.firebaseapp.com",
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "ihub-d218d",
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "ihub-d218d.firebasestorage.app",
     messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "665960152507",
     appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:665960152507:web:4e27850283a1065074989e",
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-67XBBGTM1Y"
