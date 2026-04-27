@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { KidAvatar, AvatarExpression } from "./student/KidAvatar";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface LessonQuizProps {
   courseId: string;
@@ -400,7 +402,18 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <p className="text-sm font-medium text-foreground leading-relaxed">{hint}</p>
+                        <div className="text-sm font-medium text-foreground leading-relaxed">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                              strong: ({ node, ...props }) => <strong className="font-bold text-amber-600 dark:text-amber-400" {...props} />,
+                              em: ({ node, ...props }) => <em className="italic" {...props} />,
+                            }}
+                          >
+                            {hint}
+                          </ReactMarkdown>
+                        </div>
                         
                         {/* Hint Chat Interface */}
                         <div className="mt-4 pt-4 border-t border-amber-500/10 space-y-3">
@@ -413,7 +426,16 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
                                       ? 'bg-amber-500 text-white rounded-tr-sm' 
                                       : 'bg-background/50 border border-border/50 rounded-tl-sm text-foreground'
                                   }`}>
-                                    {msg.content}
+                                    <ReactMarkdown
+                                      remarkPlugins={[remarkGfm]}
+                                      components={{
+                                        p: ({ node, ...props }) => <p className="mb-1 last:mb-0" {...props} />,
+                                        strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
+                                        em: ({ node, ...props }) => <em className="italic" {...props} />,
+                                      }}
+                                    >
+                                      {msg.content}
+                                    </ReactMarkdown>
                                   </div>
                                 </div>
                               ))}
