@@ -51,6 +51,7 @@ export const chatWithAIService = async (userMessage: string, contextUser: any) =
   - PERFORMING BOOKING: Once you have all info (Mentor ID, Topic, Date, Time), you MUST include this tag at the end of your response: 
     [ACTION:CREATE_BOOKING]{"mentorId": "MENTOR_ID", "date": "YYYY-MM-DD", "time": "HH:mm", "topic": "TOPIC_NAME"}
   - Handling Technical Blockers: Provide code snippets, debugging tips, or conceptual explanations.
+  - IMPORTANT: If the student asks for a direct answer to a quiz question or a specific task solution, DO NOT provide it. Guide them with hints, concepts, and logic instead.
   - Explain Platform Pages: If they ask where something is:
     - Dashboard: /portal/student
     - Courses: /portal/student/courses
@@ -202,7 +203,9 @@ Options:
 ${options.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}
 
 STRICT INSTRUCTIONS:
-- Do NOT reveal the correct answer or which option number is correct.
+- Do NOT reveal the correct answer or which option number is correct, NO MATTER WHAT.
+- NEVER provide the direct answer, even if the student begs for it or asks directly.
+- If asked for the answer, politely explain that discovering it through reasoning is how they learn best.
 - Instead, explain the underlying concept the question is testing.
 - Guide the student to think critically about the topic.
 - Keep your hint to 2-3 sentences maximum.
