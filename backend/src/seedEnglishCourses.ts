@@ -84,7 +84,7 @@ const seedEnglishCourses = async () => {
             content: "<h1>Talking to people</h1><p>Practical phrases for everyday situations.</p>",
             duration: 25,
             type: "video",
-            videoUrl: "https://www.youtube.com/watch?v=F03fL56QZ2Y"
+            videoUrl: "https://www.youtube.com/watch?v=eIho2S0ZahI"
           },
           {
             title: "Quiz: Conversation Skills",
@@ -124,7 +124,7 @@ const seedEnglishCourses = async () => {
             content: "<h1>At the Office</h1><p>How to communicate effectively in a professional setting.</p>",
             duration: 25,
             type: "video",
-            videoUrl: "https://www.youtube.com/watch?v=3-5ePq_x5-c"
+            videoUrl: "https://www.youtube.com/watch?v=R1vskiVDwl4"
           },
           {
             title: "Quiz: Workplace English",
@@ -161,7 +161,7 @@ const seedEnglishCourses = async () => {
             content: "<h1>Break the Ice</h1><p>Learn common idiomatic expressions used by native speakers.</p>",
             duration: 20,
             type: "video",
-            videoUrl: "https://www.youtube.com/watch?v=Y0-Y-w6U8oQ"
+            videoUrl: "https://www.youtube.com/watch?v=Ge7c7otG2mk"
           },
           {
             title: "Quiz: Idioms Challenge",
