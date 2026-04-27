@@ -146,11 +146,10 @@ const calculateInternshipProgress = async (internship: any) => {
     stageContribution = (completedInStage / itemsInStage) * (100 / totalStages);
   }
 
+  return Math.min(100, Math.round(baseProgress + stageContribution));
+}
 
-
-return Math.min(100, Math.round(baseProgress + stageContribution)); }
-
-const getAdminStudentIds = async (adminId) => {
+const getAdminStudentIds = async (adminId: string) => {
   const courses = await Course.find({ $or: [{ instructor: adminId }, { createdBy: adminId }] });
   const studentIds = new Set();
   courses.forEach((c) => {
@@ -637,6 +636,11 @@ export const resolvers = {
                 }
                 lessonCount++;
               });
+            }
+          });
+        }
+      }
+
       return courseObj;
     },
     stats: async (_: any, __: any, context: any) => {
@@ -866,7 +870,7 @@ export const resolvers = {
       ]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-      const totalCount = totalStandard + totalInternship;
+      const totalCount = standardPayments.length + internshipPayments.length;
       const totalPages = Math.ceil(totalCount / limit);
       const items = combined.slice(skip, skip + limit);
 
