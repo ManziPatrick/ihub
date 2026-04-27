@@ -1,0 +1,25 @@
+{
+  "name": "ihub-frontend",
+  "framework": "vite",
+  "buildCommand": "cd frontend && npm install && npm run build && node generate-env-config.js",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/frontend/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.codemande.com"
+        }
+      ],
+      "destination": "https://codemande.com/$1",
+      "permanent": true
+    }
+  ]
+}
