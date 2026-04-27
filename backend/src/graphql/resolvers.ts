@@ -464,13 +464,25 @@ export const resolvers = {
       }
 
       const query: any = { isDeleted: { $ne: true } };
-      if (context.user.role === 'admin') {
-        query.createdBy = context.user.id;
+
+      if (context.user.role === 'admin' || context.user.role === 'trainer') {
+        const courses = await Course.find({ 
+          $or: [{ instructor: context.user.id }, { createdBy: context.user.id }] 
+        });
+        const enrolledStudentIds = courses.reduce((acc: any[], course: any) => {
+          return [...acc, ...course.studentsEnrolled];
+        }, []);
+        
+        query.$or = [
+          { _id: { $in: enrolledStudentIds } },
+          { createdBy: context.user.id, role: 'trainer' }
+        ];
       } else if (createdBy) {
         query.createdBy = createdBy;
       }
 
       const skip = (page - 1) * limit;
+
       const [items, totalCount] = await Promise.all([
         User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
         User.countDocuments(query)
@@ -2930,8 +2942,8 @@ export const resolvers = {
     },
 
     deleteUser: async (_: any, { id }: { id: string }, context: any) => {
-      if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) {
-        throw new Error('Not authorized');
+      if (!context.user || context.user.role !== 'super_admin') {
+        throw new Error('Only super admins can delete users');
       }
 
       const user = await User.findById(id);

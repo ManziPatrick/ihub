@@ -278,13 +278,17 @@ export default function AdminUsers() {
                               <DropdownMenuItem onClick={() => setEmailUser(user)}>
                                 <Mail className="w-4 h-4 mr-2" /> Send Email
                               </DropdownMenuItem>
-                              <div className="h-px bg-border/50 my-1" />
-                              <DropdownMenuItem
-                                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                onClick={() => setDeleteUser(user)}
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" /> Delete
-                              </DropdownMenuItem>
+                              {currentUser?.role === 'super_admin' && (
+                                <>
+                                  <div className="h-px bg-border/50 my-1" />
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                    onClick={() => setDeleteUser(user)}
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" /> Delete
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </td>
