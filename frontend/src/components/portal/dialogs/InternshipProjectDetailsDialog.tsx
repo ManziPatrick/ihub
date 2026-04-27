@@ -17,6 +17,7 @@ import {
     Link as LinkIcon
 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 
 interface InternshipProjectDetailsDialogProps {
@@ -56,7 +57,18 @@ export function InternshipProjectDetailsDialog({ open, onOpenChange, project }: 
                         <div>
                             <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Project README</h3>
                             <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-heading prose-headings:font-bold prose-p:leading-relaxed prose-a:text-primary hover:prose-a:underline border-l-2 border-primary/20 pl-4 py-1">
-                                <ReactMarkdown>
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                        p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                                        ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2" {...props} />,
+                                        ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
+                                        li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                                        strong: ({ node, ...props }) => <strong className="font-bold text-primary" {...props} />,
+                                        em: ({ node, ...props }) => <em className="italic" {...props} />,
+                                        a: ({ node, ...props }) => <a className="text-primary underline hover:opacity-80 transition-opacity" {...props} />
+                                    }}
+                                >
                                     {project.description}
                                 </ReactMarkdown>
                             </div>

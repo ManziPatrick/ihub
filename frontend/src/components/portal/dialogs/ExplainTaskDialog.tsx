@@ -11,6 +11,7 @@ import { useMutation } from "@apollo/client/react";
 import { EXPLAIN_TASK } from "@/lib/graphql/mutations";
 import { Loader2, Sparkles, Brain, Info } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ExplainTaskDialogProps {
   open: boolean;
@@ -73,7 +74,20 @@ export function ExplainTaskDialog({
           ) : explanation ? (
             <div className="space-y-6">
               <div className="prose prose-sm dark:prose-invert max-w-none bg-accent/5 p-6 rounded-xl border border-accent/10">
-                <ReactMarkdown>{explanation}</ReactMarkdown>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                    ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2" {...props} />,
+                    ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
+                    li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                    strong: ({ node, ...props }) => <strong className="font-bold text-accent" {...props} />,
+                    em: ({ node, ...props }) => <em className="italic" {...props} />,
+                    a: ({ node, ...props }) => <a className="text-accent underline hover:opacity-80 transition-opacity" {...props} />
+                  }}
+                >
+                  {explanation}
+                </ReactMarkdown>
               </div>
 
               <div className="bg-muted/30 p-4 rounded-lg border border-border/50 text-[11px] text-muted-foreground flex items-start gap-3 italic">
