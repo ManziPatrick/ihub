@@ -89,44 +89,86 @@ const studentNavItems: NavItem[] = [
 
 const trainerNavItems: NavItem[] = [
   { label: "Dashboard", href: "/portal/trainer", icon: LayoutDashboard },
-  { label: "My Courses", href: "/portal/trainer/courses", icon: BookOpen },
-  { label: "Students", href: "/portal/trainer/students", icon: Users },
-  { label: "Assignments", href: "/portal/trainer/projects", icon: GraduationCap },
-  { label: "Projects", href: "/portal/trainer/assignments", icon: FolderOpen },
+  { 
+    label: "Academics", 
+    icon: GraduationCap,
+    children: [
+      { label: "My Courses", href: "/portal/trainer/courses", icon: BookOpen },
+      { label: "Students", href: "/portal/trainer/students", icon: Users },
+      { label: "Assignments", href: "/portal/trainer/projects", icon: GraduationCap },
+      { label: "Projects", href: "/portal/trainer/assignments", icon: FolderOpen },
+    ]
+  },
+  { 
+    label: "Professional", 
+    icon: Briefcase,
+    children: [
+      { label: "Mentorship", href: "/portal/trainer/mentorship", icon: GraduationCap },
+      { label: "Internships", href: "/portal/trainer/internships", icon: Briefcase },
+    ]
+  },
   { label: "Schedule", href: "/portal/trainer/schedule", icon: Calendar },
-  { label: "Mentorship", href: "/portal/trainer/mentorship", icon: GraduationCap },
-  { label: "Internships", href: "/portal/trainer/internships", icon: Briefcase },
   { label: "Messages", href: "/chat", icon: MessageSquare },
 ];
 
 const adminNavItems: NavItem[] = [
   { label: "Dashboard", href: "/portal/admin", icon: LayoutDashboard },
-  { label: "Users", href: "/portal/admin/users", icon: Users },
-  { label: "Courses", href: "/portal/admin/courses", icon: BookOpen },
-  { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
-  { label: "Internships", href: "/portal/admin/internships", icon: Briefcase },
+  { 
+    label: "Management", 
+    icon: Cog,
+    children: [
+      { label: "Users", href: "/portal/admin/users", icon: Users },
+      { label: "Courses", href: "/portal/admin/courses", icon: BookOpen },
+      { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
+      { label: "Internships", href: "/portal/admin/internships", icon: Briefcase },
+    ]
+  },
+  { 
+    label: "Content", 
+    icon: FileText,
+    children: [
+      { label: "Projects", href: "/portal/admin/projects", icon: FolderOpen },
+      { label: "Assignments", href: "/portal/admin/assignment-reviews", icon: GraduationCap },
+      { label: "Badges", href: "/portal/admin/badges", icon: Award },
+      { label: "Blog", href: "/portal/admin/blogs", icon: FileText },
+    ]
+  },
+  { 
+    label: "Operations", 
+    icon: Cog,
+    children: [
+      { label: "Team", href: "/portal/admin/team", icon: UserCog },
+      { label: "Payments", href: "/portal/admin/payments", icon: CreditCard },
+      { label: "Branding", href: "/portal/admin/branding", icon: Palette },
+      { label: "Analytics", href: "/portal/admin/analytics", icon: BarChart3 },
+      { label: "Toolbox", href: "/portal/admin/tools", icon: Table },
+    ]
+  },
   { label: "Schedule", href: "/portal/admin/schedule", icon: Calendar },
-  { label: "Projects", href: "/portal/admin/projects", icon: FolderOpen },
-  { label: "Assignments", href: "/portal/admin/assignment-reviews", icon: GraduationCap },
-  { label: "Team", href: "/portal/admin/team", icon: UserCog },
-  { label: "Payments", href: "/portal/admin/payments", icon: CreditCard },
-  { label: "Badges", href: "/portal/admin/badges", icon: Award },
-  { label: "Blog", href: "/portal/admin/blogs", icon: FileText },
-  { label: "Analytics", href: "/portal/admin/analytics", icon: BarChart3 },
-  { label: "Toolbox", href: "/portal/admin/tools", icon: Table },
-  { label: "Branding", href: "/portal/admin/branding", icon: Palette },
   { label: "Messages", href: "/chat", icon: MessageSquare },
 ];
 
 const superAdminNavItems: NavItem[] = [
   { label: "Dashboard", href: "/portal/super-admin", icon: LayoutDashboard },
-  { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },
-  { label: "All Users", href: "/portal/super-admin/users", icon: Users },
-  { label: "Configuration", href: "/portal/super-admin/config", icon: Cog },
-  { label: "Schedule", href: "/portal/admin/schedule", icon: Calendar },
-  { label: "Blog", href: "/portal/admin/blogs", icon: FileText },
-  { label: "Branding", href: "/portal/admin/branding", icon: Palette },
+  { 
+    label: "System", 
+    icon: Shield,
+    children: [
+      { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },
+      { label: "All Users", href: "/portal/super-admin/users", icon: Users },
+      { label: "Configuration", href: "/portal/super-admin/config", icon: Cog },
+    ]
+  },
+  { 
+    label: "Marketing", 
+    icon: Palette,
+    children: [
+      { label: "Blog", href: "/portal/admin/blogs", icon: FileText },
+      { label: "Branding", href: "/portal/admin/branding", icon: Palette },
+    ]
+  },
   { label: "Analytics", href: "/portal/super-admin/analytics", icon: BarChart3 },
+  { label: "Schedule", href: "/portal/admin/schedule", icon: Calendar },
   { label: "Messages", href: "/chat", icon: MessageSquare },
 ];
 
