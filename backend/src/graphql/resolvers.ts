@@ -146,8 +146,20 @@ const calculateInternshipProgress = async (internship: any) => {
     stageContribution = (completedInStage / itemsInStage) * (100 / totalStages);
   }
 
-  return Math.min(100, Math.round(baseProgress + stageContribution));
-}
+
+
+return Math.min(100, Math.round(baseProgress + stageContribution)); }
+
+const getAdminStudentIds = async (adminId) => {
+  const courses = await Course.find({ $or: [{ instructor: adminId }, { createdBy: adminId }] });
+  const studentIds = new Set();
+  courses.forEach((c) => {
+    if (c.studentsEnrolled) {
+      c.studentsEnrolled.forEach((s) => studentIds.add(s.toString()));
+    }
+  });
+  return Array.from(studentIds);
+};
 
 export const resolvers = {
   Upload: GraphQLUpload,
@@ -625,17 +637,32 @@ export const resolvers = {
                 }
                 lessonCount++;
               });
-            }
-          });
-        }
-      }
-
       return courseObj;
     },
     stats: async (_: any, __: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
+
+      const isSuperAdmin = context.user.role === 'super_admin';
+      const adminFilter = isSuperAdmin ? { isDeleted: false } : { 
+        $or: [{ instructor: context.user.id }, { createdBy: context.user.id }],
+        isDeleted: false 
+      };
+
+      // For payments, we need to find payments linked to admin's courses
+      let adminCourseIds: any[] = [];
+      if (!isSuperAdmin) {
+        const adminCourses = await Course.find({ 
+          $or: [{ instructor: context.user.id }, { createdBy: context.user.id }] 
+        });
+        adminCourseIds = adminCourses.map(c => c._id);
+      }
+
+      const paymentFilter = isSuperAdmin ? { status: 'completed' } : {
+        status: 'completed',
+        courseIds: { $in: adminCourseIds }
+      };
 
       const [
         totalUsers,
@@ -647,14 +674,14 @@ export const resolvers = {
         internshipApps,
         legacyInternships
       ] = await Promise.all([
-        User.countDocuments(),
-        Course.countDocuments({ isDeleted: false }),
-        InternshipProgram.countDocuments({ isDeleted: false }),
-        Payment.find({ status: 'completed' }),
-        InternshipPayment.find({ status: 'paid', isDeleted: false }),
-        Course.find({ isDeleted: false }),
-        InternshipApplication.find({ status: 'approved', isDeleted: false }),
-        Internship.find({ status: { $in: ['enrolled', 'in_progress', 'completed', 'graduated'] } })
+        isSuperAdmin ? User.countDocuments() : User.countDocuments({ _id: { $in: await getAdminStudentIds(context.user.id) } }),
+        Course.countDocuments(adminFilter),
+        InternshipProgram.countDocuments(adminFilter),
+        Payment.find(paymentFilter),
+        InternshipPayment.find(isSuperAdmin ? { status: 'paid', isDeleted: false } : { status: 'paid', isDeleted: false, internshipProgramId: { $in: adminCourseIds } }),
+        Course.find(adminFilter),
+        InternshipApplication.find(isSuperAdmin ? { status: 'approved', isDeleted: false } : { status: 'approved', isDeleted: false, internshipProgramId: { $in: adminCourseIds } }),
+        Internship.find(isSuperAdmin ? { status: { $in: ['enrolled', 'in_progress', 'completed', 'graduated'] } } : { mentorId: context.user.id, status: { $in: ['enrolled', 'in_progress', 'completed', 'graduated'] } })
       ]);
 
       // Calculate total unique students across all programs
@@ -784,13 +811,27 @@ export const resolvers = {
         throw new Error('Not authorized');
       }
 
+      const isSuperAdmin = context.user.role === 'super_admin';
+      let adminCourseIds: any[] = [];
+      if (!isSuperAdmin) {
+        const adminCourses = await Course.find({ 
+          $or: [{ instructor: context.user.id }, { createdBy: context.user.id }] 
+        });
+        adminCourseIds = adminCourses.map(c => c._id);
+      }
+
+      const filter: any = isSuperAdmin ? {} : {
+        $or: [
+          { courseIds: { $in: adminCourseIds } },
+          { internshipIds: { $in: adminCourseIds } }
+        ]
+      };
+
       const skip = (page - 1) * limit;
 
-      const [standardPayments, internshipPayments, totalStandard, totalInternship] = await Promise.all([
-        Payment.find().populate('userId').sort({ createdAt: -1 }),
-        InternshipPayment.find({ isDeleted: false }).populate('userId').populate('internshipProgramId').sort({ createdAt: -1 }),
-        Payment.countDocuments(),
-        InternshipPayment.countDocuments({ isDeleted: false })
+      const [standardPayments, internshipPayments] = await Promise.all([
+        Payment.find(filter).populate('userId').sort({ createdAt: -1 }),
+        InternshipPayment.find({ ...filter, isDeleted: false }).populate('userId').populate('internshipProgramId').sort({ createdAt: -1 }),
       ]);
 
       const combined = [
