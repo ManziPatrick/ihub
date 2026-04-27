@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -138,12 +139,14 @@ export const ChatBot: React.FC = () => {
                           : "bg-muted rounded-tl-none"
                       )}>
                         <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
                           components={{
                             p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
                             ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2" {...props} />,
                             ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
                             li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                            strong: ({ node, ...props }) => <span className="font-bold text-primary" {...props} />,
+                            strong: ({ node, ...props }) => <strong className="font-bold text-primary" {...props} />,
+                            em: ({ node, ...props }) => <em className="italic" {...props} />,
                             a: ({ node, ...props }) => <a className="text-primary underline hover:opacity-80 transition-opacity" {...props} />
                           }}
                         >
