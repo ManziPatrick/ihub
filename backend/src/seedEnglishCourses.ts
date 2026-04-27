@@ -47,7 +47,7 @@ const seedEnglishCourses = async () => {
             content: "<h1>Everyday Words</h1><p>Essential vocabulary you will use every day.</p>",
             duration: 20,
             type: "video",
-            videoUrl: "https://www.youtube.com/watch?v=ZfO34-580Dk"
+            videoUrl: "https://www.youtube.com/watch?v=juKd26qkNAw"
           },
           {
             title: "Quiz: Vocabulary Challenge",
