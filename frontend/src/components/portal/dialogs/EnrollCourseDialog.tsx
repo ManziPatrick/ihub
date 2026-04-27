@@ -35,13 +35,13 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
   });
 
 
+  const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
+
   if (!course) return null;
 
   const finalPrice = course.discountPrice > 0 ? course.discountPrice : course.price;
   const isFree = finalPrice === 0;
-
-  const { user, updateUser } = useAuth();
-  const navigate = useNavigate();
 
   const handleEnroll = async () => {
     // Check if user is already enrolled
