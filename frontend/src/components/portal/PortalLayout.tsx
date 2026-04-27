@@ -1,4 +1,5 @@
 import { ReactNode, useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -59,17 +60,27 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface NavItem {
   label: string;
-  href: string;
+  href?: string;
   icon: React.ElementType;
+  children?: { label: string; href: string; icon: React.ElementType }[];
 }
 
 const studentNavItems: NavItem[] = [
   { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },
-  { label: "My Courses", href: "/portal/student/courses", icon: BookOpen },
-  { label: "Gradings", href: "/portal/student/gradings", icon: Star },
-
-  { label: "Certificates", href: "/portal/student/certificates", icon: Award },
-  { label: "Internship", href: "/portal/student/internship", icon: Briefcase },
+  { 
+    label: "Academics", 
+    icon: GraduationCap,
+    children: [
+      { label: "My Courses", href: "/portal/student/courses", icon: BookOpen },
+      { label: "Certificates", href: "/portal/student/certificates", icon: Award },
+      { label: "Gradings", href: "/portal/student/gradings", icon: Star },
+    ]
+  },
+  { 
+    label: "Internship", 
+    href: "/portal/student/internship", 
+    icon: Briefcase 
+  },
   { label: "Schedule", href: "/portal/student/schedule", icon: Calendar },
   { label: "Billing", href: "/portal/student/billing", icon: CreditCard },
   { label: "Messages", href: "/chat", icon: MessageSquare },
@@ -144,6 +155,13 @@ import { GET_NOTIFICATIONS, GET_ME } from "@/lib/graphql/queries";
 import { MARK_NOTIFICATION_READ, MARK_ALL_NOTIFICATIONS_READ } from "@/lib/graphql/mutations";
 import { formatDistanceToNow } from "date-fns";
 import { usePresence } from "@/hooks/use-presence";
+import { 
+  Collapsible, 
+  CollapsibleContent, 
+  CollapsibleTrigger 
+} from "@/components/ui/collapsible";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export function PortalLayout({ children }: PortalLayoutProps) {
   const { user, logout } = useAuth();
@@ -307,41 +325,97 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     <div className="min-h-screen bg-background flex w-full">
       {/* Sidebar - Desktop */}
       <aside className={`hidden lg:flex lg:flex-col ${isSidebarMinimized ? 'lg:w-20' : 'lg:w-64'} bg-card border-r border-border/50 fixed h-full transition-all duration-300 z-40`}>
-        {/* Logo */}
-        <div className="h-16 flex items-center justify-center border-b border-border/50 px-4">
-          <Link to="/" className={`flex items-center gap-2 ${isSidebarMinimized ? 'justify-center w-full' : ''}`}>
-            {branding.logoUrl && !isSidebarMinimized ? (
-              <img src={branding.logoUrl} alt={branding.siteName} className="h-8 w-auto" />
-            ) : (
-              <span className="font-heading font-black text-2xl tracking-tighter text-card-foreground">
-                {isSidebarMinimized ? 'I' : 'Inzira '}<span className="text-accent">{isSidebarMinimized ? 'H' : 'HUB'}</span>
-              </span>
-            )}
-          </Link>
-        </div>
+        {/* Sidebar Header & Search */}
+        <div className="flex flex-col border-b border-border/50 shrink-0">
+          <div className="h-16 flex items-center justify-between px-4">
+            <Link to="/" className={`flex items-center gap-2 ${isSidebarMinimized ? 'justify-center w-full' : ''}`}>
+              {branding.logoUrl && !isSidebarMinimized ? (
+                <img src={branding.logoUrl} alt={branding.siteName} className="h-8 w-auto" />
+              ) : (
+                <span className="font-heading font-black text-2xl tracking-tighter text-card-foreground">
+                  {isSidebarMinimized ? 'I' : 'Inzira '}<span className="text-accent">{isSidebarMinimized ? 'H' : 'HUB'}</span>
+                </span>
+              )}
+            </Link>
+          </div>
 
-        {/* Role Badge */}
-        <div className={`px-4 py-3 border-b border-border/50 flex items-center ${isSidebarMinimized ? 'justify-center' : 'justify-start'}`}>
           {!isSidebarMinimized && (
-            <span className="inline-block px-3 py-1 bg-accent/20 text-accent text-xs font-medium rounded-full truncate">
-              {roleLabel}
-            </span>
+            <div className="px-4 py-3">
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Input 
+                  placeholder="Search here..." 
+                  className="h-10 pl-9 bg-background/50 border-border/50 focus-visible:ring-1 focus-visible:ring-accent rounded-xl text-xs"
+                />
+              </div>
+            </div>
           )}
         </div>
 
+        {/* Role Badge */}
+        {!isSidebarMinimized && (
+          <div className="px-4 py-2 border-b border-border/50">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+              {roleLabel}
+            </span>
+          </div>
+        )}
+
         {/* Navigation */}
         <nav className={`flex-1 overflow-y-auto py-4 ${isSidebarMinimized ? 'px-2' : 'px-3'} custom-scrollbar`}>
-          <ul className="space-y-1">
+          <ul className="space-y-1.5">
             {navItems.map((item) => {
-              const isActive = location.pathname === item.href;
+              if (item.children && !isSidebarMinimized) {
+                const isAnyChildActive = item.children.some(child => location.pathname === child.href);
+                return (
+                  <li key={item.label}>
+                    <Collapsible defaultOpen={isAnyChildActive}>
+                      <CollapsibleTrigger asChild>
+                        <button className={cn(
+                          "flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all group hover:bg-background/80",
+                          isAnyChildActive ? "text-primary bg-primary/5" : "text-card-foreground/70"
+                        )}>
+                          <div className="flex items-center gap-3">
+                            <item.icon className={cn("w-5 h-5 shrink-0", isAnyChildActive ? "text-primary" : "text-card-foreground/50")} strokeWidth={1.5} />
+                            <span>{item.label}</span>
+                          </div>
+                          <ChevronDown className={cn("w-4 h-4 transition-transform duration-200 opacity-50", isAnyChildActive && "rotate-180 opacity-100")} />
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pl-9 pr-2 space-y-1 mt-1">
+                        {item.children.map((child) => {
+                          const isChildActive = location.pathname === child.href;
+                          return (
+                            <Link
+                              key={child.href}
+                              to={child.href}
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                                isChildActive 
+                                  ? "text-primary bg-primary/5" 
+                                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                              )}
+                            >
+                              {child.icon && <child.icon className="w-3.5 h-3.5" />}
+                              {child.label}
+                            </Link>
+                          );
+                        })}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </li>
+                );
+              }
+
+              const isActive = item.href ? location.pathname === item.href : false;
               return (
-                <li key={item.href}>
+                <li key={item.label}>
                   <Link
-                    to={item.href}
+                    to={item.href || '#'}
                     title={isSidebarMinimized ? item.label : undefined}
-                    className={`flex items-center ${isSidebarMinimized ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive
-                      ? "bg-accent text-accent-foreground"
-                      : "text-card-foreground/70 hover:bg-background/50 hover:text-card-foreground"
+                    className={`flex items-center ${isSidebarMinimized ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                      : "text-card-foreground/70 hover:bg-background/80 hover:text-card-foreground"
                       }`}
                   >
                     <item.icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
