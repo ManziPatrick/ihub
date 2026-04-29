@@ -181,7 +181,7 @@ const seedEnglishCourses = async () => {
         instructor: admin._id,
         price: 0,
         level: "Beginner",
-        category: "General",
+        category: "Languages",
         status: "published",
         modules: englishLevel1Modules
       },
@@ -192,7 +192,7 @@ const seedEnglishCourses = async () => {
         instructor: admin._id,
         price: 0,
         level: "Intermediate",
-        category: "General",
+        category: "Languages",
         status: "published",
         modules: englishLevel2Modules
       }
