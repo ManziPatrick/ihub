@@ -27,7 +27,20 @@ import {
   ShoppingCart,
   CheckCircle,
   ArrowRight,
-  XCircle
+  XCircle,
+  ChevronDown,
+  Music,
+  Palette,
+  Trophy,
+  Utensils,
+  Ticket,
+  Compass,
+  Film,
+  Mic,
+  Presentation,
+  Heart,
+  Sparkles,
+  Languages
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
@@ -46,6 +59,8 @@ import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
 import { useMutation } from "@apollo/client/react";
 import { useToast } from "@/hooks/use-toast";
+import { InterestsOverlay } from "./InterestsOverlay";
+import { MoreHorizontal } from "lucide-react";
 
 // ─── Category normalization ────────────────────────────────────────────────
 const CATEGORY_MAP: Record<string, string> = {
@@ -107,6 +122,38 @@ const CATEGORY_MAP: Record<string, string> = {
   Other: "General",
   Vocational: "Vocational",
   Hospitality: "Vocational",
+
+  Music: "Music",
+  "Arts & Culture": "Arts & Culture",
+  Arts: "Arts & Culture",
+  Culture: "Arts & Culture",
+  "Sports & Wellness": "Sports & Wellness",
+  Sports: "Sports & Wellness",
+  Wellness: "Sports & Wellness",
+  "Food & Drinks": "Food & Drinks",
+  Food: "Food & Drinks",
+  Drinks: "Food & Drinks",
+  concert: "concert",
+  Concert: "concert",
+  Adventures: "Adventures",
+  Adventure: "Adventures",
+  Cinema: "Cinema",
+  Movie: "Cinema",
+  performance: "performance",
+  Performance: "performance",
+  Conferences: "Conferences",
+  Conference: "Conferences",
+  Fundraising: "Fundraising",
+  Charity: "Fundraising",
+  Family: "Family",
+  Spirituality: "Spirituality",
+  Faith: "Spirituality",
+  Languages: "Languages",
+  English: "Languages",
+  French: "Languages",
+  Kinyarwanda: "Languages",
+  Swahili: "Languages",
+  "Language Learning": "Languages",
 };
 
 function normalizeCategory(raw: string): string {
@@ -128,14 +175,27 @@ function normalizeCategory(raw: string): string {
 type CategoryMeta = { icon: React.ElementType; bg: string; text: string; border: string };
 
 const CATEGORY_META: Record<string, CategoryMeta> = {
-  Technology:    { icon: Cpu,       bg: "bg-blue-50",   text: "text-blue-600",   border: "border-blue-100"   },
-  "Data & AI":   { icon: BarChart2, bg: "bg-violet-50", text: "text-violet-600", border: "border-violet-100" },
-  Business:      { icon: TrendingUp,bg: "bg-amber-50",  text: "text-amber-600",  border: "border-amber-100"  },
-  Cybersecurity: { icon: Shield,    bg: "bg-red-50",    text: "text-red-600",    border: "border-red-100"    },
-  Design:        { icon: Layers,    bg: "bg-pink-50",   text: "text-pink-600",   border: "border-pink-100"   },
-  Science:       { icon: Zap,       bg: "bg-green-50",  text: "text-green-600",  border: "border-green-100"  },
-  Vocational:    { icon: Briefcase, bg: "bg-orange-50", text: "text-orange-600", border: "border-orange-100" },
-  General:       { icon: BookOpen,  bg: "bg-slate-50",  text: "text-slate-600",  border: "border-slate-200"  },
+  Technology:    { icon: Cpu,          bg: "bg-indigo-500/10", text: "text-indigo-400", border: "border-indigo-500/20" },
+  "Data & AI":   { icon: BarChart2,    bg: "bg-violet-500/10", text: "text-violet-400", border: "border-violet-500/20" },
+  Business:      { icon: TrendingUp,   bg: "bg-amber-500/10",  text: "text-amber-400",  border: "border-amber-500/20"  },
+  Cybersecurity: { icon: Shield,       bg: "bg-red-500/10",    text: "text-red-400",    border: "border-red-500/20"    },
+  Design:        { icon: Layers,       bg: "bg-pink-500/10",   text: "text-pink-400",   border: "border-pink-500/20"   },
+  Science:       { icon: Zap,          bg: "bg-green-500/10",  text: "text-green-400",  border: "border-green-500/20"  },
+  Vocational:    { icon: Briefcase,    bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/20" },
+  General:       { icon: BookOpen,     bg: "bg-slate-500/10",  text: "text-slate-400",  border: "border-slate-500/20"  },
+  Music:         { icon: Music,        bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/20" },
+  "Arts & Culture": { icon: Palette,      bg: "bg-pink-500/10",   text: "text-pink-400",   border: "border-pink-500/20"   },
+  "Sports & Wellness": { icon: Trophy,    bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/20" },
+  "Food & Drinks": { icon: Utensils,    bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20" },
+  concert:       { icon: Ticket,       bg: "bg-red-500/10",    text: "text-red-400",    border: "border-red-500/20"    },
+  Adventures:    { icon: Compass,      bg: "bg-green-500/10",  text: "text-green-400",  border: "border-green-500/20"  },
+  Cinema:        { icon: Film,         bg: "bg-blue-500/10",   text: "text-blue-400",   border: "border-blue-500/20"   },
+  performance:   { icon: Mic,          bg: "bg-emerald-500/10",text: "text-emerald-400",border: "border-emerald-500/20" },
+  Conferences:   { icon: Presentation, bg: "bg-cyan-500/10",   text: "text-cyan-400",   border: "border-cyan-500/20"   },
+  Fundraising:   { icon: Heart,        bg: "bg-rose-500/10",   text: "text-rose-400",   border: "border-rose-500/20"   },
+  Family:        { icon: Users,        bg: "bg-sky-500/10",    text: "text-sky-400",    border: "border-sky-500/20"    },
+  Spirituality:  { icon: Sparkles,     bg: "bg-amber-500/10",  text: "text-amber-400",  border: "border-amber-500/20"  },
+  Languages:     { icon: Languages,    bg: "bg-emerald-500/10",text: "text-emerald-400",border: "border-emerald-500/20" },
 };
 
 function getCategoryMeta(cat: string): CategoryMeta {
@@ -155,6 +215,7 @@ export function FeaturedCourses() {
   const [section, setSection] = useState<Section>("programs");
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isInterestsOpen, setIsInterestsOpen] = useState(false);
   const [selectedInternshipId, setSelectedInternshipId] = useState<string | null>(null);
   const [applyCourse, setApplyCourse] = useState<any | null>(null);
   
@@ -267,9 +328,11 @@ export function FeaturedCourses() {
   );
 
   const courseCategories = useMemo(() => {
-    const seen = new Set<string>();
+    const seen = new Set<string>(["Languages", "Technology"]);
     courses.forEach((c: any) => seen.add(c.normalizedCategory));
     const list = Array.from(seen).sort((a, b) => {
+      if (a === "Languages") return -1;
+      if (b === "Languages") return 1;
       if (a === "Technology") return -1;
       if (b === "Technology") return 1;
       return a.localeCompare(b);
@@ -278,9 +341,11 @@ export function FeaturedCourses() {
   }, [courses]);
 
   const internshipCategories = useMemo(() => {
-    const seen = new Set<string>();
+    const seen = new Set<string>(["Languages", "Technology"]);
     internships.forEach((i: any) => seen.add(i.normalizedCategory));
     const list = Array.from(seen).sort((a, b) => {
+      if (a === "Languages") return -1;
+      if (b === "Languages") return 1;
       if (a === "Technology") return -1;
       if (b === "Technology") return 1;
       return a.localeCompare(b);
@@ -360,9 +425,9 @@ export function FeaturedCourses() {
       {/* ── Integrated Hero Banner + Search ── */}
       <section className="pt-20 pb-8 bg-background transition-colors duration-300">
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="relative rounded-3xl overflow-hidden py-12 lg:py-16 px-4 shadow-2xl group border border-border/10">
+          <div className="relative rounded-3xl py-12 lg:py-16 px-4 shadow-2xl group border border-border/10 z-10">
             {/* Background Image with Parallax-like effect */}
-            <div className="absolute inset-0 w-full h-full">
+            <div className="absolute inset-0 w-full h-full overflow-hidden rounded-3xl">
               <img 
                 src={topImage} 
                 alt="Hero Background" 
@@ -390,35 +455,42 @@ export function FeaturedCourses() {
                   Programs for Your Future
                 </h1>
 
-                {/* Instant Filter Search Bar */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15, duration: 0.4 }}
-                  className="flex items-center gap-2 max-w-xl mx-auto"
-                >
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={
-                        section === "programs"
-                          ? "Search by program, topic, or location..."
-                          : "Search internships..."
-                      }
-                      className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/40 transition-all"
-                    />
+                <div className="max-w-xl mx-auto w-full relative z-[60]">
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onFocus={() => setIsInterestsOpen(true)}
+                        placeholder={
+                          section === "programs"
+                            ? "Search by program, topic, or location..."
+                            : "Search internships..."
+                        }
+                        className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/40 transition-all"
+                      />
+                    </div>
+                    <button
+                      onClick={() => setIsFilterOpen(true)}
+                      className="flex-shrink-0 p-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all"
+                      aria-label="Filter options"
+                    >
+                      <SlidersHorizontal className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setIsFilterOpen(true)}
-                    className="flex-shrink-0 p-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all"
-                    aria-label="Filter options"
-                  >
-                    <SlidersHorizontal className="w-4 h-4" />
-                  </button>
-                </motion.div>
+
+                  {/* Interests Overlay (Search Recommendations) */}
+                  <InterestsOverlay
+                    isOpen={isInterestsOpen}
+                    onClose={() => setIsInterestsOpen(false)}
+                    categories={currentCategories}
+                    activeCategory={activeCategory}
+                    onSelectCategory={setActiveCategory}
+                    getCategoryMeta={getCategoryMeta}
+                  />
+                </div>
               </motion.div>
             </div>
           </div>
@@ -622,25 +694,16 @@ export function FeaturedCourses() {
             </div>
           </motion.div>
 
-          {/* Category Tabs (shared for courses & internships) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex items-center gap-2 mb-8"
+            className="flex items-center gap-3 mb-8 overflow-hidden"
           >
-            <button
-              onClick={() => scrollTabs("left")}
-              aria-label="Scroll left"
-              className="flex-shrink-0 p-1.5 rounded-lg bg-card border border-border hover:border-accent/40 text-muted-foreground hover:text-accent transition-all"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-
             <div
               ref={tabScrollRef}
               className="flex items-center gap-2 overflow-x-auto scrollbar-none scroll-smooth flex-1 py-1"
             >
-              {currentCategories.map((cat) => {
+              {currentCategories.slice(0, 5).map((cat) => {
                 const meta = getCategoryMeta(cat);
                 const Icon = meta.icon;
                 const isActive = activeCategory === cat;
@@ -648,28 +711,28 @@ export function FeaturedCourses() {
                   <button
                     key={cat}
                     onClick={() => setActiveCategory(cat)}
-                    className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                       isActive
-                        ? "bg-foreground text-background shadow-sm"
-                        : "bg-card text-muted-foreground border border-border hover:border-accent/40 hover:text-foreground"
+                        ? "bg-white text-black shadow-lg scale-105"
+                        : "bg-[#1a1a1a] text-white/70 border border-white/5 hover:border-white/20 hover:text-white"
                     }`}
                   >
                     {cat !== "All" && (
-                      <Icon className={`w-3.5 h-3.5 ${isActive ? "text-background" : meta.text}`} />
+                      <Icon className={`w-4 h-4 ${isActive ? "text-black" : meta.text}`} />
                     )}
                     {cat}
                   </button>
                 );
               })}
+              
+              <button
+                onClick={() => setIsInterestsOpen(true)}
+                className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-[#1a1a1a] text-white/70 border border-white/5 hover:border-white/20 hover:text-white transition-all"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+                More
+              </button>
             </div>
-
-            <button
-              onClick={() => scrollTabs("right")}
-              aria-label="Scroll right"
-              className="flex-shrink-0 p-1.5 rounded-lg bg-card border border-border hover:border-accent/40 text-muted-foreground hover:text-accent transition-all"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
           </motion.div>
 
           {/* Loading */}
@@ -1110,20 +1173,17 @@ export function FeaturedCourses() {
           )}
         </div>
       </section>
-
-      {selectedInternshipId && (
-        <ApplyInternshipDialog 
-          open={!!selectedInternshipId} 
-          onOpenChange={(open) => !open && setSelectedInternshipId(null)}
-          internshipProgramId={selectedInternshipId}
-          onSuccess={() => refetchInternApps()}
-        />
-      )}
       <ApplyCourseDialog
         open={!!applyCourse}
         onOpenChange={(open) => !open && setApplyCourse(null)}
         course={applyCourse}
-        onSuccess={() => refetchApps()}
+        onSuccess={refetchApps}
+      />
+      <ApplyInternshipDialog
+        open={!!selectedInternshipId}
+        onOpenChange={(open) => !open && setSelectedInternshipId(null)}
+        internshipProgramId={selectedInternshipId || ""}
+        onSuccess={refetchInternApps}
       />
     </>
   );
