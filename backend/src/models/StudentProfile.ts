@@ -3,8 +3,13 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IStudentProfile extends Document {
   userId: mongoose.Types.ObjectId;
   school: string;
-  educationLevel: 'high_school' | 'undergraduate' | 'graduate' | 'postgraduate' | 'other';
+  educationLevel: 'nursery' | 'primary' | 'secondary' | 'university' | 'cambridge' | 'high_school' | 'undergraduate' | 'graduate' | 'postgraduate' | 'other';
+  academicYear?: string;
   fieldOfStudy: string;
+  city?: string;
+  sector?: string;
+  cell?: string;
+  village?: string;
   skills: string[];
   availability: 'full_time' | 'part_time' | 'weekends' | 'flexible';
   bio?: string;
@@ -32,12 +37,30 @@ const StudentProfileSchema: Schema = new Schema(
     },
     educationLevel: {
       type: String,
-      enum: ['high_school', 'undergraduate', 'graduate', 'postgraduate', 'other'],
       required: true
+    },
+    academicYear: {
+      type: String,
+      trim: true
     },
     fieldOfStudy: {
       type: String,
-      required: true,
+      trim: true
+    },
+    city: {
+      type: String,
+      trim: true
+    },
+    sector: {
+      type: String,
+      trim: true
+    },
+    cell: {
+      type: String,
+      trim: true
+    },
+    village: {
+      type: String,
       trim: true
     },
     skills: {
@@ -92,8 +115,12 @@ const StudentProfileSchema: Schema = new Schema(
 StudentProfileSchema.pre('save', async function () {
   const profile = this as unknown as IStudentProfile;
 
-  const requiredFields = ['school', 'educationLevel', 'fieldOfStudy', 'skills', 'availability'];
-  const optionalFields = ['bio', 'linkedinUrl', 'githubUrl', 'portfolioUrl'];
+  const baseRequired = ['school', 'educationLevel', 'skills', 'availability', 'city'];
+  const isHigherEd = !['nursery', 'primary'].includes(profile.educationLevel);
+  const requiredFields = isHigherEd ? [...baseRequired, 'fieldOfStudy'] : baseRequired;
+  
+  const optionalFields = ['bio', 'linkedinUrl', 'githubUrl', 'portfolioUrl', 'sector', 'cell', 'village'];
+  if (!isHigherEd) optionalFields.push('fieldOfStudy');
 
   let filledRequired = 0;
   let filledOptional = 0;

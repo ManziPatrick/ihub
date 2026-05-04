@@ -108,6 +108,8 @@ const userSchema = new mongoose.Schema({
   loginOTP: { type: String },
   loginOTPExpires: { type: Date },
   certificateName: { type: String },
+  school: { type: String, trim: true },
+  isFirst: { type: Boolean, default: true },
 }, { timestamps: true });
 
 export const User = mongoose.model('User', userSchema);

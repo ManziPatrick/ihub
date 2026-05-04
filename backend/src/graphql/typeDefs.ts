@@ -109,6 +109,9 @@ export const typeDefs = `#graphql
     updatedAt: String
     bookings: [Booking]
     certificateName: String
+    school: String
+    isExternal: Boolean
+    isFirst: Boolean
   }
 
   type PaginationInfo {
@@ -978,8 +981,8 @@ export const typeDefs = `#graphql
       modules: [ModuleInput!]
     ): Course
     deleteCourse(id: ID!): Boolean
-    createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String): User
-    updateUser(id: ID!, username: String, email: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String): User
+    createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String): User
+    updateUser(id: ID!, username: String, email: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String, isFirst: Boolean): User
     deleteUser(id: ID!): Boolean
     
     # Progress Tracking
@@ -1448,7 +1451,12 @@ export const typeDefs = `#graphql
     user: User
     school: String
     educationLevel: String
+    academicYear: String
     fieldOfStudy: String
+    city: String
+    sector: String
+    cell: String
+    village: String
     skills: [String!]
     availability: String
     bio: String
@@ -1674,7 +1682,12 @@ export const typeDefs = `#graphql
     createStudentProfile(
       school: String!
       educationLevel: String!
-      fieldOfStudy: String!
+      academicYear: String
+      fieldOfStudy: String
+      city: String
+      sector: String
+      cell: String
+      village: String
       skills: [String!]!
       availability: String!
       bio: String
@@ -1686,7 +1699,12 @@ export const typeDefs = `#graphql
     updateStudentProfile(
       school: String
       educationLevel: String
+      academicYear: String
       fieldOfStudy: String
+      city: String
+      sector: String
+      cell: String
+      village: String
       skills: [String]
       availability: String
       bio: String

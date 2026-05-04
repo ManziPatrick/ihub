@@ -484,9 +484,12 @@ export const resolvers = {
           return [...acc, ...course.studentsEnrolled];
         }, []);
         
+        const schoolFilter = context.user.school ? { school: context.user.school } : {};
+
         query.$or = [
           { _id: { $in: enrolledStudentIds } },
-          { createdBy: context.user.id, role: 'trainer' }
+          { createdBy: context.user.id, role: 'trainer' },
+          { ...schoolFilter, role: 'student' }
         ];
       } else if (createdBy) {
         query.createdBy = createdBy;
@@ -554,12 +557,15 @@ export const resolvers = {
         query.status = { $nin: ['DRAFT', 'CLOSED', 'ARCHIVED', 'draft', 'closed', 'archived'] };
       }
 
-      // Admin isolation: Admins see courses they created or are instructors for
+      // Admin isolation: Admins see courses they created, are instructors for, or belong to their school
       if (context.user && context.user.role === 'admin') {
         query.$or = [
           { createdBy: context.user.id },
           { instructor: context.user.id }
         ];
+        if (context.user.school) {
+          query.$or.push({ school: context.user.school });
+        }
       }
 
       const skip = (page - 1) * limit;
@@ -2528,7 +2534,8 @@ export const resolvers = {
       const course = new Course({
         ...args,
         instructor: instructorId || context.user.id,
-        createdBy: context.user.id
+        createdBy: context.user.id,
+        school: args.school || context.user.school
       });
       await course.save();
       return await course.populate('instructor');
@@ -2981,8 +2988,12 @@ export const resolvers = {
         delete args.status; // status changes usually require admin/system action
       }
 
+      if (args.isFirst !== undefined) {
+        console.log(`[UserUpdate] Manually setting isFirst for ${user.username} to ${args.isFirst}`);
+      }
       Object.assign(user, args);
       await user.save();
+      console.log(`[UserUpdate] Post-save isFirst for ${user.username}: ${user.isFirst}`);
       return user;
     },
 
@@ -3140,7 +3151,9 @@ export const resolvers = {
       (user as any).isOnline = true;
       (user as any).lastActive = new Date();
       (user as any).status = 'active'; // Ensure active on login
+      console.log(`[Login] Current isFirst for ${user.username}: ${user.isFirst}`);
       await user.save();
+      console.log(`[Login] Saved isFirst for ${user.username}: ${user.isFirst}`);
 
       const token = jwt.sign(
         { id: user.id, email: user.email, username: user.username, role: (user as any).role },
@@ -3199,7 +3212,9 @@ export const resolvers = {
         // Update Presence
         (dbUser as any).isOnline = true;
         (dbUser as any).lastActive = new Date();
+        console.log(`[GoogleLogin] Current isFirst for ${dbUser.username}: ${dbUser.isFirst}`);
         await dbUser.save();
+        console.log(`[GoogleLogin] Saved isFirst for ${dbUser.username}: ${dbUser.isFirst}`);
 
         const jwtToken = jwt.sign(
           { id: dbUser.id, email: dbUser.email, username: dbUser.username, role: (dbUser as any).role },
@@ -5820,6 +5835,16 @@ export const resolvers = {
         ...args
       });
       await profile.save();
+      
+      // Sync school to User model and mark onboarding as seen
+      const user = await User.findById(context.user.id);
+      if (user) {
+        console.log(`[Onboarding] Marking user ${user.username} as onboarded`);
+        user.isFirst = false;
+        if (args.school) user.school = args.school;
+        await user.save();
+      }
+
       await logActivity(context.user.id, 'CREATE', 'StudentProfile', profile.id, 'Created student profile');
       return profile;
     },
@@ -5832,6 +5857,16 @@ export const resolvers = {
 
       Object.assign(profile, args);
       await profile.save();
+
+      // Sync school to User model and mark onboarding as seen
+      const user = await User.findById(context.user.id);
+      if (user) {
+        console.log(`[Onboarding] Marking user ${user.username} as onboarded via update`);
+        user.isFirst = false;
+        if (args.school) user.school = args.school;
+        await user.save();
+      }
+
       await logActivity(context.user.id, 'UPDATE', 'StudentProfile', profile.id, 'Updated student profile');
       return profile;
     },
@@ -6435,7 +6470,11 @@ export const resolvers = {
 
       return completed;
     },
-    studentProfile: async (parent: any) => await StudentProfile.findOne({ userId: parent.id || parent._id })
+    studentProfile: async (parent: any) => await StudentProfile.findOne({ userId: parent.id || parent._id }),
+    isExternal: (parent: any, _: any, context: any) => {
+      if (!context.user || !context.user.school || !parent.school) return false;
+      return parent.school !== context.user.school;
+    }
   },
   Booking: {
     user: async (parent: any) => {
