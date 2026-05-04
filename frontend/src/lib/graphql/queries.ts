@@ -80,10 +80,35 @@ export const GET_USERS = gql`
         email
         role
         permissions
+        school
+        createdAt
+        isExternal
+        enrolledCourses {
+          id
+        }
         activityLog {
           action
           details
           timestamp
+        }
+        studentProfile {
+          id
+          school
+          educationLevel
+          academicYear
+          fieldOfStudy
+          city
+          sector
+          cell
+          village
+          skills
+          availability
+          bio
+          linkedinUrl
+          githubUrl
+          portfolioUrl
+          isComplete
+          completionPercentage
         }
       }
       pagination {
@@ -275,6 +300,7 @@ export const GET_ME = gql`
       bio
       phone
       location
+      isFirst
       createdAt
       enrolledCourses {
         id
@@ -336,6 +362,11 @@ export const GET_ME = gql`
         mode
         lightBg
         darkBg
+      }
+      studentProfile {
+        id
+        isComplete
+        school
       }
     }
   }
@@ -2083,6 +2114,25 @@ export const GET_COURSE_APPLICATIONS = gql`
           username
           fullName
           email
+          studentProfile {
+            id
+            school
+            educationLevel
+            academicYear
+            fieldOfStudy
+            city
+            sector
+            cell
+            village
+            skills
+            availability
+            bio
+            linkedinUrl
+            githubUrl
+            portfolioUrl
+            isComplete
+            completionPercentage
+          }
         }
         status
         selectedDeliveryMode

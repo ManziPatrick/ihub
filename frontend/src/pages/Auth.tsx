@@ -12,6 +12,7 @@ import { getGraphqlUrl } from "@/lib/env";
 import { GoogleLogin } from "@react-oauth/google";
 import { useMutation } from "@apollo/client/react";
 import { GOOGLE_LOGIN, VERIFY_2FA, SETUP_2FA, REQUEST_EMAIL_OTP, VERIFY_EMAIL_OTP } from "@/lib/graphql/mutations";
+import { ProfileCompletionWizard } from "@/components/portal/ProfileCompletionGuard";
 
 type AuthMode = "login" | "signup";
 
@@ -30,6 +31,8 @@ export default function Auth() {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
+  const [onboardingToken, setOnboardingToken] = useState<string | null>(null);
+  const [onboardingUser, setOnboardingUser] = useState<any>(null);
 
   const { login, signup, user, loginWithToken } = useAuth();
   const navigate = useNavigate();
@@ -54,6 +57,7 @@ export default function Auth() {
       setIsLoading(true);
       const { data } = await googleLoginMutation({ variables: { token } });
       const { token: backendToken, user: userData } = (data as any).googleLogin;
+      
       loginWithToken(backendToken, userData);
       toast.success("Successfully signed in with Google!");
       const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";
@@ -109,10 +113,17 @@ export default function Auth() {
           setIsLoading(false);
           return;
         }
+
         toast.success("Welcome back!");
       } else {
         if (!formData.fullName.trim()) throw new Error("Please enter your full name");
-        await signup({ email: formData.email, password: formData.password, fullName: formData.fullName, phone: formData.phone });
+        await signup({ 
+          email: formData.email, 
+          password: formData.password, 
+          fullName: formData.fullName, 
+          phone: formData.phone 
+        });
+        
         toast.success("Account created successfully!");
       }
       const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";

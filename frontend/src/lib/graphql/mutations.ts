@@ -42,6 +42,7 @@ export const LOGIN_USER = gql`
         bio
         phone
         location
+        isFirst
         createdAt
         themePreference {
           primaryColor
@@ -69,6 +70,7 @@ export const GOOGLE_LOGIN = gql`
         bio
         phone
         location
+        isFirst
         createdAt
         themePreference {
           primaryColor
@@ -96,6 +98,7 @@ export const REGISTER_USER = gql`
         bio
         phone
         location
+        isFirst
         createdAt
         themePreference {
           primaryColor
@@ -185,8 +188,8 @@ export const CREATE_USER = gql`
 `;
 
 export const UPDATE_USER = gql`
-  mutation UpdateUser($id: ID!, $username: String, $email: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $phone: String, $location: String, $title: String, $certificateName: String) {
-    updateUser(id: $id, username: $username, email: $email, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, phone: $phone, location: $location, title: $title, certificateName: $certificateName) {
+  mutation UpdateUser($id: ID!, $username: String, $email: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $phone: String, $location: String, $title: String, $certificateName: String, $isFirst: Boolean, $school: String) {
+    updateUser(id: $id, username: $username, email: $email, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, phone: $phone, location: $location, title: $title, certificateName: $certificateName, isFirst: $isFirst, school: $school) {
       id
       username
       fullName
@@ -199,6 +202,8 @@ export const UPDATE_USER = gql`
       title
       permissions
       certificateName
+      isFirst
+      school
     }
   }
 `;
@@ -1077,7 +1082,12 @@ export const CREATE_STUDENT_PROFILE = gql`
   mutation CreateStudentProfile(
     $school: String!
     $educationLevel: String!
-    $fieldOfStudy: String!
+    $academicYear: String
+    $fieldOfStudy: String
+    $city: String
+    $sector: String
+    $cell: String
+    $village: String
     $skills: [String!]!
     $availability: String!
     $bio: String
@@ -1088,7 +1098,12 @@ export const CREATE_STUDENT_PROFILE = gql`
     createStudentProfile(
       school: $school
       educationLevel: $educationLevel
+      academicYear: $academicYear
       fieldOfStudy: $fieldOfStudy
+      city: $city
+      sector: $sector
+      cell: $cell
+      village: $village
       skills: $skills
       availability: $availability
       bio: $bio
@@ -1107,7 +1122,12 @@ export const UPDATE_STUDENT_PROFILE = gql`
   mutation UpdateStudentProfile(
     $school: String
     $educationLevel: String
+    $academicYear: String
     $fieldOfStudy: String
+    $city: String
+    $sector: String
+    $cell: String
+    $village: String
     $skills: [String]
     $availability: String
     $bio: String
@@ -1118,7 +1138,12 @@ export const UPDATE_STUDENT_PROFILE = gql`
     updateStudentProfile(
       school: $school
       educationLevel: $educationLevel
+      academicYear: $academicYear
       fieldOfStudy: $fieldOfStudy
+      city: $city
+      sector: $sector
+      cell: $cell
+      village: $village
       skills: $skills
       availability: $availability
       bio: $bio

@@ -1,8 +1,19 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { useMutation } from "@apollo/client/react";
 import { LOGIN_USER, REGISTER_USER } from "@/lib/graphql/mutations";
 
-export type UserRole = "student" | "trainer" | "admin" | "super_admin" | "mentor";
+export type UserRole =
+  | "student"
+  | "trainer"
+  | "admin"
+  | "super_admin"
+  | "mentor";
 
 export interface User {
   id: string;
@@ -13,6 +24,7 @@ export interface User {
   avatar?: string;
   enrolledCourses?: string[];
   completedCourses?: string[];
+  school?: string;
   createdAt: string;
   title?: string;
   bio?: string;
@@ -37,19 +49,31 @@ export interface User {
     awardedAt: string;
   }>;
   certificateName?: string;
+  isFirst?: boolean;
+  studentProfile?: any;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{
+  login: (
+    email: string,
+    password: string,
+    skipState?: boolean
+  ) => Promise<{
     token?: string;
     user?: User;
     requires2FA?: boolean;
     requires2FASetup?: boolean;
   }>;
-  signup: (data: SignupData) => Promise<void>;
+  signup: (
+    data: SignupData,
+    skipState?: boolean
+  ) => Promise<{
+    token?: string;
+    user?: User;
+  }>;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
   loginWithToken: (token: string, userData: any) => void;
@@ -62,201 +86,353 @@ interface SignupData {
   phone?: string;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
-// Mock user data for UI development
-const mockUsers: Record<string, User & { password: string }> = {
-  "student@ihub.com": {
-    id: "1",
-    email: "student@ihub.com",
-    fullName: "Jean Baptiste",
-    role: "student",
-    password: "student123",
-    enrolledCourses: ["software-dev", "data-science"],
-    completedCourses: [],
-    createdAt: new Date().toISOString(),
-  },
-  "trainer@ihub.com": {
-    id: "2",
-    email: "trainer@ihub.com",
-    fullName: "Marie Claire",
-    role: "trainer",
-    password: "trainer123",
-    createdAt: new Date().toISOString(),
-  },
-  "admin@ihub.com": {
-    id: "3",
-    email: "admin@ihub.com",
-    fullName: "Emmanuel Kwizera",
-    role: "admin",
-    password: "admin123",
-    createdAt: new Date().toISOString(),
-  },
-  "superadmin@ihub.com": {
-    id: "4",
-    email: "superadmin@ihub.com",
-    fullName: "Sarah Uwimana",
-    role: "super_admin",
-    password: "super123",
-    createdAt: new Date().toISOString(),
-  },
-};
+export function AuthProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  /**
+   * LOAD USER FROM LOCAL STORAGE
+   */
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === "undefined") return null;
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+    const savedUser = localStorage.getItem("ihub_user");
+
+    if (!savedUser) return null;
+
+    try {
+      const parsedUser = JSON.parse(savedUser);
+
+      return {
+        ...parsedUser,
+        isFirst:
+          parsedUser.isFirst !== undefined
+            ? parsedUser.isFirst
+            : true,
+      };
+    } catch (e) {
+      console.error("Failed to parse saved user", e);
+
+      localStorage.removeItem("ihub_user");
+      localStorage.removeItem("ihub_token");
+
+      return null;
+    }
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const [loginMutation] = useMutation(LOGIN_USER);
   const [registerMutation] = useMutation(REGISTER_USER);
 
+  /**
+   * VERIFY LOCAL STORAGE
+   */
   useEffect(() => {
-    // Check for saved session
-    const savedUser = localStorage.getItem("ihub_user");
     const savedToken = localStorage.getItem("ihub_token");
+    const savedUser = localStorage.getItem("ihub_user");
 
-    if (savedUser && savedToken) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch {
-        localStorage.removeItem("ihub_user");
-        localStorage.removeItem("ihub_token");
-      }
-    } else {
-      // Clear half-logged sessions
+    if (!savedToken || !savedUser) {
+      setUser(null);
+
       localStorage.removeItem("ihub_user");
       localStorage.removeItem("ihub_token");
-      setUser(null);
     }
-    setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
+  /**
+   * LOGIN
+   */
+  const login = async (
+    email: string,
+    password: string,
+    skipState: boolean = false
+  ) => {
     setIsLoading(true);
+
     try {
       const { data } = await loginMutation({
-        variables: { email, password }
+        variables: { email, password },
       });
 
-      const { token, user: userData, requires2FA, requires2FASetup } = (data as any).login;
+      const {
+        token,
+        user: userData,
+        requires2FA,
+        requires2FASetup,
+      } = (data as any).login;
 
       if (requires2FA || requires2FASetup) {
-        return { user: userData, requires2FA, requires2FASetup };
+        return {
+          user: userData,
+          requires2FA,
+          requires2FASetup,
+        };
       }
 
-      // Store Token
-      localStorage.setItem("ihub_token", token);
-
-      // Adapt backend user to frontend User interface (mapping fields)
       const appUser: User = {
         id: userData.id,
         email: userData.email,
-        fullName: userData.username || userData.fullName,
+        fullName:
+          userData.username || userData.fullName,
         role: userData.role || "student",
-        createdAt: new Date().toISOString(),
+        createdAt:
+          userData.createdAt ||
+          new Date().toISOString(),
+
         themePreference: userData.themePreference,
         avatar: userData.avatar,
         title: userData.title,
         bio: userData.bio,
         phone: userData.phone,
         location: userData.location,
-        xp: userData.xp,
-        level: userData.level,
-        streak: userData.streak,
-        badges: userData.badges,
-        certificateName: userData.certificateName,
-        completedCourses: userData.completedCourses?.map((c: any) => (c.id || c)) || [],
-        enrolledCourses: userData.enrolledCourses?.map((c: any) => (c.id || c)) || []
+
+        xp: userData.xp || 0,
+        level: userData.level || 1,
+        streak: userData.streak || 0,
+
+        badges: userData.badges || [],
+
+        certificateName:
+          userData.certificateName || "",
+
+        completedCourses:
+          userData.completedCourses?.map(
+            (c: any) => c.id || c
+          ) || [],
+
+        enrolledCourses:
+          userData.enrolledCourses?.map(
+            (c: any) => c.id || c
+          ) || [],
+
+        school: userData.school,
+
+        // IMPORTANT
+        isFirst:
+          userData.isFirst !== undefined
+            ? userData.isFirst
+            : true,
       };
 
-      setUser(appUser);
-      localStorage.setItem("ihub_user", JSON.stringify(appUser));
+      if (!skipState) {
+        localStorage.setItem(
+          "ihub_token",
+          token
+        );
+
+        localStorage.setItem(
+          "ihub_user",
+          JSON.stringify(appUser)
+        );
+
+        setUser(appUser);
+      }
+
       return { token, user: appUser };
     } catch (err: any) {
-      throw new Error(err.message || "Login failed");
+      throw new Error(
+        err.message || "Login failed"
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signup = async (data: SignupData) => {
+  /**
+   * SIGNUP
+   */
+  const signup = async (
+    data: SignupData,
+    skipState: boolean = false
+  ) => {
     setIsLoading(true);
+
     try {
-      const { data: resData } = await registerMutation({
-        variables: {
-          username: data.email.split('@')[0], // derived username
-          fullName: data.fullName,
-          email: data.email,
-          password: data.password
-        }
-      });
+      const { data: resData } =
+        await registerMutation({
+          variables: {
+            username:
+              data.email.split("@")[0],
 
-      const { token, user: userData } = (resData as any).register;
+            fullName: data.fullName,
+            email: data.email,
+            password: data.password,
+          },
+        });
 
-      localStorage.setItem("ihub_token", token);
+      const {
+        token,
+        user: userData,
+      } = (resData as any).register;
 
       const appUser: User = {
         id: userData.id,
         email: userData.email,
-        fullName: userData.username,
+
+        fullName:
+          userData.username ||
+          userData.fullName,
+
         role: "student",
-        createdAt: new Date().toISOString(),
-        themePreference: userData.themePreference,
+
+        createdAt:
+          userData.createdAt ||
+          new Date().toISOString(),
+
+        themePreference:
+          userData.themePreference,
+
         avatar: userData.avatar,
+
         xp: userData.xp || 0,
         level: userData.level || 1,
         streak: userData.streak || 0,
+
         badges: [],
-        certificateName: ""
+
+        certificateName: "",
+
+        // IMPORTANT
+        isFirst:
+          userData.isFirst !== undefined
+            ? userData.isFirst
+            : true,
       };
 
-      setUser(appUser);
-      localStorage.setItem("ihub_user", JSON.stringify(appUser));
+      if (!skipState) {
+        localStorage.setItem(
+          "ihub_token",
+          token
+        );
+
+        localStorage.setItem(
+          "ihub_user",
+          JSON.stringify(appUser)
+        );
+
+        setUser(appUser);
+      }
+
+      return { token, user: appUser };
     } catch (err: any) {
-      throw new Error(err.message || "Signup failed");
+      throw new Error(
+        err.message || "Signup failed"
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
+  /**
+   * LOGOUT
+   */
   const logout = () => {
     setUser(null);
+
     localStorage.removeItem("ihub_user");
     localStorage.removeItem("ihub_token");
-    window.location.reload(); // clear apollo cache by force reload or use client.resetStore()
+
+    window.location.reload();
   };
 
-  const updateUser = (data: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...data };
-      setUser(updatedUser);
-      localStorage.setItem("ihub_user", JSON.stringify(updatedUser));
-    }
+  /**
+   * UPDATE USER
+   */
+  const updateUser = (
+    data: Partial<User>
+  ) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+
+      const updatedUser = {
+        ...prev,
+        ...data,
+      };
+
+      localStorage.setItem(
+        "ihub_user",
+        JSON.stringify(updatedUser)
+      );
+
+      return updatedUser;
+    });
   };
 
-  const loginWithToken = (token: string, userData: any) => {
-    localStorage.setItem("ihub_token", token);
+  /**
+   * LOGIN WITH TOKEN
+   */
+  const loginWithToken = (
+    token: string,
+    userData: any
+  ) => {
+    localStorage.setItem(
+      "ihub_token",
+      token
+    );
+
     const appUser: User = {
       id: userData.id,
       email: userData.email,
-      fullName: userData.username || userData.fullName,
+
+      fullName:
+        userData.username ||
+        userData.fullName,
+
       role: userData.role || "student",
-      createdAt: new Date().toISOString(),
-      themePreference: userData.themePreference,
+
+      createdAt:
+        userData.createdAt ||
+        new Date().toISOString(),
+
+      themePreference:
+        userData.themePreference,
+
       avatar: userData.avatar,
       title: userData.title,
       bio: userData.bio,
       phone: userData.phone,
       location: userData.location,
-      xp: userData.xp,
-      level: userData.level,
-      streak: userData.streak,
-      badges: userData.badges,
-      certificateName: userData.certificateName,
-      completedCourses: userData.completedCourses?.map((c: any) => (c.id || c)) || [],
-      enrolledCourses: userData.enrolledCourses?.map((c: any) => (c.id || c)) || []
+
+      xp: userData.xp || 0,
+      level: userData.level || 1,
+      streak: userData.streak || 0,
+
+      badges: userData.badges || [],
+
+      certificateName:
+        userData.certificateName || "",
+
+      completedCourses:
+        userData.completedCourses?.map(
+          (c: any) => c.id || c
+        ) || [],
+
+      enrolledCourses:
+        userData.enrolledCourses?.map(
+          (c: any) => c.id || c
+        ) || [],
+
+      school: userData.school,
+
+      // IMPORTANT
+      isFirst:
+        userData.isFirst !== undefined
+          ? userData.isFirst
+          : true,
     };
+
     setUser(appUser);
-    localStorage.setItem("ihub_user", JSON.stringify(appUser));
+
+    localStorage.setItem(
+      "ihub_user",
+      JSON.stringify(appUser)
+    );
   };
 
   return (
@@ -265,10 +441,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: !!user,
         isLoading,
+
         login,
         signup,
         logout,
+
         updateUser,
+
         loginWithToken,
       }}
     >
@@ -277,10 +456,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * USE AUTH HOOK
+ */
 export function useAuth() {
   const context = useContext(AuthContext);
+
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error(
+      "useAuth must be used within an AuthProvider"
+    );
   }
+
   return context;
 }
