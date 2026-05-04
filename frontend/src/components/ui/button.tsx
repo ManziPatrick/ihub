@@ -11,18 +11,18 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        outline: "border border-white/10 bg-transparent hover:bg-white/5 hover:text-white hover:border-white/20",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+        ghost: "hover:bg-white/5 hover:text-white",
         link: "text-primary underline-offset-4 hover:underline",
         // IHUB Primary Button - Gold background, dark text
-        hero: "bg-primary text-primary-foreground hover:bg-primary-hover hover:shadow-lg transition-all",
+        hero: "bg-primary text-white hover:bg-primary/90 hover:shadow-lg transition-all",
         // IHUB Secondary Button - Transparent, gold border
         heroOutline: "bg-transparent text-primary border-2 border-primary hover:bg-primary/10 transition-all",
         // Gold accent button for CTAs
-        gold: "bg-accent text-accent-foreground border border-accent hover:bg-accent/90 hover:shadow-gold-glow rounded-md font-semibold",
+        gold: "bg-accent text-white border border-accent hover:bg-accent/80 hover:shadow-gold-glow rounded-md font-semibold",
         // Navigation link style
-        nav: "bg-transparent text-primary-foreground hover:text-accent transition-colors",
+        nav: "bg-transparent text-white/70 hover:text-white transition-colors",
       },
       size: {
         default: "h-10 px-4 py-2 rounded-md",

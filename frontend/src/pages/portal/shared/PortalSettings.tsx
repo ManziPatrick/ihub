@@ -10,13 +10,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQuery } from "@apollo/client/react";
-import { UPDATE_THEME, UPDATE_USER, UPDATE_BRANDING } from "@/lib/graphql/mutations";
+import { UPDATE_THEME, UPDATE_USER, UPDATE_BRANDING, UPDATE_STUDENT_PROFILE } from "@/lib/graphql/mutations";
 import { GET_ME, GET_BRANDING } from "@/lib/graphql/queries";
 import { toast } from "sonner";
 import { useBranding } from "@/components/BrandingProvider";
 import { getApiBaseUrl } from "@/lib/env";
 import {
-  User,
+  User as UserIcon,
   Palette,
   Save,
   Camera,
@@ -33,6 +33,10 @@ import {
   Award,
   Flame,
   Star,
+  Link as LinkIcon,
+  GraduationCap as GradIcon,
+  BookOpen as BookIcon,
+  MapPin as MapIcon
 } from "lucide-react";
 
 const colorPresets = [
@@ -58,6 +62,22 @@ export default function PortalSettings() {
     location: user?.location || "",
     avatar: user?.avatar || "",
     certificateName: user?.certificateName || "",
+  });
+
+  const [studentForm, setStudentForm] = useState({
+    school: user?.studentProfile?.school || "",
+    educationLevel: user?.studentProfile?.educationLevel || "",
+    academicYear: user?.studentProfile?.academicYear || "",
+    fieldOfStudy: user?.studentProfile?.fieldOfStudy || "",
+    city: user?.studentProfile?.city || "",
+    sector: user?.studentProfile?.sector || "",
+    cell: user?.studentProfile?.cell || "",
+    village: user?.studentProfile?.village || "",
+    skills: user?.studentProfile?.skills?.join(", ") || "",
+    bio: user?.studentProfile?.bio || "",
+    linkedinUrl: user?.studentProfile?.linkedinUrl || "",
+    githubUrl: user?.studentProfile?.githubUrl || "",
+    portfolioUrl: user?.studentProfile?.portfolioUrl || "",
   });
 
   // --- Theme State ---
@@ -90,6 +110,24 @@ export default function PortalSettings() {
         certificateName: user.certificateName || "",
       });
 
+      if (user.studentProfile) {
+        setStudentForm({
+          school: user.studentProfile.school || "",
+          educationLevel: user.studentProfile.educationLevel || "",
+          academicYear: user.studentProfile.academicYear || "",
+          fieldOfStudy: user.studentProfile.fieldOfStudy || "",
+          city: user.studentProfile.city || "",
+          sector: user.studentProfile.sector || "",
+          cell: user.studentProfile.cell || "",
+          village: user.studentProfile.village || "",
+          skills: user.studentProfile.skills?.join(", ") || "",
+          bio: user.studentProfile.bio || "",
+          linkedinUrl: user.studentProfile.linkedinUrl || "",
+          githubUrl: user.studentProfile.githubUrl || "",
+          portfolioUrl: user.studentProfile.portfolioUrl || "",
+        });
+      }
+
       if (user.themePreference) {
         setLocalTheme(prev => ({
           ...prev,
@@ -109,6 +147,12 @@ export default function PortalSettings() {
       updateUser(data.updateUser);
       toast.success("Profile updated successfully");
     },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const [updateStudentProfile, { loading: savingStudent }] = useMutation(UPDATE_STUDENT_PROFILE, {
+    refetchQueries: [{ query: GET_ME }],
+    onCompleted: () => toast.success("Academic profile updated!"),
     onError: (err) => toast.error(err.message),
   });
 
@@ -218,6 +262,15 @@ export default function PortalSettings() {
     });
   };
 
+  const handleSaveStudentProfile = () => {
+    updateStudentProfile({
+      variables: {
+        ...studentForm,
+        skills: studentForm.skills.split(",").map(s => s.trim()).filter(Boolean)
+      }
+    });
+  };
+
   const handleSaveTheme = async () => {
     await updateThemeMutation({
       variables: {
@@ -260,11 +313,14 @@ export default function PortalSettings() {
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="bg-card border border-border/50 p-1 w-full justify-start overflow-x-auto">
             <TabsTrigger value="profile" className="flex items-center gap-2">
-              <User className="w-4 h-4" /> Profile
+              <UserIcon className="w-4 h-4" /> Profile
             </TabsTrigger>
-            <TabsTrigger value="preferences" className="flex items-center gap-2">
-              <Palette className="w-4 h-4" /> Appearance
-            </TabsTrigger>
+
+            {user?.role === 'student' && (
+              <TabsTrigger value="student" className="flex items-center gap-2 text-accent">
+                <GradIcon className="w-4 h-4" /> Academic Profile
+              </TabsTrigger>
+            )}
             {user?.role === 'student' && (
               <TabsTrigger value="achievements" className="flex items-center gap-2">
                 <Trophy className="w-4 h-4" /> My Achievements
@@ -335,7 +391,7 @@ export default function PortalSettings() {
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Full Name</label>
                       <div className="relative">
-                        <User className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                        <UserIcon className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
                         <Input
                           value={profileForm.fullName}
                           onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
@@ -413,89 +469,99 @@ export default function PortalSettings() {
             </motion.div>
           </TabsContent>
 
-          {/* === APPEARANCE TAB === */}
-          <TabsContent value="preferences">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
-            >
-              <Card className="border-border/50">
-                <CardHeader>
-                  <CardTitle>Theme & Appearance</CardTitle>
-                  <CardDescription>Customize your personal workspace view. This only affects what YOU see.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-8">
-                  {/* Theme Mode */}
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-sm">Color Mode</h4>
-                    <div className="grid grid-cols-2 gap-4 max-w-md">
-                      <button
-                        onClick={() => setLocalTheme({ ...localTheme, mode: 'light' })}
-                        className={`p-4 rounded-xl border-2 flex flex-col items-center gap-3 transition-all ${localTheme.mode === 'light' ? 'border-primary bg-primary/5' : 'border-border/50 hover:border-border'}`}
-                      >
-                        <div className="w-full h-8 bg-white rounded border border-gray-200" />
-                        <span className="text-sm font-medium">Light</span>
-                      </button>
-                      <button
-                        onClick={() => setLocalTheme({ ...localTheme, mode: 'dark' })}
-                        className={`p-4 rounded-xl border-2 flex flex-col items-center gap-3 transition-all ${localTheme.mode === 'dark' ? 'border-primary bg-primary/5' : 'border-border/50 hover:border-border'}`}
-                      >
-                        <div className="w-full h-8 bg-slate-900 rounded border border-slate-700" />
-                        <span className="text-sm font-medium">Dark</span>
-                      </button>
-                    </div>
-                  </div>
 
-                  {/* Primary Color Override */}
-                  <div className="space-y-4 pt-6 border-t border-border/50">
-                    <h4 className="font-medium text-sm">Personal Accent Color</h4>
-                    <p className="text-sm text-muted-foreground mb-4">Override the default site color for your dashboard.</p>
 
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
-                      {colorPresets.map((preset) => (
-                        <button
-                          key={preset.color}
-                          onClick={() => setLocalTheme({ ...localTheme, primaryColor: preset.color })}
-                          className={`group relative flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all ${localTheme.primaryColor === preset.color
-                            ? 'border-primary bg-primary/5'
-                            : 'border-transparent hover:border-border'
-                            }`}
-                        >
-                          <div
-                            className="w-8 h-8 rounded-full shadow-sm flex items-center justify-center"
-                            style={{ backgroundColor: preset.color }}
-                          >
-                            {localTheme.primaryColor === preset.color && <Check className="w-4 h-4 text-white" />}
-                          </div>
-                        </button>
-                      ))}
+          {/* === STUDENT PROFILE TAB === */}
+          {user?.role === 'student' && (
+            <TabsContent value="student">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <Card className="border-border/50 border-accent/20">
+                  <CardHeader className="bg-accent/5">
+                    <CardTitle className="text-accent flex items-center gap-2">
+                      <GradIcon className="w-5 h-5" />
+                      Academic Profile
+                    </CardTitle>
+                    <CardDescription>Manage your school information and professional links</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-8 pt-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">School / University</label>
+                        <Input 
+                          value={studentForm.school}
+                          onChange={(e) => setStudentForm({ ...studentForm, school: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Education Level</label>
+                        <Input 
+                          value={studentForm.educationLevel}
+                          onChange={(e) => setStudentForm({ ...studentForm, educationLevel: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Academic Year</label>
+                        <Input 
+                          value={studentForm.academicYear}
+                          onChange={(e) => setStudentForm({ ...studentForm, academicYear: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Field of Study</label>
+                        <Input 
+                          value={studentForm.fieldOfStudy}
+                          onChange={(e) => setStudentForm({ ...studentForm, fieldOfStudy: e.target.value })}
+                        />
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="color"
-                        value={localTheme.primaryColor || globalBranding.primaryColor}
-                        onChange={(e) => setLocalTheme({ ...localTheme, primaryColor: e.target.value })}
-                        className="h-10 w-20 cursor-pointer"
-                      />
-                      <span className="text-sm text-muted-foreground">{localTheme.primaryColor || "Default"}</span>
+                    <div className="pt-6 border-t border-border/50 space-y-6">
+                      <h4 className="text-sm font-bold flex items-center gap-2"><MapIcon className="w-4 h-4" /> Location Details</h4>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">City</label>
+                          <Input value={studentForm.city} onChange={(e) => setStudentForm({ ...studentForm, city: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Sector</label>
+                          <Input value={studentForm.sector} onChange={(e) => setStudentForm({ ...studentForm, sector: e.target.value })} />
+                        </div>
+                      </div>
+                    </div>
 
-                      <Button variant="ghost" size="sm" onClick={() => setLocalTheme({ ...localTheme, primaryColor: globalBranding.primaryColor })}>
-                        Reset to Default
+                    <div className="pt-6 border-t border-border/50 space-y-6">
+                      <h4 className="text-sm font-bold flex items-center gap-2"><LinkIcon className="w-4 h-4" /> Professional Presence</h4>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">LinkedIn URL</label>
+                          <Input value={studentForm.linkedinUrl} onChange={(e) => setStudentForm({ ...studentForm, linkedinUrl: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">GitHub URL</label>
+                          <Input value={studentForm.githubUrl} onChange={(e) => setStudentForm({ ...studentForm, githubUrl: e.target.value })} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Skills (Comma separated)</label>
+                      <Input value={studentForm.skills} onChange={(e) => setStudentForm({ ...studentForm, skills: e.target.value })} />
+                    </div>
+
+                    <div className="flex justify-end pt-4 border-t border-border/50">
+                      <Button onClick={handleSaveStudentProfile} disabled={savingStudent} className="bg-accent hover:bg-accent/90 text-accent-foreground font-black min-w-[150px]">
+                        {savingStudent ? "Saving..." : "Save Academic Profile"}
                       </Button>
                     </div>
-                  </div>
-
-                  <div className="flex justify-end pt-4 border-t border-border/50">
-                    <Button onClick={handleSaveTheme} disabled={savingTheme} className="min-w-[150px]">
-                      {savingTheme ? "Saving..." : "Save My Preferences"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </TabsContent>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </TabsContent>
+          )}
 
           {/* === GLOBAL BRANDING TAB (SUPER ADMIN ONLY) === */}
           {user?.role === 'super_admin' && (

@@ -204,6 +204,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { ProfileCompletionGuard } from "./ProfileCompletionGuard";
 
 export function PortalLayout({ children }: PortalLayoutProps) {
   const { user, logout } = useAuth();
@@ -746,7 +747,9 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
         {/* Page Content */}
         <main className="flex-1 p-4 lg:p-6 overflow-y-auto custom-scrollbar">
-          {children}
+          <ProfileCompletionGuard>
+            {children}
+          </ProfileCompletionGuard>
         </main>
       </div>
       {!location.pathname.startsWith('/chat') && <FloatingChat />}
