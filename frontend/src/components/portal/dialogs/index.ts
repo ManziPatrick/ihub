@@ -4,6 +4,7 @@ export { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 export { AddUserDialog } from "./AddUserDialog";
 export { EditUserDialog } from "./EditUserDialog";
 export { ViewUserDialog } from "./ViewUserDialog";
+export { UserDetailsSheet } from "./UserDetailsSheet";
 export { SendEmailDialog } from "./SendEmailDialog";
 export { ViewSubmissionDialog } from "./ViewSubmissionDialog";
 export { EditSessionDialog } from "./EditSessionDialog";

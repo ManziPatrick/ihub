@@ -15,10 +15,10 @@
       "has": [
         {
           "type": "host",
-          "value": "www.codemande.com"
+          "value": "app.codemande.com"
         }
       ],
-      "destination": "https://codemande.com/$1",
+      "destination": "https://app.codemande.com/$1",
       "permanent": true
     }
   ]

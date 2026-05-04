@@ -27,6 +27,7 @@ export function AddUserDialog({ open, onOpenChange, onSave }: AddUserDialogProps
     email: "",
     password: "",
     role: "student",
+    school: "",
   });
 
   const handleSubmit = () => {
@@ -36,7 +37,7 @@ export function AddUserDialog({ open, onOpenChange, onSave }: AddUserDialogProps
     }
 
     onSave?.(formData);
-    setFormData({ username: "", email: "", password: "", role: "student" });
+    setFormData({ username: "", email: "", password: "", role: "student", school: "" });
     onOpenChange(false);
   };
 
@@ -94,6 +95,19 @@ export function AddUserDialog({ open, onOpenChange, onSave }: AddUserDialogProps
                 </SelectContent>
               </Select>
             </div>
+            {currentUser?.role === "super_admin" && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">School (Optional)</label>
+                <Input
+                  placeholder="e.g. University of Rwanda"
+                  value={formData.school}
+                  onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+                />
+                <p className="text-[10px] text-muted-foreground mt-1 italic">
+                  Assigning a school restricts an Admin's visibility to that institution.
+                </p>
+              </div>
+            )}
           </div>
         </ScrollArea>
         <div className="flex gap-2 p-4 sm:p-6 border-t border-border">

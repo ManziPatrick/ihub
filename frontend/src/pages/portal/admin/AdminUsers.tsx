@@ -32,7 +32,7 @@ import { BadgeAwardDialog } from "@/components/portal/BadgeAwardDialog";
 import {
   AddUserDialog,
   EditUserDialog,
-  ViewUserDialog,
+  UserDetailsSheet,
   SendEmailDialog,
   DeleteConfirmDialog
 } from "@/components/portal/dialogs";
@@ -113,7 +113,8 @@ export default function AdminUsers() {
           username: newUser.username,
           email: newUser.email,
           password: newUser.password,
-          role: newUser.role
+          role: newUser.role,
+          school: newUser.school
         }
       });
       toast.success("User created successfully!");
@@ -131,7 +132,8 @@ export default function AdminUsers() {
           id: updatedUser.id,
           username: updatedUser.username,
           email: updatedUser.email,
-          role: updatedUser.role
+          role: updatedUser.role,
+          school: updatedUser.school
         }
       });
       toast.success("User updated successfully!");
@@ -231,7 +233,11 @@ export default function AdminUsers() {
                   </thead>
                   <tbody>
                     {filteredUsers.map((user: any) => (
-                      <tr key={user.id} className="border-b border-border/10 transition-colors group">
+                      <tr 
+                        key={user.id} 
+                        className="group border-b border-border/50 hover:bg-accent/5 transition-all duration-300 cursor-pointer"
+                        onClick={() => setViewUser(user)}
+                      >
                         <td className="p-4">
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9 border border-border/50 group-hover:border-white/30 transition-colors">
@@ -246,8 +252,13 @@ export default function AdminUsers() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <div className="group-hover:opacity-80 transition-opacity">
+                          <div className="flex items-center gap-2 group-hover:opacity-80 transition-opacity">
                             {getRoleBadge(user.role)}
+                            {user.isExternal && (
+                              <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 text-[10px]">
+                                External
+                              </Badge>
+                            )}
                           </div>
                         </td>
                         <td className="p-4 text-center">
@@ -261,7 +272,12 @@ export default function AdminUsers() {
                         <td className="p-4 text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="group-hover:text-white transition-colors">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="group-hover:text-white transition-colors"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <MoreVertical className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -270,7 +286,7 @@ export default function AdminUsers() {
                                 <Award className="w-4 h-4 mr-2" /> Award Badge
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setViewUser(user)}>
-                                <Eye className="w-4 h-4 mr-2" /> View Details
+                                <Eye className="w-4 h-4 mr-2" /> View Profile
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setEditUser(user)}>
                                 <Edit className="w-4 h-4 mr-2" /> Edit User
@@ -368,14 +384,10 @@ export default function AdminUsers() {
         onSave={handleSaveUser}
       />
 
-      <ViewUserDialog
+      <UserDetailsSheet
         open={!!viewUser}
         onOpenChange={(open) => !open && setViewUser(null)}
         user={viewUser}
-        onSendEmail={(user) => {
-          setViewUser(null);
-          setEmailUser(user);
-        }}
       />
 
       <SendEmailDialog

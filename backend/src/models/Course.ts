@@ -82,6 +82,7 @@ const courseSchema = new mongoose.Schema({
   submissionRequired: { type: Boolean, default: true },
   signerName: { type: String },
   signerSignature: { type: String },
+  school: { type: String, trim: true },
 }, { timestamps: true });
 
 export const Course = mongoose.model('Course', courseSchema);

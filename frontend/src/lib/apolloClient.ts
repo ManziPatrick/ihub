@@ -26,10 +26,12 @@ const wsLink = new GraphQLWsLink(createClient({
 
 const authLink = setContext((_, { headers }) => {
   const token = localStorage.getItem('ihub_token');
+  // Support both 'authorization' and 'Authorization'
+  const existingAuth = headers?.authorization || headers?.Authorization;
   return {
     headers: {
       ...headers,
-      authorization: token ? `Bearer ${token}` : "",
+      authorization: existingAuth || (token ? `Bearer ${token}` : ""),
     }
   }
 });

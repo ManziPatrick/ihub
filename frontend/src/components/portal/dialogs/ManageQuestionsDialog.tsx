@@ -8,6 +8,8 @@ import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_QUESTIONS } from "@/lib/graphql/queries";
 import { CREATE_QUESTION, UPDATE_QUESTION, DELETE_QUESTION, GENERATE_AI_QUIZ } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
+import { FileUpload } from "@/components/FileUpload";
+import { Image as ImageIcon, Upload } from "lucide-react";
 
 interface ManageQuestionsDialogProps {
   open: boolean;
@@ -34,7 +36,7 @@ export function ManageQuestionsDialog({
   const [formData, setFormData] = useState({
     questionText: "",
     imageUrl: "",
-    options: ["", "", "", ""],
+    options: ["", ""], // Start with 2 options minimum
     correctOptionIndex: 0,
     explanation: ""
   });
@@ -82,7 +84,7 @@ export function ManageQuestionsDialog({
         toast.success("Question added!");
       }
 
-      setFormData({ questionText: "", imageUrl: "", options: ["", "", "", ""], correctOptionIndex: 0, explanation: "" });
+      setFormData({ questionText: "", imageUrl: "", options: ["", ""], correctOptionIndex: 0, explanation: "" });
       setIsAdding(false);
       setEditingId(null);
       refetch();
@@ -179,11 +181,23 @@ export function ManageQuestionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6">
-          <DialogTitle>
-            Manage Questions {lessonTitle ? `- ${lessonTitle}` : ""}
-          </DialogTitle>
+      <DialogContent className="max-w-3xl h-[85vh] flex flex-col p-0 border-accent/20 overflow-hidden bg-background">
+        <DialogHeader className="px-4 py-4 sm:px-6 border-b border-white/5 bg-white/3">
+          <div className="flex items-center justify-between">
+            <DialogTitle>
+              Manage Questions {lessonTitle ? `- ${lessonTitle}` : ""}
+            </DialogTitle>
+            {!isAdding && (
+              <Button 
+                variant="gold" 
+                size="sm" 
+                className="h-8 gap-2 text-[10px] font-black uppercase tracking-widest rounded-lg shadow-gold/20"
+                onClick={() => setIsAdding(true)}
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Question
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-4 sm:px-6 custom-scrollbar">
@@ -202,70 +216,125 @@ export function ManageQuestionsDialog({
                   />
                 </div>
 
-                <div>
-                  <label className="text-xs font-medium mb-1.5 block flex items-center justify-between">
-                    <span>Image URL (Optional)</span>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                    <ImageIcon className="w-3.5 h-3.5 text-accent" /> Question Image (Optional)
                   </label>
-                  <Input
-                    value={formData.imageUrl}
-                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                    placeholder="https://example.com/image.png"
-                  />
-                  {formData.imageUrl && (
-                    <div className="mt-2 relative w-full h-32 bg-muted/50 rounded overflow-hidden">
+                  
+                  {formData.imageUrl ? (
+                    <div className="relative group rounded-xl overflow-hidden border border-white/10 bg-white/5 aspect-video">
                       <img src={formData.imageUrl} alt="Question preview" className="w-full h-full object-contain" />
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {formData.options.map((opt, i) => (
-                    <div key={i} className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium">Option {i + 1} *</label>
-                        <button
-                          onClick={() => setFormData({ ...formData, correctOptionIndex: i })}
-                          className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${formData.correctOptionIndex === i
-                              ? "bg-green-500/20 text-green-400 border-green-500/50"
-                              : "text-muted-foreground border-transparent hover:border-border"
-                            }`}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          className="h-8 gap-2"
+                          onClick={() => setFormData({ ...formData, imageUrl: "" })}
                         >
-                          {formData.correctOptionIndex === i ? "Correct Answer" : "Mark as Correct"}
-                        </button>
+                          <Trash2 className="w-4 h-4" /> Remove Image
+                        </Button>
                       </div>
-                      <Input
-                        value={opt}
-                        onChange={(e) => {
-                          const newOpts = [...formData.options];
-                          newOpts[i] = e.target.value;
-                          setFormData({ ...formData, options: newOpts });
-                        }}
-                        placeholder={`Option ${i + 1}...`}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-white/3 p-4">
+                      <FileUpload
+                        folder="quiz_questions"
+                        label="Drag & drop question image or click to browse"
+                        onUploadComplete={(url) => setFormData({ ...formData, imageUrl: url })}
                       />
                     </div>
-                  ))}
+                  )}
+                  
+                  <div className="flex gap-2">
+                    <Input
+                      value={formData.imageUrl}
+                      onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                      placeholder="Or paste an image URL here..."
+                      className="h-9 text-xs bg-white/5 border-white/10"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-medium mb-1.5 block">Explanation (Optional)</label>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Answer Options *</label>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 px-2 text-[9px] font-black uppercase border-dashed border-accent/30 text-accent hover:bg-accent/5"
+                      onClick={() => setFormData({ ...formData, options: [...formData.options, ""] })}
+                    >
+                      <Plus className="w-3 h-3 mr-1" /> Add Choice
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {formData.options.map((opt, i) => (
+                      <div key={i} className="group/opt relative p-3 rounded-xl border border-white/5 bg-white/3 hover:border-white/10 transition-all">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Option {i + 1}</span>
+                          <div className="flex items-center gap-2">
+                            {formData.options.length > 2 && (
+                              <button 
+                                className="opacity-0 group-hover/opt:opacity-100 transition-opacity text-red-400/50 hover:text-red-400"
+                                onClick={() => {
+                                  const newOpts = formData.options.filter((_, idx) => idx !== i);
+                                  let newCorrect = formData.correctOptionIndex;
+                                  if (newCorrect === i) newCorrect = 0;
+                                  else if (newCorrect > i) newCorrect -= 1;
+                                  setFormData({ ...formData, options: newOpts, correctOptionIndex: newCorrect });
+                                }}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setFormData({ ...formData, correctOptionIndex: i })}
+                              className={`text-[9px] font-black px-2 py-0.5 rounded-full border transition-all uppercase tracking-tighter ${formData.correctOptionIndex === i
+                                  ? "bg-green-500/20 text-green-400 border-green-500/50"
+                                  : "text-white/20 border-white/10 hover:border-white/30"
+                                }`}
+                            >
+                              {formData.correctOptionIndex === i ? "Correct" : "Mark"}
+                            </button>
+                          </div>
+                        </div>
+                        <Input
+                          value={opt}
+                          onChange={(e) => {
+                            const newOpts = [...formData.options];
+                            newOpts[i] = e.target.value;
+                            setFormData({ ...formData, options: newOpts });
+                          }}
+                          placeholder={`Enter choice ${i + 1}...`}
+                          className="h-9 text-sm bg-transparent border-transparent focus:border-white/10 p-0"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/40">Explanation (Optional)</label>
                   <Input
                     value={formData.explanation}
                     onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
-                    placeholder="Why is this the correct answer?"
+                    placeholder="Provide reasoning for the correct answer..."
+                    className="h-10 bg-white/5 border-white/10 text-sm"
                   />
                 </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Button variant="gold" size="sm" className="flex-1" onClick={handleSave}>
+                <div className="flex gap-3 pt-4 border-t border-white/5">
+                  <Button variant="gold" className="flex-1 h-11 font-black uppercase tracking-widest text-[11px] shadow-lg shadow-gold/10" onClick={handleSave}>
                     {editingId ? "Update Question" : "Save Question"}
                   </Button>
                   <Button
-                    variant="ghost"
-                    size="sm"
+                    variant="outline"
+                    className="h-11 px-6 font-black uppercase tracking-widest text-[11px]"
                     onClick={() => {
                       setIsAdding(false);
                       setEditingId(null);
-                      setFormData({ questionText: "", imageUrl: "", options: ["", "", "", ""], correctOptionIndex: 0, explanation: "" });
+                      setFormData({ questionText: "", imageUrl: "", options: ["", ""], correctOptionIndex: 0, explanation: "" });
                     }}
                   >
                     Cancel
@@ -324,13 +393,22 @@ export function ManageQuestionsDialog({
                     </div>
                   </div>
                 )}
-                <Button
-                  variant="outline"
-                  className="w-full border-dashed py-8 border-2"
-                  onClick={() => setIsAdding(true)}
-                >
-                  <Plus className="w-5 h-5 mr-2" /> Add Your First Question
-                </Button>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-sm flex items-center gap-2">
+                    Existing Questions
+                    <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                      {questions.length}
+                    </span>
+                  </h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 text-[10px] font-black uppercase tracking-widest border-dashed"
+                    onClick={() => setIsAdding(true)}
+                  >
+                    <Plus className="w-3 h-3" /> New Question
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -393,12 +471,13 @@ export function ManageQuestionsDialog({
             )}
 
             <div className="space-y-4">
-              <h3 className="font-semibold text-sm flex items-center gap-2">
-                Existing Questions
-                <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                  {questions.length}
-                </span>
-              </h3>
+              {!isAdding && questions.length > 0 && (
+                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                   <h3 className="font-semibold text-xs text-white/40 uppercase tracking-widest">
+                    Question List
+                  </h3>
+                </div>
+              )}
 
               {loading ? (
                 <div className="flex justify-center p-8">
@@ -454,6 +533,21 @@ export function ManageQuestionsDialog({
                       )}
                     </div>
                   ))}
+                  {questions.length > 5 && (
+                    <Button
+                      variant="outline"
+                      className="w-full border-dashed py-6 border-2 hover:bg-accent/5 hover:border-accent/40 transition-all group mt-6"
+                      onClick={() => {
+                        setIsAdding(true);
+                        // Scroll to top where the form appears
+                        const scrollArea = document.querySelector('.custom-scrollbar [data-radix-scroll-area-viewport]');
+                        if (scrollArea) scrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    >
+                      <Plus className="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform" /> 
+                      Add Another Question
+                    </Button>
+                  )}
                 </div>
               )}
             </div>

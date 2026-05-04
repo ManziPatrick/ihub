@@ -25,6 +25,8 @@ export function EditUserDialog({ open, onOpenChange, user, onSave }: EditUserDia
     username: "",
     email: "",
     role: "student",
+    school: "",
+    isFirst: false,
   });
 
   useEffect(() => {
@@ -33,6 +35,8 @@ export function EditUserDialog({ open, onOpenChange, user, onSave }: EditUserDia
         username: user.username || "",
         email: user.email || "",
         role: user.role || "student",
+        school: user.school || "",
+        isFirst: user.isFirst ?? true,
       });
     }
   }, [user]);
@@ -45,6 +49,8 @@ export function EditUserDialog({ open, onOpenChange, user, onSave }: EditUserDia
       username: formData.username,
       email: formData.email,
       role: formData.role,
+      school: formData.school,
+      isFirst: formData.isFirst,
     };
     
     onSave?.(updatedUser);
@@ -97,6 +103,32 @@ export function EditUserDialog({ open, onOpenChange, user, onSave }: EditUserDia
               </SelectContent>
             </Select>
           </div>
+          {currentUser?.role === "super_admin" && (
+            <div>
+              <label className="text-sm font-medium mb-2 block">School (Optional)</label>
+              <Input
+                placeholder="e.g. University of Rwanda"
+                value={formData.school}
+                onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1 italic">
+                Assigning a school restricts an Admin's visibility to that institution.
+              </p>
+            </div>
+          )}
+            
+            <div className="flex items-center gap-2 pt-2">
+              <input 
+                type="checkbox" 
+                id="isFirst" 
+                checked={formData.isFirst}
+                onChange={(e) => setFormData({ ...formData, isFirst: e.target.checked })}
+                className="w-4 h-4 rounded border-border text-accent focus:ring-accent"
+              />
+              <label htmlFor="isFirst" className="text-sm font-medium cursor-pointer">
+                Require Onboarding (First Login)
+              </label>
+            </div>
           </div>
         </ScrollArea>
         <div className="flex gap-2 p-4 sm:p-6 border-t border-border">

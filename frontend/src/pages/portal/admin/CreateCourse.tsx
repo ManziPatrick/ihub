@@ -1,4 +1,4 @@
-// CreateCourse - standalone course creation wizard
+// CreateCourse - standalone course creation wizard (v2)
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
@@ -13,6 +13,7 @@ import { TextEditor } from "@/components/ui/text-editor";
 import { ManageQuestionsDialog } from "@/components/portal/dialogs";
 import { 
   ChevronRight, 
+  ChevronDown,
   ChevronLeft, 
   Check, 
   BookOpen, 
@@ -35,7 +36,12 @@ import {
   Trash2,
   Plus,
   Calendar,
-  ExternalLink
+  ExternalLink,
+  FileText,
+  ClipboardList,
+  Circle,
+  CheckCircle2,
+  ChevronUp,
 } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_USERS, GET_COURSES, GET_ADMIN_DASHBOARD_DATA, GET_CATEGORIES } from "@/lib/graphql/queries";
@@ -43,6 +49,356 @@ import { CREATE_COURSE } from "@/lib/graphql/mutations";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+// ─── Lesson Card ──────────────────────────────────────────────────────────────
+type LessonTab = "details" | "quiz" | "assignment";
+
+function LessonCard({
+  lesson, lIdx, mIdx, module, formData, setFormData, onQuizOpen,
+}: {
+  lesson: any; lIdx: number; mIdx: number; module: any;
+  formData: any; setFormData: (d: any) => void;
+  onQuizOpen: (lesson: any) => void;
+}) {
+  const [expanded, setExpanded] = useState(!lesson.title || lesson.title === "");
+  const [tab, setTab] = useState<LessonTab>("details");
+  const [showUpload, setShowUpload] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+
+  const updateLesson = (patch: any) => {
+    const newModules = [...formData.modules];
+    const newLessons = [...module.lessons];
+    const updated = { ...lesson, ...patch };
+    newLessons[lIdx] = updated;
+    newModules[mIdx] = { ...module, lessons: newLessons };
+    setFormData({ ...formData, modules: newModules });
+    // Auto-collapse when title is filled in
+    if (patch.title && patch.title.trim() !== "" && expanded) {
+      setExpanded(false);
+    }
+  };
+
+  const deleteLesson = () => {
+    const newModules = [...formData.modules];
+    newModules[mIdx] = { ...module, lessons: module.lessons.filter((_: any, i: number) => i !== lIdx) };
+    setFormData({ ...formData, modules: newModules });
+  };
+
+  const isComplete = !!lesson.title && lesson.title.trim() !== "";
+  const isQuizType = lesson.type === "quiz";
+  const quizCount = lesson._quizCount || 0;
+
+  return (
+    <div className={cn(
+      "rounded-2xl border transition-all duration-300 group/card",
+      isComplete && !expanded
+        ? "border-green-500/20 bg-green-500/5 hover:bg-white/5 hover:border-green-500/40"
+        : "border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20"
+    )}>
+      {/* ── Header (always visible) ── */}
+      <div
+        className="flex items-center gap-3 p-4 cursor-pointer select-none"
+        onClick={() => setExpanded(v => !v)}
+      >
+        {/* L-pill */}
+        <div className={cn(
+          "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0 transition-colors",
+          isComplete ? "bg-green-500/80 text-white" : "bg-accent/80 text-accent-foreground shadow-gold"
+        )}>
+          {isComplete ? <Check className="w-3 h-3 inline" /> : null} L{lIdx + 1}
+        </div>
+
+        {/* Title input */}
+        <Input
+          placeholder="Lesson Title *"
+          className={cn(
+            "h-9 flex-1 font-bold bg-transparent border-transparent focus:border-white/20 text-sm placeholder:text-white/30 hover:border-white/10",
+            !lesson.title && "border-amber-500/30"
+          )}
+          value={lesson.title || ""}
+          onClick={e => e.stopPropagation()}
+          onChange={e => updateLesson({ title: e.target.value })}
+        />
+
+        {/* Quiz count chip — shown when type=quiz */}
+        {isQuizType && (
+          <div
+            className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl shrink-0"
+            onClick={e => { e.stopPropagation(); onQuizOpen(lesson); }}
+            title="Click to manage quiz questions"
+          >
+            <HelpCircle className="w-3 h-3 text-amber-400" />
+            <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+              {quizCount > 0 ? `${quizCount} Q` : "Quiz"}
+            </span>
+          </div>
+        )}
+
+        {/* Type selector */}
+        <select
+          className="h-9 px-3 rounded-xl border border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest text-white/60 outline-none focus:border-accent/60 hover:border-white/20 transition-colors shrink-0"
+          value={lesson.type || "video"}
+          onClick={e => e.stopPropagation()}
+          onChange={e => updateLesson({ type: e.target.value })}
+        >
+          {["video","pdf","ppt","book","article","quiz","assignment"].map(t => (
+            <option key={t} value={t}>{t.toUpperCase()}</option>
+          ))}
+        </select>
+
+        {/* Duration */}
+        <div
+          className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-xl border border-white/10 hover:border-white/20 shrink-0 transition-colors"
+          onClick={e => e.stopPropagation()}
+        >
+          <input
+            type="number"
+            className="w-10 h-7 bg-transparent text-sm font-bold text-center outline-none text-white/80"
+            value={lesson.duration || 0}
+            onChange={e => updateLesson({ duration: parseInt(e.target.value) || 0 })}
+          />
+          <span className="text-[10px] text-white/40 font-black">MINS</span>
+        </div>
+
+        {/* Missing indicator */}
+        {!lesson.title && (
+          <div className="w-2 h-2 rounded-full bg-amber-400/80 shrink-0 animate-pulse" title="Title required" />
+        )}
+
+        {/* Delete */}
+        <button
+          onClick={e => { e.stopPropagation(); deleteLesson(); }}
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+
+        {expanded
+          ? <ChevronUp className="w-4 h-4 text-white/30 shrink-0" />
+          : <ChevronDown className="w-4 h-4 text-white/30 shrink-0" />
+        }
+      </div>
+
+      {/* ── Expanded Body ── */}
+      {expanded && (
+        <div className="border-t border-white/10">
+          {/* Tab Bar */}
+          <div className="flex border-b border-white/10">
+            {([
+              { key: "details",    label: "Details",      icon: FileText },
+              { key: "quiz",       label: "Quiz Builder",  icon: HelpCircle },
+              { key: "assignment", label: "Assignment",    icon: ClipboardList },
+            ] as { key: LessonTab; label: string; icon: any }[]).map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={cn(
+                  "flex items-center gap-1.5 px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-colors",
+                  tab === key
+                    ? "text-accent border-b-2 border-accent -mb-px"
+                    : "text-white/40 hover:text-white/70 hover:bg-white/5"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* ── Tab: Details ── */}
+          {tab === "details" && (
+            <div className="p-4 space-y-4">
+              {/* URLs row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+                    <PlayCircle className="w-3.5 h-3.5 text-accent" /> Media Stream URL
+                  </label>
+                  <Input
+                    className="h-10 bg-white/5 border-white/10 text-sm placeholder:text-white/25 focus:border-accent/40 hover:border-white/20"
+                    placeholder="YouTube, Vimeo, AWS S3..."
+                    value={lesson.videoUrl || ""}
+                    onChange={e => updateLesson({ videoUrl: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+                    <ExternalLink className="w-3.5 h-3.5 text-blue-400" /> Resource URL
+                  </label>
+                  <Input
+                    className="h-10 bg-white/5 border-white/10 text-sm placeholder:text-white/25 focus:border-accent/40 hover:border-white/20"
+                    placeholder="G-Drive, Dropbox, Notion link..."
+                    value={lesson.fileUrl || ""}
+                    onChange={e => updateLesson({ fileUrl: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Upload — collapsible */}
+              <div className="rounded-xl border border-white/10 overflow-hidden">
+                <button
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors"
+                  onClick={() => setShowUpload(v => !v)}
+                >
+                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/50">
+                    <Paperclip className="w-3.5 h-3.5 text-accent/70" />
+                    Upload Resource File
+                    {lesson.fileUrl && <span className="px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400 text-[8px]">Uploaded</span>}
+                  </span>
+                  {showUpload
+                    ? <ChevronUp className="w-3.5 h-3.5 text-white/30" />
+                    : <ChevronDown className="w-3.5 h-3.5 text-white/30" />}
+                </button>
+                {showUpload && (
+                  <div className="border-t border-white/10 p-3">
+                    {lesson.fileUrl ? (
+                      <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg border border-white/10">
+                        <span className="text-xs text-white/50 truncate max-w-[200px]">{lesson.fileUrl.split('/').pop()}</span>
+                        <Button variant="ghost" size="sm" className="h-7 text-red-400 text-[10px] hover:bg-red-500/10" onClick={() => updateLesson({ fileUrl: "" })}>Remove</Button>
+                      </div>
+                    ) : (
+                      <FileUpload
+                        folder="course_resources"
+                        label="Drag & drop or click to browse"
+                        onUploadComplete={url => { updateLesson({ fileUrl: url }); setShowUpload(false); }}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Lesson Notes / Text — collapsible */}
+              <div className="rounded-xl border border-white/10 overflow-hidden">
+                <button
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors"
+                  onClick={() => setShowNotes(v => !v)}
+                >
+                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/50">
+                    <FileText className="w-3.5 h-3.5 text-accent/70" />
+                    Lesson Notes / Text
+                    {lesson.content && <span className="px-1.5 py-0.5 rounded-full bg-accent/20 text-accent text-[8px]">Added</span>}
+                  </span>
+                  {showNotes
+                    ? <ChevronUp className="w-3.5 h-3.5 text-white/30" />
+                    : <ChevronDown className="w-3.5 h-3.5 text-white/30" />}
+                </button>
+                {showNotes && (
+                  <div className="border-t border-white/10">
+                    <TextEditor
+                      value={lesson.content || ""}
+                      onChange={content => updateLesson({ content })}
+                      placeholder="Add lesson notes or rich text content for students..."
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Tab: Quiz ── */}
+          {tab === "quiz" && (
+            <div className="p-4">
+              <div className="rounded-xl border border-amber-500/15 bg-amber-500/5 p-5 space-y-4">
+                {/* Header */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                    <HelpCircle className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-white/80">Quiz Builder</p>
+                    <p className="text-[10px] text-white/40 uppercase tracking-widest font-black">
+                      {quizCount > 0 ? `${quizCount} question${quizCount !== 1 ? "s" : ""} added` : "No questions yet"}
+                    </p>
+                  </div>
+                  {quizCount > 0 && (
+                    <div className="ml-auto px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30">
+                      <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">{quizCount} Q</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Question preview pills */}
+                {quizCount > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from({ length: quizCount }).map((_, i) => (
+                      <div key={i} className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
+                        <span className="text-[10px] font-bold text-amber-400">Q{i + 1}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-xs text-white/40">
+                  Multiple-choice questions students answer after completing this lesson.
+                </p>
+                <Button
+                  variant="outline"
+                  className="h-10 w-full text-[10px] font-black uppercase tracking-widest border-amber-500/20 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 hover:border-amber-500/40 gap-2 transition-colors"
+                  onClick={() => onQuizOpen(lesson)}
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  {quizCount > 0 ? "Manage Quiz Questions" : "Add Quiz Questions"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Tab: Assignment ── */}
+          {tab === "assignment" && (
+            <div className="p-4 space-y-4">
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-accent/80">Required Submission</p>
+                  <p className="text-xs text-white/40 mt-0.5">Block lesson unlock until submitted</p>
+                </div>
+                <Switch
+                  className="data-[state=checked]:bg-accent"
+                  checked={lesson.requiredAssignment || false}
+                  onCheckedChange={checked => updateLesson({ requiredAssignment: checked, isAssignment: true })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Assignment Description</label>
+                <Textarea
+                  className="bg-white/5 border-white/10 rounded-xl text-sm placeholder:text-white/25 focus:border-accent/40 hover:border-white/20"
+                  rows={3}
+                  placeholder="Describe what students need to do..."
+                  value={lesson.assignmentDescription || ""}
+                  onChange={e => updateLesson({ assignmentDescription: e.target.value, isAssignment: true })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Required Deliverables (comma-separated)</label>
+                <Input
+                  className="h-10 bg-white/5 border-white/10 text-sm placeholder:text-white/25 focus:border-accent/40 hover:border-white/20"
+                  placeholder="GitHub Repo, Live URL, Screenshot..."
+                  value={lesson.assignmentDeliverables?.join(", ") || ""}
+                  onChange={e => updateLesson({
+                    assignmentDeliverables: e.target.value.split(",").map((s: string) => s.trim()).filter(Boolean),
+                    isAssignment: true,
+                  })}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ── Action Bar (Done Button) ── */}
+          <div className="p-4 pt-0 flex justify-end">
+             <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-8 text-[10px] font-black uppercase tracking-widest text-accent hover:bg-accent/5 gap-2"
+                onClick={() => setExpanded(false)}
+             >
+                <Check className="w-3.5 h-3.5" /> Done Editing
+             </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 const STEPS = [
   { id: 1, title: "Identity", description: "Course Personality", icon: Layout },
@@ -321,15 +677,15 @@ export default function CreateCourse() {
                                             <BookOpen className="w-6 h-6 text-accent" />
                                             Curriculum Builder
                                         </h3>
-                                        <p className="text-sm text-muted-foreground">Organize your course into modules and lessons. You can upload videos, documents, and attach interactive quizzes.</p>
+                                        <p className="text-sm text-muted-foreground">Organize your course into modules and lessons. Upload videos, documents, and attach quizzes or assignments.</p>
                                     </div>
-                                    <div className="flex gap-4">
+                                    <div className="flex gap-3">
                                         <Button
                                             variant="outline"
                                             onClick={() => setQuestionLesson({ id: "", title: "Course Wide" })}
-                                            className="h-12 rounded-2xl gap-2 font-black uppercase text-[10px] tracking-widest border-accent/20 hover:border-accent hover:bg-accent/5"
+                                            className="h-11 rounded-2xl gap-2 font-black uppercase text-[10px] tracking-widest border-accent/20 hover:border-accent hover:bg-accent/5"
                                         >
-                                            <HelpCircle className="w-4 h-4 text-accent" /> Manage Course Quiz
+                                            <HelpCircle className="w-4 h-4 text-accent" /> Course Quiz
                                         </Button>
                                         <Button
                                             onClick={() => {
@@ -337,309 +693,123 @@ export default function CreateCourse() {
                                                 setFormData({ ...formData, modules: newModules });
                                                 setExpandedModules({ ...expandedModules, [newModules.length - 1]: true });
                                             }}
-                                            className="h-12 rounded-2xl gap-2 font-black uppercase text-[10px] tracking-widest bg-accent text-accent-foreground hover:scale-[1.02] shadow-gold transition-transform"
+                                            className="h-11 rounded-2xl gap-2 font-black uppercase text-[10px] tracking-widest bg-accent text-accent-foreground hover:scale-[1.02] shadow-gold transition-transform"
                                         >
                                             <Plus className="w-4 h-4" /> Add Module
                                         </Button>
                                     </div>
                                 </div>
 
-                                <div className="space-y-6">
-                                    {formData.modules?.map((module: any, mIdx: number) => (
-                                        <div key={mIdx} className="group relative glass-card rounded-[2.5rem] overflow-hidden border border-border/40 hover:border-accent/30 transition-all">
-                                            <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-accent/10 to-accent group-hover:via-amber-500 transition-colors" />
+                                <div className="space-y-5">
+                                    {formData.modules?.map((module: any, mIdx: number) => {
+                                        const allDone = module.lessons?.length > 0 && module.lessons.every((l: any) => !!l.title && l.title !== "New Lesson");
+                                        const missingCount = (module.lessons || []).filter((l: any) => !l.title || l.title === "New Lesson").length;
+                                        return (
+                                        <div key={mIdx} className={cn(
+                                            "group relative glass-card rounded-[2rem] overflow-hidden border transition-all",
+                                            allDone ? "border-green-500/30" : "border-border/40 hover:border-accent/30"
+                                        )}>
+                                            <div className={cn("absolute top-0 left-0 w-1.5 h-full transition-colors", allDone ? "bg-green-500" : "bg-accent/40 group-hover:bg-accent")} />
 
-                                            <div className="p-8 space-y-6">
-                                                <div className="flex items-start gap-6 cursor-pointer" onClick={() => setExpandedModules(prev => ({ ...prev, [mIdx]: !prev[mIdx] }))}>
-                                                    <div className="w-14 h-14 rounded-[1.5rem] bg-accent/10 flex items-center justify-center flex-shrink-0 shadow-inner">
-                                                        <span className="font-heading text-2xl font-black text-accent">M{mIdx + 1}</span>
+                                            <div className="pl-5 pr-5 py-5 space-y-4">
+                                                {/* Module Header */}
+                                                <div className="flex items-start gap-4 cursor-pointer" onClick={() => setExpandedModules(prev => ({ ...prev, [mIdx]: !prev[mIdx] }))}>
+                                                    <div className={cn(
+                                                        "w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0",
+                                                        allDone ? "bg-green-500/10" : "bg-accent/10"
+                                                    )}>
+                                                        {allDone
+                                                            ? <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                                            : <span className="font-heading text-lg font-black text-accent">M{mIdx + 1}</span>
+                                                        }
                                                     </div>
-                                                    <div className="flex-1 space-y-3">
-                                                        <div className="flex gap-4">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex gap-2 items-center flex-wrap">
                                                             <Input
-                                                                className="font-heading font-black text-2xl bg-transparent border-0 border-b-2 border-transparent focus:border-accent focus:ring-0 rounded-none px-0 h-auto pb-1"
+                                                                className="font-heading font-black text-lg bg-transparent border-0 border-b-2 border-transparent focus:border-accent focus:ring-0 rounded-none px-0 h-auto pb-0.5 flex-1 min-w-[120px]"
                                                                 placeholder="Module Title"
                                                                 value={module.title}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                onChange={(e) => {
-                                                                    const newModules = [...formData.modules];
-                                                                    newModules[mIdx] = { ...module, title: e.target.value };
-                                                                    setFormData({ ...formData, modules: newModules });
+                                                                onClick={e => e.stopPropagation()}
+                                                                onChange={e => {
+                                                                    const nm = [...formData.modules];
+                                                                    nm[mIdx] = { ...module, title: e.target.value };
+                                                                    setFormData({ ...formData, modules: nm });
                                                                 }}
                                                             />
-                                                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                                <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive/40 hover:text-destructive hover:bg-destructive/5" onClick={() => {
-                                                                    const newModules = formData.modules.filter((_: any, i: number) => i !== mIdx);
-                                                                    setFormData({ ...formData, modules: newModules });
+                                                            <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+                                                                {allDone && (
+                                                                    <Badge className="bg-green-500/10 text-green-500 border-green-500/20 text-[9px] gap-1">
+                                                                        <Check className="w-3 h-3" /> Complete
+                                                                    </Badge>
+                                                                )}
+                                                                {!allDone && missingCount > 0 && (
+                                                                    <Badge variant="outline" className="text-amber-500 border-amber-500/30 bg-amber-500/5 text-[9px]">
+                                                                        {missingCount} need title
+                                                                    </Badge>
+                                                                )}
+                                                                <span className="text-xs text-muted-foreground">{module.lessons?.length || 0} lesson{module.lessons?.length !== 1 ? "s" : ""}</span>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/40 hover:text-destructive hover:bg-destructive/5" onClick={() => {
+                                                                    setFormData({ ...formData, modules: formData.modules.filter((_: any, i: number) => i !== mIdx) });
                                                                 }}>
-                                                                    <Trash2 className="w-5 h-5" />
+                                                                    <Trash2 className="w-4 h-4" />
                                                                 </Button>
-                                                                <div className="w-10 h-10 flex items-center justify-center text-muted-foreground bg-muted/20 rounded-xl">
-                                                                    <ChevronRight className={cn("w-5 h-5 transition-transform duration-300", expandedModules[mIdx] && "rotate-90")} />
-                                                                </div>
+                                                                <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform duration-300", expandedModules[mIdx] && "rotate-90")} />
                                                             </div>
                                                         </div>
                                                         <Input
-                                                            className="text-sm h-10 bg-muted/30 border-none font-medium text-muted-foreground rounded-xl"
+                                                            className="text-sm h-8 bg-muted/30 border-none font-medium text-muted-foreground rounded-xl mt-1.5"
                                                             placeholder="Module description (optional)"
                                                             value={module.description || ""}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            onChange={(e) => {
-                                                                const newModules = [...formData.modules];
-                                                                newModules[mIdx] = { ...module, description: e.target.value };
-                                                                setFormData({ ...formData, modules: newModules });
+                                                            onClick={e => e.stopPropagation()}
+                                                            onChange={e => {
+                                                                const nm = [...formData.modules];
+                                                                nm[mIdx] = { ...module, description: e.target.value };
+                                                                setFormData({ ...formData, modules: nm });
                                                             }}
                                                         />
                                                     </div>
                                                 </div>
 
+                                                {/* Lessons — ONLY this area scrolls, not the page */}
                                                 {expandedModules[mIdx] && (
-                                                    <div className="space-y-6 pt-6 border-t border-border/40 animate-in slide-in-from-top-4 duration-300">
-                                                        <div className="grid grid-cols-1 gap-6">
+                                                    <div className="pt-3 border-t border-border/40 animate-in slide-in-from-top-4 duration-300 space-y-3">
+                                                        <div className="max-h-[520px] overflow-y-auto space-y-2.5 pr-1 custom-scrollbar">
                                                             {module.lessons?.map((lesson: any, lIdx: number) => (
-                                                                <div key={lIdx} className="relative p-6 bg-background/50 rounded-[2rem] border border-border/40 hover:border-accent/20 transition-all space-y-6 shadow-sm">
-                                                                    <div className="flex items-center gap-4">
-                                                                        <div className="px-3 py-1 rounded-full bg-accent text-accent-foreground text-[10px] font-black uppercase tracking-widest shadow-gold">
-                                                                            L{lIdx + 1}
-                                                                        </div>
-                                                                        <Input
-                                                                            placeholder="Lesson Title"
-                                                                            className="h-12 text-lg flex-1 font-bold bg-transparent border-transparent focus:border-accent/40"
-                                                                            value={lesson.title}
-                                                                            onChange={(e) => {
-                                                                                const newModules = [...formData.modules];
-                                                                                const newLessons = [...module.lessons];
-                                                                                newLessons[lIdx] = { ...lesson, title: e.target.value };
-                                                                                newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                                setFormData({ ...formData, modules: newModules });
-                                                                            }}
-                                                                        />
-                                                                        <select
-                                                                            className="h-12 px-4 rounded-xl border border-border/40 bg-muted/20 text-[10px] font-black uppercase tracking-widest text-muted-foreground outline-none focus:border-accent transition-colors"
-                                                                            value={lesson.type || "video"}
-                                                                            onChange={(e) => {
-                                                                                const newModules = [...formData.modules];
-                                                                                const newLessons = [...module.lessons];
-                                                                                newLessons[lIdx] = { ...lesson, type: e.target.value };
-                                                                                newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                                setFormData({ ...formData, modules: newModules });
-                                                                            }}
-                                                                        >
-                                                                            {['video', 'pdf', 'ppt', 'book', 'article', 'quiz', 'assignment'].map(t => (
-                                                                                <option key={t} value={t}>{t}</option>
-                                                                            ))}
-                                                                        </select>
-                                                                        <Button variant="ghost" size="icon" className="h-12 w-12 text-destructive shrink-0 bg-destructive/5 hover:bg-destructive/10 rounded-xl" onClick={() => {
-                                                                            const newModules = [...formData.modules];
-                                                                            const newLessons = module.lessons.filter((_: any, i: number) => i !== lIdx);
-                                                                            newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                            setFormData({ ...formData, modules: newModules });
-                                                                        }}>
-                                                                            <Trash2 className="w-5 h-5" />
-                                                                        </Button>
-                                                                    </div>
-
-                                                                    {lesson.type === 'assignment' && (
-                                                                        <div className="space-y-4 p-6 bg-accent/5 rounded-2xl border border-accent/10">
-                                                                            <div className="flex items-center justify-between pb-4 border-b border-accent/10">
-                                                                                <div>
-                                                                                    <label className="text-[10px] font-black tracking-widest text-accent uppercase block">Required Submission</label>
-                                                                                    <p className="text-xs text-muted-foreground">Force validation before proceeding</p>
-                                                                                </div>
-                                                                                <Switch
-                                                                                    className="data-[state=checked]:bg-accent"
-                                                                                    checked={lesson.requiredAssignment || false}
-                                                                                    onCheckedChange={(checked) => {
-                                                                                        const newModules = [...formData.modules];
-                                                                                        const newLessons = [...module.lessons];
-                                                                                        newLessons[lIdx] = { ...lesson, requiredAssignment: checked };
-                                                                                        newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                                        setFormData({ ...formData, modules: newModules });
-                                                                                    }}
-                                                                                />
-                                                                            </div>
-                                                                            <div className="grid gap-4">
-                                                                                <div>
-                                                                                    <label className="text-[10px] font-black tracking-widest text-muted-foreground uppercase block mb-2">Assignment Description</label>
-                                                                                    <Input
-                                                                                        className="h-12 bg-background border-border/40"
-                                                                                        placeholder="Define the task..."
-                                                                                        value={lesson.assignmentDescription || ""}
-                                                                                        onChange={(e) => {
-                                                                                            const newModules = [...formData.modules];
-                                                                                            const newLessons = [...module.lessons];
-                                                                                            newLessons[lIdx] = { ...lesson, assignmentDescription: e.target.value, isAssignment: true };
-                                                                                            newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                                            setFormData({ ...formData, modules: newModules });
-                                                                                        }}
-                                                                                    />
-                                                                                </div>
-                                                                                <div>
-                                                                                    <label className="text-[10px] font-black tracking-widest text-muted-foreground uppercase block mb-2">Required Outputs (comma separated)</label>
-                                                                                    <Input
-                                                                                        className="h-12 bg-background border-border/40"
-                                                                                        placeholder="GitHub Repository, Production URL..."
-                                                                                        value={lesson.assignmentDeliverables?.join(', ') || ""}
-                                                                                        onChange={(e) => {
-                                                                                            const deliverables = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                                                                                            const newModules = [...formData.modules];
-                                                                                            const newLessons = [...module.lessons];
-                                                                                            newLessons[lIdx] = { ...lesson, assignmentDeliverables: deliverables, isAssignment: true };
-                                                                                            newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                                            setFormData({ ...formData, modules: newModules });
-                                                                                        }}
-                                                                                    />
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    )}
-
-                                                                    <div className="grid grid-cols-2 gap-6">
-                                                                        <div className="space-y-2">
-                                                                            <label className="text-[10px] font-black tracking-widest text-muted-foreground uppercase flex items-center gap-2">
-                                                                                <PlayCircle className="w-4 h-4 text-accent" /> Media Stream URL
-                                                                            </label>
-                                                                            <Input
-                                                                                className="h-12 bg-muted/20 border-border/40"
-                                                                                placeholder="YouTube, Vimeo, AWS S3..."
-                                                                                value={lesson.videoUrl || ""}
-                                                                                onChange={(e) => {
-                                                                                    const newModules = [...formData.modules];
-                                                                                    const newLessons = [...module.lessons];
-                                                                                    newLessons[lIdx] = { ...lesson, videoUrl: e.target.value };
-                                                                                    newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                                    setFormData({ ...formData, modules: newModules });
-                                                                                }}
-                                                                            />
-                                                                        </div>
-                                                                        <div className="space-y-2">
-                                                                            <label className="text-[10px] font-black tracking-widest text-muted-foreground uppercase flex items-center gap-2">
-                                                                                <ExternalLink className="w-4 h-4 text-blue-500" /> Resource URL
-                                                                            </label>
-                                                                            <Input
-                                                                                className="h-12 bg-muted/20 border-border/40"
-                                                                                placeholder="G-Drive, Dropbox, notion link..."
-                                                                                value={lesson.fileUrl || ""}
-                                                                                onChange={(e) => {
-                                                                                    const newModules = [...formData.modules];
-                                                                                    const newLessons = [...module.lessons];
-                                                                                    newLessons[lIdx] = { ...lesson, fileUrl: e.target.value };
-                                                                                    newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                                    setFormData({ ...formData, modules: newModules });
-                                                                                }}
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="p-6 bg-accent/5 rounded-2xl border border-accent/10 space-y-4">
-                                                                        <div className="flex items-center justify-between">
-                                                                            <label className="text-[10px] font-black tracking-widest text-accent uppercase flex items-center gap-2">
-                                                                                <Paperclip className="w-4 h-4" /> Upload Resource
-                                                                            </label>
-                                                                            {lesson.fileUrl && (
-                                                                                <Badge variant="outline" className="text-[9px] bg-background">
-                                                                                    {lesson.fileUrl.split('/').pop()?.slice(-20)}...
-                                                                                </Badge>
-                                                                            )}
-                                                                        </div>
-                                                                        <div className="h-32">
-                                                                            <FileUpload
-                                                                                folder="course_resources"
-                                                                                label="Drag assets here"
-                                                                                onUploadComplete={(url) => {
-                                                                                    const newModules = [...formData.modules];
-                                                                                    const newLessons = [...module.lessons];
-                                                                                    newLessons[lIdx] = { ...lesson, fileUrl: url };
-                                                                                    newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                                    setFormData({ ...formData, modules: newModules });
-                                                                                }}
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-border/20">
-                                                                        <div className="flex items-center gap-4">
-                                                                            <div className="flex items-center gap-2 bg-muted/30 px-3 py-1.5 rounded-xl border border-border/50">
-                                                                                <Calendar className="w-4 h-4 text-muted-foreground mr-1" />
-                                                                                <input
-                                                                                    type="number"
-                                                                                    className="w-12 h-8 rounded-lg border-none bg-background text-sm font-bold text-center focus:ring-1 focus:ring-accent"
-                                                                                    value={lesson.duration || 0}
-                                                                                    onChange={(e) => {
-                                                                                        const newModules = [...formData.modules];
-                                                                                        const newLessons = [...module.lessons];
-                                                                                        newLessons[lIdx] = { ...lesson, duration: parseInt(e.target.value) || 0 };
-                                                                                        newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                                        setFormData({ ...formData, modules: newModules });
-                                                                                    }}
-                                                                                />
-                                                                                <span className="text-[10px] text-muted-foreground font-black tracking-widest">MINS</span>
-                                                                            </div>
-                                                                            <Button
-                                                                                variant="outline"
-                                                                                className="h-11 rounded-xl text-[10px] font-black tracking-widest uppercase hover:bg-accent/5 hover:text-accent border-border/40"
-                                                                                onClick={() => {
-                                                                                    const newModules = [...formData.modules];
-                                                                                    const newLessons = [...module.lessons];
-                                                                                    newLessons[lIdx] = { ...lesson, _showEditor: !lesson._showEditor };
-                                                                                    newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                                    setFormData({ ...formData, modules: newModules });
-                                                                                }}
-                                                                            >
-                                                                                {lesson._showEditor ? "Collapse Details" : "Edit Lesson Details"}
-                                                                            </Button>
-                                                                        </div>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            className="h-11 rounded-xl text-[10px] font-black tracking-widest uppercase gap-2 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10 hover:text-amber-600"
-                                                                            onClick={() => {
-                                                                                const lessonId = lesson.id || `${mIdx}-${lIdx}`;
-                                                                                setQuestionLesson({ id: lessonId, title: lesson.title, content: lesson.content });
-                                                                            }}
-                                                                        >
-                                                                            <HelpCircle className="w-4 h-4" /> Quiz Builder
-                                                                        </Button>
-                                                                    </div>
-
-                                                                    {lesson._showEditor && (
-                                                                        <div className="pt-4 animate-in slide-in-from-top-4 duration-300">
-                                                                            <div className="rounded-2xl overflow-hidden border border-border/40 shadow-sm">
-                                                                                <TextEditor
-                                                                                    value={lesson.content || ""}
-                                                                                    onChange={(content) => {
-                                                                                        const newModules = [...formData.modules];
-                                                                                        const newLessons = [...module.lessons];
-                                                                                        newLessons[lIdx] = { ...lesson, content };
-                                                                                        newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                                        setFormData({ ...formData, modules: newModules });
-                                                                                    }}
-                                                                                    placeholder="Add lesson text or notes..."
-                                                                                />
-                                                                            </div>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
+                                                                <LessonCard
+                                                                    key={lIdx}
+                                                                    lesson={lesson}
+                                                                    lIdx={lIdx}
+                                                                    mIdx={mIdx}
+                                                                    module={module}
+                                                                    formData={formData}
+                                                                    setFormData={setFormData}
+                                                                    onQuizOpen={(l) => {
+                                                                        const lessonId = l.id || `${mIdx}-${lIdx}`;
+                                                                        setQuestionLesson({ id: lessonId, title: l.title || `Lesson ${lIdx + 1}`, content: l.content });
+                                                                    }}
+                                                                />
                                                             ))}
-
-                                                            <Button
-                                                                variant="outline"
-                                                                className="w-full h-14 border-2 border-dashed border-border/50 hover:border-accent hover:bg-accent/5 transition-all text-[10px] font-black tracking-widest uppercase gap-2 rounded-[1.5rem] group"
-                                                                onClick={() => {
-                                                                    const newModules = [...formData.modules];
-                                                                    const newLessons = [...(module.lessons || []), { title: "New Lesson", duration: 10, type: "video" }];
-                                                                    newModules[mIdx] = { ...module, lessons: newLessons };
-                                                                    setFormData({ ...formData, modules: newModules });
-                                                                }}
-                                                            >
-                                                                <Plus className="w-5 h-5 text-accent transition-transform group-hover:rotate-90" />
-                                                                Add Lesson to {module.title || "Module"}
-                                                            </Button>
                                                         </div>
+
+                                                        <Button
+                                                            variant="outline"
+                                                            className="w-full h-11 border-2 border-dashed border-border/50 hover:border-accent hover:bg-accent/5 transition-all text-[10px] font-black tracking-widest uppercase gap-2 rounded-xl group"
+                                                            onClick={() => {
+                                                                const nm = [...formData.modules];
+                                                                const nl = [...(module.lessons || []), { title: "", duration: 10, type: "video" }];
+                                                                nm[mIdx] = { ...module, lessons: nl };
+                                                                setFormData({ ...formData, modules: nm });
+                                                            }}
+                                                        >
+                                                            <Plus className="w-4 h-4 text-accent transition-transform group-hover:rotate-90" />
+                                                            Add Lesson to {module.title || "Module"}
+                                                        </Button>
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -683,37 +853,47 @@ export default function CreateCourse() {
                                         <Switch className="data-[state=checked]:bg-accent" checked={formData.submissionRequired} onCheckedChange={(checked) => updateFormData("submissionRequired", checked)} />
                                     </div>
 
-                                    <div className="glass-card rounded-[2.5rem] p-8 space-y-6">
-                                        <div className="flex items-center gap-3 pb-4 border-b border-border/20">
+                                    <div className="glass-card rounded-[2.5rem] p-8 space-y-6 bg-white/5 border border-white/10">
+                                        <div className="flex items-center gap-3 pb-4 border-b border-white/5">
                                             <Trophy className="w-5 h-5 text-accent" />
                                             <h4 className="text-lg font-heading font-black">Certificate Configuration</h4>
                                         </div>
-                                        <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="grid md:grid-cols-2 gap-8">
                                             <div className="space-y-3">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Signer Full Name</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Signer Full Name</label>
                                                 <Input 
                                                     placeholder="e.g. Dr. John Smith"
                                                     value={formData.signerName}
                                                     onChange={(e) => updateFormData("signerName", e.target.value)}
-                                                    className="h-12 bg-muted/20 border-border/40 rounded-xl"
+                                                    className="h-12 bg-white/3 border-white/10 rounded-xl focus:border-accent/40"
                                                 />
                                             </div>
                                             <div className="space-y-3">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Signer Signature Image</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Signer Signature Image</label>
                                                 {formData.signerSignature ? (
-                                                    <div className="relative h-12 rounded-xl overflow-hidden border border-border/40 bg-white p-1 flex items-center justify-between">
-                                                        <img src={formData.signerSignature} className="h-full object-contain" />
-                                                        <Button variant="ghost" size="sm" onClick={() => updateFormData("signerSignature", "")} className="h-8 text-[9px] font-black uppercase tracking-widest text-destructive">Remove</Button>
+                                                    <div className="relative h-24 rounded-2xl overflow-hidden border border-white/10 bg-white/5 p-2 flex items-center justify-center group/sig">
+                                                        <img src={formData.signerSignature} className="h-full object-contain brightness-110 contrast-125" />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/sig:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <Button 
+                                                                variant="destructive" 
+                                                                size="sm" 
+                                                                className="h-8 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                                                                onClick={() => updateFormData("signerSignature", "")}
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Remove
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="h-12">
+                                                    <div className="h-[120px] rounded-2xl border-2 border-dashed border-white/5 bg-white/2 hover:border-accent/20 hover:bg-accent/5 transition-all">
                                                         <FileUpload 
                                                             folder="signatures" 
-                                                            label="Upload Signature (PNG preferred)"
+                                                            label="CLICK TO UPLOAD SCREENSHOT"
                                                             onUploadComplete={(url) => updateFormData("signerSignature", url)}
                                                         />
                                                     </div>
                                                 )}
+                                                <p className="text-[9px] text-white/30 italic">Upload a PNG signature or official stamp.</p>
                                             </div>
                                         </div>
                                     </div>

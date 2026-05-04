@@ -20,11 +20,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from "framer-motion";
+import { UserDetailsSheet } from '@/components/portal/dialogs/UserDetailsSheet';
 
 export default function CourseApplicationReview() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filter, setFilter] = useState('pending');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const pageSize = 10;
   
   const { data, loading, error, refetch } = useQuery(GET_COURSE_APPLICATIONS, {
@@ -116,43 +118,45 @@ export default function CourseApplicationReview() {
           >
             <CardContent className="p-0">
               <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-12 h-12 border-2 border-border/50">
-                    <AvatarImage src={app.user?.avatar} />
-                    <AvatarFallback className="bg-accent/10 text-accent font-black">
-                      {app.user?.username.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-black text-lg text-foreground">{app.user?.fullName || app.user?.username || 'Unknown User'}</h3>
-                      {getStatusBadge(app.status)}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <BookOpen className="w-3.5 h-3.5 text-accent/60" />
-                        {app.course?.title || 'Deleted Course'}
+                  <div 
+                    className="flex items-center gap-4 cursor-pointer group/user hover:opacity-80 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedUser(app.user);
+                    }}
+                  >
+                    <Avatar className="w-12 h-12 border-2 border-border/50 group-hover/user:border-accent/50 transition-colors">
+                      <AvatarImage src={app.user?.avatar} />
+                      <AvatarFallback className="bg-accent/10 text-accent font-black">
+                        {app.user?.username.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-black text-lg text-foreground group-hover/user:text-accent transition-colors">
+                          {app.user?.fullName || app.user?.username || 'Unknown User'}
+                        </h3>
+                        {getStatusBadge(app.status)}
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Calendar className="w-3.5 h-3.5 text-accent/60" />
-                        {(() => {
-                           try {
-                             const date = new Date(!isNaN(Number(app.createdAt)) ? Number(app.createdAt) : app.createdAt);
-                             return isNaN(date.getTime()) ? 'Recently' : date.toLocaleDateString();
-                           } catch (e) {
-                             return 'Recently';
-                           }
-                         })()}
-                      </div>
-                      {app.selectedDeliveryMode && (
-                        <div className="flex items-center gap-1.5 text-xs text-accent font-bold uppercase tracking-wider">
-                          <MapPin className="w-3.5 h-3.5" />
-                          {app.selectedDeliveryMode}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <BookOpen className="w-3.5 h-3.5 text-accent/60" />
+                          {app.course?.title || 'Deleted Course'}
                         </div>
-                      )}
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Calendar className="w-3.5 h-3.5 text-accent/60" />
+                          {(() => {
+                             try {
+                               const date = new Date(!isNaN(Number(app.createdAt)) ? Number(app.createdAt) : app.createdAt);
+                               return isNaN(date.getTime()) ? 'Recently' : date.toLocaleDateString();
+                             } catch (e) {
+                               return 'Recently';
+                             }
+                           })()}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
 
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex gap-2">
@@ -264,6 +268,12 @@ export default function CourseApplicationReview() {
           </div>
         </div>
       )}
+      {/* Profile Detail Sheet */}
+      <UserDetailsSheet
+        open={!!selectedUser}
+        onOpenChange={(open) => !open && setSelectedUser(null)}
+        user={selectedUser}
+      />
     </div>
   );
 }

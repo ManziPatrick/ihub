@@ -108,6 +108,8 @@ export default function AdminCourses() {
           status: updatedCourse.status,
           enrollmentMode: updatedCourse.enrollmentMode || 'direct',
           submissionRequired: updatedCourse.submissionRequired,
+          signerName: updatedCourse.signerName,
+          signerSignature: updatedCourse.signerSignature,
           modules: updatedCourse.modules
         }
       });
