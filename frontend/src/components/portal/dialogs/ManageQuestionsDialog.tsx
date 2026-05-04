@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Trash2, CheckCircle2, AlertCircle, Loader2, Pencil, Sparkles, Save, X } from "lucide-react";
+import { Plus, Trash2, CheckCircle2, AlertCircle, Loader2, Pencil, Sparkles, Save, X, ArrowLeft } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_QUESTIONS } from "@/lib/graphql/queries";
 import { CREATE_QUESTION, UPDATE_QUESTION, DELETE_QUESTION, GENERATE_AI_QUIZ } from "@/lib/graphql/mutations";
@@ -31,6 +31,7 @@ export function ManageQuestionsDialog({
   lessonContent
 }: ManageQuestionsDialogProps) {
   const [isAdding, setIsAdding] = useState(false);
+  const [creationMode, setCreationMode] = useState<'manual' | 'ai' | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -203,210 +204,272 @@ export function ManageQuestionsDialog({
         <ScrollArea className="flex-1 px-4 sm:px-6 custom-scrollbar">
           <div className="py-4 space-y-6">
             {isAdding ? (
-              <div className="p-4 bg-muted/30 rounded-lg border border-border/50 space-y-4">
-                <h4 className="font-medium text-sm">
-                  {editingId ? "Edit Question" : "Add New Question"}
-                </h4>
-                <div>
-                  <label className="text-xs font-medium mb-1.5 block">Question Text *</label>
-                  <Input
-                    value={formData.questionText}
-                    onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
-                    placeholder="Enter the question here..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
-                    <ImageIcon className="w-3.5 h-3.5 text-accent" /> Question Image (Optional)
-                  </label>
-                  
-                  {formData.imageUrl ? (
-                    <div className="relative group rounded-xl overflow-hidden border border-white/10 bg-white/5 aspect-video">
-                      <img src={formData.imageUrl} alt="Question preview" className="w-full h-full object-contain" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
-                          className="h-8 gap-2"
-                          onClick={() => setFormData({ ...formData, imageUrl: "" })}
-                        >
-                          <Trash2 className="w-4 h-4" /> Remove Image
-                        </Button>
+              <div className="space-y-6">
+                {!creationMode && !editingId ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in zoom-in-95 duration-300">
+                    <button 
+                      onClick={() => setCreationMode('manual')}
+                      className="p-6 rounded-2xl border-2 border-dashed border-accent/20 bg-accent/5 hover:border-accent/40 hover:bg-accent/10 transition-all group text-left"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                        <Plus className="w-5 h-5 text-accent" />
                       </div>
+                      <h4 className="font-bold text-base mb-1">Create Manually</h4>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">Draft your own question, options, and explanation from scratch.</p>
+                    </button>
+
+                    <button 
+                      onClick={() => setCreationMode('ai')}
+                      disabled={!lessonId}
+                      className={`p-6 rounded-2xl border-2 border-dashed transition-all group text-left ${!lessonId ? 'opacity-50 cursor-not-allowed border-white/5' : 'border-indigo-500/20 bg-indigo-500/5 hover:border-indigo-500/40 hover:bg-indigo-500/10'}`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform ${!lessonId ? 'bg-white/5' : 'bg-indigo-500/20'}`}>
+                        <Sparkles className={`w-5 h-5 ${!lessonId ? 'text-white/20' : 'text-indigo-400'}`} />
+                      </div>
+                      <h4 className="font-bold text-base mb-1">Generate with AI</h4>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        {lessonId ? "Instantly create high-quality questions based on this lesson's content." : "AI generation requires this question to be attached to a specific lesson."}
+                      </p>
+                    </button>
+
+                    <div className="sm:col-span-2 flex justify-center">
+                      <Button variant="ghost" size="sm" onClick={() => setIsAdding(false)} className="text-muted-foreground hover:text-foreground">
+                        <ArrowLeft className="w-4 h-4 mr-2" /> Back to List
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-white/10 bg-white/3 p-4">
-                      <FileUpload
-                        folder="quiz_questions"
-                        label="Drag & drop question image or click to browse"
-                        onUploadComplete={(url) => setFormData({ ...formData, imageUrl: url })}
+                  </div>
+                ) : (creationMode === 'manual' || editingId) ? (
+                  <div className="p-4 bg-muted/30 rounded-lg border border-border/50 space-y-4 animate-in slide-in-from-bottom-4 duration-300">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-bold text-sm flex items-center gap-2">
+                        <Pencil className="w-4 h-4 text-accent" />
+                        {editingId ? "Edit Question" : "New Manual Question"}
+                      </h4>
+                      {!editingId && (
+                        <Button variant="ghost" size="sm" onClick={() => setCreationMode(null)} className="h-7 text-[10px] uppercase font-bold">
+                          Change Method
+                        </Button>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1.5 block">Question Text *</label>
+                      <Input
+                        value={formData.questionText}
+                        onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
+                        placeholder="Enter the question here..."
                       />
                     </div>
-                  )}
-                  
-                  <div className="flex gap-2">
-                    <Input
-                      value={formData.imageUrl}
-                      onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                      placeholder="Or paste an image URL here..."
-                      className="h-9 text-xs bg-white/5 border-white/10"
-                    />
-                  </div>
-                </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Answer Options *</label>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="h-7 px-2 text-[9px] font-black uppercase border-dashed border-accent/30 text-accent hover:bg-accent/5"
-                      onClick={() => setFormData({ ...formData, options: [...formData.options, ""] })}
-                    >
-                      <Plus className="w-3 h-3 mr-1" /> Add Choice
-                    </Button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {formData.options.map((opt, i) => (
-                      <div key={i} className="group/opt relative p-3 rounded-xl border border-white/5 bg-white/3 hover:border-white/10 transition-all">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Option {i + 1}</span>
-                          <div className="flex items-center gap-2">
-                            {formData.options.length > 2 && (
-                              <button 
-                                className="opacity-0 group-hover/opt:opacity-100 transition-opacity text-red-400/50 hover:text-red-400"
-                                onClick={() => {
-                                  const newOpts = formData.options.filter((_, idx) => idx !== i);
-                                  let newCorrect = formData.correctOptionIndex;
-                                  if (newCorrect === i) newCorrect = 0;
-                                  else if (newCorrect > i) newCorrect -= 1;
-                                  setFormData({ ...formData, options: newOpts, correctOptionIndex: newCorrect });
-                                }}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            )}
-                            <button
-                              onClick={() => setFormData({ ...formData, correctOptionIndex: i })}
-                              className={`text-[9px] font-black px-2 py-0.5 rounded-full border transition-all uppercase tracking-tighter ${formData.correctOptionIndex === i
-                                  ? "bg-green-500/20 text-green-400 border-green-500/50"
-                                  : "text-white/20 border-white/10 hover:border-white/30"
-                                }`}
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                        <ImageIcon className="w-3.5 h-3.5 text-accent" /> Question Image (Optional)
+                      </label>
+                      
+                      {formData.imageUrl ? (
+                        <div className="relative group rounded-xl overflow-hidden border border-white/10 bg-white/5 aspect-video">
+                          <img src={formData.imageUrl} alt="Question preview" className="w-full h-full object-contain" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button 
+                              variant="destructive" 
+                              size="sm" 
+                              className="h-8 gap-2"
+                              onClick={() => setFormData({ ...formData, imageUrl: "" })}
                             >
-                              {formData.correctOptionIndex === i ? "Correct" : "Mark"}
-                            </button>
+                              <Trash2 className="w-4 h-4" /> Remove Image
+                            </Button>
                           </div>
                         </div>
+                      ) : (
+                        <div className="rounded-xl border border-dashed border-white/10 bg-white/3 p-4">
+                          <FileUpload
+                            folder="quiz_questions"
+                            label="Drag & drop question image or click to browse"
+                            onUploadComplete={(url) => setFormData({ ...formData, imageUrl: url })}
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-2">
                         <Input
-                          value={opt}
-                          onChange={(e) => {
-                            const newOpts = [...formData.options];
-                            newOpts[i] = e.target.value;
-                            setFormData({ ...formData, options: newOpts });
-                          }}
-                          placeholder={`Enter choice ${i + 1}...`}
-                          className="h-9 text-sm bg-transparent border-transparent focus:border-white/10 p-0"
+                          value={formData.imageUrl}
+                          onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                          placeholder="Or paste an image URL here..."
+                          className="h-9 text-xs bg-white/5 border-white/10"
                         />
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/40">Explanation (Optional)</label>
-                  <Input
-                    value={formData.explanation}
-                    onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
-                    placeholder="Provide reasoning for the correct answer..."
-                    className="h-10 bg-white/5 border-white/10 text-sm"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4 border-t border-white/5">
-                  <Button variant="gold" className="flex-1 h-11 font-black uppercase tracking-widest text-[11px] shadow-lg shadow-gold/10" onClick={handleSave}>
-                    {editingId ? "Update Question" : "Save Question"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-11 px-6 font-black uppercase tracking-widest text-[11px]"
-                    onClick={() => {
-                      setIsAdding(false);
-                      setEditingId(null);
-                      setFormData({ questionText: "", imageUrl: "", options: ["", ""], correctOptionIndex: 0, explanation: "" });
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {lessonId && (
-                  <div className="bg-gradient-to-br from-accent/10 to-accent/5 p-5 rounded-xl border border-accent/20 space-y-4">
-                    <div>
-                      <h4 className="text-sm font-semibold text-accent flex items-center gap-2">
-                        <Sparkles className="w-5 h-5" /> AI Quiz Generator
-                      </h4>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Automatically generate multiple-choice questions based on this lesson's content.
-                      </p>
                     </div>
-                    
-                    <div className="flex items-end gap-3">
-                      <div className="flex-1">
-                        <label className="text-xs font-medium mb-1.5 block">Number of Questions</label>
-                        <Input 
-                          type="number" 
-                          min={1} max={20} 
-                          value={aiQuestionCount} 
-                          onChange={e => setAiQuestionCount(parseInt(e.target.value) || 3)}
-                          className="h-9"
-                        />
+
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-widest text-white/40">Answer Options *</label>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 px-2 text-[9px] font-black uppercase border-dashed border-accent/30 text-accent hover:bg-accent/5"
+                          onClick={() => setFormData({ ...formData, options: [...formData.options, ""] })}
+                        >
+                          <Plus className="w-3 h-3 mr-1" /> Add Choice
+                        </Button>
                       </div>
-                      <div className="flex-[2]">
-                        <label className="text-xs font-medium mb-1.5 block">Custom Instructions (Optional)</label>
-                        <Input 
-                          placeholder="e.g. Focus on X, easy/hard, etc." 
-                          value={aiPrompt}
-                          onChange={e => setAiPrompt(e.target.value)}
-                          className="h-9"
-                        />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {formData.options.map((opt, i) => (
+                          <div key={i} className="group/opt relative p-3 rounded-xl border border-white/5 bg-white/3 hover:border-white/10 transition-all">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Option {i + 1}</span>
+                              <div className="flex items-center gap-2">
+                                {formData.options.length > 2 && (
+                                  <button 
+                                    className="opacity-0 group-hover/opt:opacity-100 transition-opacity text-red-400/50 hover:text-red-400"
+                                    onClick={() => {
+                                      const newOpts = formData.options.filter((_, idx) => idx !== i);
+                                      let newCorrect = formData.correctOptionIndex;
+                                      if (newCorrect === i) newCorrect = 0;
+                                      else if (newCorrect > i) newCorrect -= 1;
+                                      setFormData({ ...formData, options: newOpts, correctOptionIndex: newCorrect });
+                                    }}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => setFormData({ ...formData, correctOptionIndex: i })}
+                                  className={`text-[9px] font-black px-2 py-0.5 rounded-full border transition-all uppercase tracking-tighter ${formData.correctOptionIndex === i
+                                      ? "bg-green-500/20 text-green-400 border-green-500/50"
+                                      : "text-white/20 border-white/10 hover:border-white/30"
+                                    }`}
+                                >
+                                  {formData.correctOptionIndex === i ? "Correct" : "Mark"}
+                                </button>
+                              </div>
+                            </div>
+                            <Input
+                              value={opt}
+                              onChange={(e) => {
+                                const newOpts = [...formData.options];
+                                newOpts[i] = e.target.value;
+                                setFormData({ ...formData, options: newOpts });
+                              }}
+                              placeholder={`Enter choice ${i + 1}...`}
+                              className="h-9 text-sm bg-transparent border-transparent focus:border-white/10 p-0"
+                            />
+                          </div>
+                        ))}
                       </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-widest text-white/40">Explanation (Optional)</label>
+                      <Input
+                        value={formData.explanation}
+                        onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
+                        placeholder="Provide reasoning for the correct answer..."
+                        className="h-10 bg-white/5 border-white/10 text-sm"
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t border-white/5">
+                      <Button variant="gold" className="flex-1 h-11 font-black uppercase tracking-widest text-[11px] shadow-lg shadow-gold/10" onClick={handleSave}>
+                        {editingId ? "Update Question" : "Save Question"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="h-11 px-6 font-black uppercase tracking-widest text-[11px]"
+                        onClick={() => {
+                          setIsAdding(false);
+                          setCreationMode(null);
+                          setEditingId(null);
+                          setFormData({ questionText: "", imageUrl: "", options: ["", ""], correctOptionIndex: 0, explanation: "" });
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-300">
+                    <div className="bg-gradient-to-br from-indigo-500/10 to-indigo-500/5 p-6 rounded-2xl border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <h4 className="text-lg font-bold text-indigo-400 flex items-center gap-2">
+                            <Sparkles className="w-6 h-6" /> AI Quiz Generator
+                          </h4>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Crafting intelligent questions from your lesson content.
+                          </p>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => setCreationMode(null)} className="h-8 text-[10px] uppercase font-bold text-muted-foreground">
+                          Change Method
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Quantity</label>
+                          <Input 
+                            type="number" 
+                            min={1} max={20} 
+                            value={aiQuestionCount} 
+                            onChange={e => setAiQuestionCount(parseInt(e.target.value) || 3)}
+                            className="h-10 bg-white/5 border-white/10"
+                          />
+                        </div>
+                        <div className="sm:col-span-2 space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Focus / Instructions</label>
+                          <Input 
+                            placeholder="e.g. Focus on technical details, make it challenging..." 
+                            value={aiPrompt}
+                            onChange={e => setAiPrompt(e.target.value)}
+                            className="h-10 bg-white/5 border-white/10"
+                          />
+                        </div>
+                      </div>
+
                       <Button 
                         variant="default" 
-                        className="bg-accent hover:bg-accent/90 text-accent-foreground h-9 px-6"
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white h-12 font-black uppercase tracking-widest text-xs shadow-xl shadow-indigo-900/20"
                         onClick={handleGenerateAI}
                         disabled={isGenerating}
                       >
                         {isGenerating ? (
                           <>
-                            <Loader2 className="w-4 h-4 animate-spin mr-2" /> Generating...
+                            <Loader2 className="w-4 h-4 animate-spin mr-3" /> Generating Questions...
                           </>
                         ) : (
                           <>
-                            <Sparkles className="w-4 h-4 mr-2" /> Generate
+                            <Sparkles className="w-4 h-4 mr-3" /> Generate Now
                           </>
                         )}
                       </Button>
                     </div>
+
+                    <div className="flex justify-center pt-2">
+                      <Button variant="ghost" size="sm" onClick={() => { setIsAdding(false); setCreationMode(null); }} className="text-muted-foreground hover:text-foreground">
+                        <ArrowLeft className="w-4 h-4 mr-2" /> Back to Question List
+                      </Button>
+                    </div>
                   </div>
                 )}
+              </div>
+            ) : (
+              <div className="space-y-4 animate-in fade-in duration-500">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm flex items-center gap-2">
+                  <h3 className="font-semibold text-sm flex items-center gap-2 text-white/40 uppercase tracking-widest">
                     Existing Questions
-                    <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-black bg-white/5 text-white/60 px-2.5 py-1 rounded-full border border-white/10 ml-2">
                       {questions.length}
                     </span>
                   </h3>
                   <Button
-                    variant="outline"
+                    variant="gold"
                     size="sm"
-                    className="h-8 gap-1.5 text-[10px] font-black uppercase tracking-widest border-dashed"
-                    onClick={() => setIsAdding(true)}
+                    className="h-9 gap-2 text-[10px] font-black uppercase tracking-widest rounded-xl shadow-gold/20"
+                    onClick={() => {
+                      setIsAdding(true);
+                      setCreationMode(null);
+                    }}
                   >
-                    <Plus className="w-3 h-3" /> New Question
+                    <Plus className="w-4 h-4" /> Add New Question
                   </Button>
                 </div>
               </div>

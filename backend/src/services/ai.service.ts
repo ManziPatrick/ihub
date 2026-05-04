@@ -170,8 +170,9 @@ export const generateAIQuizService = async (courseTitle: string, lessonTitle: st
          "explanation": "..."
        }
     4. Explanation: The explanation must be clear and directly explain why the option is correct.
+    5. LANGUAGE: You MUST detect the language of the "Content Context" provided above and generate the entire quiz (questionText, options, and explanation) in that same language. If the lesson is in French, generate the quiz in French. If it is in English, use English. Never mix languages or explain a foreign language concept in English unless explicitly asked.
     
-    Goal: Test the core concept while keeping the student engaged.`;
+    Goal: Test the core concept while keeping the student engaged in their primary learning language.`;
 
     try {
         const response = await axios.post(
