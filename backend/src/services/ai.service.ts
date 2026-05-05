@@ -236,6 +236,41 @@ Your hint:`;
     }
 };
 
+export const generateQuestionExplanationService = async (questionText: string, options: string[], correctOptionIndex: number) => {
+    const prompt = `You are an expert educator at IHUB Academy. 
+    Provide a concise, clear, and professional explanation for why the following answer is correct.
+
+    Question: ${questionText}
+    Options:
+    ${options.map((opt, i) => `${i + 1}. ${opt} ${i === correctOptionIndex ? '(Correct Answer)' : ''}`).join('\n')}
+
+    STRICT INSTRUCTIONS:
+    - Focus on the logic and concept behind the correct answer.
+    - Keep it to 1-2 sentences.
+    - Professional tone.
+    - No emojis.
+    - Do not say "The correct answer is...", instead explain why it's correct.
+
+    Explanation:`;
+
+    try {
+        const response = await axios.post(
+            'https://router.huggingface.co/v1/chat/completions',
+            {
+                model: "Qwen/Qwen3-Coder-Next:novita",
+                messages: [{ role: 'user', content: prompt }],
+                stream: false,
+                max_tokens: 200
+            },
+            { headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' } }
+        );
+        return response.data.choices[0].message.content.trim();
+    } catch (error: any) {
+        console.error('Explanation Generation Error:', error);
+        return "The selected option is correct based on the principles discussed in the lesson content.";
+    }
+};
+
 const parseAIResponse = async (aiContent: string, contextUser: any) => {
     let action = null;
     let actionData = null;

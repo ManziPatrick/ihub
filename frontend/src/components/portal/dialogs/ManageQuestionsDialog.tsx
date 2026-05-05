@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Trash2, CheckCircle2, AlertCircle, Loader2, Pencil, Sparkles, Save, X, ArrowLeft } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_QUESTIONS } from "@/lib/graphql/queries";
-import { CREATE_QUESTION, UPDATE_QUESTION, DELETE_QUESTION, GENERATE_AI_QUIZ } from "@/lib/graphql/mutations";
+import { CREATE_QUESTION, UPDATE_QUESTION, DELETE_QUESTION, GENERATE_AI_QUIZ, GENERATE_QUESTION_EXPLANATION } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 import { FileUpload } from "@/components/FileUpload";
 import { Image as ImageIcon, Upload } from "lucide-react";
@@ -43,23 +43,30 @@ export function ManageQuestionsDialog({
   });
 
   const { data, loading, refetch } = useQuery(GET_QUESTIONS, {
-    variables: { courseId, lessonId: lessonId || null },
-    skip: !open || !courseId
+    variables: { courseId, lessonId: (lessonId && lessonId.includes('-')) ? null : lessonId },
+    skip: !open || !courseId || courseId === "" || courseId.length !== 24
   });
 
   const [createQuestion] = useMutation(CREATE_QUESTION);
   const [updateQuestion] = useMutation(UPDATE_QUESTION);
   const [deleteQuestion] = useMutation(DELETE_QUESTION);
   const [generateAIQuiz] = useMutation(GENERATE_AI_QUIZ);
+  const [generateAIExplanation] = useMutation<{ generateQuestionExplanation: string }>(GENERATE_QUESTION_EXPLANATION);
 
   const [draftQuestions, setDraftQuestions] = useState<any[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isExplaining, setIsExplaining] = useState(false);
   const [aiQuestionCount, setAiQuestionCount] = useState(3);
   const [aiPrompt, setAiPrompt] = useState("");
 
   const questions = (data as any)?.questions || [];
 
   const handleSave = async () => {
+    if (!courseId || courseId === "" || courseId.length !== 24) {
+      toast.error("Please save your course as a draft first to add quiz questions.");
+      return;
+    }
+
     if (!formData.questionText || formData.options.some(o => !o)) {
       toast.error("Please fill in the question and all options");
       return;
@@ -78,7 +85,7 @@ export function ManageQuestionsDialog({
         await createQuestion({
           variables: {
             courseId,
-            lessonId: lessonId || null,
+            lessonId: (lessonId && lessonId.includes('-')) ? null : (lessonId || null),
             ...formData
           }
         });
@@ -118,6 +125,10 @@ export function ManageQuestionsDialog({
   };
 
   const handleGenerateAI = async () => {
+    if (!courseId || courseId === "" || courseId.length !== 24) {
+      toast.error("Please save your course as a draft first to use AI generation.");
+      return;
+    }
     if (!lessonId && !lessonTitle) {
       toast.error("AI Generation requires a specific lesson.");
       return;
@@ -147,12 +158,41 @@ export function ManageQuestionsDialog({
     }
   };
 
+  const handleGenerateExplanation = async () => {
+    if (!formData.questionText || formData.options.some(o => !o)) {
+      toast.error("Please fill in the question and all options first.");
+      return;
+    }
+    setIsExplaining(true);
+    try {
+      const { data } = await generateAIExplanation({
+        variables: {
+          questionText: formData.questionText,
+          options: formData.options,
+          correctOptionIndex: formData.correctOptionIndex
+        }
+      });
+      if (data?.generateQuestionExplanation) {
+        setFormData(prev => ({ ...prev, explanation: data.generateQuestionExplanation }));
+        toast.success("Explanation generated!");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate explanation");
+    } finally {
+      setIsExplaining(false);
+    }
+  };
+
   const handleSaveDraft = async (draft: any, index: number) => {
+    if (!courseId || courseId === "" || courseId.length !== 24) {
+      toast.error("Please save your course as a draft first to save quiz questions.");
+      return;
+    }
     try {
       await createQuestion({
         variables: {
           courseId,
-          lessonId: lessonId || null,
+          lessonId: (lessonId && lessonId.includes('-')) ? null : (lessonId || null),
           questionText: draft.questionText,
           imageUrl: draft.imageUrl || "",
           options: draft.options,
@@ -200,6 +240,18 @@ export function ManageQuestionsDialog({
             )}
           </div>
         </DialogHeader>
+
+        {(!courseId || courseId === "" || courseId.length !== 24) && (
+          <div className="mx-6 mt-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-amber-500 uppercase tracking-tight">Draft Mode Restriction</p>
+              <p className="text-[10px] text-white/60 leading-relaxed font-medium">
+                This course hasn't been saved to our database yet. You can design questions here, but you must <b>save the course as a draft</b> in the main builder before questions can be persisted.
+              </p>
+            </div>
+          </div>
+        )}
 
         <ScrollArea className="flex-1 px-4 sm:px-6 custom-scrollbar">
           <div className="py-4 space-y-6">
@@ -359,7 +411,19 @@ export function ManageQuestionsDialog({
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold uppercase tracking-widest text-white/40">Explanation (Optional)</label>
+                      <label className="text-xs font-bold uppercase tracking-widest text-white/40 flex items-center justify-between">
+                        <span>Explanation (Optional)</span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 gap-1.5 text-[9px] font-black uppercase text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10"
+                          onClick={handleGenerateExplanation}
+                          disabled={isExplaining}
+                        >
+                          {isExplaining ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                          AI Explain
+                        </Button>
+                      </label>
                       <Input
                         value={formData.explanation}
                         onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
@@ -403,6 +467,7 @@ export function ManageQuestionsDialog({
                         </Button>
                       </div>
                       
+
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-black uppercase tracking-widest text-white/40 block">Quantity</label>

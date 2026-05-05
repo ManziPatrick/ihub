@@ -911,6 +911,7 @@ export const typeDefs = `#graphql
     reviewSubmission(taskTitle: String!, submissionContent: String!): ChatResponse
     generateAIQuiz(courseId: ID, lessonId: ID, courseTitle: String, lessonTitle: String, lessonContent: String, questionCount: Int, prompt: String): [Question]
     hintForQuestion(questionText: String!, options: [String!]!): String
+    generateQuestionExplanation(questionText: String!, options: [String!]!, correctOptionIndex: Int!): String
 
     # Uploads
     getUploadSignature(folder: String, resourceType: String): UploadSignature!

@@ -149,7 +149,7 @@ export const ENROLL_STUDENT_IN_COURSE = gql`
 `;
 
 export const CREATE_COURSE = gql`
-  mutation CreateCourse($title: String!, $description: String!, $category: String!, $level: String, $thumbnail: String, $instructorId: ID!, $price: Float, $discountPrice: Float, $modules: [ModuleInput], $submissionRequired: Boolean, $status: String, $enrollmentMode: String, $signerName: String, $signerSignature: String, $applicationQuestions: [ApplicationQuestionInput]) {
+  mutation CreateCourse($title: String!, $description: String!, $category: String!, $level: String, $thumbnail: String, $instructorId: ID!, $price: Float, $discountPrice: Float, $modules: [ModuleInput!]!, $submissionRequired: Boolean, $status: String, $enrollmentMode: String, $signerName: String, $signerSignature: String, $applicationQuestions: [ApplicationQuestionInput]) {
     createCourse(title: $title, description: $description, category: $category, level: $level, thumbnail: $thumbnail, instructorId: $instructorId, price: $price, discountPrice: $discountPrice, modules: $modules, submissionRequired: $submissionRequired, status: $status, enrollmentMode: $enrollmentMode, signerName: $signerName, signerSignature: $signerSignature, applicationQuestions: $applicationQuestions) {
       id
       title
@@ -252,6 +252,12 @@ export const GENERATE_AI_QUIZ = gql`
 export const HINT_FOR_QUESTION = gql`
   mutation HintForQuestion($questionText: String!, $options: [String!]!) {
     hintForQuestion(questionText: $questionText, options: $options)
+  }
+`;
+
+export const GENERATE_QUESTION_EXPLANATION = gql`
+  mutation GenerateQuestionExplanation($questionText: String!, $options: [String!]!, $correctOptionIndex: Int!) {
+    generateQuestionExplanation(questionText: $questionText, options: $options, correctOptionIndex: $correctOptionIndex)
   }
 `;
 
