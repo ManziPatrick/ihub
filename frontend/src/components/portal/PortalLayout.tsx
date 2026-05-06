@@ -746,7 +746,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 lg:p-6 overflow-y-auto custom-scrollbar">
+        <main className="flex-1 p-4 lg:p-6 pb-24 overflow-y-auto custom-scrollbar">
           <ProfileCompletionGuard>
             {children}
           </ProfileCompletionGuard>

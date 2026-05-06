@@ -140,12 +140,25 @@ export function FloatingChat() {
   const currentOtherUser = activeConversation?.otherUser || activeConversation?.participants?.find((p: any) => p.id !== user?.id);
 
   return (
-    <div className="fixed bottom-0 right-0 md:right-8 z-[100] w-full md:w-80 pointer-events-auto">
-      <Card className="border-border/50 shadow-2xl rounded-t-xl overflow-hidden flex flex-col bg-card mx-auto">
+    <div className={cn(
+      "fixed z-[100] transition-all duration-300 pointer-events-auto",
+      viewState === 'collapsed' 
+        ? "bottom-6 right-6 w-auto" 
+        : "bottom-0 right-0 md:right-8 md:bottom-0 w-full md:w-80"
+    )}>
+      <Card className={cn(
+        "border-border/50 shadow-2xl overflow-hidden flex flex-col bg-card transition-all duration-300",
+        viewState === 'collapsed' ? "rounded-full" : "rounded-t-xl mx-auto"
+      )}>
         {/* Header Bar - Always visible */}
         <div
           onClick={handleToggleHeader}
-          className="bg-card hover:bg-accent/5 px-4 py-3 flex items-center justify-between cursor-pointer border-b border-border/50 transition-colors"
+          className={cn(
+            "bg-card hover:bg-accent/5 flex items-center transition-colors cursor-pointer",
+            viewState === 'collapsed' 
+              ? "p-3 rounded-full border border-border/50" 
+              : "px-4 py-3 justify-between border-b border-border/50"
+          )}
         >
           <div className="flex items-center gap-2.5">
             {viewState === 'chat' && activeConversation ? (
@@ -178,24 +191,26 @@ export function FloatingChat() {
                   <MessageSquare className="w-5 h-5 text-accent" />
                   <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-accent rounded-full border-2 border-card"></span>
                 </div>
-                <span className="font-heading font-medium text-sm text-card-foreground tracking-wide">Messaging</span>
+                {viewState !== 'collapsed' && (
+                  <span className="font-heading font-medium text-sm text-card-foreground tracking-wide">Messaging</span>
+                )}
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-card-foreground/50 hover:text-accent hidden md:flex" onClick={openFullChat}>
-              <Maximize2 className="w-3.5 h-3.5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-card-foreground/50 hover:text-accent" onClick={handleToggleHeader}>
-              {viewState === 'collapsed' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </Button>
-            {viewState !== 'collapsed' && (
+          {viewState !== 'collapsed' && (
+            <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-card-foreground/50 hover:text-accent hidden md:flex" onClick={openFullChat}>
+                <Maximize2 className="w-3.5 h-3.5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-card-foreground/50 hover:text-accent" onClick={handleToggleHeader}>
+                <ChevronDown className="w-4 h-4" />
+              </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7 text-card-foreground/50 hover:text-accent md:hidden" onClick={() => setViewState('collapsed')}>
                 <X className="w-4 h-4" />
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Content Area */}
