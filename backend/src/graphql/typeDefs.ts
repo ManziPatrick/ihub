@@ -332,6 +332,7 @@ export const typeDefs = `#graphql
     submissionRequired: Boolean
     signerName: String
     signerSignature: String
+    school: String
     createdAt: String!
     updatedAt: String!
   }
@@ -1030,6 +1031,7 @@ export const typeDefs = `#graphql
       submissionRequired: Boolean
       signerName: String
       signerSignature: String
+      school: String
       applicationQuestions: [ApplicationQuestionInput]
       modules: [ModuleInput!]!
     ): Course
@@ -1048,6 +1050,7 @@ export const typeDefs = `#graphql
       submissionRequired: Boolean
       signerName: String
       signerSignature: String
+      school: String
       applicationQuestions: [ApplicationQuestionInput]
       modules: [ModuleInput!]
     ): Course

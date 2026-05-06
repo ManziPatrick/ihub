@@ -25,6 +25,9 @@ interface Certificate {
   user?: {
       fullName: string;
   };
+  course?: {
+      school?: string;
+  };
 }
 
 interface ViewCertificateDialogProps {
@@ -200,6 +203,7 @@ export function ViewCertificateDialog({
                     credentialId={certificate.credentialId}
                     signerName={certificate.signerName || "Patrick Manzi"}
                     signerSignature={certificate.signerSignature}
+                    schoolName={certificate.course?.school}
                 />
             </div>
           </div>

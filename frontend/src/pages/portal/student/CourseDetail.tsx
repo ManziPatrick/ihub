@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { TextEditor } from "@/components/ui/text-editor";
 import {
   Dialog,
@@ -637,58 +638,62 @@ export default function CourseDetail() {
               <CardContent className="p-0">
                 <ScrollArea className="h-[600px]">
                   <div className="p-4 space-y-6">
-                    {course.modules?.map((mod: any, mIdx: number) => {
-                      const modCompleted = isModuleCompleted(mod);
-                      return (
-                        <div key={mod.id || mod._id} className="space-y-2">
-                          <div className="flex items-center justify-between px-2">
-                            <h4 className="text-xs font-bold text-accent uppercase">{mod.title}</h4>
-                            {modCompleted && (
-                              <button
-                                onClick={() => handleDownloadModuleCert(mod)}
-                                title="Download Module Certificate"
-                                className="flex items-center gap-1 text-[10px] font-black text-gold hover:text-gold/80 transition-colors"
-                              >
-                                <Award className="w-3 h-3" />
-                                <span>Cert</span>
-                              </button>
-                            )}
-                          </div>
-                          <div className="space-y-1">
-                            {mod.lessons?.map((les: any) => {
-                              const lesId = les.id || les._id;
-                              const isActive = lesId === activeLessonId;
-                              const isComp = completedLessons.some((cl: any) => cl.lessonId === lesId) || forcedProgressLessonIds.includes(lesId);
-
-                              const lIdx = allLessons.findIndex(l => (l.id || l._id) === lesId);
-                              const prevRequiredLessons = allLessons.slice(0, lIdx).filter((pl) =>
-                                pl.requiredAssignment || pl.type === 'assignment' || pl.type === 'quiz' || pl.isAssignment
-                              );
-                              const isLock = prevRequiredLessons.some((pl) => !isLessonSatisfied(pl));
-
-                              return (
+                    <Accordion type="single" collapsible className="w-full space-y-4">
+                      {course.modules?.map((mod: any, mIdx: number) => {
+                        const modCompleted = isModuleCompleted(mod);
+                        return (
+                          <AccordionItem key={mod.id || mod._id} value={`module-${mIdx}`} className="border rounded-xl px-4 bg-background">
+                            <div className="flex items-center justify-between w-full">
+                              <AccordionTrigger className="hover:no-underline flex-1 text-left py-4">
+                                <h4 className="text-xs font-bold text-accent uppercase">{mod.title}</h4>
+                              </AccordionTrigger>
+                              {modCompleted && (
                                 <button
-                                  key={lesId}
-                                  disabled={isLock}
-                                  onClick={() => !isLock && setActiveLessonId(lesId)}
-                                  className={`w-full text-left p-3 rounded-xl text-sm transition-all flex items-center gap-3 ${isActive ? 'bg-accent/10 border border-accent/20 text-accent font-bold' : isLock ? 'opacity-30 cursor-not-allowed grayscale pointer-events-none' : 'hover:bg-muted/10'}`}
+                                  onClick={(e) => { e.stopPropagation(); handleDownloadModuleCert(mod); }}
+                                  title="Download Module Certificate"
+                                  className="flex items-center gap-1 text-[10px] font-black text-gold hover:text-gold/80 transition-colors mr-2 z-10 relative"
                                 >
-                                  {isComp ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : isLock ? <Lock className="w-3.5 h-3.5" /> : React.createElement(getLessonIcon(les.type), { className: "w-3.5 h-3.5" })}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="truncate">{les.title}</p>
-                                    {les.type === 'quiz' && me?.grades?.some((g: any) => g.lessonId === lesId) && (
-                                      <p className="text-[10px] text-accent font-black uppercase">
-                                        Grade: {me.grades.find((g: any) => g.lessonId === lesId).score}%
-                                      </p>
-                                    )}
-                                  </div>
+                                  <Award className="w-3 h-3" />
+                                  <span>Cert</span>
                                 </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
+                              )}
+                            </div>
+                            <AccordionContent className="pt-2 pb-4 space-y-1">
+                              {mod.lessons?.map((les: any) => {
+                                const lesId = les.id || les._id;
+                                const isActive = lesId === activeLessonId;
+                                const isComp = completedLessons.some((cl: any) => cl.lessonId === lesId) || forcedProgressLessonIds.includes(lesId);
+
+                                const lIdx = allLessons.findIndex(l => (l.id || l._id) === lesId);
+                                const prevRequiredLessons = allLessons.slice(0, lIdx).filter((pl) =>
+                                  pl.requiredAssignment || pl.type === 'assignment' || pl.type === 'quiz' || pl.isAssignment
+                                );
+                                const isLock = prevRequiredLessons.some((pl) => !isLessonSatisfied(pl));
+
+                                return (
+                                  <button
+                                    key={lesId}
+                                    disabled={isLock}
+                                    onClick={() => !isLock && setActiveLessonId(lesId)}
+                                    className={`w-full text-left p-3 rounded-xl text-sm transition-all flex items-center gap-3 ${isActive ? 'bg-accent/10 border border-accent/20 text-accent font-bold' : isLock ? 'opacity-30 cursor-not-allowed grayscale pointer-events-none' : 'hover:bg-muted/10'}`}
+                                  >
+                                    {isComp ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : isLock ? <Lock className="w-3.5 h-3.5" /> : React.createElement(getLessonIcon(les.type), { className: "w-3.5 h-3.5" })}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="truncate">{les.title}</p>
+                                      {les.type === 'quiz' && me?.grades?.some((g: any) => g.lessonId === lesId) && (
+                                        <p className="text-[10px] text-accent font-black uppercase">
+                                          Grade: {me.grades.find((g: any) => g.lessonId === lesId).score}%
+                                        </p>
+                                      )}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </AccordionContent>
+                          </AccordionItem>
+                        );
+                      })}
+                    </Accordion>
                   </div>
                 </ScrollArea>
               </CardContent>

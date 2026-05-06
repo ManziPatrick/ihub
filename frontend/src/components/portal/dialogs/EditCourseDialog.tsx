@@ -394,6 +394,7 @@ export function EditCourseDialog({
     isFree: false,
     level: "Beginner",
     category: "Development",
+    school: "",
     instructorId: "",
     status: "draft",
     allowedDeliveryModes: ["online"],
@@ -437,6 +438,7 @@ export function EditCourseDialog({
             isFree: course.price === 0,
             level: course.level || "Beginner",
             category: course.category || "Development",
+            school: course.school || "",
             instructorId: course.instructor?.id || course.instructor || "",
             status: course.status || "draft",
             allowedDeliveryModes: course.allowedDeliveryModes || ["online"],
@@ -485,6 +487,7 @@ export function EditCourseDialog({
             thumbnail: shouldUpdateDetails ? course.thumbnail : prev.thumbnail,
             level: (prev.level === "Beginner" && course.level && course.level !== "Beginner") ? course.level : prev.level,
             category: (prev.category === "Development" && course.category && course.category !== "Development") ? course.category : prev.category,
+            school: (!prev.school && course.school) ? course.school : prev.school,
             modules: (hasMoreModules || hasLessonsNow) ? course.modules.map((m: any) => ({
               ...m,
               title: m.title || "",
@@ -523,6 +526,7 @@ export function EditCourseDialog({
       discountPrice: parseFloat(formData.discountPrice) || 0,
       level: formData.level,
       category: formData.category,
+      school: formData.school,
       instructorId: formData.instructorId,
       status: formData.status,
       allowedDeliveryModes: formData.allowedDeliveryModes,
@@ -686,11 +690,18 @@ export function EditCourseDialog({
                             <label className="text-xs font-bold mb-1.5 block text-muted-foreground">Difficulty Level</label>
                             <Input
                               placeholder="Beginner"
+                              list="course-levels"
                               className="bg-background border-accent/10 h-10 font-medium"
                               value={formData.level}
                               onChange={(e) => setFormData({ ...formData, level: e.target.value })}
                               disabled={!isAdmin}
                             />
+                            <datalist id="course-levels">
+                              <option value="Beginner" />
+                              <option value="Intermediate" />
+                              <option value="Advanced" />
+                              <option value="Expert" />
+                            </datalist>
                           </div>
                           <div>
                             <label className="text-xs font-bold mb-1.5 block text-muted-foreground">Subject Category</label>
@@ -706,6 +717,23 @@ export function EditCourseDialog({
                               {categories.map((cat: string) => (
                                 <option key={cat} value={cat} />
                               ))}
+                            </datalist>
+                          </div>
+                          <div className="col-span-2">
+                            <label className="text-xs font-bold mb-1.5 block text-muted-foreground">Provider / School</label>
+                            <Input
+                              placeholder="e.g. Kingdavid, Greenhill Academy"
+                              list="course-schools"
+                              className="bg-background border-accent/10 h-10 font-medium"
+                              value={formData.school || ""}
+                              onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+                              disabled={!isAdmin}
+                            />
+                            <datalist id="course-schools">
+                              <option value="Kingdavid" />
+                              <option value="Greenhill Academy" />
+                              <option value="Andela" />
+                              <option value="iHub" />
                             </datalist>
                           </div>
                         </div>

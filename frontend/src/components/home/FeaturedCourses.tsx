@@ -262,6 +262,7 @@ export function FeaturedCourses() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterPrice, setFilterPrice] = useState<string>("all");
   const [filterLevel, setFilterLevel] = useState<string>("all");
+  const [filterSchool, setFilterSchool] = useState<string>("all");
 
   const tabScrollRef = useRef<HTMLDivElement>(null);
 
@@ -340,6 +341,14 @@ export function FeaturedCourses() {
     return ["All", ...list];
   }, [courses]);
 
+  const courseSchools = useMemo(() => {
+    const seen = new Set<string>();
+    courses.forEach((c: any) => {
+      if (c.school) seen.add(c.school);
+    });
+    return ["all", ...Array.from(seen).sort()];
+  }, [courses]);
+
   const internshipCategories = useMemo(() => {
     const seen = new Set<string>(["Languages", "Technology"]);
     internships.forEach((i: any) => seen.add(i.normalizedCategory));
@@ -368,12 +377,13 @@ export function FeaturedCourses() {
       
       const matchPrice = filterPrice === "all" ? true : filterPrice === "free" ? c.price === 0 : c.price > 0;
       const matchLevel = filterLevel === "all" ? true : c.level?.toLowerCase() === filterLevel;
+      const matchSchool = filterSchool === "all" ? true : c.school === filterSchool;
       const statusLower = c.status?.toLowerCase();
       const isOpen = !c.status || statusLower === "published" || statusLower === "active" || statusLower === "open";
 
-      return matchCat && matchSearch && matchPrice && matchLevel && isOpen;
+      return matchCat && matchSearch && matchPrice && matchLevel && matchSchool && isOpen;
     });
-  }, [courses, activeCategory, searchQuery, filterPrice, filterLevel]);
+  }, [courses, activeCategory, searchQuery, filterPrice, filterLevel, filterSchool]);
 
   const filteredInternships = useMemo(() => {
     return internships.filter((intern: any) => {
@@ -404,6 +414,7 @@ export function FeaturedCourses() {
     setSearchQuery("");
     setFilterPrice("all");
     setFilterLevel("all");
+    setFilterSchool("all");
   };
 
   // Lock body scroll when filter is open
@@ -556,22 +567,19 @@ export function FeaturedCourses() {
                 {/* Category Filter */}
                 <div>
                   <h4 className="text-sm font-medium text-foreground mb-3">Category</h4>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
                     {currentCategories.map((cat) => (
-                      <label 
-                        key={cat} 
-                        className="flex items-center gap-3 cursor-pointer group p-1"
+                      <button
+                        key={cat}
+                        onClick={() => setActiveCategory(cat)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                          activeCategory === cat
+                            ? "bg-accent text-accent-foreground shadow-sm"
+                            : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent"
+                        }`}
                       >
-                        <input 
-                          type="radio" 
-                          name="category-filter"
-                          value={cat}
-                          checked={activeCategory === cat}
-                          onChange={() => setActiveCategory(cat)}
-                          className="w-4 h-4 text-accent border-muted-foreground/30 focus:ring-accent/30 cursor-pointer"
-                        />
-                        <span className="text-sm text-muted-foreground group-hover:text-foreground">{cat}</span>
-                      </label>
+                        {cat}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -623,6 +631,31 @@ export function FeaturedCourses() {
                     </div>
                   </div>
                 )}
+
+                {/* School Filter (Only for Courses) */}
+                {section === "programs" && courseSchools.length > 1 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-foreground mb-3">School / Provider</h4>
+                    <div className="flex flex-col gap-2">
+                      {courseSchools.map((s) => (
+                        <label 
+                          key={s} 
+                          className="flex items-center gap-3 cursor-pointer group p-1"
+                        >
+                          <input 
+                            type="radio" 
+                            name="school-filter"
+                            value={s}
+                            checked={filterSchool === s}
+                            onChange={() => setFilterSchool(s)}
+                            className="w-4 h-4 text-accent border-muted-foreground/30 focus:ring-accent/30 cursor-pointer"
+                          />
+                          <span className="text-sm text-muted-foreground group-hover:text-foreground capitalize">{s === "all" ? "All Schools" : s}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="p-4 border-t border-border/50 bg-muted/20 flex gap-3">
@@ -633,6 +666,7 @@ export function FeaturedCourses() {
                     setActiveCategory("All");
                     setFilterPrice("all");
                     setFilterLevel("all");
+                    setFilterSchool("all");
                   }}
                 >
                   Reset
@@ -817,6 +851,11 @@ export function FeaturedCourses() {
                               <span className="text-[9px] bg-accent/5 px-2 py-0.5 rounded-full text-accent font-medium uppercase tracking-wider">
                                 {course.level || "All levels"}
                               </span>
+                              {course.school && (
+                                <span className="text-[9px] bg-indigo-500/10 px-2 py-0.5 rounded-full text-indigo-400 font-medium uppercase tracking-wider line-clamp-1">
+                                  {course.school}
+                               </span>
+                              )}
                             </div>
                             <h3 className="font-heading text-sm font-bold text-card-foreground mb-1 line-clamp-2 group-hover:text-accent transition-colors">
                               {course.title}

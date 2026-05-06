@@ -281,6 +281,12 @@ export default function StudentCourses() {
                                 <Clock className="w-3.5 h-3.5" />
                                 {course.level}
                               </span>
+                              {course.school && (
+                                <span className="flex items-center gap-1 font-semibold text-indigo-500">
+                                  <Briefcase className="w-3.5 h-3.5" />
+                                  {course.school}
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
@@ -370,6 +376,12 @@ export default function StudentCourses() {
                             {course.studentsEnrolled?.length || 0}
                           </span>
                         </div>
+                        {course.school && (
+                          <div className="flex items-center gap-1 text-xs font-semibold text-indigo-500 mb-3">
+                            <Briefcase className="w-3.5 h-3.5" />
+                            {course.school}
+                          </div>
+                        )}
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-accent">
                             {isFree ? 'Free' : (course.price.toLocaleString() + ' RWF')}

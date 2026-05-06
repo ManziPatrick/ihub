@@ -182,6 +182,7 @@ export const GET_USER_CERTIFICATES = gql`
       course {
         id
         title
+        school
       }
       downloadUrl
     }
@@ -252,6 +253,7 @@ export const GET_COURSES = gql`
         enrollmentMode
         allowedDeliveryModes
         submissionRequired
+        school
         instructor {
           id
           username
@@ -304,6 +306,7 @@ export const GET_COURSE = gql`
       level
       category
       status
+      school
       enrollmentMode
       allowedDeliveryModes
       submissionRequired
@@ -380,6 +383,7 @@ export const GET_ME = gql`
         discountPrice
         level
         category
+        school
         modules {
           title
           description
@@ -859,6 +863,7 @@ export const GET_MY_CERTIFICATES = gql`
       course {
         id
         title
+        school
       }
       createdAt
       updatedAt

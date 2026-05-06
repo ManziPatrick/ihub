@@ -8,6 +8,7 @@ interface CertificateTemplateProps {
   credentialId: string;
   signerName: string;
   signerSignature?: string;
+  schoolName?: string;
 }
 
 export const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
@@ -16,7 +17,8 @@ export const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
   issueDate,
   credentialId,
   signerName,
-  signerSignature
+  signerSignature,
+  schoolName
 }) => {
   const formatDate = (dateStr: string) => {
     try {
@@ -112,7 +114,7 @@ export const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
             verify.ihub.com/{credentialId}
           </div>
           <div>
-            IHUB ACADEMY • KIGALI, RWANDA
+            {schoolName ? schoolName.toUpperCase() : "IHUB ACADEMY"} • KIGALI, RWANDA
           </div>
         </div>
       </div>
