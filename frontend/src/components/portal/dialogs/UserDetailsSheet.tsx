@@ -21,9 +21,16 @@ import {
     Globe, 
     Sparkles,
     User,
-    CheckCircle2
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    Award
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@apollo/client/react";
+import { GET_USER_PROFILE, GET_USER_CERTIFICATES } from "@/lib/graphql/queries";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 
 interface UserDetailsSheetProps {
     open: boolean;
@@ -32,9 +39,25 @@ interface UserDetailsSheetProps {
 }
 
 export function UserDetailsSheet({ open, onOpenChange, user }: UserDetailsSheetProps) {
+    const { user: currentUser } = useAuth();
+    const [showGrades, setShowGrades] = useState(false);
+    const [showCertificates, setShowCertificates] = useState(false);
+
+    const { data: profileData } = useQuery(GET_USER_PROFILE, {
+        variables: { userId: user?.id },
+        skip: !user?.id || !open
+    });
+
+    const { data: certData } = useQuery(GET_USER_CERTIFICATES, {
+        variables: { userId: user?.id },
+        skip: !user?.id || !open || currentUser?.role !== 'super_admin'
+    });
+
     if (!user) return null;
 
-    const profile = user.studentProfile || {};
+    const fullUser = (profileData as any)?.user || user;
+    const profile = fullUser.studentProfile || {};
+    const certificates = (certData as any)?.getUserCertificates || [];
     const getInitials = (name: string) => (name || "").split(" ").map(n => n[0]).join("").toUpperCase();
 
     const InfoCard = ({ icon: Icon, label, value, className }: any) => (
@@ -152,6 +175,83 @@ export function UserDetailsSheet({ open, onOpenChange, user }: UserDetailsSheetP
                                         </a>
                                     )}
                                 </div>
+                            </div>
+                        )}
+                        {/* Grades & Performance */}
+                        {(fullUser.grades || []).length > 0 && (
+                            <div className="space-y-4">
+                                <button 
+                                  onClick={() => setShowGrades(!showGrades)}
+                                  className="w-full flex items-center justify-between text-xs font-black uppercase tracking-[0.2em] text-accent p-3 bg-accent/5 rounded-xl border border-accent/10 hover:bg-accent/10 transition-colors"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <GraduationCap className="w-4 h-4" />
+                                        Grades & Performance ({(fullUser.grades || []).length})
+                                    </span>
+                                    {showGrades ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                </button>
+                                
+                                {showGrades && (
+                                    <div className="space-y-3 animate-in slide-in-from-top-2">
+                                        {fullUser.grades.map((grade: any, i: number) => (
+                                            <div key={i} className="p-4 rounded-2xl bg-secondary/20 border border-border/30 flex items-center justify-between gap-4">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-bold truncate text-foreground">{grade.lesson?.title || "Assignment"}</p>
+                                                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{grade.courseId || "Course Unit"}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="flex items-center gap-1 justify-end">
+                                                        <span className={cn("text-lg font-black", grade.score >= 70 ? "text-green-500" : "text-orange-500")}>
+                                                            {grade.score}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-muted-foreground">/ 100</span>
+                                                    </div>
+                                                    <p className="text-[9px] font-black uppercase text-muted-foreground tracking-tighter">
+                                                        {new Date(parseInt(grade.gradedAt) || grade.gradedAt).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Superadmin: Certificates */}
+                        {currentUser?.role === 'super_admin' && certificates.length > 0 && (
+                            <div className="space-y-4">
+                                <button 
+                                  onClick={() => setShowCertificates(!showCertificates)}
+                                  className="w-full flex items-center justify-between text-xs font-black uppercase tracking-[0.2em] text-amber-500 p-3 bg-amber-500/5 rounded-xl border border-amber-500/10 hover:bg-amber-500/10 transition-colors"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Award className="w-4 h-4" />
+                                        Certificates ({certificates.length})
+                                    </span>
+                                    {showCertificates ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                </button>
+                                
+                                {showCertificates && (
+                                    <div className="space-y-3 animate-in slide-in-from-top-2">
+                                        {certificates.map((cert: any, i: number) => (
+                                            <div key={i} className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex flex-col gap-2">
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-bold text-amber-500">{cert.courseTitle}</p>
+                                                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono mt-1">ID: {cert.credentialId}</p>
+                                                    </div>
+                                                    <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+                                                        {cert.status}
+                                                    </Badge>
+                                                </div>
+                                                <div className="flex justify-between items-center text-xs text-muted-foreground pt-2 border-t border-amber-500/10 mt-2">
+                                                    <span>Issued: {new Date(parseInt(cert.issueDate) || cert.issueDate).toLocaleDateString()}</span>
+                                                    {cert.grade && <span className="font-bold text-foreground">Grade: {cert.grade}%</span>}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 

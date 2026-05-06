@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { RequestHelpDialog, BookCallDialog } from "@/components/portal/dialogs";
 import { LessonQuiz } from "@/components/portal/LessonQuiz";
+import { AssignmentExamView } from "@/components/portal/AssignmentExamView";
 import { PPTViewer } from "@/components/portal/PPTViewer";
 import { toast } from "sonner";
 import { useQuery, useMutation } from "@apollo/client/react";
@@ -455,6 +456,20 @@ export default function CourseDetail() {
                     <LessonQuiz
                       courseId={courseId!}
                       lessonId={(currentLesson.id || currentLesson._id)}
+                      onComplete={handleMarkComplete}
+                    />
+                  </Card>
+                );
+              }
+
+              if (currentLesson?.assignmentQuestions?.length > 0) {
+                return (
+                  <Card className="border-border/50 p-8 shadow-2xl">
+                    <AssignmentExamView
+                      courseId={courseId!}
+                      lessonId={(currentLesson.id || currentLesson._id)}
+                      questions={currentLesson.assignmentQuestions}
+                      config={currentLesson.assignmentConfig}
                       onComplete={handleMarkComplete}
                     />
                   </Card>

@@ -26,6 +26,19 @@ const lessonSchema = new mongoose.Schema({
   requiredAssignment: { type: Boolean, default: false },
   assignmentDescription: { type: String },
   assignmentDeliverables: [{ type: String }],
+  assignmentQuestions: [{
+    questionText: { type: String },
+    type: { type: String, enum: ['mcq', 'open'], default: 'open' },
+    options: [{ type: String }],
+    correctOptionIndex: { type: Number },
+    points: { type: Number, default: 10 }
+  }],
+  assignmentConfig: {
+    timeLimit: { type: Number }, // in minutes
+    allowRetakes: { type: Boolean, default: false },
+    disableRightClick: { type: Boolean, default: false },
+    mode: { type: String, enum: ['exam', 'exercise'], default: 'exam' }
+  },
   order: { type: Number }
 });
 

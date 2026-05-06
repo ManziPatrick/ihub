@@ -42,7 +42,7 @@ import { GET_ALL_PROJECTS, GET_USERS, GET_ASSIGNMENT_SUBMISSIONS } from "@/lib/g
 import { DELETE_PROJECT, UPDATE_PROJECT, GRADE_ASSIGNMENT } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { TeamChatDialog, ManageProjectTasksDialog, ProjectDetailsDialog, CreateAgileProjectDialog, CreateProjectDialog, GradeProjectDialog, BookCallDialog } from "@/components/portal/dialogs";
+import { TeamChatDialog, ManageProjectTasksDialog, ProjectDetailsDialog, CreateAgileProjectDialog, CreateProjectDialog, GradeProjectDialog, BookCallDialog, ViewSubmissionDialog } from "@/components/portal/dialogs";
 import { Textarea } from "@/components/ui/textarea";
 
 interface AssignmentSubmission {
@@ -56,7 +56,22 @@ interface AssignmentSubmission {
   };
   courseId: string;
   lessonId: string;
-  content: string;
+  course?: { id: string; title: string; };
+  lesson?: {
+    title: string;
+    assignmentQuestions?: Array<{
+      id: string;
+      questionText: string;
+      type: string;
+      options?: string[];
+      correctOptionIndex?: number;
+      points?: number;
+    }>;
+  };
+  content?: string;
+  answers?: Array<{ questionId: string; answerText: string; score?: number; aiFeedback?: string; }>;
+  totalScore?: number;
+  timeTaken?: number;
   status: string;
   grade?: number;
   feedback?: string;
@@ -98,6 +113,7 @@ export default function AdminProjects() {
   const [gradeValue, setGradeValue] = useState("");
   const [feedbackValue, setFeedbackValue] = useState("");
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [viewSubmission, setViewSubmission] = useState<AssignmentSubmission | null>(null);
 
   const [assignPage, setAssignPage] = useState(1);
   const assignPageSize = 10;
@@ -536,7 +552,27 @@ export default function AdminProjects() {
                                 <Calendar className="w-3 h-3" />
                                 {new Date(parseInt(submission.createdAt)).toLocaleDateString()}
                               </div>
-                              <p className="text-sm line-clamp-2 text-muted-foreground">{submission.content}</p>
+                              {submission.answers && submission.answers.length > 0 ? (
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className="text-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-bold">
+                                    {submission.answers.filter(a => a.answerText?.trim()).length}/{submission.lesson?.assignmentQuestions?.length || submission.answers.length} answered
+                                  </span>
+                                  {submission.totalScore != null && (
+                                    <span className="text-xs bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold">
+                                      AI Score: {submission.totalScore} pts
+                                    </span>
+                                  )}
+                                  {submission.timeTaken != null && (
+                                    <span className="text-xs text-muted-foreground">
+                                      ⏱ {Math.floor(submission.timeTaken / 60)}m {submission.timeTaken % 60}s
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-sm line-clamp-2 text-muted-foreground">
+                                  {submission.content?.replace(/<[^>]*>/g, '') || 'No content'}
+                                </p>
+                              )}
                             </CardContent>
                           </Card>
                         ))}
@@ -558,24 +594,41 @@ export default function AdminProjects() {
                               <p className="text-lg">{selectedSubmission.user?.fullName || selectedSubmission.user?.username}</p>
                             </div>
                             <div className="space-y-2">
-                              <label className="text-sm font-bold">Submission Content</label>
-                              <div className="p-4 bg-muted/20 rounded-lg border border-border/30">
-                                <p className="text-sm font-mono whitespace-pre-wrap break-all">{selectedSubmission.content}</p>
-                                {selectedSubmission.content.startsWith("http") && (
-                                  <div className="flex gap-2 mt-2">
-                                    <Button variant="ghost" size="sm" asChild>
-                                      <a href={selectedSubmission.content} target="_blank" rel="noopener noreferrer">
-                                        <ExternalLink className="w-4 h-4 mr-2" />
-                                        Open Link
-                                      </a>
-                                    </Button>
-                                    <Button variant="outline" size="sm" className="border-border/50" asChild>
-                                      <a href={selectedSubmission.content} download target="_blank" rel="noopener noreferrer">
-                                        <FolderOpen className="w-4 h-4 mr-2" />
-                                        Download
-                                      </a>
-                                    </Button>
+                              <div className="flex items-center justify-between">
+                                <label className="text-sm font-bold">Submission Content</label>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setViewSubmission(selectedSubmission)}
+                                  className="h-7 text-xs"
+                                >
+                                  <Eye className="w-3 h-3 mr-1" /> View Full Details
+                                </Button>
+                              </div>
+                              <div className="p-4 bg-muted/20 rounded-lg border border-border/30 max-h-[200px] overflow-y-auto">
+                                {(selectedSubmission.answers && selectedSubmission.answers.length > 0) ? (
+                                  <div className="space-y-3">
+                                    {selectedSubmission.answers.map((answer, idx) => {
+                                      const question = selectedSubmission.lesson?.assignmentQuestions?.find(q => q.id === answer.questionId);
+                                      return (
+                                        <div key={idx} className="text-sm">
+                                          <p className="font-semibold text-foreground mb-1">
+                                            Q{idx + 1}: {question?.questionText || `Question ${idx + 1}`}
+                                          </p>
+                                          <p className="text-muted-foreground bg-background/50 p-2 rounded-lg">
+                                            {question?.type === 'mcq' && question.options
+                                              ? (question.options[parseInt(answer.answerText)] || answer.answerText)
+                                              : (answer.answerText || <em>No answer</em>)
+                                            }
+                                          </p>
+                                        </div>
+                                      );
+                                    })}
                                   </div>
+                                ) : (
+                                  <p className="text-sm font-mono whitespace-pre-wrap break-all">
+                                    {selectedSubmission.content || 'No content submitted'}
+                                  </p>
                                 )}
                               </div>
                             </div>
@@ -754,6 +807,24 @@ export default function AdminProjects() {
         mentorId={selectedSubmission?.user?.id || selectedSubmission?.userId}
         mentorName={selectedSubmission?.user?.fullName || selectedSubmission?.user?.username}
         purpose="assignment-review"
+      />
+
+      <ViewSubmissionDialog
+        open={!!viewSubmission}
+        onOpenChange={(open) => !open && setViewSubmission(null)}
+        submission={viewSubmission ? {
+          id: viewSubmission.id,
+          student: viewSubmission.user?.fullName || viewSubmission.user?.username || 'Unknown',
+          assignment: viewSubmission.lesson?.title || viewSubmission.lessonId,
+          course: (viewSubmission as any).course?.title || viewSubmission.courseId,
+          submittedAt: new Date(parseInt(viewSubmission.createdAt || '0')).toLocaleString(),
+          type: (viewSubmission.answers?.length || 0) > 0 ? 'exam' : 'assignment',
+          content: viewSubmission.content,
+          answers: viewSubmission.answers,
+          totalScore: viewSubmission.totalScore,
+          timeTaken: viewSubmission.timeTaken,
+          lessonQuestions: viewSubmission.lesson?.assignmentQuestions,
+        } : null}
       />
     </PortalLayout>
   );

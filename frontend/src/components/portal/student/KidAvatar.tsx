@@ -4,9 +4,10 @@ export type AvatarExpression = 'happy' | 'sad' | 'thinking' | 'celebrating' | 'n
 
 interface KidAvatarProps {
   expression: AvatarExpression;
+  className?: string;
 }
 
-export function KidAvatar({ expression }: KidAvatarProps) {
+export function KidAvatar({ expression, className }: KidAvatarProps) {
   const getAvatar = () => {
     switch (expression) {
       case 'happy':
@@ -25,7 +26,7 @@ export function KidAvatar({ expression }: KidAvatarProps) {
   const { emoji, color, text } = getAvatar();
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className={`flex flex-col items-center gap-4 ${className || ""}`}>
       <motion.div
         key={expression}
         initial={{ scale: 0.5, rotate: -20 }}

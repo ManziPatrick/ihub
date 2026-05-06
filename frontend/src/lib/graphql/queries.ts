@@ -132,6 +132,62 @@ export const GET_ALL_STUDENTS = gql`
   }
 `;
 
+export const GET_TOP_STUDENTS = gql`
+  query GetTopStudents($courseId: ID, $limit: Int) {
+    getTopStudents(courseId: $courseId, limit: $limit) {
+      id
+      username
+      email
+      role
+      level
+      xp
+      avatar
+      studentProfile {
+        school
+      }
+      enrolledCourses {
+        id
+        title
+      }
+    }
+  }
+`;
+
+export const GET_ANALYTICS_EXPORT = gql`
+  query GetAnalyticsExport {
+    getAnalyticsExport
+  }
+`;
+
+export const GET_USER_CERTIFICATES = gql`
+  query GetUserCertificates($userId: ID!) {
+    getUserCertificates(userId: $userId) {
+      id
+      courseTitle
+      issueDate
+      credentialId
+      status
+      grade
+      progress
+      requirements {
+        title
+        completed
+        current
+        required
+      }
+      student {
+        id
+        username
+      }
+      course {
+        id
+        title
+      }
+      downloadUrl
+    }
+  }
+`;
+
 export const GET_ALL_TRAINERS = gql`
   query GetAllTrainers {
     getAllTrainers {
@@ -277,6 +333,19 @@ export const GET_COURSE = gql`
           isAssignment
           assignmentDescription
           assignmentDeliverables
+          assignmentQuestions {
+            id
+            questionText
+            type
+            options
+            points
+          }
+          assignmentConfig {
+            timeLimit
+            allowRetakes
+            disableRightClick
+            mode
+          }
         }
       }
       studentsEnrolled {
@@ -1944,11 +2013,27 @@ export const GET_ASSIGNMENT_SUBMISSIONS = gql`
         lessonId
         lesson {
           title
+          assignmentQuestions {
+            id
+            questionText
+            type
+            options
+            correctOptionIndex
+            points
+          }
         }
         content
         status
         grade
         feedback
+        totalScore
+        timeTaken
+        answers {
+          questionId
+          answerText
+          score
+          aiFeedback
+        }
         createdAt
       }
       pagination {
@@ -2168,6 +2253,22 @@ export const MY_COURSE_APPLICATIONS = gql`
       }
       rejectionReason
       createdAt
+    }
+  }
+`;
+
+export const GET_ALL_USER_GRADE_REPORTS = gql`
+  query GetAllUserGradeReports {
+    allUserGradeReports {
+      id
+      userId
+      username
+      email
+      courseTitle
+      lessonTitle
+      score
+      gradedAt
+      status
     }
   }
 `;

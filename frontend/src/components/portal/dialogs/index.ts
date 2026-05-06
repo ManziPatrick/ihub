@@ -57,3 +57,6 @@ export { GraduationDialog } from "./GraduationDialog";
 export { ExplainTaskDialog } from "./ExplainTaskDialog";
 export { CreateInternshipMeetingDialog } from "./CreateInternshipMeetingDialog";
 export { ManageTeamMembersDialog } from "./ManageTeamMembersDialog";
+export { ManageAssignmentQuestionsDialog } from "./ManageAssignmentQuestionsDialog";
+export { AssignmentConfigDialog } from "./AssignmentConfigDialog";
+export { ExamConfigDialog } from "../ExamConfigDialog";

@@ -21,6 +21,9 @@ import {
   ChevronRight,
   Eye,
   Award,
+  Download,
+  Trophy,
+  Activity,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -37,8 +40,8 @@ import {
   DeleteConfirmDialog
 } from "@/components/portal/dialogs";
 import { toast } from "sonner";
-import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_USERS } from "@/lib/graphql/queries";
+import { useQuery, useMutation, useApolloClient } from "@apollo/client/react";
+import { GET_USERS, GET_TOP_STUDENTS, GET_ANALYTICS_EXPORT } from "@/lib/graphql/queries";
 import { CREATE_USER, UPDATE_USER, DELETE_USER } from "@/lib/graphql/mutations";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -79,9 +82,15 @@ export default function AdminUsers() {
   const [awardUser, setAwardUser] = useState<any | null>(null);
 
   // Queries & Mutations
+  const client = useApolloClient();
   const { data, loading, refetch } = useQuery(GET_USERS, {
     variables: { page: currentPage, limit: pageSize },
     pollInterval: 30000 // auto-refresh every 30 seconds
+  });
+  
+  const { data: topStudentsData } = useQuery(GET_TOP_STUDENTS, {
+    variables: { limit: 5 },
+    skip: currentUser?.role !== "admin" && currentUser?.role !== "super_admin"
   });
   const [createUserMutation] = useMutation(CREATE_USER, {
     refetchQueries: [{ query: GET_USERS }]
@@ -156,6 +165,33 @@ export default function AdminUsers() {
     }
   };
 
+  const handleExportCSV = async () => {
+    try {
+      const { data } = await client.query({
+        query: GET_ANALYTICS_EXPORT,
+        fetchPolicy: 'network-only'
+      });
+      const csvContent = (data as any)?.getAnalyticsExport;
+      if (!csvContent) {
+        toast.error("No data available to export.");
+        return;
+      }
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `student_analytics_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Analytics exported successfully!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to export data");
+    }
+  };
+
   return (
     <PortalLayout>
       <div className="space-y-6">
@@ -177,6 +213,61 @@ export default function AdminUsers() {
             <Plus className="w-4 h-4 mr-2" />
             Add User
           </Button>
+        </motion.div>
+
+        {/* Analytics & Export Top Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
+          {/* Top Students Leaderboard */}
+          <div className="md:col-span-2">
+            <Card className="border-accent/20 bg-accent/5 h-full">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4 text-accent">
+                  <Trophy className="w-5 h-5" />
+                  <h3 className="font-bold uppercase tracking-widest text-sm">Top 5 Students (XP Leaderboard)</h3>
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  {((topStudentsData as any)?.getTopStudents || []).map((student: any, idx: number) => (
+                    <div key={student.id} className="flex items-center gap-3 bg-background p-3 rounded-xl border border-border/50 flex-1 min-w-[200px]">
+                      <div className="w-8 h-8 rounded-full bg-accent/20 text-accent font-black flex items-center justify-center text-xs">
+                        #{idx + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold truncate">{student.username}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{student.xp || 0} XP • Lvl {student.level || 1}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {(!(topStudentsData as any)?.getTopStudents || (topStudentsData as any).getTopStudents.length === 0) && (
+                    <p className="text-sm text-muted-foreground italic">No student data available yet.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="md:col-span-1 flex flex-col gap-4">
+            <Card className="border-border/50 h-full flex flex-col justify-center">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <Activity className="w-5 h-5" />
+                  <h3 className="font-bold uppercase tracking-widest text-sm">Analytics & Reports</h3>
+                </div>
+                <Button 
+                  onClick={handleExportCSV}
+                  className="w-full bg-green-500/10 text-green-500 hover:bg-green-500/20 border border-green-500/20 h-12 rounded-xl flex items-center gap-2 font-bold"
+                  variant="outline"
+                >
+                  <Download className="w-4 h-4" />
+                  Export CSV Analytics
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </motion.div>
 
         {/* Filters */}

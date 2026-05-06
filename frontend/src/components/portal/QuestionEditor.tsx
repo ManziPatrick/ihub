@@ -11,8 +11,8 @@ import { Trash2, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const CREATE_QUESTION = gql`
-  mutation CreateQuestion($courseId: ID!, $questionText: String!, $options: [String!]!, $correctOptionIndex: Int!, $explanation: String) {
-    createQuestion(courseId: $courseId, questionText: $questionText, options: $options, correctOptionIndex: $correctOptionIndex, explanation: $explanation) {
+  mutation CreateQuestion($courseId: ID!, $type: String, $questionText: String!, $options: [String!]!, $correctOptionIndex: Int!, $explanation: String) {
+    createQuestion(courseId: $courseId, type: $type, questionText: $questionText, options: $options, correctOptionIndex: $correctOptionIndex, explanation: $explanation) {
       id
       questionText
     }
@@ -20,8 +20,8 @@ const CREATE_QUESTION = gql`
 `;
 
 const UPDATE_QUESTION = gql`
-  mutation UpdateQuestion($id: ID!, $questionText: String, $options: [String!], $correctOptionIndex: Int, $explanation: String) {
-    updateQuestion(id: $id, questionText: $questionText, options: $options, correctOptionIndex: $correctOptionIndex, explanation: $explanation) {
+  mutation UpdateQuestion($id: ID!, $type: String, $questionText: String, $options: [String!], $correctOptionIndex: Int, $explanation: String) {
+    updateQuestion(id: $id, type: $type, questionText: $questionText, options: $options, correctOptionIndex: $correctOptionIndex, explanation: $explanation) {
       id
       questionText
     }
@@ -37,8 +37,9 @@ interface QuestionEditorProps {
 }
 
 export function QuestionEditor({ isOpen, onClose, courseId, questionToEdit, onSuccess }: QuestionEditorProps) {
+    const [type, setType] = useState(questionToEdit?.type || "multiple_choice");
     const [questionText, setQuestionText] = useState(questionToEdit?.questionText || "");
-    const [options, setOptions] = useState<string[]>(questionToEdit?.options || ["", "", "", ""]);
+    const [options, setOptions] = useState<string[]>(questionToEdit?.options?.length ? questionToEdit.options : ["", "", "", ""]);
     const [correctOptionIndex, setCorrectOptionIndex] = useState(questionToEdit?.correctOptionIndex || 0);
     const [explanation, setExplanation] = useState(questionToEdit?.explanation || "");
 
@@ -72,7 +73,7 @@ export function QuestionEditor({ isOpen, onClose, courseId, questionToEdit, onSu
             toast.error("Please enter a question text");
             return;
         }
-        if (options.some(opt => !opt.trim())) {
+        if (type === 'multiple_choice' && options.some(opt => !opt.trim())) {
             toast.error("Please fill in all options");
             return;
         }
@@ -82,9 +83,10 @@ export function QuestionEditor({ isOpen, onClose, courseId, questionToEdit, onSu
                 await updateQuestion({
                     variables: {
                         id: questionToEdit.id,
+                        type,
                         questionText,
-                        options,
-                        correctOptionIndex,
+                        options: type === 'open_ended' ? [] : options,
+                        correctOptionIndex: type === 'open_ended' ? 0 : correctOptionIndex,
                         explanation
                     }
                 });
@@ -93,9 +95,10 @@ export function QuestionEditor({ isOpen, onClose, courseId, questionToEdit, onSu
                 await createQuestion({
                     variables: {
                         courseId,
+                        type,
                         questionText,
-                        options,
-                        correctOptionIndex,
+                        options: type === 'open_ended' ? [] : options,
+                        correctOptionIndex: type === 'open_ended' ? 0 : correctOptionIndex,
                         explanation
                     }
                 });
@@ -119,6 +122,20 @@ export function QuestionEditor({ isOpen, onClose, courseId, questionToEdit, onSu
 
                 <div className="space-y-6 py-4">
                     <div className="space-y-2">
+                        <Label>Question Type</Label>
+                        <RadioGroup value={type} onValueChange={setType} className="flex gap-4">
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="multiple_choice" id="t-mc" />
+                                <Label htmlFor="t-mc">Multiple Choice</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="open_ended" id="t-oe" />
+                                <Label htmlFor="t-oe">Open Ended</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+
+                    <div className="space-y-2">
                         <Label>Question Text</Label>
                         <Textarea
                             placeholder="e.g., What does HTML stand for?"
@@ -127,33 +144,35 @@ export function QuestionEditor({ isOpen, onClose, courseId, questionToEdit, onSu
                         />
                     </div>
 
-                    <div className="space-y-3">
-                        <Label>Options</Label>
-                        <RadioGroup value={correctOptionIndex.toString()} onValueChange={(val) => setCorrectOptionIndex(parseInt(val))}>
-                            {options.map((option, index) => (
-                                <div key={index} className="flex items-center gap-2">
-                                    <RadioGroupItem value={index.toString()} id={`opt-${index}`} />
-                                    <Input
-                                        value={option}
-                                        onChange={(e) => handleOptionChange(index, e.target.value)}
-                                        placeholder={`Option ${index + 1}`}
-                                        className="flex-1"
-                                    />
-                                    <Button variant="ghost" size="icon" onClick={() => removeOption(index)} disabled={options.length <= 2}>
-                                        <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                                    </Button>
-                                </div>
-                            ))}
-                        </RadioGroup>
-                        <Button variant="outline" size="sm" onClick={addOption} className="mt-2">
-                            <Plus className="w-3 h-3 mr-2" /> Add Option
-                        </Button>
-                    </div>
+                    {type === 'multiple_choice' && (
+                        <div className="space-y-3">
+                            <Label>Options</Label>
+                            <RadioGroup value={correctOptionIndex.toString()} onValueChange={(val) => setCorrectOptionIndex(parseInt(val))}>
+                                {options.map((option, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                        <RadioGroupItem value={index.toString()} id={`opt-${index}`} />
+                                        <Input
+                                            value={option}
+                                            onChange={(e) => handleOptionChange(index, e.target.value)}
+                                            placeholder={`Option ${index + 1}`}
+                                            className="flex-1"
+                                        />
+                                        <Button variant="ghost" size="icon" onClick={() => removeOption(index)} disabled={options.length <= 2}>
+                                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </RadioGroup>
+                            <Button variant="outline" size="sm" onClick={addOption} className="mt-2">
+                                <Plus className="w-3 h-3 mr-2" /> Add Option
+                            </Button>
+                        </div>
+                    )}
 
                     <div className="space-y-2">
                         <Label>Explanation (Optional)</Label>
                         <Textarea
-                            placeholder="Explain why the answer is correct..."
+                            placeholder="Explain why the answer is correct or expected format..."
                             value={explanation}
                             onChange={(e) => setExplanation(e.target.value)}
                         />

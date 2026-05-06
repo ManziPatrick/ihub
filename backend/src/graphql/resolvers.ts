@@ -1206,6 +1206,33 @@ export const resolvers = {
         coursePerformance: performanceData
       };
     },
+    allUserGradeReports: async (_: any, __: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      const submissions = await AssignmentSubmission.find().populate(['userId', 'courseId']);
+      return submissions.map(s => {
+          const course = s.courseId as any;
+          let lessonTitle = s.lessonId;
+          if (course && course.modules) {
+              course.modules.forEach((m: any) => {
+                  const l = m.lessons.find((lesson: any) => lesson.id === s.lessonId);
+                  if (l) lessonTitle = l.title;
+              });
+          }
+          return {
+              id: s._id,
+              userId: s.userId?._id || s.userId,
+              username: (s.userId as any)?.username,
+              email: (s.userId as any)?.email,
+              courseTitle: course?.title,
+              lessonTitle,
+              score: s.totalScore || 0,
+              gradedAt: s.updatedAt,
+              status: s.status
+          };
+      });
+    },
 
     analytics: async (_: any, { createdBy }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) throw new Error('Not authorized');
@@ -2263,6 +2290,141 @@ export const resolvers = {
         course: populated.courseId,
         courseId: populated.courseId?._id || populated.courseId
       };
+    },
+    submitAssignmentExam: async (_: any, { courseId, lessonId, answers, timeTaken }: any, context: any) => {
+      if (!context.user) throw new Error('Unauthorized');
+
+      const course = await Course.findById(courseId);
+      if (!course) throw new Error('Course not found');
+
+      let targetLesson: any = null;
+      course.modules.forEach((m: any) => {
+        const found = m.lessons.find((l: any) => l.id === lessonId);
+        if (found) targetLesson = found;
+      });
+      if (!targetLesson) throw new Error('Lesson not found');
+
+      let totalScore = 0;
+      const gradedAnswers = await Promise.all(answers.map(async (ans: any) => {
+        const question = targetLesson.assignmentQuestions.find((q: any) => q._id?.toString() === ans.questionId || q.id === ans.questionId);
+        if (!question) return { ...ans, score: 0 };
+
+        if (question.type === 'mcq') {
+          const isCorrect = parseInt(ans.answerText) === question.correctOptionIndex;
+          const score = isCorrect ? (question.points || 10) : 0;
+          totalScore += score;
+          return {
+            ...ans,
+            score,
+            aiFeedback: isCorrect ? 'Correct' : `Incorrect. The correct answer was: ${question.options[question.correctOptionIndex]}`
+          };
+        } else if (question.type === 'open') {
+          try {
+            const aiResult = await reviewSubmissionService(question.questionText, ans.answerText);
+            const score = Math.round((aiResult.score / 100) * (question.points || 10));
+            totalScore += score;
+            return {
+              ...ans,
+              score,
+              aiFeedback: aiResult.content
+            };
+          } catch (err) {
+            return { ...ans, score: 0, aiFeedback: 'AI grading unavailable.' };
+          }
+        }
+        return ans;
+      }));
+
+      let submission = await AssignmentSubmission.findOne({
+        userId: context.user.id,
+        courseId,
+        lessonId
+      });
+
+      const submissionData = {
+        userId: context.user.id,
+        courseId,
+        lessonId,
+        content: `Exam Submission: ${gradedAnswers.length} questions answered`,
+        answers: gradedAnswers,
+        totalScore,
+        timeTaken,
+        status: 'pending'
+      };
+
+      if (submission) {
+        Object.assign(submission, submissionData);
+        await submission.save();
+      } else {
+        submission = await AssignmentSubmission.create(submissionData);
+      }
+
+      await logActivity(context.user.id, 'SUBMIT_ASSIGNMENT_EXAM', 'AssignmentSubmission', submission.id, `Submitted exam for lesson ${lessonId}`);
+
+      const populated = await submission.populate(['userId', 'courseId']);
+      return {
+        ...populated.toObject(),
+        id: populated._id,
+        user: populated.userId,
+        course: populated.courseId
+      };
+    },
+    updateExamConfig: async (_: any, { courseId, lessonId, config }: any, context: any) => {
+      if (!context.user || !['trainer', 'admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      const course = await Course.findById(courseId);
+      if (!course) throw new Error('Course not found');
+
+      course.modules.forEach((m: any) => {
+        const lesson = m.lessons.find((l: any) => l.id === lessonId);
+        if (lesson) {
+          lesson.assignmentConfig = {
+            ...lesson.assignmentConfig,
+            ...config
+          };
+        }
+      });
+      await course.save();
+      return course;
+    },
+    aiGradeOpenAnswers: async (_: any, { submissionId }: any, context: any) => {
+      if (!context.user || !['trainer', 'admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      const submission = await AssignmentSubmission.findById(submissionId).populate(['userId', 'courseId']);
+      if (!submission) throw new Error('Submission not found');
+
+      const course = await Course.findById(submission.courseId);
+      if (!course) throw new Error('Course not found');
+
+      let targetLesson: any = null;
+      course.modules.forEach((m: any) => {
+        const found = m.lessons.find((l: any) => l.id === submission.lessonId);
+        if (found) targetLesson = found;
+      });
+
+      if (!targetLesson) throw new Error('Lesson not found');
+
+      let totalScore = submission.totalScore || 0;
+      const updatedAnswers = await Promise.all(submission.answers.map(async (ans: any) => {
+        if (ans.score > 0 || ans.aiFeedback) return ans;
+
+        const question = targetLesson.assignmentQuestions.find((q: any) => q._id?.toString() === ans.questionId);
+        if (question && question.type === 'open') {
+          const aiResult = await reviewSubmissionService(question.questionText, ans.answerText);
+          const score = Math.round((aiResult.score / 100) * (question.points || 10));
+          totalScore += score;
+          return { ...ans, score, aiFeedback: aiResult.content };
+        }
+        return ans;
+      }));
+
+      submission.answers = updatedAnswers;
+      submission.totalScore = totalScore;
+      submission.status = 'reviewed';
+      await submission.save();
+      return submission;
     },
 
     gradeAssignment: async (_: any, { submissionId, grade, feedback }: any, context: any) => {
@@ -6463,13 +6625,15 @@ export const resolvers = {
           });
         }
       });
-
       // Fallback to User model's completedLessons if CourseProgress is empty but User has data
       if (completed.length === 0 && parent.completedLessons && parent.completedLessons.length > 0) {
         return parent.completedLessons;
       }
 
       return completed;
+    },
+    certificates: async (parent: any) => {
+      return await Certificate.find({ userId: parent.id || parent._id }).populate('courseId');
     },
     studentProfile: async (parent: any) => await StudentProfile.findOne({ userId: parent.id || parent._id }),
     isExternal: (parent: any, _: any, context: any) => {

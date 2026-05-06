@@ -1385,6 +1385,16 @@ export const SUBMIT_ASSIGNMENT = gql`
   }
 `;
 
+export const SUBMIT_ASSIGNMENT_EXAM = gql`
+  mutation SubmitAssignmentExam($courseId: ID!, $lessonId: String!, $answers: [AssignmentAnswerInput!]!, $timeTaken: Int) {
+    submitAssignmentExam(courseId: $courseId, lessonId: $lessonId, answers: $answers, timeTaken: $timeTaken) {
+      id
+      totalScore
+      status
+    }
+  }
+`;
+
 export const GRADE_ASSIGNMENT = gql`
   mutation GradeAssignment($submissionId: ID!, $grade: Int!, $feedback: String) {
     gradeAssignment(submissionId: $submissionId, grade: $grade, feedback: $feedback) {
@@ -1754,6 +1764,38 @@ export const VERIFY_EMAIL_OTP = gql`
         role
         fullName
       }
+    }
+  }
+`;
+
+export const UPDATE_QUIZ_CONFIG = gql`
+  mutation UpdateQuizConfig($courseId: ID!, $lessonId: ID!, $quizConfig: QuizConfigInput!) {
+    updateQuizConfig(courseId: $courseId, lessonId: $lessonId, quizConfig: $quizConfig) {
+      id
+      quizConfig {
+        disableRightClick
+        timeLimit
+        quizType
+        questionsPerPage
+      }
+    }
+  }
+`;
+
+export const UPDATE_EXAM_CONFIG = gql`
+  mutation UpdateExamConfig($courseId: ID!, $lessonId: String!, $config: AssignmentConfigInput!) {
+    updateExamConfig(courseId: $courseId, lessonId: $lessonId, config: $config) {
+      id
+    }
+  }
+`;
+
+export const AI_GRADE_OPEN_ANSWERS = gql`
+  mutation AiGradeOpenAnswers($submissionId: ID!) {
+    aiGradeOpenAnswers(submissionId: $submissionId) {
+      id
+      totalScore
+      status
     }
   }
 `;

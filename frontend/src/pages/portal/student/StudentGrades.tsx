@@ -17,7 +17,8 @@ import {
   FlaskConical,
   BrainCircuit,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Download
 } from "lucide-react";
 import { useQuery } from "@apollo/client/react";
 import { GET_ME } from "@/lib/graphql/queries";
@@ -26,6 +27,8 @@ import { format } from "date-fns";
 interface MeData {
   me: {
     id: string;
+    username: string;
+    fullName?: string;
     enrolledCourses: Array<{
       id: string;
       title: string;
@@ -124,6 +127,79 @@ export default function StudentGrades() {
     ? Math.round(grades.reduce((acc: number, g: any) => acc + g.score, 0) / grades.length)
     : 0;
 
+  const handleDownloadReport = () => {
+    const reportHtml = `
+      <html>
+      <head>
+        <title>Academic Report - ${me?.username}</title>
+        <style>
+          body { font-family: 'Inter', sans-serif; padding: 40px; color: #333; }
+          .header { text-align: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 40px; }
+          .stats { display: flex; justify-content: space-around; margin-bottom: 40px; background: #f9f9f9; padding: 20px; rounded: 10px; }
+          .stat-item { text-align: center; }
+          .stat-value { font-size: 24px; font-weight: bold; color: #6366f1; }
+          .stat-label { font-size: 10px; text-transform: uppercase; color: #666; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { text-align: left; background: #f0f0f0; padding: 12px; font-size: 12px; }
+          td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+          .score { font-weight: bold; }
+          .pass { color: green; }
+          .fail { color: orange; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Academic Performance Report</h1>
+          <p>Student: ${me?.fullName || me?.username}</p>
+          <p>Date Generated: ${new Date().toLocaleDateString()}</p>
+        </div>
+        <div class="stats">
+          <div class="stat-item">
+            <div class="stat-value">${overallAverage}%</div>
+            <div class="stat-label">Global Average</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${grades.length}</div>
+            <div class="stat-label">Total Assessments</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${enrolledCourses.length}</div>
+            <div class="stat-label">Courses Enrolled</div>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>Assessment Unit</th>
+              <th>Score</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${grades.map((g: any) => `
+              <tr>
+                <td>${enrolledCourses.find(c => c.id === g.courseId)?.title || 'N/A'}</td>
+                <td>${g.lesson?.title || 'Assignment'}</td>
+                <td class="score">${g.score}/100</td>
+                <td class="${g.score >= 70 ? 'pass' : 'fail'}">${g.score >= 70 ? 'PASSED' : 'REVISION'}</td>
+                <td>${format(new Date(isNaN(Number(g.gradedAt)) ? g.gradedAt : parseInt(g.gradedAt)), "MMM d, yyyy")}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(reportHtml);
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    }
+  };
+
   const toggleExpand = (courseId: string) => {
     setExpandedCourse(expandedCourse === courseId ? null : courseId);
   };
@@ -144,6 +220,17 @@ export default function StudentGrades() {
             <p className="text-muted-foreground mt-2 font-medium">
               Comprehensive report of your quizzes, labs, and overall performance.
             </p>
+            <div className="flex gap-3 mt-4">
+               <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-dashed border-accent/40 text-accent hover:bg-accent/5 font-bold"
+                onClick={handleDownloadReport}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Full Report
+              </Button>
+            </div>
           </motion.div>
 
           <motion.div 

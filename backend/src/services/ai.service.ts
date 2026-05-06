@@ -125,6 +125,7 @@ export const reviewSubmissionService = async (taskTitle: string, submissionConte
     const prompt = `You are an expert mentor at IHUB Academy. 
     Review the following task submission. Be encouraging but honest.
     Identify 2 things done well and 2 areas for improvement.
+    Assign a preliminary score out of 100 based on quality.
     Use simple language.
     
     Task: ${taskTitle}
@@ -132,7 +133,9 @@ export const reviewSubmissionService = async (taskTitle: string, submissionConte
     
     Format:
     🌟 What's Great: ...
-    💡 Suggestions: ...`;
+    💡 Suggestions: ...
+    
+    [SCORE: XX] (Include this at the end)`;
 
     try {
         const response = await axios.post(
@@ -144,9 +147,17 @@ export const reviewSubmissionService = async (taskTitle: string, submissionConte
             },
             { headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' } }
         );
-        return { content: response.data.choices[0].message.content, role: 'assistant' };
+        let content = response.data.choices[0].message.content;
+        let score = 0;
+        const scoreMatch = content.match(/\[SCORE:\s*(\d+)\]/);
+        if (scoreMatch) {
+            score = parseInt(scoreMatch[1]);
+            content = content.replace(scoreMatch[0], '').trim();
+        }
+        return { content, score, role: 'assistant' };
     } catch (error: any) {
-        return handleAIError(error);
+        const err = handleAIError(error);
+        return { ...err, score: 0 };
     }
 };
 

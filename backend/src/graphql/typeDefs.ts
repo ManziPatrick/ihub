@@ -112,6 +112,7 @@ export const typeDefs = `#graphql
     school: String
     isExternal: Boolean
     isFirst: Boolean
+    certificates: [Certificate]
   }
 
   type PaginationInfo {
@@ -236,7 +237,44 @@ export const typeDefs = `#graphql
     requiredAssignment: Boolean
     assignmentDescription: String
     assignmentDeliverables: [String]
+    assignmentQuestions: [AssignmentQuestion]
+    assignmentConfig: AssignmentConfig
     order: Int
+  }
+
+  type AssignmentQuestion {
+    id: ID
+    questionText: String!
+    type: String!
+    options: [String]
+    correctOptionIndex: Int
+    points: Int
+  }
+
+  type AssignmentConfig {
+    timeLimit: Int
+    allowRetakes: Boolean
+    disableRightClick: Boolean
+    mode: String
+  }
+
+  type UserGradeReport {
+    id: ID!
+    userId: ID!
+    username: String!
+    email: String!
+    courseTitle: String!
+    lessonTitle: String!
+    score: Int!
+    gradedAt: String!
+    status: String!
+  }
+
+  type AssignmentAnswer {
+    questionId: String
+    answerText: String
+    score: Int
+    aiFeedback: String
   }
 
   type CourseApplication {
@@ -668,10 +706,13 @@ export const typeDefs = `#graphql
     course: Course
     lessonId: String!
     lesson: Lesson
-    content: String! # URL or Text
+    content: String # URL or Text (can be null for exams)
     status: String! # 'pending', 'reviewed', 'revision_requested'
     grade: Int
     feedback: String
+    answers: [AssignmentAnswer]
+    totalScore: Int
+    timeTaken: Int
     createdAt: String!
     updatedAt: String!
   }
@@ -717,6 +758,7 @@ export const typeDefs = `#graphql
     
     trainerStats: TrainerStats
     adminDashboardData(createdBy: ID): AdminDashboardData
+    allUserGradeReports: [UserGradeReport]
 
     # Projects
     projects(page: Int, limit: Int): ProjectResponse
@@ -733,6 +775,11 @@ export const typeDefs = `#graphql
     certificates: [Certificate]
     myCertificates: [Certificate]
     certificate(id: ID!): Certificate
+    getUserCertificates(userId: ID!): [Certificate]
+    
+    # Admin Analytics & Exports
+    getTopStudents(courseId: ID, limit: Int): [User]
+    getAnalyticsExport: String
     
     # Meetings
     getInternshipMeetings(teamId: ID, programId: ID, status: String): [InternshipMeeting]
@@ -794,7 +841,30 @@ export const typeDefs = `#graphql
     requiredAssignment: Boolean
     assignmentDescription: String
     assignmentDeliverables: [String]
+    assignmentQuestions: [AssignmentQuestionInput]
+    assignmentConfig: AssignmentConfigInput
     order: Int
+  }
+
+  input AssignmentQuestionInput {
+    id: ID
+    questionText: String!
+    type: String!
+    options: [String]
+    correctOptionIndex: Int
+    points: Int
+  }
+
+  input AssignmentConfigInput {
+    timeLimit: Int
+    allowRetakes: Boolean
+    disableRightClick: Boolean
+    mode: String
+  }
+
+  input AssignmentAnswerInput {
+    questionId: String!
+    answerText: String!
   }
 
   input ModuleInput {
@@ -1797,17 +1867,11 @@ export const typeDefs = `#graphql
     assignInternshipProjectToTeam(teamId: ID!, projectId: ID!): InternshipTeam
 
     # Assignments
-    submitAssignment(
-      courseId: ID!
-      lessonId: String!
-      content: String!
-    ): AssignmentSubmission
-    
-    gradeAssignment(
-      submissionId: ID!
-      grade: Int!
-      feedback: String
-    ): AssignmentSubmission
+    submitAssignment(courseId: ID!, lessonId: String!, content: String!): AssignmentSubmission
+    submitAssignmentExam(courseId: ID!, lessonId: String!, answers: [AssignmentAnswerInput!]!, timeTaken: Int): AssignmentSubmission
+    gradeAssignment(submissionId: ID!, grade: Int!, feedback: String): AssignmentSubmission
+    updateExamConfig(courseId: ID!, lessonId: String!, config: AssignmentConfigInput!): Course
+    aiGradeOpenAnswers(submissionId: ID!): AssignmentSubmission
 
     approveLessonProgress(
       userId: ID!

@@ -29,9 +29,11 @@ import {
   ChevronUp,
   ChevronDown,
   ClipboardList,
+  ListOrdered,
+  Settings2,
   FileText as FileTextIcon
 } from "lucide-react";
-import { ManageQuestionsDialog, ResourceBankDialog } from "./index";
+import { ManageQuestionsDialog, ResourceBankDialog, ManageAssignmentQuestionsDialog, AssignmentConfigDialog, ExamConfigDialog } from "./index";
 import { useAuth } from "@/contexts/AuthContext";
 import { FileUpload } from "@/components/FileUpload";
 
@@ -51,11 +53,13 @@ import { GET_CATEGORIES } from "@/lib/graphql/queries";
 type LessonTab = "details" | "quiz" | "assignment";
 
 function LessonCard({
-  lesson, lIdx, mIdx, module, formData, setFormData, onQuizOpen,
+  lesson, lIdx, mIdx, module, formData, setFormData, onQuizOpen, onAssignmentQuestionsOpen, onAssignmentConfigOpen
 }: {
   lesson: any; lIdx: number; mIdx: number; module: any;
   formData: any; setFormData: (d: any) => void;
   onQuizOpen: (lesson: any) => void;
+  onAssignmentQuestionsOpen: (lesson: any) => void;
+  onAssignmentConfigOpen: (lesson: any) => void;
 }) {
   const [expanded, setExpanded] = useState(!lesson.title || lesson.title === "New Lesson" || lesson.title === "");
   const [tab, setTab] = useState<LessonTab>("details");
@@ -300,6 +304,36 @@ function LessonCard({
           {/* Tab: Assignment */}
           {tab === "assignment" && (
             <div className="p-4 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-blue-500/15 bg-blue-500/5 p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <ListOrdered className="w-5 h-5 text-blue-400" />
+                    <p className="font-bold text-sm text-white/80">Exam Questions</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="h-10 w-full text-[10px] font-black uppercase tracking-widest border-blue-500/20 text-blue-400 hover:bg-blue-500/10"
+                    onClick={() => onAssignmentQuestionsOpen(lesson)}
+                  >
+                    Manage {lesson.assignmentQuestions?.length || 0} Questions
+                  </Button>
+                </div>
+
+                <div className="rounded-xl border border-orange-500/15 bg-orange-500/5 p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Settings2 className="w-5 h-5 text-orange-400" />
+                    <p className="font-bold text-sm text-white/80">Exam Config</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="h-10 w-full text-[10px] font-black uppercase tracking-widest border-orange-500/20 text-orange-400 hover:bg-orange-500/10"
+                    onClick={() => onAssignmentConfigOpen(lesson)}
+                  >
+                    Configure Settings
+                  </Button>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-accent/80">Required Submission</p>
@@ -316,17 +350,6 @@ function LessonCard({
                   rows={3}
                   value={lesson.assignmentDescription || ""}
                   onChange={e => updateLesson({ assignmentDescription: e.target.value, isAssignment: true })}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Required Deliverables</label>
-                <Input
-                  className="h-10 bg-white/5 border-white/10 text-sm"
-                  value={lesson.assignmentDeliverables?.join(", ") || ""}
-                  onChange={e => updateLesson({
-                    assignmentDeliverables: e.target.value.split(",").map((s: string) => s.trim()).filter(Boolean),
-                    isAssignment: true,
-                  })}
                 />
               </div>
             </div>
@@ -384,6 +407,8 @@ export function EditCourseDialog({
 
   const [hasInitialized, setHasInitialized] = useState(false);
   const [questionLesson, setQuestionLesson] = useState<{ id: string, title: string } | null>(null);
+  const [assignmentQuestionLesson, setAssignmentQuestionLesson] = useState<{ mIdx: number, lIdx: number, title: string } | null>(null);
+  const [assignmentConfigLesson, setAssignmentConfigLesson] = useState<{ mIdx: number, lIdx: number, title: string } | null>(null);
   const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({ 0: true });
   const [showResourceBank, setShowResourceBank] = useState(false);
   const [resourceBankTarget, setResourceBankTarget] = useState<{ mIdx: number, lIdx: number } | null>(null);
@@ -523,10 +548,24 @@ export function EditCourseDialog({
           fileUrl: l.fileUrl || "",
           type: l.type || "video",
           content: l.content || "",
-          isAssignment: l.type === 'assignment',
+          isAssignment: l.type === 'assignment' || l.type === 'exam' || l.type === 'quiz',
           requiredAssignment: !!l.requiredAssignment,
           assignmentDescription: l.assignmentDescription || "",
           assignmentDeliverables: l.assignmentDeliverables || [],
+          assignmentQuestions: l.assignmentQuestions?.map((q: any) => ({
+            id: q.id || q._id,
+            questionText: q.questionText,
+            type: q.type,
+            options: q.options || [],
+            correctOptionIndex: q.correctOptionIndex,
+            points: q.points
+          })) || [],
+          assignmentConfig: l.assignmentConfig ? {
+            timeLimit: Number(l.assignmentConfig.timeLimit) || null,
+            allowRetakes: !!l.assignmentConfig.allowRetakes,
+            disableRightClick: !!l.assignmentConfig.disableRightClick,
+            mode: l.assignmentConfig.mode || 'standard'
+          } : null,
           resources: l.resources?.map((r: any) => ({
             id: r.id || r._id,
             title: r.title,
@@ -1161,6 +1200,12 @@ export function EditCourseDialog({
                                       const lessonId = lesson.id || `${mIdx}-${lIdx}`;
                                       setQuestionLesson({ id: lessonId, title: lesson.title });
                                     }}
+                                    onAssignmentQuestionsOpen={(lesson) => {
+                                      setAssignmentQuestionLesson({ mIdx, lIdx, title: lesson.title });
+                                    }}
+                                    onAssignmentConfigOpen={(lesson) => {
+                                      setAssignmentConfigLesson({ mIdx, lIdx, title: lesson.title });
+                                    }}
                                   />
                                 ))}
 
@@ -1241,6 +1286,36 @@ export function EditCourseDialog({
             setResourceBankTarget(null);
           }
         }}
+      />
+      <ManageAssignmentQuestionsDialog
+        open={!!assignmentQuestionLesson}
+        onOpenChange={(open) => !open && setAssignmentQuestionLesson(null)}
+        questions={assignmentQuestionLesson ? formData.modules[assignmentQuestionLesson.mIdx].lessons[assignmentQuestionLesson.lIdx].assignmentQuestions : []}
+        onSave={(questions) => {
+          if (assignmentQuestionLesson) {
+            const newModules = [...formData.modules];
+            const newLessons = [...newModules[assignmentQuestionLesson.mIdx].lessons];
+            newLessons[assignmentQuestionLesson.lIdx] = { ...newLessons[assignmentQuestionLesson.lIdx], assignmentQuestions: questions };
+            newModules[assignmentQuestionLesson.mIdx] = { ...newModules[assignmentQuestionLesson.mIdx], lessons: newLessons };
+            setFormData({ ...formData, modules: newModules });
+          }
+        }}
+      />
+
+      <ExamConfigDialog
+        open={!!assignmentConfigLesson}
+        onOpenChange={(open) => !open && setAssignmentConfigLesson(null)}
+        config={assignmentConfigLesson ? formData.modules[assignmentConfigLesson.mIdx].lessons[assignmentConfigLesson.lIdx].assignmentConfig : {}}
+        onSave={(config) => {
+          if (assignmentConfigLesson) {
+            const newModules = [...formData.modules];
+            const newLessons = [...newModules[assignmentConfigLesson.mIdx].lessons];
+            newLessons[assignmentConfigLesson.lIdx] = { ...newLessons[assignmentConfigLesson.lIdx], assignmentConfig: config };
+            newModules[assignmentConfigLesson.mIdx] = { ...newModules[assignmentConfigLesson.mIdx], lessons: newLessons };
+            setFormData({ ...formData, modules: newModules });
+          }
+        }}
+        title={`Exam Settings: ${assignmentConfigLesson?.title || 'Module Assessment'}`}
       />
     </Dialog >
   );
