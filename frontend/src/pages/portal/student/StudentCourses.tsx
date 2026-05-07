@@ -101,14 +101,42 @@ export default function StudentCourses() {
     }
   };
 
+  const FALLBACK_IMG = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600";
+
   if (meLoading || coursesLoading || projectsLoading) {
     return (
       <PortalLayout>
-        <div className="space-y-6">
-          <div className="h-8 w-48 bg-muted rounded animate-pulse"></div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-80 bg-muted rounded-xl animate-pulse"></div>
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Header skeleton */}
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-muted/60 rounded-xl animate-pulse" />
+            <div className="h-4 w-72 bg-muted/40 rounded-lg animate-pulse" />
+          </div>
+          {/* Hero card skeleton */}
+          <div className="h-44 w-full bg-muted/50 rounded-3xl animate-pulse" />
+          {/* Search bar skeleton */}
+          <div className="flex gap-3">
+            <div className="h-10 flex-1 bg-muted/40 rounded-xl animate-pulse" />
+            <div className="h-10 w-10 bg-muted/40 rounded-xl animate-pulse" />
+            <div className="h-10 w-10 bg-muted/40 rounded-xl animate-pulse" />
+          </div>
+          {/* Tabs skeleton */}
+          <div className="h-10 w-full bg-muted/30 rounded-xl animate-pulse" />
+          {/* Course cards skeleton */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="rounded-2xl border border-border/40 overflow-hidden" style={{ animationDelay: `${i * 80}ms` }}>
+                <div className="h-36 bg-muted/60 animate-pulse" />
+                <div className="p-4 space-y-3">
+                  <div className="h-5 w-3/4 bg-muted/60 rounded-lg animate-pulse" />
+                  <div className="h-3 w-full bg-muted/40 rounded animate-pulse" />
+                  <div className="h-3 w-5/6 bg-muted/40 rounded animate-pulse" />
+                  <div className="flex justify-between pt-1">
+                    <div className="h-3 w-20 bg-muted/30 rounded animate-pulse" />
+                    <div className="h-8 w-20 bg-muted/50 rounded-xl animate-pulse" />
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -194,13 +222,12 @@ export default function StudentCourses() {
             </div>
             <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center">
               <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden bg-muted/20 border border-border/50 shrink-0">
-                {latestCourse.thumbnail ? (
-                  <img src={latestCourse.thumbnail} className="w-full h-full object-cover" alt={latestCourse.title} />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-accent/10">
-                    <BookOpen className="w-10 h-10 text-accent" />
-                  </div>
-                )}
+                <img
+                  src={latestCourse.thumbnail || FALLBACK_IMG}
+                  onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
+                  className="w-full h-full object-cover"
+                  alt={latestCourse.title}
+                />
               </div>
               <div className="flex-1 w-full">
                 <div className="flex items-center gap-2 mb-2">
@@ -313,11 +340,12 @@ export default function StudentCourses() {
                           {/* Image */}
                           <div className={`bg-gradient-to-br from-accent/20 to-primary/10 ${viewMode === "list" ? "w-48 h-auto" : "h-40"}`}>
                             <div className="w-full h-full flex items-center justify-center">
-                              {course.thumbnail ? (
-                                <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
-                              ) : (
-                                <BookOpen className="w-12 h-12 text-accent/50" />
-                              )}
+                              <img
+                                src={course.thumbnail || FALLBACK_IMG}
+                                onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
+                                alt={course.title}
+                                className="w-full h-full object-cover"
+                              />
                             </div>
                           </div>
                           
@@ -405,11 +433,12 @@ export default function StudentCourses() {
                       {/* Image */}
                       <div className="h-36 bg-gradient-to-br from-accent/20 to-primary/10 relative">
                         <div className="w-full h-full flex items-center justify-center">
-                          {course.thumbnail ? (
-                            <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <BookOpen className="w-10 h-10 text-accent/50" />
-                          )}
+                          <img
+                            src={course.thumbnail || FALLBACK_IMG}
+                            onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
+                            alt={course.title}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                         {isFree && (
                           <span className="absolute top-3 left-3 bg-accent text-accent-foreground text-xs font-medium px-2 py-1 rounded">
@@ -658,11 +687,12 @@ export default function StudentCourses() {
                         <div className={`flex ${viewMode === "list" ? "flex-row" : "flex-col"}`}>
                           <div className={`bg-green-500/10 ${viewMode === "list" ? "w-48 h-auto" : "h-40"}`}>
                             <div className="w-full h-full flex items-center justify-center">
-                              {course.thumbnail ? (
-                                <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover opacity-80" />
-                              ) : (
-                                <Award className="w-12 h-12 text-green-500/50" />
-                              )}
+                              <img
+                                src={course.thumbnail || FALLBACK_IMG}
+                                onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
+                                alt={course.title}
+                                className="w-full h-full object-cover opacity-80"
+                              />
                             </div>
                           </div>
                           

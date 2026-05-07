@@ -145,17 +145,26 @@ export default function CourseDetail() {
     }
   }, [course, activeLessonId]);
 
+  const FALLBACK_IMG = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600";
+
   if (loading) return (
     <PortalLayout>
-      <div className="space-y-6">
-        <div className="h-64 lg:h-96 bg-muted rounded-xl animate-pulse"></div>
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="h-8 w-64 bg-muted rounded animate-pulse"></div>
-            <div className="h-32 bg-muted rounded-xl animate-pulse"></div>
+      <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="h-4 w-48 bg-muted/50 rounded animate-pulse" />
+        <div className="h-28 w-full bg-muted/50 rounded-2xl animate-pulse" />
+        <div className="grid lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-8 space-y-4">
+            <div className="aspect-video bg-muted/60 rounded-2xl animate-pulse" />
+            <div className="h-6 w-2/3 bg-muted/50 rounded animate-pulse" />
+            <div className="space-y-2">
+              {[1,2,3].map(i => <div key={i} className="h-3 w-full bg-muted/40 rounded animate-pulse" />)}
+            </div>
           </div>
-          <div className="space-y-4">
-            <div className="h-64 bg-muted rounded-xl animate-pulse"></div>
+          <div className="lg:col-span-4 space-y-3">
+            <div className="h-8 bg-muted/40 rounded-xl animate-pulse" />
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="h-12 bg-muted/30 rounded-xl animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+            ))}
           </div>
         </div>
       </div>
@@ -386,7 +395,12 @@ export default function CourseDetail() {
         >
           <div className="flex items-center gap-5">
             <div className="w-16 h-16 rounded-2xl overflow-hidden border border-border/50 shadow-xl">
-              <img src={course.thumbnail} className="w-full h-full object-cover" />
+              <img
+                src={course.thumbnail || FALLBACK_IMG}
+                onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
+                className="w-full h-full object-cover"
+                alt={course.title}
+              />
             </div>
             <div>
               <h1 className="font-heading text-2xl font-bold">{course.title}</h1>

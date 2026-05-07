@@ -378,8 +378,22 @@ const Explore = () => {
               {/* Main Grid */}
               <div className="flex-1 w-full">
                 {apolloLoading && (
-                  <div className="flex justify-center py-20">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+                  <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {[1,2,3,4,5,6].map(i => (
+                      <div key={i} className="rounded-2xl border border-border/30 overflow-hidden bg-card" style={{ animationDelay: `${i * 80}ms` }}>
+                        <div className="aspect-video bg-muted/60 animate-pulse" />
+                        <div className="p-6 space-y-3">
+                          <div className="h-5 w-3/4 bg-muted/60 rounded-lg animate-pulse" />
+                          <div className="h-3 w-full bg-muted/40 rounded animate-pulse" />
+                          <div className="h-3 w-5/6 bg-muted/40 rounded animate-pulse" />
+                          <div className="h-3 w-4/6 bg-muted/40 rounded animate-pulse" />
+                          <div className="pt-4 border-t border-border/30 flex justify-between">
+                            <div className="h-5 w-20 bg-muted/50 rounded animate-pulse" />
+                            <div className="h-9 w-24 bg-muted/50 rounded-xl animate-pulse" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
                 
@@ -402,7 +416,8 @@ const Explore = () => {
                 >
                   <div className="aspect-video relative overflow-hidden">
                     <img
-                      src={course.thumbnail}
+                      src={course.thumbnail || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600"}
+                      onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600"; }}
                       alt={course.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
