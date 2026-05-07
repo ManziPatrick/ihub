@@ -50,6 +50,8 @@ import {
   Printer,
   ListOrdered,
   Building2,
+  PanelRightClose,
+  PanelRightOpen,
 } from "lucide-react";
 import { RequestHelpDialog, BookCallDialog } from "@/components/portal/dialogs";
 import { LessonQuiz } from "@/components/portal/LessonQuiz";
@@ -87,6 +89,7 @@ export default function CourseDetail() {
   const [isSubmittingAssignment, setIsSubmittingAssignment] = useState(false);
   const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
   const [forcedProgressLessonIds, setForcedProgressLessonIds] = useState<string[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Queries
   const { data: userData, refetch: refetchUser } = useQuery(GET_ME);
@@ -488,9 +491,22 @@ export default function CourseDetail() {
           </motion.div>
         )}
 
-        <div className="grid lg:grid-cols-12 gap-6">
+        {/* Track Overview toggle — visible on ALL screen sizes */}
+        <div className="flex justify-end mb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSidebarOpen(v => !v)}
+            className="gap-2 text-xs text-muted-foreground hover:text-foreground border border-border/40 rounded-xl px-3 h-8"
+          >
+            {sidebarOpen ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />}
+            {sidebarOpen ? 'Hide Track' : 'Show Track'}
+          </Button>
+        </div>
+
+        <div className={`grid gap-6 transition-all duration-300 ${sidebarOpen ? 'lg:grid-cols-12' : 'lg:grid-cols-1'}`}>
           {/* Main Area */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className={sidebarOpen ? 'lg:col-span-8 space-y-6' : 'space-y-6'}>
             {(() => {
               const lessonIndex = allLessons.findIndex(l => (l.id || l._id) === activeLessonId);
               const isLocked = isModuleLocked(activeLessonId || '');
@@ -711,78 +727,95 @@ export default function CourseDetail() {
             })()}
           </div>
 
-          {/* Course Track Overview — always visible below main content */}
-          <div className="mt-4">
-            <Card className="border-border/50">
-              <div className="p-3 border-b border-border/30 bg-muted/10 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2">
-                <ListOrdered className="w-3.5 h-3.5 text-accent" />
-                Track Overview
-              </div>
-              <CardContent className="p-0">
-                <div className="p-3 space-y-4">
-                  <Accordion type="multiple" className="w-full space-y-2">
-                    {course.modules?.map((mod: any, mIdx: number) => {
-                      const modCompleted = isModuleCompleted(mod);
-                      return (
-                        <AccordionItem key={mod.id || mod._id} value={`module-${mIdx}`} className="border rounded-xl px-3 bg-background">
-                          <div className="flex items-center justify-between w-full">
-                            <AccordionTrigger className="hover:no-underline flex-1 text-left py-2.5">
-                              <h4 className="text-[10px] font-bold text-accent uppercase tracking-wide line-clamp-1">{mod.title}</h4>
-                            </AccordionTrigger>
-                            {modCompleted && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleDownloadModuleCert(mod); }}
-                                title="Download Module Certificate"
-                                className="flex items-center gap-1 text-[9px] font-black text-gold hover:text-gold/80 transition-colors mr-1 z-10 relative"
-                              >
-                                <Award className="w-3 h-3" />
-                                <span>Cert</span>
-                              </button>
-                            )}
-                          </div>
-                          <AccordionContent className="pt-1 pb-3 space-y-1">
-                            {mod.lessons?.map((les: any) => {
-                              const lesId = les.id || les._id;
-                              const isActive = lesId === activeLessonId;
-                              const isComp = completedLessons.some((cl: any) => cl.lessonId === lesId) || forcedProgressLessonIds.includes(lesId);
-                              const lIdx = allLessons.findIndex(l => (l.id || l._id) === lesId);
-                              // Module-based lock: locked if previous module is not fully completed
-                              const isLock = isModuleLocked(lesId);
-                              return (
-                                <button
-                                  key={lesId}
-                                  disabled={isLock}
-                                  onClick={() => !isLock && setActiveLessonId(lesId)}
-                                  className={`w-full text-left p-2 rounded-lg text-xs transition-all flex items-center gap-2 ${
-                                    isActive ? 'bg-accent/10 border border-accent/20 text-accent font-bold'
-                                    : isLock ? 'opacity-30 cursor-not-allowed grayscale pointer-events-none'
-                                    : 'hover:bg-muted/10 text-muted-foreground'
-                                  }`}
-                                >
-                                  {isComp ? <CheckCircle className="w-3 h-3 text-green-500 shrink-0" /> : isLock ? <Lock className="w-3 h-3 shrink-0" /> : React.createElement(getLessonIcon(les.type), { className: "w-3 h-3 shrink-0" })}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="truncate">{les.title}</p>
-                                    {les.type === 'quiz' && me?.grades?.some((g: any) => g.lessonId === lesId) && (
-                                      <p className="text-[9px] text-accent font-black uppercase">
-                                        Grade: {me.grades.find((g: any) => g.lessonId === lesId).score}%
-                                      </p>
-                                    )}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </AccordionContent>
-                        </AccordionItem>
-                      );
-                    })}
-                  </Accordion>
+          {/* Track Overview — inline on mobile, right column on desktop — controlled by sidebarOpen */}
+          {sidebarOpen && (
+            <div className="lg:col-span-4 h-fit lg:sticky lg:top-24">
+              <Card className="border-border/50">
+                <div className="p-3 border-b border-border/30 bg-muted/10 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2">
+                  <ListOrdered className="w-3.5 h-3.5 text-accent" />
+                  Track Overview
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <CardContent className="p-0">
+                  <ScrollArea className="max-h-[60vh] lg:h-[calc(100vh-220px)] lg:max-h-[700px]">
+                    <div className="p-3 space-y-2">
+                      <Accordion type="multiple" defaultValue={course.modules?.map((_: any, i: number) => `track-module-${i}`)} className="w-full space-y-2">
+                        {course.modules?.map((mod: any, mIdx: number) => {
+                          const modCompleted = isModuleCompleted(mod);
+                          const modLocked = mod.lessons?.every((l: any) => isModuleLocked(l.id || l._id));
+                          return (
+                            <AccordionItem key={mod.id || mod._id} value={`track-module-${mIdx}`} className="border rounded-xl px-3 bg-background">
+                              <div className="flex items-center w-full">
+                                <AccordionTrigger className="hover:no-underline flex-1 text-left py-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {modCompleted
+                                      ? <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />
+                                      : modLocked
+                                        ? <Lock className="w-3 h-3 text-muted-foreground/40 shrink-0" />
+                                        : <div className="w-3 h-3 shrink-0" />}
+                                    <h4 className="text-[10px] font-bold text-accent uppercase tracking-wide line-clamp-1">{mod.title}</h4>
+                                  </div>
+                                </AccordionTrigger>
+                                {modCompleted && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleDownloadModuleCert(mod); }}
+                                    title="Download Module Certificate"
+                                    className="text-[9px] font-black text-gold mr-1 flex items-center gap-0.5 shrink-0"
+                                  >
+                                    <Award className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+                              <AccordionContent className="pt-1 pb-2 space-y-1">
+                                {mod.lessons?.map((les: any) => {
+                                  const lesId = les.id || les._id;
+                                  const isActive = lesId === activeLessonId;
+                                  const isComp = completedLessons.some((cl: any) => cl.lessonId === lesId) || forcedProgressLessonIds.includes(lesId);
+                                  const isLock = isModuleLocked(lesId);
+                                  return (
+                                    <button
+                                      key={lesId}
+                                      disabled={isLock}
+                                      onClick={() => !isLock && setActiveLessonId(lesId)}
+                                      className={`w-full text-left p-2 rounded-lg text-xs transition-all flex items-center gap-2 ${
+                                        isActive
+                                          ? 'bg-accent/10 border border-accent/20 text-accent font-bold'
+                                          : isLock
+                                            ? 'opacity-30 cursor-not-allowed grayscale pointer-events-none'
+                                            : 'hover:bg-muted/10 text-muted-foreground'
+                                      }`}
+                                    >
+                                      {isComp
+                                        ? <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />
+                                        : isLock
+                                          ? <Lock className="w-3 h-3 shrink-0" />
+                                          : React.createElement(getLessonIcon(les.type), { className: "w-3 h-3 shrink-0" })}
+                                      <div className="flex-1 min-w-0">
+                                        <p className="truncate">{les.title}</p>
+                                        {les.type === 'quiz' && me?.grades?.some((g: any) => g.lessonId === lesId) && (
+                                          <p className="text-[9px] text-accent font-black uppercase">
+                                            Grade: {me.grades.find((g: any) => g.lessonId === lesId).score}%
+                                          </p>
+                                        )}
+                                      </div>
+                                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />}
+                                    </button>
+                                  );
+                                })}
+                              </AccordionContent>
+                            </AccordionItem>
+                          );
+                        })}
+                      </Accordion>
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
       <BookCallDialog open={bookingOpen} onOpenChange={setBookingOpen} mentorId={course?.instructor?.id || course?.instructor} purpose="assignment-review" />
     </PortalLayout>
   );
 }
+
