@@ -276,21 +276,40 @@ export default function CourseDetail() {
       || forcedProgressLessonIds.includes(lessonId);
   };
 
+  // Returns true if the lesson's module is locked (previous module not fully done)
+  const isModuleLocked = (lessonId: string) => {
+    if (!course?.modules) return false;
+    const modules = course.modules as any[];
+
+    // Find which module this lesson belongs to
+    const modIndex = modules.findIndex((m: any) =>
+      m.lessons?.some((l: any) => (l.id || l._id) === lessonId)
+    );
+    if (modIndex <= 0) return false; // first module is always unlocked
+
+    // Check if every lesson in the previous module is satisfied
+    const prevModule = modules[modIndex - 1];
+    return !prevModule.lessons?.every((l: any) => isLessonSatisfied(l));
+  };
+
   const handleNext = () => {
     if (currentIndex < allLessons.length - 1) {
       const nextLesson = allLessons[currentIndex + 1];
       const nextId = nextLesson.id || nextLesson._id;
 
-      // Only block on ASSIGNMENT type, not quiz (quizzes are self-completing)
-      const nextIndex = currentIndex + 1;
-      const previousRequired = allLessons.slice(0, nextIndex).filter(l =>
-        (l.requiredAssignment || l.type === 'assignment') && l.type !== 'quiz'
-      );
-      const isNextLocked = previousRequired.some((pl) => !isLessonSatisfied(pl));
+      // Block if the next lesson's module is locked (prev module incomplete)
+      if (isModuleLocked(nextId)) {
+        toast.error('Complete all lessons in the current module first to unlock the next one.');
+        return;
+      }
 
-      if (isNextLocked) {
-        const blockingLesson = previousRequired.find((pl) => !isLessonSatisfied(pl));
-        toast.error(`Unit Locked: Submit and get approval for "${blockingLesson?.title}" first.`);
+      // Also block if there's a required final assignment (non-quiz) in previous lessons
+      const nextIndex = currentIndex + 1;
+      const hardGate = allLessons.slice(0, nextIndex).find(l =>
+        (l.requiredAssignment || l.type === 'assignment') && l.type !== 'quiz' && !isLessonSatisfied(l)
+      );
+      if (hardGate) {
+        toast.error(`Unit Locked: Submit and get approval for "${hardGate.title}" first.`);
         return;
       }
 
@@ -474,28 +493,34 @@ export default function CourseDetail() {
           <div className="lg:col-span-8 space-y-6">
             {(() => {
               const lessonIndex = allLessons.findIndex(l => (l.id || l._id) === activeLessonId);
-              const previousRequiredLessons = allLessons.slice(0, lessonIndex).filter((pl) =>
-                (pl.requiredAssignment || pl.type === 'assignment') && pl.type !== 'quiz'
-              );
-              const isLocked = previousRequiredLessons.some((pl) => !isLessonSatisfied(pl));
+              const isLocked = isModuleLocked(activeLessonId || '');
 
               if (isLocked) {
+                // Find which module this lesson is in and what previous module is incomplete
+                const modules = (course?.modules || []) as any[];
+                const modIndex = modules.findIndex((m: any) =>
+                  m.lessons?.some((l: any) => (l.id || l._id) === activeLessonId)
+                );
+                const prevModule = modIndex > 0 ? modules[modIndex - 1] : null;
+                const incompleteLessons = prevModule?.lessons?.filter((l: any) => !isLessonSatisfied(l)) || [];
                 return (
-                  <Card className="border-border/50 min-h-[500px] flex flex-col items-center justify-center p-12 text-center">
-                    <Lock className="w-16 h-16 text-muted-foreground/30 mb-6" />
-                    <h2 className="text-2xl font-bold mb-2">Unit Locked</h2>
-                    <p className="text-muted-foreground mb-8">Complete the previous module requirements to unlock this content.</p>
-                    <div className="p-4 bg-muted/20 rounded-xl border border-border/30 text-left max-w-sm w-full">
-                      <p className="text-[10px] font-bold uppercase text-accent mb-2 tracking-widest">Incomplete Requirements:</p>
-                      <ul className="space-y-1">
-                        {previousRequiredLessons.filter((pl) => !isLessonSatisfied(pl)).map(pl => (
-                          <li key={pl.id || pl._id} className="text-sm flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                            {pl.title}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  <Card className="border-border/50 min-h-[300px] sm:min-h-[400px] flex flex-col items-center justify-center p-6 sm:p-10 text-center">
+                    <Lock className="w-10 h-10 sm:w-14 sm:h-14 text-muted-foreground/30 mb-4" />
+                    <h2 className="text-lg sm:text-xl font-bold mb-1">Module Locked</h2>
+                    <p className="text-muted-foreground text-xs sm:text-sm mb-4">Finish <span className="font-bold text-accent">{prevModule?.title}</span> to unlock this module.</p>
+                    {incompleteLessons.length > 0 && (
+                      <div className="p-3 bg-muted/20 rounded-xl border border-border/30 text-left max-w-xs w-full">
+                        <p className="text-[9px] font-bold uppercase text-accent mb-1.5 tracking-widest">Still needed:</p>
+                        <ul className="space-y-1">
+                          {incompleteLessons.map((pl: any) => (
+                            <li key={pl.id || pl._id} className="text-xs flex items-center gap-2">
+                              <span className="w-1 h-1 rounded-full bg-accent shrink-0" />
+                              {pl.title}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </Card>
                 );
               }
@@ -721,10 +746,8 @@ export default function CourseDetail() {
                               const isActive = lesId === activeLessonId;
                               const isComp = completedLessons.some((cl: any) => cl.lessonId === lesId) || forcedProgressLessonIds.includes(lesId);
                               const lIdx = allLessons.findIndex(l => (l.id || l._id) === lesId);
-                              const prevRequiredLessons = allLessons.slice(0, lIdx).filter((pl) =>
-                                (pl.requiredAssignment || pl.type === 'assignment') && pl.type !== 'quiz'
-                              );
-                              const isLock = prevRequiredLessons.some((pl) => !isLessonSatisfied(pl));
+                              // Module-based lock: locked if previous module is not fully completed
+                              const isLock = isModuleLocked(lesId);
                               return (
                                 <button
                                   key={lesId}
