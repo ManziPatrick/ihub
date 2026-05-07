@@ -2335,11 +2335,13 @@ export const resolvers = {
         return ans;
       }));
 
-      let submission = await AssignmentSubmission.findOne({
-        userId: context.user.id,
-        courseId,
-        lessonId
-      });
+      // Calculate max possible score
+      const maxScore = targetLesson.assignmentQuestions.reduce((sum: number, q: any) => sum + (q.points || 10), 0);
+      const gradePercent = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+
+      // Determine if all answers are auto-gradeable (MCQ only, or AI grading ran for all open questions)
+      const hasOpenQuestions = targetLesson.assignmentQuestions.some((q: any) => q.type === 'open');
+      const autoStatus = gradePercent >= 50 ? 'approved' : 'reviewed';
 
       const submissionData = {
         userId: context.user.id,
@@ -2349,7 +2351,11 @@ export const resolvers = {
         answers: gradedAnswers,
         totalScore,
         timeTaken,
-        status: 'pending'
+        grade: gradePercent,
+        status: autoStatus,
+        feedback: hasOpenQuestions
+          ? `Auto-graded: ${gradePercent}% (${totalScore}/${maxScore} pts). Open-ended answers reviewed by AI.`
+          : `Auto-graded: ${gradePercent}% (${totalScore}/${maxScore} pts).`
       };
 
       if (submission) {
@@ -2359,7 +2365,43 @@ export const resolvers = {
         submission = await AssignmentSubmission.create(submissionData);
       }
 
-      await logActivity(context.user.id, 'SUBMIT_ASSIGNMENT_EXAM', 'AssignmentSubmission', submission.id, `Submitted exam for lesson ${lessonId}`);
+      // Record grade on the user profile
+      const user = await User.findById(context.user.id);
+      if (user) {
+        const existingGradeIdx = (user as any).grades?.findIndex((g: any) => g.lessonId === lessonId);
+        const gradeEntry = { lessonId, score: gradePercent, courseId };
+        if (existingGradeIdx >= 0) {
+          (user as any).grades[existingGradeIdx] = gradeEntry;
+        } else {
+          if (!(user as any).grades) (user as any).grades = [];
+          (user as any).grades.push(gradeEntry);
+        }
+        // Add XP reward based on score
+        const xpReward = Math.round((gradePercent / 100) * 50); // max 50 XP for exam
+        (user as any).xp = ((user as any).xp || 0) + xpReward;
+        await user.save();
+      }
+
+      // Auto-complete the lesson if passing grade (≥50%)
+      if (gradePercent >= 50) {
+        try {
+          const userDoc = await User.findById(context.user.id);
+          if (userDoc) {
+            const alreadyComplete = (userDoc as any).completedLessons?.some(
+              (cl: any) => cl.lessonId === lessonId && cl.courseId?.toString() === courseId
+            );
+            if (!alreadyComplete) {
+              if (!(userDoc as any).completedLessons) (userDoc as any).completedLessons = [];
+              (userDoc as any).completedLessons.push({ courseId, lessonId, completedAt: new Date() });
+              await userDoc.save();
+            }
+          }
+        } catch (e) {
+          // Non-critical — lesson completion failure shouldn't block exam result
+        }
+      }
+
+      await logActivity(context.user.id, 'SUBMIT_ASSIGNMENT_EXAM', 'AssignmentSubmission', submission.id, `Submitted exam for lesson ${lessonId} — Score: ${gradePercent}%`);
 
       const populated = await submission.populate(['userId', 'courseId']);
       return {
@@ -2369,6 +2411,7 @@ export const resolvers = {
         course: populated.courseId
       };
     },
+
     updateExamConfig: async (_: any, { courseId, lessonId, config }: any, context: any) => {
       if (!context.user || !['trainer', 'admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Unauthorized');

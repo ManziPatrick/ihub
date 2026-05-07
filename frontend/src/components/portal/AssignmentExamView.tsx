@@ -132,6 +132,7 @@ export function AssignmentExamView({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const answersRef = useRef<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [gradeResult, setGradeResult] = useState<{ grade: number; totalScore: number; status: string } | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [isSecureStarted, setIsSecureStarted] = useState(false);
   const [violationCount, setViolationCount] = useState(0);
@@ -181,7 +182,15 @@ export function AssignmentExamView({
     } catch (_) {}
 
     try {
-      await submitExam({ variables: { courseId, lessonId, answers: formattedAnswers, timeTaken } });
+      const { data } = await submitExam({ variables: { courseId, lessonId, answers: formattedAnswers, timeTaken } });
+      const result = data?.submitAssignmentExam;
+      if (result) {
+        setGradeResult({
+          grade: result.grade ?? 0,
+          totalScore: result.totalScore ?? 0,
+          status: result.status ?? 'reviewed'
+        });
+      }
       setIsSubmitted(true);
     } catch (err: any) {
       toast.error(err.message || "Failed to submit exam");
@@ -274,29 +283,68 @@ export function AssignmentExamView({
 
   /* ─────────────────────────── SUBMITTED ─────────────────────────── */
   if (isSubmitted) {
+    const passed = gradeResult ? gradeResult.grade >= 50 : false;
+    const grade = gradeResult?.grade ?? null;
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="text-center p-6 sm:p-10 space-y-5 sm:space-y-7"
+        className="text-center p-6 sm:p-10 space-y-5 sm:space-y-6"
       >
-        <div className="w-16 h-16 sm:w-24 sm:h-24 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-green-500/10">
-          <Trophy className="w-8 h-8 sm:w-12 sm:h-12" />
+        {/* Score circle */}
+        <div className={`w-20 h-20 sm:w-28 sm:h-28 rounded-full flex items-center justify-center mx-auto shadow-xl ${
+          grade === null ? 'bg-green-500/10 text-green-500' :
+          passed ? 'bg-green-500/15 shadow-green-500/20' : 'bg-red-500/15 shadow-red-500/20'
+        }`}>
+          {grade !== null ? (
+            <div className="flex flex-col items-center leading-none">
+              <span className={`text-2xl sm:text-3xl font-black ${ passed ? 'text-green-400' : 'text-red-400' }`}>
+                {grade}%
+              </span>
+              <span className={`text-[9px] font-black uppercase tracking-widest mt-0.5 ${ passed ? 'text-green-400/70' : 'text-red-400/70' }`}>
+                {passed ? 'PASSED' : 'FAILED'}
+              </span>
+            </div>
+          ) : (
+            <Trophy className="w-10 h-10 sm:w-14 sm:h-14 text-green-500" />
+          )}
         </div>
-        <div className="space-y-2 sm:space-y-3">
-          <h3 className="text-xl sm:text-3xl font-black text-foreground tracking-tight">
-            EXAM COMPLETED! 🏆
+
+        <div className="space-y-2">
+          <h3 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+            {grade !== null ? (passed ? 'Exam Passed! 🎉' : 'Exam Submitted') : 'EXAM COMPLETED! 🏆'}
           </h3>
-          <p className="text-muted-foreground text-xs sm:text-sm font-medium max-w-sm mx-auto leading-relaxed">
-            Your responses have been securely transmitted. Our AI grading system and your lead trainer will review your open responses shortly.
+          {grade !== null ? (
+            <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black border ${
+              passed
+                ? 'bg-green-500/10 border-green-500/20 text-green-400'
+                : 'bg-orange-500/10 border-orange-500/20 text-orange-400'
+            }`}>
+              {passed ? '✓ Auto-Graded & Approved' : '⏳ Submitted for Review'}
+            </div>
+          ) : null}
+          <p className="text-muted-foreground text-xs sm:text-sm max-w-sm mx-auto leading-relaxed">
+            {grade !== null && passed
+              ? `Great work! You scored ${grade}% on this exam. Your result has been recorded.`
+              : grade !== null
+              ? `You scored ${grade}%. A score of 50% or higher is required to pass. You may retake the exam.`
+              : 'Your responses have been securely transmitted and are being reviewed.'}
           </p>
         </div>
+
         <div className="flex flex-col items-center gap-3">
-          <Button onClick={onComplete} className="w-full sm:w-auto h-11 sm:h-14 px-6 sm:px-10 rounded-xl sm:rounded-2xl text-sm sm:text-base font-black bg-amber-500 hover:bg-amber-600 shadow-lg">
-            RETURN TO COURSE TRACK
+          <Button
+            onClick={onComplete}
+            className={`w-full sm:w-auto h-11 sm:h-12 px-8 rounded-xl font-black text-sm ${
+              passed || grade === null
+                ? 'bg-amber-500 hover:bg-amber-600'
+                : 'bg-muted hover:bg-muted/80'
+            } shadow-lg`}
+          >
+            {passed ? '🏆 Return to Course' : 'Return to Course'}
           </Button>
           <p className="text-[9px] sm:text-[10px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-1.5">
-            <History className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> Result will appear in your gradebook
+            <History className="w-2.5 h-2.5" /> Grade saved in your gradebook
           </p>
         </div>
       </motion.div>

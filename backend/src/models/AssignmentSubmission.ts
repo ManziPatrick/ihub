@@ -5,7 +5,7 @@ export interface IAssignmentSubmission extends Document {
     courseId: mongoose.Types.ObjectId;
     lessonId: string;
     content: string;
-    status: 'pending' | 'reviewed' | 'revision_requested';
+    status: 'pending' | 'reviewed' | 'revision_requested' | 'approved';
     grade?: number;
     feedback?: string;
     answers: Array<{
@@ -28,7 +28,7 @@ const AssignmentSubmissionSchema: Schema = new Schema(
         content: { type: String, required: false },
         status: {
             type: String,
-            enum: ['pending', 'reviewed', 'revision_requested'],
+            enum: ['pending', 'reviewed', 'revision_requested', 'approved'],
             default: 'pending'
         },
         grade: { type: Number },
