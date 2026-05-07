@@ -2896,10 +2896,7 @@ export const resolvers = {
         const currentLessonIndex = allLessons.findIndex((l: any) => (l.id || l._id).toString() === targetLessonId);
         if (currentLessonIndex > 0) {
           const previousRequiredLessons = allLessons.slice(0, currentLessonIndex).filter((l: any) =>
-            l.requiredAssignment ||
-            l.type === 'assignment' ||
-            l.type === 'quiz' ||
-            l.isAssignment
+            (l.requiredAssignment || l.type === 'assignment') && l.type !== 'quiz'
           );
 
           for (const prevLesson of previousRequiredLessons) {

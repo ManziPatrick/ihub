@@ -243,7 +243,7 @@ export default function CourseDetail() {
       setTimeout(() => win.print(), 500);
     }
   };
-  const currentLessonRequiresAssignment = !!(currentLesson?.type === 'assignment' || currentLesson?.isAssignment);
+  const currentLessonRequiresAssignment = !!(currentLesson?.type === 'assignment' && currentLesson?.isAssignment);
   const currentLessonSubmission = submissionsData?.getAssignmentSubmissions?.items?.find((submission) => !me?.id || submission.userId === me.id);
   const currentLessonSubmissionStatus = currentLessonSubmission?.status;
   const currentLessonCompleted = completedLessons.some((cl: any) => cl.lessonId === (currentLesson?.id || currentLesson?._id));
@@ -281,23 +281,16 @@ export default function CourseDetail() {
       const nextLesson = allLessons[currentIndex + 1];
       const nextId = nextLesson.id || nextLesson._id;
 
-      // Check if next lesson is locked
+      // Only block on ASSIGNMENT type, not quiz (quizzes are self-completing)
       const nextIndex = currentIndex + 1;
       const previousRequired = allLessons.slice(0, nextIndex).filter(l =>
-        l.requiredAssignment || l.type === 'assignment' || l.type === 'quiz' || l.isAssignment
+        (l.requiredAssignment || l.type === 'assignment') && l.type !== 'quiz'
       );
       const isNextLocked = previousRequired.some((pl) => !isLessonSatisfied(pl));
 
       if (isNextLocked) {
-        const blockingLesson = previousRequired.find((pl) => {
-          return !isLessonSatisfied(pl);
-        });
-
-        if (blockingLesson?.type === 'assignment' || blockingLesson?.isAssignment) {
-          toast.error(`Unit Locked: Submit and get approval for assignment "${blockingLesson.title}" first.`);
-        } else {
-          toast.error(`Unit Locked: Finish previous requirements first.`);
-        }
+        const blockingLesson = previousRequired.find((pl) => !isLessonSatisfied(pl));
+        toast.error(`Unit Locked: Submit and get approval for "${blockingLesson?.title}" first.`);
         return;
       }
 
@@ -482,7 +475,7 @@ export default function CourseDetail() {
             {(() => {
               const lessonIndex = allLessons.findIndex(l => (l.id || l._id) === activeLessonId);
               const previousRequiredLessons = allLessons.slice(0, lessonIndex).filter((pl) =>
-                pl.requiredAssignment || pl.type === 'assignment' || pl.type === 'quiz' || pl.isAssignment
+                (pl.requiredAssignment || pl.type === 'assignment') && pl.type !== 'quiz'
               );
               const isLocked = previousRequiredLessons.some((pl) => !isLessonSatisfied(pl));
 
@@ -732,7 +725,7 @@ export default function CourseDetail() {
                               const isComp = completedLessons.some((cl: any) => cl.lessonId === lesId) || forcedProgressLessonIds.includes(lesId);
                               const lIdx = allLessons.findIndex(l => (l.id || l._id) === lesId);
                               const prevRequiredLessons = allLessons.slice(0, lIdx).filter((pl) =>
-                                pl.requiredAssignment || pl.type === 'assignment' || pl.type === 'quiz' || pl.isAssignment
+                                (pl.requiredAssignment || pl.type === 'assignment') && pl.type !== 'quiz'
                               );
                               const isLock = prevRequiredLessons.some((pl) => !isLessonSatisfied(pl));
 
@@ -799,7 +792,7 @@ export default function CourseDetail() {
 
                                 const lIdx = allLessons.findIndex(l => (l.id || l._id) === lesId);
                                 const prevRequiredLessons = allLessons.slice(0, lIdx).filter((pl) =>
-                                  pl.requiredAssignment || pl.type === 'assignment' || pl.type === 'quiz' || pl.isAssignment
+                                  (pl.requiredAssignment || pl.type === 'assignment') && pl.type !== 'quiz'
                                 );
                                 const isLock = prevRequiredLessons.some((pl) => !isLessonSatisfied(pl));
 
