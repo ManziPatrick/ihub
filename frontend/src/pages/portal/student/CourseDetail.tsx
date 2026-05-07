@@ -646,19 +646,24 @@ export default function CourseDetail() {
                         </div>
                       )}
 
-                      <div className="flex justify-between mt-10 gap-2">
-                        <Button variant="outline" className="border-border/50 hover:bg-muted/10" onClick={handlePrevious} disabled={currentIndex === 0}>
+                      <div className="flex flex-col sm:flex-row justify-between mt-10 gap-4">
+                        <Button 
+                          variant="outline" 
+                          className="w-full sm:w-auto border-border/50 hover:bg-muted/10 order-2 sm:order-1" 
+                          onClick={handlePrevious} 
+                          disabled={currentIndex === 0}
+                        >
                           <ChevronLeft className="w-4 h-4 mr-2" /> Previous Block
                         </Button>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-center gap-3 order-1 sm:order-2">
                           {currentLessonRequiresAssignment && !canMarkCurrentLessonComplete && (
-                            <Button variant="outline" onClick={handleForceProceed}>
+                            <Button variant="outline" className="w-full sm:w-auto" onClick={handleForceProceed}>
                               Force Proceed
                             </Button>
                           )}
                           <Button
                             variant="gold"
-                            className="shadow-lg shadow-gold/10"
+                            className="w-full sm:w-auto shadow-lg shadow-gold/10"
                             onClick={handleMarkComplete}
                             disabled={!canMarkCurrentLessonComplete}
                           >

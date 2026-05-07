@@ -10,6 +10,10 @@ const lessonSchema = new mongoose.Schema({
   title: { type: String, required: true },
   content: { type: String }, // Markdown content or description
   videoUrl: { type: String }, // URL to video resource
+  videoTitle: { type: String },
+  videoThumbnail: { type: String },
+  animationType: { type: String }, // e.g. '2D Animation', 'Motion Graphics'
+  ageCategory: { type: String }, // e.g. 'Children under 10'
   fileUrl: { type: String }, // URL to primary file resource (PDF, PPT, etc)
   duration: { type: Number }, // in minutes
   type: { type: String, enum: ['video', 'book', 'ppt', 'pdf', 'image', 'article', 'quiz', 'challenge', 'project', 'assignment'], default: 'video' },

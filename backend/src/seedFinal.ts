@@ -86,6 +86,28 @@ const seedFinal = async () => {
         category: "Design",
         status: "published",
         school: "Greenhill Academy"
+      },
+      {
+        title: "Machine Learning Specialization",
+        description: "Deep dive into algorithms, neural networks, and AI model deployment.",
+        thumbnail: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 850000,
+        level: "Advanced",
+        category: "Data Science",
+        status: "published",
+        school: "Greenhill Academy"
+      },
+      {
+        title: "Project Management Professional",
+        description: "Learn the methodology and tools to manage complex projects effectively.",
+        thumbnail: "https://images.unsplash.com/photo-1542626991-cbc4e32524cc?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 450000,
+        level: "Intermediate",
+        category: "Business",
+        status: "published",
+        school: "Kigali Business School"
       }
     ];
 
@@ -191,6 +213,247 @@ const seedFinal = async () => {
         ]
       },
       {
+        title: "Ethical Hacking Workshop (Free)",
+        description: "Learn the basics of penetration testing and network security.",
+        thumbnail: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 0,
+        level: "Intermediate",
+        category: "IT & Software",
+        status: "published",
+        school: "Kingdavid",
+        modules: [
+          {
+            title: "Module 1: Reconnaissance",
+            lessons: [
+              { title: "Information Gathering", duration: 30, type: "video" },
+              {
+                title: "Quiz: Recon Techniques",
+                type: "quiz",
+                isAssignment: true,
+                assignmentQuestions: [
+                  {
+                    questionText: "What is 'dorking'?",
+                    type: "mcq",
+                    options: ["Advanced search queries", "System failure", "Password cracking", "Social engineering"],
+                    correctOptionIndex: 0,
+                    points: 10
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "Module 2: Penetration Testing Exam",
+            lessons: [
+              {
+                title: "Hacking Fundamentals Exam",
+                type: "assignment",
+                isAssignment: true,
+                requiredAssignment: true,
+                assignmentConfig: { mode: "exam" },
+                assignmentQuestions: [
+                  { questionText: "Describe the 5 phases of ethical hacking.", type: "open", points: 50 }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "DevOps for Beginners (Free)",
+        description: "Introduction to CI/CD, Docker, and automation workflows.",
+        thumbnail: "https://images.unsplash.com/photo-1618401471353-b98aadebc248?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 0,
+        level: "Beginner",
+        category: "IT & Software",
+        status: "published",
+        school: "IHUB Academy",
+        modules: [
+          {
+            title: "Module 1: Containerization",
+            lessons: [
+              { title: "Docker Basics", duration: 25, type: "video" },
+              {
+                title: "Quiz: Docker Commands",
+                type: "quiz",
+                isAssignment: true,
+                assignmentQuestions: [
+                  {
+                    questionText: "Which command lists running containers?",
+                    type: "mcq",
+                    options: ["docker run", "docker ps", "docker images", "docker build"],
+                    correctOptionIndex: 1,
+                    points: 10
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "Module 2: DevOps Final Exam",
+            lessons: [
+              {
+                title: "DevOps Foundations Exam",
+                type: "assignment",
+                isAssignment: true,
+                requiredAssignment: true,
+                assignmentConfig: { mode: "exam" },
+                assignmentQuestions: [
+                  { questionText: "Explain the concept of Continuous Integration.", type: "open", points: 50 }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Blockchain & Cryptography (Free)",
+        description: "Explore the technology behind Bitcoin, Ethereum, and secure communications.",
+        thumbnail: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 0,
+        level: "Intermediate",
+        category: "AI & Technology",
+        status: "published",
+        school: "IHUB Academy",
+        modules: [
+          {
+            title: "Module 1: Decentralization",
+            lessons: [
+              { title: "What is a Blockchain?", duration: 20, type: "video" },
+              {
+                title: "Quiz: Mining and Consensous",
+                type: "quiz",
+                isAssignment: true,
+                assignmentQuestions: [
+                  {
+                    questionText: "What is 'Proof of Work'?",
+                    type: "mcq",
+                    options: ["Consensus algorithm", "Hashing function", "Wallet type", "Transaction fee"],
+                    correctOptionIndex: 0,
+                    points: 10
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "Module 2: Crypto Final Exam",
+            lessons: [
+              {
+                title: "Blockchain Mastery Exam",
+                type: "assignment",
+                isAssignment: true,
+                requiredAssignment: true,
+                assignmentConfig: { mode: "exam" },
+                assignmentQuestions: [
+                  { questionText: "How do Smart Contracts work?", type: "open", points: 50 }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Graphic Design with Canva (Free)",
+        description: "Create professional graphics, social media posts, and presentations with ease.",
+        thumbnail: "https://images.unsplash.com/photo-1541462608141-ad4d0594ba67?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 0,
+        level: "Beginner",
+        category: "Design",
+        status: "published",
+        school: "Greenhill Academy",
+        modules: [
+          {
+            title: "Module 1: Design Principles",
+            lessons: [
+              { title: "Color Theory Basics", duration: 15, type: "video" },
+              {
+                title: "Quiz: Typography",
+                type: "quiz",
+                isAssignment: true,
+                assignmentQuestions: [
+                  {
+                    questionText: "What is a 'Serif' font?",
+                    type: "mcq",
+                    options: ["Font with small strokes at the ends", "Sans-stroke font", "Monospaced font", "Script font"],
+                    correctOptionIndex: 0,
+                    points: 10
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "Module 2: Creative Exam",
+            lessons: [
+              {
+                title: "Visual Communication Exam",
+                type: "assignment",
+                isAssignment: true,
+                requiredAssignment: true,
+                assignmentConfig: { mode: "exam" },
+                assignmentQuestions: [
+                  { questionText: "Define the Rule of Thirds in design.", type: "open", points: 50 }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Financial Literacy for Entrepreneurs (Free)",
+        description: "Manage your business finances, understand taxes, and plan for growth.",
+        thumbnail: "https://images.unsplash.com/photo-1454165833762-0204b2816718?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 0,
+        level: "Beginner",
+        category: "Business",
+        status: "published",
+        school: "Kigali Business School",
+        modules: [
+          {
+            title: "Module 1: Cashflow Management",
+            lessons: [
+              { title: "Budgeting Basics", duration: 25, type: "video" },
+              {
+                title: "Quiz: Balance Sheets",
+                type: "quiz",
+                isAssignment: true,
+                assignmentQuestions: [
+                  {
+                    questionText: "What is an Asset?",
+                    type: "mcq",
+                    options: ["Something you owe", "Something you own", "Your total income", "A business expense"],
+                    correctOptionIndex: 1,
+                    points: 10
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "Module 2: Entrepreneurial Finance Exam",
+            lessons: [
+              {
+                title: "Business Finance Mastery Exam",
+                type: "assignment",
+                isAssignment: true,
+                requiredAssignment: true,
+                assignmentConfig: { mode: "exam" },
+                assignmentQuestions: [
+                  { questionText: "What is ROI and how is it calculated?", type: "open", points: 50 }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
         title: "Data Analytics with Python (Free)",
         description: "Learn to analyze data and gain insights using Python, Pandas, and Matplotlib.",
         thumbnail: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800",
@@ -280,6 +543,72 @@ const seedFinal = async () => {
                 assignmentConfig: { mode: "exam" },
                 assignmentQuestions: [
                   { questionText: "Compare AWS, Azure, and Google Cloud.", type: "open", points: 50 }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Social Media Strategy (Free)",
+        description: "Build an audience and grow your brand on Instagram, TikTok, and LinkedIn.",
+        thumbnail: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 0,
+        level: "Beginner",
+        category: "Marketing",
+        status: "published",
+        school: "Kigali Business School",
+        modules: [
+          {
+            title: "Module 1: Content Planning",
+            lessons: [
+              { title: "Engagement Metrics", duration: 20, type: "video" },
+              {
+                title: "Quiz: Algorithms",
+                type: "quiz",
+                isAssignment: true,
+                assignmentQuestions: [
+                  {
+                    questionText: "What is the most important factor for video reach?",
+                    type: "mcq",
+                    options: ["Watch time", "Likes", "Comments", "Shares"],
+                    correctOptionIndex: 0,
+                    points: 10
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Professional Soft Skills (Free)",
+        description: "Communication, emotional intelligence, and leadership for the modern workplace.",
+        thumbnail: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 0,
+        level: "Beginner",
+        category: "Business",
+        status: "published",
+        school: "IHUB Academy",
+        modules: [
+          {
+            title: "Module 1: Emotional Intelligence",
+            lessons: [
+              { title: "Self-Awareness", duration: 15, type: "video" },
+              {
+                title: "Quiz: EQ Basics",
+                type: "quiz",
+                isAssignment: true,
+                assignmentQuestions: [
+                  {
+                    questionText: "What is Empathy?",
+                    type: "mcq",
+                    options: ["Understanding others' feelings", "Ignoring others", "Talking loudly", "Working alone"],
+                    correctOptionIndex: 0,
+                    points: 10
+                  }
                 ]
               }
             ]
