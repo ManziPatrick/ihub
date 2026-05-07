@@ -2873,8 +2873,8 @@ export const resolvers = {
         const allLessons = course.modules.flatMap((m: any) => m.lessons);
         const lesson = allLessons.find((l: any) => (l.id || l._id).toString() === targetLessonId);
 
-        const isGlobalAssignmentRequired = course.submissionRequired !== false && (lesson && (lesson.type === 'assignment' || lesson.isAssignment));
-        const isLessonExplicitlyRequired = lesson && !!lesson.requiredAssignment;
+        const isGlobalAssignmentRequired = course.submissionRequired !== false && (lesson && lesson.type !== 'quiz' && (lesson.type === 'assignment' || lesson.isAssignment));
+        const isLessonExplicitlyRequired = lesson && !!lesson.requiredAssignment && lesson.type !== 'quiz';
 
         if (isGlobalAssignmentRequired || isLessonExplicitlyRequired) {
           const submission = await AssignmentSubmission.findOne({

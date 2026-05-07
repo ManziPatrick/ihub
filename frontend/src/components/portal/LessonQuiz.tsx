@@ -258,7 +258,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
         <div className="flex flex-col gap-3 justify-center max-w-xs mx-auto">
           {passed ? (
             <>
-              <Button variant="gold" onClick={onComplete} className="h-16 rounded-2xl text-lg font-black shadow-gold hover:scale-[1.02] transition-all">
+              <Button variant="gold" onClick={onComplete} className="w-full h-14 sm:h-16 rounded-2xl text-lg font-black shadow-gold hover:scale-[1.02] transition-all">
                 COLLECT REWARDS <Star className="w-5 h-5 ml-2 fill-current" />
               </Button>
               <div className="flex items-center justify-center gap-2 text-xs font-bold text-accent">
@@ -319,50 +319,58 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
         </div>
       </div>
 
-      <div className="grid md:grid-cols-12 gap-8 items-start">
-        <div className="md:col-span-8 space-y-6">
-          <motion.div
-            key={currentQuestionIndex}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="space-y-6"
-          >
-            {/* Question Text */}
-            <div className="flex flex-col gap-4">
-              <h4 className="text-lg font-bold leading-tight text-foreground">
-                {currentQuestion.questionText}
-              </h4>
-            </div>
+      <div className="space-y-6">
+        {/* Avatar — shown at top on mobile, right side on desktop */}
+        <div className="flex justify-center md:hidden">
+          <div className="w-20 h-20">
+            <KidAvatar expression={expression} />
+          </div>
+        </div>
 
-            <div className="grid gap-3">
-              {currentQuestion.options.map((option: string, i: number) => {
-                const isCorrectOption = i === currentQuestion.correctOptionIndex;
-                const isSelectedOption = i === selectedOption;
-                
-                let stateClass = "bg-card border-border hover:border-gold/50";
-                if (isAnswered) {
-                  if (isCorrectOption) stateClass = "bg-green-500/10 border-green-500 text-green-400 scale-[1.02] shadow-lg shadow-green-500/10";
-                  else if (isSelectedOption) stateClass = "bg-red-500/10 border-red-500 text-red-500 opacity-80";
-                  else stateClass = "bg-muted/5 border-border/20 text-muted-foreground opacity-40";
-                } else if (isSelectedOption) {
-                  stateClass = "bg-gold/10 border-gold text-gold shadow-lg shadow-gold/10";
-                }
+        <div className="grid md:grid-cols-12 gap-6 md:gap-8 items-start">
+          <div className="md:col-span-8 space-y-6">
+            <motion.div
+              key={currentQuestionIndex}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-6"
+            >
+              {/* Question Text */}
+              <div className="flex flex-col gap-4">
+                <h4 className="text-lg font-bold leading-tight text-foreground">
+                  {currentQuestion.questionText}
+                </h4>
+              </div>
 
-                return (
-                  <motion.button
-                    key={i}
-                    whileHover={!isAnswered ? { scale: 1.01 } : {}}
-                    whileTap={!isAnswered ? { scale: 0.98 } : {}}
-                    onClick={() => handleOptionSelect(i)}
-                    disabled={isAnswered}
-                    className={`w-full text-left p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 transition-all flex items-center justify-between font-bold text-base sm:text-lg ${stateClass}`}
-                  >
-                    <span>{option}</span>
-                    {isAnswered && isCorrectOption && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />}
-                  </motion.button>
-                );
-              })}
-            </div>
+              <div className="grid gap-3">
+                {currentQuestion.options.map((option: string, i: number) => {
+                  const isCorrectOption = i === currentQuestion.correctOptionIndex;
+                  const isSelectedOption = i === selectedOption;
+                  
+                  let stateClass = "bg-card border-border hover:border-gold/50";
+                  if (isAnswered) {
+                    if (isCorrectOption) stateClass = "bg-green-500/10 border-green-500 text-green-400 scale-[1.02] shadow-lg shadow-green-500/10";
+                    else if (isSelectedOption) stateClass = "bg-red-500/10 border-red-500 text-red-500 opacity-80";
+                    else stateClass = "bg-muted/5 border-border/20 text-muted-foreground opacity-40";
+                  } else if (isSelectedOption) {
+                    stateClass = "bg-gold/10 border-gold text-gold shadow-lg shadow-gold/10";
+                  }
+
+                  return (
+                    <motion.button
+                      key={i}
+                      whileHover={!isAnswered ? { scale: 1.01 } : {}}
+                      whileTap={!isAnswered ? { scale: 0.98 } : {}}
+                      onClick={() => handleOptionSelect(i)}
+                      disabled={isAnswered}
+                      className={`w-full text-left p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 transition-all flex items-center justify-between font-bold text-base sm:text-lg ${stateClass}`}
+                    >
+                      <span>{option}</span>
+                      {isAnswered && isCorrectOption && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 fill-current shrink-0" />}
+                    </motion.button>
+                  );
+                })}
+              </div>
 
             {/* Hint Button and Panel below options */}
             <div className="pt-2">
@@ -470,15 +478,16 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
                 )}
               </AnimatePresence>
             </div>
+            </div>
           </motion.div>
         </div>
 
-        <div className="md:col-span-4 sticky top-4 flex justify-center md:justify-end">
-          <div className="w-24 h-24 sm:w-auto">
-            <KidAvatar expression={expression} />
-          </div>
+        {/* Avatar — hidden on mobile (shown above), visible on desktop */}
+        <div className="hidden md:flex md:col-span-4 sticky top-4 justify-end">
+          <KidAvatar expression={expression} />
         </div>
       </div>
+    </div>
 
       <AnimatePresence>
         {isAnswered && (
@@ -514,11 +523,11 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
               </div>
             )}
 
-            <div className="flex justify-end">
+            <div className="flex flex-col sm:flex-row justify-end gap-3">
               <Button 
                 variant="gold" 
                 onClick={handleNext} 
-                className="h-16 px-10 rounded-2xl text-lg font-black shadow-gold group hover:scale-[1.05] transition-all"
+                className="w-full sm:w-auto h-14 sm:h-16 px-8 sm:px-10 rounded-2xl text-base sm:text-lg font-black shadow-gold group hover:scale-[1.05] transition-all"
               >
                 {currentQuestionIndex < questions.length - 1 ? "NEXT CHALLENGE" : "FINISH QUIZ"}
                 <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
@@ -534,7 +543,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
             variant="gold" 
             onClick={handleSubmitAnswer} 
             disabled={selectedOption === null}
-            className="h-14 px-8 rounded-2xl font-black shadow-gold"
+            className="w-full sm:w-auto h-14 px-8 rounded-2xl font-black shadow-gold"
           >
             CHECK ANSWER
           </Button>
