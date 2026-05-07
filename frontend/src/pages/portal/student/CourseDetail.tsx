@@ -384,10 +384,10 @@ export default function CourseDetail() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 p-6 bg-muted/10 rounded-2xl border border-border/50"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-muted/10 rounded-2xl border border-border/50"
         >
-          <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden border border-border/50 shadow-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl overflow-hidden border border-border/50 shadow-lg shrink-0">
               <img
                 src={course.thumbnail || FALLBACK_IMG}
                 onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
@@ -395,41 +395,41 @@ export default function CourseDetail() {
                 alt={course.title}
               />
             </div>
-            <div>
-              <h1 className="font-heading text-2xl font-bold">{course.title}</h1>
-              <div className="flex items-center gap-3 mt-1.5">
-                <Badge variant="secondary" className="text-[10px] uppercase font-black bg-accent/10 text-accent border-accent/20 gap-1.5 px-2 py-1">
-                  <Building2 className="w-3 h-3" />
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-base font-semibold text-foreground tracking-tight leading-snug line-clamp-1">{course.title}</h1>
+              <div className="flex items-center flex-wrap gap-2 mt-1">
+                <Badge variant="secondary" className="text-[9px] uppercase font-black bg-accent/10 text-accent border-accent/20 gap-1 px-1.5 py-0.5">
+                  <Building2 className="w-2.5 h-2.5" />
                   {course.school || "IHUB Academy"}
                 </Badge>
-                <Badge variant="outline" className="text-[10px] uppercase text-card-foreground/60">{course.level}</Badge>
-                <p className="text-muted-foreground text-xs font-medium">{progressPercent}% Completed</p>
+                <Badge variant="outline" className="text-[9px] uppercase text-card-foreground/60 px-1.5 py-0.5">{course.level}</Badge>
+                <span className="text-muted-foreground text-[10px] font-medium">{progressPercent}% done</span>
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/20 rounded-2xl">
-              <Star className="w-4 h-4 text-gold fill-current" />
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase text-gold/60 leading-none">XP Points</span>
-                <span className="text-sm font-black text-gold">{me?.xp || 0}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gold/10 border border-gold/20 rounded-xl">
+              <Star className="w-3.5 h-3.5 text-gold fill-current" />
+              <div className="flex flex-col leading-none">
+                <span className="text-[9px] font-bold uppercase text-gold/60">XP</span>
+                <span className="text-xs font-black text-gold">{me?.xp || 0}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/20 rounded-2xl">
-              <Flame className="w-4 h-4 text-accent fill-current" />
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase text-accent/60 leading-none">Streak</span>
-                <span className="text-sm font-black text-accent">{me?.streak || 0} Days</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 border border-accent/20 rounded-xl">
+              <Flame className="w-3.5 h-3.5 text-accent fill-current" />
+              <div className="flex flex-col leading-none">
+                <span className="text-[9px] font-bold uppercase text-accent/60">Streak</span>
+                <span className="text-xs font-black text-accent">{me?.streak || 0}d</span>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-muted/10 border border-border/20 rounded-2xl">
-              <Trophy className="w-4 h-4 text-muted-foreground" />
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground leading-none">Level</span>
-                <span className="text-sm font-black text-foreground">{me?.level || 1}</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/10 border border-border/20 rounded-xl">
+              <Trophy className="w-3.5 h-3.5 text-muted-foreground" />
+              <div className="flex flex-col leading-none">
+                <span className="text-[9px] font-bold uppercase text-muted-foreground">Lvl</span>
+                <span className="text-xs font-black text-foreground">{me?.level || 1}</span>
               </div>
             </div>
-            <div className="w-48 bg-muted/20 rounded-full h-2 hidden md:block">
+            <div className="w-24 bg-muted/20 rounded-full h-1.5 hidden sm:block">
               <div className="bg-gold h-full rounded-full transition-all duration-1000" style={{ width: `${progressPercent}%` }} />
             </div>
           </div>
