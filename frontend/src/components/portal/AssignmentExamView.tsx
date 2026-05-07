@@ -183,7 +183,7 @@ export function AssignmentExamView({
 
     try {
       const { data } = await submitExam({ variables: { courseId, lessonId, answers: formattedAnswers, timeTaken } });
-      const result = data?.submitAssignmentExam;
+      const result = (data as any)?.submitAssignmentExam;
       if (result) {
         setGradeResult({
           grade: result.grade ?? 0,

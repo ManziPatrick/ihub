@@ -2358,6 +2358,12 @@ export const resolvers = {
           : `Auto-graded: ${gradePercent}% (${totalScore}/${maxScore} pts).`
       };
 
+      let submission = await AssignmentSubmission.findOne({
+        userId: context.user.id,
+        courseId,
+        lessonId
+      });
+
       if (submission) {
         Object.assign(submission, submissionData);
         await submission.save();
