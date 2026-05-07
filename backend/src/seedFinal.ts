@@ -64,180 +64,229 @@ const seedFinal = async () => {
         category: "Marketing",
         status: "published",
         school: "Kigali Business School"
+      },
+      {
+        title: "Cybersecurity Professional",
+        description: "Learn to protect systems, networks, and programs from digital attacks.",
+        thumbnail: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 600000,
+        level: "Intermediate",
+        category: "IT & Software",
+        status: "published",
+        school: "Kingdavid"
+      },
+      {
+        title: "UI/UX Design Masterclass",
+        description: "Master the art of creating beautiful and functional user interfaces.",
+        thumbnail: "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 350000,
+        level: "Intermediate",
+        category: "Design",
+        status: "published",
+        school: "Greenhill Academy"
       }
     ];
 
-    const complexFreeCourse = {
-      title: "Full-Stack Web Development Mastery (Free)",
-      description: "A comprehensive journey from HTML basics to advanced React and Node.js backend systems. This course includes multiple quizzes, hands-on modules, and a final certification exam.",
-      thumbnail: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=800",
-      instructor: instructor._id,
-      price: 0,
-      level: "Beginner",
-      category: "Development",
-      status: "published",
-      school: "IHUB Academy",
-      allowedDeliveryModes: ["online"],
-      enrollmentMode: "direct",
-      modules: [
-        {
-          title: "Module 1: The Foundation (HTML & CSS)",
-          description: "Learn the building blocks of the web.",
-          lessons: [
-            {
-              title: "HTML5 Semantic Structure",
-              duration: 15,
-              type: "video",
-              content: "Understanding how to structure web pages correctly."
-            },
-            {
-              title: "CSS3 Flexbox and Grid",
-              duration: 20,
-              type: "article",
-              content: "Mastering modern layouts."
-            },
-            {
-              title: "Quiz: Web Foundations",
-              duration: 10,
-              type: "quiz",
-              isAssignment: true,
-              assignmentDescription: "Test your knowledge on HTML and CSS basics.",
-              assignmentQuestions: [
-                {
-                  questionText: "Which HTML tag is used for the largest heading?",
-                  type: "mcq",
-                  options: ["<h6>", "<head>", "<h1>", "<header>"],
-                  correctOptionIndex: 2,
-                  explanation: "<h1> is the standard tag for the most important heading on a page.",
-                  points: 10
-                },
-                {
-                  questionText: "What does CSS stand for?",
-                  type: "mcq",
-                  options: ["Creative Style Sheets", "Cascading Style Sheets", "Computer Style Sheets", "Colorful Style Sheets"],
-                  correctOptionIndex: 1,
-                  explanation: "CSS stands for Cascading Style Sheets.",
-                  points: 10
-                }
-              ]
-            }
-          ]
-        },
-        {
-          title: "Module 2: JavaScript Essentials",
-          description: "Bringing logic to your web pages.",
-          lessons: [
-            {
-              title: "ES6+ Features",
-              duration: 25,
-              type: "video",
-              content: "Arrow functions, destructuring, and more."
-            },
-            {
-              title: "Asynchronous JavaScript",
-              duration: 30,
-              type: "article",
-              content: "Promises and Async/Await explained."
-            },
-            {
-              title: "Quiz: JavaScript Logic",
-              duration: 15,
-              type: "quiz",
-              isAssignment: true,
-              assignmentDescription: "Challenge yourself with JS logic questions.",
-              assignmentQuestions: [
-                {
-                  questionText: "What will 'typeof []' return in JavaScript?",
-                  type: "mcq",
-                  options: ["array", "object", "null", "undefined"],
-                  correctOptionIndex: 1,
-                  explanation: "In JavaScript, arrays are a specialized type of object.",
-                  points: 10
-                }
-              ]
-            }
-          ]
-        },
-        {
-          title: "Module 3: React Fundamentals",
-          description: "Building modern UIs with React.",
-          lessons: [
-            {
-              title: "Hooks: useState & useEffect",
-              duration: 30,
-              type: "video",
-              content: "Managing state and side effects."
-            },
-            {
-              title: "Component Architecture",
-              duration: 20,
-              type: "article",
-              content: "Props, components, and reusability."
-            }
-          ]
-        },
-        {
-          title: "Module 4: Backend with Node.js",
-          description: "Creating servers and APIs.",
-          lessons: [
-            {
-              title: "Express.js Routing",
-              duration: 25,
-              type: "video",
-              content: "How to handle requests and responses."
-            },
-            {
-              title: "MongoDB & Mongoose",
-              duration: 30,
-              type: "article",
-              content: "Interacting with databases."
-            }
-          ]
-        },
-        {
-          title: "Module 5: Final Certification",
-          description: "The ultimate test of your skills.",
-          lessons: [
-            {
-              title: "Final Exam: Full-Stack Proficiency",
-              duration: 60,
-              type: "assignment",
-              isAssignment: true,
-              requiredAssignment: true,
-              assignmentDescription: "A comprehensive exam covering HTML, CSS, JS, React, and Node.js. Passing score is 80%.",
-              assignmentConfig: {
-                timeLimit: 45,
-                allowRetakes: false,
-                disableRightClick: true,
-                mode: "exam"
-              },
-              assignmentQuestions: [
-                {
-                  questionText: "Explain the Virtual DOM in React.",
-                  type: "open",
-                  explanation: "The Virtual DOM is a lightweight copy of the real DOM that React uses to optimize updates.",
-                  points: 20
-                },
-                {
-                  questionText: "Which HTTP method is typically used to create a new resource?",
-                  type: "mcq",
-                  options: ["GET", "POST", "PUT", "DELETE"],
-                  correctOptionIndex: 1,
-                  explanation: "POST is the standard method for creating new resources in REST APIs.",
-                  points: 10
-                },
-                {
-                  questionText: "Describe the purpose of Middleware in Express.",
-                  type: "open",
-                  explanation: "Middleware functions have access to the request and response objects and can execute code, modify them, or end the request-response cycle.",
-                  points: 20
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    };
+    const complexFreeCourses = [
+      {
+        title: "Full-Stack Web Development Mastery (Free)",
+        description: "A comprehensive journey from HTML basics to advanced React and Node.js backend systems.",
+        thumbnail: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 0,
+        level: "Beginner",
+        category: "Development",
+        status: "published",
+        school: "IHUB Academy",
+        allowedDeliveryModes: ["online"],
+        enrollmentMode: "direct",
+        modules: [
+          {
+            title: "Module 1: Web Foundation",
+            description: "HTML & CSS Basics",
+            lessons: [
+              { title: "HTML Essentials", duration: 15, type: "video" },
+              {
+                title: "Quiz: HTML Basics",
+                type: "quiz",
+                isAssignment: true,
+                assignmentQuestions: [
+                  {
+                    questionText: "Which tag is used for links?",
+                    type: "mcq",
+                    options: ["<link>", "<a>", "<href>", "<url>"],
+                    correctOptionIndex: 1,
+                    points: 10
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "Module 2: Final Exam",
+            lessons: [
+              {
+                title: "Certification Exam",
+                type: "assignment",
+                isAssignment: true,
+                requiredAssignment: true,
+                assignmentConfig: { mode: "exam", timeLimit: 30 },
+                assignmentQuestions: [
+                  { questionText: "What is the purpose of React?", type: "open", points: 50 }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Mobile App Development with Flutter (Free)",
+        description: "Build beautiful, natively compiled applications for mobile from a single codebase.",
+        thumbnail: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 0,
+        level: "Beginner",
+        category: "Development",
+        status: "published",
+        school: "IHUB Academy",
+        modules: [
+          {
+            title: "Module 1: Introduction to Dart",
+            lessons: [
+              { title: "Dart Basics", duration: 20, type: "video" },
+              {
+                title: "Quiz: Dart Syntax",
+                type: "quiz",
+                isAssignment: true,
+                assignmentQuestions: [
+                  {
+                    questionText: "How do you define a variable in Dart?",
+                    type: "mcq",
+                    options: ["var", "let", "dim", "def"],
+                    correctOptionIndex: 0,
+                    points: 10
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "Module 2: Flutter Widgets",
+            lessons: [
+              { title: "Stateless vs Stateful", duration: 25, type: "video" },
+              {
+                title: "Final Exam: Flutter Basics",
+                type: "assignment",
+                isAssignment: true,
+                requiredAssignment: true,
+                assignmentConfig: { mode: "exam" },
+                assignmentQuestions: [
+                  { questionText: "Explain the Flutter build process.", type: "open", points: 50 }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Data Analytics with Python (Free)",
+        description: "Learn to analyze data and gain insights using Python, Pandas, and Matplotlib.",
+        thumbnail: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 0,
+        level: "Beginner",
+        category: "Data Science",
+        status: "published",
+        school: "Kigali Business School",
+        modules: [
+          {
+            title: "Module 1: Python for Data",
+            lessons: [
+              { title: "NumPy Fundamentals", duration: 20, type: "video" },
+              {
+                title: "Quiz: NumPy",
+                type: "quiz",
+                isAssignment: true,
+                assignmentQuestions: [
+                  {
+                    questionText: "What does NumPy stand for?",
+                    type: "mcq",
+                    options: ["Number Python", "Numerical Python", "New Python", "Node Python"],
+                    correctOptionIndex: 1,
+                    points: 10
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "Module 2: Final Assessment",
+            lessons: [
+              {
+                title: "Data Analytics Exam",
+                type: "assignment",
+                isAssignment: true,
+                requiredAssignment: true,
+                assignmentConfig: { mode: "exam" },
+                assignmentQuestions: [
+                  { questionText: "How do you handle missing data in Pandas?", type: "open", points: 50 }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        title: "Cloud Computing Essentials (Free)",
+        description: "Understanding Cloud architecture, deployment models, and service providers.",
+        thumbnail: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800",
+        instructor: instructor._id,
+        price: 0,
+        level: "Beginner",
+        category: "IT & Software",
+        status: "published",
+        school: "IHUB Academy",
+        modules: [
+          {
+            title: "Module 1: Cloud Concepts",
+            lessons: [
+              { title: "IaaS, PaaS, and SaaS", duration: 15, type: "video" },
+              {
+                title: "Quiz: Cloud Models",
+                type: "quiz",
+                isAssignment: true,
+                assignmentQuestions: [
+                  {
+                    questionText: "What does SaaS stand for?",
+                    type: "mcq",
+                    options: ["Software as a Service", "System as a Service", "Servers as a Service", "Storage as a Service"],
+                    correctOptionIndex: 0,
+                    points: 10
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            title: "Module 2: Cloud Exam",
+            lessons: [
+              {
+                title: "Cloud Certification Exam",
+                type: "assignment",
+                isAssignment: true,
+                requiredAssignment: true,
+                assignmentConfig: { mode: "exam" },
+                assignmentQuestions: [
+                  { questionText: "Compare AWS, Azure, and Google Cloud.", type: "open", points: 50 }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ];
 
     console.log('🚀 Seeding school courses...');
     for (const courseData of schoolCourses) {
@@ -250,12 +299,14 @@ const seedFinal = async () => {
       console.log(`✅ Seeded: ${courseData.title} (${courseData.school})`);
     }
 
-    console.log('🚀 Seeding complex free course...');
-    const existingFreeCourse = await Course.findOne({ title: complexFreeCourse.title });
-    if (existingFreeCourse) {
-      console.log(`⏩ Skipping existing: ${complexFreeCourse.title}`);
-    } else {
-      const freeCourse = await new Course(complexFreeCourse).save();
+    console.log('🚀 Seeding complex free courses...');
+    for (const courseData of complexFreeCourses) {
+      const existingCourse = await Course.findOne({ title: courseData.title });
+      if (existingCourse) {
+        console.log(`⏩ Skipping existing: ${courseData.title}`);
+        continue;
+      }
+      const freeCourse = await new Course(courseData).save();
       console.log(`✅ Seeded: ${freeCourse.title} with ${freeCourse.modules.length} modules.`);
     }
 
