@@ -278,25 +278,25 @@ export function AssignmentExamView({
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="text-center p-12 space-y-8"
+        className="text-center p-6 sm:p-10 space-y-5 sm:space-y-7"
       >
-        <div className="w-32 h-32 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-green-500/10">
-          <Trophy className="w-16 h-16" />
+        <div className="w-16 h-16 sm:w-24 sm:h-24 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-green-500/10">
+          <Trophy className="w-8 h-8 sm:w-12 sm:h-12" />
         </div>
-        <div className="space-y-4">
-          <h3 className="text-4xl font-black text-foreground tracking-tighter">
+        <div className="space-y-2 sm:space-y-3">
+          <h3 className="text-xl sm:text-3xl font-black text-foreground tracking-tight">
             EXAM COMPLETED! 🏆
           </h3>
-          <p className="text-muted-foreground font-medium max-w-md mx-auto leading-relaxed">
-            Congratulations! Your responses have been securely transmitted. Our AI grading system and your lead trainer will review your open responses shortly.
+          <p className="text-muted-foreground text-xs sm:text-sm font-medium max-w-sm mx-auto leading-relaxed">
+            Your responses have been securely transmitted. Our AI grading system and your lead trainer will review your open responses shortly.
           </p>
         </div>
-        <div className="flex flex-col items-center gap-4">
-          <Button onClick={onComplete} className="h-16 px-12 rounded-2xl text-lg font-black bg-amber-500 hover:bg-amber-600 shadow-lg">
+        <div className="flex flex-col items-center gap-3">
+          <Button onClick={onComplete} className="w-full sm:w-auto h-11 sm:h-14 px-6 sm:px-10 rounded-xl sm:rounded-2xl text-sm sm:text-base font-black bg-amber-500 hover:bg-amber-600 shadow-lg">
             RETURN TO COURSE TRACK
           </Button>
-          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
-            <History className="w-3 h-3" /> Result will appear in your gradebook
+          <p className="text-[9px] sm:text-[10px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-1.5">
+            <History className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> Result will appear in your gradebook
           </p>
         </div>
       </motion.div>
@@ -309,25 +309,25 @@ export function AssignmentExamView({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl mx-auto p-6 sm:p-12 text-center space-y-8 bg-indigo-500/5 rounded-[2.5rem] border-2 border-indigo-500/10"
+        className="max-w-2xl mx-auto p-4 sm:p-10 text-center space-y-5 sm:space-y-7 bg-indigo-500/5 rounded-2xl sm:rounded-[2.5rem] border-2 border-indigo-500/10"
       >
-        <div className="w-20 h-20 bg-indigo-500/20 text-indigo-500 rounded-2xl flex items-center justify-center mx-auto">
-          <ShieldAlert className="w-10 h-10" />
+        <div className="w-14 h-14 sm:w-20 sm:h-20 bg-indigo-500/20 text-indigo-500 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto">
+          <ShieldAlert className="w-7 h-7 sm:w-10 sm:h-10" />
         </div>
-        <div className="space-y-4">
-          <h2 className="text-3xl font-black tracking-tight">Secure Exam Mode</h2>
-          <div className="space-y-4 text-muted-foreground text-sm font-medium leading-relaxed max-w-sm mx-auto">
+        <div className="space-y-3 sm:space-y-4">
+          <h2 className="text-xl sm:text-3xl font-black tracking-tight">Secure Exam Mode</h2>
+          <div className="space-y-3 text-muted-foreground text-xs sm:text-sm font-medium leading-relaxed max-w-sm mx-auto">
             <p>To ensure academic integrity, this exam will lock your screen:</p>
-            <ul className="text-left max-w-xs mx-auto space-y-2 list-none">
+            <ul className="text-left max-w-xs mx-auto space-y-1.5 list-none">
               {[
                 { icon: Maximize2, text: "Fullscreen will be forced – you cannot minimize" },
                 { icon: EyeOff, text: "Switching tabs flags a violation" },
                 { icon: AlertTriangle, text: `3 violations = automatic submission` },
                 { icon: Lock, text: "Right-click is disabled" },
               ].map(({ icon: Icon, text }, i) => (
-                <li key={i} className="flex items-center gap-3 bg-background/60 rounded-xl p-3 border border-border/50">
-                  <Icon className="w-4 h-4 text-red-400 shrink-0" />
-                  <span className="text-foreground">{text}</span>
+                <li key={i} className="flex items-center gap-2.5 bg-background/60 rounded-xl p-2.5 border border-border/50">
+                  <Icon className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                  <span className="text-foreground text-xs">{text}</span>
                 </li>
               ))}
             </ul>
@@ -335,9 +335,9 @@ export function AssignmentExamView({
         </div>
         <Button
           onClick={startSecureExam}
-          className="h-16 px-12 rounded-2xl text-lg font-black flex items-center gap-3 w-full sm:w-auto mx-auto bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-500/20"
+          className="h-11 sm:h-14 px-8 sm:px-12 rounded-xl sm:rounded-2xl text-sm sm:text-base font-black flex items-center gap-2 w-full sm:w-auto mx-auto bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-500/20"
         >
-          <Maximize2 className="w-5 h-5" />
+          <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5" />
           START SECURE EXAM
         </Button>
       </motion.div>

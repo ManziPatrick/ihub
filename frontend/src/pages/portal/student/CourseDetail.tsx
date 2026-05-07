@@ -440,29 +440,29 @@ export default function CourseDetail() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="p-6 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-3xl mb-8 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative"
+            className="p-4 sm:p-6 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-2xl mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 overflow-hidden relative"
           >
             <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-              <Trophy className="w-32 h-32 text-green-500" />
+              <Trophy className="w-20 h-20 text-green-500" />
             </div>
-            <div className="flex items-center gap-6">
-              <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center text-white shadow-xl shadow-green-500/20">
-                <CheckCircle className="w-8 h-8" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white shadow-lg shadow-green-500/20 shrink-0">
+                <CheckCircle className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <h2 className="text-2xl font-black text-foreground">Course Mastered! 🎉</h2>
-                <p className="text-muted-foreground">Congratulations! You've successfully completed every unit in this track.</p>
+                <h2 className="text-base sm:text-lg font-black text-foreground">Course Mastered! 🎉</h2>
+                <p className="text-muted-foreground text-xs">You've completed every unit in this track.</p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link to="/portal/student/certificates">
-                <Button size="lg" className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold px-8 rounded-2xl shadow-lg shadow-green-500/20">
-                  <Award className="w-5 h-5 mr-2" /> Certificate
+            <div className="flex flex-row gap-2 w-full sm:w-auto">
+              <Link to="/portal/student/certificates" className="flex-1 sm:flex-none">
+                <Button size="sm" className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold px-4 rounded-xl text-xs h-9">
+                  <Award className="w-3.5 h-3.5 mr-1.5" /> Certificate
                 </Button>
               </Link>
-              <Link to="/portal/student/courses">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto rounded-2xl border-green-500/30 text-green-500 hover:bg-green-500/10">
-                  Next Course <ChevronRight className="w-5 h-5 ml-1" />
+              <Link to="/portal/student/courses" className="flex-1 sm:flex-none">
+                <Button size="sm" variant="outline" className="w-full sm:w-auto rounded-xl border-green-500/30 text-green-500 hover:bg-green-500/10 text-xs h-9">
+                  Next Course <ChevronRight className="w-3.5 h-3.5 ml-1" />
                 </Button>
               </Link>
             </div>
@@ -686,39 +686,36 @@ export default function CourseDetail() {
             })()}
           </div>
 
-          {/* Mobile Curriculum Trigger */}
-          <div className="lg:hidden fixed bottom-6 right-6 z-50">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="gold" size="lg" className="rounded-full w-14 h-14 p-0 shadow-2xl shadow-gold/40 border-2 border-white/20">
-                  <ListOrdered className="w-6 h-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0 border-l-accent/20 bg-background/95 backdrop-blur-xl">
-                <SheetHeader className="p-6 border-b border-border/50 bg-muted/10">
-                  <SheetTitle className="text-sm font-black uppercase tracking-widest text-accent flex items-center gap-2">
-                    <ListOrdered className="w-4 h-4" />
-                    Track Curriculum
-                  </SheetTitle>
-                </SheetHeader>
-                <ScrollArea className="h-[calc(100vh-100px)]">
-                  <div className="p-6">
+          {/* Course Track Overview — always visible below main content */}
+          <div className="mt-4">
+            <Card className="border-border/50">
+              <div className="p-3 border-b border-border/30 bg-muted/10 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2">
+                <ListOrdered className="w-3.5 h-3.5 text-accent" />
+                Track Overview
+              </div>
+              <CardContent className="p-0">
+                <div className="p-3 space-y-4">
+                  <Accordion type="multiple" className="w-full space-y-2">
                     {course.modules?.map((mod: any, mIdx: number) => {
                       const modCompleted = isModuleCompleted(mod);
                       return (
-                        <div key={mod.id || mod._id} className="mb-6 last:mb-0">
-                          <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-[10px] font-black text-accent uppercase tracking-widest flex-1">{mod.title}</h4>
+                        <AccordionItem key={mod.id || mod._id} value={`module-${mIdx}`} className="border rounded-xl px-3 bg-background">
+                          <div className="flex items-center justify-between w-full">
+                            <AccordionTrigger className="hover:no-underline flex-1 text-left py-2.5">
+                              <h4 className="text-[10px] font-bold text-accent uppercase tracking-wide line-clamp-1">{mod.title}</h4>
+                            </AccordionTrigger>
                             {modCompleted && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleDownloadModuleCert(mod); }}
-                                className="text-[10px] font-bold text-gold flex items-center gap-1"
+                                title="Download Module Certificate"
+                                className="flex items-center gap-1 text-[9px] font-black text-gold hover:text-gold/80 transition-colors mr-1 z-10 relative"
                               >
-                                <Award className="w-3 h-3" /> Cert
+                                <Award className="w-3 h-3" />
+                                <span>Cert</span>
                               </button>
                             )}
                           </div>
-                          <div className="space-y-1 pl-1 border-l-2 border-muted/20 ml-1">
+                          <AccordionContent className="pt-1 pb-3 space-y-1">
                             {mod.lessons?.map((les: any) => {
                               const lesId = les.id || les._id;
                               const isActive = lesId === activeLessonId;
@@ -728,105 +725,40 @@ export default function CourseDetail() {
                                 (pl.requiredAssignment || pl.type === 'assignment') && pl.type !== 'quiz'
                               );
                               const isLock = prevRequiredLessons.some((pl) => !isLessonSatisfied(pl));
-
                               return (
                                 <button
                                   key={lesId}
                                   disabled={isLock}
-                                  onClick={() => {
-                                    if (!isLock) {
-                                      setActiveLessonId(lesId);
-                                      // We don't have direct access to setSheetOpen here without adding state, 
-                                      // but usually clicking an item should close the sheet in a good UX.
-                                    }
-                                  }}
-                                  className={`w-full text-left p-2.5 rounded-xl text-xs transition-all flex items-center gap-3 ${isActive ? 'bg-accent/10 text-accent font-bold' : isLock ? 'opacity-30' : 'hover:bg-muted/10 text-muted-foreground'}`}
+                                  onClick={() => !isLock && setActiveLessonId(lesId)}
+                                  className={`w-full text-left p-2 rounded-lg text-xs transition-all flex items-center gap-2 ${
+                                    isActive ? 'bg-accent/10 border border-accent/20 text-accent font-bold'
+                                    : isLock ? 'opacity-30 cursor-not-allowed grayscale pointer-events-none'
+                                    : 'hover:bg-muted/10 text-muted-foreground'
+                                  }`}
                                 >
-                                  {isComp ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : isLock ? <Lock className="w-3.5 h-3.5" /> : React.createElement(getLessonIcon(les.type), { className: "w-3.5 h-3.5" })}
-                                  <span className="truncate flex-1">{les.title}</span>
+                                  {isComp ? <CheckCircle className="w-3 h-3 text-green-500 shrink-0" /> : isLock ? <Lock className="w-3 h-3 shrink-0" /> : React.createElement(getLessonIcon(les.type), { className: "w-3 h-3 shrink-0" })}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="truncate">{les.title}</p>
+                                    {les.type === 'quiz' && me?.grades?.some((g: any) => g.lessonId === lesId) && (
+                                      <p className="text-[9px] text-accent font-black uppercase">
+                                        Grade: {me.grades.find((g: any) => g.lessonId === lesId).score}%
+                                      </p>
+                                    )}
+                                  </div>
                                 </button>
                               );
                             })}
-                          </div>
-                        </div>
+                          </AccordionContent>
+                        </AccordionItem>
                       );
                     })}
-                  </div>
-                </ScrollArea>
-              </SheetContent>
-            </Sheet>
-          </div>
-
-          {/* Desktop Sidebar */}
-          <div className="hidden lg:block lg:col-span-4 h-fit sticky top-24">
-            <Card className="border-border/50">
-              <div className="p-4 border-b border-border/30 bg-muted/10 font-bold text-xs uppercase tracking-widest">Track Overview</div>
-              <CardContent className="p-0">
-                <ScrollArea className="h-[600px]">
-                  <div className="p-4 space-y-6">
-                    <Accordion type="single" collapsible className="w-full space-y-4">
-                      {course.modules?.map((mod: any, mIdx: number) => {
-                        const modCompleted = isModuleCompleted(mod);
-                        return (
-                          <AccordionItem key={mod.id || mod._id} value={`module-${mIdx}`} className="border rounded-xl px-4 bg-background">
-                            <div className="flex items-center justify-between w-full">
-                              <AccordionTrigger className="hover:no-underline flex-1 text-left py-4">
-                                <h4 className="text-xs font-bold text-accent uppercase">{mod.title}</h4>
-                              </AccordionTrigger>
-                              {modCompleted && (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleDownloadModuleCert(mod); }}
-                                  title="Download Module Certificate"
-                                  className="flex items-center gap-1 text-[10px] font-black text-gold hover:text-gold/80 transition-colors mr-2 z-10 relative"
-                                >
-                                  <Award className="w-3 h-3" />
-                                  <span>Cert</span>
-                                </button>
-                              )}
-                            </div>
-                            <AccordionContent className="pt-2 pb-4 space-y-1">
-                              {mod.lessons?.map((les: any) => {
-                                const lesId = les.id || les._id;
-                                const isActive = lesId === activeLessonId;
-                                const isComp = completedLessons.some((cl: any) => cl.lessonId === lesId) || forcedProgressLessonIds.includes(lesId);
-
-                                const lIdx = allLessons.findIndex(l => (l.id || l._id) === lesId);
-                                const prevRequiredLessons = allLessons.slice(0, lIdx).filter((pl) =>
-                                  (pl.requiredAssignment || pl.type === 'assignment') && pl.type !== 'quiz'
-                                );
-                                const isLock = prevRequiredLessons.some((pl) => !isLessonSatisfied(pl));
-
-                                return (
-                                  <button
-                                    key={lesId}
-                                    disabled={isLock}
-                                    onClick={() => !isLock && setActiveLessonId(lesId)}
-                                    className={`w-full text-left p-3 rounded-xl text-sm transition-all flex items-center gap-3 ${isActive ? 'bg-accent/10 border border-accent/20 text-accent font-bold' : isLock ? 'opacity-30 cursor-not-allowed grayscale pointer-events-none' : 'hover:bg-muted/10'}`}
-                                  >
-                                    {isComp ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : isLock ? <Lock className="w-3.5 h-3.5" /> : React.createElement(getLessonIcon(les.type), { className: "w-3.5 h-3.5" })}
-                                    <div className="flex-1 min-w-0">
-                                      <p className="truncate">{les.title}</p>
-                                      {les.type === 'quiz' && me?.grades?.some((g: any) => g.lessonId === lesId) && (
-                                        <p className="text-[10px] text-accent font-black uppercase">
-                                          Grade: {me.grades.find((g: any) => g.lessonId === lesId).score}%
-                                        </p>
-                                      )}
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </AccordionContent>
-                          </AccordionItem>
-                        );
-                      })}
-                    </Accordion>
-                  </div>
-                </ScrollArea>
+                  </Accordion>
+                </div>
               </CardContent>
             </Card>
           </div>
-        </div>
       </div>
+    </div>
       <BookCallDialog open={bookingOpen} onOpenChange={setBookingOpen} mentorId={course?.instructor?.id || course?.instructor} purpose="assignment-review" />
     </PortalLayout>
   );
