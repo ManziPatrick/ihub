@@ -104,7 +104,7 @@ const Internships = () => {
               </p>
               <div className="flex flex-wrap justify-center gap-4 mt-8">
                 <AuthAwareLink variant="gold" size="lg" to="/portal/student/internship">Apply for Internship</AuthAwareLink>
-                <Link to="/training">
+                <Link to="/explore">
                   <Button variant="outline" size="lg">View Training First</Button>
                 </Link>
               </div>
@@ -391,7 +391,7 @@ const Internships = () => {
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <AuthAwareLink variant="gold" size="lg" to="/portal/student/internship">Apply Now</AuthAwareLink>
-                <Link to="/training">
+                <Link to="/explore">
                   <Button variant="outline" size="lg">Explore Training First</Button>
                 </Link>
               </div>

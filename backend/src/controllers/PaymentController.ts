@@ -6,7 +6,7 @@
 import mongoose from 'mongoose';
 import { Request, Response } from 'express';
 import { PaymentTransaction } from '../models/PaymentTransaction';
-import { createPaypackService } from '../services/paypack.service';
+import { createPesapalService } from '../services/pesapal.service';
 import { User } from '../models/User';
 import { Course } from '../models/Course';
 import { Internship } from '../models/Internship';
@@ -33,10 +33,13 @@ interface PaymentInitiateBody {
   subscriptionId?: string;
   internshipProgramId?: string;
   internshipIds?: string[];
+  firstName?: string;
+  lastName?: string;
+  email?: string;
 }
 
 class PaymentController {
-  private paypackService = createPaypackService();
+  private pesapalService = createPesapalService();
 
   /**
    * Initiate a payment (CASHIN) from user
@@ -57,29 +60,104 @@ class PaymentController {
         return res.status(400).json({ error: 'Invalid amount' });
       }
 
+      const allCourseIds = [...(courseIds || []), ...(courseId ? [courseId] : [])];
+      const allInternshipIds = [...(internshipIds || []), ...(internshipProgramId ? [internshipProgramId] : [])];
+      
+      // Build a smart itemTitle
+      let smartTitle = description || 'Payment';
+      if (allCourseIds.length > 0) {
+        const firstCourse = await Course.findById(allCourseIds[0]).select('title').lean() as any;
+        if (firstCourse) {
+          smartTitle = allCourseIds.length === 1 ? firstCourse.title : `${firstCourse.title} +${allCourseIds.length - 1} more`;
+        }
+      } else if (allInternshipIds.length > 0) {
+        const firstProg = await InternshipProgram.findById(allInternshipIds[0]).select('title').lean() as any;
+        if (firstProg) {
+          smartTitle = allInternshipIds.length === 1 ? firstProg.title : `${firstProg.title} +${allInternshipIds.length - 1} more`;
+        }
+      }
+
+      // ─── PESAPAL INTEGRATION (FOR ALL METHODS: MTN, AIRTEL, CARD) ───
+      if (paymentMethod === 'pesapal' || paymentMethod === 'card' || paymentMethod === 'mtn' || paymentMethod === 'airtel') {
+        const { firstName, lastName, email } = req.body;
+        
+        // Use provided email or fallback to logged-in user's email
+        const userEmail = email || req.user?.email;
+        if (!userEmail) return res.status(400).json({ error: 'Email is required for payment' });
+
+        // 1. Register IPN
+        const ipnCallbackUrl = `${process.env.BACKEND_URL || 'https://api.codemande.com'}/api/payments/pesapal/ipn`;
+        const ipnId = await this.pesapalService.registerIPN(ipnCallbackUrl);
+
+        // 2. Submit Order
+        const redirectUrl = `${process.env.CLIENT_URL || 'http://localhost:8080'}/payment/pesapal/callback`;
+        
+        // Map phone prefix to ISO country code for Pesapal
+        let countryCode = 'RW'; // Default to Rwanda
+        if (phoneNumber?.startsWith('+254')) countryCode = 'KE';
+        else if (phoneNumber?.startsWith('+256')) countryCode = 'UG';
+        else if (phoneNumber?.startsWith('+255')) countryCode = 'TZ';
+        else if (phoneNumber?.startsWith('+257')) countryCode = 'BI';
+        else if (phoneNumber?.startsWith('+243')) countryCode = 'CD';
+
+        const orderResponse = await this.pesapalService.submitOrder({
+          id: `ORD-${Date.now()}`,
+          currency: 'RWF', 
+          amount: amount,
+          description: smartTitle,
+          callback_url: redirectUrl,
+          notification_id: ipnId,
+          billing_address: {
+            email_address: userEmail,
+            phone_number: phoneNumber || undefined,
+            country_code: countryCode,
+            first_name: firstName || req.user?.fullName?.split(' ')[0] || 'Customer',
+            last_name: lastName || req.user?.fullName?.split(' ')[1] || 'User',
+          }
+        });
+
+        // 3. Save Transaction
+        const transaction = new PaymentTransaction({
+          userId,
+          type: 'CASHIN',
+          amount,
+          status: 'pending',
+          pesapalTrackingId: orderResponse.order_tracking_id,
+          paymentMethod: paymentMethod === 'card' ? 'card' : 'momo',
+          phoneNumber: phoneNumber || undefined,
+          description: smartTitle,
+          courseId: courseId || null,
+          courseIds: courseIds || [],
+          internshipProgramId: internshipProgramId || null,
+          internshipIds: internshipIds || [],
+        });
+        await transaction.save();
+
+        // 4. Create Pending Payment
+        const pendingPayment = new Payment({
+          userId,
+          amount,
+          currency: 'RWF',
+          status: 'pending',
+          paymentMethod: paymentMethod === 'card' ? 'Pesapal (Card)' : 'Pesapal (Mobile Money)',
+          transactionId: orderResponse.order_tracking_id,
+          type: allCourseIds.length > 0 ? 'Course Enrollment' : 'Internship/Subscription',
+          itemTitle: smartTitle,
+          courseIds: allCourseIds,
+          internshipIds: allInternshipIds
+        });
+        await pendingPayment.save();
+
+        return res.status(201).json({
+          message: 'Payment initiated via Pesapal',
+          redirectUrl: orderResponse.redirect_url,
+          orderTrackingId: orderResponse.order_tracking_id
+        });
+      }
+
       if (paymentMethod === 'manual_transfer') {
         const transactionId = `MANUAL-${Math.random().toString(36).substring(7).toUpperCase()}`;
 
-        // Build a smart itemTitle from actual course/program names
-        let smartTitle = description || 'Payment';
-        const allCourseIds = [...(courseIds || []), ...(courseId ? [courseId] : [])];
-        const allInternshipIds = [...(internshipIds || []), ...(internshipProgramId ? [internshipProgramId] : [])];
-        if (allCourseIds.length > 0) {
-          const firstCourse = await Course.findById(allCourseIds[0]).select('title').lean() as any;
-          if (firstCourse) {
-            smartTitle = allCourseIds.length === 1
-              ? firstCourse.title
-              : `${firstCourse.title} +${allCourseIds.length - 1} more`;
-          }
-        } else if (allInternshipIds.length > 0) {
-          const firstProg = await InternshipProgram.findById(allInternshipIds[0]).select('title').lean() as any;
-          if (firstProg) {
-            smartTitle = allInternshipIds.length === 1
-              ? firstProg.title
-              : `${firstProg.title} +${allInternshipIds.length - 1} more`;
-          }
-        }
-        
         // Create a PENDING Payment record
         const pendingPayment = new Payment({
           userId,
@@ -105,88 +183,7 @@ class PaymentController {
         });
       }
 
-      if (!phoneNumber) {
-        return res.status(400).json({ error: 'Phone number is required' });
-      }
-
-      // Normalize phone number (handle both 078... and +250... formats)
-      const normalizedPhone = phoneNumber.startsWith('+250')
-        ? '0' + phoneNumber.slice(4)
-        : phoneNumber;
-
-      // Initiate payment with Paypack
-      const paypackResponse = await this.paypackService.initiatePayment({
-        amount: Math.floor(amount), // Ensure integer
-        number: normalizedPhone,
-      });
-
-      // Persist transaction with Paypack reference from the start.
-      const normalizedInitialStatus = this.paypackService.normalizeStatus(
-        paypackResponse.status
-      );
-
-      const paymentTransaction = new PaymentTransaction({
-        userId,
-        type: 'CASHIN',
-        amount,
-        phoneNumber: normalizedPhone,
-        status: normalizedInitialStatus,
-        paypackRef: paypackResponse.ref,
-        description,
-        courseId: courseId || null,
-        courseIds: courseIds || [],
-        subscriptionId: subscriptionId || null,
-        internshipProgramId: internshipProgramId || null,
-        internshipIds: internshipIds || [],
-      });
-
-      await paymentTransaction.save();
-
-      // 3. Create a PENDING Payment record for immediate visibility in "Bills"
-      // Build a smart itemTitle from actual course/program names
-      let smartTitleMomo = description || 'Payment';
-      const allCourseIdsMomo = [...(courseIds || []), ...(courseId ? [courseId] : [])];
-      const allInternshipIdsMomo = [...(internshipIds || []), ...(internshipProgramId ? [internshipProgramId] : [])];
-      if (allCourseIdsMomo.length > 0) {
-        const firstCourse = await Course.findById(allCourseIdsMomo[0]).select('title').lean() as any;
-        if (firstCourse) {
-          smartTitleMomo = allCourseIdsMomo.length === 1
-            ? firstCourse.title
-            : `${firstCourse.title} +${allCourseIdsMomo.length - 1} more`;
-        }
-      } else if (allInternshipIdsMomo.length > 0) {
-        const firstProg = await InternshipProgram.findById(allInternshipIdsMomo[0]).select('title').lean() as any;
-        if (firstProg) {
-          smartTitleMomo = allInternshipIdsMomo.length === 1
-            ? firstProg.title
-            : `${firstProg.title} +${allInternshipIdsMomo.length - 1} more`;
-        }
-      }
-
-      const pendingPayment = new Payment({
-        userId,
-        amount: Math.floor(amount),
-        currency: 'RWF',
-        status: 'pending',
-        paymentMethod: 'Paypack Mobile Money',
-        transactionId: paypackResponse.ref, // Use Paypack ref as unique identifier
-        type: (courseIds && courseIds.length > 0) || (internshipIds && internshipIds.length > 0) ? 'Bulk Enrollment' : (courseId ? 'Course Enrollment' : (internshipProgramId ? 'Internship Fee' : 'Subscription Fee')),
-        itemTitle: smartTitleMomo,
-        courseId: courseId || undefined,
-        courseIds: courseIds && courseIds.length > 0 ? courseIds.map((id: string) => new mongoose.Types.ObjectId(id)) : [],
-        internshipId: subscriptionId || undefined,
-        internshipIds: internshipIds && internshipIds.length > 0 ? internshipIds.map((id: string) => new mongoose.Types.ObjectId(id)) : [],
-      });
-      await pendingPayment.save();
-
-      return res.status(201).json({
-        message: 'Payment initiated successfully',
-        transactionId: paymentTransaction._id,
-        paypackRef: paypackResponse.ref,
-        amount: paypackResponse.amount,
-        status: normalizedInitialStatus,
-        instructions: paypackResponse.user_message || paypackResponse.instructions || 'Follow the USSD prompt on your phone.',
-      });
+      return res.status(400).json({ error: 'Invalid payment method' });
     } catch (error) {
       console.error('Payment initiation error:', error);
       return res.status(500).json({
@@ -232,16 +229,21 @@ class PaymentController {
       }
 
         try {
-          console.log(`Checking status for Paypack ref: ${transaction.paypackRef}`);
-          const paypackStatus = await this.paypackService.getTransactionStatus(
-            transaction.paypackRef
+          console.log(`Checking status for Pesapal TrackingId: ${transaction.pesapalTrackingId}`);
+          const pesapalStatus = await this.pesapalService.getTransactionStatus(
+            transaction.pesapalTrackingId
           );
           
-          const normalizedStatus = this.paypackService.normalizeStatus(
-            paypackStatus.status
+          if (!pesapalStatus || !pesapalStatus.payment_status_code) {
+            console.error('Incomplete status response from Pesapal');
+            return res.json(this.formatTransactionResponse(transaction));
+          }
+          
+          const normalizedStatus = this.pesapalService.normalizeStatus(
+            pesapalStatus.payment_status_code as any
           );
 
-          console.log(`Paypack API status for ${transaction.paypackRef}: ${paypackStatus.status} -> ${normalizedStatus}`);
+          console.log(`Pesapal API status for ${transaction.pesapalTrackingId}: ${pesapalStatus.payment_status_code} -> ${normalizedStatus}`);
 
           if (normalizedStatus !== transaction.status) {
             transaction.status = normalizedStatus as any;
@@ -259,12 +261,8 @@ class PaymentController {
 
           return res.json(this.formatTransactionResponse(transaction));
         } catch (error: any) {
-          if (error.message === 'NOT_FOUND') {
-            console.log(`Paypack ref ${transaction.paypackRef} not indexed yet. Returning current status: ${transaction.status}`);
-          } else {
-            console.error('Error fetching status from Paypack:', error.message);
-          }
-          // Fallback to current database status if API call or indexing fails
+          console.error('Error fetching status from Pesapal:', error.message);
+          // Fallback to current database status if API call fails
           return res.json({
             ...this.formatTransactionResponse(transaction),
             note: 'Real-time check currently unavailable (local cache used)',
@@ -282,97 +280,11 @@ class PaymentController {
       amount: transaction.amount,
       fee: transaction.fee,
       status: transaction.status,
-      paypackRef: transaction.paypackRef,
+      pesapalTrackingId: transaction.pesapalTrackingId,
       createdAt: transaction.createdAt,
       processedAt: transaction.processedAt,
       description: transaction.description,
     };
-  }
-
-  /**
-   * Webhook endpoint for Paypack transaction updates
-   * POST /api/payments/webhook
-   */
-  async handleWebhook(req: Request, res: Response) {
-    try {
-      const signature = req.get('x-paypack-signature');
-      if (!signature) {
-        console.warn('Webhook received without signature');
-        return res.status(400).json({ error: 'Missing signature' });
-      }
-
-      // Verify webhook signature
-      let rawBody: string;
-      if (req.rawBody instanceof Buffer) {
-        rawBody = req.rawBody.toString();
-      } else if (typeof req.rawBody === 'string') {
-        rawBody = req.rawBody;
-      } else {
-        rawBody = JSON.stringify(req.body);
-      }
-
-      const isValid = this.paypackService.verifyWebhookSignature(
-        rawBody,
-        signature
-      );
-
-      if (!isValid) {
-        console.warn('Invalid webhook signature. Signing failed for body:', rawBody.substring(0, 50));
-        return res.status(401).json({ error: 'Invalid signature' });
-      }
-
-      console.log('Webhook signature valid. Processing payload...');
-
-      // Parse webhook payload
-      const webhookData = this.paypackService.parseWebhookPayload(req.body as any);
-
-      // Find transaction by Paypack reference
-      const transaction = await PaymentTransaction.findOne({
-        paypackRef: webhookData.transactionRef,
-      });
-
-      if (!transaction) {
-        console.warn(
-          `Transaction not found for ref: ${webhookData.transactionRef}`
-        );
-        // Still return 200 to acknowledge receipt
-        return res.json({ success: true });
-      }
-
-      // Update transaction status
-      const previousStatus = transaction.status;
-      transaction.status = webhookData.status;
-      transaction.processedAt = new Date();
-      transaction.fee = webhookData.fee;
-      transaction.metadata = {
-        ...(transaction.metadata as any),
-        webhookReceivedAt: new Date().toISOString(),
-      };
-
-      await transaction.save();
-
-      // Handle post-payment actions
-      if (webhookData.status === 'successful' && previousStatus !== 'successful') {
-        await this.handleSuccessfulPayment(transaction);
-      }
-
-      // Log webhook event
-      console.log(`Payment webhook processed:`, {
-        transactionRef: webhookData.transactionRef,
-        status: webhookData.status,
-        amount: webhookData.amount,
-        dbTransactionId: transaction._id,
-      });
-
-      return res.json({ success: true });
-    } catch (error) {
-      console.error('Webhook processing error:', error);
-      // Return 200 anyway to prevent Paypack retries
-      return res.status(200).json({
-        success: false,
-        message: 'Internal processing error',
-      });
-    }
   }
 
   /**
@@ -395,7 +307,8 @@ class PaymentController {
       // 1. Update the Payment record (for accounting/history)
       try {
         // Find existing pending payment first (created during initiation)
-        let paymentRecord = await Payment.findOne({ transactionId: transaction.paypackRef });
+        const ref = transaction.pesapalTrackingId;
+        let paymentRecord = await Payment.findOne({ transactionId: ref });
         
         if (paymentRecord) {
           paymentRecord.status = 'completed';
@@ -408,8 +321,8 @@ class PaymentController {
             amount,
             currency: 'RWF',
             status: 'completed',
-            paymentMethod: 'Paypack Mobile Money',
-            transactionId: transaction.paypackRef,
+            paymentMethod: 'Pesapal',
+            transactionId: ref,
             type: courseIds?.length || internshipIds?.length ? 'Bulk Enrollment' : (courseId ? 'Course Enrollment' : (internshipProgramId ? 'Internship Fee' : 'Subscription Fee')),
             itemTitle: description || (courseIds?.length || internshipIds?.length ? 'Multiple Items' : (courseId ? 'Course' : (internshipProgramId ? 'Internship' : 'Subscription'))),
             courseId: courseId || undefined,
@@ -597,6 +510,75 @@ class PaymentController {
         error: 'Failed to fetch payment history',
         message: error instanceof Error ? error.message : 'Unknown error',
       });
+    }
+  }
+
+  /**
+   * Handle Pesapal IPN
+   */
+  async handlePesapalIPN(req: Request, res: Response) {
+    try {
+      const { OrderTrackingId, OrderMerchantReference } = req.body;
+      console.log(`Pesapal IPN Received: TrackingId=${OrderTrackingId}, Ref=${OrderMerchantReference}`);
+
+      const transaction = await PaymentTransaction.findOne({ pesapalTrackingId: OrderTrackingId });
+      if (!transaction) return res.status(200).json({ status: 200 }); // Still 200
+
+      const status = await this.pesapalService.getTransactionStatus(OrderTrackingId);
+      if (!status || !status.payment_status_code) {
+        console.warn(`Could not get status for Pesapal TrackingId: ${OrderTrackingId}`);
+        return res.status(200).json({ status: 200 });
+      }
+
+      const normalizedStatus = this.pesapalService.normalizeStatus(status.payment_status_code as any);
+
+      if (normalizedStatus !== transaction.status) {
+        const prevStatus = transaction.status;
+        transaction.status = normalizedStatus;
+        if (normalizedStatus === 'successful' && prevStatus !== 'successful') {
+          await this.handleSuccessfulPayment(transaction);
+        }
+        await transaction.save();
+      }
+
+      return res.status(200).json({ status: 200 });
+    } catch (error) {
+      console.error('Pesapal IPN Error:', error);
+      return res.status(200).json({ status: 200 });
+    }
+  }
+
+  /**
+   * Handle Pesapal Callback (User Redirect)
+   */
+  async handlePesapalCallback(req: Request, res: Response) {
+    try {
+      const { OrderTrackingId, OrderMerchantReference } = req.query;
+      console.log(`Pesapal Callback Received: ${OrderTrackingId}`);
+
+      const transaction = await PaymentTransaction.findOne({ pesapalTrackingId: OrderTrackingId as string });
+      if (!transaction) return res.redirect(`${process.env.CLIENT_URL}/payment/status?error=not_found`);
+
+      const status = await this.pesapalService.getTransactionStatus(OrderTrackingId as string);
+      if (!status || !status.payment_status_code) {
+        return res.redirect(`${process.env.CLIENT_URL}/payment/status?error=status_unavailable`);
+      }
+
+      const normalizedStatus = this.pesapalService.normalizeStatus(status.payment_status_code as any);
+
+      if (normalizedStatus !== transaction.status) {
+        const prevStatus = transaction.status;
+        transaction.status = normalizedStatus;
+        if (normalizedStatus === 'successful' && prevStatus !== 'successful') {
+          await this.handleSuccessfulPayment(transaction);
+        }
+        await transaction.save();
+      }
+
+      return res.redirect(`${process.env.CLIENT_URL}/payment/status?transactionId=${transaction._id}&status=${normalizedStatus}`);
+    } catch (error) {
+      console.error('Pesapal Callback Error:', error);
+      return res.redirect(`${process.env.CLIENT_URL}/payment/status?error=server_error`);
     }
   }
 }

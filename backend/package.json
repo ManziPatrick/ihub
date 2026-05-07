@@ -10,7 +10,9 @@
     "start": "node dist/index.js",
     "seed": "ts-node src/seed.ts",
     "seed:gamified": "ts-node src/seedGamified.ts",
-    "seed:english": "ts-node src/seedEnglishCourses.ts"
+    "seed:english": "ts-node src/seedEnglishCourses.ts",
+    "seed:schools": "ts-node src/seedSchools.ts",
+    "seed:diverse": "ts-node src/seedDiverseCourses.ts"
   },
   "keywords": [],
   "author": "",

@@ -40,7 +40,8 @@ import {
   Presentation,
   Heart,
   Sparkles,
-  Languages
+  Languages,
+  Building2
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
@@ -226,7 +227,7 @@ export function FeaturedCourses() {
 
   const [enrollMutation, { loading: enrolling }] = useMutation(ENROLL_COURSE, {
     onCompleted: (data: any) => {
-      const courseId = data.enrollCourse.id;
+      const courseId = data.enroll.id;
       
       // Update global user state
       if (user) {
@@ -852,7 +853,8 @@ export function FeaturedCourses() {
                                 {course.level || "All levels"}
                               </span>
                               {course.school && (
-                                <span className="text-[9px] bg-indigo-500/10 px-2 py-0.5 rounded-full text-indigo-400 font-medium uppercase tracking-wider line-clamp-1">
+                                <span className="flex items-center gap-1 bg-indigo-500/10 px-2 py-0.5 rounded-full text-indigo-400 text-[9px] font-bold uppercase tracking-widest line-clamp-1">
+                                  <Building2 className="w-2.5 h-2.5" />
                                   {course.school}
                                </span>
                               )}

@@ -93,8 +93,8 @@ export function ApplyCourseDialog({ open, onOpenChange, course, onSuccess }: App
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] border-accent/20">
-        <DialogHeader>
+      <DialogContent className="max-w-[100vw] sm:max-w-md w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col p-0 overflow-hidden border-2 border-accent/20 shadow-2xl rounded-none sm:rounded-2xl">
+        <DialogHeader className="px-6 pt-6 pb-2">
           <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
             <HelpCircle className="w-6 h-6 text-accent" />
           </div>
@@ -190,7 +190,7 @@ export function ApplyCourseDialog({ open, onOpenChange, course, onSuccess }: App
               </div>
             </div>
 
-            <DialogFooter className="pt-6 border-t flex items-center justify-between">
+            <DialogFooter className="p-6 border-t flex items-center justify-between bg-muted/5 mt-auto">
               <Button 
                 variant="ghost" 
                 className="rounded-xl h-11" 

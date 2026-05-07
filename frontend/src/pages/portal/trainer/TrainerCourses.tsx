@@ -240,7 +240,7 @@ export default function TrainerCourses() {
                     </CardHeader>
                     <CardContent className="p-6">
                       <Tabs defaultValue="modules" className="w-full">
-                        <TabsList className="bg-muted/20 p-1 rounded-lg h-12 border border-border/30">
+                        <TabsList className="w-full justify-start overflow-x-auto bg-muted/20 p-1 rounded-lg h-12 border border-border/30">
                           <TabsTrigger value="modules" className="rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">Modules & Lessons</TabsTrigger>
                           <TabsTrigger value="students" className="rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">Enrolled Students</TabsTrigger>
                           <TabsTrigger value="teams" className="rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">Project Teams</TabsTrigger>

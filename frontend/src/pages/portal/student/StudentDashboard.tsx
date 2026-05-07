@@ -234,7 +234,7 @@ export default function StudentDashboard() {
                           : `Unfortunately, your application was not accepted. Reason: ${latestApp.rejectionReason || 'No reason provided.'}`}
                       </p>
                       {latestApp.status === 'rejected' && (
-                        <Link to="/training">
+                        <Link to="/explore">
                           <Button variant="outline" size="sm" className="mt-4 rounded-lg font-bold">Explore Other Courses</Button>
                         </Link>
                       )}
@@ -255,7 +255,7 @@ export default function StudentDashboard() {
                 </div>
                 <h3 className="text-lg font-bold text-foreground">Ready to start?</h3>
                 <p className="text-sm text-muted-foreground max-w-[250px] mx-auto mt-1 mb-6">Enroll in a course to start your learning journey and earn certificates.</p>
-                <Link to="/training">
+                <Link to="/explore">
                   <Button variant="gold" className="rounded-xl px-8 font-bold h-11">Explore Catalog</Button>
                 </Link>
               </Card>
@@ -396,7 +396,7 @@ export default function StudentDashboard() {
                 {enrolledCourses.length === 0 && myApplications.length === 0 && (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground mb-4">You haven't enrolled in any courses or applied yet.</p>
-                    <Link to="/training">
+                    <Link to="/explore">
                       <Button variant="gold">Browse Courses</Button>
                     </Link>
                   </div>

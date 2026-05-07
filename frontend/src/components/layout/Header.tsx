@@ -13,19 +13,13 @@ import { useBranding } from "@/components/BrandingProvider";
 // Reference image nav: Home + Applications only shown in desktop
 const navLinks = [
   { name: "Home", href: "/" },
-  { name: "Applications", href: "/training" },
+  { name: "Explore", href: "/explore" },
 ];
 
 // Full mobile menu links
 const mobileLinks = [
   { name: "Home", href: "/" },
-  { name: "Training", href: "/training" },
-  { name: "Internships", href: "/internships" },
-  { name: "About", href: "/about" },
-  { name: "Services", href: "/services" },
-  { name: "Projects", href: "/projects" },
-  { name: "Blog", href: "/blog" },
-  { name: "Contact", href: "/contact" },
+  { name: "Explore", href: "/explore" },
 ];
 
 export function Header() {

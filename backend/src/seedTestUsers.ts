@@ -1,102 +1,70 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import { User } from './models/User';
 import connectDB from './config/db';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
-const testUsers = [
-    {
-        username: 'superadmin',
-        fullName: 'Super Admin',
-        email: 'superadmin@ihub.com',
-        password: 'password123',
-        role: 'super_admin',
-    },
-    {
-        username: 'admin',
-        fullName: 'Admin User',
-        email: 'admin@ihub.com',
-        password: 'password123',
-        role: 'admin',
-    },
-    {
-        username: 'trainer',
-        fullName: 'Trainer User',
-        email: 'trainer@ihub.com',
-        password: 'password123',
-        role: 'trainer',
-    },
-    {
-        username: 'student',
-        fullName: 'Student User',
-        email: 'student@ihub.com',
-        password: 'password123',
-        role: 'student',
-    },
-    {
-        username: 'johndoe',
-        fullName: 'John Doe',
-        email: 'john@example.com',
-        password: 'password123',
-        role: 'student',
-    },
-    {
-        username: 'janesmith',
-        fullName: 'Jane Smith',
-        email: 'jane@example.com',
-        password: 'password123',
-        role: 'student',
-    },
+const users = [
+  {
+    username: 'LeadTrainer',
+    email: 'trainer@ihub.com',
+    password: 'Password@123',
+    role: 'trainer',
+    fullName: 'Lead Instructor',
+    bio: 'Expert in software architecture and AI.',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
+  },
+  {
+    username: 'StudentOne',
+    email: 'student@ihub.com',
+    password: 'Password@123',
+    role: 'student',
+    fullName: 'Alex Student',
+    bio: 'Passionate learner exploring AI and Web3.',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex'
+  },
+  {
+    username: 'WorkshopAsst',
+    email: 'assistant@ihub.com',
+    password: 'Password@123',
+    role: 'trainer',
+    fullName: 'Sarah Assistant',
+    bio: 'Specialist in frontend development and UX.',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah'
+  }
 ];
 
-async function seedTestUsers() {
-    try {
-        await connectDB();
-        console.log('✅ Connected to MongoDB');
+const seedUsers = async () => {
+  try {
+    await connectDB();
+    console.log('📦 Connected to MongoDB');
 
-        // Clear existing test users
-        await User.deleteMany({ email: { $in: testUsers.map(u => u.email) } });
-        console.log('🗑️  Cleared existing test users');
+    for (const userData of users) {
+      const existingUser = await User.findOne({ email: userData.email });
+      if (existingUser) {
+        console.log(`⚠️ User ${userData.email} already exists. Skipping.`);
+        continue;
+      }
 
-        for (const userData of testUsers) {
-            // Check if user already exists
-            const existingUser = await User.findOne({ email: userData.email });
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const user = new User({
+        ...userData,
+        password: hashedPassword,
+        isVerified: true
+      });
 
-            if (existingUser) {
-                console.log(`⏭️  User ${userData.email} already exists, skipping...`);
-                continue;
-            }
-
-            // Hash password
-            const hashedPassword = await bcrypt.hash(userData.password, 10);
-
-            // Create user
-            const user = new User({
-                ...userData,
-                password: hashedPassword,
-            });
-
-            await user.save();
-            console.log(`✅ Created ${userData.role}: ${userData.email} (password: ${userData.password})`);
-        }
-
-        console.log('\n🎉 Test users seeded successfully!');
-        console.log('\n📋 Login Credentials:');
-        console.log('━'.repeat(60));
-        testUsers.forEach(user => {
-            console.log(`${user.role.toUpperCase().padEnd(15)} | ${user.email.padEnd(30)} | ${user.password}`);
-        });
-        console.log('━'.repeat(60));
-
-        await mongoose.disconnect();
-        console.log('\n✅ Disconnected from MongoDB');
-        process.exit(0);
-    } catch (error) {
-        console.error('❌ Error seeding test users:', error);
-        process.exit(1);
+      await user.save();
+      console.log(`✅ Created ${userData.role}: ${userData.email}`);
     }
-}
 
-seedTestUsers();
+    console.log('🏁 User seeding complete!');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error seeding users:', error);
+    process.exit(1);
+  }
+};
+
+seedUsers();

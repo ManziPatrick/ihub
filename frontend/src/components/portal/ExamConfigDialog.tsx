@@ -60,7 +60,7 @@ export function ExamConfigDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-background border-accent/20 p-0 overflow-hidden">
+      <DialogContent className="max-w-[100vw] sm:max-w-2xl w-full max-h-[100dvh] sm:max-h-[90vh] bg-background border-accent/20 p-0 overflow-hidden rounded-none sm:rounded-lg">
         <DialogHeader className="p-6 bg-accent/5 border-b border-accent/10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center text-accent">

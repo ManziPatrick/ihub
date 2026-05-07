@@ -10,7 +10,7 @@ export function HeroSection() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate(`/training${searchQuery.trim() ? `?q=${encodeURIComponent(searchQuery.trim())}` : ""}`);
+    navigate(`/explore${searchQuery.trim() ? `?q=${encodeURIComponent(searchQuery.trim())}` : ""}`);
   };
 
   return (

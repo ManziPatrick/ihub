@@ -182,7 +182,7 @@ const Services = () => {
                 end-to-end education and services for individuals, businesses, and institutions.
               </p>
               <div className="flex flex-wrap justify-center gap-4 mt-8">
-                <Link to="/training">
+                <Link to="/explore">
                   <Button variant="gold" size="lg">View Training Programs</Button>
                 </Link>
                 <Link to="/contact">
@@ -250,7 +250,7 @@ const Services = () => {
               ))}
             </div>
             <div className="text-center mt-10">
-              <Link to="/training">
+              <Link to="/explore">
                 <Button variant="gold">
                   View All Training Programs <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

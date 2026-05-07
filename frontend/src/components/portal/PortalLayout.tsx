@@ -527,16 +527,61 @@ export function PortalLayout({ children }: PortalLayoutProps) {
               <nav className="flex-1 overflow-y-auto py-4 px-3 custom-scrollbar">
                 <ul className="space-y-1">
                   {navItems.map((item) => {
-                    const isActive = location.pathname === item.href;
+                    if (item.children) {
+                      const isAnyChildActive = item.children.some(child => location.pathname === child.href);
+                      return (
+                        <li key={item.label}>
+                          <Collapsible defaultOpen={isAnyChildActive}>
+                            <CollapsibleTrigger asChild>
+                              <button className={cn(
+                                "flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all group hover:bg-background/80",
+                                isAnyChildActive ? "text-accent bg-accent/5 font-bold" : "text-card-foreground/70"
+                              )}>
+                                <div className="flex items-center gap-3">
+                                  <item.icon className={cn("w-5 h-5 shrink-0", isAnyChildActive ? "text-accent" : "text-card-foreground/50")} strokeWidth={1.5} />
+                                  <span>{item.label}</span>
+                                </div>
+                                <ChevronDown className={cn("w-4 h-4 transition-transform duration-200 opacity-50", isAnyChildActive && "rotate-180 opacity-100")} />
+                              </button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="pl-9 pr-2 space-y-1 mt-1">
+                              {item.children.map((child) => {
+                                const isChildActive = location.pathname === child.href;
+                                return (
+                                  <Link
+                                    key={child.href}
+                                    to={child.href}
+                                    onClick={() => setSidebarOpen(false)}
+                                    className={cn(
+                                      "flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                                      isChildActive 
+                                        ? "text-accent bg-accent/5 font-bold" 
+                                        : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                    )}
+                                  >
+                                    {child.icon && <child.icon className="w-3.5 h-3.5" />}
+                                    {child.label}
+                                  </Link>
+                                );
+                              })}
+                            </CollapsibleContent>
+                          </Collapsible>
+                        </li>
+                      );
+                    }
+
+                    const isActive = item.href ? location.pathname === item.href : false;
                     return (
-                      <li key={item.href}>
+                      <li key={item.label}>
                         <Link
-                          to={item.href}
+                          to={item.href || '#'}
                           onClick={() => setSidebarOpen(false)}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive
-                            ? "bg-accent text-accent-foreground"
-                            : "text-card-foreground/70 hover:bg-background/50 hover:text-card-foreground"
-                            }`}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                            isActive
+                              ? "bg-accent text-accent-foreground shadow-lg shadow-accent/20"
+                              : "text-card-foreground/70 hover:bg-background/50 hover:text-card-foreground"
+                          )}
                         >
                           <item.icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
                           <span>{item.label}</span>

@@ -32,7 +32,8 @@ import {
   Box,
   Link as LinkIcon,
   Sparkles,
-  XCircle
+  XCircle,
+  Building2
 } from "lucide-react";
 import { 
   EnrollCourseDialog, 
@@ -116,14 +117,17 @@ export default function StudentCourses() {
   }
 
   const me = (meData as any)?.me;
-  const enrolledCourses = me?.enrolledCourses || [];
+  const enrolledCoursesRaw = me?.enrolledCourses || [];
+  // LIFO: Reverse the array to show latest first
+  const enrolledCourses = [...enrolledCoursesRaw].reverse();
+  
   const completedLessons = me?.completedLessons || [];
   const myApplications = (appsData as any)?.myCourseApplications || [];
   
   const allCoursesData = (coursesData as any)?.courses;
   const allCourses = allCoursesData?.items || [];
   const availableCourses = allCourses.filter((c: any) => 
-    !enrolledCourses.some((ec: any) => ec.id === c.id)
+    !enrolledCoursesRaw.some((ec: any) => ec.id === c.id)
   );
 
   const getCourseProgress = (courseId: string, totalLessons: number) => {
@@ -131,6 +135,23 @@ export default function StudentCourses() {
     const completed = completedLessons.filter((l: any) => l.courseId === courseId).length;
     return Math.round((completed / totalLessons) * 100);
   };
+
+  const latestCourse = enrolledCourses[0];
+  const latestCourseId = latestCourse?.id || latestCourse?._id;
+  const lastLessonId = latestCourseId ? localStorage.getItem(`last_lesson_${latestCourseId}`) : null;
+  
+  // Find the lesson title if it was saved
+  let lastLessonTitle = "Continue where you left off";
+  if (lastLessonId && latestCourse) {
+    const foundLesson = latestCourse.modules?.flatMap((m: any) => m.lessons || [])
+      .find((l: any) => (l.id || l._id) === lastLessonId);
+    if (foundLesson) {
+      lastLessonTitle = `Resume: ${foundLesson.title}`;
+    }
+  }
+
+  const latestCourseTotalLessons = latestCourse?.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
+  const latestProgress = latestCourse ? getCourseProgress(latestCourseId, latestCourseTotalLessons) : 0;
 
   const handleBrowseCourses = () => {
     const tabTrigger = document.querySelector('[value="available"]') as HTMLElement;
@@ -160,6 +181,54 @@ export default function StudentCourses() {
           </div>
 
         </motion.div>
+
+        {/* Latest Activity / Continue Learning Tracker */}
+        {latestCourse && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-accent/20 via-accent/5 to-transparent border border-accent/20 p-6 shadow-xl shadow-accent/5"
+          >
+            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+              <Sparkles className="w-32 h-32 text-accent" />
+            </div>
+            <div className="relative z-10 flex flex-col md:flex-row gap-6 items-center">
+              <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden bg-muted/20 border border-border/50 shrink-0">
+                {latestCourse.thumbnail ? (
+                  <img src={latestCourse.thumbnail} className="w-full h-full object-cover" alt={latestCourse.title} />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-accent/10">
+                    <BookOpen className="w-10 h-10 text-accent" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 w-full">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-0.5 rounded-full bg-accent text-accent-foreground text-[10px] font-bold uppercase tracking-wider">
+                    Latest Activity
+                  </span>
+                  <span className="text-xs text-muted-foreground">{lastLessonTitle}</span>
+                </div>
+                <h2 className="text-xl font-bold text-foreground mb-4 line-clamp-1">
+                  {latestCourse.title}
+                </h2>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-muted-foreground">Course Progress</span>
+                    <span className="font-bold text-accent">{latestProgress}%</span>
+                  </div>
+                  <Progress value={latestProgress} className="h-3 bg-background/50" />
+                </div>
+              </div>
+              <Link to={`/portal/student/courses/${latestCourse.id || latestCourse._id}`} className="w-full md:w-auto">
+                <Button variant="gold" size="lg" className="w-full h-14 rounded-2xl px-8 shadow-lg shadow-gold/20 group">
+                  <PlayCircle className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                  Continue Learning
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        )}
 
         {/* Search & Filters */}
         <motion.div
@@ -200,11 +269,11 @@ export default function StudentCourses() {
 
         {/* Tabs */}
         <Tabs defaultValue="enrolled" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="enrolled">Enrolled ({enrolledCourses.length})</TabsTrigger>
-            <TabsTrigger value="available">Available Courses</TabsTrigger>
-            <TabsTrigger value="projects">My Projects ({(projectsData as any)?.myProjects?.length || 0})</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsList className="w-full justify-start overflow-x-auto no-scrollbar bg-background/50 border border-border/50 p-1 rounded-xl h-auto flex-nowrap min-w-full">
+            <TabsTrigger value="enrolled" className="px-4 py-2 text-xs sm:text-sm whitespace-nowrap">Enrolled ({enrolledCourses.length})</TabsTrigger>
+            <TabsTrigger value="available" className="px-4 py-2 text-xs sm:text-sm whitespace-nowrap">Available Courses</TabsTrigger>
+            <TabsTrigger value="projects" className="px-4 py-2 text-xs sm:text-sm whitespace-nowrap">My Projects ({(projectsData as any)?.myProjects?.length || 0})</TabsTrigger>
+            <TabsTrigger value="completed" className="px-4 py-2 text-xs sm:text-sm whitespace-nowrap">Completed</TabsTrigger>
           </TabsList>
 
           {/* Enrolled Courses */}
@@ -282,8 +351,8 @@ export default function StudentCourses() {
                                 {course.level}
                               </span>
                               {course.school && (
-                                <span className="flex items-center gap-1 font-semibold text-indigo-500">
-                                  <Briefcase className="w-3.5 h-3.5" />
+                                <span className="flex items-center gap-1.5 font-bold text-accent bg-accent/10 px-2.5 py-1 rounded-full border border-accent/20">
+                                  <Building2 className="w-3 h-3" />
                                   {course.school}
                                 </span>
                               )}
@@ -377,8 +446,8 @@ export default function StudentCourses() {
                           </span>
                         </div>
                         {course.school && (
-                          <div className="flex items-center gap-1 text-xs font-semibold text-indigo-500 mb-3">
-                            <Briefcase className="w-3.5 h-3.5" />
+                          <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-accent bg-accent/10 px-2 py-1 rounded-lg border border-accent/20 w-fit mb-3 shadow-sm">
+                            <Building2 className="w-3 h-3" />
                             {course.school}
                           </div>
                         )}

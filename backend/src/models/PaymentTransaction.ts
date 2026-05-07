@@ -8,7 +8,9 @@ export interface IPaymentTransaction extends Document {
   phoneNumber: string;
   provider?: string; // MTN, Airtel, etc
   status: 'pending' | 'successful' | 'failed';
-  paypackRef: string; // Reference from Paypack API
+  paypackRef?: string; // Reference from Paypack API
+  pesapalTrackingId?: string; // Reference from Pesapal API
+  paymentMethod?: string; // momo, card, etc
   description?: string; // What the payment is for (course, subscription, etc)
   courseId?: mongoose.Types.ObjectId | null;
   courseIds?: mongoose.Types.ObjectId[];
@@ -45,14 +47,7 @@ const PaymentTransactionSchema = new Schema<IPaymentTransaction>(
     },
     phoneNumber: {
       type: String,
-      required: true,
-      validate: {
-        validator: function (v: string) {
-          // Rwandan phone format: 078xxxxxxx or +250788xxxxxx
-          return /^(\+250|0)[1-9]\d{8}$/.test(v.replace(/\s+/g, ''));
-        },
-        message: 'Invalid phone number format',
-      },
+      required: false, // Optional for Card/Pesapal payments
     },
     provider: {
       type: String,
@@ -67,9 +62,18 @@ const PaymentTransactionSchema = new Schema<IPaymentTransaction>(
     },
     paypackRef: {
       type: String,
-      required: true,
-      unique: true,
+      required: false,
+      sparse: true,
       index: true,
+    },
+    pesapalTrackingId: {
+      type: String,
+      required: false,
+      sparse: true,
+      index: true,
+    },
+    paymentMethod: {
+      type: String,
     },
     description: {
       type: String,

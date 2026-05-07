@@ -341,6 +341,8 @@ export const GET_COURSE = gql`
             questionText
             type
             options
+            correctOptionIndex
+            explanation
             points
           }
           assignmentConfig {

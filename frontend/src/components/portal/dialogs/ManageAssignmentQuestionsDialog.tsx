@@ -132,7 +132,7 @@ export function ManageAssignmentQuestionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 overflow-hidden bg-background">
+      <DialogContent className="max-w-[100vw] sm:max-w-4xl w-full h-[100dvh] sm:h-[85vh] flex flex-col p-0 overflow-hidden bg-background rounded-none sm:rounded-2xl">
         <DialogHeader className="px-6 py-4 border-b border-white/5">
           <DialogTitle className="flex items-center gap-2">
             <ListOrdered className="w-5 h-5 text-accent" />

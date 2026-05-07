@@ -98,78 +98,74 @@ function LessonCard({
     )}>
       {/* ── Header (always visible) ── */}
       <div
-        className="flex items-center gap-3 p-4 cursor-pointer select-none"
+        className="flex flex-wrap items-center gap-3 p-4 cursor-pointer select-none"
         onClick={() => setExpanded(v => !v)}
       >
-        <div className={cn(
-          "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0 transition-colors",
-          isComplete ? "bg-green-500 text-white" : "bg-accent text-white"
-        )}>
-          {isComplete ? <Check className="w-3 h-3 inline" /> : null} L{lIdx + 1}
-        </div>
-
-        <Input
-          placeholder="Lesson Title *"
-          className={cn(
-            "h-9 flex-1 font-bold bg-transparent border-transparent focus:border-white/20 text-sm placeholder:text-white/30 hover:border-white/10",
-            !lesson.title && "border-amber-500/30"
-          )}
-          value={lesson.title || ""}
-          onClick={e => e.stopPropagation()}
-          onChange={e => updateLesson({ title: e.target.value })}
-        />
-
-        {isQuizType && (
-          <div
-            className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl shrink-0"
-            onClick={e => { e.stopPropagation(); onQuizOpen(lesson); }}
-          >
-            <HelpCircle className="w-3 h-3 text-amber-400" />
-            <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
-              {quizCount > 0 ? `${quizCount} Q` : "Quiz"}
-            </span>
+        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+          <div className={cn(
+            "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0 transition-colors",
+            isComplete ? "bg-green-500 text-white" : "bg-accent text-white"
+          )}>
+            {isComplete ? <Check className="w-3 h-3 inline" /> : null} L{lIdx + 1}
           </div>
-        )}
 
-        <select
-          className="h-9 px-3 rounded-xl border border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest text-white/60 outline-none focus:border-accent/60 hover:border-white/20 transition-colors shrink-0"
-          value={lesson.type || "video"}
-          onClick={e => e.stopPropagation()}
-          onChange={e => updateLesson({ type: e.target.value })}
-        >
-          {["video","pdf","ppt","book","article","quiz","assignment"].map(t => (
-            <option key={t} value={t}>{t.toUpperCase()}</option>
-          ))}
-        </select>
-
-        <div
-          className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-xl border border-white/10 hover:border-white/20 shrink-0 transition-colors"
-          onClick={e => e.stopPropagation()}
-        >
-          <input
-            type="number"
-            className="w-10 h-7 bg-transparent text-sm font-bold text-center outline-none text-white/80"
-            value={lesson.duration || 0}
-            onChange={e => updateLesson({ duration: parseInt(e.target.value) || 0 })}
+          <Input
+            placeholder="Lesson Title *"
+            className={cn(
+              "h-9 flex-1 font-bold bg-transparent border-transparent focus:border-white/20 text-sm placeholder:text-white/30 hover:border-white/10",
+              !lesson.title && "border-amber-500/30"
+            )}
+            value={lesson.title || ""}
+            onClick={e => e.stopPropagation()}
+            onChange={e => updateLesson({ title: e.target.value })}
           />
-          <span className="text-[10px] text-white/40 font-black">MINS</span>
         </div>
 
-        {!lesson.title && (
-          <div className="w-2 h-2 rounded-full bg-amber-400/80 shrink-0 animate-pulse" title="Title required" />
-        )}
+        <div className="flex items-center gap-2 ml-auto" onClick={e => e.stopPropagation()}>
+          {isQuizType && (
+            <div
+              className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl shrink-0 cursor-pointer"
+              onClick={() => onQuizOpen(lesson)}
+            >
+              <HelpCircle className="w-3 h-3 text-amber-400" />
+              <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                {quizCount > 0 ? `${quizCount} Q` : "Quiz"}
+              </span>
+            </div>
+          )}
 
-        <button
-          onClick={e => { e.stopPropagation(); deleteLesson(); }}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+          <select
+            className="h-8 px-2 rounded-lg border border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest text-white/60 outline-none focus:border-accent/60 hover:border-white/20 transition-colors shrink-0"
+            value={lesson.type || "video"}
+            onChange={e => updateLesson({ type: e.target.value })}
+          >
+            {["video","pdf","ppt","book","article","quiz","assignment"].map(t => (
+              <option key={t} value={t}>{t.toUpperCase()}</option>
+            ))}
+          </select>
 
-        {expanded
-          ? <ChevronUp className="w-4 h-4 text-white/30 shrink-0" />
-          : <ChevronDown className="w-4 h-4 text-white/30 shrink-0" />
-        }
+          <div className="flex items-center gap-1 bg-white/5 px-2 rounded-lg border border-white/10 hover:border-white/20 shrink-0 transition-colors">
+            <input
+              type="number"
+              className="w-8 h-7 bg-transparent text-[10px] font-bold text-center outline-none text-white/80"
+              value={lesson.duration || 0}
+              onChange={e => updateLesson({ duration: parseInt(e.target.value) || 0 })}
+            />
+            <span className="text-[8px] text-white/40 font-black">MIN</span>
+          </div>
+
+          <button
+            onClick={deleteLesson}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+
+          {expanded
+            ? <ChevronUp className="w-4 h-4 text-white/30 shrink-0" />
+            : <ChevronDown className="w-4 h-4 text-white/30 shrink-0" />
+          }
+        </div>
       </div>
 
       {/* ── Expanded Body ── */}
@@ -590,7 +586,7 @@ export function EditCourseDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden border-accent/20">
+      <DialogContent className="max-w-[100vw] sm:max-w-4xl w-full h-[100dvh] sm:h-[90vh] flex flex-col p-0 overflow-hidden border-accent/20 rounded-none sm:rounded-lg">
         <DialogHeader className="px-6 py-4 bg-accent/5 flex-shrink-0 border-b border-accent/10">
           <div className="flex items-center justify-between">
             <div>

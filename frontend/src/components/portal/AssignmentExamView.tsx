@@ -23,6 +23,14 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { LayoutGrid } from "lucide-react";
 
 interface AssignmentQuestion {
   _id?: string;
@@ -301,14 +309,14 @@ export function AssignmentExamView({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl mx-auto p-8 text-center space-y-8 bg-indigo-500/5 rounded-[2.5rem] border-2 border-indigo-500/10"
+        className="max-w-2xl mx-auto p-6 sm:p-12 text-center space-y-8 bg-indigo-500/5 rounded-[2.5rem] border-2 border-indigo-500/10"
       >
         <div className="w-20 h-20 bg-indigo-500/20 text-indigo-500 rounded-2xl flex items-center justify-center mx-auto">
           <ShieldAlert className="w-10 h-10" />
         </div>
         <div className="space-y-4">
           <h2 className="text-3xl font-black tracking-tight">Secure Exam Mode</h2>
-          <div className="space-y-3 text-muted-foreground text-sm font-medium leading-relaxed">
+          <div className="space-y-4 text-muted-foreground text-sm font-medium leading-relaxed max-w-sm mx-auto">
             <p>To ensure academic integrity, this exam will lock your screen:</p>
             <ul className="text-left max-w-xs mx-auto space-y-2 list-none">
               {[
@@ -351,15 +359,15 @@ export function AssignmentExamView({
       }}
     >
       {/* ── Top bar ── */}
-      <div className="flex-shrink-0 flex items-center justify-between px-8 py-4 bg-[#13162a] border-b border-white/5">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black shadow-lg shadow-indigo-500/30">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 sm:px-8 py-3 sm:py-4 bg-[#13162a] border-b border-white/5">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black shadow-lg shadow-indigo-500/30 text-xs sm:text-base">
             {currentPage + 1}
           </div>
-          <div>
-            <p className="text-white font-bold text-sm">Module Assessment</p>
-            <p className="text-[10px] text-white/40 uppercase tracking-widest font-black">
-              Question {currentPage + 1} of {totalPages} • {config?.mode?.toUpperCase() || "EXAM"} MODE
+          <div className="hidden xs:block">
+            <p className="text-white font-bold text-xs sm:text-sm">Assessment</p>
+            <p className="text-[8px] sm:text-[10px] text-white/40 uppercase tracking-widest font-black">
+              Q{currentPage + 1} of {totalPages}
             </p>
           </div>
         </div>
@@ -376,28 +384,89 @@ export function AssignmentExamView({
           {/* Timer */}
           {timeRemaining !== null && (
             <div
-              className={`flex items-center gap-2 px-6 py-3 rounded-2xl border-2 font-black tracking-widest transition-colors ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border-2 font-black tracking-tighter sm:tracking-widest transition-colors ${
                 timeRemaining < 300
                   ? "bg-red-500/10 text-red-400 border-red-500/30 animate-pulse"
                   : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
               }`}
             >
-              <Clock className="w-4 h-4" />
-              <span className="text-lg tabular-nums">{formatTime(timeRemaining)}</span>
+              <Clock className="w-3.5 h-3.5 sm:w-4 h-4" />
+              <span className="text-sm sm:text-lg tabular-nums">{formatTime(timeRemaining)}</span>
             </div>
           )}
 
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 text-white/40 text-[10px] font-black uppercase tracking-widest border border-white/10">
+          <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 text-white/40 text-[10px] font-black uppercase tracking-widest border border-white/10">
             <Lock className="w-3 h-3" />
             Secure
           </div>
+
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="lg:hidden text-white/70">
+                <LayoutGrid className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="bg-[#11142a] border-white/5 text-white p-6 overflow-y-auto">
+              <SheetHeader className="mb-6">
+                <SheetTitle className="text-white font-black tracking-tight uppercase text-sm">Assessment Map</SheetTitle>
+              </SheetHeader>
+              
+              <div className="space-y-8">
+                <div className="grid grid-cols-4 gap-3">
+                  {questions.map((q, i) => {
+                    const qid = q._id || q.id || "";
+                    const isAnswered = answers[qid] !== undefined && answers[qid] !== "";
+                    const isCurrent = i === currentPage;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setCurrentPage(i);
+                        }}
+                        className={`aspect-square flex items-center justify-center rounded-xl text-xs font-black transition-all border ${
+                          isAnswered
+                            ? "bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20"
+                            : "bg-white/5 border-white/10 text-white/40 hover:border-indigo-500/40"
+                        } ${isCurrent ? "ring-2 ring-indigo-400/50 scale-110 z-10" : ""}`}
+                      >
+                        {i + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/40">
+                    <span>Progress</span>
+                    <span className="text-indigo-400">{progressPct}%</span>
+                  </div>
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-indigo-500"
+                      animate={{ width: `${progressPct}%` }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-red-500/5 border border-red-500/20 space-y-2">
+                  <h4 className="text-[10px] font-black uppercase text-red-400 tracking-widest flex items-center gap-2">
+                    <ShieldAlert className="w-3 h-3" /> Integrity Notice
+                  </h4>
+                  <p className="text-[10px] text-white/40 leading-relaxed">
+                    This exam is proctored. Tab switching or exiting fullscreen counts as a violation. {MAX_VIOLATIONS} violations = auto-submit.
+                  </p>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
       {/* ── Body ── */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Left: Question area */}
-        <div className="flex-1 overflow-y-auto px-10 py-8 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-10 py-6 sm:py-8 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPage}
@@ -423,7 +492,7 @@ export function AssignmentExamView({
               </h3>
 
               {currentQuestion?.type === "mcq" ? (
-                <div className="grid gap-4">
+                <div className="grid gap-3 sm:gap-4">
                   {currentQuestion.options?.map((option, i) => {
                     const qId = currentQuestion._id || currentQuestion.id || "";
                     const isSelected = answers[qId] === i.toString();
@@ -431,14 +500,14 @@ export function AssignmentExamView({
                       <button
                         key={i}
                         onClick={() => handleAnswerChange(qId, i.toString())}
-                        className={`w-full text-left p-5 rounded-2xl border-2 transition-all flex items-center gap-5 font-semibold text-base ${
+                        className={`w-full text-left p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 transition-all flex items-center gap-3 sm:gap-5 font-semibold text-sm sm:text-base ${
                           isSelected
                             ? "bg-indigo-500/15 border-indigo-500 text-white shadow-lg shadow-indigo-500/10"
                             : "bg-white/3 border-white/10 text-white/70 hover:border-indigo-500/40 hover:bg-white/5"
                         }`}
                       >
                         <div
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center border-2 font-black text-sm transition-all flex-shrink-0 ${
+                          className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center border-2 font-black text-xs sm:text-sm transition-all flex-shrink-0 ${
                             isSelected
                               ? "bg-indigo-500 border-indigo-500 text-white"
                               : "border-white/20 text-white/40"
@@ -447,7 +516,7 @@ export function AssignmentExamView({
                           {String.fromCharCode(65 + i)}
                         </div>
                         <span className="flex-1">{option}</span>
-                        {isSelected && <CheckCircle2 className="w-5 h-5 text-indigo-400 flex-shrink-0" />}
+                        {isSelected && <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400 flex-shrink-0" />}
                       </button>
                     );
                   })}
@@ -474,8 +543,8 @@ export function AssignmentExamView({
           </AnimatePresence>
         </div>
 
-        {/* Right: Sidebar */}
-        <div className="w-72 flex-shrink-0 border-l border-white/5 bg-[#11142a]/80 flex flex-col overflow-y-auto px-6 py-6 gap-6">
+        {/* Right: Sidebar - Hidden on mobile, or can be toggled if needed */}
+        <div className="hidden lg:flex w-72 flex-shrink-0 border-l border-white/5 bg-[#11142a]/80 flex-col overflow-y-auto px-6 py-6 gap-6">
           {/* Question map */}
           <div className="space-y-3">
             <p className="text-[10px] font-black uppercase text-indigo-400 tracking-[0.2em]">
@@ -548,34 +617,37 @@ export function AssignmentExamView({
       </div>
 
       {/* ── Bottom nav bar ── */}
-      <div className="flex-shrink-0 flex items-center justify-between px-8 py-5 bg-[#13162a] border-t border-white/5">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 sm:px-8 py-3 sm:py-5 bg-[#13162a] border-t border-white/5">
         <Button
           variant="ghost"
+          size="sm"
           disabled={currentPage === 0}
           onClick={() => setCurrentPage((p) => p - 1)}
           className="rounded-xl text-white/60 hover:text-white hover:bg-white/5"
         >
-          <ChevronLeft className="w-4 h-4 mr-2" /> Back
+          <ChevronLeft className="w-4 h-4 mr-1 sm:mr-2" /> <span className="hidden xs:inline">Back</span>
         </Button>
 
         {currentPage < totalPages - 1 ? (
           <Button
+            size="lg"
             onClick={() => setCurrentPage((p) => p + 1)}
-            className="px-10 font-black uppercase tracking-widest h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 group"
+            className="px-6 sm:px-10 font-black uppercase tracking-widest h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 group text-xs sm:text-sm"
           >
-            Next Question <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+            Next <span className="hidden xs:inline">Question</span> <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1 sm:ml-2 transition-transform group-hover:translate-x-1" />
           </Button>
         ) : (
           <Button
+            size="lg"
             onClick={() => {
               if (confirm("Are you sure you want to submit? You won't be able to change your answers.")) {
                 handleSubmit();
               }
             }}
             disabled={submitting}
-            className="px-10 font-black uppercase tracking-widest h-14 rounded-2xl bg-green-600 hover:bg-green-700 shadow-xl shadow-green-500/20"
+            className="px-6 sm:px-10 font-black uppercase tracking-widest h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-green-600 hover:bg-green-700 shadow-xl shadow-green-500/20 text-xs sm:text-sm"
           >
-            {submitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Send className="w-5 h-5 mr-2" />}
+            {submitting ? <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin mr-2" /> : <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />}
             Final Submission
           </Button>
         )}

@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const Index = lazy(() => import("@/pages/Index"));
 const About = lazy(() => import("@/pages/About"));
 const Services = lazy(() => import("@/pages/Services"));
-const Training = lazy(() => import("@/pages/Training"));
+const Explore = lazy(() => import("@/pages/Explore"));
 const Internships = lazy(() => import("@/pages/Internships"));
 const Projects = lazy(() => import("@/pages/Projects"));
 const Partners = lazy(() => import("@/pages/Partners"));
@@ -124,7 +124,7 @@ export function AnimatedRoutes() {
           <Route path="/" element={<PageTransition><Index /></PageTransition>} />
           <Route path="/about" element={<PageTransition><About /></PageTransition>} />
           <Route path="/services" element={<PageTransition><Services /></PageTransition>} />
-          <Route path="/training" element={<PageTransition><Training /></PageTransition>} />
+          <Route path="/explore" element={<PageTransition><Explore /></PageTransition>} />
           <Route path="/internships" element={<PageTransition><Internships /></PageTransition>} />
           <Route path="/projects" element={<PageTransition><Projects /></PageTransition>} />
           <Route path="/partners" element={<PageTransition><Partners /></PageTransition>} />

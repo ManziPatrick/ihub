@@ -248,6 +248,7 @@ export const typeDefs = `#graphql
     type: String!
     options: [String]
     correctOptionIndex: Int
+    explanation: String
     points: Int
   }
 
@@ -853,6 +854,7 @@ export const typeDefs = `#graphql
     type: String!
     options: [String]
     correctOptionIndex: Int
+    explanation: String
     points: Int
   }
 

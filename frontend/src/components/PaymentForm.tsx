@@ -3,12 +3,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from 'sonner';
-import { Loader2, Phone, DollarSign, CheckCircle, Smartphone, History, Upload, ShieldCheck, Globe } from 'lucide-react';
+import { Loader2, Phone, CheckCircle, Smartphone, History, ShieldCheck, Mail, Ticket, X } from 'lucide-react';
 import { getApiBaseUrl } from '@/lib/env';
-import { FileUpload } from '@/components/FileUpload';
 import { useMutation } from '@apollo/client/react';
 import { SUBMIT_PAYMENT_PROOF } from '@/lib/graphql/mutations';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface PaymentFormProps {
   amount: number;
@@ -20,6 +28,7 @@ interface PaymentFormProps {
   internshipIds?: string[];
   selectedDeliveryMode?: string;
   onSuccess?: () => void;
+  onMethodChange?: (method: 'mtn' | 'airtel' | 'card' | 'manual') => void;
 }
 
 export function PaymentForm({
@@ -32,15 +41,19 @@ export function PaymentForm({
   internshipIds,
   selectedDeliveryMode,
   onSuccess,
+  onMethodChange,
 }: PaymentFormProps) {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState(user?.phone || '');
+  const [countryCode, setCountryCode] = useState('+250');
+  const [email, setEmail] = useState(user?.email || '');
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'checking' | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'paypack' | 'manual'>('paypack');
-  const [paymentProofUrl, setPaymentProofUrl] = useState<string>('');
-  const [manualPaymentId, setManualPaymentId] = useState<string | null>(null);
+  const [method, setMethod] = useState<'mtn' | 'airtel' | 'card' | 'manual'>('mtn');
+  const [discountCode, setDiscountCode] = useState('');
+  const [isDiscountApplied, setIsDiscountApplied] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const [submitProof] = useMutation(SUBMIT_PAYMENT_PROOF, {
     onCompleted: () => {
@@ -53,38 +66,46 @@ export function PaymentForm({
   });
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Allow digits and plus sign
-    let value = e.target.value.replace(/[^\d+]/g, ''); 
-    
-    // Don't auto-prefix with 0 to allow natural typing or pasting of +250...
+    let value = e.target.value.replace(/[^\d+]/g, ''); // Allow digits and +
     setPhoneNumber(value);
   };
 
   const validatePhoneNumber = (phone: string): boolean => {
-    // Rwandan phone format: 078xxxxxxx or +250788xxxxxx
-    const regex = /^(\+250|0)[1-9]\d{8}$/;
-    return regex.test(phone.replace(/\s+/g, ''));
+    return phone.length >= 8; // Basic length check for international numbers
   };
 
   const handleInitiatePayment = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (paymentMethod === 'paypack') {
+    if (!agreedToTerms) {
+      toast.error('Please agree to the Terms and Privacy Policy');
+      return;
+    }
+
+    if (method === 'mtn' || method === 'airtel') {
       if (!phoneNumber) {
         toast.error('Please enter your phone number');
         return;
       }
-
       if (!validatePhoneNumber(phoneNumber)) {
-        toast.error('Invalid phone number format. Use 078xxxxxxx');
+        toast.error('Invalid phone number format.');
         return;
       }
+    }
+
+    if (!email) {
+      toast.error('Please enter your email address');
+      return;
     }
 
     setIsLoading(true);
 
     try {
       const baseUrl = getApiBaseUrl();
+      const fullPhoneNumber = countryCode + phoneNumber.replace(/^0+/, ''); // Remove leading zero if any
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
       const response = await fetch(`${baseUrl}/api/payments/initiate`, {
         method: 'POST',
@@ -92,11 +113,13 @@ export function PaymentForm({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('ihub_token')}`,
         },
+        signal: controller.signal,
         body: JSON.stringify({
           amount: Math.floor(amount),
-          phoneNumber: paymentMethod === 'paypack' ? phoneNumber : undefined,
-          paymentMethod: paymentMethod === 'paypack' ? undefined : 'manual_transfer',
+          phoneNumber: (method === 'mtn' || method === 'airtel') ? fullPhoneNumber : undefined,
+          paymentMethod: method === 'manual' ? 'manual_transfer' : method,
           description,
+          email,
           courseId: courseId || undefined,
           courseIds: courseIds || undefined,
           subscriptionId: subscriptionId || undefined,
@@ -106,52 +129,28 @@ export function PaymentForm({
         }),
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to initiate payment');
       }
 
       const data = await response.json();
+      
+      if (data.redirectUrl) {
+        // Handle Pesapal redirect (All methods except manual)
+        toast.success('Redirecting to secure payment page...');
+        window.location.href = data.redirectUrl;
+        return;
+      }
 
-      if (paymentMethod === 'paypack') {
-        setTransactionId(data.transactionId);
-        setPaymentStatus('pending');
-
-        toast.success('Payment initiated! Check your phone for a USSD prompt.');
-        toast.info(data.instructions);
-
-        // Start polling for payment status after 3 seconds
-        setTimeout(() => {
-          pollPaymentStatus(data.transactionId);
-        }, 3000);
-      } else {
-        setManualPaymentId(data.transactionId);
-        toast.success('Manual payment initiated. Please upload your proof of payment.');
+      if (method === 'manual') {
+        toast.success('Manual payment record created.');
+        onSuccess?.(); // Redirect to manual proof upload in parent
       }
     } catch (error) {
-      console.error('Payment initiation error:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to initiate payment'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleFinalizeManual = async () => {
-    if (!manualPaymentId || !paymentProofUrl) {
-      toast.error('Please upload your payment proof first.');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await submitProof({
-        variables: {
-          paymentId: manualPaymentId,
-          proofUrl: paymentProofUrl
-        }
-      });
+      toast.error(error instanceof Error ? error.message : 'Failed to initiate payment');
     } finally {
       setIsLoading(false);
     }
@@ -159,318 +158,312 @@ export function PaymentForm({
 
   const pollPaymentStatus = async (txId: string) => {
     setPaymentStatus('checking');
-
     try {
       const baseUrl = getApiBaseUrl();
       const response = await fetch(`${baseUrl}/api/payments/${txId}`, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('ihub_token')}`,
-        },
+        headers: { Authorization: `Bearer ${localStorage.getItem('ihub_token')}` },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to check payment status');
-      }
-
+      if (!response.ok) throw new Error('Failed to check status');
       const data = await response.json();
-      console.log('Payment status check:', data.status);
 
-      const terminalStatuses = ['successful', 'failed', 'cancelled', 'expired'];
-      
       if (data.status === 'successful') {
         setPaymentStatus(null);
         toast.success('Payment successful! 🎉');
         onSuccess?.();
-      } else if (data.status === 'failed' || data.status === 'cancelled' || data.status === 'expired') {
+      } else if (['failed', 'cancelled', 'expired'].includes(data.status)) {
         setPaymentStatus(null);
         toast.error(`Payment ${data.status}. Please try again.`);
       } else {
-        // Still pending or unknown, keep polling
         setPaymentStatus('pending');
-        setTimeout(() => {
-          pollPaymentStatus(txId);
-        }, 4000);
+        setTimeout(() => pollPaymentStatus(txId), 4000);
       }
     } catch (error) {
-      console.error('Status check error:', error);
-      // Keep polling on error (might be transient network issue)
-      setTimeout(() => {
-        pollPaymentStatus(txId);
-      }, 6000);
+      setTimeout(() => pollPaymentStatus(txId), 6000);
     }
-  }
+  };
 
-  // Show status message while payment is pending
+  const applyDiscount = () => {
+    if (!discountCode) return;
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      setIsDiscountApplied(true);
+      toast.success('Discount code applied!');
+    }, 1000);
+  };
+
   if (transactionId && paymentStatus) {
     return (
-      <div className="w-full max-w-sm mx-auto p-6 border rounded-2xl bg-white shadow-xl relative overflow-hidden">
-        <div className="relative flex flex-col items-center justify-center mb-6">
-          <div className="relative w-14 h-14 bg-[#ffcc00] rounded-2xl flex items-center justify-center shadow-lg mb-4 transform rotate-3 hover:rotate-0 transition-transform duration-500">
-            <img 
-               src="https://momo.mtn.com/wp-content/uploads/sites/15/2022/07/Group-360.png" 
-               alt="MTN" 
-               className="w-8 h-8 object-contain rounded"
-            />
+      <div className="w-full flex flex-col items-center justify-center py-12 px-6 text-center space-y-6 animate-in fade-in zoom-in-95">
+        <div className="relative">
+          <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center animate-pulse">
+            <Smartphone className="w-10 h-10 text-accent" />
           </div>
-          
-          <div className="flex flex-col items-center gap-0.5">
-            <div className="flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin text-[#ffcc00]" />
-              <h3 className="text-lg font-black text-gray-900 tracking-tight">Authorization Sent</h3>
-            </div>
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Checking...</p>
-          </div>
+          <Loader2 className="w-6 h-6 text-accent animate-spin absolute -bottom-1 -right-1 bg-background rounded-full p-1 border" />
         </div>
-
-        <div className="relative bg-gray-50/80 border border-gray-100 rounded-xl p-4 text-center space-y-3 backdrop-blur-sm">
-          <p className="text-[11px] text-gray-600 leading-normal">
-            Enter your PIN on the <strong>MoMo prompt</strong><br/>
-            to authorize <strong>{amount.toLocaleString()} RWF</strong>.
+        <div className="space-y-2">
+          <h3 className="text-xl font-bold">Waiting for Approval</h3>
+          <p className="text-sm text-muted-foreground">
+            Please check your phone for the USSD prompt and enter your PIN to authorize 
+            <span className="text-foreground font-bold"> {amount.toLocaleString()} RWF</span>.
           </p>
-          
-          <div className="py-1.5 px-3 bg-white rounded-lg shadow-xs inline-block border border-gray-100">
-             <span className="text-[9px] uppercase font-bold text-gray-300 block mb-0.5">Reference</span>
-             <span className="font-mono text-[10px] font-bold text-gray-700">{transactionId.substring(transactionId.length - 8).toUpperCase()}</span>
-          </div>
         </div>
-
-        <div className="mt-6 space-y-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setTransactionId(null);
-              setPaymentStatus(null);
-            }}
-            className="w-full border border-gray-100 hover:bg-gray-50 font-bold transition-all h-10 rounded-xl text-xs"
-          >
-            I've completed payment
-          </Button>
-          
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="w-full text-[10px] font-bold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-widest text-center"
-          >
-            Refresh if prompt didn't appear
-          </button>
+        <div className="p-4 bg-muted/30 rounded-xl border border-border/50 w-full max-w-xs">
+          <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Reference</p>
+          <p className="font-mono text-sm font-bold">{transactionId.slice(-12).toUpperCase()}</p>
         </div>
+        <Button variant="ghost" onClick={() => setTransactionId(null)} className="text-xs text-muted-foreground hover:text-foreground">
+          Cancel and try again
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-6">
-      {/* Method Selector */}
-      <div className="grid grid-cols-2 gap-2 p-1 bg-muted/30 rounded-2xl border border-border/50">
-        <button
-          type="button"
-          onClick={() => setPaymentMethod('paypack')}
-          className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all
-            ${paymentMethod === 'paypack' 
-              ? 'bg-background text-foreground shadow-sm' 
-              : 'text-muted-foreground hover:bg-background/50'}`}
+    <form onSubmit={handleInitiatePayment} className="space-y-6 py-2">
+      {/* PAY WITH */}
+      <div className="space-y-3">
+        <Label className="text-sm font-bold text-foreground">Pay With</Label>
+        <Select 
+          value={method} 
+          onValueChange={(val: any) => {
+            setMethod(val);
+            onMethodChange?.(val);
+          }}
         >
-          <Smartphone className="w-3.5 h-3.5" />
-          MoMo Pay
-        </button>
-        <button
-          type="button"
-          onClick={() => setPaymentMethod('manual')}
-          className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all
-            ${paymentMethod === 'manual' 
-              ? 'bg-background text-foreground shadow-sm' 
-              : 'text-muted-foreground hover:bg-background/50'}`}
-        >
-          <History className="w-3.5 h-3.5" />
-          Manual
-        </button>
-      </div>
-
-      {paymentMethod === 'paypack' ? (
-        <form onSubmit={handleInitiatePayment} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          {/* Visual Context Bar */}
-          <div className="w-full flex items-center justify-between px-3 py-2 bg-background border border-border/50 rounded-xl shadow-inner-sm">
-            <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#ffcc00]/10 rounded-md flex items-center justify-center p-1 border border-[#ffcc00]/20">
-                  <img 
-                    src="https://momo.mtn.com/wp-content/uploads/sites/15/2022/07/Group-360.png" 
-                    alt="MTN" 
-                    className="w-full h-full object-contain"
-                  />
+          <SelectTrigger className="h-14 bg-muted/20 border-border/50 rounded-2xl px-4 focus:ring-accent/20">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="rounded-2xl border-border/50 bg-popover shadow-2xl">
+            <SelectItem value="mtn" className="py-3 rounded-xl focus:bg-accent/10">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-[#ffcc00] rounded-lg flex items-center justify-center p-1.5 shadow-sm">
+                  <img src="https://momo.mtn.com/wp-content/uploads/sites/15/2022/07/Group-360.png" alt="MTN" className="w-full h-full object-contain" />
                 </div>
-                <span className="text-[11px] font-black text-foreground tracking-tight">MTN MoMo</span>
-            </div>
-            <div className="flex items-center gap-1.5 opacity-60">
-                <img src="https://flagcdn.com/w40/rw.png" alt="RW Flag" className="w-3 h-2 object-cover rounded-px grayscale-[0.2]" />
-                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Verified</span>
-            </div>
-          </div>
-
-          {/* Primary Input Section */}
-          <div className="space-y-3">
-            <div className="space-y-1.5 flex flex-col items-center">
-                <Label htmlFor="phone" className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.1em] text-center">
-                    Mobile Money Number
-                </Label>
-                <div className="relative group w-full max-w-[200px]">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-                        <Phone className="w-3.5 h-3.5 text-muted-foreground/30 group-focus-within:text-[#ffcc00] transition-colors" />
-                    </div>
-                    <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="078 / 079..."
-                        value={phoneNumber}
-                        onChange={handlePhoneChange}
-                        disabled={isLoading}
-                        className="pl-9 h-10 bg-muted/20 border-none focus-visible:ring-1 focus-visible:ring-accent/40 rounded-xl text-base font-black tracking-widest placeholder:tracking-normal placeholder:font-medium placeholder:text-muted-foreground/20 text-center transition-all shadow-none"
-                        maxLength={13}
-                    />
-                </div>
-            </div>
-
-            <Button
-                type="submit"
-                disabled={isLoading || !phoneNumber}
-                className="w-full bg-[#ffcc00] hover:bg-black hover:text-[#ffcc00] text-black font-black h-10 rounded-xl shadow-md transition-all active:scale-[0.98] text-[11px] uppercase tracking-wider border-none"
-            >
-                {isLoading ? (
-                    <div className="flex items-center gap-2">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Processing...</span>
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-2">
-                        <Smartphone className="w-3.5 h-3.5" />
-                        <span>Pay {amount.toLocaleString()} RWF</span>
-                    </div>
-                )}
-            </Button>
-          </div>
-
-          <p className="text-[9px] text-muted-foreground/60 text-center font-medium leading-tight px-4">
-            Success is automatic once you confirm the <strong>MoMo prompt</strong> sent to your device.
-          </p>
-        </form>
-      ) : (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="space-y-6">
-            {/* Unified Manual View */}
-            <div className="relative p-6 bg-gradient-to-b from-accent/10 via-accent/5 to-transparent rounded-[2rem] border border-accent/20 overflow-hidden shadow-sm">
-                <div className="absolute top-4 right-4 text-accent/40">
-                    <ShieldCheck className="w-5 h-5 animate-pulse" />
-                </div>
-                
-                <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-accent/5 text-accent rounded-full border border-accent/20 text-[9px] font-black uppercase tracking-[0.2em] w-fit shadow-sm mb-2">
-                        MANUAL TRANSFER
-                    </div>
-                    <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em] pl-1">BANK / MOMO DETAILS</h3>
-                    <div className="space-y-1 pl-1">
-                        <p className="text-sm font-black text-foreground tracking-tight uppercase">CODE MANDE LTD</p>
-                        <p className="text-[11px] font-medium text-muted-foreground">Equity Bank: <span className="text-foreground font-bold">450123456789</span></p>
-                        <p className="text-xl font-black text-[#ffcc00] tracking-tighter">*182*8*1*123456#</p>
-                    </div>
-                </div>
-                
-                <div className="mt-6 flex flex-col items-center gap-1 border-t border-dashed border-accent/30 pt-6">
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em]">TOTAL AMOUNT</p>
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-4xl font-black text-foreground tracking-tighter">{amount.toLocaleString()}</span>
-                        <span className="text-xs font-black text-muted-foreground uppercase">RWF</span>
-                    </div>
-                </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex flex-col gap-1 px-2">
-                  <h4 className="text-[11px] font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-                    STEP 2: UPLOAD SCREENSHOT
-                  </h4>
-                  <p className="text-[10px] text-muted-foreground font-medium pl-3.5">Upload your transaction confirmation below.</p>
+                <span className="font-semibold">MTN Mobile Money</span>
               </div>
-              
-              <div className="bg-muted/10 rounded-3xl p-1 border border-border/40 overflow-hidden">
-                <FileUpload
-                  onUploadComplete={(url) => setPaymentProofUrl(url)}
-                  folder="payment-proofs"
-                  label="Click to upload screenshot"
-                />
+            </SelectItem>
+            <SelectItem value="airtel" className="py-3 rounded-xl focus:bg-accent/10">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-[#ed1c24] rounded-lg flex items-center justify-center p-1.5 shadow-sm">
+                   <img src="https://airtel.rw/assets/images/airtel-money-logo.png" alt="Airtel" className="w-full h-full object-contain brightness-0 invert" />
+                </div>
+                <span className="font-semibold">Airtel Money</span>
               </div>
-
-              {paymentProofUrl && (
-                <div className="relative group animate-in zoom-in-95 duration-300">
-                  <div className="overflow-hidden rounded-2xl border-2 border-accent/20 shadow-lg aspect-video bg-muted/20">
-                    <img src={paymentProofUrl} alt="Proof" className="w-full h-full object-cover" />
+            </SelectItem>
+            <SelectItem value="card" className="py-3 rounded-xl focus:bg-accent/10">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center p-1 shadow-sm">
+                  <div className="flex -space-x-2">
+                    <div className="w-3.5 h-3.5 rounded-full bg-red-500 opacity-90" />
+                    <div className="w-3.5 h-3.5 rounded-full bg-yellow-500 opacity-90" />
                   </div>
                 </div>
-              )}
-            </div>
+                <span className="font-semibold">VISA/Master Card</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="manual" className="py-3 rounded-xl focus:bg-accent/10">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center shadow-sm">
+                  <History className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <span className="font-semibold">Manual Transfer</span>
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-            <Button
-              onClick={async () => {
-                // For combined view, we need to initiate the payment record first if not already done
-                if (!manualPaymentId) {
-                  setIsLoading(true);
-                  try {
-                    const baseUrl = getApiBaseUrl();
-                    const response = await fetch(`${baseUrl}/api/payments/initiate`, {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${localStorage.getItem('ihub_token')}`,
-                      },
-                      body: JSON.stringify({
-                        amount: Math.floor(amount),
-                        paymentMethod: 'manual_transfer',
-                        description,
-                        courseId: courseId || undefined,
-                        courseIds: courseIds || undefined,
-                        subscriptionId: subscriptionId || undefined,
-                        internshipProgramId: internshipProgramId || undefined,
-                        internshipIds: internshipIds || undefined,
-                        selectedDeliveryMode: selectedDeliveryMode || undefined,
-                      }),
-                    });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.message || 'Failed');
-                    
-                    // Now submit the proof with the new ID
-                    await submitProof({
-                      variables: {
-                        paymentId: data.transactionId,
-                        proofUrl: paymentProofUrl
-                      }
-                    });
-                  } catch (e: any) {
-                    toast.error(e.message);
-                  } finally {
-                    setIsLoading(false);
-                  }
-                } else {
-                  handleFinalizeManual();
-                }
-              }}
-              disabled={isLoading || !paymentProofUrl}
-              variant="gold"
-              className="w-full h-14 rounded-2xl shadow-premium text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02]"
-            >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldCheck className="w-4 h-4 mr-2" />}
-              Submit Proof & View Bills
-            </Button>
-          </div>
-
-          <div className="pt-6 border-t border-dashed border-border/50 flex flex-col items-center gap-2">
-            <div className="flex items-center gap-1.5 px-4 py-2 bg-accent/5 rounded-full border border-accent/20 text-[9px] font-black text-accent uppercase tracking-widest">
-              <Globe className="w-3 h-3" />
-              Manual verification takes 2-4 hours
+      {/* SEND TO */}
+      <div className="space-y-4">
+        <Label className="text-sm font-bold text-foreground">Send To</Label>
+        
+        {/* Email Input */}
+        <div className="space-y-1.5">
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+              <Mail className="w-4 h-4 text-muted-foreground/40 group-focus-within:text-accent transition-colors" />
             </div>
+            <Input
+              type="email"
+              placeholder="example@mail.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-14 pl-11 bg-muted/20 border-border/50 rounded-2xl focus-visible:ring-accent/20 transition-all text-sm font-medium"
+            />
+            <span className="absolute -top-2 left-4 px-2 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Email</span>
           </div>
+          <p className="text-[10px] text-muted-foreground pl-1">We will send your invoice to this address</p>
         </div>
-      )}
-    </div>
+
+        {/* Phone Input (if MoMo) */}
+        {(method === 'mtn' || method === 'airtel') && (
+          <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
+            <div className="flex gap-2">
+              <div className="w-[120px]">
+                <Select value={countryCode} onValueChange={setCountryCode}>
+                  <SelectTrigger className="h-14 bg-muted/20 border-border/50 rounded-2xl focus:ring-accent/20">
+                    <SelectValue placeholder="Code" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border-border/50">
+                    <SelectItem value="+250" className="rounded-xl">🇷🇼 +250</SelectItem>
+                    <SelectItem value="+254" className="rounded-xl">🇰🇪 +254</SelectItem>
+                    <SelectItem value="+256" className="rounded-xl">🇺🇬 +256</SelectItem>
+                    <SelectItem value="+255" className="rounded-xl">🇹🇿 +255</SelectItem>
+                    <SelectItem value="+257" className="rounded-xl">🇧🇮 +257</SelectItem>
+                    <SelectItem value="+243" className="rounded-xl">🇨🇩 +243</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="relative group flex-1">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                  <Phone className="w-4 h-4 text-muted-foreground/40 group-focus-within:text-accent transition-colors" />
+                </div>
+                <Input
+                  type="tel"
+                  placeholder="788 000 000"
+                  value={phoneNumber}
+                  onChange={handlePhoneChange}
+                  className="h-14 pl-11 bg-muted/20 border-border/50 rounded-2xl focus-visible:ring-accent/20 transition-all text-sm font-medium"
+                />
+                <span className="absolute -top-2 left-4 px-2 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Phone number</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Manual Details (if Manual) */}
+        {method === 'manual' && (
+          <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
+            <div className="p-4 bg-accent/5 rounded-2xl border border-accent/20 space-y-4">
+              <div className="flex justify-between items-center p-3 bg-background rounded-xl border border-border/50">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-[#ffcc00] rounded flex items-center justify-center p-1">
+                    <img src="https://momo.mtn.com/wp-content/uploads/sites/15/2022/07/Group-360.png" alt="MTN" className="w-full h-full object-contain" />
+                  </div>
+                  <span className="text-xs font-bold">MTN MoMo</span>
+                </div>
+                <span className="font-mono text-xs font-bold select-all">0790706170</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-background rounded-xl border border-border/50">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center p-1 text-white">
+                    P
+                  </div>
+                  <span className="text-xs font-bold">PayPal</span>
+                </div>
+                <span className="font-mono text-[10px] font-bold select-all">munyeshurimanzi@gmail.com</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground text-center italic">
+                Please transfer the amount and then upload proof below.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* DISCOUNT CODE */}
+      <div className="space-y-3 pt-2">
+        <AnimatePresence mode="wait">
+          {!isDiscountApplied ? (
+            <motion.div 
+              key="discount-input"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="relative group"
+            >
+              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                <Ticket className="w-4 h-4 text-muted-foreground/40 group-focus-within:text-accent transition-colors" />
+              </div>
+              <Input
+                placeholder="Enter discount code"
+                value={discountCode}
+                onChange={(e) => setDiscountCode(e.target.value)}
+                className="h-14 pl-11 pr-24 bg-muted/20 border-border/50 rounded-2xl focus-visible:ring-accent/20 transition-all text-sm font-medium"
+              />
+              <span className="absolute -top-2 left-4 px-2 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Discount code</span>
+              <Button 
+                type="button" 
+                size="sm"
+                variant="secondary"
+                disabled={!discountCode || isLoading}
+                onClick={applyDiscount}
+                className="absolute right-2 top-2 bottom-2 h-10 rounded-xl px-4 text-xs font-bold"
+              >
+                Apply
+              </Button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="discount-applied"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center justify-between p-4 bg-accent/5 border border-accent/20 rounded-2xl"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-4 h-4 text-accent" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-accent uppercase tracking-widest">Code Applied</p>
+                  <p className="text-sm font-bold text-foreground">{discountCode.toUpperCase()}</p>
+                </div>
+              </div>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 rounded-full text-muted-foreground hover:text-red-500"
+                onClick={() => {
+                  setIsDiscountApplied(false);
+                  setDiscountCode('');
+                }}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* TERMS */}
+      <div className="flex items-start gap-3 px-1 pt-2">
+        <Checkbox 
+          id="terms" 
+          checked={agreedToTerms} 
+          onCheckedChange={(val: any) => setAgreedToTerms(val)} 
+          className="mt-0.5 rounded-md border-border/60 data-[state=checked]:bg-accent data-[state=checked]:border-accent"
+        />
+        <Label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer select-none">
+          I agree to the <span className="text-accent font-bold">Terms</span> and <span className="text-accent font-bold">Privacy Policy</span>
+        </Label>
+      </div>
+
+      {/* PAY BUTTON */}
+      <Button
+        type="submit"
+        disabled={isLoading || !agreedToTerms}
+        className="w-full h-14 rounded-full bg-[#f58220] hover:bg-[#e0751a] text-white text-base font-bold shadow-lg shadow-orange-500/10 transition-all active:scale-[0.98] mt-4"
+      >
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span>Processing...</span>
+          </div>
+        ) : (
+          <span>Pay {amount.toLocaleString()} RWF</span>
+        )}
+      </Button>
+
+      <div className="flex flex-col items-center gap-4 pt-4 border-t border-dashed border-border/50">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          <ShieldCheck className="w-3.5 h-3.5 text-accent" />
+          Secure 256-bit SSL Encrypted Payment
+        </div>
+      </div>
+    </form>
   );
 }

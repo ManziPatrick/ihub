@@ -268,7 +268,7 @@ const About = () => {
           <div className="container mx-auto px-4">
             <h2 className="font-heading text-3xl lg:text-4xl font-bold mb-8">Ready to Build the Future?</h2>
             <div className="flex flex-wrap justify-center gap-4">
-              <Link to="/training">
+              <Link to="/explore">
                 <Button variant="gold" size="lg" className="px-8 h-12">Start Training</Button>
               </Link>
               <Link to="/contact">

@@ -293,7 +293,7 @@ export function ManageQuestionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl h-[85vh] flex flex-col p-0 border-accent/20 overflow-hidden bg-background">
+      <DialogContent className="max-w-[100vw] sm:max-w-3xl w-full h-[100dvh] sm:h-[85vh] flex flex-col p-0 border-accent/20 overflow-hidden bg-background rounded-none sm:rounded-lg">
         <DialogHeader className="px-4 py-4 sm:px-6 border-b border-white/5 bg-white/3">
           <div className="flex items-center justify-between">
             <DialogTitle>

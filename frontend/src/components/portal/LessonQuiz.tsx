@@ -15,9 +15,11 @@ interface LessonQuizProps {
   courseId: string;
   lessonId: string;
   onComplete: () => void;
+  fallbackQuestions?: any[];
 }
 
-export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) {
+export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }: LessonQuizProps) {
+  console.log("LessonQuiz Props:", { courseId, lessonId, hasFallback: !!fallbackQuestions });
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
@@ -60,7 +62,9 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
   });
   const [hintForQuestion, { loading: loadingHint }] = useMutation(HINT_FOR_QUESTION);
 
-  const questions = (data as any)?.questions || [];
+  const questions = (data as any)?.questions && (data as any)?.questions.length > 0 
+    ? (data as any)?.questions 
+    : (fallbackQuestions || []);
 
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
   if (error) return <div className="text-destructive p-4">Error loading quiz questions.</div>;
@@ -351,10 +355,10 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
                     whileTap={!isAnswered ? { scale: 0.98 } : {}}
                     onClick={() => handleOptionSelect(i)}
                     disabled={isAnswered}
-                    className={`w-full text-left p-5 rounded-2xl border-2 transition-all flex items-center justify-between font-bold text-lg ${stateClass}`}
+                    className={`w-full text-left p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 transition-all flex items-center justify-between font-bold text-base sm:text-lg ${stateClass}`}
                   >
                     <span>{option}</span>
-                    {isAnswered && isCorrectOption && <CheckCircle2 className="w-6 h-6 fill-current" />}
+                    {isAnswered && isCorrectOption && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />}
                   </motion.button>
                 );
               })}
@@ -469,8 +473,10 @@ export function LessonQuiz({ courseId, lessonId, onComplete }: LessonQuizProps) 
           </motion.div>
         </div>
 
-        <div className="md:col-span-4 sticky top-4">
-          <KidAvatar expression={expression} />
+        <div className="md:col-span-4 sticky top-4 flex justify-center md:justify-end">
+          <div className="w-24 h-24 sm:w-auto">
+            <KidAvatar expression={expression} />
+          </div>
         </div>
       </div>
 

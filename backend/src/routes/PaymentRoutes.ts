@@ -49,21 +49,16 @@ router.get(
 );
 
 /**
- * HEAD /api/payments/webhook
- * Paypack pings webhook URL with HEAD before sending POST payloads
- */
-router.head('/webhook', (_req, res) => {
-  return res.status(200).end();
-});
-
-/**
- * POST /api/payments/webhook
- * Webhook endpoint for Paypack transaction updates
- * Public endpoint - signature verified internally
+ * Pesapal Webhooks & Callbacks
  */
 router.post(
-  '/webhook',
-  paymentController.handleWebhook.bind(paymentController)
+  '/pesapal/ipn',
+  paymentController.handlePesapalIPN.bind(paymentController)
+);
+
+router.get(
+  '/pesapal/callback',
+  paymentController.handlePesapalCallback.bind(paymentController)
 );
 
 export default router;

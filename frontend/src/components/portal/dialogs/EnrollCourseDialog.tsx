@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { BookOpen, Clock, Star, CheckCircle, CreditCard, Smartphone, Check, FileText, XCircle } from "lucide-react";
+import { BookOpen, Clock, Star, CheckCircle, CreditCard, Smartphone, Check, FileText, XCircle, Loader2 } from "lucide-react";
 
 
 import { useMutation } from "@apollo/client/react";
@@ -177,12 +177,12 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
       }
 
     }}>
-      <DialogContent className="max-w-md max-h-[90vh] flex flex-col p-0 overflow-hidden border-2 border-accent/20 shadow-2xl">
-        <DialogHeader className="px-6 pt-6 pb-2 border-b bg-muted/20">
-          <DialogTitle className="text-xl font-bold">
+      <DialogContent className="max-w-[100vw] sm:max-w-md w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col p-0 overflow-hidden border-2 border-accent/20 shadow-2xl rounded-none sm:rounded-lg">
+        <DialogHeader className="px-6 pt-6 pb-2 border-b-0 bg-transparent">
+          <DialogTitle className="text-2xl font-black tracking-tight">
             {step === 1 && "Course Enrollment"}
-            {step === 3 && (paymentMethod === "manual" ? "Submit Proof of Payment" : "Mobile Money Payment")}
-            {step === 4 && (paymentMethod === "manual" ? "Enrollment Pending" : "Enrollment Complete")}
+            {step === 3 && "Secure Checkout"}
+            {step === 4 && "Confirmation"}
           </DialogTitle>
         </DialogHeader>
 
@@ -261,24 +261,15 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
                 )}
 
                 {!isFree && (
-                  <div className="space-y-3">
-                    <p className="text-sm font-semibold text-foreground">Choose payment method</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button
-                        type="button"
-                        variant={paymentMethod === "paypack" ? "gold" : "outline"}
-                        onClick={() => setPaymentMethod("paypack")}
-                        className={paymentMethod === "paypack" ? "bg-[#ffcc00] text-black hover:bg-[#e6b800] border-none" : ""}
-                      >
-                        Mobile Money
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={paymentMethod === "manual" ? "gold" : "outline"}
-                        onClick={() => setPaymentMethod("manual")}
-                      >
-                        Manual Payment
-                      </Button>
+                  <div className="p-4 bg-accent/5 rounded-2xl border border-accent/20 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                       <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                          <CreditCard className="w-5 h-5 text-accent" />
+                       </div>
+                       <div>
+                          <p className="text-[10px] font-black text-accent uppercase tracking-widest">Payment Method</p>
+                          <p className="text-sm font-bold">Mobile Money / Cards</p>
+                       </div>
                     </div>
                   </div>
                 )}
@@ -286,92 +277,63 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
             )}
 
 
-            {step === 3 && paymentMethod === "manual" && (
+            {step === 3 && (
               <div className="space-y-6">
-                <div className="p-4 bg-accent/5 rounded-xl border border-accent/20">
-                  <p className="text-sm font-bold text-accent mb-3 text-center uppercase tracking-wider">Manual Payment Instructions</p>
-                  <div className="space-y-4 text-sm">
-                    <div className="flex justify-between items-center p-3 bg-background rounded-lg border border-border/50">
-                      <div className="flex items-center gap-2">
-                        <Smartphone className="w-4 h-4 text-accent" />
-                        <span className="font-medium">MTN MoMo</span>
-                      </div>
-                      <span className="font-mono font-bold select-all">250790706170</span>
-                    </div>
-
-                    <div className="flex justify-between items-center p-3 bg-background rounded-lg border border-border/50">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-accent" />
-                        <span className="font-medium">PayPal</span>
-                      </div>
-                      <span className="font-mono font-bold select-all">munyeshurimanzi@gmail.com</span>
-                    </div>
-
-                    <div className="p-3 bg-muted/20 rounded-lg space-y-2">
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        1. Send <span className="text-accent font-bold">{finalPrice.toLocaleString()} RWF</span> using either method above.
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        2. Keep your transaction confirmation message or take a screenshot.
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        3. Upload the confirmation proof below for verification.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-
-                <FileUpload
-                  onUploadComplete={(url) => setProofUrl(url)}
-                  label="Upload Confirmation Screenshot/PDF"
-                  folder="payment-proofs"
-                />
-
-                {proofUrl && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-green-500 text-xs font-semibold justify-center">
-                      <CheckCircle className="w-4 h-4" /> Proof uploaded successfully
-                    </div>
-
-                    <div className="relative aspect-video rounded-lg overflow-hidden border border-border bg-black/5 flex items-center justify-center">
-                      {proofUrl.toLowerCase().endsWith('.pdf') ? (
-                        <div className="flex flex-col items-center p-4">
-                          <FileText className="w-8 h-8 text-accent mb-2" />
-                          <span className="text-xs font-medium">PDF Document</span>
-                        </div>
-                      ) : (
-                        <img src={proofUrl} alt="Payment Proof" className="w-full h-full object-contain" />
-                      )}
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="absolute top-2 right-2 h-7 w-7 rounded-full shadow-lg"
-                        onClick={() => setProofUrl(null)}
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {step === 3 && paymentMethod === "paypack" && (
-              <div className="space-y-4">
-                <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-                  <p className="text-sm font-semibold text-yellow-900 mb-1">MTN / Airtel Mobile Money</p>
-                  <p className="text-xs text-yellow-800">
-                    Pay securely using your mobile wallet. You will receive an automated USSD prompt on your phone.
-                  </p>
-                </div>
                 <PaymentForm
                   amount={finalPrice}
                   description={`Course enrollment - ${course.title}`}
                   courseId={course.id || course._id}
                   selectedDeliveryMode={selectedDeliveryMode}
-                  onSuccess={handlePaypackSuccess}
+                  onMethodChange={(m) => setPaymentMethod(m === 'manual' ? 'manual' : 'paypack')}
+                  onSuccess={() => {
+                    if (paymentMethod === "manual") {
+                      // Stay on step 3 but now we can show upload proof
+                      toast.info("Transfer record created. Please upload your proof.");
+                    } else {
+                      handlePaypackSuccess();
+                    }
+                  }}
                 />
+
+                {paymentMethod === "manual" && (
+                   <div className="pt-4 border-t border-dashed border-border/50 animate-in fade-in duration-500">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-1.5 h-6 bg-accent rounded-full" />
+                        <h4 className="text-sm font-black uppercase tracking-widest">Upload Proof</h4>
+                      </div>
+                      
+                      <FileUpload
+                        onUploadComplete={(url) => setProofUrl(url)}
+                        label="Upload Confirmation Screenshot"
+                        folder="payment-proofs"
+                      />
+
+                      {proofUrl && (
+                        <div className="mt-4 relative group animate-in zoom-in-95">
+                          <div className="overflow-hidden rounded-2xl border border-border shadow-lg aspect-video bg-black/5">
+                            <img src={proofUrl} alt="Proof" className="w-full h-full object-contain" />
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-2 right-2 h-8 w-8 rounded-full"
+                              onClick={() => setProofUrl(null)}
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <Button 
+                        className="w-full h-14 rounded-full mt-4 font-black uppercase tracking-widest text-[11px] bg-[#f58220] hover:bg-[#e0751a] text-white border-none" 
+                        disabled={!proofUrl || isProcessing}
+                        onClick={handleSubmitProof}
+                      >
+                        {isProcessing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+                        Confirm Enrollment
+                      </Button>
+                   </div>
+                )}
               </div>
             )}
 
@@ -407,13 +369,13 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
           </div>
         </div>
 
-        <div className="p-6 border-t border-border bg-muted/5">
+        <div className="p-6 bg-transparent">
           {step === 1 && (
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+              <Button variant="outline" className="flex-1 h-12 rounded-xl" onClick={() => onOpenChange(false)}>
                 Maybe Later
               </Button>
-              <Button variant="gold" className="flex-1" onClick={handleEnroll} disabled={isProcessing || !!user?.enrolledCourses?.includes(course.id || course._id)}>
+              <Button variant="gold" className="flex-1 h-12 rounded-full font-bold shadow-lg shadow-gold/20" onClick={handleEnroll} disabled={isProcessing || !!user?.enrolledCourses?.includes(course.id || course._id)}>
                 {isProcessing ? "Processing..." : user?.enrolledCourses?.includes(course.id || course._id) ? "Already Enrolled" : isFree ? "Enroll Free" : "Next: Payment"}
               </Button>
             </div>
@@ -421,19 +383,14 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
 
 
 
-          {step === 3 && paymentMethod === "manual" && (
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => setStep(1)} disabled={isProcessing}>
-                Back
-              </Button>
-              <Button variant="gold" className="flex-1" onClick={handleSubmitProof} disabled={isProcessing || !proofUrl}>
-                {isProcessing ? "Processing..." : "Complete Enrollment"}
-              </Button>
-            </div>
+          {step === 3 && (
+            <Button variant="ghost" className="w-full text-xs text-muted-foreground h-10" onClick={() => setStep(1)} disabled={isProcessing}>
+              Go back to course details
+            </Button>
           )}
 
           {step === 4 && (
-            <Button variant="gold" className="w-full" onClick={() => {
+            <Button variant="gold" className="w-full h-12 rounded-full font-bold shadow-lg shadow-gold/20" onClick={() => {
               onOpenChange(false);
               if (paymentMethod !== "manual") {
                 navigate(`/portal/student/courses/${course.id || course._id}`);

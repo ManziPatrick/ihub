@@ -31,6 +31,7 @@ const lessonSchema = new mongoose.Schema({
     type: { type: String, enum: ['mcq', 'open'], default: 'open' },
     options: [{ type: String }],
     correctOptionIndex: { type: Number },
+    explanation: { type: String },
     points: { type: Number, default: 10 }
   }],
   assignmentConfig: {

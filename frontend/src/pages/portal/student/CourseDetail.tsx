@@ -18,6 +18,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
   PlayCircle,
   CheckCircle,
   Lock,
@@ -41,6 +48,8 @@ import {
   Flame,
   Trophy,
   Printer,
+  ListOrdered,
+  Building2,
 } from "lucide-react";
 import { RequestHelpDialog, BookCallDialog } from "@/components/portal/dialogs";
 import { LessonQuiz } from "@/components/portal/LessonQuiz";
@@ -98,6 +107,28 @@ export default function CourseDetail() {
   });
 
   const existingSubmission = submissionsData?.getAssignmentSubmissions?.items?.[0];
+
+  // Persistence: Save and restore last active lesson
+  useEffect(() => {
+    if (courseId && !activeLessonId) {
+      const savedLessonId = localStorage.getItem(`last_lesson_${courseId}`);
+      if (savedLessonId) {
+        // Verify the saved lesson ID exists in the course
+        const lessonExists = course?.modules?.some((m: any) => 
+          m.lessons?.some((l: any) => (l.id || l._id) === savedLessonId)
+        );
+        if (lessonExists) {
+          setActiveLessonId(savedLessonId);
+        }
+      }
+    }
+  }, [courseId, course]);
+
+  useEffect(() => {
+    if (courseId && activeLessonId) {
+      localStorage.setItem(`last_lesson_${courseId}`, activeLessonId);
+    }
+  }, [courseId, activeLessonId]);
 
   useEffect(() => {
     if (existingSubmission?.content) {
@@ -360,8 +391,12 @@ export default function CourseDetail() {
             <div>
               <h1 className="font-heading text-2xl font-bold">{course.title}</h1>
               <div className="flex items-center gap-3 mt-1.5">
-                <Badge variant="outline" className="text-[10px] uppercase text-accent">{course.level}</Badge>
-                <p className="text-muted-foreground text-sm">{progressPercent}% Completed</p>
+                <Badge variant="secondary" className="text-[10px] uppercase font-black bg-accent/10 text-accent border-accent/20 gap-1.5 px-2 py-1">
+                  <Building2 className="w-3 h-3" />
+                  {course.school || "IHUB Academy"}
+                </Badge>
+                <Badge variant="outline" className="text-[10px] uppercase text-card-foreground/60">{course.level}</Badge>
+                <p className="text-muted-foreground text-xs font-medium">{progressPercent}% Completed</p>
               </div>
             </div>
           </div>
@@ -407,16 +442,23 @@ export default function CourseDetail() {
               <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center text-white shadow-xl shadow-green-500/20">
                 <CheckCircle className="w-8 h-8" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h2 className="text-2xl font-black text-foreground">Course Mastered! 🎉</h2>
                 <p className="text-muted-foreground">Congratulations! You've successfully completed every unit in this track.</p>
               </div>
             </div>
-            <Link to="/portal/student/certificates">
-              <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 rounded-2xl shadow-lg shadow-green-500/20">
-                <Award className="w-5 h-5 mr-2" /> Full Course Certificate
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link to="/portal/student/certificates">
+                <Button size="lg" className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold px-8 rounded-2xl shadow-lg shadow-green-500/20">
+                  <Award className="w-5 h-5 mr-2" /> Certificate
+                </Button>
+              </Link>
+              <Link to="/portal/student/courses">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto rounded-2xl border-green-500/30 text-green-500 hover:bg-green-500/10">
+                  Next Course <ChevronRight className="w-5 h-5 ml-1" />
+                </Button>
+              </Link>
+            </div>
           </motion.div>
         )}
 
@@ -458,6 +500,7 @@ export default function CourseDetail() {
                       courseId={courseId!}
                       lessonId={(currentLesson.id || currentLesson._id)}
                       onComplete={handleMarkComplete}
+                      fallbackQuestions={currentLesson.assignmentQuestions}
                     />
                   </Card>
                 );
@@ -570,8 +613,8 @@ export default function CourseDetail() {
                           )}
 
                           <Dialog open={isAssignmentDialogOpen} onOpenChange={setIsAssignmentDialogOpen}>
-                            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                              <DialogHeader>
+                            <DialogContent className="max-w-[100vw] sm:max-w-3xl w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col p-0 overflow-hidden bg-background rounded-none sm:rounded-2xl">
+                              <DialogHeader className="px-6 py-4 bg-accent/5 border-b border-accent/10">
                                 <DialogTitle>{existingSubmission ? "Update Mission Submission" : "Complete Exercise Mission"}</DialogTitle>
                               </DialogHeader>
                               <div className="py-4 space-y-4">
@@ -631,8 +674,79 @@ export default function CourseDetail() {
             })()}
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-4 h-fit sticky top-24">
+          {/* Mobile Curriculum Trigger */}
+          <div className="lg:hidden fixed bottom-6 right-6 z-50">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="gold" size="lg" className="rounded-full w-14 h-14 p-0 shadow-2xl shadow-gold/40 border-2 border-white/20">
+                  <ListOrdered className="w-6 h-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px] p-0 border-l-accent/20 bg-background/95 backdrop-blur-xl">
+                <SheetHeader className="p-6 border-b border-border/50 bg-muted/10">
+                  <SheetTitle className="text-sm font-black uppercase tracking-widest text-accent flex items-center gap-2">
+                    <ListOrdered className="w-4 h-4" />
+                    Track Curriculum
+                  </SheetTitle>
+                </SheetHeader>
+                <ScrollArea className="h-[calc(100vh-100px)]">
+                  <div className="p-6">
+                    {course.modules?.map((mod: any, mIdx: number) => {
+                      const modCompleted = isModuleCompleted(mod);
+                      return (
+                        <div key={mod.id || mod._id} className="mb-6 last:mb-0">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-[10px] font-black text-accent uppercase tracking-widest flex-1">{mod.title}</h4>
+                            {modCompleted && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDownloadModuleCert(mod); }}
+                                className="text-[10px] font-bold text-gold flex items-center gap-1"
+                              >
+                                <Award className="w-3 h-3" /> Cert
+                              </button>
+                            )}
+                          </div>
+                          <div className="space-y-1 pl-1 border-l-2 border-muted/20 ml-1">
+                            {mod.lessons?.map((les: any) => {
+                              const lesId = les.id || les._id;
+                              const isActive = lesId === activeLessonId;
+                              const isComp = completedLessons.some((cl: any) => cl.lessonId === lesId) || forcedProgressLessonIds.includes(lesId);
+                              const lIdx = allLessons.findIndex(l => (l.id || l._id) === lesId);
+                              const prevRequiredLessons = allLessons.slice(0, lIdx).filter((pl) =>
+                                pl.requiredAssignment || pl.type === 'assignment' || pl.type === 'quiz' || pl.isAssignment
+                              );
+                              const isLock = prevRequiredLessons.some((pl) => !isLessonSatisfied(pl));
+
+                              return (
+                                <button
+                                  key={lesId}
+                                  disabled={isLock}
+                                  onClick={() => {
+                                    if (!isLock) {
+                                      setActiveLessonId(lesId);
+                                      // We don't have direct access to setSheetOpen here without adding state, 
+                                      // but usually clicking an item should close the sheet in a good UX.
+                                    }
+                                  }}
+                                  className={`w-full text-left p-2.5 rounded-xl text-xs transition-all flex items-center gap-3 ${isActive ? 'bg-accent/10 text-accent font-bold' : isLock ? 'opacity-30' : 'hover:bg-muted/10 text-muted-foreground'}`}
+                                >
+                                  {isComp ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : isLock ? <Lock className="w-3.5 h-3.5" /> : React.createElement(getLessonIcon(les.type), { className: "w-3.5 h-3.5" })}
+                                  <span className="truncate flex-1">{les.title}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:block lg:col-span-4 h-fit sticky top-24">
             <Card className="border-border/50">
               <div className="p-4 border-b border-border/30 bg-muted/10 font-bold text-xs uppercase tracking-widest">Track Overview</div>
               <CardContent className="p-0">

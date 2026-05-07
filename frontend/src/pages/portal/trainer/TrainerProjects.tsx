@@ -358,9 +358,9 @@ export default function TrainerProjects() {
             <div className="space-y-6">
                 <Tabs defaultValue="assignments" className="space-y-6">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <TabsList className="bg-muted/20 p-1 rounded-xl h-12 border border-border/30">
-                            <TabsTrigger value="assignments" className="rounded-lg px-6">Assignment Reviews</TabsTrigger>
-                            <TabsTrigger value="projects" className="rounded-lg px-6">Project Management</TabsTrigger>
+                        <TabsList className="w-full justify-start overflow-x-auto no-scrollbar bg-muted/20 p-1 rounded-xl h-auto flex-nowrap border border-border/30">
+                            <TabsTrigger value="assignments" className="rounded-lg px-6 whitespace-nowrap">Assignment Reviews</TabsTrigger>
+                            <TabsTrigger value="projects" className="rounded-lg px-6 whitespace-nowrap">Project Management</TabsTrigger>
                         </TabsList>
 
                         <div className="flex gap-2">
