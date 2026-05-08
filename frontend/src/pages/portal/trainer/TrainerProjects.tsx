@@ -36,7 +36,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { TextEditor } from "@/components/ui/text-editor";
-import { BookCallDialog } from "@/components/portal/dialogs";
+import { BookCallDialog, ViewSubmissionDialog } from "@/components/portal/dialogs";
 import {
     Trash2,
     Link as LinkIcon,
@@ -51,7 +51,8 @@ import {
     Plus,
     Users,
     FileCode,
-    Download
+    Download,
+    Eye
 } from "lucide-react";
 
 interface AssignmentSubmission {
@@ -81,6 +82,14 @@ interface AssignmentSubmission {
     status: string;
     grade?: number;
     feedback?: string;
+    totalScore?: number;
+    timeTaken?: number;
+    answers?: {
+        questionId: string;
+        answerText: string;
+        score: number;
+        aiFeedback?: string;
+    }[];
     createdAt: string;
 }
 
@@ -141,6 +150,7 @@ export default function TrainerProjects() {
         links: [{ title: "", url: "" }] as { title: string; url: string }[],
         tasks: [{ title: "", completed: false }] as { title: string; completed: boolean }[]
     });
+    const [viewSubmission, setViewSubmission] = useState<AssignmentSubmission | null>(null);
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
     const [assignPage, setAssignPage] = useState(1);
@@ -438,7 +448,7 @@ export default function TrainerProjects() {
                                                                     </Badge>
                                                                 )}
                                                             </TableCell>
-                                                            <TableCell className="text-xs text-muted-foreground">{submission.course?.title || "Unknown"}</TableCell>
+                                                            <TableCell className="text-xs text-muted-foreground">{submission.course?.title || (typeof submission.courseId === 'string' ? submission.courseId : "Unknown")}</TableCell>
                                                             <TableCell className="text-xs">{submission.lesson?.title || submission.lessonId}</TableCell>
                                                             <TableCell className="text-xs">{new Date(parseInt(submission.createdAt)).toLocaleDateString()}</TableCell>
                                                         </TableRow>
@@ -495,10 +505,18 @@ export default function TrainerProjects() {
                                                                 </Button>
                                                             </div>
                                                         )}
-                                                        <div className="space-y-2">
-                                                            <label className="text-sm font-bold">Submission Content</label>
-                                                            <div className="p-4 bg-muted/20 rounded-lg border border-border/30">
                                                                 <div className="mb-4">
+                                                                    <div className="flex items-center justify-between mb-2">
+                                                                        <label className="text-xs uppercase tracking-wider text-muted-foreground font-bold">Submission Content</label>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="sm"
+                                                                            className="h-7 text-[10px] text-accent hover:bg-accent/10"
+                                                                            onClick={() => setViewSubmission(selectedSubmission)}
+                                                                        >
+                                                                            <ExternalLink className="w-3.5 h-3.5 mr-1.5" /> Full Detail View
+                                                                        </Button>
+                                                                    </div>
                                                                     <p className="text-sm font-mono whitespace-pre-wrap break-all bg-background/50 p-3 rounded border border-border/20">
                                                                         {selectedSubmission.content}
                                                                     </p>
@@ -518,15 +536,73 @@ export default function TrainerProjects() {
                                                                                 Download File
                                                                             </a>
                                                                         </Button>
-                                                                        {selectedSubmission.content.toLowerCase().endsWith(".pdf") && (
-                                                                            <p className="text-[10px] text-muted-foreground w-full mt-1 italic">
-                                                                                Tip: This appears to be a PDF file.
-                                                                            </p>
-                                                                        )}
                                                                     </div>
                                                                 )}
+
+                                                        {/* Exam Results Section */}
+                                                        {selectedSubmission.answers && selectedSubmission.answers.length > 0 && (
+                                                            <div className="space-y-4">
+                                                                <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                                                                    <label className="text-sm font-bold flex items-center gap-2">
+                                                                        <ListTodo className="w-4 h-4 text-accent" />
+                                                                        Exam Performance
+                                                                    </label>
+                                                                    <div className="text-right">
+                                                                        <Badge className="bg-accent/10 text-accent border-accent/20">
+                                                                            Score: {selectedSubmission.totalScore} pts ({selectedSubmission.grade}%)
+                                                                        </Badge>
+                                                                    </div>
+                                                                </div>
+                                                                <ScrollArea className="h-[300px] pr-4">
+                                                                    <div className="space-y-4">
+                                                                        {(selectedSubmission as any).lesson?.assignmentQuestions?.map((q: any, idx: number) => {
+                                                                            const answer = selectedSubmission.answers?.find(a => a.questionId === q.id);
+                                                                            const isCorrect = (answer?.score || 0) > 0;
+                                                                            
+                                                                            return (
+                                                                                <div key={q.id} className={`p-3 rounded-lg border ${isCorrect ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+                                                                                    <div className="flex justify-between gap-2 mb-2">
+                                                                                        <p className="text-xs font-bold text-muted-foreground">Question {idx + 1}</p>
+                                                                                        <Badge variant="outline" className={isCorrect ? 'text-green-500 border-green-500/30' : 'text-red-500 border-red-500/30'}>
+                                                                                            {answer?.score || 0} / {q.points} pts
+                                                                                        </Badge>
+                                                                                    </div>
+                                                                                    <p className="text-sm font-medium mb-3">{q.questionText}</p>
+                                                                                    
+                                                                                    <div className="space-y-2">
+                                                                                        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Student Answer:</div>
+                                                                                        <div className={`p-2 rounded text-xs ${isCorrect ? 'bg-green-500/10 text-green-700' : 'bg-red-500/10 text-red-700'}`}>
+                                                                                            {q.type === 'mcq' ? (
+                                                                                                q.options[parseInt(answer?.answerText || "-1")] || answer?.answerText || "No answer"
+                                                                                            ) : (
+                                                                                                answer?.answerText || "No answer"
+                                                                                            )}
+                                                                                        </div>
+                                                                                        
+                                                                                        {!isCorrect && q.type === 'mcq' && (
+                                                                                            <>
+                                                                                                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-black mt-2">Correct Answer:</div>
+                                                                                                <div className="p-2 rounded bg-green-500/10 text-green-700 text-xs">
+                                                                                                    {q.options[q.correctOptionIndex]}
+                                                                                                </div>
+                                                                                            </>
+                                                                                        )}
+
+                                                                                        {answer?.aiFeedback && (
+                                                                                            <div className="mt-2 p-2 bg-accent/5 rounded border border-accent/10 text-[11px] italic">
+                                                                                                <span className="font-bold not-italic">Feedback: </span>
+                                                                                                {answer.aiFeedback}
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                </ScrollArea>
                                                             </div>
-                                                        </div>
+                                                        )}
+
                                                         <div className="space-y-2">
                                                             <label className="text-sm font-bold">Grade (0-100)</label>
                                                             <Input
@@ -633,13 +709,14 @@ export default function TrainerProjects() {
                                             <TableHead>Grade</TableHead>
                                             <TableHead>Feedback</TableHead>
                                             <TableHead>Date</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {filteredGraded.map((submission: AssignmentSubmission) => (
                                             <TableRow key={submission.id}>
                                                 <TableCell className="font-medium text-sm">{submission.user?.fullName || submission.user?.username}</TableCell>
-                                                <TableCell className="text-xs text-muted-foreground">{submission.course?.title || "Unknown"}</TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">{submission.course?.title || (typeof submission.courseId === 'string' ? submission.courseId : "Unknown")}</TableCell>
                                                 <TableCell className="text-xs">{submission.lesson?.title || submission.lessonId}</TableCell>
                                                 <TableCell>
                                                     <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
@@ -656,6 +733,16 @@ export default function TrainerProjects() {
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-xs">{new Date(parseInt(submission.createdAt)).toLocaleDateString()}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        className="h-8 w-8 p-0"
+                                                        onClick={() => setViewSubmission(submission)}
+                                                    >
+                                                        <Eye className="w-4 h-4 text-muted-foreground" />
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -1040,6 +1127,23 @@ export default function TrainerProjects() {
         mentorName={selectedSubmission?.user?.fullName || selectedSubmission?.user?.username}
         purpose="assignment-review"
     />
+            <ViewSubmissionDialog 
+                open={!!viewSubmission} 
+                onOpenChange={(open) => !open && setViewSubmission(null)}
+                submission={viewSubmission ? {
+                    id: viewSubmission.id,
+                    student: viewSubmission.user?.fullName || viewSubmission.user?.username || 'Unknown',
+                    assignment: viewSubmission.lesson?.title || viewSubmission.lessonId,
+                    course: viewSubmission.course?.title || "Unknown",
+                    submittedAt: new Date(parseInt(viewSubmission.createdAt || '0')).toLocaleString(),
+                    type: (viewSubmission.answers?.length || 0) > 0 ? 'exam' : 'assignment',
+                    content: viewSubmission.content,
+                    answers: viewSubmission.answers,
+                    totalScore: viewSubmission.totalScore,
+                    timeTaken: viewSubmission.timeTaken,
+                    lessonQuestions: (viewSubmission as any).lesson?.assignmentQuestions,
+                } : null}
+            />
         </PortalLayout>
     );
 }

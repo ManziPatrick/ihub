@@ -283,6 +283,21 @@ export const GET_COURSES = gql`
             isAssignment
             requiredAssignment
             assignmentDescription
+            assignmentQuestions {
+              id
+              questionText
+              type
+              options
+              correctOptionIndex
+              explanation
+              points
+            }
+            assignmentConfig {
+              timeLimit
+              allowRetakes
+              disableRightClick
+              mode
+            }
           }
         }
       }

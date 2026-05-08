@@ -2792,6 +2792,16 @@ export const resolvers = {
                   return res;
                 });
               }
+              if (les.assignmentQuestions) {
+                les.assignmentQuestions = les.assignmentQuestions.map((q: any) => {
+                  const quest = { ...q };
+                  if (quest.id) {
+                    quest._id = quest.id;
+                    delete quest.id;
+                  }
+                  return quest;
+                });
+              }
               return les;
             });
           }
@@ -6804,13 +6814,27 @@ export const resolvers = {
     },
     course: async (parent: any) => {
       if (parent.course && parent.course.title) return parent.course;
-      if (!parent.courseId) return null;
+      if (!parent.courseId) {
+        // Fallback: Try to find a course that contains this lessonId
+        if (parent.lessonId) {
+          const course = await Course.findOne({ 'modules.lessons._id': parent.lessonId });
+          if (course) return course;
+        }
+        return null;
+      }
       return await Course.findById(parent.courseId);
     },
     lesson: async (parent: any) => {
-      const course = parent.course && parent.course.modules 
-        ? parent.course 
-        : await Course.findById(parent.courseId);
+      let course = parent.course && parent.course.modules ? parent.course : null;
+      
+      if (!course && parent.courseId) {
+        course = await Course.findById(parent.courseId);
+      }
+      
+      // Secondary fallback if still no course: search all courses for this lessonId
+      if (!course && parent.lessonId) {
+        course = await Course.findOne({ 'modules.lessons._id': parent.lessonId });
+      }
       
       if (!course || !course.modules) return null;
       

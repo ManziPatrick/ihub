@@ -463,19 +463,40 @@ export function EditCourseDialog({
                 requiredAssignment: !!l.requiredAssignment,
                 isAssignment: !!l.isAssignment || l.type === 'assignment',
                 assignmentDescription: l.assignmentDescription || "",
-                assignmentDeliverables: l.assignmentDeliverables || []
+                assignmentDeliverables: l.assignmentDeliverables || [],
+                assignmentQuestions: l.assignmentQuestions?.map((q: any) => ({
+                  id: q.id || q._id,
+                  questionText: q.questionText || "",
+                  type: q.type || "mcq",
+                  options: q.options || [],
+                  correctOptionIndex: q.correctOptionIndex ?? 0,
+                  points: q.points || 10,
+                  explanation: q.explanation || ""
+                })) || [],
+                assignmentConfig: l.assignmentConfig ? {
+                  timeLimit: l.assignmentConfig.timeLimit || null,
+                  allowRetakes: !!l.assignmentConfig.allowRetakes,
+                  disableRightClick: !!l.assignmentConfig.disableRightClick,
+                  mode: l.assignmentConfig.mode || 'standard'
+                } : { timeLimit: null, allowRetakes: true, disableRightClick: false, mode: 'standard' }
               })) || []
             })) || []
           };
         }
 
         // Subsequent background updates (e.g. curriculum arriving)
-        const hasMoreModules = (course.modules?.length > prev.modules.length);
-        const hasLessonsNow = (prev.modules.length > 0 && prev.modules.every((m: any) => !m.lessons?.length) && course.modules?.[0]?.lessons?.length > 0);
+        const hasMoreModules = (course.modules?.length || 0) > (prev.modules?.length || 0);
+        const hasMoreLessons = course.modules?.some((m: any, idx: number) => (m.lessons?.length || 0) > (prev.modules[idx]?.lessons?.length || 0));
+        const hasQuestionsNow = course.modules?.some((m: any, mIdx: number) => 
+          m.lessons?.some((l: any, lIdx: number) => 
+            (l.assignmentQuestions?.length || 0) > (prev.modules[mIdx]?.lessons?.[lIdx]?.assignmentQuestions?.length || 0)
+          )
+        );
         const shouldUpdatePricing = (prev.price === "0" && course.price > 0);
         const shouldUpdateDetails = (prev.thumbnail === "" && course.thumbnail);
+        const curriculumArrived = hasMoreModules || hasMoreLessons || hasQuestionsNow;
 
-        if (hasMoreModules || hasLessonsNow || shouldUpdatePricing || shouldUpdateDetails) {
+        if (curriculumArrived || shouldUpdatePricing || shouldUpdateDetails) {
           return {
             ...prev,
             price: shouldUpdatePricing ? course.price.toString() : prev.price,
@@ -484,7 +505,7 @@ export function EditCourseDialog({
             level: (prev.level === "Beginner" && course.level && course.level !== "Beginner") ? course.level : prev.level,
             category: (prev.category === "Development" && course.category && course.category !== "Development") ? course.category : prev.category,
             school: (!prev.school && course.school) ? course.school : prev.school,
-            modules: (hasMoreModules || hasLessonsNow) ? course.modules.map((m: any) => ({
+            modules: curriculumArrived ? course.modules.map((m: any) => ({
               ...m,
               title: m.title || "",
               description: m.description || "",
@@ -499,7 +520,22 @@ export function EditCourseDialog({
                 requiredAssignment: !!l.requiredAssignment,
                 isAssignment: !!l.isAssignment || l.type === 'assignment',
                 assignmentDescription: l.assignmentDescription || "",
-                assignmentDeliverables: l.assignmentDeliverables || []
+                assignmentDeliverables: l.assignmentDeliverables || [],
+                assignmentQuestions: l.assignmentQuestions?.map((q: any) => ({
+                  id: q.id || q._id,
+                  questionText: q.questionText || "",
+                  type: q.type || "mcq",
+                  options: q.options || [],
+                  correctOptionIndex: q.correctOptionIndex ?? 0,
+                  points: q.points || 10,
+                  explanation: q.explanation || ""
+                })) || [],
+                assignmentConfig: l.assignmentConfig ? {
+                  timeLimit: l.assignmentConfig.timeLimit || null,
+                  allowRetakes: !!l.assignmentConfig.allowRetakes,
+                  disableRightClick: !!l.assignmentConfig.disableRightClick,
+                  mode: l.assignmentConfig.mode || 'standard'
+                } : { timeLimit: null, allowRetakes: true, disableRightClick: false, mode: 'standard' }
               })) || []
             })) : prev.modules
           };

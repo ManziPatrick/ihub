@@ -538,7 +538,8 @@ export default function AdminProjects() {
                                   </div>
                                   <div>
                                     <CardTitle className="text-base">{submission.user?.fullName || submission.user?.username}</CardTitle>
-                                    <p className="text-xs text-muted-foreground">Lesson ID: {submission.lessonId}</p>
+                                    <p className="text-[10px] font-bold text-accent uppercase tracking-wider">{submission.course?.title || 'Unknown Course'}</p>
+                                    <p className="text-xs text-muted-foreground">Lesson: {submission.lesson?.title || submission.lessonId}</p>
                                   </div>
                                 </div>
                                 <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">

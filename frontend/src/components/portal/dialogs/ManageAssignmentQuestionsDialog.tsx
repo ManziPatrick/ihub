@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,11 @@ export function ManageAssignmentQuestionsDialog({
   const [localQuestions, setLocalQuestions] = useState<AssignmentQuestion[]>(initialQuestions || []);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [bulkText, setBulkText] = useState("");
+
+  // Sync local state when initialQuestions prop changes
+  useEffect(() => {
+    setLocalQuestions(initialQuestions || []);
+  }, [initialQuestions]);
 
   const [formData, setFormData] = useState<AssignmentQuestion>({
     questionText: "",
@@ -150,8 +155,8 @@ export function ManageAssignmentQuestionsDialog({
           </div>
 
           <TabsContent value="list" className="flex-1 m-0 overflow-hidden">
-            <ScrollArea className="h-full px-6 py-4">
-              <div className="space-y-3">
+            <ScrollArea className="h-full">
+              <div className="px-6 py-4 space-y-3">
                 {localQuestions.map((q, idx) => (
                   <div key={idx} className="p-4 rounded-xl border border-border/50 bg-card group hover:border-accent/30 transition-all">
                     <div className="flex justify-between gap-4">
@@ -294,32 +299,34 @@ export function ManageAssignmentQuestionsDialog({
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="bulk" className="flex-1 m-0 p-6 space-y-6">
-            <div className="space-y-4 max-w-2xl mx-auto">
-              <div className="bg-accent/5 p-4 rounded-xl border border-accent/20">
-                <h4 className="text-sm font-bold text-accent mb-2 flex items-center gap-2">
-                  <FileText className="w-4 h-4" /> Bulk Import Guide
-                </h4>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Paste your exam questions here. The parser will detect numbering like "1. ", "2) " and options like "a) ", "b. ".
-                  <br /><br />
-                  Example format:<br />
-                  1. What is 2+2?<br />
-                  a) 3<br />
-                  b) 4<br />
-                  2. Explain photosynthesis in your own words.
-                </p>
+          <TabsContent value="bulk" className="flex-1 m-0 overflow-hidden">
+            <ScrollArea className="h-full">
+              <div className="p-6 space-y-6 max-w-2xl mx-auto">
+                <div className="bg-accent/5 p-4 rounded-xl border border-accent/20">
+                  <h4 className="text-sm font-bold text-accent mb-2 flex items-center gap-2">
+                    <FileText className="w-4 h-4" /> Bulk Import Guide
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Paste your exam questions here. The parser will detect numbering like "1. ", "2) " and options like "a) ", "b. ".
+                    <br /><br />
+                    Example format:<br />
+                    1. What is 2+2?<br />
+                    a) 3<br />
+                    b) 4<br />
+                    2. Explain photosynthesis in your own words.
+                  </p>
+                </div>
+                <Textarea 
+                  value={bulkText}
+                  onChange={(e) => setBulkText(e.target.value)}
+                  placeholder="Paste your exam text here..."
+                  className="min-h-[300px] font-mono text-xs bg-white/5 border-white/10"
+                />
+                <Button variant="gold" className="w-full h-12 font-black uppercase tracking-widest" onClick={handleBulkParse}>
+                  Parse & Import Questions
+                </Button>
               </div>
-              <Textarea 
-                value={bulkText}
-                onChange={(e) => setBulkText(e.target.value)}
-                placeholder="Paste your exam text here..."
-                className="min-h-[300px] font-mono text-xs"
-              />
-              <Button variant="gold" className="w-full h-12 font-black uppercase tracking-widest" onClick={handleBulkParse}>
-                Parse & Import Questions
-              </Button>
-            </div>
+            </ScrollArea>
           </TabsContent>
         </Tabs>
 

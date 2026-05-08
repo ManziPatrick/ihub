@@ -702,9 +702,9 @@ export const typeDefs = `#graphql
 
   type AssignmentSubmission {
     id: ID!
-    userId: ID!
+    userId: ID
     user: User
-    courseId: ID!
+    courseId: ID
     course: Course
     lessonId: String!
     lesson: Lesson
