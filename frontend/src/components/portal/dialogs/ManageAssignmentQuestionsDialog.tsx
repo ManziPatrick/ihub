@@ -145,7 +145,7 @@ export function ManageAssignmentQuestionsDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="px-6 border-b border-border/50">
             <TabsList className="bg-transparent space-x-2">
               <TabsTrigger value="list" className="data-[state=active]:text-accent">Questions List</TabsTrigger>
@@ -154,8 +154,8 @@ export function ManageAssignmentQuestionsDialog({
             </TabsList>
           </div>
 
-          <TabsContent value="list" className="flex-1 m-0 overflow-hidden flex flex-col min-h-0">
-            <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-4">
+          <TabsContent value="list" className="flex-1 m-0 overflow-hidden flex flex-col min-h-0 bg-transparent">
+            <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-4 min-h-0">
               <div className="space-y-3">
                 {localQuestions.map((q, idx) => (
                   <div key={idx} className="p-4 rounded-xl border border-border/50 bg-card group hover:border-accent/30 transition-all">
@@ -204,8 +204,8 @@ export function ManageAssignmentQuestionsDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="add" className="flex-1 m-0 overflow-hidden flex flex-col min-h-0">
-            <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-6">
+          <TabsContent value="add" className="flex-1 m-0 overflow-hidden flex flex-col min-h-0 bg-transparent">
+            <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-6 min-h-0">
               <div className="space-y-4 max-w-2xl mx-auto pb-8">
               <div className="grid grid-cols-2 gap-3">
                 <Button 
@@ -296,10 +296,12 @@ export function ManageAssignmentQuestionsDialog({
                 )}
               </div>
             </div>
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          <TabsContent value="bulk" className="flex-1 m-0 overflow-hidden flex flex-col min-h-0">
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+          <TabsContent value="bulk" className="flex-1 m-0 overflow-hidden flex flex-col min-h-0 bg-transparent">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 min-h-0">
+              <div className="space-y-6 max-w-2xl mx-auto">
                 <div className="bg-accent/5 p-4 rounded-xl border border-accent/20">
                   <h4 className="text-sm font-bold text-accent mb-2 flex items-center gap-2">
                     <FileText className="w-4 h-4" /> Bulk Import Guide
