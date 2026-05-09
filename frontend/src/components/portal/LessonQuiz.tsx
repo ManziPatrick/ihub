@@ -3,14 +3,18 @@ import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_QUESTIONS } from "@/lib/graphql/queries";
 import { REWARD_STUDENT, GENERATE_AI_QUIZ, HINT_FOR_QUESTION, CHAT_WITH_AI } from "@/lib/graphql/mutations";
-import { CheckCircle2, ChevronRight, RefreshCcw, Loader2, HelpCircle, Star, Flame, Trophy, Lightbulb, Send, MessageSquare } from "lucide-react";
+import { CheckCircle2, ChevronRight, RefreshCcw, Loader2, HelpCircle, Star, Flame, Trophy, Lightbulb, Send, MessageSquare, Volume2, VolumeX, Pause, Play, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { KidAvatar, AvatarExpression } from "./student/KidAvatar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
+import { tts } from "@/lib/tts";
+import successSound from '@/assets/Voice/success.mp3';
+import failedSound from '@/assets/Voice/failed.mp3';
+import cheersSound from '@/assets/Voice/cheers.mp3';
+import keyboardSound from '@/assets/Voice/keyboard.mp3';
 interface LessonQuizProps {
   courseId: string;
   lessonId: string;
@@ -20,13 +24,40 @@ interface LessonQuizProps {
 
 export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }: LessonQuizProps) {
   console.log("LessonQuiz Props:", { courseId, lessonId, hasFallback: !!fallbackQuestions });
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [isAnswered, setIsAnswered] = useState(false);
-  const [score, setScore] = useState(0);
-  const [isFinished, setIsFinished] = useState(false);
-  const [xp, setXp] = useState(0);
-  const [streak, setStreak] = useState(0);
+  const storageKey = `lessonQuiz_${courseId}_${lessonId}`;
+
+  const loadState = () => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return null;
+  };
+  const savedState = loadState();
+
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(savedState?.currentQuestionIndex || 0);
+  const [selectedOption, setSelectedOption] = useState<number | null>(savedState?.selectedOption ?? null);
+  const [isAnswered, setIsAnswered] = useState(savedState?.isAnswered || false);
+  const [score, setScore] = useState(savedState?.score || 0);
+  const [isFinished, setIsFinished] = useState(savedState?.isFinished || false);
+  const [xp, setXp] = useState(savedState?.xp || 0);
+  const [streak, setStreak] = useState(savedState?.streak || 0);
+
+  useEffect(() => {
+    if (!isFinished) {
+      localStorage.setItem(storageKey, JSON.stringify({
+        currentQuestionIndex,
+        selectedOption,
+        isAnswered,
+        score,
+        isFinished,
+        xp,
+        streak
+      }));
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }, [currentQuestionIndex, selectedOption, isAnswered, score, isFinished, xp, streak, storageKey]);
   const [expression, setExpression] = useState<AvatarExpression>('normal');
   const [showExplanation, setShowExplanation] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
@@ -34,21 +65,28 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
   
   const [hintChatMessages, setHintChatMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [speechStatus, setSpeechStatus] = useState<"idle" | "playing" | "paused">("idle");
   
   const [chatWithAI, { loading: sendingChat }] = useMutation<any, any>(CHAT_WITH_AI);
 
   const correctAudio = useRef<HTMLAudioElement | null>(null);
   const incorrectAudio = useRef<HTMLAudioElement | null>(null);
   const completeAudio = useRef<HTMLAudioElement | null>(null);
+  const typingAudio = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    correctAudio.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3");
-    incorrectAudio.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3");
-    completeAudio.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3");
+    correctAudio.current = new Audio(successSound);
+    incorrectAudio.current = new Audio(failedSound);
+    completeAudio.current = new Audio(cheersSound);
+    typingAudio.current = new Audio(keyboardSound);
     
     if (correctAudio.current) correctAudio.current.volume = 0.3;
     if (incorrectAudio.current) incorrectAudio.current.volume = 0.3;
     if (completeAudio.current) completeAudio.current.volume = 0.3;
+    if (typingAudio.current) {
+      typingAudio.current.volume = 0.3;
+      typingAudio.current.loop = true;
+    }
   }, []);
 
   const { data, loading, error } = useQuery(GET_QUESTIONS, {
@@ -61,6 +99,32 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
     refetchQueries: [{ query: GET_QUESTIONS, variables: { courseId, lessonId } }]
   });
   const [hintForQuestion, { loading: loadingHint }] = useMutation(HINT_FOR_QUESTION);
+
+  // Effect for typing sound and vibration
+  useEffect(() => {
+    const isTyping = loadingHint || sendingChat || generatingQuiz;
+    let vibrateInterval: NodeJS.Timeout;
+    
+    if (isTyping) {
+      if (typingAudio.current) {
+        typingAudio.current.currentTime = 0;
+        typingAudio.current.play().catch(e => console.error("Typing audio err:", e));
+      }
+      if (navigator.vibrate) {
+        vibrateInterval = setInterval(() => navigator.vibrate(50), 200);
+      }
+    } else {
+      if (typingAudio.current) {
+        typingAudio.current.pause();
+        typingAudio.current.currentTime = 0;
+      }
+      if (navigator.vibrate) navigator.vibrate(0);
+    }
+    
+    return () => {
+      if (vibrateInterval) clearInterval(vibrateInterval);
+    };
+  }, [loadingHint, sendingChat, generatingQuiz]);
 
   const questions = (data as any)?.questions && (data as any)?.questions.length > 0 
     ? (data as any)?.questions 
@@ -144,7 +208,12 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
       });
       
       if (data?.chatWithAI?.content) {
-        setHintChatMessages(prev => [...prev, { role: 'assistant', content: data.chatWithAI.content }]);
+        const response = data.chatWithAI.content;
+        setHintChatMessages(prev => [...prev, { role: 'assistant', content: response }]);
+        
+        // Read the AI response
+        setSpeechStatus("playing");
+        tts.speak(response, () => setSpeechStatus("idle"));
       }
     } catch (err) {
       console.error("Chat error", err);
@@ -163,7 +232,10 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
       setStreak(streak + 1);
       setXp(prev => prev + 10 + (streak > 2 ? 5 : 0));
       setExpression('happy');
-      correctAudio.current?.play().catch(() => {});
+      if (correctAudio.current) {
+        correctAudio.current.currentTime = 0;
+        correctAudio.current.play().catch(e => console.error("Audio error:", e));
+      }
       confetti({
         particleCount: 40,
         spread: 70,
@@ -173,13 +245,18 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
     } else {
       setStreak(0);
       setExpression('sad');
-      incorrectAudio.current?.play().catch(() => {});
+      if (incorrectAudio.current) {
+        incorrectAudio.current.currentTime = 0;
+        incorrectAudio.current.play().catch(e => console.error("Audio error:", e));
+      }
     }
     // Always show explanation so students learn regardless of outcome
     setShowExplanation(true);
   };
 
   const handleNext = () => {
+    tts.stop();
+    setSpeechStatus("idle");
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedOption(null);
@@ -192,7 +269,10 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
     } else {
       setIsFinished(true);
       setExpression('celebrating');
-      completeAudio.current?.play().catch(() => {});
+      if (completeAudio.current) {
+        completeAudio.current.currentTime = 0;
+        completeAudio.current.play().catch(e => console.error("Audio error:", e));
+      }
       confetti({
         particleCount: 150,
         spread: 100,
@@ -211,6 +291,9 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
   };
 
   const handleRestart = () => {
+    tts.stop();
+    setSpeechStatus("idle");
+    localStorage.removeItem(storageKey);
     setCurrentQuestionIndex(0);
     setSelectedOption(null);
     setIsAnswered(false);
@@ -334,9 +417,81 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
           >
             {/* Question Text */}
             <div className="flex flex-col gap-4">
-              <h4 className="text-xl font-bold leading-tight text-foreground">
-                {currentQuestion.questionText}
-              </h4>
+              <div className="flex items-start justify-between gap-4">
+                <h4 className="text-xl font-bold leading-tight text-foreground flex-1">
+                  {currentQuestion.questionText}
+                </h4>
+                <div className="flex items-center gap-1 bg-secondary/50 p-1.5 rounded-full border border-border/50 transition-all duration-300">
+                  {speechStatus === "idle" ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setSpeechStatus("playing");
+                        const optionsText = currentQuestion?.options ? `. The options are: ${currentQuestion.options.join(', ')}` : '';
+                        const textToRead = `${currentQuestion?.questionText}${optionsText}`;
+                        tts.speak(textToRead, () => setSpeechStatus("idle"));
+                      }}
+                      className="h-9 w-9 rounded-full text-foreground/40 hover:text-foreground hover:bg-foreground/10"
+                    >
+                      <Volume2 className="w-5 h-5" />
+                    </Button>
+                  ) : speechStatus === "playing" ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        tts.pause();
+                        setSpeechStatus("paused");
+                      }}
+                      className="h-9 w-9 rounded-full text-indigo-400 bg-indigo-400/20 hover:bg-indigo-400/30 animate-pulse"
+                    >
+                      <Pause className="w-5 h-5" />
+                    </Button>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          tts.resume();
+                          setSpeechStatus("playing");
+                        }}
+                        className="h-9 w-9 rounded-full text-indigo-400 bg-indigo-400/20 hover:bg-indigo-400/30"
+                      >
+                        <Play className="w-5 h-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          tts.stop();
+                          setSpeechStatus("playing");
+                          const optionsText = currentQuestion?.options ? `. The options are: ${currentQuestion.options.join(', ')}` : '';
+                          const textToRead = `${currentQuestion?.questionText}${optionsText}`;
+                          tts.speak(textToRead, () => setSpeechStatus("idle"));
+                        }}
+                        className="h-9 w-9 rounded-full text-amber-400 hover:bg-amber-400/10"
+                      >
+                        <RotateCcw className="w-5 h-5" />
+                      </Button>
+                    </div>
+                  )}
+                  {speechStatus !== "idle" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        tts.stop();
+                        setSpeechStatus("idle");
+                      }}
+                      className="h-9 w-9 rounded-full text-red-400 hover:text-red-500 hover:bg-red-500/10 border-l border-border/50 ml-1 pl-2"
+                    >
+                      <VolumeX className="w-5 h-5" />
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="grid gap-3">

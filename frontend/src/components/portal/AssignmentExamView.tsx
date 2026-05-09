@@ -30,7 +30,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, Volume2, VolumeX, Pause, Play, RotateCcw } from "lucide-react";
+import { tts } from "@/lib/tts";
+
 
 interface AssignmentQuestion {
   _id?: string;
@@ -128,16 +130,44 @@ export function AssignmentExamView({
   config,
   onComplete,
 }: AssignmentExamViewProps) {
-  const [currentPage, setCurrentPage] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const answersRef = useRef<Record<string, string>>({});
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [gradeResult, setGradeResult] = useState<{ grade: number; totalScore: number; status: string } | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
-  const [isSecureStarted, setIsSecureStarted] = useState(false);
-  const [violationCount, setViolationCount] = useState(0);
+  const storageKey = `examState_${courseId}_${lessonId}`;
+
+  const loadState = () => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return null;
+  };
+  const savedState = loadState();
+
+  const [currentPage, setCurrentPage] = useState(savedState?.currentPage || 0);
+  const [answers, setAnswers] = useState<Record<string, string>>(savedState?.answers || {});
+  const answersRef = useRef<Record<string, string>>(savedState?.answers || {});
+  const [isSubmitted, setIsSubmitted] = useState(savedState?.isSubmitted || false);
+  const [gradeResult, setGradeResult] = useState<{ grade: number; totalScore: number; status: string } | null>(savedState?.gradeResult || null);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(savedState?.timeRemaining ?? null);
+  const [isSecureStarted, setIsSecureStarted] = useState(savedState?.isSecureStarted || false);
+  const [violationCount, setViolationCount] = useState(savedState?.violationCount || 0);
+
+  useEffect(() => {
+    if (!isSubmitted) {
+      localStorage.setItem(storageKey, JSON.stringify({
+        currentPage,
+        answers,
+        isSubmitted,
+        gradeResult,
+        timeRemaining,
+        isSecureStarted,
+        violationCount
+      }));
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }, [currentPage, answers, isSubmitted, gradeResult, timeRemaining, isSecureStarted, violationCount, storageKey]);
   const [showViolation, setShowViolation] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [speechStatus, setSpeechStatus] = useState<"idle" | "playing" | "paused">("idle");
 
   const startTime = useRef<number>(Date.now());
   const isSubmittedRef = useRef(false);
@@ -166,6 +196,9 @@ export function AssignmentExamView({
 
   /* ── Submit handler ── */
   const handleSubmit = useCallback(async () => {
+    tts.stop();
+    setSpeechStatus("idle");
+    localStorage.removeItem(storageKey);
     if (isSubmittedRef.current) return;
     isSubmittedRef.current = true;
     setSubmitting(true);
@@ -179,7 +212,7 @@ export function AssignmentExamView({
     // Exit fullscreen cleanly before submitting
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
-    } catch (_) {}
+    } catch (_) { }
 
     try {
       const { data } = await submitExam({ variables: { courseId, lessonId, answers: formattedAnswers, timeTaken } });
@@ -249,7 +282,7 @@ export function AssignmentExamView({
   const startSecureExam = async () => {
     try {
       await document.documentElement.requestFullscreen();
-    } catch (_) {}
+    } catch (_) { }
     setIsSecureStarted(true);
     startTime.current = Date.now();
   };
@@ -263,7 +296,7 @@ export function AssignmentExamView({
       if (!document.fullscreenElement) {
         await document.documentElement.requestFullscreen();
       }
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const handleAnswerChange = (questionId: string, answer: string) => {
@@ -292,16 +325,15 @@ export function AssignmentExamView({
         className="text-center p-6 sm:p-10 space-y-5 sm:space-y-6"
       >
         {/* Score circle */}
-        <div className={`w-20 h-20 sm:w-28 sm:h-28 rounded-full flex items-center justify-center mx-auto shadow-xl ${
-          grade === null ? 'bg-green-500/10 text-green-500' :
+        <div className={`w-20 h-20 sm:w-28 sm:h-28 rounded-full flex items-center justify-center mx-auto shadow-xl ${grade === null ? 'bg-green-500/10 text-green-500' :
           passed ? 'bg-green-500/15 shadow-green-500/20' : 'bg-red-500/15 shadow-red-500/20'
-        }`}>
+          }`}>
           {grade !== null ? (
             <div className="flex flex-col items-center leading-none">
-              <span className={`text-2xl sm:text-3xl font-black ${ passed ? 'text-green-400' : 'text-red-400' }`}>
+              <span className={`text-2xl sm:text-3xl font-black ${passed ? 'text-green-400' : 'text-red-400'}`}>
                 {grade}%
               </span>
-              <span className={`text-[9px] font-black uppercase tracking-widest mt-0.5 ${ passed ? 'text-green-400/70' : 'text-red-400/70' }`}>
+              <span className={`text-[9px] font-black uppercase tracking-widest mt-0.5 ${passed ? 'text-green-400/70' : 'text-red-400/70'}`}>
                 {passed ? 'PASSED' : 'FAILED'}
               </span>
             </div>
@@ -315,11 +347,10 @@ export function AssignmentExamView({
             {grade !== null ? (passed ? 'Exam Passed! 🎉' : 'Exam Submitted') : 'EXAM COMPLETED! 🏆'}
           </h3>
           {grade !== null ? (
-            <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black border ${
-              passed
-                ? 'bg-green-500/10 border-green-500/20 text-green-400'
-                : 'bg-orange-500/10 border-orange-500/20 text-orange-400'
-            }`}>
+            <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black border ${passed
+              ? 'bg-green-500/10 border-green-500/20 text-green-400'
+              : 'bg-orange-500/10 border-orange-500/20 text-orange-400'
+              }`}>
               {passed ? '✓ Auto-Graded & Approved' : '⏳ Submitted for Review'}
             </div>
           ) : null}
@@ -327,19 +358,18 @@ export function AssignmentExamView({
             {grade !== null && passed
               ? `Great work! You scored ${grade}% on this exam. Your result has been recorded.`
               : grade !== null
-              ? `You scored ${grade}%. A score of 50% or higher is required to pass. You may retake the exam.`
-              : 'Your responses have been securely transmitted and are being reviewed.'}
+                ? `You scored ${grade}%. A score of 50% or higher is required to pass. You may retake the exam.`
+                : 'Your responses have been securely transmitted and are being reviewed.'}
           </p>
         </div>
 
         <div className="flex flex-col items-center gap-3">
           <Button
             onClick={onComplete}
-            className={`w-full sm:w-auto h-11 sm:h-12 px-8 rounded-xl font-black text-sm ${
-              passed || grade === null
-                ? 'bg-amber-500 hover:bg-amber-600'
-                : 'bg-muted hover:bg-muted/80'
-            } shadow-lg`}
+            className={`w-full sm:w-auto h-11 sm:h-12 px-8 rounded-xl font-black text-sm ${passed || grade === null
+              ? 'bg-amber-500 hover:bg-amber-600'
+              : 'bg-muted hover:bg-muted/80'
+              } shadow-lg`}
           >
             {passed ? '🏆 Return to Course' : 'Return to Course'}
           </Button>
@@ -432,11 +462,10 @@ export function AssignmentExamView({
           {/* Timer */}
           {timeRemaining !== null && (
             <div
-              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border-2 font-black tracking-tighter sm:tracking-widest transition-colors ${
-                timeRemaining < 300
-                  ? "bg-red-500/10 text-red-400 border-red-500/30 animate-pulse"
-                  : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
-              }`}
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border-2 font-black tracking-tighter sm:tracking-widest transition-colors ${timeRemaining < 300
+                ? "bg-red-500/10 text-red-400 border-red-500/30 animate-pulse"
+                : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+                }`}
             >
               <Clock className="w-3.5 h-3.5 sm:w-4 h-4" />
               <span className="text-sm sm:text-lg tabular-nums">{formatTime(timeRemaining)}</span>
@@ -458,7 +487,7 @@ export function AssignmentExamView({
               <SheetHeader className="mb-6">
                 <SheetTitle className="text-white font-black tracking-tight uppercase text-sm">Assessment Map</SheetTitle>
               </SheetHeader>
-              
+
               <div className="space-y-8">
                 <div className="grid grid-cols-4 gap-3">
                   {questions.map((q, i) => {
@@ -469,13 +498,14 @@ export function AssignmentExamView({
                       <button
                         key={i}
                         onClick={() => {
+                          tts.stop();
+                          setSpeechStatus("idle");
                           setCurrentPage(i);
                         }}
-                        className={`aspect-square flex items-center justify-center rounded-xl text-xs font-black transition-all border ${
-                          isAnswered
-                            ? "bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20"
-                            : "bg-white/5 border-white/10 text-white/40 hover:border-indigo-500/40"
-                        } ${isCurrent ? "ring-2 ring-indigo-400/50 scale-110 z-10" : ""}`}
+                        className={`aspect-square flex items-center justify-center rounded-xl text-xs font-black transition-all border ${isAnswered
+                          ? "bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20"
+                          : "bg-white/5 border-white/10 text-white/40 hover:border-indigo-500/40"
+                          } ${isCurrent ? "ring-2 ring-indigo-400/50 scale-110 z-10" : ""}`}
                       >
                         {i + 1}
                       </button>
@@ -535,9 +565,81 @@ export function AssignmentExamView({
                 </span>
               </div>
 
-              <h3 className="text-2xl md:text-3xl font-bold text-white leading-snug">
-                {currentQuestion?.questionText}
-              </h3>
+              <div className="flex items-start justify-between gap-4">
+                <h3 className="text-2xl md:text-3xl font-bold text-white leading-snug flex-1">
+                  {currentQuestion?.questionText}
+                </h3>
+                <div className="flex items-center gap-1 bg-white/5 p-1.5 rounded-full border border-white/10 shrink-0 transition-all duration-300">
+                  {speechStatus === "idle" ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setSpeechStatus("playing");
+                        const optionsText = currentQuestion?.options ? `. The options are: ${currentQuestion.options.join(', ')}` : '';
+                        const textToRead = `${currentQuestion?.questionText}${optionsText}`;
+                        tts.speak(textToRead, () => setSpeechStatus("idle"));
+                      }}
+                      className="h-9 w-9 rounded-full text-white/40 hover:text-white hover:bg-white/10"
+                    >
+                      <Volume2 className="w-5 h-5" />
+                    </Button>
+                  ) : speechStatus === "playing" ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        tts.pause();
+                        setSpeechStatus("paused");
+                      }}
+                      className="h-9 w-9 rounded-full text-indigo-400 bg-indigo-400/20 hover:bg-indigo-400/30 animate-pulse"
+                    >
+                      <Pause className="w-5 h-5" />
+                    </Button>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          tts.resume();
+                          setSpeechStatus("playing");
+                        }}
+                        className="h-9 w-9 rounded-full text-indigo-400 bg-indigo-400/20 hover:bg-indigo-400/30"
+                      >
+                        <Play className="w-5 h-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          tts.stop();
+                          setSpeechStatus("playing");
+                          const optionsText = currentQuestion?.options ? `. The options are: ${currentQuestion.options.join(', ')}` : '';
+                          const textToRead = `${currentQuestion?.questionText}${optionsText}`;
+                          tts.speak(textToRead, () => setSpeechStatus("idle"));
+                        }}
+                        className="h-9 w-9 rounded-full text-amber-400 hover:bg-amber-400/10"
+                      >
+                        <RotateCcw className="w-5 h-5" />
+                      </Button>
+                    </div>
+                  )}
+                  {speechStatus !== "idle" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        tts.stop();
+                        setSpeechStatus("idle");
+                      }}
+                      className="h-9 w-9 rounded-full text-red-400 hover:text-red-500 hover:bg-red-500/10 border-l border-white/10 ml-1 pl-2"
+                    >
+                      <VolumeX className="w-5 h-5" />
+                    </Button>
+                  )}
+                </div>
+              </div>
 
               {currentQuestion?.type === "mcq" ? (
                 <div className="grid gap-3 sm:gap-4">
@@ -548,18 +650,16 @@ export function AssignmentExamView({
                       <button
                         key={i}
                         onClick={() => handleAnswerChange(qId, i.toString())}
-                        className={`w-full text-left p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 transition-all flex items-center gap-3 sm:gap-5 font-semibold text-sm sm:text-base ${
-                          isSelected
-                            ? "bg-indigo-500/15 border-indigo-500 text-white shadow-lg shadow-indigo-500/10"
-                            : "bg-white/3 border-white/10 text-white/70 hover:border-indigo-500/40 hover:bg-white/5"
-                        }`}
+                        className={`w-full text-left p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 transition-all flex items-center gap-3 sm:gap-5 font-semibold text-sm sm:text-base ${isSelected
+                          ? "bg-indigo-500/15 border-indigo-500 text-white shadow-lg shadow-indigo-500/10"
+                          : "bg-white/3 border-white/10 text-white/70 hover:border-indigo-500/40 hover:bg-white/5"
+                          }`}
                       >
                         <div
-                          className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center border-2 font-black text-xs sm:text-sm transition-all flex-shrink-0 ${
-                            isSelected
-                              ? "bg-indigo-500 border-indigo-500 text-white"
-                              : "border-white/20 text-white/40"
-                          }`}
+                          className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center border-2 font-black text-xs sm:text-sm transition-all flex-shrink-0 ${isSelected
+                            ? "bg-indigo-500 border-indigo-500 text-white"
+                            : "border-white/20 text-white/40"
+                            }`}
                         >
                           {String.fromCharCode(65 + i)}
                         </div>
@@ -606,12 +706,15 @@ export function AssignmentExamView({
                 return (
                   <button
                     key={i}
-                    onClick={() => setCurrentPage(i)}
-                    className={`aspect-square flex items-center justify-center rounded-xl text-xs font-black transition-all border ${
-                      isAnswered
-                        ? "bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20"
-                        : "bg-white/5 border-white/10 text-white/40 hover:border-indigo-500/40"
-                    } ${isCurrent ? "ring-2 ring-indigo-400/50 scale-110 z-10" : ""}`}
+                    onClick={() => {
+                      tts.stop();
+                      setSpeechStatus("idle");
+                      setCurrentPage(i);
+                    }}
+                    className={`aspect-square flex items-center justify-center rounded-xl text-xs font-black transition-all border ${isAnswered
+                      ? "bg-indigo-500 border-indigo-500 text-white shadow-lg shadow-indigo-500/20"
+                      : "bg-white/5 border-white/10 text-white/40 hover:border-indigo-500/40"
+                      } ${isCurrent ? "ring-2 ring-indigo-400/50 scale-110 z-10" : ""}`}
                   >
                     {i + 1}
                   </button>
@@ -654,9 +757,8 @@ export function AssignmentExamView({
               {Array.from({ length: MAX_VIOLATIONS }).map((_, i) => (
                 <div
                   key={i}
-                  className={`flex-1 h-3 rounded-full transition-all ${
-                    i < violationCount ? "bg-red-500 shadow-lg shadow-red-500/30" : "bg-white/10"
-                  }`}
+                  className={`flex-1 h-3 rounded-full transition-all ${i < violationCount ? "bg-red-500 shadow-lg shadow-red-500/30" : "bg-white/10"
+                    }`}
                 />
               ))}
             </div>
@@ -670,7 +772,11 @@ export function AssignmentExamView({
           variant="ghost"
           size="sm"
           disabled={currentPage === 0}
-          onClick={() => setCurrentPage((p) => p - 1)}
+          onClick={() => {
+            tts.stop();
+            setSpeechStatus("idle");
+            setCurrentPage((p) => p - 1);
+          }}
           className="rounded-xl text-white/60 hover:text-white hover:bg-white/5"
         >
           <ChevronLeft className="w-4 h-4 mr-1 sm:mr-2" /> <span className="hidden xs:inline">Back</span>
@@ -679,7 +785,13 @@ export function AssignmentExamView({
         {currentPage < totalPages - 1 ? (
           <Button
             size="lg"
-            onClick={() => setCurrentPage((p) => p + 1)}
+            onClick={() => {
+              tts.stop();
+              setSpeechStatus("idle");
+              if (currentPage < totalPages - 1) {
+                setCurrentPage((p) => p + 1);
+              }
+            }}
             className="px-6 sm:px-10 font-black uppercase tracking-widest h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-500/20 group text-xs sm:text-sm"
           >
             Next <span className="hidden xs:inline">Question</span> <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1 sm:ml-2 transition-transform group-hover:translate-x-1" />
