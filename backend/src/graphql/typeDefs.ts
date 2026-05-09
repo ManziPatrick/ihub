@@ -72,6 +72,12 @@ export const typeDefs = `#graphql
     darkBg: String
   }
 
+  type CourseProgressSnapshot {
+    courseId: ID!
+    lessonId: String!
+    updatedAt: String
+  }
+
   type User {
     id: ID!
     username: String!
@@ -79,6 +85,7 @@ export const typeDefs = `#graphql
     role: String!
     enrolledCourses: [Course]
     completedLessons: [CompletedLesson]
+    courseProgress: [CourseProgressSnapshot]
     completedCourses: [Course]
     activityLog: [Activity]
     badges: [UserBadge]
@@ -1063,6 +1070,7 @@ export const typeDefs = `#graphql
     
     # Progress Tracking
     updateLessonProgress(courseId: ID!, lessonId: String!, timeSpent: Int!, completed: Boolean): Boolean
+    updateCourseProgress(courseId: ID!, lessonId: String!): User
     
     completeLesson(courseId: ID!, lessonId: String!): User
     rewardStudent(xp: Int!, streak: Int, courseId: ID, lessonId: ID, score: Int): User!

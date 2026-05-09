@@ -2418,6 +2418,28 @@ export const resolvers = {
       };
     },
 
+    updateCourseProgress: async (_: any, { courseId, lessonId }: any, context: any) => {
+      if (!context.user) throw new Error('Unauthorized');
+      
+      const user = await User.findById(context.user.id);
+      if (!user) throw new Error('User not found');
+      
+      // Ensure courseProgress is initialized
+      if (!user.courseProgress) {
+        (user as any).courseProgress = [];
+      }
+      
+      const existingIdx = (user.courseProgress as any[]).findIndex(p => p.courseId?.toString() === courseId);
+      if (existingIdx > -1) {
+        user.courseProgress[existingIdx].lessonId = lessonId;
+        user.courseProgress[existingIdx].updatedAt = new Date();
+      } else {
+        user.courseProgress.push({ courseId, lessonId, updatedAt: new Date() });
+      }
+      
+      await user.save();
+      return user;
+    },
     updateExamConfig: async (_: any, { courseId, lessonId, config }: any, context: any) => {
       if (!context.user || !['trainer', 'admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Unauthorized');

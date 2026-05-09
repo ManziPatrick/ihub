@@ -226,6 +226,19 @@ export const COMPLETE_LESSON = gql`
   }
 `;
 
+export const UPDATE_COURSE_PROGRESS = gql`
+  mutation UpdateCourseProgress($courseId: ID!, $lessonId: String!) {
+    updateCourseProgress(courseId: $courseId, lessonId: $lessonId) {
+      id
+      courseProgress {
+        courseId
+        lessonId
+        updatedAt
+      }
+    }
+  }
+`;
+
 export const REWARD_STUDENT = gql`
   mutation RewardStudent($xp: Int!, $streak: Int, $courseId: ID, $lessonId: ID, $score: Int) {
     rewardStudent(xp: $xp, streak: $streak, courseId: $courseId, lessonId: $lessonId, score: $score) {

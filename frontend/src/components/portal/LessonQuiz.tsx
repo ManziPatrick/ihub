@@ -320,10 +320,8 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
       </div>
 
       {/* Avatar — shown at top on mobile only */}
-      <div className="flex justify-center md:hidden">
-        <div className="w-20 h-20">
-          <KidAvatar expression={expression} />
-        </div>
+      <div className="flex justify-center md:hidden pb-4">
+        <KidAvatar expression={expression} />
       </div>
 
       <div className="grid md:grid-cols-12 gap-6 md:gap-8 items-start">
@@ -336,7 +334,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
           >
             {/* Question Text */}
             <div className="flex flex-col gap-4">
-              <h4 className="text-lg font-bold leading-tight text-foreground">
+              <h4 className="text-xl font-bold leading-tight text-foreground">
                 {currentQuestion.questionText}
               </h4>
             </div>
@@ -362,7 +360,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
                     whileTap={!isAnswered ? { scale: 0.98 } : {}}
                     onClick={() => handleOptionSelect(i)}
                     disabled={isAnswered}
-                    className={`w-full text-left p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 transition-all flex items-center justify-between font-bold text-base sm:text-lg ${stateClass}`}
+                    className={`w-full text-left p-4 sm:p-6 rounded-xl sm:rounded-3xl border-2 transition-all flex items-center justify-between font-bold text-base sm:text-xl ${stateClass}`}
                   >
                     <span>{option}</span>
                     {isAnswered && isCorrectOption && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 fill-current shrink-0" />}

@@ -372,7 +372,7 @@ export function ManageAssignmentQuestionsDialog({
                   <h4 className="text-lg font-bold text-accent mb-4 flex items-center gap-2">
                     <FileText className="w-5 h-5" /> Bulk Import Guide
                   </h4>
-                  <p className="text-sm text-white/60 leading-relaxed max-w-xl">
+                  <p className="text-sm text-white/60 leading-relaxed max-wxl">
                     Paste your raw exam text below. Our AI parser will automatically detect questions and options.
                   </p>
                   <div className="mt-6 grid grid-cols-2 gap-6">

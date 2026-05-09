@@ -60,7 +60,7 @@ import { PPTViewer } from "@/components/portal/PPTViewer";
 import { toast } from "sonner";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_COURSE, GET_ME, GET_ASSIGNMENT_SUBMISSIONS } from "@/lib/graphql/queries";
-import { COMPLETE_LESSON, SUBMIT_ASSIGNMENT } from "@/lib/graphql/mutations";
+import { COMPLETE_LESSON, SUBMIT_ASSIGNMENT, UPDATE_COURSE_PROGRESS } from "@/lib/graphql/mutations";
 import { triggerFileDownload } from "@/lib/download";
 
 interface AssignmentSubmission {
@@ -103,6 +103,7 @@ export default function CourseDetail() {
 
   const [completeLessonMutation] = useMutation(COMPLETE_LESSON);
   const [submitAssignmentMutation] = useMutation(SUBMIT_ASSIGNMENT);
+  const [updateCourseProgress] = useMutation(UPDATE_COURSE_PROGRESS);
 
   const { data: submissionsData, refetch: refetchSubmissions } = useQuery<GetAssignmentSubmissionsData>(GET_ASSIGNMENT_SUBMISSIONS, {
     variables: { courseId, lessonId: activeLessonId },
@@ -113,25 +114,46 @@ export default function CourseDetail() {
 
   // Persistence: Save and restore last active lesson
   useEffect(() => {
-    if (courseId && !activeLessonId) {
+    if (courseId && !activeLessonId && course) {
+      // 1. Try backend progress first (from me.courseProgress)
+      const backendProgress = me?.courseProgress?.find((p: any) => p.courseId === courseId);
+      if (backendProgress) {
+        setActiveLessonId(backendProgress.lessonId);
+        return;
+      }
+
+      // 2. Fallback to localStorage
       const savedLessonId = localStorage.getItem(`last_lesson_${courseId}`);
       if (savedLessonId) {
-        // Verify the saved lesson ID exists in the course
         const lessonExists = course?.modules?.some((m: any) => 
           m.lessons?.some((l: any) => (l.id || l._id) === savedLessonId)
         );
         if (lessonExists) {
           setActiveLessonId(savedLessonId);
+          return;
         }
       }
+
+      // 3. Fallback to first lesson
+      if (course?.modules?.[0]?.lessons?.[0]) {
+        const firstLesson = course.modules[0].lessons[0];
+        setActiveLessonId(firstLesson.id || firstLesson._id);
+      }
     }
-  }, [courseId, course]);
+  }, [courseId, course, me?.courseProgress]);
 
   useEffect(() => {
     if (courseId && activeLessonId) {
       localStorage.setItem(`last_lesson_${courseId}`, activeLessonId);
+      
+      // Update backend progress silently
+      updateCourseProgress({
+        variables: { courseId, lessonId: activeLessonId }
+      }).catch(() => {
+        // Silently fail if backend update fails, we still have localStorage
+      });
     }
-  }, [courseId, activeLessonId]);
+  }, [courseId, activeLessonId, updateCourseProgress]);
 
   useEffect(() => {
     if (existingSubmission?.content) {

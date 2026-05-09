@@ -43,6 +43,11 @@ const userSchema = new mongoose.Schema({
     courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
     lessonId: { type: String }
   }],
+  courseProgress: [{
+    courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
+    lessonId: { type: String },
+    updatedAt: { type: Date, default: Date.now }
+  }],
   completedCourses: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course'
