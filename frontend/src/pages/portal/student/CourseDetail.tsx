@@ -597,7 +597,18 @@ export default function CourseDetail() {
                       {currentLesson?.type === 'ppt' || (currentLesson?.fileUrl && (currentLesson.fileUrl.endsWith('.ppt') || currentLesson.fileUrl.endsWith('.pptx'))) ? (
                         <PPTViewer url={currentLesson.fileUrl} title={currentLesson.title} startSlide={1} />
                       ) : currentLesson?.videoUrl ? (
-                        <iframe src={currentLesson.videoUrl.replace("watch?v=", "embed/")} className="w-full h-full" allowFullScreen />
+                        <iframe 
+                          src={(() => {
+                            let url = currentLesson.videoUrl;
+                            if (!url) return "";
+                            if (url.includes("youtube.com/watch?v=")) return url.replace("watch?v=", "embed/").split("&")[0];
+                            if (url.includes("youtube.com/shorts/")) return url.replace("shorts/", "embed/").split("?")[0];
+                            if (url.includes("youtu.be/")) return `https://www.youtube.com/embed/${url.split("youtu.be/")[1].split("?")[0]}`;
+                            return url;
+                          })()}
+                          className="w-full h-full" 
+                          allowFullScreen 
+                        />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-center p-12">
                           {React.createElement(getLessonIcon(currentLesson?.type), { className: "w-16 h-16 text-accent mb-4" })}

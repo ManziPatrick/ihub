@@ -33,7 +33,7 @@ export function ManageQuestionsDialog({
   courseTitle,
   lessonContent
 }: ManageQuestionsDialogProps) {
-  const [activeTab, setActiveTab] = useState("questions");
+  const [activeTab, setActiveTab] = useState("import");
   const [isAdding, setIsAdding] = useState(false);
   const [creationMode, setCreationMode] = useState<'manual' | 'ai' | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -97,6 +97,16 @@ export function ManageQuestionsDialog({
   const [aiQuestionCount, setAiQuestionCount] = useState(3);
   const [aiPrompt, setAiPrompt] = useState("");
 
+  // Reset draft questions whenever the dialog opens for a new lesson
+  useEffect(() => {
+    if (open) {
+      setDraftQuestions([]);
+      setIsAdding(false);
+      setCreationMode(null);
+      setEditingId(null);
+    }
+  }, [open, lessonId]);
+
   const questions = (data as any)?.questions || [];
 
   const handleSave = async () => {
@@ -143,11 +153,89 @@ export function ManageQuestionsDialog({
 
   const handleBulkImport = async () => {
     if (!bulkImportText.trim()) return;
-    
-    const lines = bulkImportText.split('\n').filter(l => l.trim().length > 0);
-    // Simple parser: lines starting with Q: are questions, lines with A/B/C/D are options, correct answers marked with *
-    toast.info("Bulk import processing to be implemented via AI or strict parser.");
-    // For now we just log it as incomplete
+
+    const lines = bulkImportText.split('\n').map((l: string) => l.trim()).filter((l: string) => l);
+    const parsed: { type: string; questionText: string; options: string[]; correctOptionIndex: number; explanation: string }[] = [];
+    let current: { type: string; questionText: string; options: string[]; correctOptionIndex: number; explanation: string } | null = null;
+
+    lines.forEach((line: string) => {
+      // Format 1: "Q: What is React?" or "1. What is React?" or numbered question
+      const qMatch = line.match(/^(Q:|Question\s*\d*[:.]?|\d+[.)\s])\s*(.*)/i);
+      // Format 2: options like "A) option", "a. option", "(a) option"
+      const optMatch = line.match(/^([a-dA-D][.)\s]|\([a-dA-D]\))\s*(.*)/i);
+      // Format 3: correct answer marker like "Correct: A" or "Answer: B"
+      const correctMatch = line.match(/^(Correct|Answer):\s*([a-dA-D])/i);
+      // Format 4: open-ended marker
+      const openMatch = line.match(/\(Open\s*Ended\)/i);
+
+      if (qMatch) {
+        if (current) parsed.push(current);
+        current = { type: 'multiple_choice', questionText: qMatch[2], options: [], correctOptionIndex: 0, explanation: '' };
+        if (openMatch) current.type = 'open_ended';
+      } else if (optMatch && current) {
+        current.type = 'multiple_choice';
+        current.options.push(optMatch[2]);
+      } else if (correctMatch && current) {
+        const letter = correctMatch[2].toUpperCase();
+        current.correctOptionIndex = letter.charCodeAt(0) - 65; // A=0, B=1...
+      } else if (openMatch && current) {
+        current.type = 'open_ended';
+      } else if (current) {
+        // continuation of previous question text
+        current.questionText += ' ' + line;
+      } else {
+        // bare line with no prefix — treat as a new open-ended question
+        current = { type: 'open_ended', questionText: line, options: [], correctOptionIndex: 0, explanation: '' };
+      }
+    });
+
+    if (current) parsed.push(current);
+
+    if (parsed.length === 0) {
+      toast.error("No questions found. Check your format.");
+      return;
+    }
+
+    if (!courseId || courseId.length !== 24) {
+      // No DB yet — push to draftQuestions for review
+      setDraftQuestions(prev => [...prev, ...parsed]);
+      setBulkImportText("");
+      setActiveTab('questions');
+      toast.success(`Parsed ${parsed.length} questions! Review and save them from the Questions tab.`);
+      return;
+    }
+
+    // Save directly to DB
+    let saved = 0;
+    let failed = 0;
+    for (const q of parsed) {
+      try {
+        await createQuestion({
+          variables: {
+            courseId,
+            lessonId: (lessonId && lessonId.includes('-')) ? null : (lessonId || null),
+            type: q.type,
+            questionText: q.questionText,
+            imageUrl: '',
+            options: q.type === 'open_ended' ? [] : q.options,
+            correctOptionIndex: q.correctOptionIndex,
+            explanation: q.explanation
+          }
+        });
+        saved++;
+      } catch {
+        failed++;
+      }
+    }
+
+    if (saved > 0) {
+      refetch();
+      setBulkImportText("");
+      setActiveTab('questions');
+      toast.success(`Imported ${saved} question${saved > 1 ? 's' : ''}!${ failed > 0 ? ` (${failed} failed)` : '' }`);
+    } else {
+      toast.error("All questions failed to import. Please save the course first.");
+    }
   };
 
   const handleSaveQuizConfig = async () => {
@@ -324,22 +412,22 @@ export function ManageQuestionsDialog({
           </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="px-6 border-b border-border/50">
             <TabsList className="bg-transparent space-x-2">
+              <TabsTrigger value="import" className="data-[state=active]:bg-accent/10 data-[state=active]:text-accent">
+                Bulk Import
+              </TabsTrigger>
               <TabsTrigger value="questions" className="data-[state=active]:bg-accent/10 data-[state=active]:text-accent">
                 Questions
               </TabsTrigger>
               <TabsTrigger value="settings" className="data-[state=active]:bg-accent/10 data-[state=active]:text-accent">
                 Settings
               </TabsTrigger>
-              <TabsTrigger value="import" className="data-[state=active]:bg-accent/10 data-[state=active]:text-accent">
-                Bulk Import
-              </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="questions" className="flex-1 m-0 overflow-hidden flex flex-col">
+          <TabsContent value="questions" className="hidden data-[state=active]:flex flex-col flex-1 min-h-0">
             <ScrollArea className="flex-1 px-4 sm:px-6 custom-scrollbar">
               <div className="py-4 space-y-6">
                 {isAdding ? (
@@ -771,8 +859,8 @@ export function ManageQuestionsDialog({
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="settings" className="flex-1 overflow-auto p-6 m-0">
-            <div className="space-y-6 max-w-xl mx-auto">
+          <TabsContent value="settings" className="hidden data-[state=active]:flex flex-col flex-1 min-h-0 overflow-y-auto">
+            <div className="p-6 space-y-6 flex-1">
               <div className="space-y-4">
                 <h3 className="text-lg font-bold text-accent border-b border-white/5 pb-2">Quiz Settings</h3>
                 <p className="text-sm text-muted-foreground">Configure the behavior of this quiz for students.</p>
@@ -846,19 +934,20 @@ export function ManageQuestionsDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="import" className="flex-1 overflow-auto p-6 m-0">
-             <div className="space-y-6 max-w-2xl mx-auto">
-               <div className="space-y-4">
+          <TabsContent value="import" className="hidden data-[state=active]:flex flex-col flex-1 min-h-0 p-4 sm:p-6 overflow-hidden">
+             <div className="flex flex-col flex-1 space-y-4">
+               <div>
                  <h3 className="text-lg font-bold text-accent border-b border-white/5 pb-2 flex items-center gap-2">
                    <Type className="w-5 h-5" /> Bulk Import
                  </h3>
-                 <p className="text-sm text-muted-foreground">Paste questions in text format. Our AI will automatically parse them into structured quiz questions.</p>
+                 <p className="text-sm text-muted-foreground mt-2">Paste questions in text format. Our AI will automatically parse them into structured quiz questions.</p>
+               </div>
                  
-                 <Textarea 
-                   value={bulkImportText}
-                   onChange={e => setBulkImportText(e.target.value)}
-                   className="h-[300px] font-mono text-xs p-4 bg-muted/10 border-white/10 custom-scrollbar"
-                   placeholder="Example format:
+               <Textarea 
+                 value={bulkImportText}
+                 onChange={e => setBulkImportText(e.target.value)}
+                 className="flex-1 min-h-[300px] font-mono text-xs p-4 bg-muted/10 border-white/10 custom-scrollbar resize-none"
+                 placeholder="Example format:
 Q: What is React?
 A) A library
 B) A framework
@@ -867,16 +956,15 @@ Correct: A
 
 Q: Describe the virtual DOM. (Open Ended)
 "
-                 />
+               />
 
-                 <Button 
-                   className="w-full font-bold uppercase tracking-widest text-xs h-12" 
-                   onClick={handleBulkImport}
-                   variant="default"
-                 >
-                   <Upload className="w-4 h-4 mr-2" /> Process & Import
-                 </Button>
-               </div>
+               <Button 
+                 className="w-full sm:w-auto self-end font-bold uppercase tracking-widest text-xs h-12 px-8" 
+                 onClick={handleBulkImport}
+                 variant="default"
+               >
+                 <Upload className="w-4 h-4 mr-2" /> Process & Import
+               </Button>
              </div>
           </TabsContent>
         </Tabs>

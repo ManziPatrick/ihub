@@ -44,6 +44,12 @@ const lessonSchema = new mongoose.Schema({
     disableRightClick: { type: Boolean, default: false },
     mode: { type: String, enum: ['exam', 'exercise'], default: 'exam' }
   },
+  quizConfig: {
+    disableRightClick: { type: Boolean, default: false },
+    timeLimit: { type: Number, default: 0 },
+    quizType: { type: String, enum: ['exercise', 'once'], default: 'exercise' },
+    questionsPerPage: { type: Number, default: 5 }
+  },
   order: { type: Number }
 });
 

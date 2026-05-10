@@ -133,29 +133,9 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
   if (error) return <div className="text-destructive p-4">Error loading quiz questions.</div>;
   if (questions.length === 0) {
-    return (
-      <div className="text-center p-12 space-y-6">
-        <KidAvatar expression="normal" />
-        <div>
-          <h3 className="text-xl font-bold">Concept Check</h3>
-          <p className="text-muted-foreground max-w-xs mx-auto">This unit doesn't have a formal assessment. You can proceed to the next module.</p>
-        </div>
-        <Button 
-          variant="gold" 
-          onClick={() => generateAIQuiz({ variables: { courseId, lessonId } })} 
-          disabled={generatingQuiz}
-          className="rounded-2xl h-14 px-8 text-lg shadow-gold"
-        >
-          {generatingQuiz ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Star className="w-5 h-5 mr-2" />}
-          GENERATE AI CHALLENGE
-        </Button>
-        <div className="pt-4">
-          <Button variant="ghost" onClick={onComplete} className="text-muted-foreground">
-            Skip to Next Module <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
-      </div>
-    );
+    // No quiz for this lesson — silently proceed
+    onComplete();
+    return null;
   }
 
   const currentQuestion = questions[currentQuestionIndex];

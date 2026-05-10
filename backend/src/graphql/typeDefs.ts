@@ -246,6 +246,7 @@ export const typeDefs = `#graphql
     assignmentDeliverables: [String]
     assignmentQuestions: [AssignmentQuestion]
     assignmentConfig: AssignmentConfig
+    quizConfig: QuizConfig
     order: Int
   }
 
@@ -264,6 +265,13 @@ export const typeDefs = `#graphql
     allowRetakes: Boolean
     disableRightClick: Boolean
     mode: String
+  }
+
+  type QuizConfig {
+    disableRightClick: Boolean
+    timeLimit: Int
+    quizType: String
+    questionsPerPage: Int
   }
 
   type UserGradeReport {
@@ -870,6 +878,13 @@ export const typeDefs = `#graphql
     allowRetakes: Boolean
     disableRightClick: Boolean
     mode: String
+  }
+
+  input QuizConfigInput {
+    disableRightClick: Boolean
+    timeLimit: Int
+    quizType: String
+    questionsPerPage: Int
   }
 
   input AssignmentAnswerInput {
@@ -1884,6 +1899,7 @@ export const typeDefs = `#graphql
     submitAssignmentExam(courseId: ID!, lessonId: String!, answers: [AssignmentAnswerInput!]!, timeTaken: Int): AssignmentSubmission
     gradeAssignment(submissionId: ID!, grade: Int!, feedback: String): AssignmentSubmission
     updateExamConfig(courseId: ID!, lessonId: String!, config: AssignmentConfigInput!): Course
+    updateQuizConfig(courseId: ID!, lessonId: ID!, quizConfig: QuizConfigInput!): Course
     aiGradeOpenAnswers(submissionId: ID!): AssignmentSubmission
 
     approveLessonProgress(

@@ -477,8 +477,8 @@ export function EditCourseDialog({
                   timeLimit: l.assignmentConfig.timeLimit || null,
                   allowRetakes: !!l.assignmentConfig.allowRetakes,
                   disableRightClick: !!l.assignmentConfig.disableRightClick,
-                  mode: l.assignmentConfig.mode || 'standard'
-                } : { timeLimit: null, allowRetakes: true, disableRightClick: false, mode: 'standard' }
+                  mode: l.assignmentConfig.mode || 'exam'
+                } : { timeLimit: null, allowRetakes: true, disableRightClick: false, mode: 'exam' }
               })) || []
             })) || []
           };
@@ -534,8 +534,8 @@ export function EditCourseDialog({
                   timeLimit: l.assignmentConfig.timeLimit || null,
                   allowRetakes: !!l.assignmentConfig.allowRetakes,
                   disableRightClick: !!l.assignmentConfig.disableRightClick,
-                  mode: l.assignmentConfig.mode || 'standard'
-                } : { timeLimit: null, allowRetakes: true, disableRightClick: false, mode: 'standard' }
+                  mode: l.assignmentConfig.mode || 'exam'
+                } : { timeLimit: null, allowRetakes: true, disableRightClick: false, mode: 'exam' }
               })) || []
             })) : prev.modules
           };
@@ -600,7 +600,7 @@ export function EditCourseDialog({
             timeLimit: Number(l.assignmentConfig.timeLimit) || null,
             allowRetakes: !!l.assignmentConfig.allowRetakes,
             disableRightClick: !!l.assignmentConfig.disableRightClick,
-            mode: l.assignmentConfig.mode || 'standard'
+            mode: l.assignmentConfig.mode || 'exam'
           } : null,
           resources: l.resources?.map((r: any) => ({
             id: r.id || r._id,

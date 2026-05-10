@@ -775,7 +775,11 @@ export const resolvers = {
     questions: async (_: any, { courseId, lessonId }: any) => {
       console.log('--- questions query: courseId:', courseId, 'lessonId:', lessonId);
       const query: any = { courseId };
-      if (lessonId) query.lessonId = lessonId;
+      if (lessonId !== undefined && lessonId !== null) {
+        query.lessonId = lessonId;
+      } else {
+        query.lessonId = null;
+      }
       const results = await Question.find(query).sort({ createdAt: 1 });
       console.log(`--- questions query: found ${results.length} questions`);
       return results;
@@ -2453,6 +2457,25 @@ export const resolvers = {
           lesson.assignmentConfig = {
             ...lesson.assignmentConfig,
             ...config
+          };
+        }
+      });
+      await course.save();
+      return course;
+    },
+    updateQuizConfig: async (_: any, { courseId, lessonId, quizConfig }: any, context: any) => {
+      if (!context.user || !['trainer', 'admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      const course = await Course.findById(courseId);
+      if (!course) throw new Error('Course not found');
+
+      course.modules.forEach((m: any) => {
+        const lesson = m.lessons.find((l: any) => l.id === lessonId);
+        if (lesson) {
+          lesson.quizConfig = {
+            ...(lesson.quizConfig || {}),
+            ...quizConfig
           };
         }
       });

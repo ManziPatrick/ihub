@@ -1785,12 +1785,6 @@ export const UPDATE_QUIZ_CONFIG = gql`
   mutation UpdateQuizConfig($courseId: ID!, $lessonId: ID!, $quizConfig: QuizConfigInput!) {
     updateQuizConfig(courseId: $courseId, lessonId: $lessonId, quizConfig: $quizConfig) {
       id
-      quizConfig {
-        disableRightClick
-        timeLimit
-        quizType
-        questionsPerPage
-      }
     }
   }
 `;
