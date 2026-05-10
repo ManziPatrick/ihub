@@ -47,7 +47,7 @@ export function GradeStudentDialog({ open, onOpenChange, student }: GradeStudent
   });
 
   const { data: badgesData } = useQuery(GET_BADGES);
-  const badges = (badgesData as any)?.badges || [];
+  const badges = (badgesData as any)?.badges?.items || [];
 
   const [submitGrade] = useMutation(SUBMIT_GRADE, {
     refetchQueries: [{ query: GET_TRAINER_STUDENTS }],
