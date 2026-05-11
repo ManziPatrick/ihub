@@ -440,7 +440,7 @@ const Explore = () => {
                       {course.title}
                     </h3>
                     <div
-                      className="text-muted-foreground text-sm mb-6 line-clamp-3 prose prose-sm prose-invert max-w-none"
+                      className="text-muted-foreground text-sm mb-6 line-clamp-3 prose prose-sm dark:prose-invert max-w-none"
                       dangerouslySetInnerHTML={{ __html: course.description }}
                     />
 

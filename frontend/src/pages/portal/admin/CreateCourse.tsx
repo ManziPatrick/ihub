@@ -92,8 +92,8 @@ function LessonCard({
     <div className={cn(
       "rounded-2xl border transition-all duration-300 group/card",
       isComplete && !expanded
-        ? "border-green-500/20 bg-green-500/5 hover:bg-white/5 hover:border-green-500/40"
-        : "border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20"
+        ? "border-green-500/20 bg-green-500/5 hover:bg-muted/10 hover:border-green-500/40"
+        : "border-border/40 bg-muted/30 hover:bg-muted/50 hover:border-accent/40"
     )}>
       {/* ── Header (always visible) ── */}
       <div
@@ -112,7 +112,7 @@ function LessonCard({
         <Input
           placeholder="Lesson Title *"
           className={cn(
-            "h-9 flex-1 font-bold bg-transparent border-transparent focus:border-white/20 text-sm placeholder:text-white/30 hover:border-white/10",
+            "h-9 flex-1 font-bold bg-transparent border-transparent focus:border-border text-sm placeholder:text-muted-foreground/50 hover:border-border/50",
             !lesson.title && "border-amber-500/30"
           )}
           value={lesson.title || ""}
@@ -136,7 +136,7 @@ function LessonCard({
 
         {/* Type selector */}
         <select
-          className="h-9 px-3 rounded-xl border border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest text-white/60 outline-none focus:border-accent/60 hover:border-white/20 transition-colors shrink-0"
+          className="h-9 px-3 rounded-xl border border-border/40 bg-muted/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground outline-none focus:border-accent/60 hover:border-border/60 transition-colors shrink-0"
           value={lesson.type || "video"}
           onClick={e => e.stopPropagation()}
           onChange={e => updateLesson({ type: e.target.value })}
@@ -148,16 +148,16 @@ function LessonCard({
 
         {/* Duration */}
         <div
-          className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-xl border border-white/10 hover:border-white/20 shrink-0 transition-colors"
+          className="flex items-center gap-1 bg-muted/50 px-2.5 py-1 rounded-xl border border-border/40 hover:border-border/60 shrink-0 transition-colors"
           onClick={e => e.stopPropagation()}
         >
           <input
             type="number"
-            className="w-10 h-7 bg-transparent text-sm font-bold text-center outline-none text-white/80"
+            className="w-10 h-7 bg-transparent text-sm font-bold text-center outline-none text-foreground"
             value={lesson.duration || 0}
             onChange={e => updateLesson({ duration: parseInt(e.target.value) || 0 })}
           />
-          <span className="text-[10px] text-white/40 font-black">MINS</span>
+          <span className="text-[10px] text-muted-foreground font-black">MINS</span>
         </div>
 
         {/* Missing indicator */}
@@ -168,22 +168,22 @@ function LessonCard({
         {/* Delete */}
         <button
           onClick={e => { e.stopPropagation(); deleteLesson(); }}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground/40 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
         >
           <Trash2 className="w-4 h-4" />
         </button>
 
         {expanded
-          ? <ChevronUp className="w-4 h-4 text-white/30 shrink-0" />
-          : <ChevronDown className="w-4 h-4 text-white/30 shrink-0" />
+          ? <ChevronUp className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+          : <ChevronDown className="w-4 h-4 text-muted-foreground/50 shrink-0" />
         }
       </div>
 
       {/* ── Expanded Body ── */}
       {expanded && (
-        <div className="border-t border-white/10">
+        <div className="border-t border-border/40">
           {/* Tab Bar */}
-          <div className="flex border-b border-white/10">
+          <div className="flex border-b border-border/40">
             {([
               { key: "details",    label: "Details",      icon: FileText },
               { key: "quiz",       label: "Quiz Builder",  icon: HelpCircle },
@@ -196,7 +196,7 @@ function LessonCard({
                   "flex items-center gap-1.5 px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-colors",
                   tab === key
                     ? "text-accent border-b-2 border-accent -mb-px"
-                    : "text-white/40 hover:text-white/70 hover:bg-white/5"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -211,22 +211,22 @@ function LessonCard({
               {/* URLs row */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1.5">
                     <PlayCircle className="w-3.5 h-3.5 text-accent" /> Media Stream URL
                   </label>
                   <Input
-                    className="h-10 bg-white/5 border-white/10 text-sm placeholder:text-white/25 focus:border-accent/40 hover:border-white/20"
+                    className="h-10 bg-muted/30 border-border/40 text-sm placeholder:text-muted-foreground/30 focus:border-accent/40 hover:border-border/60"
                     placeholder="YouTube, Vimeo, AWS S3..."
                     value={lesson.videoUrl || ""}
                     onChange={e => updateLesson({ videoUrl: e.target.value })}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1.5">
                     <ExternalLink className="w-3.5 h-3.5 text-blue-400" /> Resource URL
                   </label>
                   <Input
-                    className="h-10 bg-white/5 border-white/10 text-sm placeholder:text-white/25 focus:border-accent/40 hover:border-white/20"
+                    className="h-10 bg-muted/30 border-border/40 text-sm placeholder:text-muted-foreground/30 focus:border-accent/40 hover:border-border/60"
                     placeholder="G-Drive, Dropbox, Notion link..."
                     value={lesson.fileUrl || ""}
                     onChange={e => updateLesson({ fileUrl: e.target.value })}
@@ -237,23 +237,23 @@ function LessonCard({
               {/* Upload — collapsible */}
               <div className="rounded-xl border border-white/10 overflow-hidden">
                 <button
-                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/50 transition-colors"
                   onClick={() => setShowUpload(v => !v)}
                 >
-                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/50">
+                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
                     <Paperclip className="w-3.5 h-3.5 text-accent/70" />
                     Upload Resource File
                     {lesson.fileUrl && <span className="px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400 text-[8px]">Uploaded</span>}
                   </span>
                   {showUpload
-                    ? <ChevronUp className="w-3.5 h-3.5 text-white/30" />
-                    : <ChevronDown className="w-3.5 h-3.5 text-white/30" />}
+                    ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground/30" />
+                    : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/30" />}
                 </button>
                 {showUpload && (
-                  <div className="border-t border-white/10 p-3">
+                  <div className="border-t border-border/40 p-3">
                     {lesson.fileUrl ? (
-                      <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg border border-white/10">
-                        <span className="text-xs text-white/50 truncate max-w-[200px]">{lesson.fileUrl.split('/').pop()}</span>
+                      <div className="flex items-center justify-between p-2 bg-muted/30 rounded-lg border border-border/40">
+                        <span className="text-xs text-muted-foreground/50 truncate max-w-[200px]">{lesson.fileUrl.split('/').pop()}</span>
                         <Button variant="ghost" size="sm" className="h-7 text-red-400 text-[10px] hover:bg-red-500/10" onClick={() => updateLesson({ fileUrl: "" })}>Remove</Button>
                       </div>
                     ) : (
@@ -268,22 +268,22 @@ function LessonCard({
               </div>
 
               {/* Lesson Notes / Text — collapsible */}
-              <div className="rounded-xl border border-white/10 overflow-hidden">
+              <div className="rounded-xl border border-border/40 overflow-hidden">
                 <button
-                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/50 transition-colors"
                   onClick={() => setShowNotes(v => !v)}
                 >
-                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/50">
+                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
                     <FileText className="w-3.5 h-3.5 text-accent/70" />
                     Lesson Notes / Text
                     {lesson.content && <span className="px-1.5 py-0.5 rounded-full bg-accent/20 text-accent text-[8px]">Added</span>}
                   </span>
                   {showNotes
-                    ? <ChevronUp className="w-3.5 h-3.5 text-white/30" />
-                    : <ChevronDown className="w-3.5 h-3.5 text-white/30" />}
+                    ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground/30" />
+                    : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/30" />}
                 </button>
                 {showNotes && (
-                  <div className="border-t border-white/10">
+                  <div className="border-t border-border/40 prose dark:prose-invert max-w-none lesson-content-viewer">
                     <TextEditor
                       value={lesson.content || ""}
                       onChange={content => updateLesson({ content })}
@@ -305,8 +305,8 @@ function LessonCard({
                     <HelpCircle className="w-5 h-5 text-amber-400" />
                   </div>
                   <div>
-                    <p className="font-bold text-sm text-white/80">Quiz Builder</p>
-                    <p className="text-[10px] text-white/40 uppercase tracking-widest font-black">
+                    <p className="font-bold text-sm text-foreground/80">Quiz Builder</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">
                       {quizCount > 0 ? `${quizCount} question${quizCount !== 1 ? "s" : ""} added` : "No questions yet"}
                     </p>
                   </div>
@@ -328,7 +328,7 @@ function LessonCard({
                   </div>
                 )}
 
-                <p className="text-xs text-white/40">
+                <p className="text-xs text-muted-foreground">
                   Multiple-choice questions students answer after completing this lesson.
                 </p>
                 <Button
@@ -346,10 +346,10 @@ function LessonCard({
           {/* ── Tab: Assignment ── */}
           {tab === "assignment" && (
             <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border border-border/40">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-accent/80">Required Submission</p>
-                  <p className="text-xs text-white/40 mt-0.5">Block lesson unlock until submitted</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Block lesson unlock until submitted</p>
                 </div>
                 <Switch
                   className="data-[state=checked]:bg-accent"
@@ -358,9 +358,9 @@ function LessonCard({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Assignment Description</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Assignment Description</label>
                 <Textarea
-                  className="bg-white/5 border-white/10 rounded-xl text-sm placeholder:text-white/25 focus:border-accent/40 hover:border-white/20"
+                  className="bg-muted/30 border-border/40 rounded-xl text-sm placeholder:text-muted-foreground/30 focus:border-accent/40 hover:border-border/60"
                   rows={3}
                   placeholder="Describe what students need to do..."
                   value={lesson.assignmentDescription || ""}
@@ -368,9 +368,9 @@ function LessonCard({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Required Deliverables (comma-separated)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Required Deliverables (comma-separated)</label>
                 <Input
-                  className="h-10 bg-white/5 border-white/10 text-sm placeholder:text-white/25 focus:border-accent/40 hover:border-white/20"
+                  className="h-10 bg-muted/30 border-border/40 text-sm placeholder:text-muted-foreground/30 focus:border-accent/40 hover:border-border/60"
                   placeholder="GitHub Repo, Live URL, Screenshot..."
                   value={lesson.assignmentDeliverables?.join(", ") || ""}
                   onChange={e => updateLesson({
@@ -853,25 +853,25 @@ export default function CreateCourse() {
                                         <Switch className="data-[state=checked]:bg-accent" checked={formData.submissionRequired} onCheckedChange={(checked) => updateFormData("submissionRequired", checked)} />
                                     </div>
 
-                                    <div className="glass-card rounded-[2.5rem] p-8 space-y-6 bg-white/5 border border-white/10">
-                                        <div className="flex items-center gap-3 pb-4 border-b border-white/5">
+                                    <div className="glass-card rounded-[2.5rem] p-8 space-y-6 bg-muted/20 border border-border/40">
+                                        <div className="flex items-center gap-3 pb-4 border-b border-border/10">
                                             <Trophy className="w-5 h-5 text-accent" />
                                             <h4 className="text-lg font-heading font-black">Certificate Configuration</h4>
                                         </div>
                                         <div className="grid md:grid-cols-2 gap-8">
                                             <div className="space-y-3">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Signer Full Name</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Signer Full Name</label>
                                                 <Input 
                                                     placeholder="e.g. Dr. John Smith"
                                                     value={formData.signerName}
                                                     onChange={(e) => updateFormData("signerName", e.target.value)}
-                                                    className="h-12 bg-white/3 border-white/10 rounded-xl focus:border-accent/40"
+                                                    className="h-12 bg-muted/30 border-border/40 rounded-xl focus:border-accent/40"
                                                 />
                                             </div>
                                             <div className="space-y-3">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Signer Signature Image</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Signer Signature Image</label>
                                                 {formData.signerSignature ? (
-                                                    <div className="relative h-24 rounded-2xl overflow-hidden border border-white/10 bg-white/5 p-2 flex items-center justify-center group/sig">
+                                                    <div className="relative h-24 rounded-2xl overflow-hidden border border-border/40 bg-muted/30 p-2 flex items-center justify-center group/sig">
                                                         <img src={formData.signerSignature} className="h-full object-contain brightness-110 contrast-125" />
                                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/sig:opacity-100 transition-opacity flex items-center justify-center">
                                                             <Button 
@@ -885,7 +885,7 @@ export default function CreateCourse() {
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="h-[120px] rounded-2xl border-2 border-dashed border-white/5 bg-white/2 hover:border-accent/20 hover:bg-accent/5 transition-all">
+                                                    <div className="h-[120px] rounded-2xl border-2 border-dashed border-border/40 bg-muted/20 hover:border-accent/20 hover:bg-accent/5 transition-all">
                                                         <FileUpload 
                                                             folder="signatures" 
                                                             label="CLICK TO UPLOAD SCREENSHOT"
@@ -893,7 +893,7 @@ export default function CreateCourse() {
                                                         />
                                                     </div>
                                                 )}
-                                                <p className="text-[9px] text-white/30 italic">Upload a PNG signature or official stamp.</p>
+                                                <p className="text-[9px] text-muted-foreground/40 italic">Upload a PNG signature or official stamp.</p>
                                             </div>
                                         </div>
                                     </div>

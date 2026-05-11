@@ -628,7 +628,7 @@ export default function CourseDetail() {
                     </div>
                     <CardContent className="p-8">
                       <h2 className="text-2xl font-bold mb-4">{currentLesson?.title}</h2>
-                      <div className="prose prose-invert max-w-none mb-8" dangerouslySetInnerHTML={{ __html: currentLesson?.content || currentLesson?.description || "" }} />
+                      <div className="prose dark:prose-invert max-w-none mb-8 lesson-content-viewer" dangerouslySetInnerHTML={{ __html: currentLesson?.content || currentLesson?.description || "" }} />
 
                       {currentLessonFirstSlidePreview && (
                         <div className="mb-6 p-4 rounded-xl border border-border/40 bg-muted/10 flex items-center justify-between gap-3">

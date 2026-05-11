@@ -329,3 +329,9 @@
 .prose li {
   @apply list-disc;
 }
+
+/* Let Quill and Tailwind typography handle colors for pasted content naturally */
+.dark .lesson-content-viewer a {
+  color: hsl(var(--accent));
+  text-decoration: underline;
+}
