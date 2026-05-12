@@ -43,6 +43,7 @@ interface EditCourseDialogProps {
   course: any | null;
   trainers?: any[];
   onSave?: (course: any) => void;
+  onQuizSave?: (course: any) => void;
   isLoading?: boolean;
 }
 
@@ -87,95 +88,108 @@ function LessonCard({
 
   const isComplete = !!lesson.title && lesson.title.trim() !== "" && lesson.title !== "New Lesson";
   const isQuizType = lesson.type === "quiz";
-  const quizCount = lesson._quizCount || 0;
+  const quizCount = lesson.quizQuestions?.length || 0;
 
   return (
     <div className={cn(
       "rounded-2xl border transition-all duration-300 group/card",
       isComplete && !expanded
-        ? "border-green-500/20 bg-green-500/5 hover:bg-white/5 hover:border-green-500/40"
-        : "border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20"
+        ? "border-green-500/20 bg-green-500/5 hover:bg-muted/10 hover:border-green-500/40"
+        : "border-border/40 bg-muted/30 hover:bg-muted/50 hover:border-accent/40"
     )}>
       {/* ── Header (always visible) ── */}
       <div
         className="flex flex-wrap items-center gap-3 p-4 cursor-pointer select-none"
         onClick={() => setExpanded(v => !v)}
       >
-        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-          <div className={cn(
-            "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0 transition-colors",
-            isComplete ? "bg-green-500 text-white" : "bg-accent text-white"
-          )}>
-            {isComplete ? <Check className="w-3 h-3 inline" /> : null} L{lIdx + 1}
-          </div>
-
-          <Input
-            placeholder="Lesson Title *"
-            className={cn(
-              "h-9 flex-1 font-bold bg-transparent border-transparent focus:border-white/20 text-sm placeholder:text-white/30 hover:border-white/10",
-              !lesson.title && "border-amber-500/30"
-            )}
-            value={lesson.title || ""}
-            onClick={e => e.stopPropagation()}
-            onChange={e => updateLesson({ title: e.target.value })}
-          />
+        {/* L-pill */}
+        <div className={cn(
+          "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0 transition-colors",
+          isComplete ? "bg-green-500/80 text-white" : "bg-accent/80 text-accent-foreground shadow-gold"
+        )}>
+          {isComplete ? <Check className="w-3 h-3 inline" /> : null} L{lIdx + 1}
         </div>
 
-        <div className="flex items-center gap-2 ml-auto" onClick={e => e.stopPropagation()}>
-          {isQuizType && (
-            <div
-              className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl shrink-0 cursor-pointer"
-              onClick={() => onQuizOpen(lesson)}
-            >
-              <HelpCircle className="w-3 h-3 text-amber-400" />
-              <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
-                {quizCount > 0 ? `${quizCount} Q` : "Quiz"}
-              </span>
-            </div>
+        {/* Title input */}
+        <Input
+          placeholder="Lesson Title *"
+          className={cn(
+            "h-9 flex-1 font-bold bg-transparent border-transparent focus:border-border text-sm placeholder:text-muted-foreground/50 hover:border-border/50",
+            !lesson.title && "border-amber-500/30"
           )}
+          value={lesson.title || ""}
+          onClick={e => e.stopPropagation()}
+          onChange={e => updateLesson({ title: e.target.value })}
+        />
 
-          <select
-            className="h-8 px-2 rounded-lg border border-white/10 bg-white/5 text-[10px] font-black uppercase tracking-widest text-white/60 outline-none focus:border-accent/60 hover:border-white/20 transition-colors shrink-0"
-            value={lesson.type || "video"}
-            onChange={e => updateLesson({ type: e.target.value })}
+        {/* Quiz count chip — shown when type=quiz */}
+        {isQuizType && (
+          <div
+            className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl shrink-0"
+            onClick={e => { e.stopPropagation(); onQuizOpen(lesson); }}
+            title="Click to manage quiz questions"
           >
-            {["video","pdf","ppt","book","article","quiz","assignment"].map(t => (
-              <option key={t} value={t}>{t.toUpperCase()}</option>
-            ))}
-          </select>
-
-          <div className="flex items-center gap-1 bg-white/5 px-2 rounded-lg border border-white/10 hover:border-white/20 shrink-0 transition-colors">
-            <input
-              type="number"
-              className="w-8 h-7 bg-transparent text-[10px] font-bold text-center outline-none text-white/80"
-              value={lesson.duration || 0}
-              onChange={e => updateLesson({ duration: parseInt(e.target.value) || 0 })}
-            />
-            <span className="text-[8px] text-white/40 font-black">MIN</span>
+            <HelpCircle className="w-3 h-3 text-amber-400" />
+            <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+              {quizCount > 0 ? `${quizCount} Q` : "Quiz"}
+            </span>
           </div>
+        )}
 
-          <button
-            onClick={deleteLesson}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+        {/* Type selector */}
+        <select
+          className="h-9 px-3 rounded-xl border border-border/40 bg-muted/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground outline-none focus:border-accent/60 hover:border-border/60 transition-colors shrink-0"
+          value={lesson.type || "video"}
+          onClick={e => e.stopPropagation()}
+          onChange={e => updateLesson({ type: e.target.value })}
+        >
+          {["video", "pdf", "ppt", "book", "article", "quiz", "assignment"].map(t => (
+            <option key={t} value={t}>{t.toUpperCase()}</option>
+          ))}
+        </select>
 
-          {expanded
-            ? <ChevronUp className="w-4 h-4 text-white/30 shrink-0" />
-            : <ChevronDown className="w-4 h-4 text-white/30 shrink-0" />
-          }
+        {/* Duration */}
+        <div
+          className="flex items-center gap-1 bg-muted/50 px-2.5 py-1 rounded-xl border border-border/40 hover:border-border/60 shrink-0 transition-colors"
+          onClick={e => e.stopPropagation()}
+        >
+          <input
+            type="number"
+            className="w-10 h-7 bg-transparent text-sm font-bold text-center outline-none text-foreground"
+            value={lesson.duration || 0}
+            onChange={e => updateLesson({ duration: parseInt(e.target.value) || 0 })}
+          />
+          <span className="text-[10px] text-muted-foreground font-black">MINS</span>
         </div>
+
+        {/* Missing indicator */}
+        {!lesson.title && (
+          <div className="w-2 h-2 rounded-full bg-amber-400/80 shrink-0 animate-pulse" title="Title required" />
+        )}
+
+        {/* Delete */}
+        <button
+          onClick={e => { e.stopPropagation(); deleteLesson(); }}
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground/40 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+
+        {expanded
+          ? <ChevronUp className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+          : <ChevronDown className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+        }
       </div>
 
       {/* ── Expanded Body ── */}
       {expanded && (
-        <div className="border-t border-white/10">
-          <div className="flex border-b border-white/10">
+        <div className="border-t border-border/40">
+          {/* Tab Bar */}
+          <div className="flex border-b border-border/40">
             {([
-              { key: "details",    label: "Details",      icon: FileTextIcon },
-              { key: "quiz",       label: "Quiz Builder",  icon: HelpCircle },
-              { key: "assignment", label: "Assignment",    icon: ClipboardList },
+              { key: "details", label: "Details", icon: FileTextIcon },
+              { key: "quiz", label: "Quiz Builder", icon: HelpCircle },
+              { key: "assignment", label: "Assignment", icon: ClipboardList },
             ] as { key: LessonTab; label: string; icon: any }[]).map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
@@ -184,7 +198,7 @@ function LessonCard({
                   "flex items-center gap-1.5 px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-colors",
                   tab === key
                     ? "text-accent border-b-2 border-accent -mb-px"
-                    : "text-white/40 hover:text-white/70 hover:bg-white/5"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -198,23 +212,23 @@ function LessonCard({
             <div className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1.5">
                     <PlayCircle className="w-3.5 h-3.5 text-accent" /> Media Stream URL
                   </label>
                   <Input
-                    className="h-10 bg-white/5 border-white/10 text-sm focus:border-accent/40"
-                    placeholder="YouTube, Vimeo..."
+                    className="h-10 bg-muted/30 border-border/40 text-sm placeholder:text-muted-foreground/30 focus:border-accent/40 hover:border-border/60"
+                    placeholder="YouTube, Vimeo, AWS S3..."
                     value={lesson.videoUrl || ""}
                     onChange={e => updateLesson({ videoUrl: e.target.value })}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1.5">
                     <ExternalLink className="w-3.5 h-3.5 text-blue-400" /> Resource URL
                   </label>
                   <Input
-                    className="h-10 bg-white/5 border-white/10 text-sm focus:border-accent/40"
-                    placeholder="Google Drive, Dropbox..."
+                    className="h-10 bg-muted/30 border-border/40 text-sm placeholder:text-muted-foreground/30 focus:border-accent/40 hover:border-border/60"
+                    placeholder="G-Drive, Dropbox, Notion link..."
                     value={lesson.fileUrl || ""}
                     onChange={e => updateLesson({ fileUrl: e.target.value })}
                   />
@@ -224,21 +238,21 @@ function LessonCard({
               {/* Upload — collapsible */}
               <div className="rounded-xl border border-white/10 overflow-hidden">
                 <button
-                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/50 transition-colors"
                   onClick={() => setShowUpload(v => !v)}
                 >
-                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/50">
+                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
                     <Paperclip className="w-3.5 h-3.5 text-accent/70" />
                     Upload Resource File
                     {lesson.fileUrl && <span className="px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400 text-[8px]">Uploaded</span>}
                   </span>
-                  {showUpload ? <ChevronUp className="w-3.5 h-3.5 text-white/30" /> : <ChevronDown className="w-3.5 h-3.5 text-white/30" />}
+                  {showUpload ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground/30" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/30" />}
                 </button>
                 {showUpload && (
-                  <div className="border-t border-white/10 p-3">
+                  <div className="border-t border-border/40 p-3">
                     {lesson.fileUrl ? (
-                      <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg border border-white/10">
-                        <span className="text-xs text-white/50 truncate max-w-[200px]">{lesson.fileUrl.split('/').pop()}</span>
+                      <div className="flex items-center justify-between p-2 bg-muted/30 rounded-lg border border-border/40">
+                        <span className="text-xs text-muted-foreground/50 truncate max-w-[200px]">{lesson.fileUrl.split('/').pop()}</span>
                         <Button variant="ghost" size="sm" className="h-7 text-red-400 text-[10px] hover:bg-red-500/10" onClick={() => updateLesson({ fileUrl: "" })}>Remove</Button>
                       </div>
                     ) : (
@@ -253,20 +267,20 @@ function LessonCard({
               </div>
 
               {/* Lesson Notes / Text — collapsible */}
-              <div className="rounded-xl border border-white/10 overflow-hidden">
+              <div className="rounded-xl border border-border/40 overflow-hidden">
                 <button
-                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/50 transition-colors"
                   onClick={() => setShowNotes(v => !v)}
                 >
-                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/50">
+                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
                     <FileTextIcon className="w-3.5 h-3.5 text-accent/70" />
                     Lesson Notes / Text
                     {lesson.content && <span className="px-1.5 py-0.5 rounded-full bg-accent/20 text-accent text-[8px]">Added</span>}
                   </span>
-                  {showNotes ? <ChevronUp className="w-3.5 h-3.5 text-white/30" /> : <ChevronDown className="w-3.5 h-3.5 text-white/30" />}
+                  {showNotes ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground/30" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/30" />}
                 </button>
                 {showNotes && (
-                  <div className="border-t border-white/10">
+                  <div className="border-t border-border/40 prose dark:prose-invert max-w-none lesson-content-viewer">
                     <TextEditor
                       value={lesson.content || ""}
                       onChange={content => updateLesson({ content })}
@@ -282,16 +296,45 @@ function LessonCard({
           {tab === "quiz" && (
             <div className="p-4">
               <div className="rounded-xl border border-amber-500/15 bg-amber-500/5 p-5 space-y-4">
+                {/* Header */}
                 <div className="flex items-center gap-3">
-                  <HelpCircle className="w-5 h-5 text-amber-400" />
-                  <p className="font-bold text-sm text-white/80">Quiz Builder</p>
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                    <HelpCircle className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-foreground/80">Quiz Builder</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">
+                      {quizCount > 0 ? `${quizCount} question${quizCount !== 1 ? "s" : ""} added` : "No questions yet"}
+                    </p>
+                  </div>
+                  {quizCount > 0 && (
+                    <div className="ml-auto px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30">
+                      <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">{quizCount} Q</span>
+                    </div>
+                  )}
                 </div>
+
+                {/* Question preview pills */}
+                {quizCount > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from({ length: quizCount }).map((_, i) => (
+                      <div key={i} className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
+                        <span className="text-[10px] font-bold text-amber-400">Q{i + 1}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground">
+                  Multiple-choice questions students answer after completing this lesson.
+                </p>
                 <Button
                   variant="outline"
-                  className="h-10 w-full text-[10px] font-black uppercase tracking-widest border-amber-500/20 text-amber-400 hover:bg-amber-500/10"
+                  className="h-10 w-full text-[10px] font-black uppercase tracking-widest border-amber-500/20 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 hover:border-amber-500/40 gap-2 transition-colors"
                   onClick={() => onQuizOpen(lesson)}
                 >
-                  Open Quiz Builder
+                  <HelpCircle className="w-4 h-4" />
+                  {quizCount > 0 ? "Manage Quiz Questions" : "Add Quiz Questions"}
                 </Button>
               </div>
             </div>
@@ -330,20 +373,23 @@ function LessonCard({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border border-border/40">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-accent/80">Required Submission</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Block lesson unlock until submitted</p>
                 </div>
                 <Switch
+                  className="data-[state=checked]:bg-accent"
                   checked={lesson.requiredAssignment || false}
                   onCheckedChange={checked => updateLesson({ requiredAssignment: checked, isAssignment: true })}
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Assignment Description</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Assignment Description</label>
                 <Textarea
-                  className="bg-white/5 border-white/10 rounded-xl text-sm"
+                  className="bg-muted/30 border-border/40 rounded-xl text-sm placeholder:text-muted-foreground/30 focus:border-accent/40 hover:border-border/60"
                   rows={3}
+                  placeholder="Describe what students need to do..."
                   value={lesson.assignmentDescription || ""}
                   onChange={e => updateLesson({ assignmentDescription: e.target.value, isAssignment: true })}
                 />
@@ -374,6 +420,7 @@ export function EditCourseDialog({
   course,
   trainers = [],
   onSave,
+  onQuizSave,
   isLoading = false
 }: EditCourseDialogProps) {
   const { user } = useAuth();
@@ -403,7 +450,7 @@ export function EditCourseDialog({
   });
 
   const [hasInitialized, setHasInitialized] = useState(false);
-  const [questionLesson, setQuestionLesson] = useState<{ id: string, title: string } | null>(null);
+  const [questionLesson, setQuestionLesson] = useState<{ id: string, title: string, mIdx: number, lIdx: number } | null>(null);
   const [assignmentQuestionLesson, setAssignmentQuestionLesson] = useState<{ mIdx: number, lIdx: number, title: string } | null>(null);
   const [assignmentConfigLesson, setAssignmentConfigLesson] = useState<{ mIdx: number, lIdx: number, title: string } | null>(null);
   const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({ 0: true });
@@ -419,8 +466,10 @@ export function EditCourseDialog({
 
   // 1. Core initialization and background sync
   useEffect(() => {
-    if (course && open) {
-      setFormData(prev => {
+    // Only update formData from props if we are NOT currently editing a sub-component
+    // This prevents background refetches from wiping out local edits in ManageQuestionsDialog
+    if (course && open && !questionLesson && !assignmentQuestionLesson && !assignmentConfigLesson) {
+      setFormData((prev: any) => {
         // If this is the FIRST time we're loading THIS course in THIS session
         if (!hasInitialized || prev.id !== course.id) {
           setHasInitialized(true);
@@ -478,7 +527,22 @@ export function EditCourseDialog({
                   allowRetakes: !!l.assignmentConfig.allowRetakes,
                   disableRightClick: !!l.assignmentConfig.disableRightClick,
                   mode: l.assignmentConfig.mode || 'exam'
-                } : { timeLimit: null, allowRetakes: true, disableRightClick: false, mode: 'exam' }
+                } : { timeLimit: null, allowRetakes: true, disableRightClick: false, mode: 'exam' },
+                quizQuestions: l.quizQuestions?.map((q: any) => ({
+                  id: q.id || q._id,
+                  questionText: q.questionText || "",
+                  type: q.type || "multiple_choice",
+                  imageUrl: q.imageUrl || "",
+                  options: q.options || [],
+                  correctOptionIndex: q.correctOptionIndex ?? 0,
+                  explanation: q.explanation || ""
+                })) || [],
+                quizConfig: l.quizConfig ? {
+                  disableRightClick: !!l.quizConfig.disableRightClick,
+                  timeLimit: l.quizConfig.timeLimit || 0,
+                  quizType: l.quizConfig.quizType || 'exercise',
+                  questionsPerPage: l.quizConfig.questionsPerPage || 5
+                } : { disableRightClick: false, timeLimit: 0, quizType: 'exercise', questionsPerPage: 5 }
               })) || []
             })) || []
           };
@@ -487,8 +551,8 @@ export function EditCourseDialog({
         // Subsequent background updates (e.g. curriculum arriving)
         const hasMoreModules = (course.modules?.length || 0) > (prev.modules?.length || 0);
         const hasMoreLessons = course.modules?.some((m: any, idx: number) => (m.lessons?.length || 0) > (prev.modules[idx]?.lessons?.length || 0));
-        const hasQuestionsNow = course.modules?.some((m: any, mIdx: number) => 
-          m.lessons?.some((l: any, lIdx: number) => 
+        const hasQuestionsNow = course.modules?.some((m: any, mIdx: number) =>
+          m.lessons?.some((l: any, lIdx: number) =>
             (l.assignmentQuestions?.length || 0) > (prev.modules[mIdx]?.lessons?.[lIdx]?.assignmentQuestions?.length || 0)
           )
         );
@@ -535,7 +599,22 @@ export function EditCourseDialog({
                   allowRetakes: !!l.assignmentConfig.allowRetakes,
                   disableRightClick: !!l.assignmentConfig.disableRightClick,
                   mode: l.assignmentConfig.mode || 'exam'
-                } : { timeLimit: null, allowRetakes: true, disableRightClick: false, mode: 'exam' }
+                } : { timeLimit: null, allowRetakes: true, disableRightClick: false, mode: 'exam' },
+                quizQuestions: l.quizQuestions?.map((q: any) => ({
+                  id: q.id || q._id,
+                  questionText: q.questionText || "",
+                  type: q.type || "multiple_choice",
+                  imageUrl: q.imageUrl || "",
+                  options: q.options || [],
+                  correctOptionIndex: q.correctOptionIndex ?? 0,
+                  explanation: q.explanation || ""
+                })) || [],
+                quizConfig: l.quizConfig ? {
+                  disableRightClick: !!l.quizConfig.disableRightClick,
+                  timeLimit: l.quizConfig.timeLimit || 0,
+                  quizType: l.quizConfig.quizType || 'exercise',
+                  questionsPerPage: l.quizConfig.questionsPerPage || 5
+                } : { disableRightClick: false, timeLimit: 0, quizType: 'exercise', questionsPerPage: 5 }
               })) || []
             })) : prev.modules
           };
@@ -546,11 +625,66 @@ export function EditCourseDialog({
     }
   }, [course, open, hasInitialized]);
 
-  const handleSave = () => {
-    if (!course) return;
+  // Shared helper — builds the full payload from current formData and an optional module override
+  const buildUpdatedCourse = (modulesOverride?: any[]) => {
+    const modules = (modulesOverride ?? formData.modules).map((m: any) => ({
+      id: m.id || m._id,
+      title: m.title,
+      description: m.description || "",
+      lessons: m.lessons.map((l: any) => ({
+        id: l.id || l._id,
+        title: l.title,
+        duration: Number(l.duration) || 0,
+        videoUrl: l.videoUrl || "",
+        fileUrl: l.fileUrl || "",
+        type: l.type || "video",
+        content: l.content || "",
+        isAssignment: l.type === 'assignment' || l.type === 'exam' || l.type === 'quiz',
+        requiredAssignment: !!l.requiredAssignment,
+        assignmentDescription: l.assignmentDescription || "",
+        assignmentDeliverables: l.assignmentDeliverables || [],
+        assignmentQuestions: l.assignmentQuestions?.map((q: any) => ({
+          id: q.id || q._id,
+          questionText: q.questionText,
+          type: q.type,
+          options: q.options || [],
+          correctOptionIndex: q.correctOptionIndex,
+          points: q.points
+        })) || [],
+        assignmentConfig: l.assignmentConfig ? {
+          timeLimit: Number(l.assignmentConfig.timeLimit) || null,
+          allowRetakes: !!l.assignmentConfig.allowRetakes,
+          disableRightClick: !!l.assignmentConfig.disableRightClick,
+          mode: l.assignmentConfig.mode || 'exam'
+        } : null,
+        quizQuestions: l.quizQuestions?.map((q: any) => ({
+          id: q.id || q._id,
+          questionText: q.questionText,
+          type: q.type,
+          imageUrl: q.imageUrl,
+          options: q.options || [],
+          correctOptionIndex: q.correctOptionIndex,
+          explanation: q.explanation
+        })) || [],
+        quizConfig: l.quizConfig ? {
+          disableRightClick: !!l.quizConfig.disableRightClick,
+          timeLimit: Number(l.quizConfig.timeLimit) || 0,
+          quizType: l.quizConfig.quizType || 'exercise',
+          questionsPerPage: Number(l.quizConfig.questionsPerPage) || 5
+        } : null,
+        resources: l.resources?.map((r: any) => ({
+          id: r.id || r._id,
+          title: r.title,
+          url: r.url,
+          type: r.type,
+          source: r.source,
+          visibility: r.visibility
+        })) || []
+      }))
+    }));
 
-    const updatedCourse = {
-      ...course,
+    return {
+      id: course.id || course._id,
       title: formData.title,
       description: formData.description,
       thumbnail: formData.thumbnail,
@@ -572,49 +706,13 @@ export function EditCourseDialog({
         required: q.required,
         options: q.options || []
       })),
-      modules: formData.modules.map((m: any) => ({
-        id: m.id || m._id,
-        title: m.title,
-        description: m.description || "",
-        lessons: m.lessons.map((l: any) => ({
-          id: l.id || l._id,
-          title: l.title,
-          duration: Number(l.duration) || 0,
-          videoUrl: l.videoUrl || "",
-          fileUrl: l.fileUrl || "",
-          type: l.type || "video",
-          content: l.content || "",
-          isAssignment: l.type === 'assignment' || l.type === 'exam' || l.type === 'quiz',
-          requiredAssignment: !!l.requiredAssignment,
-          assignmentDescription: l.assignmentDescription || "",
-          assignmentDeliverables: l.assignmentDeliverables || [],
-          assignmentQuestions: l.assignmentQuestions?.map((q: any) => ({
-            id: q.id || q._id,
-            questionText: q.questionText,
-            type: q.type,
-            options: q.options || [],
-            correctOptionIndex: q.correctOptionIndex,
-            points: q.points
-          })) || [],
-          assignmentConfig: l.assignmentConfig ? {
-            timeLimit: Number(l.assignmentConfig.timeLimit) || null,
-            allowRetakes: !!l.assignmentConfig.allowRetakes,
-            disableRightClick: !!l.assignmentConfig.disableRightClick,
-            mode: l.assignmentConfig.mode || 'exam'
-          } : null,
-          resources: l.resources?.map((r: any) => ({
-            id: r.id || r._id,
-            title: r.title,
-            url: r.url,
-            type: r.type,
-            source: r.source,
-            visibility: r.visibility
-          })) || []
-        }))
-      }))
+      modules
     };
+  };
 
-    onSave?.(updatedCourse);
+  const handleSave = () => {
+    if (!course) return;
+    onSave?.(buildUpdatedCourse());
     onOpenChange(false);
   };
 
@@ -701,7 +799,7 @@ export function EditCourseDialog({
                         <Layout className="w-5 h-5 text-accent" />
                         <h3 className="font-bold text-sm uppercase tracking-tight">General Information</h3>
                       </div>
-                      
+
                       <div className="space-y-4">
                         <div>
                           <label className="text-xs font-bold mb-1.5 block text-muted-foreground flex items-center gap-2">
@@ -790,7 +888,7 @@ export function EditCourseDialog({
                             {formData.status === 'published' ? 'Visible to students on the platform.' : 'Private and cannot be accessed by students.'}
                           </p>
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="text-xs font-bold mb-1.5 block text-muted-foreground">Delivery Modes</label>
@@ -900,32 +998,32 @@ export function EditCourseDialog({
                           </div>
                         </div>
 
-                        <div className="p-5 bg-white/5 rounded-2xl border border-white/10 space-y-5 shadow-sm">
-                          <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+                        <div className="p-5 bg-muted/30 rounded-2xl border border-border/40 space-y-5 shadow-sm">
+                          <div className="flex items-center gap-2 border-b border-border/20 pb-3">
                             <Plus className="w-4 h-4 text-accent" />
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-accent">Certificate Issuance Details</h4>
                           </div>
-                          
+
                           <div className="grid grid-cols-1 gap-4">
                             <div className="space-y-2">
-                              <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Official Signer Name</label>
+                              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Official Signer Name</label>
                               <Input
                                 placeholder="e.g. Jean Doe, Program Manager"
-                                className="h-10 text-sm bg-white/3 border-white/10 focus:border-accent/40"
+                                className="h-10 text-sm bg-muted/20 border-border/40 focus:border-accent/40"
                                 value={formData.signerName}
                                 onChange={(e) => setFormData({ ...formData, signerName: e.target.value })}
                               />
                             </div>
-                            
+
                             <div className="space-y-2">
-                              <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Official Signature (Stamp/Sign)</label>
+                              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Official Signature (Stamp/Sign)</label>
                               {formData.signerSignature ? (
-                                <div className="relative h-24 rounded-xl overflow-hidden border border-white/10 bg-white/5 p-2 flex items-center justify-center group/sig">
+                                <div className="relative h-24 rounded-xl overflow-hidden border border-border/40 bg-muted/30 p-2 flex items-center justify-center group/sig">
                                   <img src={formData.signerSignature} className="h-full object-contain brightness-110 contrast-125" />
                                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/sig:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Button 
-                                      variant="destructive" 
-                                      size="sm" 
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
                                       className="h-8 rounded-lg text-[10px] font-black uppercase tracking-widest"
                                       onClick={() => setFormData({ ...formData, signerSignature: "" })}
                                     >
@@ -934,15 +1032,15 @@ export function EditCourseDialog({
                                   </div>
                                 </div>
                               ) : (
-                                <div className="min-h-[120px] rounded-xl border-2 border-dashed border-white/5 bg-white/2 hover:border-accent/20 hover:bg-accent/5 transition-all">
-                                  <FileUpload 
-                                    folder="signatures" 
+                                <div className="min-h-[120px] rounded-xl border-2 border-dashed border-border/20 bg-muted/10 hover:border-accent/20 hover:bg-accent/5 transition-all">
+                                  <FileUpload
+                                    folder="signatures"
                                     label="CLICK TO UPLOAD SCREENSHOT"
                                     onUploadComplete={(url) => setFormData({ ...formData, signerSignature: url })}
                                   />
                                 </div>
                               )}
-                              <p className="text-[9px] text-white/30 italic">Upload a PNG with a transparent background for best results.</p>
+                              <p className="text-[9px] text-muted-foreground/30 italic">Upload a PNG with a transparent background for best results.</p>
                             </div>
                           </div>
                         </div>
@@ -950,14 +1048,14 @@ export function EditCourseDialog({
                     </div>
                   </div>
 
-                  <div className="mt-12 space-y-4 pt-8 border-t border-white/5">
+                  <div className="mt-12 space-y-4 pt-8 border-t border-border/20">
                     <div className="flex items-center gap-2">
                       <FileTextIcon className="w-5 h-5 text-accent" />
                       <label className="text-sm font-bold uppercase tracking-tight">
                         Course Description & Syllabus
                       </label>
                     </div>
-                    <div className="rounded-2xl border border-white/10 overflow-hidden shadow-2xl shadow-black/20 bg-white/2">
+                    <div className="rounded-2xl border border-border/40 overflow-hidden shadow-2xl shadow-black/20 bg-muted/10">
                       <TextEditor
                         value={formData.description}
                         onChange={(content) => setFormData({ ...formData, description: content })}
@@ -1168,7 +1266,7 @@ export function EditCourseDialog({
                         size="sm"
                         className="h-9 gap-2 font-bold text-xs rounded-xl"
                         onClick={() => {
-                          setQuestionLesson({ id: "", title: "Course Wide" });
+                          setQuestionLesson({ id: "", title: "Course Wide", mIdx: -1, lIdx: -1 });
                         }}
                       >
                         <HelpCircle className="w-4 h-4 text-accent" />
@@ -1257,8 +1355,7 @@ export function EditCourseDialog({
                                     formData={formData}
                                     setFormData={setFormData}
                                     onQuizOpen={(lesson) => {
-                                      const lessonId = lesson.id || `${mIdx}-${lIdx}`;
-                                      setQuestionLesson({ id: lessonId, title: lesson.title });
+                                      setQuestionLesson({ id: lesson.id || `${mIdx}-${lIdx}`, title: lesson.title, mIdx, lIdx });
                                     }}
                                     onAssignmentQuestionsOpen={(lesson) => {
                                       setAssignmentQuestionLesson({ mIdx, lIdx, title: lesson.title });
@@ -1321,8 +1418,29 @@ export function EditCourseDialog({
         open={!!questionLesson}
         onOpenChange={(open) => !open && setQuestionLesson(null)}
         courseId={course?.id}
+        courseTitle={formData.title}
         lessonId={questionLesson?.id}
         lessonTitle={questionLesson?.title}
+        questions={questionLesson && questionLesson.mIdx !== -1 ? formData.modules[questionLesson.mIdx].lessons[questionLesson.lIdx].quizQuestions : []}
+        config={questionLesson && questionLesson.mIdx !== -1 ? formData.modules[questionLesson.mIdx].lessons[questionLesson.lIdx].quizConfig : {}}
+        isLoading={isLoading}
+        onSave={(questions, localConfig) => {
+          if (questionLesson && questionLesson.mIdx !== -1) {
+            const newModules = [...formData.modules];
+            const newLessons = [...newModules[questionLesson.mIdx].lessons];
+            newLessons[questionLesson.lIdx] = {
+              ...newLessons[questionLesson.lIdx],
+              quizQuestions: questions,
+              quizConfig: localConfig
+            };
+            newModules[questionLesson.mIdx] = { ...newModules[questionLesson.mIdx], lessons: newLessons };
+            setFormData({ ...formData, modules: newModules });
+            // Immediately persist to DB without closing the editor dialog
+            if (course) {
+              onQuizSave?.(buildUpdatedCourse(newModules));
+            }
+          }
+        }}
       />
       <ResourceBankDialog
         open={showResourceBank}

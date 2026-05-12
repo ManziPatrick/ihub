@@ -298,6 +298,21 @@ export const GET_COURSES = gql`
               disableRightClick
               mode
             }
+            quizQuestions {
+              id
+              questionText
+              type
+              imageUrl
+              options
+              correctOptionIndex
+              explanation
+            }
+            quizConfig {
+              disableRightClick
+              timeLimit
+              quizType
+              questionsPerPage
+            }
           }
         }
       }
@@ -366,6 +381,21 @@ export const GET_COURSE = gql`
             disableRightClick
             mode
           }
+          quizQuestions {
+            id
+            questionText
+            type
+            imageUrl
+            options
+            correctOptionIndex
+            explanation
+          }
+          quizConfig {
+            disableRightClick
+            timeLimit
+            quizType
+            questionsPerPage
+          }
         }
       }
       studentsEnrolled {
@@ -408,10 +438,42 @@ export const GET_ME = gql`
             title
             duration
             type
+            content
+            videoUrl
             fileUrl
             isAssignment
             requiredAssignment
             assignmentDescription
+            assignmentQuestions {
+              id
+              questionText
+              type
+              options
+              correctOptionIndex
+              explanation
+              points
+            }
+            assignmentConfig {
+              timeLimit
+              allowRetakes
+              disableRightClick
+              mode
+            }
+            quizQuestions {
+              id
+              questionText
+              type
+              imageUrl
+              options
+              correctOptionIndex
+              explanation
+            }
+            quizConfig {
+              disableRightClick
+              timeLimit
+              quizType
+              questionsPerPage
+            }
           }
         }
       }

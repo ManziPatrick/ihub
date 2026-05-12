@@ -2857,9 +2857,25 @@ export const resolvers = {
               if (les.assignmentQuestions) {
                 les.assignmentQuestions = les.assignmentQuestions.map((q: any) => {
                   const quest = { ...q };
-                  if (quest.id) {
+                  if (quest.id && quest.id.length === 24) {
                     quest._id = quest.id;
                     delete quest.id;
+                  } else {
+                    delete quest.id; // Let MongoDB generate a new ID for temporary IDs
+                  }
+                  return quest;
+                });
+              }
+              if (les.quizQuestions) {
+                console.log(`[Resolver] Processing ${les.quizQuestions.length} quiz questions for lesson ${les.title || les._id}`);
+                les.quizQuestions = les.quizQuestions.map((q: any) => {
+                  const quest = { ...q };
+                  if (quest.id && quest.id.length === 24) {
+                    quest._id = quest.id;
+                    delete quest.id;
+                  } else {
+                    console.log(`[Resolver] Question has no valid ID, let MongoDB generate one: ${quest.id}`);
+                    delete quest.id; // Let MongoDB generate a new ID for temporary IDs
                   }
                   return quest;
                 });
@@ -2882,9 +2898,91 @@ export const resolvers = {
         });
       }
 
-      Object.assign(course, updateData);
-      await course.save();
-      return await course.populate('instructor studentsEnrolled');
+      console.log(`[UpdateCourse] SANITIZING AND SAVING VIA NUCLEAR UPDATE for course ${id}`);
+      
+      if (updateData.modules) {
+        updateData.modules = updateData.modules.map((mod: any) => {
+          return {
+            ...mod,
+            lessons: (mod.lessons || []).map((l: any) => {
+              const les = { ...l };
+              
+              // Map Quiz Questions with forced isolation
+              if (les.quizQuestions && Array.isArray(les.quizQuestions)) {
+                // Force a deep copy to break any shared references
+                const cleanQuestions = JSON.parse(JSON.stringify(les.quizQuestions));
+                les.quizQuestions = cleanQuestions.map((q: any) => {
+                  if (q.id && typeof q.id === 'string' && q.id.length !== 24) {
+                    delete q.id;
+                  }
+                  return {
+                    id: q.id || q._id,
+                    questionText: q.questionText,
+                    type: q.type,
+                    options: q.options || [],
+                    correctOptionIndex: q.correctOptionIndex,
+                    explanation: q.explanation,
+                    imageUrl: q.imageUrl
+                  };
+                });
+                if (les.quizQuestions.length > 0) {
+                  console.log(`[UpdateCourse] ISO-CHECK: Lesson "${les.title}" isolated with ${les.quizQuestions.length} questions.`);
+                }
+              }
+
+              // Map Assignment Questions with forced isolation
+              if (les.assignmentQuestions && Array.isArray(les.assignmentQuestions)) {
+                const cleanQuestions = JSON.parse(JSON.stringify(les.assignmentQuestions));
+                les.assignmentQuestions = cleanQuestions.map((q: any) => {
+                  if (q.id && typeof q.id === 'string' && q.id.length !== 24) {
+                    delete q.id;
+                  }
+                  return {
+                    id: q.id || q._id,
+                    questionText: q.questionText,
+                    type: q.type,
+                    options: q.options || [],
+                    correctOptionIndex: q.correctOptionIndex,
+                    explanation: q.explanation,
+                    points: q.points
+                  };
+                });
+              }
+
+              return les;
+            })
+          };
+        });
+      }
+      
+      const modulesToSave = updateData.modules;
+      delete updateData.modules;
+
+      const updatedCourse = await Course.findOneAndUpdate(
+        { _id: id },
+        { 
+          $set: { 
+            ...updateData,
+            ...(modulesToSave ? { modules: modulesToSave } : {})
+          } 
+        },
+        { new: true, runValidators: true }
+      ).populate('instructor studentsEnrolled');
+
+      if (!updatedCourse) throw new Error('Course not found');
+
+      console.log(`[UpdateCourse] NUCLEAR UPDATE SUCCESSFUL for ${id}.`);
+      
+      // Final verification of what's in the document we just got back
+      let totalQs = 0;
+      updatedCourse.modules?.forEach((m: any) => {
+        m.lessons?.forEach((l: any) => {
+          totalQs += (l.quizQuestions?.length || 0);
+        });
+      });
+      console.log(`[UpdateCourse] POST-SAVE VERIFICATION: Total Quiz Questions in DB: ${totalQs}`);
+
+      return updatedCourse;
     },
 
     deleteCourse: async (_: any, { id }: { id: string }, context: any) => {

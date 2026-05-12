@@ -166,6 +166,61 @@ export const UPDATE_COURSE = gql`
       submissionRequired
       signerName
       signerSignature
+      modules {
+        id
+        title
+        description
+        lessons {
+          id
+          title
+          duration
+          type
+          videoUrl
+          fileUrl
+          content
+          isAssignment
+          requiredAssignment
+          assignmentDescription
+          assignmentDeliverables
+          assignmentQuestions {
+            id
+            questionText
+            type
+            options
+            correctOptionIndex
+            points
+          }
+          assignmentConfig {
+            timeLimit
+            allowRetakes
+            disableRightClick
+            mode
+          }
+          quizQuestions {
+            id
+            questionText
+            type
+            imageUrl
+            options
+            correctOptionIndex
+            explanation
+          }
+          quizConfig {
+            disableRightClick
+            timeLimit
+            quizType
+            questionsPerPage
+          }
+          resources {
+            id
+            title
+            url
+            type
+            source
+            visibility
+          }
+        }
+      }
     }
   }
 `;

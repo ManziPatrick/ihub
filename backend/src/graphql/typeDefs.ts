@@ -246,8 +246,19 @@ export const typeDefs = `#graphql
     assignmentDeliverables: [String]
     assignmentQuestions: [AssignmentQuestion]
     assignmentConfig: AssignmentConfig
+    quizQuestions: [QuizQuestion]
     quizConfig: QuizConfig
     order: Int
+  }
+
+  type QuizQuestion {
+    id: ID
+    questionText: String!
+    type: String!
+    imageUrl: String
+    options: [String]
+    correctOptionIndex: Int
+    explanation: String
   }
 
   type AssignmentQuestion {
@@ -862,7 +873,26 @@ export const typeDefs = `#graphql
     assignmentDeliverables: [String]
     assignmentQuestions: [AssignmentQuestionInput]
     assignmentConfig: AssignmentConfigInput
+    quizQuestions: [QuizQuestionInput]
+    quizConfig: QuizConfigInput
     order: Int
+  }
+
+  input QuizQuestionInput {
+    id: ID
+    questionText: String!
+    type: String!
+    imageUrl: String
+    options: [String]
+    correctOptionIndex: Int
+    explanation: String
+  }
+
+  input QuizConfigInput {
+    disableRightClick: Boolean
+    timeLimit: Int
+    quizType: String
+    questionsPerPage: Int
   }
 
   input AssignmentQuestionInput {

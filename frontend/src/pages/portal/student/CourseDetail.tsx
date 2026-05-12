@@ -563,20 +563,24 @@ export default function CourseDetail() {
                 );
               }
 
-              if (currentLesson?.type === 'quiz') {
+              const hasQuiz = (currentLesson?.quizQuestions?.length > 0) || (currentLesson?.type === 'quiz');
+              const hasAssignment = (currentLesson?.assignmentQuestions?.length > 0);
+
+              if (hasQuiz) {
                 return (
                   <Card className="border-border/50 p-8 shadow-2xl">
                     <LessonQuiz
                       courseId={courseId!}
                       lessonId={(currentLesson.id || currentLesson._id)}
                       onComplete={handleMarkComplete}
-                      fallbackQuestions={currentLesson.assignmentQuestions}
+                      quizQuestions={currentLesson.quizQuestions || []}
+                      config={currentLesson.quizConfig}
                     />
                   </Card>
                 );
               }
 
-              if (currentLesson?.assignmentQuestions?.length > 0) {
+              if (hasAssignment) {
                 return (
                   <Card className="border-border/50 p-8 shadow-2xl">
                     <AssignmentExamView

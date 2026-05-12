@@ -55,7 +55,7 @@ export default function AdminCourses() {
     pollInterval: 30000
   });
   const [loadCourse, { data: fullCourseData, loading: courseLoading }] = useLazyQuery(GET_COURSE);
-  const [updateCourseMutation] = useMutation(UPDATE_COURSE, {
+  const [updateCourseMutation, { loading: updateLoading }] = useMutation(UPDATE_COURSE, {
     refetchQueries: [{ query: GET_COURSES }, { query: GET_STATS }, { query: GET_ADMIN_DASHBOARD_DATA }]
   });
   const [deleteCourseMutation] = useMutation(DELETE_COURSE, {
@@ -119,6 +119,45 @@ export default function AdminCourses() {
       setEditPricingCourse(null);
     } catch (err: any) {
       toast.error(err.message);
+    }
+  };
+
+  const handleQuizSaveOnly = async (updatedCourse: any) => {
+    try {
+      console.log("[AdminCourses] handleQuizSaveOnly triggered. Modules count:", updatedCourse.modules?.length);
+      // Log quiz questions count for each lesson to verify they exist in the payload
+      updatedCourse.modules?.forEach((m: any, mIdx: number) => {
+        m.lessons?.forEach((l: any, lIdx: number) => {
+          if (l.quizQuestions?.length > 0) {
+            console.log(`[AdminCourses] Lesson "${l.title}" (M:${mIdx}, L:${lIdx}) has ${l.quizQuestions.length} quiz questions.`);
+          }
+        });
+      });
+
+      await updateCourseMutation({
+        variables: {
+          id: updatedCourse.id,
+          title: updatedCourse.title,
+          description: updatedCourse.description,
+          price: Number(updatedCourse.price),
+          discountPrice: Number(updatedCourse.discountPrice),
+          level: updatedCourse.level,
+          category: updatedCourse.category,
+          instructorId: updatedCourse.instructorId,
+          thumbnail: updatedCourse.thumbnail,
+          status: updatedCourse.status,
+          enrollmentMode: updatedCourse.enrollmentMode || 'direct',
+          submissionRequired: updatedCourse.submissionRequired,
+          signerName: updatedCourse.signerName,
+          signerSignature: updatedCourse.signerSignature,
+          modules: updatedCourse.modules
+        }
+      });
+      toast.success("Quiz synced to course draft!");
+      refetch();
+    } catch (err: any) {
+      console.error("[AdminCourses] Sync failed:", err);
+      toast.error("Sync failed: " + err.message);
     }
   };
 
@@ -430,7 +469,8 @@ export default function AdminCourses() {
         course={editCourse || editPricingCourse}
         trainers={trainers}
         onSave={handleSaveCourse}
-        isLoading={courseLoading}
+        onQuizSave={handleQuizSaveOnly}
+        isLoading={updateLoading || courseLoading}
       />
       <DeleteConfirmDialog
         open={!!deleteCourse}

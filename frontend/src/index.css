@@ -330,8 +330,113 @@
   @apply list-disc;
 }
 
-/* Let Quill and Tailwind typography handle colors for pasted content naturally */
-.dark .lesson-content-viewer a {
-  color: hsl(var(--accent));
+/* ===================================================
+   LESSON CONTENT VIEWER — Theme-Aware Rendering
+   Overrides Quill's hardcoded inline RGB colors to
+   use CSS design tokens that adapt to dark/light mode.
+   =================================================== */
+
+.lesson-content-viewer {
+  color: hsl(var(--foreground));
+  line-height: 1.8;
+  font-size: 1.05rem;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* --- Base element overrides --- */
+.lesson-content-viewer p,
+.lesson-content-viewer li,
+.lesson-content-viewer span {
+  color: inherit;
+}
+
+.lesson-content-viewer h1,
+.lesson-content-viewer h2,
+.lesson-content-viewer h3,
+.lesson-content-viewer h4 {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.lesson-content-viewer a {
+  color: hsl(var(--accent)) !important;
   text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lesson-content-viewer strong {
+  color: inherit;
+  font-weight: 700;
+}
+
+.lesson-content-viewer ul,
+.lesson-content-viewer ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.lesson-content-viewer li {
+  margin-bottom: 0.35rem;
+}
+
+/* --- Override Quill's hardcoded body-text dark gray (rgb 31,41,55) --- */
+/* These are readable in light mode but invisible in dark mode */
+.dark .lesson-content-viewer [style*="color: rgb(31, 41, 55)"],
+.dark .lesson-content-viewer [style*="color:rgb(31, 41, 55)"],
+.dark .lesson-content-viewer [style*="color: rgb(31,41,55)"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* --- Override very light text used in dark card contexts --- */
+/* rgb(240,238,229) is near-white, invisible in light mode */
+.lesson-content-viewer [style*="color: rgb(240, 238, 229)"],
+.lesson-content-viewer [style*="color:rgb(240, 238, 229)"],
+.lesson-content-viewer [style*="color: rgb(240,238,229)"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* --- Override white text used for step numbers in dark containers --- */
+.dark .lesson-content-viewer [style*="color: rgb(255, 255, 255)"],
+.dark .lesson-content-viewer [style*="color:rgb(255, 255, 255)"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* --- Override muted gray text (rgb 107,114,128) --- */
+.dark .lesson-content-viewer [style*="color: rgb(107, 114, 128)"],
+.dark .lesson-content-viewer [style*="color:rgb(107, 114, 128)"] {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* --- Remap Quill blue accent (rgb 26,86,219) to design system accent --- */
+/* This affects callout labels like "💡 Simple analogy:", "⚠️ Important:" etc */
+.lesson-content-viewer [style*="color: rgb(26, 86, 219)"],
+.lesson-content-viewer [style*="color:rgb(26, 86, 219)"],
+.lesson-content-viewer [style*="color: rgb(26,86,219)"] {
+  color: hsl(var(--accent)) !important;
+}
+
+/* --- Keep semantic colors (green, red) intact --- */
+/* Green success rgb(21,128,61) and rgb(22,163,74) — intentional */
+/* Red error rgb(220,38,38) — intentional */
+/* These are left as-is to preserve their meaning */
+
+/* --- Remove background-color transparent noise --- */
+.lesson-content-viewer [style*="background-color: transparent"] {
+  background-color: transparent !important;
+}
+
+/* --- Light mode: ensure dark text colors stay readable --- */
+:root:not(.dark) .lesson-content-viewer [style*="color: rgb(31, 41, 55)"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+:root:not(.dark) .lesson-content-viewer [style*="color: rgb(107, 114, 128)"] {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* --- Quill editor cursor artifact --- */
+.lesson-content-viewer .ql-cursor {
+  display: none;
 }

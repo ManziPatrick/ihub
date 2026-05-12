@@ -20,10 +20,26 @@ interface LessonQuizProps {
   lessonId: string;
   onComplete: () => void;
   fallbackQuestions?: any[];
+  quizQuestions?: any[];
+  config?: any;
 }
 
-export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }: LessonQuizProps) {
-  console.log("LessonQuiz Props:", { courseId, lessonId, hasFallback: !!fallbackQuestions });
+export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, quizQuestions, config }: LessonQuizProps) {
+  console.log("LessonQuiz Props:", { courseId, lessonId, hasFallback: !!fallbackQuestions, hasQuiz: !!quizQuestions });
+  
+  // Consolidate questions source
+  const questions = quizQuestions && quizQuestions.length > 0 
+    ? quizQuestions 
+    : (fallbackQuestions && fallbackQuestions.length > 0 ? fallbackQuestions : []);
+
+  // Use a useEffect to handle the "No questions" scenario to avoid render-phase state updates
+  useEffect(() => {
+    if (questions.length === 0) {
+      console.log("[LessonQuiz] No questions found, auto-completing lesson.");
+      onComplete();
+    }
+  }, [questions.length, onComplete]);
+
   const storageKey = `lessonQuiz_${courseId}_${lessonId}`;
 
   const loadState = () => {
@@ -89,9 +105,9 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
     }
   }, []);
 
-  const { data, loading, error } = useQuery(GET_QUESTIONS, {
+  const { loading: queryLoading, error: queryError } = useQuery(GET_QUESTIONS, {
     variables: { courseId, lessonId },
-    skip: !courseId || !lessonId
+    skip: !!quizQuestions || !courseId || !lessonId
   });
 
   const [rewardStudent] = useMutation(REWARD_STUDENT);
@@ -126,16 +142,16 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions }
     };
   }, [loadingHint, sendingChat, generatingQuiz]);
 
-  const questions = (data as any)?.questions && (data as any)?.questions.length > 0 
-    ? (data as any)?.questions 
-    : (fallbackQuestions || []);
-
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
-  if (error) return <div className="text-destructive p-4">Error loading quiz questions.</div>;
+  if (queryLoading && !quizQuestions) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-accent" /></div>;
+  if (queryError && !quizQuestions) return <div className="text-destructive p-4">Error loading quiz questions.</div>;
+  
   if (questions.length === 0) {
-    // No quiz for this lesson — silently proceed
-    onComplete();
-    return null;
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center space-y-4">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+        <p className="text-muted-foreground">Finalizing unit progress...</p>
+      </div>
+    );
   }
 
   const currentQuestion = questions[currentQuestionIndex];

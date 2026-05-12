@@ -67,17 +67,17 @@ export function ExamConfigDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[100vw] sm:max-w-2xl w-full max-h-[100dvh] sm:max-h-[90vh] bg-background border-accent/20 p-0 overflow-hidden rounded-none sm:rounded-lg">
-        <DialogHeader className="p-6 bg-accent/5 border-b border-accent/10">
+      <DialogContent className="max-w-[100vw] sm:max-w-2xl w-full max-h-[100dvh] sm:max-h-[90vh] bg-background border-accent/20 p-0 overflow-hidden rounded-none sm:rounded-lg shadow-2xl">
+        <DialogHeader className="p-6 bg-muted/30 border-b border-border/20">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center text-accent">
+            <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center text-accent shadow-gold/10">
               <Settings2 className="w-6 h-6" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-black tracking-tight">
+              <DialogTitle className="text-xl font-black uppercase tracking-widest text-foreground/80">
                 {title}
               </DialogTitle>
-              <DialogDescription className="text-xs font-medium">
+              <DialogDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
                 Configure the rules and environment for this module assessment.
               </DialogDescription>
             </div>
@@ -89,14 +89,14 @@ export function ExamConfigDialog({
             {/* Primary Settings */}
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <Target className="w-3 h-3" /> Delivery Mode
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Target className="w-3 h-3 text-accent" /> Delivery Mode
                 </label>
                 <Select 
                   value={localConfig.mode} 
                   onValueChange={(val: any) => setLocalConfig({...localConfig, mode: val})}
                 >
-                  <SelectTrigger className="w-full h-12 bg-muted/20 border-border/50">
+                  <SelectTrigger className="w-full h-12 bg-muted/20 border-border/40 rounded-xl font-bold">
                     <SelectValue placeholder="Select mode" />
                   </SelectTrigger>
                   <SelectContent>
@@ -104,7 +104,7 @@ export function ExamConfigDialog({
                     <SelectItem value="exercise">Practice Exercise (Self-paced)</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-[10px] text-muted-foreground italic">
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">
                   {localConfig.mode === 'exam' 
                     ? "Official exams are strict and impact the course grade." 
                     : "Practice mode allows for learning without pressure."}
@@ -112,22 +112,22 @@ export function ExamConfigDialog({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <Clock className="w-3 h-3" /> Time Limit (Minutes)
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Clock className="w-3 h-3 text-accent" /> Time Limit (Minutes)
                 </label>
                 <Input 
                   type="number"
                   value={localConfig.timeLimit || ""}
                   onChange={(e) => setLocalConfig({...localConfig, timeLimit: parseInt(e.target.value) || 0})}
                   placeholder="0 for unlimited"
-                  className="h-12 bg-muted/20 border-border/50 font-bold"
+                  className="h-12 bg-muted/20 border-border/40 rounded-xl font-black text-lg"
                 />
-                <p className="text-[10px] text-muted-foreground">Students will be auto-submitted when time expires.</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">Students will be auto-submitted when time expires.</p>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <Trophy className="w-3 h-3" /> Passing Score (%)
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Trophy className="w-3 h-3 text-accent" /> Passing Score (%)
                 </label>
                 <Input 
                   type="number"
@@ -135,25 +135,25 @@ export function ExamConfigDialog({
                   max="100"
                   value={localConfig.passingScore || 70}
                   onChange={(e) => setLocalConfig({...localConfig, passingScore: parseInt(e.target.value) || 0})}
-                  className="h-12 bg-muted/20 border-border/50 font-bold"
+                  className="h-12 bg-muted/20 border-border/40 rounded-xl font-black text-lg"
                 />
               </div>
             </div>
 
             {/* Integrity & Rules */}
             <div className="space-y-4">
-              <Card className="border-border/50 bg-muted/10 shadow-none">
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+              <Card className="border-border/40 bg-muted/10 shadow-none rounded-2xl overflow-hidden">
+                <CardHeader className="p-4 pb-2 bg-muted/30">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-foreground/70">
                     <ShieldAlert className="w-4 h-4 text-orange-500" />
                     Integrity Controls
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 pt-0 space-y-4">
+                <CardContent className="p-4 pt-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <p className="text-xs font-bold">Anti-Cheat Mode</p>
-                      <p className="text-[10px] text-muted-foreground">Block right-click & copy</p>
+                      <p className="text-[11px] font-black uppercase tracking-widest text-foreground/80">Anti-Cheat Mode</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">Block right-click & copy</p>
                     </div>
                     <Switch 
                       checked={localConfig.disableRightClick}
@@ -162,8 +162,8 @@ export function ExamConfigDialog({
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <p className="text-xs font-bold">Allow Retakes</p>
-                      <p className="text-[10px] text-muted-foreground">Unlimited attempts</p>
+                      <p className="text-[11px] font-black uppercase tracking-widest text-foreground/80">Allow Retakes</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">Unlimited attempts</p>
                     </div>
                     <Switch 
                       checked={localConfig.allowRetakes}
@@ -173,17 +173,17 @@ export function ExamConfigDialog({
                 </CardContent>
               </Card>
 
-              <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex gap-3">
+              <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 flex gap-3">
                 <Info className="w-5 h-5 text-blue-500 shrink-0" />
-                <p className="text-[10px] text-blue-600/80 leading-relaxed font-medium">
+                <p className="text-[9px] font-black uppercase tracking-widest text-blue-600/60 leading-relaxed">
                   Configuring this as an <b>Official Exam</b> will enable AI-proctoring events and detailed performance tracking for trainers.
                 </p>
               </div>
 
               {localConfig.timeLimit && localConfig.timeLimit > 0 && (
-                <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 flex gap-3">
+                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 flex gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
-                  <p className="text-[10px] text-amber-600/80 leading-relaxed font-medium">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-amber-600/60 leading-relaxed">
                     Strict timer enabled. Ensure the question count is appropriate for {localConfig.timeLimit} minutes.
                   </p>
                 </div>
@@ -192,17 +192,17 @@ export function ExamConfigDialog({
           </div>
         </div>
 
-        <div className="p-6 bg-muted/20 border-t border-border/50 flex gap-3">
+        <div className="p-6 bg-muted/30 border-t border-border/20 flex gap-3">
           <Button 
             variant="ghost" 
-            className="flex-1 h-12 font-bold" 
+            className="flex-1 h-12 font-black uppercase tracking-widest text-[10px]" 
             onClick={() => onOpenChange(false)}
           >
             Cancel
           </Button>
           <Button 
             variant="gold" 
-            className="flex-1 h-12 font-black uppercase tracking-widest shadow-lg shadow-gold/20" 
+            className="flex-1 h-12 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-gold/20" 
             onClick={handleSave}
           >
             Save Configuration
