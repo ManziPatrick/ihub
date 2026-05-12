@@ -463,7 +463,10 @@ export const resolvers = {
 
     getCourseQuestions: async (_: any, { courseId }: { courseId: string }) => {
       console.log('--- getCourseQuestions courseId:', courseId);
-      if (!courseId || courseId === "" || courseId === "undefined" || courseId === "null") return [];
+      if (!courseId || courseId === "" || courseId === "undefined" || courseId === "null" || !mongoose.Types.ObjectId.isValid(courseId)) {
+        console.log('--- getCourseQuestions: Invalid courseId, returning empty array');
+        return [];
+      }
       const questions = await Question.find({ courseId });
       console.log(`--- getCourseQuestions: found ${questions.length} questions`);
       return questions;
@@ -774,10 +777,27 @@ export const resolvers = {
     },
     questions: async (_: any, { courseId, lessonId, moduleNumber, lessonNumber }: any) => {
       console.log('--- questions query: courseId:', courseId, 'lessonId:', lessonId, 'moduleNumber:', moduleNumber, 'lessonNumber:', lessonNumber);
+      
+      if (!courseId || !mongoose.Types.ObjectId.isValid(courseId)) {
+        console.log('--- questions query: Invalid or missing courseId');
+        return [];
+      }
+
       const query: any = { courseId };
       
       if (lessonId !== undefined && lessonId !== null && lessonId !== "") {
-        query.lessonId = lessonId;
+        if (mongoose.Types.ObjectId.isValid(lessonId)) {
+          query.lessonId = lessonId;
+        } else if (lessonId.includes('-')) {
+          // If lessonId is a string like "0-0", treat it as module-lesson numbers
+          const [m, l] = lessonId.split('-');
+          query.moduleNumber = m;
+          query.lessonNumber = l;
+          console.log(`--- questions query: lessonId "${lessonId}" interpreted as module ${m}, lesson ${l}`);
+        } else {
+          // Fallback if it's just a non-ObjectId string
+          query.lessonNumber = lessonId;
+        }
       } else if (moduleNumber !== undefined && moduleNumber !== null && moduleNumber !== "") {
         query.moduleNumber = moduleNumber;
         if (lessonNumber !== undefined && lessonNumber !== null && lessonNumber !== "") {
@@ -797,8 +817,9 @@ export const resolvers = {
         query.moduleNumber = null;
         query.lessonNumber = null;
       }
+      
       const results = await Question.find(query).sort({ createdAt: 1 });
-      console.log(`--- questions query: found ${results.length} questions`);
+      console.log(`--- questions query: found ${results.length} questions for query:`, JSON.stringify(query));
       return results;
     },
     bookings: async (_: any, { page = 1, limit = 10 }: any, context: any) => {

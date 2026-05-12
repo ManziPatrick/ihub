@@ -216,7 +216,10 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
     }
   };
 
-  const handleSubmitAnswer = () => {
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
+  const [loadingAiExplanation, setLoadingAiExplanation] = useState(false);
+
+  const handleSubmitAnswer = async () => {
     if (selectedOption === null) return;
     setIsAnswered(true);
     setShowHint(false);
@@ -246,7 +249,33 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
         incorrectAudio.current.play().catch(e => console.error("Audio error:", e));
       }
     }
-    // Always show explanation so students learn regardless of outcome
+
+    // ALWAYS trigger AI Explanation for "long and correct" reasoning
+    setLoadingAiExplanation(true);
+    try {
+      const prompt = `Explain why "${currentQuestion.options[currentQuestion.correctOptionIndex]}" is correct for: "${currentQuestion.questionText}".
+      
+      Keep it ultra-concise:
+      ### 🎯 Key Insight
+      [One definitive sentence explaining the core fact.]
+
+      ### ⚡ Quick Dive
+      [Max 2 sentences explaining the logic. No fluff. Keep under 50 words.]`;
+      
+      const { data } = await chatWithAI({
+        variables: { message: prompt }
+      });
+      
+      if (data?.chatWithAI?.content) {
+        setAiExplanation(data.chatWithAI.content);
+      }
+    } catch (err) {
+      console.error("AI Explanation Error:", err);
+      setAiExplanation(currentQuestion.explanation || "Great job! Keep going to the next challenge.");
+    } finally {
+      setLoadingAiExplanation(false);
+    }
+
     setShowExplanation(true);
   };
 
@@ -258,6 +287,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
       setSelectedOption(null);
       setIsAnswered(false);
       setShowExplanation(false);
+      setAiExplanation(null); // Reset for next question
       setShowHint(false);
       setHint(null);
       setHintChatMessages([]);
@@ -299,6 +329,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
     setIsFinished(false);
     setExpression('normal');
     setShowExplanation(false);
+    setAiExplanation(null);
     setShowHint(false);
     setHint(null);
     setHintChatMessages([]);
@@ -642,7 +673,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6 pt-6 border-t border-border/50"
           >
-            {showExplanation && currentQuestion.explanation && (
+            {(showExplanation || loadingAiExplanation) && (
               <div className={`p-6 rounded-3xl border-2 relative overflow-hidden ${
                 selectedOption === currentQuestion.correctOptionIndex
                   ? 'bg-green-500/5 border-green-500/20'
@@ -655,17 +686,36 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
                   selectedOption === currentQuestion.correctOptionIndex ? 'text-green-500' : 'text-accent'
                 }`}>
                   {selectedOption === currentQuestion.correctOptionIndex
-                    ? '✅ Why this is correct'
-                    : '💡 Here is why the correct answer is'}
+                    ? '✅ Correct Logic'
+                    : '💡 Answer Logic'}
                 </p>
                 {selectedOption !== currentQuestion.correctOptionIndex && (
                   <p className="text-sm font-black text-green-400 mb-2">
                     ✓ {currentQuestion.options[currentQuestion.correctOptionIndex]}
                   </p>
                 )}
-                <p className="text-sm font-bold text-foreground leading-relaxed">
-                  {currentQuestion.explanation}
-                </p>
+
+                {loadingAiExplanation ? (
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground py-4">
+                    <Loader2 className="w-5 h-5 animate-spin text-accent" />
+                    <span>AI is crafting a detailed breakdown for you...</span>
+                  </div>
+                ) : (
+                  <div className="text-sm font-bold text-foreground leading-relaxed">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({ node, ...props }) => <p className="mb-4 last:mb-0" {...props} />,
+                        strong: ({ node, ...props }) => <strong className="font-black text-gold" {...props} />,
+                        ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-4 space-y-1" {...props} />,
+                        li: ({ node, ...props }) => <li className="font-medium" {...props} />,
+                        h3: ({ node, ...props }) => <h3 className="text-lg font-black text-accent mt-6 mb-2" {...props} />,
+                      }}
+                    >
+                      {aiExplanation || currentQuestion.explanation || "No explanation provided."}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </div>
             )}
 
@@ -673,6 +723,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
               <Button 
                 variant="gold" 
                 onClick={handleNext} 
+                disabled={loadingAiExplanation}
                 className="w-full sm:w-auto h-14 sm:h-16 px-8 sm:px-10 rounded-2xl text-base sm:text-lg font-black shadow-gold group hover:scale-[1.05] transition-all"
               >
                 {currentQuestionIndex < questions.length - 1 ? "NEXT CHALLENGE" : "FINISH QUIZ"}
