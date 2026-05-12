@@ -80,7 +80,12 @@ export function ManageQuestionsDialog({
   }, [courseData, lessonId]);
 
   const { data, loading, refetch } = useQuery(GET_QUESTIONS, {
-    variables: { courseId, lessonId: (lessonId && lessonId.includes('-')) ? null : lessonId },
+    variables: { 
+      courseId, 
+      lessonId: (lessonId && lessonId.includes('-')) ? null : lessonId,
+      moduleNumber: (lessonId && lessonId.includes('-')) ? lessonId.split('-')[0] : null,
+      lessonNumber: (lessonId && lessonId.includes('-')) ? lessonId.split('-')[1] : null
+    },
     skip: !open || !courseId || courseId === "" || courseId.length !== 24
   });
 
@@ -125,6 +130,8 @@ export function ManageQuestionsDialog({
         await updateQuestion({
           variables: {
             id: editingId,
+            moduleNumber: (lessonId && lessonId.includes('-')) ? lessonId.split('-')[0] : null,
+            lessonNumber: (lessonId && lessonId.includes('-')) ? lessonId.split('-')[1] : null,
             ...formData,
             options: formData.type === 'open_ended' ? [] : formData.options
           }
@@ -135,6 +142,8 @@ export function ManageQuestionsDialog({
           variables: {
             courseId,
             lessonId: (lessonId && lessonId.includes('-')) ? null : (lessonId || null),
+            moduleNumber: (lessonId && lessonId.includes('-')) ? lessonId.split('-')[0] : null,
+            lessonNumber: (lessonId && lessonId.includes('-')) ? lessonId.split('-')[1] : null,
             ...formData,
             options: formData.type === 'open_ended' ? [] : formData.options
           }
@@ -214,6 +223,8 @@ export function ManageQuestionsDialog({
           variables: {
             courseId,
             lessonId: (lessonId && lessonId.includes('-')) ? null : (lessonId || null),
+            moduleNumber: (lessonId && lessonId.includes('-')) ? lessonId.split('-')[0] : null,
+            lessonNumber: (lessonId && lessonId.includes('-')) ? lessonId.split('-')[1] : null,
             type: q.type,
             questionText: q.questionText,
             imageUrl: '',
@@ -350,6 +361,8 @@ export function ManageQuestionsDialog({
         variables: {
           courseId,
           lessonId: (lessonId && lessonId.includes('-')) ? null : (lessonId || null),
+          moduleNumber: (lessonId && lessonId.includes('-')) ? lessonId.split('-')[0] : null,
+          lessonNumber: (lessonId && lessonId.includes('-')) ? lessonId.split('-')[1] : null,
           type: draft.type || 'multiple_choice',
           questionText: draft.questionText,
           imageUrl: draft.imageUrl || "",

@@ -288,19 +288,23 @@ export const TRACK_ACTIVITY = gql`
 `;
 
 export const CREATE_QUESTION = gql`
-  mutation CreateQuestion($courseId: ID!, $lessonId: ID, $questionText: String!, $options: [String!]!, $correctOptionIndex: Int!, $explanation: String) {
-    createQuestion(courseId: $courseId, lessonId: $lessonId, questionText: $questionText, options: $options, correctOptionIndex: $correctOptionIndex, explanation: $explanation) {
+  mutation CreateQuestion($courseId: ID!, $lessonId: ID, $moduleNumber: String, $lessonNumber: String, $questionText: String!, $options: [String!]!, $correctOptionIndex: Int!, $explanation: String) {
+    createQuestion(courseId: $courseId, lessonId: $lessonId, moduleNumber: $moduleNumber, lessonNumber: $lessonNumber, questionText: $questionText, options: $options, correctOptionIndex: $correctOptionIndex, explanation: $explanation) {
       id
       questionText
+      moduleNumber
+      lessonNumber
     }
   }
 `;
 
 export const UPDATE_QUESTION = gql`
-  mutation UpdateQuestion($id: ID!, $questionText: String, $options: [String!], $correctOptionIndex: Int, $explanation: String) {
-    updateQuestion(id: $id, questionText: $questionText, options: $options, correctOptionIndex: $correctOptionIndex, explanation: $explanation) {
+  mutation UpdateQuestion($id: ID!, $moduleNumber: String, $lessonNumber: String, $questionText: String, $options: [String!], $correctOptionIndex: Int, $explanation: String) {
+    updateQuestion(id: $id, moduleNumber: $moduleNumber, lessonNumber: $lessonNumber, questionText: $questionText, options: $options, correctOptionIndex: $correctOptionIndex, explanation: $explanation) {
       id
       questionText
+      moduleNumber
+      lessonNumber
     }
   }
 `;

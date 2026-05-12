@@ -554,11 +554,13 @@ export const GET_RECENT_ACTIVITY = gql`
 `;
 
 export const GET_QUESTIONS = gql`
-  query GetQuestions($courseId: ID!, $lessonId: ID) {
-    questions(courseId: $courseId, lessonId: $lessonId) {
+  query GetQuestions($courseId: ID!, $lessonId: ID, $moduleNumber: String, $lessonNumber: String) {
+    questions(courseId: $courseId, lessonId: $lessonId, moduleNumber: $moduleNumber, lessonNumber: $lessonNumber) {
       id
       courseId
       lessonId
+      moduleNumber
+      lessonNumber
       questionText
       options
       correctOptionIndex

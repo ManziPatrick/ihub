@@ -772,13 +772,30 @@ export const resolvers = {
 
       return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 10);
     },
-    questions: async (_: any, { courseId, lessonId }: any) => {
-      console.log('--- questions query: courseId:', courseId, 'lessonId:', lessonId);
+    questions: async (_: any, { courseId, lessonId, moduleNumber, lessonNumber }: any) => {
+      console.log('--- questions query: courseId:', courseId, 'lessonId:', lessonId, 'moduleNumber:', moduleNumber, 'lessonNumber:', lessonNumber);
       const query: any = { courseId };
-      if (lessonId !== undefined && lessonId !== null) {
+      
+      if (lessonId !== undefined && lessonId !== null && lessonId !== "") {
         query.lessonId = lessonId;
+      } else if (moduleNumber !== undefined && moduleNumber !== null && moduleNumber !== "") {
+        query.moduleNumber = moduleNumber;
+        if (lessonNumber !== undefined && lessonNumber !== null && lessonNumber !== "") {
+          query.lessonNumber = lessonNumber;
+        }
+      } else if (lessonNumber !== undefined && lessonNumber !== null && lessonNumber !== "") {
+        // Fallback for when only lessonNumber is provided (possibly still containing module-lesson format)
+        if (lessonNumber.includes('-')) {
+          const [m, l] = lessonNumber.split('-');
+          query.moduleNumber = m;
+          query.lessonNumber = l;
+        } else {
+          query.lessonNumber = lessonNumber;
+        }
       } else {
         query.lessonId = null;
+        query.moduleNumber = null;
+        query.lessonNumber = null;
       }
       const results = await Question.find(query).sort({ createdAt: 1 });
       console.log(`--- questions query: found ${results.length} questions`);
@@ -3605,6 +3622,15 @@ export const resolvers = {
       if (!context.user || (context.user.role !== 'admin' && context.user.role !== 'super_admin' && context.user.role !== 'trainer')) {
         throw new Error('Not authorized');
       }
+      
+      // Ensure lessonId is null if it's a temporary ID from the frontend
+      if (args.lessonId && args.lessonId.includes('-')) {
+        const [m, l] = args.lessonId.split('-');
+        if (!args.moduleNumber) args.moduleNumber = m;
+        if (!args.lessonNumber) args.lessonNumber = l;
+        args.lessonId = null;
+      }
+
       const question = new Question({
         ...args
       });
@@ -3616,6 +3642,15 @@ export const resolvers = {
       if (!context.user || (context.user.role !== 'admin' && context.user.role !== 'super_admin' && context.user.role !== 'trainer')) {
         throw new Error('Not authorized');
       }
+
+      // Handle lessonId if it's a temporary ID
+      if (args.lessonId && args.lessonId.includes('-')) {
+        const [m, l] = args.lessonId.split('-');
+        if (!args.moduleNumber) args.moduleNumber = m;
+        if (!args.lessonNumber) args.lessonNumber = l;
+        args.lessonId = null;
+      }
+
       return await Question.findByIdAndUpdate(id, args, { new: true });
     },
     deleteQuestion: async (_: any, { id }: any, context: any) => {

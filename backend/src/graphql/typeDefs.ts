@@ -383,6 +383,8 @@ export const typeDefs = `#graphql
     id: ID!
     courseId: ID!
     lessonId: ID
+    moduleNumber: String
+    lessonNumber: String
     questionText: String!
     imageUrl: String
     options: [String!]!
@@ -763,7 +765,7 @@ export const typeDefs = `#graphql
     categories: [String]
     trainerStudents: [User]
     recentActivity: [ActivityLogEntry]
-    questions(courseId: ID!, lessonId: ID): [Question]
+    questions(courseId: ID!, lessonId: ID, moduleNumber: String, lessonNumber: String): [Question]
     bookings(page: Int, limit: Int): BookingResponse
     payments(page: Int, limit: Int): PaymentResponse
     analytics(createdBy: ID): AnalyticsData
@@ -1020,8 +1022,8 @@ export const typeDefs = `#graphql
     resetPassword(token: String!, newPassword: String!): Boolean
     
     # Questions
-    createQuestion(courseId: ID!, lessonId: ID, questionText: String!, imageUrl: String, options: [String!]!, correctOptionIndex: Int!, explanation: String): Question
-    updateQuestion(id: ID!, questionText: String, imageUrl: String, options: [String!], correctOptionIndex: Int, explanation: String): Question
+    createQuestion(courseId: ID!, lessonId: ID, moduleNumber: String, lessonNumber: String, questionText: String!, imageUrl: String, options: [String!]!, correctOptionIndex: Int!, explanation: String): Question
+    updateQuestion(id: ID!, moduleNumber: String, lessonNumber: String, questionText: String, imageUrl: String, options: [String!], correctOptionIndex: Int, explanation: String): Question
 
     deleteQuestion(id: ID!): Boolean
 
