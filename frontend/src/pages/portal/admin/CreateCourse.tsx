@@ -1141,6 +1141,30 @@ export default function CreateCourse() {
         lessonId={questionLesson?.id}
         lessonTitle={questionLesson?.title}
         lessonContent={questionLesson?.content}
+        questions={
+          questionLesson
+            ? formData.modules.flatMap((m: any) =>
+                m.lessons.filter((l: any) => (l.id || `${formData.modules.indexOf(m)}-${m.lessons.indexOf(l)}`) === questionLesson.id)
+              ).flatMap((l: any) => l.quizQuestions || [])
+            : []
+        }
+        config={null}
+        onSave={(questions: any[]) => {
+          if (!questionLesson) return;
+          setFormData((prev: any) => ({
+            ...prev,
+            modules: prev.modules.map((m: any, mIdx: number) => ({
+              ...m,
+              lessons: m.lessons.map((l: any, lIdx: number) => {
+                const lid = l.id || `${mIdx}-${lIdx}`;
+                if (lid === questionLesson.id) {
+                  return { ...l, quizQuestions: questions, type: 'quiz' };
+                }
+                return l;
+              })
+            }))
+          }));
+        }}
       />
     </PortalLayout>
   );
