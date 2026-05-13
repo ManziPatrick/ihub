@@ -27,6 +27,7 @@ import {
 import {
   PlayCircle,
   CheckCircle,
+  CheckCircle2,
   Lock,
   Clock,
   BookOpen,
@@ -563,8 +564,27 @@ export default function CourseDetail() {
                 );
               }
 
+              const isSatisfied = isLessonSatisfied(currentLesson);
               const hasQuiz = (currentLesson?.quizQuestions?.length > 0) || (currentLesson?.type === 'quiz');
               const hasAssignment = (currentLesson?.assignmentQuestions?.length > 0);
+
+              // Prevent infinite loop: If already satisfied AND no questions, don't render active quiz
+              if (hasQuiz && isSatisfied && (!currentLesson?.quizQuestions || currentLesson?.quizQuestions.length === 0)) {
+                return (
+                  <Card className="border-border/50 p-12 shadow-2xl flex flex-col items-center justify-center text-center space-y-4">
+                    <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center">
+                      <CheckCircle2 className="w-10 h-10 text-green-500" />
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-bold">Lesson Completed!</h2>
+                      <p className="text-muted-foreground">You have successfully finished this unit.</p>
+                    </div>
+                    <Button variant="gold" onClick={handleNext} className="h-12 px-8 rounded-xl font-bold shadow-gold">
+                      CONTINUE TO NEXT <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Card>
+                );
+              }
 
               if (hasQuiz) {
                 return (

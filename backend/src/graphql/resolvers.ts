@@ -2979,6 +2979,53 @@ export const resolvers = {
       const modulesToSave = updateData.modules;
       delete updateData.modules;
 
+      // ─── QUIZ PRESERVATION GUARD ────────────────────────────────────────────
+      // Before saving, fetch the existing course from DB and merge quiz/assignment
+      // questions. If the incoming lesson has 0 questions but the existing lesson
+      // already has questions (matched by _id), we preserve the existing ones.
+      // This prevents data loss when the Edit dialog opens before full course data loads.
+      if (modulesToSave) {
+        const existingCourse = await Course.findById(id).lean() as any;
+        if (existingCourse?.modules) {
+          // Build a flat lookup map: lessonId -> existing lesson data
+          const existingLessonMap = new Map<string, any>();
+          existingCourse.modules.forEach((m: any) => {
+            (m.lessons || []).forEach((l: any) => {
+              const lid = (l._id || l.id)?.toString();
+              if (lid) existingLessonMap.set(lid, l);
+            });
+          });
+
+          modulesToSave.forEach((m: any) => {
+            (m.lessons || []).forEach((l: any) => {
+              const lid = (l._id || l.id)?.toString();
+              const existing = lid ? existingLessonMap.get(lid) : null;
+
+              // Preserve quizQuestions if incoming is empty but DB has them
+              if (
+                existing &&
+                (!l.quizQuestions || l.quizQuestions.length === 0) &&
+                existing.quizQuestions?.length > 0
+              ) {
+                console.log(`[UpdateCourse] PRESERVING ${existing.quizQuestions.length} quiz questions for lesson "${l.title || lid}"`);
+                l.quizQuestions = existing.quizQuestions;
+              }
+
+              // Preserve assignmentQuestions if incoming is empty but DB has them
+              if (
+                existing &&
+                (!l.assignmentQuestions || l.assignmentQuestions.length === 0) &&
+                existing.assignmentQuestions?.length > 0
+              ) {
+                console.log(`[UpdateCourse] PRESERVING ${existing.assignmentQuestions.length} assignment questions for lesson "${l.title || lid}"`);
+                l.assignmentQuestions = existing.assignmentQuestions;
+              }
+            });
+          });
+        }
+      }
+      // ─── END QUIZ PRESERVATION GUARD ────────────────────────────────────────
+
       const updatedCourse = await Course.findOneAndUpdate(
         { _id: id },
         { 
