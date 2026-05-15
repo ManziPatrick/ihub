@@ -150,13 +150,27 @@ const calculateInternshipProgress = async (internship: any) => {
 }
 
 const getAdminStudentIds = async (adminId: string) => {
-  const courses = await Course.find({ $or: [{ instructor: adminId }, { createdBy: adminId }] });
+  const [courses, internships, applications] = await Promise.all([
+    Course.find({ $or: [{ instructor: adminId }, { createdBy: adminId }] }),
+    InternshipProgram.find({ createdBy: adminId }),
+    Internship.find({ mentorId: adminId })
+  ]);
+  
+  const internshipIds = internships.map(i => i._id);
+  const approvedApps = await InternshipApplication.find({ 
+    internshipProgramId: { $in: internshipIds },
+    status: 'approved'
+  });
+
   const studentIds = new Set();
   courses.forEach((c) => {
     if (c.studentsEnrolled) {
       c.studentsEnrolled.forEach((s) => studentIds.add(s.toString()));
     }
   });
+  approvedApps.forEach(app => studentIds.add(app.userId.toString()));
+  applications.forEach(intern => studentIds.add(intern.userId.toString()));
+  
   return Array.from(studentIds);
 };
 
@@ -477,7 +491,7 @@ export const resolvers = {
         throw new Error('Unauthorized');
       }
 
-      const query: any = { isDeleted: { $ne: true } };
+      const query: any = {};
 
       if (context.user.role === 'admin' || context.user.role === 'trainer') {
         const courses = await Course.find({ 
@@ -665,11 +679,16 @@ export const resolvers = {
 
       // For payments, we need to find payments linked to admin's courses
       let adminCourseIds: any[] = [];
+      let adminInternshipIds: any[] = [];
       if (!isSuperAdmin) {
-        const adminCourses = await Course.find({ 
-          $or: [{ instructor: context.user.id }, { createdBy: context.user.id }] 
-        });
+        const [adminCourses, adminInternships] = await Promise.all([
+          Course.find({ 
+            $or: [{ instructor: context.user.id }, { createdBy: context.user.id }] 
+          }),
+          InternshipProgram.find({ createdBy: context.user.id })
+        ]);
         adminCourseIds = adminCourses.map(c => c._id);
+        adminInternshipIds = adminInternships.map(i => i._id);
       }
 
       const paymentFilter = isSuperAdmin ? { status: 'completed' } : {
@@ -691,9 +710,9 @@ export const resolvers = {
         Course.countDocuments(adminFilter),
         InternshipProgram.countDocuments(adminFilter),
         Payment.find(paymentFilter),
-        InternshipPayment.find(isSuperAdmin ? { status: 'paid', isDeleted: false } : { status: 'paid', isDeleted: false, internshipProgramId: { $in: adminCourseIds } }),
+        InternshipPayment.find(isSuperAdmin ? { status: 'paid', isDeleted: false } : { status: 'paid', isDeleted: false, internshipProgramId: { $in: adminInternshipIds } }),
         Course.find(adminFilter),
-        InternshipApplication.find(isSuperAdmin ? { status: 'approved', isDeleted: false } : { status: 'approved', isDeleted: false, internshipProgramId: { $in: adminCourseIds } }),
+        InternshipApplication.find(isSuperAdmin ? { status: 'approved', isDeleted: false } : { status: 'approved', isDeleted: false, internshipProgramId: { $in: adminInternshipIds } }),
         Internship.find(isSuperAdmin ? { status: { $in: ['enrolled', 'in_progress', 'completed', 'graduated'] } } : { mentorId: context.user.id, status: { $in: ['enrolled', 'in_progress', 'completed', 'graduated'] } })
       ]);
 
@@ -756,8 +775,8 @@ export const resolvers = {
       if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) {
         throw new Error('Not authorized');
       }
-
-      const users = await User.find({ role: 'student' }).limit(50);
+      // Fetch activities from all users (admins, trainers, students) for global audit
+      const users = await User.find({}).limit(200); 
       let activities: any[] = [];
 
       users.forEach(user => {
@@ -773,7 +792,12 @@ export const resolvers = {
         }
       });
 
-      return activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 10);
+      // Sort by timestamp descending
+      return activities.sort((a, b) => {
+        const timeA = new Date(a.timestamp).getTime();
+        const timeB = new Date(b.timestamp).getTime();
+        return timeB - timeA;
+      }).slice(0, 100);
     },
     questions: async (_: any, { courseId, lessonId, moduleNumber, lessonNumber }: any) => {
       console.log('--- questions query: courseId:', courseId, 'lessonId:', lessonId, 'moduleNumber:', moduleNumber, 'lessonNumber:', lessonNumber);
@@ -1133,7 +1157,7 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) throw new Error('Not authorized');
 
       let targetCreatedBy = context.user.role !== 'super_admin' ? context.user.id : createdBy;
-      const userFilter = targetCreatedBy ? { createdBy: targetCreatedBy } : {};
+      const userFilter = targetCreatedBy ? { _id: { $in: await getAdminStudentIds(targetCreatedBy) } } : {};
       const courseFilter = targetCreatedBy ? { $or: [{ createdBy: targetCreatedBy }, { instructor: targetCreatedBy }], isDeleted: false } : { isDeleted: false };
       const programFilter = targetCreatedBy ? { createdBy: targetCreatedBy, isDeleted: false } : { isDeleted: false };
 
@@ -1280,7 +1304,7 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) throw new Error('Not authorized');
 
       let targetCreatedBy = context.user.role !== 'super_admin' ? context.user.id : createdBy;
-      const userFilter = targetCreatedBy ? { createdBy: targetCreatedBy, isDeleted: { $ne: true } } : { isDeleted: { $ne: true } };
+      const userFilter = targetCreatedBy ? { _id: { $in: await getAdminStudentIds(targetCreatedBy) }, isDeleted: { $ne: true } } : { isDeleted: { $ne: true } };
       const courseFilter = targetCreatedBy ? { $or: [{ createdBy: targetCreatedBy }, { instructor: targetCreatedBy }], isDeleted: false } : { isDeleted: false };
 
       const adminOwnedCourses = targetCreatedBy ? await Course.find(courseFilter).distinct('_id') : null;
@@ -1336,16 +1360,26 @@ export const resolvers = {
           matchStage.courseId = { $in: adminOwnedCourses };
         }
 
-        const result = await Payment.aggregate([
-          { $match: matchStage },
-          {
-            $group: {
-              _id: null,
-              totalAmount: { $sum: "$amount" }
-            }
-          }
+        const [standardResult, internshipResult] = await Promise.all([
+          Payment.aggregate([
+            { $match: matchStage },
+            { $group: { _id: null, totalAmount: { $sum: "$amount" } } }
+          ]),
+          InternshipPayment.aggregate([
+            { 
+              $match: {
+                status: 'paid',
+                isDeleted: false,
+                createdAt: matchStage.createdAt,
+                ...(adminOwnedCourses ? { internshipProgramId: { $in: await InternshipProgram.find({ createdBy: targetCreatedBy }).distinct('_id') } } : {})
+              }
+            },
+            { $group: { _id: null, totalAmount: { $sum: "$amount" } } }
+          ])
         ]);
-        return { label: m.label, value: result[0]?.totalAmount || 0 };
+        
+        const totalMonthRevenue = (standardResult[0]?.totalAmount || 0) + (internshipResult[0]?.totalAmount || 0);
+        return { label: m.label, value: totalMonthRevenue };
       }));
 
       // 5. Internship Stats
@@ -1597,7 +1631,7 @@ export const resolvers = {
         secondaryColor: '#B08D2A',
         accentColor: '#D4AF37',
         logoUrl: '',
-        siteName: 'IHUB',
+        siteName: 'MultiCourses',
         portalTitle: 'Academy Hub',
         maintenanceMode: false
       };
@@ -1802,10 +1836,11 @@ export const resolvers = {
         .populate('milestoneId')
         .sort({ createdAt: -1 });
     },
-    internshipTimeLogs: async (_: any, { teamId, userId }: { teamId: string, userId?: string }, context: any) => {
+    internshipTimeLogs: async (_: any, { teamId, userId }: { teamId?: string, userId?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
-      const query: any = { teamId, isDeleted: false };
+      const query: any = { isDeleted: false };
+      if (teamId) query.teamId = teamId;
 
       if (context.user.role === 'admin') {
         // Admins can only see logs if they own the program associated with the team
@@ -2383,7 +2418,7 @@ export const resolvers = {
 
       // Determine if all answers are auto-gradeable (MCQ only, or AI grading ran for all open questions)
       const hasOpenQuestions = targetLesson.assignmentQuestions.some((q: any) => q.type === 'open');
-      const autoStatus = gradePercent >= 50 ? 'approved' : 'reviewed';
+      const autoStatus = gradePercent >= 50 ? 'approved' : 'failed';
 
       const submissionData = {
         userId: context.user.id,
@@ -3170,8 +3205,10 @@ export const resolvers = {
             lessonId: targetLessonId
           });
 
-          if (!submission || submission.status !== 'reviewed') {
-            throw new Error('You must submit the assignment and wait for trainer approval before completing this unit.');
+          const isAccepted = submission && (submission.status === 'approved' || submission.status === 'reviewed' || submission.status === 'failed');
+          
+          if (!submission || !isAccepted) {
+            throw new Error('You must submit the assignment and achieve a passing grade before completing this unit.');
           }
 
           if (submission.grade !== undefined && submission.grade < 70) {
@@ -3548,6 +3585,15 @@ export const resolvers = {
       });
       await user.save();
 
+      // Log Registration Activity
+      const now = new Date().toISOString();
+      (user as any).activityLog.push({ 
+        action: 'REGISTER', 
+        details: 'User created a new account', 
+        timestamp: now 
+      });
+      await user.save();
+
       // Trigger Welcome Email
       try {
         await sendWelcomeEmail(user.email, user.username, user.role);
@@ -3601,6 +3647,15 @@ export const resolvers = {
       console.log(`[Login] Current isFirst for ${user.username}: ${user.isFirst}`);
       await user.save();
       console.log(`[Login] Saved isFirst for ${user.username}: ${user.isFirst}`);
+
+      // Log Login Activity
+      const now = new Date().toISOString();
+      (user as any).activityLog.push({ 
+        action: 'LOGIN', 
+        details: 'User logged in via email', 
+        timestamp: now 
+      });
+      await user.save();
 
       const token = jwt.sign(
         { id: user.id, email: user.email, username: user.username, role: (user as any).role },
@@ -3659,9 +3714,16 @@ export const resolvers = {
         // Update Presence
         (dbUser as any).isOnline = true;
         (dbUser as any).lastActive = new Date();
-        console.log(`[GoogleLogin] Current isFirst for ${dbUser.username}: ${dbUser.isFirst}`);
+        
+        // Log Login Activity
+        const now = new Date().toISOString();
+        (dbUser as any).activityLog.push({ 
+          action: 'LOGIN', 
+          details: 'User logged in via Google', 
+          timestamp: now 
+        });
+        
         await dbUser.save();
-        console.log(`[GoogleLogin] Saved isFirst for ${dbUser.username}: ${dbUser.isFirst}`);
 
         const jwtToken = jwt.sign(
           { id: dbUser.id, email: dbUser.email, username: dbUser.username, role: (dbUser as any).role },
@@ -3956,7 +4018,7 @@ export const resolvers = {
 
       const success = await sendEmail({
         to,
-        subject: 'Test Email from IHUB Academy',
+        subject: 'Test Email from MultiCourses Academy',
         html: `
           <h1>SMTP Configuration Test</h1>
           <p>This is a test email to verify your SMTP settings (Zoho/Gmail/etc.) are working correctly with your App Password.</p>
@@ -3977,7 +4039,7 @@ export const resolvers = {
       if (!user) throw new Error('User not found');
 
       const secret = speakeasy.generateSecret({
-        name: `IHUB Academy (${user.email})`
+        name: `MultiCourses Academy (${user.email})`
       });
 
       user.twoFactorSecret = secret.base32;
@@ -5460,7 +5522,7 @@ export const resolvers = {
             secondaryColor: '#B08D2A',
             accentColor: '#D4AF37',
             logoUrl: '',
-            siteName: 'IHUB',
+            siteName: 'MultiCourses',
             portalTitle: 'Academy Hub',
             maintenanceMode: false
           }
@@ -6901,6 +6963,11 @@ export const resolvers = {
       if (parent.enrolledCourses && parent.enrolledCourses.length > 0 && (parent.enrolledCourses[0] as any).title) return parent.enrolledCourses;
       const user = await User.findById(parent.id || parent._id).populate('enrolledCourses');
       return user?.enrolledCourses || [];
+    },
+    completedCourses: async (parent: any) => {
+      if (parent.completedCourses && parent.completedCourses.length > 0 && (parent.completedCourses[0] as any).title) return parent.completedCourses;
+      const user = await User.findById(parent.id || parent._id).populate('completedCourses');
+      return user?.completedCourses || [];
     },
     badges: async (parent: any) => {
       if (parent.badges && parent.badges.length > 0 && (parent.badges[0] as any).badgeId && (parent.badges[0] as any).badgeId.title) return parent.badges;

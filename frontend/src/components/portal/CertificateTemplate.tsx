@@ -114,7 +114,7 @@ export const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
             verify.ihub.com/{credentialId}
           </div>
           <div>
-            {schoolName ? schoolName.toUpperCase() : "IHUB ACADEMY"} • KIGALI, RWANDA
+            {schoolName ? schoolName.toUpperCase() : "MULTICOURSES ACADEMY"} • KIGALI, RWANDA
           </div>
         </div>
       </div>

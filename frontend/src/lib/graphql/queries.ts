@@ -83,8 +83,25 @@ export const GET_USERS = gql`
         school
         createdAt
         isExternal
+        isDeleted
         enrolledCourses {
           id
+          title
+          thumbnail
+          level
+        }
+        completedCourses {
+          id
+          title
+        }
+        completedLessons {
+          courseId
+          lessonId
+        }
+        courseProgress {
+          courseId
+          lessonId
+          updatedAt
         }
         activityLog {
           action
@@ -260,6 +277,7 @@ export const GET_COURSES = gql`
         }
         studentsEnrolled {
           id
+          username
         }
         createdAt
         applicationQuestions {

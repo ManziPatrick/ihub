@@ -14,7 +14,13 @@ import {
   Activity,
   Server,
   Zap,
+  Star,
+  ShieldCheck,
+  Trophy,
+  Book,
 } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   AreaChart, 
   Area, 
@@ -35,17 +41,31 @@ import { format, isValid } from "date-fns";
 const COLORS = ['#D4AF37', '#3B82F6', '#10B981', '#F59E0B', '#6366F1', '#EC4899'];
 
 import { useQuery } from "@apollo/client/react";
-import { GET_ANALYTICS, GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY } from "@/lib/graphql/queries";
+import { GET_ANALYTICS, GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY, GET_TOP_STUDENTS, GET_USERS, GET_COURSES } from "@/lib/graphql/queries";
 
 
 export default function SuperAdminAnalytics() {
   const { data: analyticsData, loading: analyticsLoading } = useQuery(GET_ANALYTICS);
   const { data: dashboardData } = useQuery(GET_ADMIN_DASHBOARD_DATA);
   const { data: activityData } = useQuery(GET_RECENT_ACTIVITY, { pollInterval: 15000 });
+  const { data: topStudentsData } = useQuery(GET_TOP_STUDENTS, { variables: { limit: 5 } });
+  const { data: usersData } = useQuery(GET_USERS, { variables: { limit: 100 } });
+  const { data: coursesData } = useQuery(GET_COURSES, { variables: { limit: 50 } });
 
   const analytics = (analyticsData as any)?.analytics;
   const liveStats = (dashboardData as any)?.adminDashboardData?.stats || { totalRevenue: 0, totalUsers: 0, totalCourses: 0 };
   const recentActivityLogs = (activityData as any)?.recentActivity || [];
+  const topStudents = (topStudentsData as any)?.getTopStudents || [];
+  
+  // Try to find the best admins by checking enrolled courses if possible, otherwise just get admins
+  const allUsers = (usersData as any)?.users?.items || [];
+  const bestAdmins = allUsers
+    .filter((u: any) => u.role === 'admin' || u.role === 'super_admin')
+    .sort((a: any, b: any) => (b.enrolledCourses?.length || 0) - (a.enrolledCourses?.length || 0))
+    .slice(0, 5);
+    
+  const allCourses = (coursesData as any)?.courses?.items || [];
+  const topCourses = [...allCourses].sort((a: any, b: any) => (b.studentsEnrolled?.length || 0) - (a.studentsEnrolled?.length || 0)).slice(0, 5);
 
   const monthlyGrowth = analytics ? analytics.userGrowth.map((ug: any, i: number) => ({
     month: ug.label,
@@ -207,6 +227,140 @@ export default function SuperAdminAnalytics() {
             </Card>
           </motion.div>
         </div>
+
+        {/* Top Performers */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+            <Card className="border-border/50 h-full">
+              <CardHeader>
+                <CardTitle className="text-lg font-heading flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-accent" />
+                  Top Performing Admins
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {bestAdmins.map((admin: any, index: number) => (
+                    <div key={admin.id} className="flex items-center justify-between p-3 bg-background/50 rounded-lg border border-border/30">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarFallback className="bg-accent/20 text-accent text-xs">
+                            {admin.username.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-bold text-sm text-foreground">{admin.username}</p>
+                          <p className="text-xs text-muted-foreground">{admin.email}</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="bg-accent/10 text-accent border-accent/20">
+                        {admin.role}
+                      </Badge>
+                    </div>
+                  ))}
+                  {bestAdmins.length === 0 && (
+                    <div className="text-center py-4 text-sm text-muted-foreground">No admin data available.</div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}>
+            <Card className="border-border/50 h-full">
+              <CardHeader>
+                <CardTitle className="text-lg font-heading flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-yellow-500" />
+                  Top Students
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {topStudents.map((student: any, index: number) => (
+                    <div key={student.id} className="flex items-center justify-between p-3 bg-background/50 rounded-lg border border-border/30">
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 text-center font-bold text-muted-foreground">#{index + 1}</div>
+                        <Avatar>
+                          <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                            {student.username.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-bold text-sm text-foreground">{student.username}</p>
+                          <p className="text-xs text-muted-foreground">{student.xp || 0} XP</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-yellow-500/20 text-yellow-600 hover:bg-yellow-500/30">
+                        Level {student.level || 1}
+                      </Badge>
+                    </div>
+                  ))}
+                  {topStudents.length === 0 && (
+                    <div className="text-center py-4 text-sm text-muted-foreground">No student data available.</div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+        
+        {/* Top Courses */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-lg font-heading flex items-center gap-2">
+                <Book className="w-5 h-5 text-accent" />
+                Top Enrolled Courses & Owner Statistics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid lg:grid-cols-2 gap-4">
+                {topCourses.map((course: any, idx: number) => (
+                  <div key={course.id} className="flex flex-col gap-3 p-4 bg-background/50 rounded-lg border border-border/30">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded bg-accent/10 flex items-center justify-center text-accent">
+                          <Book className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-foreground">{course.title}</p>
+                          <p className="text-xs text-muted-foreground">Owner: {course.instructor?.username || 'System'}</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">{course.level || 'Beginner'}</Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between border-t border-border/50 pt-2 mt-1">
+                      <div className="text-xs text-muted-foreground">
+                        <span className="font-bold text-foreground">{course.studentsEnrolled?.length || 0}</span> Students Enrolled
+                      </div>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-6 text-[10px] uppercase">View List</Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-3 max-h-64 overflow-y-auto" align="end">
+                          <h4 className="font-bold text-xs mb-2">Enrolled Students</h4>
+                          {course.studentsEnrolled && course.studentsEnrolled.length > 0 ? (
+                            <ul className="space-y-1">
+                              {course.studentsEnrolled.map((student: any) => (
+                                <li key={student.id} className="text-sm py-1 border-b border-border/20 last:border-0 flex items-center gap-2">
+                                  <div className="w-2 h-2 rounded-full bg-accent/50" />
+                                  {student.username || 'Unknown User'}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-xs text-muted-foreground italic">No students enrolled yet.</p>
+                          )}
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Recent Admin Activity */}
         <motion.div

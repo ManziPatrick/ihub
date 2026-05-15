@@ -58,7 +58,9 @@ export default function SystemAuditReport() {
   });
   const { data: timeData, loading: timeLoading } = useQuery(GET_INTERNSHIP_TIME_LOGS);
   const { data: analyticsData, loading: analyticsLoading } = useQuery(GET_ANALYTICS);
-  const { data: usersData, loading: usersLoading } = useQuery(GET_USERS);
+  const { data: usersData, loading: usersLoading } = useQuery(GET_USERS, {
+    variables: { limit: 1000 }
+  });
 
   const activities = (activityData as any)?.recentActivity || [];
   const timeLogs = (timeData as any)?.internshipTimeLogs || [];
@@ -68,8 +70,22 @@ export default function SystemAuditReport() {
   // Aggregated Stats
   const totalMinutes = timeLogs.reduce((acc: number, log: any) => acc + log.minutes, 0);
   const totalHours = (totalMinutes / 60).toFixed(1);
-  const loginActions = activities.filter((a: any) => a.action.toUpperCase().includes('LOGIN'));
+  // Match multiple variants of login or session start
+  const loginActions = activities.filter((a: any) => 
+    a.action.toUpperCase().includes('LOGIN') || 
+    a.action.toUpperCase().includes('AUTH') ||
+    a.action.toUpperCase().includes('SESSION') ||
+    a.action.toUpperCase().includes('STARTED') ||
+    a.action.toUpperCase().includes('REGISTER')
+  );
   
+  const parseSafeDate = (timestamp: any) => {
+    if (!timestamp) return new Date();
+    // Try parsing as ISO string or number
+    const date = new Date(!isNaN(Number(timestamp)) ? Number(timestamp) : timestamp);
+    return isValid(date) ? date : new Date();
+  };
+
   // Login Activity Trend (Last 7 Days)
   const loginTrendData = useMemo(() => {
     const days = Array.from({ length: 7 }, (_, i) => subDays(new Date(), i)).reverse();
@@ -98,12 +114,7 @@ export default function SystemAuditReport() {
     });
   }, [activities]);
 
-  const parseSafeDate = (timestamp: any) => {
-    if (!timestamp) return new Date();
-    // Try parsing as ISO string or number
-    const date = new Date(!isNaN(Number(timestamp)) ? Number(timestamp) : timestamp);
-    return isValid(date) ? date : new Date();
-  };
+
 
   const exportReport = () => {
     const reportData = allUsers.map(u => {
@@ -327,16 +338,23 @@ export default function SystemAuditReport() {
                                 {u.username.charAt(0)}
                               </div>
                               <div>
-                                <h4 className="font-bold text-sm text-foreground">{u.username}</h4>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-bold text-sm text-foreground">{u.username}</h4>
+                                  {u.isDeleted && <Badge variant="destructive" className="text-[9px] h-4 px-1 py-0 leading-none">DELETED</Badge>}
+                                </div>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{u.role}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-8">
                               <div className="text-right">
+                                <p className="text-xs font-black text-foreground">{u.enrolledCourses?.length || 0}</p>
+                                <p className="text-[9px] text-muted-foreground uppercase">Courses</p>
+                              </div>
+                              <div className="text-right">
                                 <p className="text-xs font-black text-foreground">{userActions.length}</p>
                                 <p className="text-[9px] text-muted-foreground uppercase">Actions</p>
                               </div>
-                              <div className="text-right">
+                              <div className="text-right hidden sm:block">
                                 <p className="text-xs font-black text-gold">{userHours}h</p>
                                 <p className="text-[9px] text-muted-foreground uppercase">Log Time</p>
                               </div>

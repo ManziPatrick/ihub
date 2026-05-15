@@ -22,12 +22,12 @@ async function runTest() {
 
   const result = await sendEmail({
     to: 'munyeshurimanzi@gmail.com',
-    subject: 'IHUB Academy - SMTP Validation',
+    subject: 'MultiCourses Academy - SMTP Validation',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
         <h1 style="color: #EAB308;">SMTP Configuration Verified</h1>
         <p>Hello,</p>
-        <p>This is a test email from the <strong>IHUB Academy</strong> platform.</p>
+        <p>This is a test email from the <strong>MultiCourses Academy</strong> platform.</p>
         <p>The SMTP settings for <strong>Zoho Mail</strong> have been successfully configured and verified using your App Password.</p>
         <hr/>
         <p style="font-size: 12px; color: #666;">Sent at: ${new Date().toLocaleString()}</p>

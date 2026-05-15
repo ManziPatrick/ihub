@@ -25,7 +25,7 @@ const getEmailConfig = async (): Promise<EmailConfig> => {
     let portStr = portConfig ? String(portConfig.value) : process.env.SMTP_PORT || '587';
     let user = senderConfig ? String(senderConfig.value) : process.env.SMTP_USER;
     let pass = passConfig ? String(passConfig.value) : process.env.SMTP_PASS;
-    let siteName = siteNameConfig ? String(siteNameConfig.value) : "IHUB Academy";
+    let siteName = siteNameConfig ? String(siteNameConfig.value) : "MultiCourses Academy";
     
     // Clear quotes if present from JSON strings
     host = host.replace(/^"|"$/g, '');
@@ -43,8 +43,8 @@ const getEmailConfig = async (): Promise<EmailConfig> => {
       port: parseInt(process.env.SMTP_PORT || '587'),
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
-      from: process.env.EMAIL_FROM || 'IHUB Academy <noreply@ihub.com>',
-      siteName: "IHUB Academy"
+      from: process.env.EMAIL_FROM || 'MultiCourses Academy <noreply@ihub.com>',
+      siteName: "MultiCourses Academy"
     };
   }
 };
@@ -116,13 +116,13 @@ export const sendWelcomeEmail = async (
     <body>
       <div class="container">
         <div class="header">
-          <h1>Welcome to IHUB Academy!</h1>
+          <h1>Welcome to MultiCourses Academy!</h1>
         </div>
         <div class="content">
           <h2>Hi ${username},</h2>
           <p>We're thrilled to have you join our community of innovators and builders!</p>
           <p>Your account has been successfully created as a <strong>${role.charAt(0).toUpperCase() + role.slice(1)}</strong>.</p>
-          <p>At IHUB Academy, we focus on real-world engineering skills that matter. You can now access your dashboard to start your learning journey.</p>
+          <p>At MultiCourses Academy, we focus on real-world engineering skills that matter. You can now access your dashboard to start your learning journey.</p>
           <a href="${process.env.CLIENT_ORIGIN}/login" class="btn">Access My Dashboard</a>
         </div>
         <div class="footer">
@@ -135,7 +135,7 @@ export const sendWelcomeEmail = async (
 
   return sendEmail({
     to: email,
-    subject: `Welcome to IHUB Academy, ${username}!`,
+    subject: `Welcome to MultiCourses Academy, ${username}!`,
     html
   });
 };
@@ -273,7 +273,7 @@ export const sendApplicationConfirmation = async (
         </div>
         <div class="content">
           <h2>Hi ${studentName},</h2>
-          <p>Thank you for applying to the <strong>${programTitle}</strong> internship program at IHUB Academy!</p>
+          <p>Thank you for applying to the <strong>${programTitle}</strong> internship program at MultiCourses Academy!</p>
           <p>Your application has been received and is now under review. Here's what happens next:</p>
           <ol>
             <li>Our team will review your application within 3-5 business days</li>
@@ -584,7 +584,7 @@ export const sendPasswordResetEmail = async (
         </div>
         <div class="content">
           <h2>Hello,</h2>
-          <p>We received a request to reset the password for your IHUB Academy account.</p>
+          <p>We received a request to reset the password for your MultiCourses Academy account.</p>
           <p>If you made this request, please click the button below to choose a new password:</p>
           
           <div style="text-align: center;">
@@ -610,7 +610,7 @@ export const sendPasswordResetEmail = async (
 
   return sendEmail({
     to: email,
-    subject: 'Reset Your Password - IHUB Academy',
+    subject: 'Reset Your Password - MultiCourses Academy',
     html
   });
 };
@@ -649,7 +649,7 @@ export const sendLoginOTPEmail = async (email: string, code: string): Promise<bo
     <body>
       <div class="container">
         <div class="header">
-          <h1 style="margin: 0; font-size: 24px;">IHUB ACADEMY</h1>
+          <h1 style="margin: 0; font-size: 24px;">MULTICOURSES ACADEMY</h1>
         </div>
         <div class="content">
           <h2 style="margin-top: 0; color: #1a1a1a;">Verification Code</h2>

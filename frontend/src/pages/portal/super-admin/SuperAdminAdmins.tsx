@@ -14,6 +14,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -32,6 +38,10 @@ import {
   XCircle,
   Key,
   Loader2,
+  Eye,
+  BookOpen,
+  Users,
+  Briefcase,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -40,7 +50,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_USERS } from "@/lib/graphql/queries";
+import { GET_USERS, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
 import { CREATE_USER, DELETE_USER, UPDATE_USER } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 
@@ -53,6 +63,88 @@ const permissionsList = [
   { key: "students", label: "Student Management" },
 ];
 
+function AdminPerformanceStats({ adminId }: { adminId: string }) {
+  const { data, loading, error } = useQuery(GET_ADMIN_DASHBOARD_DATA, {
+    variables: { createdBy: adminId },
+    skip: !adminId
+  });
+
+  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-accent" /></div>;
+  if (error) return <div className="p-4 text-destructive">Failed to load performance data.</div>;
+
+  const stats = (data as any)?.adminDashboardData?.stats;
+
+  return (
+    <div className="mt-6 space-y-6">
+      <div className="grid grid-cols-2 gap-4">
+        <Card className="border-border/50">
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+            <BookOpen className="w-6 h-6 text-accent mb-2" />
+            <p className="text-2xl font-bold">{stats?.totalCourses || 0}</p>
+            <p className="text-xs text-muted-foreground">Courses Created</p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50">
+          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+            <Users className="w-6 h-6 text-accent mb-2" />
+            <p className="text-2xl font-bold">{stats?.totalStudents || 0}</p>
+            <p className="text-xs text-muted-foreground">Total Students</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-border/50 bg-accent/5">
+        <CardContent className="p-4">
+          <h4 className="font-semibold text-accent mb-2 flex items-center gap-2">
+            <Briefcase className="w-4 h-4" /> Internship Tracking
+          </h4>
+          <p className="text-sm text-muted-foreground mb-4">
+            Total internships managed and tracked by this admin.
+          </p>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="flex justify-between border-b border-border/50 pb-1">
+              <span>Managed Programs</span>
+              <span className="font-bold">{stats?.totalCourses || 0 /* Placeholder if internships not isolated */}</span>
+            </div>
+            <div className="flex justify-between border-b border-border/50 pb-1">
+              <span>Active Students</span>
+              <span className="font-bold">{stats?.totalStudents || 0}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {(data as any)?.adminDashboardData?.coursePerformance && (data as any).adminDashboardData.coursePerformance.length > 0 && (
+        <div className="space-y-3">
+          <h4 className="font-semibold border-b border-border/50 pb-2">Admin Course & Program Details</h4>
+          <div className="grid gap-3">
+            {(data as any).adminDashboardData.coursePerformance.map((course: any, idx: number) => (
+              <div key={idx} className="flex flex-col gap-2 p-3 bg-muted/20 rounded-xl border border-border/50">
+                <div className="flex items-center justify-between">
+                  <h5 className="font-bold text-sm leading-tight text-foreground">{course.courseTitle}</h5>
+                  <Badge variant="outline" className="text-[10px] uppercase text-accent border-accent/20 bg-accent/10">
+                    {course.studentCount} Enrolled
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mt-1">
+                  <div className="flex justify-between">
+                    <span>Avg Completion:</span>
+                    <span className="font-bold text-foreground">{course.avgCompletion}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Revenue Generated:</span>
+                    <span className="font-bold text-green-500">{course.revenue?.toLocaleString() || 0} RWF</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SuperAdminAdmins() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -63,6 +155,7 @@ export default function SuperAdminAdmins() {
     role: "admin",
     permissions: [] as string[]
   });
+  const [selectedAdminId, setSelectedAdminId] = useState<string | null>(null);
 
   const { data, loading, refetch } = useQuery(GET_USERS);
   const [createUserMutation] = useMutation(CREATE_USER);
@@ -252,6 +345,9 @@ export default function SuperAdminAdmins() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setSelectedAdminId(admin.id)}>
+                            <Eye className="w-4 h-4 mr-2" /> View Performance Stats
+                          </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Edit className="w-4 h-4 mr-2" /> Edit
                           </DropdownMenuItem>
@@ -306,6 +402,15 @@ export default function SuperAdminAdmins() {
           )}
         </motion.div>
       </div>
+
+      <Sheet open={!!selectedAdminId} onOpenChange={(open) => !open && setSelectedAdminId(null)}>
+        <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Admin Performance & Tracking</SheetTitle>
+          </SheetHeader>
+          {selectedAdminId && <AdminPerformanceStats adminId={selectedAdminId} />}
+        </SheetContent>
+      </Sheet>
     </PortalLayout>
   );
 }

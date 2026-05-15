@@ -32,8 +32,7 @@ export default function ApplicationReview() {
   const pageSize = 10;
   
   const { data, loading, error, refetch } = useQuery(GET_INTERNSHIP_APPLICATIONS, {
-    variables: { status: filter, page: currentPage, limit: pageSize },
-    pollInterval: 30000 // auto-refresh every 30 seconds
+    variables: { status: filter, page: currentPage, limit: pageSize }
   });
   
   const [reviewApplication] = useMutation(REVIEW_INTERNSHIP_APPLICATION, {

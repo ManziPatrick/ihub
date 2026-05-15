@@ -82,8 +82,8 @@ const Blog = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
-        <title>Blog | IHUB - Rwanda Tech Insights</title>
-        <meta name="description" content="Stay updated with the latest in Rwanda Tech, Future Technologies, and Business strategies from the experts at IHUB." />
+        <title>Blog | MultiCourses - Rwanda Tech Insights</title>
+        <meta name="description" content="Stay updated with the latest in Rwanda Tech, Future Technologies, and Business strategies from the experts at MultiCourses." />
       </Helmet>
       <Header />
       <main className="pt-20">

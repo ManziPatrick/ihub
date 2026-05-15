@@ -9,7 +9,7 @@ import testimonialJean from "@/assets/testimonial-jean.webp";
 const testimonials = [
   {
     id: 1,
-    quote: "IHUB helped me transition from learning to real-world development. The mentorship prepared me for industry work.",
+    quote: "MultiCourses helped me transition from learning to real-world development. The mentorship prepared me for industry work.",
     author: "Emmanuel R.",
     role: "Software Developer",
     company: "TechCorp Rwanda",
@@ -25,7 +25,7 @@ const testimonials = [
   },
   {
     id: 3,
-    quote: "From training to internship to full-time employment, IHUB's network opened doors I never knew existed.",
+    quote: "From training to internship to full-time employment, MultiCourses's network opened doors I never knew existed.",
     author: "Jean Paul N.",
     role: "IoT Engineer",
     company: "SmartFarm Solutions",

@@ -737,7 +737,7 @@ export const typeDefs = `#graphql
     lessonId: String!
     lesson: Lesson
     content: String # URL or Text (can be null for exams)
-    status: String! # 'pending', 'reviewed', 'revision_requested'
+    status: String! # 'pending', 'reviewed', 'revision_requested', 'approved', 'failed'
     grade: Int
     feedback: String
     answers: [AssignmentAnswer]
@@ -798,7 +798,8 @@ export const typeDefs = `#graphql
     myBookings(status: String): [Booking]
     getAllStudents: [User]
     getAllTrainers: [User]
-
+    getTopStudents(courseId: ID, limit: Int): [User]
+    getAnalyticsExport: String
     project(id: ID!): Project
     
     # Certificates
@@ -807,10 +808,7 @@ export const typeDefs = `#graphql
     certificate(id: ID!): Certificate
     getUserCertificates(userId: ID!): [Certificate]
     
-    # Admin Analytics & Exports
-    getTopStudents(courseId: ID, limit: Int): [User]
-    getAnalyticsExport: String
-    
+
     # Meetings
     getInternshipMeetings(teamId: ID, programId: ID, status: String): [InternshipMeeting]
     getMyInternshipMeetings: [InternshipMeeting]
@@ -1545,7 +1543,7 @@ export const typeDefs = `#graphql
     internshipTeams(programId: ID, page: Int, limit: Int): InternshipTeamResponse
     myInternshipTeam: InternshipTeam
     internshipSubmissions(teamId: ID): [InternshipSubmission]
-    internshipTimeLogs(teamId: ID!, userId: ID): [InternshipTimeLog]
+    internshipTimeLogs(teamId: ID, userId: ID): [InternshipTimeLog]
     internshipActivityLogs(programId: ID, targetType: String, targetId: ID, page: Int, limit: Int): InternshipActivityLogResponse
     
     # Sprint & Task Board Queries

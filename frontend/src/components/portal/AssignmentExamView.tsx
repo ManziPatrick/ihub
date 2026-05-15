@@ -19,6 +19,7 @@ import {
   EyeOff,
   X,
   Lock,
+  RefreshCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -145,7 +146,7 @@ export function AssignmentExamView({
   const [answers, setAnswers] = useState<Record<string, string>>(savedState?.answers || {});
   const answersRef = useRef<Record<string, string>>(savedState?.answers || {});
   const [isSubmitted, setIsSubmitted] = useState(savedState?.isSubmitted || false);
-  const [gradeResult, setGradeResult] = useState<{ grade: number; totalScore: number; status: string } | null>(savedState?.gradeResult || null);
+  const [gradeResult, setGradeResult] = useState<{ grade: number; totalScore: number; status: string; answers?: any[] } | null>(savedState?.gradeResult || null);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(savedState?.timeRemaining ?? null);
   const [isSecureStarted, setIsSecureStarted] = useState(savedState?.isSecureStarted || false);
   const [violationCount, setViolationCount] = useState(savedState?.violationCount || 0);
@@ -221,7 +222,8 @@ export function AssignmentExamView({
         setGradeResult({
           grade: result.grade ?? 0,
           totalScore: result.totalScore ?? 0,
-          status: result.status ?? 'reviewed'
+          status: result.status ?? 'reviewed',
+          answers: result.answers || []
         });
       }
       setIsSubmitted(true);
@@ -351,7 +353,7 @@ export function AssignmentExamView({
               ? 'bg-green-500/10 border-green-500/20 text-green-400'
               : 'bg-orange-500/10 border-orange-500/20 text-orange-400'
               }`}>
-              {passed ? '✓ Auto-Graded & Approved' : '⏳ Submitted for Review'}
+              {passed ? '✓ Auto-Graded & Passed' : '❌ Auto-Graded & Failed'}
             </div>
           ) : null}
           <p className="text-muted-foreground text-xs sm:text-sm max-w-sm mx-auto leading-relaxed">
@@ -362,17 +364,86 @@ export function AssignmentExamView({
                 : 'Your responses have been securely transmitted and are being reviewed.'}
           </p>
         </div>
+        
+        {/* Graded Answers Summary */}
+        {gradeResult?.answers && gradeResult.answers.length > 0 && (
+          <div className="max-w-xl mx-auto w-full space-y-4 pt-4 border-t border-white/5">
+            <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-4">
+              Detailed Assessment Breakdown
+            </h4>
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+              {questions.map((q, i) => {
+                const qid = q._id || q.id;
+                const userAns = gradeResult.answers?.find(a => a.questionId === qid);
+                const isCorrect = userAns ? userAns.score > 0 : false;
+                
+                return (
+                  <div key={i} className={`text-left p-4 rounded-2xl border ${
+                    isCorrect ? 'bg-green-500/5 border-green-500/10' : 'bg-red-500/5 border-red-500/10'
+                  }`}>
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <p className="text-xs font-bold text-white leading-relaxed flex-1">
+                        <span className="text-white/40 mr-2">Q{i+1}:</span>
+                        {q.questionText}
+                      </p>
+                      {isCorrect ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                      )}
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <p className={`text-[10px] font-bold ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                        Your Answer: {q.type === 'mcq' ? q.options?.[parseInt(userAns?.answerText)] || userAns?.answerText : userAns?.answerText || "No answer"}
+                      </p>
+                      {!isCorrect && userAns?.aiFeedback && (
+                        <p className="text-[10px] text-white/50 bg-white/5 p-2 rounded-lg italic">
+                          💡 {userAns.aiFeedback}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col items-center gap-3">
           <Button
             onClick={onComplete}
             className={`w-full sm:w-auto h-11 sm:h-12 px-8 rounded-xl font-black text-sm ${passed || grade === null
-              ? 'bg-amber-500 hover:bg-amber-600'
+              ? 'bg-indigo-600 hover:bg-indigo-700'
               : 'bg-muted hover:bg-muted/80'
-              } shadow-lg`}
+              } shadow-lg shadow-indigo-500/20`}
           >
             {passed ? '🏆 Return to Course' : 'Return to Course'}
           </Button>
+
+          {/* Improved Retake Button */}
+          <Button 
+            variant={passed ? "outline" : "default"}
+            onClick={() => {
+              if (confirm("Are you sure you want to retake the exam? Your previous score will be overwritten.")) {
+                setIsSubmitted(false);
+                setGradeResult(null);
+                setCurrentPage(0);
+                setAnswers({});
+                answersRef.current = {};
+                setIsSecureStarted(false);
+              }
+            }} 
+            className={`w-full sm:w-auto h-11 sm:h-12 px-8 rounded-xl font-black text-sm ${
+              passed 
+                ? 'border-dashed border-white/20 hover:bg-white/5' 
+                : 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20'
+            }`}
+          >
+            <RefreshCcw className="w-3.5 h-3.5 mr-2" /> 
+            {passed ? 'RETAKE TO IMPROVE' : 'TRY AGAIN (RETAKE)'}
+          </Button>
+
           <p className="text-[9px] sm:text-[10px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-1.5">
             <History className="w-2.5 h-2.5" /> Grade saved in your gradebook
           </p>

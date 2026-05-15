@@ -66,7 +66,7 @@ const About = () => {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "IHUB",
+    "name": "MultiCourses",
     "url": "https://ihub.com",
     "logo": "https://ihub.com/logo.png",
     "founder": [
@@ -90,7 +90,7 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>About Us | IHUB - Leaders in Professional Growth</title>
+        <title>About Us | MultiCourses - Leaders in Professional Growth</title>
         <meta name="description" content="Meet with iHub" />
         <script type="application/ld+json">
           {JSON.stringify(jsonLd)}
@@ -145,7 +145,7 @@ const About = () => {
                 </h2>
                 <div className="space-y-4 text-muted-foreground leading-relaxed text-lg">
                   <p>
-                    We believe opportunity should not depend on location. IHUB uses online and
+                    We believe opportunity should not depend on location. MultiCourses uses online and
                     in-person delivery, remote collaboration, and affordable internet access to serve
                     learners beyond major cities.
                   </p>
@@ -174,7 +174,7 @@ const About = () => {
                     src={aboutImage}
                     srcSet={`${aboutImageMobile} 600w, ${aboutImage} 1280w`}
                     sizes="(max-width: 1024px) 100vw, 50vw"
-                    alt="IHUB training session"
+                    alt="MultiCourses training session"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                   />
@@ -195,7 +195,7 @@ const About = () => {
             <div className="max-w-4xl mx-auto text-center mb-16">
               <h2 className="font-heading text-2xl lg:text-4xl font-medium text-card-foreground mb-6">Our Story</h2>
               <p className="text-card-foreground/80 text-lg leading-relaxed">
-                IHUB was founded by <strong>Manzi Alain Patrick Munyeshuri</strong>, a Rwandan technologist driven
+                MultiCourses was founded by <strong>Manzi Alain Patrick Munyeshuri</strong>, a Rwandan technologist driven
                 by the need to close the gap between education and employability. He envisioned a platform where
                 learning is directly connected to real projects and mentorship.
               </p>

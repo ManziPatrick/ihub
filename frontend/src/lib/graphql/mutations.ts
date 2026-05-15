@@ -1461,8 +1461,15 @@ export const SUBMIT_ASSIGNMENT_EXAM = gql`
   mutation SubmitAssignmentExam($courseId: ID!, $lessonId: String!, $answers: [AssignmentAnswerInput!]!, $timeTaken: Int) {
     submitAssignmentExam(courseId: $courseId, lessonId: $lessonId, answers: $answers, timeTaken: $timeTaken) {
       id
+      grade
       totalScore
       status
+      answers {
+        questionId
+        answerText
+        score
+        aiFeedback
+      }
     }
   }
 `;

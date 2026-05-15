@@ -35,6 +35,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_USERS } from "@/lib/graphql/queries";
 import { DELETE_USER, UPDATE_USER } from "@/lib/graphql/mutations";
@@ -44,6 +50,7 @@ export default function SuperAdminUsers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const pageSize = 10;
 
   const { data, loading, refetch } = useQuery(GET_USERS, {
@@ -198,7 +205,7 @@ export default function SuperAdminUsers() {
                     </thead>
                     <tbody>
                         {filteredUsers.map((user: any) => (
-                        <tr key={user.id} className="border-b border-border/30 hover:bg-background/50">
+                        <tr key={user.id} onClick={() => setSelectedUser(user)} className="border-b border-border/30 hover:bg-background/50 cursor-pointer">
                             <td className="p-4">
                             <div className="flex items-center gap-3">
                                 <Avatar>
@@ -231,7 +238,7 @@ export default function SuperAdminUsers() {
                                 </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setSelectedUser(user)}>
                                     <Eye className="w-4 h-4 mr-2" /> View Profile
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
@@ -304,6 +311,111 @@ export default function SuperAdminUsers() {
           </Card>
         </motion.div>
       </div>
+
+      <Sheet open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
+        <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>User Profile</SheetTitle>
+          </SheetHeader>
+          {selectedUser && (
+            <div className="mt-6 space-y-6">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-16 h-16">
+                  <AvatarFallback className="bg-accent/20 text-accent text-xl">
+                    {getInitials(selectedUser.username)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-xl font-bold">{selectedUser.username}</h3>
+                  <p className="text-muted-foreground">{selectedUser.email}</p>
+                  <div className="flex gap-2 mt-2">
+                    <Badge className={roleColors[selectedUser.role]}>{selectedUser.role}</Badge>
+                    <Badge variant="outline">Joined: {new Date(Number(selectedUser.createdAt) || selectedUser.createdAt).toLocaleDateString()}</Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="border-border/50">
+                  <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                    <BookOpen className="w-6 h-6 text-accent mb-2" />
+                    <p className="text-2xl font-bold">{selectedUser.enrolledCourses?.length || 0}</p>
+                    <p className="text-xs text-muted-foreground">Enrolled Courses</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-border/50">
+                  <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                    <UserCheck className="w-6 h-6 text-accent mb-2" />
+                    <p className="text-2xl font-bold">{selectedUser.studentProfile?.completionPercentage || 0}%</p>
+                    <p className="text-xs text-muted-foreground">Profile Completion</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {selectedUser.studentProfile && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold border-b border-border/50 pb-2">Academic Profile</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-muted-foreground">School:</span> {selectedUser.studentProfile.school || 'N/A'}</div>
+                    <div><span className="text-muted-foreground">Education Level:</span> {selectedUser.studentProfile.educationLevel || 'N/A'}</div>
+                    <div><span className="text-muted-foreground">Field:</span> {selectedUser.studentProfile.fieldOfStudy || 'N/A'}</div>
+                    <div><span className="text-muted-foreground">City:</span> {selectedUser.studentProfile.city || 'N/A'}</div>
+                  </div>
+                </div>
+              )}
+
+              {selectedUser.enrolledCourses && selectedUser.enrolledCourses.length > 0 && (
+                <div className="space-y-3 mt-4">
+                  <h4 className="font-semibold border-b border-border/50 pb-2">Course Progress</h4>
+                  <div className="grid gap-3">
+                    {selectedUser.enrolledCourses.map((course: any) => {
+                      const courseLessons = selectedUser.completedLessons?.filter((l: any) => l.courseId === course.id) || [];
+                      const isCompleted = selectedUser.completedCourses?.some((c: any) => c.id === course.id);
+                      return (
+                        <div key={course.id} className="flex items-center gap-3 p-3 bg-muted/20 rounded-xl border border-border/50">
+                          {course.thumbnail ? (
+                            <img src={course.thumbnail} alt={course.title} className="w-12 h-12 rounded object-cover" />
+                          ) : (
+                            <div className="w-12 h-12 rounded bg-accent/20 flex items-center justify-center">
+                              <BookOpen className="w-5 h-5 text-accent" />
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <h5 className="font-bold text-sm leading-tight">{course.title}</h5>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="outline" className="text-[10px] uppercase">{course.level || 'Beginner'}</Badge>
+                              {isCompleted ? (
+                                <Badge className="text-[10px] bg-green-500/20 text-green-500 hover:bg-green-500/30">Completed</Badge>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground">{courseLessons.length} lessons completed</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {selectedUser.activityLog && selectedUser.activityLog.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold border-b border-border/50 pb-2">Recent Activity</h4>
+                  <div className="space-y-3">
+                    {selectedUser.activityLog.slice(0, 5).map((log: any, idx: number) => (
+                      <div key={idx} className="flex flex-col text-sm border-l-2 border-accent/50 pl-3 py-1">
+                        <span className="font-medium">{log.action}</span>
+                        <span className="text-xs text-muted-foreground">{log.details}</span>
+                        <span className="text-[10px] text-muted-foreground/60">{new Date(Number(log.timestamp) || log.timestamp).toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </PortalLayout>
   );
 }

@@ -1,8 +1,8 @@
 {
-    "title": "About IHUB | Professional Academy & Innovation Hub Rwanda",
+    "title": "About MultiCourses | Professional Academy & Innovation Hub Rwanda",
     "description": "Meet with iHub",
     "keywords": [
-        "IHUB",
+        "MultiCourses",
         "Rwanda Tech",
         "Software Development Kigali",
         "AI Training Africa",
@@ -10,11 +10,11 @@
         "Bizimana Eric",
         "Tech Careers Rwanda"
     ],
-    "author": "IHUB",
+    "author": "MultiCourses",
     "og": {
         "type": "website",
         "url": "https://ihub.com/about",
-        "title": "About IHUB - Building the Future of African Tech",
+        "title": "About MultiCourses - Building the Future of African Tech",
         "image": "https://ihub.com/og-about.jpg"
     }
 }
