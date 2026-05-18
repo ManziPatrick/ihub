@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import { Request, Response } from 'express';
 import { PaymentTransaction } from '../models/PaymentTransaction';
 import { createPesapalService } from '../services/pesapal.service';
+import { createFDIService } from '../services/fdi.service';
 import { User } from '../models/User';
 import { Course } from '../models/Course';
 import { Internship } from '../models/Internship';
@@ -40,6 +41,7 @@ interface PaymentInitiateBody {
 
 class PaymentController {
   private pesapalService = createPesapalService();
+  private fdiService = createFDIService();
 
   /**
    * Initiate a payment (CASHIN) from user
@@ -66,19 +68,76 @@ class PaymentController {
       // Build a smart itemTitle
       let smartTitle = description || 'Payment';
       if (allCourseIds.length > 0) {
-        const firstCourse = await Course.findById(allCourseIds[0]).select('title').lean() as any;
-        if (firstCourse) {
-          smartTitle = allCourseIds.length === 1 ? firstCourse.title : `${firstCourse.title} +${allCourseIds.length - 1} more`;
+        const coursesList = await Course.find({ _id: { $in: allCourseIds } }).select('title').lean() as any[];
+        if (coursesList.length > 0) {
+          smartTitle = coursesList.map((c: any) => c.title).join(", ");
         }
       } else if (allInternshipIds.length > 0) {
-        const firstProg = await InternshipProgram.findById(allInternshipIds[0]).select('title').lean() as any;
-        if (firstProg) {
-          smartTitle = allInternshipIds.length === 1 ? firstProg.title : `${firstProg.title} +${allInternshipIds.length - 1} more`;
+        const progsList = await InternshipProgram.find({ _id: { $in: allInternshipIds } }).select('title').lean() as any[];
+        if (progsList.length > 0) {
+          smartTitle = progsList.map((p: any) => p.title).join(", ");
         }
       }
 
-      // ─── PESAPAL INTEGRATION (FOR ALL METHODS: MTN, AIRTEL, CARD) ───
-      if (paymentMethod === 'pesapal' || paymentMethod === 'card' || paymentMethod === 'mtn' || paymentMethod === 'airtel') {
+      // ─── FDI INTEGRATION (FOR MTN, AIRTEL) ───
+      if (paymentMethod === 'mtn' || paymentMethod === 'airtel') {
+        const trxRef = `TRX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const channelId = paymentMethod === 'mtn' ? 'momo-mtn-rw' : 'momo-airtel-rw';
+        
+        if (!phoneNumber) {
+          return res.status(400).json({ error: 'Phone number is required for mobile money payment' });
+        }
+
+        const callbackUrl = `${process.env.BACKEND_URL || 'https://api.codemande.com'}/api/payments/fdi/callback`;
+
+        const response = await this.fdiService.pullFunds({
+          trxRef,
+          channelId,
+          msisdn: phoneNumber,
+          amount,
+          callback: callbackUrl,
+        });
+
+        const transaction = new PaymentTransaction({
+          userId,
+          type: 'CASHIN',
+          amount,
+          status: 'pending',
+          fdiRef: response.data?.gwRef || response.data?.trxRef,
+          paymentMethod: paymentMethod === 'mtn' ? 'mtn' : 'airtel',
+          phoneNumber,
+          description: smartTitle,
+          courseId: courseId || null,
+          courseIds: courseIds || [],
+          internshipProgramId: internshipProgramId || null,
+          internshipIds: internshipIds || [],
+        });
+        await transaction.save();
+
+        const pendingPayment = new Payment({
+          userId,
+          amount,
+          currency: 'RWF',
+          status: 'pending',
+          paymentMethod: paymentMethod === 'mtn' ? 'MTN Mobile Money' : 'Airtel Money',
+          transactionId: response.data?.gwRef || response.data?.trxRef || trxRef,
+          type: allCourseIds.length > 0 ? 'Course Enrollment' : 'Internship/Subscription',
+          itemTitle: smartTitle,
+          courseIds: allCourseIds,
+          internshipIds: allInternshipIds
+        });
+        await pendingPayment.save();
+
+        return res.status(202).json({
+          message: 'Mobile Money payment initiated',
+          data: response.data,
+          status: 'processing',
+          transactionId: transaction._id
+        });
+      }
+
+      // ─── PESAPAL INTEGRATION (FOR CARD OR EXPLICIT PESAPAL) ───
+      if (paymentMethod === 'pesapal' || paymentMethod === 'card') {
         const { firstName, lastName, email } = req.body;
         
         // Use provided email or fallback to logged-in user's email
@@ -228,46 +287,80 @@ class PaymentController {
         return res.json(this.formatTransactionResponse(transaction));
       }
 
+      // ─── FDI MOBILE MONEY STATUS CHECK ───
+      if (transaction.paymentMethod === 'fdi') {
         try {
-          console.log(`Checking status for Pesapal TrackingId: ${transaction.pesapalTrackingId}`);
-          const pesapalStatus = await this.pesapalService.getTransactionStatus(
-            transaction.pesapalTrackingId
-          );
+          console.log(`Checking status for FDI Ref: ${transaction.fdiRef}`);
+          const fdiStatus = await this.fdiService.getTransactionInfo(transaction.fdiRef || '');
           
-          if (!pesapalStatus || !pesapalStatus.payment_status_code) {
-            console.error('Incomplete status response from Pesapal');
-            return res.json(this.formatTransactionResponse(transaction));
-          }
-          
-          const normalizedStatus = this.pesapalService.normalizeStatus(
-            pesapalStatus.payment_status_code as any
-          );
+          if (fdiStatus && fdiStatus.status === 'success' && fdiStatus.data) {
+            const state = fdiStatus.data.trxStatus || fdiStatus.data.state;
+            const normalizedStatus = state === 'successful' ? 'successful' : (state === 'failed' ? 'failed' : 'pending');
 
-          console.log(`Pesapal API status for ${transaction.pesapalTrackingId}: ${pesapalStatus.payment_status_code} -> ${normalizedStatus}`);
-
-          if (normalizedStatus !== transaction.status) {
-            transaction.status = normalizedStatus as any;
-            
-            if (normalizedStatus === 'successful') {
-              await this.handleSuccessfulPayment(transaction);
+            if (normalizedStatus !== transaction.status) {
+              transaction.status = normalizedStatus as any;
+              
+              if (normalizedStatus === 'successful') {
+                await this.handleSuccessfulPayment(transaction);
+              }
+              
+              if (terminalStatuses.includes(normalizedStatus)) {
+                transaction.processedAt = new Date();
+              }
+              
+              await transaction.save();
             }
-            
-            if (terminalStatuses.includes(normalizedStatus)) {
-              transaction.processedAt = new Date();
-            }
-            
-            await transaction.save();
           }
-
           return res.json(this.formatTransactionResponse(transaction));
         } catch (error: any) {
-          console.error('Error fetching status from Pesapal:', error.message);
-          // Fallback to current database status if API call fails
+          console.error('Error fetching status from FDI:', error.message);
           return res.json({
             ...this.formatTransactionResponse(transaction),
             note: 'Real-time check currently unavailable (local cache used)',
           });
         }
+      }
+
+      try {
+        console.log(`Checking status for Pesapal TrackingId: ${transaction.pesapalTrackingId}`);
+        const pesapalStatus = await this.pesapalService.getTransactionStatus(
+          transaction.pesapalTrackingId
+        );
+        
+        if (!pesapalStatus || !pesapalStatus.payment_status_code) {
+          console.error('Incomplete status response from Pesapal');
+          return res.json(this.formatTransactionResponse(transaction));
+        }
+        
+        const normalizedStatus = this.pesapalService.normalizeStatus(
+          pesapalStatus.payment_status_code as any
+        );
+
+        console.log(`Pesapal API status for ${transaction.pesapalTrackingId}: ${pesapalStatus.payment_status_code} -> ${normalizedStatus}`);
+
+        if (normalizedStatus !== transaction.status) {
+          transaction.status = normalizedStatus as any;
+          
+          if (normalizedStatus === 'successful') {
+            await this.handleSuccessfulPayment(transaction);
+          }
+          
+          if (terminalStatuses.includes(normalizedStatus)) {
+            transaction.processedAt = new Date();
+          }
+          
+          await transaction.save();
+        }
+
+        return res.json(this.formatTransactionResponse(transaction));
+      } catch (error: any) {
+        console.error('Error fetching status from Pesapal:', error.message);
+        // Fallback to current database status if API call fails
+        return res.json({
+          ...this.formatTransactionResponse(transaction),
+          note: 'Real-time check currently unavailable (local cache used)',
+        });
+      }
     } catch (error) {
       console.error('Error in getPaymentStatus:', error);
       return res.status(500).json({ error: 'Internal server error' });
@@ -307,7 +400,7 @@ class PaymentController {
       // 1. Update the Payment record (for accounting/history)
       try {
         // Find existing pending payment first (created during initiation)
-        const ref = transaction.pesapalTrackingId;
+        const ref = transaction.pesapalTrackingId || transaction.fdiRef || transaction.paypackRef || transaction._id;
         let paymentRecord = await Payment.findOne({ transactionId: ref });
         
         if (paymentRecord) {
@@ -316,12 +409,21 @@ class PaymentController {
           console.log(`Payment record ${paymentRecord._id} updated to completed`);
         } else {
           // Fallback: create if it doesn't exist for some reason
+          let friendlyMethod = 'Pesapal';
+          if (transaction.paymentMethod === 'fdi') {
+            friendlyMethod = transaction.description?.toLowerCase().includes('airtel') ? 'Airtel Money' : 'MTN Mobile Money';
+          } else if (transaction.paymentMethod === 'paypack') {
+            friendlyMethod = 'Paypack';
+          } else if (transaction.paymentMethod === 'manual') {
+            friendlyMethod = 'Manual Transfer';
+          }
+
           paymentRecord = new Payment({
             userId,
             amount,
             currency: 'RWF',
             status: 'completed',
-            paymentMethod: 'Pesapal',
+            paymentMethod: friendlyMethod,
             transactionId: ref,
             type: courseIds?.length || internshipIds?.length ? 'Bulk Enrollment' : (courseId ? 'Course Enrollment' : (internshipProgramId ? 'Internship Fee' : 'Subscription Fee')),
             itemTitle: description || (courseIds?.length || internshipIds?.length ? 'Multiple Items' : (courseId ? 'Course' : (internshipProgramId ? 'Internship' : 'Subscription'))),
@@ -579,6 +681,56 @@ class PaymentController {
     } catch (error) {
       console.error('Pesapal Callback Error:', error);
       return res.redirect(`${process.env.CLIENT_URL}/payment/status?error=server_error`);
+    }
+  }
+  /**
+   * Handle FDI Callback
+   */
+  async handleFDICallback(req: Request, res: Response) {
+    try {
+      const payload = req.body;
+      console.log('FDI Callback Received:', payload);
+
+      if (payload.status === 'success' && payload.data) {
+        const { state, gwRef, trxRef } = payload.data;
+        
+        // Find by gwRef (which is what we saved as fdiRef) or trxRef (which might be saved as transactionId in Payment)
+        const transaction = await PaymentTransaction.findOne({ 
+          $or: [{ fdiRef: gwRef }, { fdiRef: trxRef }] 
+        });
+
+        if (!transaction) {
+          console.warn(`FDI Callback: Transaction not found for ref ${gwRef} or ${trxRef}`);
+          return res.status(200).json({ status: 'ok' }); // Acknowledge receipt
+        }
+
+        const normalizedStatus = state === 'successful' ? 'successful' : (state === 'failed' ? 'failed' : 'pending');
+
+        if (normalizedStatus !== transaction.status) {
+          const prevStatus = transaction.status;
+          transaction.status = normalizedStatus;
+          if (normalizedStatus === 'successful' && prevStatus !== 'successful') {
+            await this.handleSuccessfulPayment(transaction);
+          }
+          await transaction.save();
+        }
+      } else if (payload.status === 'fail' && payload.data) {
+        // Handle explicit failure
+        const { gwRef, trxRef } = payload.data;
+        const transaction = await PaymentTransaction.findOne({ 
+          $or: [{ fdiRef: gwRef }, { fdiRef: trxRef }] 
+        });
+
+        if (transaction && transaction.status !== 'failed') {
+          transaction.status = 'failed';
+          await transaction.save();
+        }
+      }
+
+      return res.status(200).json({ status: 'ok' });
+    } catch (error) {
+      console.error('FDI Callback Error:', error);
+      return res.status(500).json({ status: 'error' });
     }
   }
 }

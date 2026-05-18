@@ -75,7 +75,7 @@ export default function StudentCertificates() {
   };
 
   const handleViewOnline = (cert: Certificate) => {
-    window.open(`https://ihub.com/verify/${cert.credentialId}`, "_blank");
+    window.open(`${window.location.origin}/verify/${cert.credentialId}`, "_blank");
     toast.success("Opening certificate verification page...");
   };
 

@@ -160,8 +160,8 @@ const seedData = async () => {
       description: 'Master the art of hospitality. Learn front desk operations, guest relations, and luxury service standards.',
       instructor: trainer1._id,
       createdBy: admin._id,
-      price: 0,
-      discountPrice: 0,
+      price: 15000,
+      discountPrice: 12000,
       category: 'Hospitality',
       level: 'Intermediate',
       thumbnail: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop',
@@ -181,13 +181,13 @@ const seedData = async () => {
       enrollmentMode: 'direct',
       studentsEnrolled: [student1._id]
     } as any).save();
-
+ 
     const techCourse = await new Course({
       title: 'Advanced Cloud Computing with AWS',
       description: 'Deploy, manage, and scale secure applications on Amazon Web Services. Prepare for the Solutions Architect exam.',
       instructor: trainer2._id,
       createdBy: admin._id,
-      price: 0,
+      price: 25000,
       category: 'Technology',
       level: 'Advanced',
       thumbnail: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop',
@@ -207,7 +207,7 @@ const seedData = async () => {
       enrollmentMode: 'direct',
       studentsEnrolled: [student2._id]
     } as any).save();
-
+ 
     const agricultureCourse = await new Course({
       title: 'Modern Agri-Tech & Sustainable Farming',
       description: 'Leverage IoT sensors, drone imaging, and sustainable practices to maximize crop yield while protecting the environment.',
@@ -234,13 +234,13 @@ const seedData = async () => {
       enrollmentMode: 'direct',
       studentsEnrolled: []
     } as any).save();
-
+ 
     const economicsCourse = await new Course({
       title: 'Global Macroeconomics & Market Trends',
       description: 'Understand inflation, monetary policy, and how global events shape financial markets.',
       instructor: trainer2._id,
       createdBy: admin._id,
-      price: 0,
+      price: 150,
       category: 'Economics',
       level: 'Intermediate',
       thumbnail: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2070&auto=format&fit=crop',
@@ -287,8 +287,178 @@ const seedData = async () => {
       studentsEnrolled: [student1._id, student2._id]
     } as any).save();
 
+    const nextjsCourse = await new Course({
+      title: 'Full-Stack Web Development with Next.js & GraphQL',
+      description: 'Build enterprise-grade applications with modern React, Server Components, and a performant GraphQL API tier.',
+      instructor: trainer2._id,
+      createdBy: admin._id,
+      price: 35000,
+      discountPrice: 28000,
+      category: 'Technology',
+      level: 'Advanced',
+      enrollmentMode: 'direct',
+      thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop',
+      modules: [
+        {
+          title: 'Next.js App Router Architecture',
+          description: 'Mastering Server Components, Client Components, Suspense, and Streaming.',
+          lessons: createLessons('App Router', 4)
+        },
+        {
+          title: 'GraphQL API Design',
+          description: 'Designing modular schemas and performant resolvers with Apollo Server.',
+          lessons: createLessons('GraphQL Schema', 4)
+        }
+      ],
+      status: 'published',
+      studentsEnrolled: []
+    } as any).save();
+
+    const aiCourse = await new Course({
+      title: 'Artificial Intelligence & Machine Learning Basics',
+      description: 'Understand the mathematical foundations and code implementations of popular AI/ML algorithms using Python.',
+      instructor: trainer2._id,
+      createdBy: admin._id,
+      price: 0, // Free
+      category: 'AI',
+      level: 'Beginner',
+      enrollmentMode: 'direct',
+      thumbnail: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?q=80&w=2070&auto=format&fit=crop',
+      modules: [
+        {
+          title: 'Linear Algebra & Numerical Python',
+          description: 'Essential mathematics and operations in NumPy.',
+          lessons: createLessons('Math & NumPy', 3)
+        },
+        {
+          title: 'Supervised Learning',
+          description: 'Implementing regressions and classifications using Scikit-Learn.',
+          lessons: createLessons('Supervised ML', 4)
+        }
+      ],
+      status: 'published',
+      studentsEnrolled: []
+    } as any).save();
+
+    const uiuxCourse = await new Course({
+      title: 'UI/UX Design Masterclass: Figma to Production',
+      description: 'Master high-fidelity user interface layouts, interactive prototypes, and UX user journeys using Figma.',
+      instructor: trainer1._id,
+      createdBy: admin._id,
+      price: 18000,
+      discountPrice: 15000,
+      category: 'Design',
+      level: 'Intermediate',
+      enrollmentMode: 'direct',
+      thumbnail: 'https://images.unsplash.com/photo-1561070791-26c113006238?q=80&w=2064&auto=format&fit=crop',
+      modules: [
+        {
+          title: 'Design Systems & Tokens',
+          description: 'Configuring typography, color models, grids, and components in Figma.',
+          lessons: createLessons('Design Systems', 4)
+        },
+        {
+          title: 'Advanced Interactive Prototyping',
+          description: 'Setting up smart-animates, variable binds, and complex user flows.',
+          lessons: createLessons('Prototyping', 4)
+        }
+      ],
+      status: 'published',
+      studentsEnrolled: []
+    } as any).save();
+
+    const financeCourse = await new Course({
+      title: 'Financial Modeling & Valuation Techniques',
+      description: 'Master discounted cash flows, leveraged buyouts, and comparative analytics models to analyze global corporations.',
+      instructor: trainer1._id,
+      createdBy: admin._id,
+      price: 20000,
+      category: 'Finance',
+      level: 'Advanced',
+      enrollmentMode: 'direct',
+      thumbnail: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop',
+      modules: [
+        {
+          title: 'Discounted Cash Flow Model',
+          description: 'Calculating WACC, terminal values, and net present value.',
+          lessons: createLessons('DCF Valuation', 5)
+        },
+        {
+          title: 'LBO Modeling & Ratios',
+          description: 'Leveraged buyouts, debt scheduling, and internal rate of return.',
+          lessons: createLessons('LBO Modeling', 4)
+        }
+      ],
+      status: 'published',
+      studentsEnrolled: []
+    } as any).save();
+
+    const marketingCourse = await new Course({
+      title: 'Digital Marketing Strategy & Growth Hacking',
+      description: 'Accelerate user acquisition via SEO, SEM, advanced analytics, and automated custom funnels.',
+      instructor: trainer1._id,
+      createdBy: admin._id,
+      price: 0, // Free
+      category: 'Marketing',
+      level: 'Beginner',
+      enrollmentMode: 'direct',
+      thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop',
+      modules: [
+        {
+          title: 'SEO & Search Engine Algorithms',
+          description: 'On-page optimizations, crawl audits, and domain authority.',
+          lessons: createLessons('SEO Mastery', 3)
+        },
+        {
+          title: 'Custom Conversion Funnels',
+          description: 'Configuring analytics tools and optimizing user conversion rate.',
+          lessons: createLessons('Growth Funnels', 4)
+        }
+      ],
+      status: 'published',
+      studentsEnrolled: []
+    } as any).save();
+
+    const microEconomicsCourse = await new Course({
+      title: 'Micro-Economics & Competitive Business Strategy',
+      description: 'Understand competitive dynamics, monopoly power, pricing strategies, and game theory models.',
+      instructor: trainer2._id,
+      createdBy: admin._id,
+      price: 120, // 120 RWF
+      category: 'Economics',
+      level: 'Intermediate',
+      enrollmentMode: 'direct',
+      thumbnail: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=2070&auto=format&fit=crop',
+      modules: [
+        {
+          title: 'Pricing Power & Monopoly Strategy',
+          description: 'Price discrimination models and market share maximization.',
+          lessons: createLessons('Pricing Models', 4)
+        },
+        {
+          title: 'Game Theory & Nash Equilibrium',
+          description: 'Analyzing strategic interactions in oligopolies.',
+          lessons: createLessons('Game Theory', 4)
+        }
+      ],
+      status: 'published',
+      studentsEnrolled: []
+    } as any).save();
+
     // ── Seed Quiz Questions for all courses ──
-    const allCourses = [hotelCourse, techCourse, agricultureCourse, economicsCourse, childcareCourse];
+    const allCourses = [
+      hotelCourse, 
+      techCourse, 
+      agricultureCourse, 
+      economicsCourse, 
+      childcareCourse,
+      nextjsCourse,
+      aiCourse,
+      uiuxCourse,
+      financeCourse,
+      marketingCourse,
+      microEconomicsCourse
+    ];
     console.log('❓ Seeding Quiz Questions...');
     for (const course of allCourses) {
       for (const mod of (course as any).modules) {

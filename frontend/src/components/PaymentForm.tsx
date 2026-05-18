@@ -139,9 +139,16 @@ export function PaymentForm({
       const data = await response.json();
       
       if (data.redirectUrl) {
-        // Handle Pesapal redirect (All methods except manual)
+        // Handle Pesapal redirect
         toast.success('Redirecting to secure payment page...');
         window.location.href = data.redirectUrl;
+        return;
+      }
+
+      if (data.status === 'processing' && data.transactionId) {
+        toast.success('Payment initiated. Please check your phone for the USSD prompt.');
+        setTransactionId(data.transactionId);
+        pollPaymentStatus(data.transactionId);
         return;
       }
 

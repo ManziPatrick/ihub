@@ -28,7 +28,7 @@ export function ShareCertificateDialog({
   
   if (!certificate) return null;
 
-  const shareUrl = `https://ihub.com/verify/${certificate.credentialId}`;
+  const shareUrl = `${window.location.origin}/verify/${certificate.credentialId}`;
   const shareText = `I just earned my ${certificate.courseName} certificate from MultiCourses! 🎓`;
 
   const handleCopy = () => {

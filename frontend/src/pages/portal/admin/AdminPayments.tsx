@@ -322,13 +322,11 @@ function AdminPaymentRow({ payment, setVerifyingPayment }: { payment: any, setVe
   const allItems = [...(payment.courses || []), ...(payment.internships || [])];
   // If we don't have nested items, try to use the itemTitle
   const hasItems = allItems.length > 0;
-  const visibleItems = expanded ? allItems : allItems.slice(0, 1);
 
-  // Compute a smart display title from actual item names
+  // Compute a smart display title from actual item names (showing all items)
   const displayTitle = allItems.length > 0
-    ? allItems[0].title
+    ? allItems.map((item: any) => item.title).join(", ")
     : payment.itemTitle;
-  const extraCount = allItems.length > 1 ? allItems.length - 1 : 0;
 
   return (
     <tr className="border-b border-border/10 transition-colors group">
@@ -346,27 +344,14 @@ function AdminPaymentRow({ payment, setVerifyingPayment }: { payment: any, setVe
         <div className="flex flex-col">
           <p className="text-sm font-medium group-hover:text-foreground dark:group-hover:text-white transition-colors flex items-center gap-1.5 flex-wrap">
             {displayTitle}
-            {extraCount > 0 && !expanded && (
-              <span className="text-[9px] font-black text-accent bg-accent/10 border border-accent/20 px-1.5 py-0.5 rounded-full uppercase tracking-widest">
-                +{extraCount} more
-              </span>
-            )}
           </p>
           {hasItems && (
             <div className="mt-1 flex flex-wrap gap-1 items-center">
-              {visibleItems.map((item: any, idx: number) => (
+              {allItems.map((item: any, idx: number) => (
                 <span key={item.id || idx} className="text-[9px] px-1.5 py-0.5 bg-accent/5 text-accent group-hover:bg-white/10 group-hover:text-white group-hover:border-white/20 border border-accent/10 rounded font-medium transition-colors">
                   {item.title}
                 </span>
               ))}
-              {allItems.length > 1 && (
-                <button 
-                  onClick={() => setExpanded(!expanded)}
-                  className="text-[9px] font-black text-accent hover:text-white transition-colors ml-1 uppercase tracking-widest"
-                >
-                  {expanded ? '[ Minimise ]' : `[ +${allItems.length - 1} more ]`}
-                </button>
-              )}
             </div>
           )}
         </div>

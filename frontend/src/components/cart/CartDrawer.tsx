@@ -115,10 +115,7 @@ export function CartDrawer() {
                   </button>
                   <PaymentForm 
                     amount={cartTotal} 
-                    description={cartItems.length === 1
-                      ? cartItems[0].title
-                      : `${cartItems[0].title} +${cartItems.length - 1} more`
-                    }
+                    description={cartItems.map(item => item.title).join(", ")}
                     courseIds={cartItems.filter(item => item.type === 'course').map(item => item.id)}
                     internshipIds={cartItems.filter(item => item.type === 'internship').map(item => item.id)}
                     onSuccess={() => {

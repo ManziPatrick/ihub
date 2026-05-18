@@ -10,6 +10,7 @@ export interface IPaymentTransaction extends Document {
   status: 'pending' | 'successful' | 'failed';
   paypackRef?: string; // Reference from Paypack API
   pesapalTrackingId?: string; // Reference from Pesapal API
+  fdiRef?: string; // Reference from FDI Payments API
   paymentMethod?: string; // momo, card, etc
   description?: string; // What the payment is for (course, subscription, etc)
   courseId?: mongoose.Types.ObjectId | null;
@@ -67,6 +68,12 @@ const PaymentTransactionSchema = new Schema<IPaymentTransaction>(
       index: true,
     },
     pesapalTrackingId: {
+      type: String,
+      required: false,
+      sparse: true,
+      index: true,
+    },
+    fdiRef: {
       type: String,
       required: false,
       sparse: true,

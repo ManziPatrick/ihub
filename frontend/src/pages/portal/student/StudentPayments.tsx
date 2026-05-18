@@ -202,11 +202,10 @@ function PaymentRow({
   
   const allItems = [...(payment.courses || []), ...(payment.internships || [])];
 
-  // Compute a smart display title from actual item names
+  // Compute a smart display title from actual item names (showing all items)
   const displayTitle = allItems.length > 0
-    ? allItems[0].title
+    ? allItems.map((item: any) => item.title).join(", ")
     : payment.itemTitle;
-  const extraCount = allItems.length > 1 ? allItems.length - 1 : 0;
 
   return (
     <>
@@ -225,11 +224,6 @@ function PaymentRow({
             <div>
               <p className="text-xs font-bold group-hover:text-foreground dark:group-hover:text-white transition-colors flex items-center gap-1.5 flex-wrap leading-tight">
                 {displayTitle}
-                {extraCount > 0 && (
-                  <span className="text-[8px] font-black text-accent bg-accent/10 border border-accent/20 px-1 py-0.5 rounded-full uppercase tracking-widest">
-                    +{extraCount} more
-                  </span>
-                )}
               </p>
               <p className="text-[9px] text-muted-foreground group-hover:text-foreground dark:group-hover:text-white/60 font-mono mt-0.5 transition-colors">ID: {payment.id}</p>
             </div>

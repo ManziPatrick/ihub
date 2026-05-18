@@ -1110,7 +1110,7 @@ export const typeDefs = `#graphql
     ): Course
     deleteCourse(id: ID!): Boolean
     createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String): User
-    updateUser(id: ID!, username: String, email: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String, isFirst: Boolean): User
+    updateUser(id: ID!, username: String, email: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String): User
     deleteUser(id: ID!): Boolean
     
     # Progress Tracking

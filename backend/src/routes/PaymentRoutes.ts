@@ -61,4 +61,12 @@ router.get(
   paymentController.handlePesapalCallback.bind(paymentController)
 );
 
+/**
+ * FDI Webhooks
+ */
+router.post(
+  '/fdi/callback',
+  paymentController.handleFDICallback.bind(paymentController)
+);
+
 export default router;

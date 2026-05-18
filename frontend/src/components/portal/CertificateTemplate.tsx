@@ -111,7 +111,7 @@ export const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
         <div className="mt-8 pt-6 border-t border-[#d4af37]/10 w-full flex justify-between items-center text-[10px] font-bold text-[#1a3d3d]/40 uppercase tracking-[0.2em]">
           <div className="flex items-center gap-2">
             <Globe className="w-3 h-3" />
-            verify.ihub.com/{credentialId}
+            {typeof window !== 'undefined' ? window.location.host : 'academy.multicourses.org'}/verify/{credentialId}
           </div>
           <div>
             {schoolName ? schoolName.toUpperCase() : "MULTICOURSES ACADEMY"} • KIGALI, RWANDA
