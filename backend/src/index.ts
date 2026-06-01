@@ -26,6 +26,7 @@ import aiCourseRoutes from './routes/AICourseRoutes';
 import moduleAccessRoutes from './routes/ModuleAccessRoutes';
 import paymentRoutes from './routes/PaymentRoutes';
 import certificateRoutes from './routes/CertificateRoutes';
+import voiceTutorRoutes from './routes/VoiceTutorRoutes';
 import { authMiddleware } from './middleware/auth';
 import { maintenanceMiddleware } from './middleware/maintenance';
 
@@ -106,7 +107,7 @@ const startServer = async () => {
     // =============================
     // ✅ GRAPHQL UPLOAD MIDDLEWARE (Must be before body-parser)
     // =============================
-    app.use(graphqlUploadExpress({
+    app.use('/graphql', graphqlUploadExpress({
         maxFileSize: 100 * 1024 * 1024, // 100MB
         maxFiles: 5
     }));
@@ -197,6 +198,14 @@ const startServer = async () => {
     );
 
     // =============================
+    // HEALTH CHECK (Docker / Coolify)
+    // =============================
+
+    app.get('/health', (_req, res) => {
+        res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    });
+
+    // =============================
     // REST ROUTES
     // =============================
 
@@ -208,6 +217,7 @@ const startServer = async () => {
     app.use('/api/payments', paymentRoutes);
     app.use('/api/certificates', certificateRoutes);
     app.use('/api/ai-courses', aiCourseRoutes); // Enabled for deployment
+    app.use('/api/voice-tutor', voiceTutorRoutes);
 
     // =============================
     // GLOBAL ERROR HANDLER
