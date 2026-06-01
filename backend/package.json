@@ -21,6 +21,7 @@
   "dependencies": {
     "@apollo/server": "^4.12.2",
     "@graphql-tools/schema": "^10.0.31",
+    "@huggingface/inference": "^4.13.16",
     "@openrouter/sdk": "^0.5.1",
     "@types/graphql-upload": "^8.0.7",
     "@types/node-cron": "^3.0.11",

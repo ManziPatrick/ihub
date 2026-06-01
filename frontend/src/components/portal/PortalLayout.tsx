@@ -50,7 +50,8 @@ import {
   Trophy,
   ClipboardList,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Globe
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePusher } from "@/hooks/use-pusher";
@@ -81,6 +82,7 @@ const studentNavItems: NavItem[] = [
     href: "/portal/student/internship", 
     icon: Briefcase 
   },
+  { label: "AI Voice Tutor", href: "/portal/student/voice-tutor", icon: Globe },
   { label: "Schedule", href: "/portal/student/schedule", icon: Calendar },
   { label: "Billing", href: "/portal/student/billing", icon: CreditCard },
   { label: "Messages", href: "/chat", icon: MessageSquare },
