@@ -3,13 +3,13 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Install all dependencies (including devDeps for build tools)
+# Force NODE_ENV=development so npm installs devDependencies (typescript/vite/etc.)
 COPY package.json package-lock.json ./
-RUN npm ci --include=dev
+RUN NODE_ENV=development npm install --legacy-peer-deps
 
 # Copy source & build
 COPY . .
-RUN npm run build
+RUN NODE_ENV=development npm run build
 
 # ─── Stage 2: Production ────────────────────────────────────────
 FROM node:22-alpine AS production
