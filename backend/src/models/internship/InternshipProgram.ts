@@ -25,6 +25,13 @@ export interface IInternshipProgram extends Document {
     required: boolean;
     options?: string[];
   }[];
+  // Phase-based application management
+  enablePhaseBasedApproval: boolean;
+  phases?: mongoose.Types.ObjectId[]; // References to ApplicationPhase documents
+  phaseApprovalRules?: {
+    requireApprovalAtEachPhase: boolean;
+    autoProgressOnApproval: boolean;
+  };
   isDeleted: boolean;
   createdBy?: mongoose.Types.ObjectId;
   signerName?: string;
@@ -65,6 +72,12 @@ const InternshipProgramSchema: Schema = new Schema(
     ],
     status: { type: String, enum: ['active', 'inactive', 'closed', 'upcoming'], default: 'active', index: true },
     allowedDeliveryModes: [{ type: String, enum: ['online', 'physical', 'hybrid'] }],
+    enablePhaseBasedApproval: { type: Boolean, default: false },
+    phases: [{ type: Schema.Types.ObjectId, ref: 'ApplicationPhase' }],
+    phaseApprovalRules: {
+      requireApprovalAtEachPhase: { type: Boolean, default: true },
+      autoProgressOnApproval: { type: Boolean, default: false },
+    },
     isDeleted: { type: Boolean, default: false, index: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
     signerName: { type: String },

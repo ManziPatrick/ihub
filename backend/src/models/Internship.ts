@@ -62,6 +62,20 @@ export interface IInternship extends Document {
     reviewedBy: mongoose.Types.ObjectId;
     date: Date;
   }>;
+  performanceGrades?: Array<{
+    grade: string;
+    color: 'red' | 'yellow' | 'green';
+    feedbackType: 'interview' | 'internship';
+    feedbackDate: Date;
+    feedbackBy: mongoose.Types.ObjectId;
+    notes?: string;
+  }>;
+  phaseCompletionHistory?: Array<{
+    phaseId: mongoose.Types.ObjectId;
+    completedAt: Date;
+    approvedBy: mongoose.Types.ObjectId;
+    notes?: string;
+  }>;
   cohort?: string; // Grouping interns into cohorts
   groupId?: string; // specific isolated group for pacing
   signerName?: string;
@@ -145,6 +159,24 @@ const InternshipSchema: Schema = new Schema(
         feedback: { type: String },
         reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
         date: { type: Date, default: Date.now },
+      }
+    ],
+    performanceGrades: [
+      {
+        grade: { type: String, required: true },
+        color: { type: String, enum: ['red', 'yellow', 'green'], required: true },
+        feedbackType: { type: String, enum: ['interview', 'internship'], required: true },
+        feedbackDate: { type: Date, required: true },
+        feedbackBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        notes: { type: String },
+      }
+    ],
+    phaseCompletionHistory: [
+      {
+        phaseId: { type: Schema.Types.ObjectId, ref: 'ApplicationPhase', required: true },
+        completedAt: { type: Date, required: true },
+        approvedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        notes: { type: String },
       }
     ],
     groupId: { type: String },

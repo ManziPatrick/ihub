@@ -14,6 +14,24 @@ export interface IInternshipApplication extends Document {
     answer: string;
   }[];
   rejectionReason?: string;
+  // Phase-based application tracking
+  currentPhaseId?: mongoose.Types.ObjectId;
+  phasedStatus?: 'in_phase' | 'awaiting_review' | 'approved_to_next' | 'rejected';
+  phaseSubmissions?: mongoose.Types.ObjectId[]; // References to ApplicationPhaseSubmission
+  phaseCompletionHistory?: Array<{
+    phaseId: mongoose.Types.ObjectId;
+    completedAt: Date;
+    approvedBy: mongoose.Types.ObjectId;
+    notes?: string;
+  }>;
+  performanceGrades?: Array<{
+    grade: string;
+    color: 'red' | 'yellow' | 'green';
+    feedbackType: 'interview' | 'internship';
+    feedbackDate: Date;
+    feedbackBy: mongoose.Types.ObjectId;
+    notes?: string;
+  }>;
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -41,6 +59,27 @@ const InternshipApplicationSchema: Schema = new Schema(
       }
     ],
     rejectionReason: { type: String },
+    currentPhaseId: { type: Schema.Types.ObjectId, ref: 'ApplicationPhase' },
+    phasedStatus: { type: String, enum: ['in_phase', 'awaiting_review', 'approved_to_next', 'rejected'] },
+    phaseSubmissions: [{ type: Schema.Types.ObjectId, ref: 'ApplicationPhaseSubmission' }],
+    phaseCompletionHistory: [
+      {
+        phaseId: { type: Schema.Types.ObjectId, ref: 'ApplicationPhase', required: true },
+        completedAt: { type: Date, required: true },
+        approvedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        notes: { type: String },
+      }
+    ],
+    performanceGrades: [
+      {
+        grade: { type: String, required: true },
+        color: { type: String, enum: ['red', 'yellow', 'green'], required: true },
+        feedbackType: { type: String, enum: ['interview', 'internship'], required: true },
+        feedbackDate: { type: Date, required: true },
+        feedbackBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        notes: { type: String },
+      }
+    ],
     isDeleted: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }

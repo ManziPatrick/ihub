@@ -174,9 +174,12 @@ const getAdminStudentIds = async (adminId: string) => {
   return Array.from(studentIds);
 };
 
+import { applicationPhaseResolvers } from './application-phase-resolvers';
+
 export const resolvers = {
   Upload: GraphQLUpload,
   Query: {
+    ...applicationPhaseResolvers.Query,
     hello: () => 'Hello world from Apollo Server!',
 
     // Resource Queries
@@ -6949,6 +6952,7 @@ export const resolvers = {
         paymentId: payment.id
       };
     },
+    ...applicationPhaseResolvers.Mutation,
   },
   User: {
     id: (parent: any) => parent.id || parent._id || parent.toString(),

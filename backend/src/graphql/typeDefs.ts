@@ -2013,4 +2013,417 @@ export const typeDefs = `#graphql
     order: Int!
     type: String!
   }
+
+  # Application Phase Management Types
+  type ApplicationPhase {
+    id: ID!
+    programId: ID!
+    name: String!
+    description: String
+    order: Int!
+    requiredDeliverables: [Deliverable!]!
+    estimatedDurationDays: Int
+    enableApproval: Boolean!
+    approvalType: String
+    notificationOnCompletion: Boolean
+    isInterviewPhase: Boolean
+    allowMeetingScheduling: Boolean
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type Deliverable {
+    type: String!
+    name: String!
+    required: Boolean!
+    description: String
+    maxFileSize: Int
+  }
+
+  type ApplicationPhaseSubmission {
+    id: ID!
+    applicationId: ID!
+    phaseId: ID!
+    submissionData: [SubmissionData!]!
+    submittedAt: String!
+    reviewStatus: String!
+    reviewedBy: User
+    reviewedAt: String
+    reviewNotes: String
+    rejectionReason: String
+    revisionRequestNotes: String
+    isLatestSubmission: Boolean!
+    submissionNumber: Int!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type SubmissionData {
+    deliverableType: String!
+    deliverableName: String!
+    value: String
+    fileUrl: String
+    fileName: String
+  }
+
+  type ApplicationMeeting {
+    id: ID!
+    applicationId: ID!
+    phaseId: ID!
+    scheduledBy: User!
+    scheduledFor: User!
+    meetingType: String!
+    title: String!
+    description: String
+    scheduledDate: String!
+    scheduledTime: String!
+    duration: Int!
+    location: String
+    meetingLink: String
+    status: String!
+    confirmedAt: String
+    confirmedBy: User
+    completedAt: String
+    meetingNotes: String
+    feedback: MeetingFeedback
+    attendees: [MeetingAttendee!]!
+    reminderSent: Boolean!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type MeetingFeedback {
+    rating: Int
+    comments: String
+    performanceGrade: PerformanceGrade
+  }
+
+  type PerformanceGrade {
+    grade: String!
+    color: String!
+  }
+
+  type MeetingAttendee {
+    userId: ID!
+    role: String!
+    attended: Boolean
+  }
+
+  type UserAssignedTask {
+    id: ID!
+    userId: ID!
+    assignedBy: User!
+    title: String!
+    description: String!
+    status: String!
+    priority: String!
+    dueDate: String
+    relatedApplication: ID
+    relatedPhase: ID
+    attachments: [TaskAttachment!]
+    checklist: [ChecklistItem!]
+    assignedDate: String!
+    completedDate: String
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type TaskAttachment {
+    fileName: String!
+    fileUrl: String!
+  }
+
+  type ChecklistItem {
+    item: String!
+    completed: Boolean!
+  }
+
+  type TaskTracking {
+    id: ID!
+    taskId: ID!
+    statusHistory: [StatusHistory!]!
+    timeSpent: TimeSpent!
+    progressPercentage: Int!
+    progressUpdates: [ProgressUpdate!]!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type StatusHistory {
+    status: String!
+    changedAt: String!
+    changedBy: User!
+    notes: String
+  }
+
+  type TimeSpent {
+    total: Int!
+    sessions: [TimeSession!]!
+  }
+
+  type TimeSession {
+    startTime: String!
+    endTime: String
+    duration: Int!
+    notes: String
+  }
+
+  type ProgressUpdate {
+    date: String!
+    percentage: Int!
+    notes: String
+    updatedBy: User!
+  }
+
+  type ApplicationProgress {
+    application: InternshipApplication!
+    currentPhase: ApplicationPhase
+    completedPhases: [PhaseCompletion!]!
+    totalPhases: Int!
+  }
+
+  type PhaseCompletion {
+    phaseId: ID!
+    completedAt: String!
+    approvedBy: User!
+    notes: String
+  }
+
+  type TaskStats {
+    totalTasks: Int!
+    completed: Int!
+    pending: Int!
+    inProgress: Int!
+    totalTimeSpent: Int!
+    avgCompletionRate: Float!
+    overdueTasks: Int!
+  }
+
+  extend type Query {
+    # Application Phase Queries
+    getApplicationPhases(programId: ID!): [ApplicationPhase!]!
+    getApplicationPhase(phaseId: ID!): ApplicationPhase
+    getApplicationPhaseSubmissions(applicationId: ID!): [ApplicationPhaseSubmission!]!
+    getApplicantsByPhase(programId: ID!, phaseId: ID!): [InternshipApplication!]!
+    getApplicationMeetings(applicationId: ID!): [ApplicationMeeting!]!
+    getPendingMeetings(adminId: ID!): [ApplicationMeeting!]!
+    getUserAssignedTasks(userId: ID!, status: String): [UserAssignedTask!]!
+    getTasksByAssignedBy(adminId: ID!, status: String): [UserAssignedTask!]!
+    getTaskWithTracking(taskId: ID!): TaskTracking
+    getApplicationProgress(applicationId: ID!): ApplicationProgress
+    getTaskStats(adminId: ID!): TaskStats!
+  }
+
+  extend type Mutation {
+    # Application Phase Mutations
+    createApplicationPhase(
+      programId: ID!
+      name: String!
+      description: String
+      order: Int!
+      requiredDeliverables: [DeliverableInput!]
+      estimatedDurationDays: Int
+      enableApproval: Boolean
+      approvalType: String
+      notificationOnCompletion: Boolean
+      isInterviewPhase: Boolean
+      allowMeetingScheduling: Boolean
+    ): ApplicationPhase!
+
+    updateApplicationPhase(
+      phaseId: ID!
+      name: String
+      description: String
+      order: Int
+      requiredDeliverables: [DeliverableInput!]
+      estimatedDurationDays: Int
+      enableApproval: Boolean
+      approvalType: String
+      isInterviewPhase: Boolean
+      allowMeetingScheduling: Boolean
+    ): ApplicationPhase!
+
+    deleteApplicationPhase(phaseId: ID!): Boolean!
+    reorderApplicationPhases(programId: ID!, phaseIds: [ID!]!): [ApplicationPhase!]!
+
+    # Application Submission Mutations
+    submitPhaseDeliverable(
+      applicationId: ID!
+      phaseId: ID!
+      submissionData: [SubmissionDataInput!]!
+    ): ApplicationPhaseSubmission!
+
+    approvePhaseSubmission(
+      applicationId: ID!
+      phaseId: ID!
+      approvedBy: ID!
+      notes: String
+      moveToNextPhase: Boolean
+    ): InternshipApplication!
+
+    rejectPhaseSubmission(
+      applicationId: ID!
+      phaseId: ID!
+      rejectedBy: ID!
+      rejectionReason: String!
+      allowResubmission: Boolean
+    ): InternshipApplication!
+
+    requestRevision(
+      applicationId: ID!
+      phaseId: ID!
+      requestedBy: ID!
+      revisionNotes: String!
+    ): ApplicationPhaseSubmission!
+
+    moveApplicationToPhase(
+      applicationId: ID!
+      phaseId: ID!
+      movedBy: ID!
+      notes: String
+    ): InternshipApplication!
+
+    # Meeting Mutations
+    scheduleApplicationMeeting(
+      applicationId: ID!
+      phaseId: ID!
+      scheduledBy: ID!
+      scheduledFor: ID!
+      meetingType: String!
+      title: String!
+      description: String
+      scheduledDate: String!
+      scheduledTime: String!
+      duration: Int
+      location: String
+      meetingLink: String
+      attendees: [AttendeeInput!]
+    ): ApplicationMeeting!
+
+    confirmApplicationMeeting(
+      meetingId: ID!
+      confirmedBy: ID!
+    ): ApplicationMeeting!
+
+    cancelApplicationMeeting(
+      meetingId: ID!
+      cancelledBy: ID!
+      reason: String
+    ): ApplicationMeeting!
+
+    completeMeeting(
+      meetingId: ID!
+      notes: String!
+      rating: Int
+      performanceGrade: PerformanceGradeInput
+      attendanceData: [AttendanceDataInput!]
+    ): ApplicationMeeting!
+
+    markMeetingAsNoShow(meetingId: ID!): ApplicationMeeting!
+
+    # Task Mutations
+    assignTask(
+      userId: ID!
+      assignedBy: ID!
+      title: String!
+      description: String!
+      priority: String
+      dueDate: String
+      relatedApplication: ID
+      relatedPhase: ID
+      attachments: [TaskAttachmentInput!]
+      checklist: [ChecklistItemInput!]
+    ): UserAssignedTask!
+
+    updateTaskStatus(
+      taskId: ID!
+      newStatus: String!
+      updatedBy: ID!
+      notes: String
+    ): UserAssignedTask!
+
+    updateTaskProgress(
+      taskId: ID!
+      progressPercentage: Int!
+      updatedBy: ID!
+      notes: String
+    ): TaskTracking!
+
+    logTimeSpent(
+      taskId: ID!
+      duration: Int!
+      notes: String
+    ): TaskTracking!
+
+    completeChecklistItem(
+      taskId: ID!
+      itemIndex: Int!
+    ): UserAssignedTask!
+
+    cancelTask(
+      taskId: ID!
+      cancelledBy: ID!
+      reason: String
+    ): UserAssignedTask!
+
+    # Performance Grading
+    setPerformanceGrade(
+      applicationId: ID!
+      grade: String!
+      color: String!
+      feedbackType: String!
+      feedbackBy: ID!
+      notes: String
+    ): InternshipApplication!
+
+    setInternshipPerformanceGrade(
+      internshipId: ID!
+      grade: String!
+      color: String!
+      feedbackType: String!
+      feedbackBy: ID!
+      notes: String
+    ): Internship!
+  }
+
+  input DeliverableInput {
+    type: String!
+    name: String!
+    required: Boolean!
+    description: String
+    maxFileSize: Int
+  }
+
+  input SubmissionDataInput {
+    deliverableType: String!
+    deliverableName: String!
+    value: String
+    fileUrl: String
+    fileName: String
+  }
+
+  input AttendeeInput {
+    userId: ID!
+    role: String!
+  }
+
+  input AttendanceDataInput {
+    userId: ID!
+    attended: Boolean!
+  }
+
+  input PerformanceGradeInput {
+    grade: String!
+    color: String!
+  }
+
+  input TaskAttachmentInput {
+    fileName: String!
+    fileUrl: String!
+  }
+
+  input ChecklistItemInput {
+    item: String!
+    completed: Boolean
+  }
 `;
