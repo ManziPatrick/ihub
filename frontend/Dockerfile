@@ -5,11 +5,11 @@ WORKDIR /app
 
 # Force NODE_ENV=development so npm installs devDependencies (typescript/vite/etc.)
 COPY frontend/package.json frontend/package-lock.json ./
-RUN NODE_ENV=development npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps
 
 # Copy source & build
 COPY frontend/ ./
-RUN NODE_ENV=development npm run build
+RUN npm run build
 
 # ─── Stage 2: Production ────────────────────────────────────────
 FROM node:22-alpine AS production
@@ -21,10 +21,9 @@ COPY --from=builder /app/dist ./dist
 COPY frontend/generate-env-config.js ./
 COPY frontend/package.json ./
 
-ENV HOST=::
-ENV NODE_ENV=production
 
-EXPOSE 8080
+
+
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
   CMD wget --quiet --tries=1 --spider http://localhost:8080 || exit 1
@@ -32,4 +31,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
 # 1. Inject runtime VITE_* env vars into dist/env-config.js
 # 2. Serve SPA with --single flag so React Router handles all routes
 CMD node generate-env-config.js && \
-    npx --yes serve -s dist -l 8080 --single
+  npx --yes serve -s dist -l 8080 --single
