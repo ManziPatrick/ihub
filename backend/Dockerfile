@@ -3,14 +3,14 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-COPY backend/package.json backend/package-lock.json ./
+COPY package.json package-lock.json ./
 
 # Force NODE_ENV=development so npm installs devDependencies (typescript/tsc)
 # even when Coolify injects NODE_ENV=production as a build ARG
 RUN NODE_ENV=development npm install --legacy-peer-deps
 
 # Copy source & build
-COPY backend/ ./
+COPY . .
 RUN NODE_ENV=development npm run build
 
 # ─── Stage 2: Production ────────────────────────────────────────
@@ -18,7 +18,7 @@ FROM node:22-alpine AS production
 
 WORKDIR /app
 
-COPY backend/package.json backend/package-lock.json ./
+COPY package.json package-lock.json ./
 
 # Production deps only (no tsc needed at runtime)
 RUN npm install --legacy-peer-deps --omit=dev
