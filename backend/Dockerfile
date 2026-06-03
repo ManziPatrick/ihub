@@ -7,11 +7,11 @@ COPY package.json package-lock.json ./
 
 # Force NODE_ENV=development so npm installs devDependencies (typescript/tsc)
 # even when Coolify injects NODE_ENV=production as a build ARG
-RUN NODE_ENV=development npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps
 
 # Copy source & build
 COPY . .
-RUN NODE_ENV=development npm run build
+RUN npm run build
 
 # ─── Stage 2: Production ────────────────────────────────────────
 FROM node:22-alpine AS production
@@ -29,11 +29,9 @@ COPY --from=builder /app/dist ./dist
 # Persistent directory for uploaded files
 RUN mkdir -p /app/uploads
 
-ENV HOST=::
-ENV PORT=4000
-ENV NODE_ENV=production
 
-EXPOSE 4000
+
+
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=5 \
   CMD wget --quiet --tries=1 --spider http://localhost:4000/health || exit 1
