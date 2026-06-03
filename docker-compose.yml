@@ -6,8 +6,8 @@ services:
   # ─────────────────────────────────────────
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: ihub_backend
     restart: unless-stopped
     ports:
@@ -109,8 +109,8 @@ services:
   # ─────────────────────────────────────────
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: ihub_frontend
     restart: unless-stopped
     ports:

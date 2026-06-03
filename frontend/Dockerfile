@@ -4,11 +4,11 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Force NODE_ENV=development so npm installs devDependencies (typescript/vite/etc.)
-COPY package.json package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json ./
 RUN NODE_ENV=development npm install --legacy-peer-deps
 
 # Copy source & build
-COPY . .
+COPY frontend/ ./
 RUN NODE_ENV=development npm run build
 
 # ─── Stage 2: Production ────────────────────────────────────────
@@ -18,8 +18,8 @@ WORKDIR /app
 
 # Copy built SPA + runtime env injector + package.json (needed for "type":"module")
 COPY --from=builder /app/dist ./dist
-COPY generate-env-config.js ./
-COPY package.json ./
+COPY frontend/generate-env-config.js ./
+COPY frontend/package.json ./
 
 ENV HOST=::
 ENV NODE_ENV=production
