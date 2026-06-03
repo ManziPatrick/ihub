@@ -1373,10 +1373,6 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
               {
                 title: 'Tip 29: YouTube Hidden Features',
                 content: '<p><strong>1. Speed up any video:</strong> Tap the three dots → Playback speed → choose 1.25x, 1.5x, or 2x. Watch tutorials and lectures in half the time. On mobile, hold and press the screen to temporarily speed up.</p><p><strong>2. Picture-in-Picture (PiP):</strong> While watching a video, press the home button. On Android 8+ and iPhone (with Premium or some free videos), the video floats in a small window. You can keep using other apps.</p><p><strong>3. Loop a video:</strong> Long-press on any video → tap "Loop video." It plays forever. Great for music or learning a specific move.</p><p><strong>4. Dark mode:</strong> Profile icon → Settings → General → Dark theme. Easier on eyes at night.</p><p><strong>5. Auto-generate captions:</strong> Tap the CC button during any video. YouTube auto-generates subtitles in many languages — even translates them.</p>',
-                duration: 5,
-                resources: [],
-              },
-              {
                 title: 'Tip 30: Google Lens — The Secret Superpower',
                 content: '<p><strong>What it is:</strong> Google Lens uses your camera to identify and interact with the real world.</p><p><strong>How to open:</strong> Android — tap the Lens icon in Google Search, Google Photos, or the Google app. iPhone — download Google app → tap Lens icon in search bar.</p><p><strong>What it can do:</strong></p><ul><li><strong>Translate text in real-time:</strong> Point camera at a sign in another language — it overlays the translation.</li><li><strong>Copy text from paper:</strong> Point at any printed text → tap "Copy text" → paste it anywhere. Works for handwritten notes too.</li><li><strong>Identify plants & animals:</strong> Point at a flower or bug — Lens identifies it.</li><li><strong>Scan QR codes and barcodes:</strong> No extra app needed.</li><li><strong>Find similar products to buy:</strong> Point at clothing, furniture, or decor — Lens finds where to buy it online.</li><li><strong>Solve math problems:</strong> Point at a math equation — Lens solves it and shows steps.</li></ul>',
                 duration: 6,
@@ -1393,6 +1389,8 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
 
     // 5. Seed "Cyber Literacy" course
     console.log('🔐 Seeding Cyber Literacy course...');
+    console.log('🗑️ Deleting existing Cyber Literacy course...');
+    await Course.deleteOne({ title: 'Cyber Literacy — Protect Yourself & Recover from Hacks' });
     const cyberExists = await Course.findOne({ title: 'Cyber Literacy — Protect Yourself & Recover from Hacks' });
     if (!cyberExists) {
       await new Course({
@@ -1419,10 +1417,6 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 4,
                 type: 'article',
                 resources: [{ title: 'Phishing Red Flags Checklist (PDF)', url: 'https://example.com/phishing-checklist.pdf', type: 'pdf' }],
-                quizQuestions: [
-                  { questionText: 'What is phishing?', type: 'multiple_choice', options: ['A type of computer virus', 'A fake message trying to steal your password', 'A security feature on phones', 'A type of password'], correctOptionIndex: 1, explanation: 'Phishing is when scammers send fake messages to trick you into giving them your password.' },
-                  { questionText: 'Does a real company ever ask for your password in a message?', type: 'multiple_choice', options: ['Yes, sometimes', 'No — never', 'Only Facebook does', 'Only banks do'], correctOptionIndex: 1, explanation: 'Real companies will NEVER ask for your password. If someone asks, it\'s a scam.' },
-                ],
               },
               {
                 title: 'The \'Friend in Need\' Scam (WhatsApp & Facebook)',
@@ -1431,9 +1425,6 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 3,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'What should you do if a \'friend\' messages you from a new number asking for money?', type: 'multiple_choice', options: ['Send money immediately', 'Call them on their old number to verify', 'Ignore and block', 'Send half the money'], correctOptionIndex: 1, explanation: 'Always verify by calling the person\'s real phone number before sending any money.' },
-                ],
               },
               {
                 title: 'The \'Verify Your Account\' Scam (Instagram & Facebook)',
@@ -1442,9 +1433,6 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 2,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'Does Instagram ever send you a direct message asking for your password?', type: 'multiple_choice', options: ['Yes, sometimes', 'No, never', 'Only for business accounts', 'Only if you did something wrong'], correctOptionIndex: 1, explanation: 'Instagram will NEVER ask for your password in a message. Anyone who does is a scammer.' },
-                ],
               },
               {
                 title: 'The \'Job Offer\' Scam (WhatsApp & Telegram)',
@@ -1453,9 +1441,6 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 3,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'Should you ever pay money to get a job?', type: 'multiple_choice', options: ['Yes, it\'s normal', 'No — real jobs pay you, you don\'t pay them', 'Only for online jobs', 'Only for remote jobs'], correctOptionIndex: 1, explanation: 'Real jobs pay you for your work. If someone asks for money first, it\'s a scam.' },
-                ],
               },
               {
                 title: 'The \'Free Gift\' or \'You Won\' Scam (All Platforms)',
@@ -1464,9 +1449,6 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 2,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'You get a message saying \'You won a free iPhone.\' What should you do?', type: 'multiple_choice', options: ['Click the link', 'Send your address', 'Delete it — it\'s a scam', 'Share with friends'], correctOptionIndex: 2, explanation: 'If you didn\'t enter a contest, you didn\'t win. Free iPhone messages are always scams.' },
-                ],
               },
               {
                 title: 'Module 1 Quiz',
@@ -1474,11 +1456,12 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 type: 'quiz',
                 resources: [],
                 quizQuestions: [
-                  { questionText: 'What is phishing?', type: 'multiple_choice', options: ['A type of virus', 'A fake message to steal your password', 'A security app', 'A password manager'], correctOptionIndex: 1 },
-                  { questionText: 'Does a real company ever ask for your password in a message?', type: 'multiple_choice', options: ['Yes', 'No — never', 'Only banks', 'Only Facebook'], correctOptionIndex: 1 },
-                  { questionText: 'Your \'friend\' messages from a new number asking for money. What should you do?', type: 'multiple_choice', options: ['Send money', 'Call their old number to verify', 'Ignore', 'Send half'], correctOptionIndex: 1 },
-                  { questionText: 'You get a message \'You won a free iPhone.\' What do you do?', type: 'multiple_choice', options: ['Click the link', 'Delete it — it\'s a scam', 'Send your address', 'Share with friends'], correctOptionIndex: 1 },
-                  { questionText: 'A \'job offer\' asks you to pay $50 for training. Is this real?', type: 'multiple_choice', options: ['Yes, many jobs do this', 'No — real jobs pay you, you don\'t pay them', 'Only for online jobs', 'Only for remote jobs'], correctOptionIndex: 1 },
+                  { questionText: 'What is phishing?', type: 'multiple_choice', options: ['A type of virus', 'A fake message to steal your password', 'A security app', 'A password manager'], correctOptionIndex: 1, explanation: 'Phishing is when scammers send fake messages to trick you into giving them your password.' },
+                  { questionText: 'Does a real company ever ask for your password in a message?', type: 'multiple_choice', options: ['Yes', 'No — never', 'Only banks', 'Only Facebook'], correctOptionIndex: 1, explanation: 'Real companies will NEVER ask for your password. If someone asks, it\'s a scam.' },
+                  { questionText: 'Your \'friend\' messages from a new number asking for money. What should you do?', type: 'multiple_choice', options: ['Send money', 'Call their old number to verify', 'Ignore', 'Send half'], correctOptionIndex: 1, explanation: 'Always verify by calling the person\'s real phone number before sending any money.' },
+                  { questionText: 'Does Instagram ever message you asking for your password?', type: 'multiple_choice', options: ['Yes, sometimes', 'No — never', 'Only for business accounts', 'Only if you did something wrong'], correctOptionIndex: 1, explanation: 'Instagram will NEVER ask for your password in a message. Anyone who does is a scammer.' },
+                  { questionText: 'A \'job offer\' asks you to pay $50 for training. Is this real?', type: 'multiple_choice', options: ['Yes, many jobs do this', 'No — real jobs pay you, you don\'t pay them', 'Only for online jobs', 'Only for remote jobs'], correctOptionIndex: 1, explanation: 'Real jobs pay you for your work. If someone asks for money first, it\'s a scam.' },
+                  { questionText: 'You get a message \'You won a free iPhone.\' What do you do?', type: 'multiple_choice', options: ['Click the link', 'Delete it — it\'s a scam', 'Send your address', 'Share with friends'], correctOptionIndex: 1, explanation: 'If you didn\'t enter a contest, you didn\'t win. Free iPhone messages are always scams.' },
                 ],
               },
             ],
@@ -1512,9 +1495,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 assignmentDescription: 'Change one weak password to a strong password. Screenshot confirmation.',
                 assignmentDeliverables: ['Password change screenshot'],
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'Which is a strong password?', type: 'multiple_choice', options: ['123456', 'password', 'Ilep0Fn!', 'yourname123'], correctOptionIndex: 2, explanation: 'A strong password has uppercase, lowercase, numbers, and symbols.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Check If Your Password Has Been Stolen',
@@ -1526,9 +1507,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 assignmentDescription: 'Check your email on haveibeenpwned.com. Screenshot result. If breached, change password.',
                 assignmentDeliverables: ['haveibeenpwned screenshot'],
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'What does haveibeenpwned.com tell you?', type: 'multiple_choice', options: ['Your phone number', 'If your email was in a data breach', 'Your password', 'Your location'], correctOptionIndex: 1, explanation: 'haveibeenpwned.com checks if your email address has appeared in known data breaches.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Login Alerts — Get Notified If Someone Logs Into Your Account',
@@ -1537,9 +1516,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 2,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'What do Login Alerts do?', type: 'multiple_choice', options: ['Change your password', 'Notify you when someone logs into your account', 'Block all logins', 'Delete your account'], correctOptionIndex: 1, explanation: 'Login alerts send you a notification when anyone logs into your account from a new device.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Module 2 Quiz',
@@ -1547,11 +1524,11 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 type: 'quiz',
                 resources: [],
                 quizQuestions: [
-                  { questionText: 'What is the most important security feature you can turn on?', type: 'multiple_choice', options: ['Dark mode', '2-Step Verification (2FA)', 'Auto-correct', 'Push notifications'], correctOptionIndex: 1 },
-                  { questionText: 'Which is a strong password?', type: 'multiple_choice', options: ['123456', 'password', 'Mypizza!2024', 'yourname'], correctOptionIndex: 2 },
-                  { questionText: 'What does haveibeenpwned.com do?', type: 'multiple_choice', options: ['Sells your email', 'Checks if your email was in a data breach', 'Creates passwords', 'Hacks accounts'], correctOptionIndex: 1 },
-                  { questionText: 'What do Login Alerts do?', type: 'multiple_choice', options: ['Change your password', 'Notify you of new logins', 'Block all logins', 'Delete your account'], correctOptionIndex: 1 },
-                  { questionText: 'If you use 2FA, what do you need to log in?', type: 'multiple_choice', options: ['Only password', 'Only phone', 'Password AND code from phone', 'Only email'], correctOptionIndex: 2 },
+                  { questionText: 'What is the most important security feature you can turn on?', type: 'multiple_choice', options: ['Dark mode', '2-Step Verification (2FA)', 'Auto-correct', 'Push notifications'], correctOptionIndex: 1, explanation: '2-Step Verification (2FA) makes it much harder for anyone to access your account, even if they know your password.' },
+                  { questionText: 'Which is a strong password?', type: 'multiple_choice', options: ['123456', 'password', 'Mypizza!2024', 'yourname'], correctOptionIndex: 2, explanation: 'A strong password has uppercase, lowercase, numbers, and symbols.' },
+                  { questionText: 'What does haveibeenpwned.com do?', type: 'multiple_choice', options: ['Sells your email', 'Checks if your email was in a data breach', 'Creates passwords', 'Hacks accounts'], correctOptionIndex: 1, explanation: 'haveibeenpwned.com checks if your email address has appeared in known data breaches.' },
+                  { questionText: 'What do Login Alerts do?', type: 'multiple_choice', options: ['Change your password', 'Notify you of new logins', 'Block all logins', 'Delete your account'], correctOptionIndex: 1, explanation: 'Login alerts send you a notification when anyone logs into your account from a new device.' },
+                  { questionText: 'If you use 2FA, what do you need to log in?', type: 'multiple_choice', options: ['Only password', 'Only phone', 'Password AND code from phone', 'Only email'], correctOptionIndex: 2, explanation: '2FA requires both your password AND a one-time code from your phone.' },
                 ],
               },
             ],
@@ -1568,9 +1545,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 2,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'Which is a sign you\'ve been hacked?', type: 'multiple_choice', options: ['You got a new follower', 'You can\'t log in and your password doesn\'t work', 'Your friend liked your photo', 'You changed your bio yourself'], correctOptionIndex: 1, explanation: 'If your password suddenly stops working and you didn\'t change it, someone else may have changed it.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Step 1: Try \'Forgot Password\' on Instagram',
@@ -1579,9 +1554,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 4,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'What is the first thing to try if you can\'t log in?', type: 'multiple_choice', options: ['Create a new account', 'Tap \'Forgot password\'', 'Call Instagram', 'Delete the app'], correctOptionIndex: 1, explanation: 'Always try \'Forgot password\' first. Instagram will send a recovery link to your email or phone.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Step 2: Instagram \'Support\' Recovery (Hacker Changed Your Email)',
@@ -1593,9 +1566,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 assignmentDescription: 'Go to Instagram \'Forgot password\' and screenshot the \'Try another way\' options.',
                 assignmentDeliverables: ['Instagram recovery options screenshot'],
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'What should you do if \'Forgot password\' says the hacker changed your email?', type: 'multiple_choice', options: ['Give up', 'Tap \'Try another way\' and verify your identity', 'Create new account', 'Message the hacker'], correctOptionIndex: 1, explanation: 'Instagram has a \'Try another way\' option for when the hacker changed your contact info.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Step 3: After Recovery — Secure Your Instagram Immediately',
@@ -1604,9 +1575,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 4,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'After recovering your account, what must you do?', type: 'multiple_choice', options: ['Just change password', 'Change password AND log out of all devices', 'Delete the account', 'Do nothing'], correctOptionIndex: 1, explanation: 'The hacker may still be logged in on their device. You must log out of all devices.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'What to Do If Instagram Support Doesn\'t Help',
@@ -1615,9 +1584,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 3,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'If someone messages you saying \'I can recover your hacked account for $50\', what should you do?', type: 'multiple_choice', options: ['Pay them', 'Trust them', 'Ignore them — it\'s another scam', 'Send your password'], correctOptionIndex: 2, explanation: 'People offering to recover hacked accounts for money are almost always scammers.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Module 3 Quiz',
@@ -1625,11 +1592,11 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 type: 'quiz',
                 resources: [],
                 quizQuestions: [
-                  { questionText: 'What is the first thing to try if you can\'t log into Instagram?', type: 'multiple_choice', options: ['Create new account', 'Tap \'Forgot password\'', 'Call Instagram', 'Delete the app'], correctOptionIndex: 1 },
-                  { questionText: 'If the hacker changed your email, what option do you use?', type: 'multiple_choice', options: ['Give up', 'Try another way / verify identity', 'Message the hacker', 'Create new email'], correctOptionIndex: 1 },
-                  { questionText: 'After recovering your account, what must you do?', type: 'multiple_choice', options: ['Only change password', 'Change password AND log out of all devices', 'Delete account', 'Do nothing'], correctOptionIndex: 1 },
-                  { questionText: 'Should you pay someone who offers to recover your hacked account?', type: 'multiple_choice', options: ['Yes', 'No — it\'s another scam', 'Only if they seem legit', 'Only if they charge under $20'], correctOptionIndex: 1 },
-                  { questionText: 'What does Instagram ask for during identity verification?', type: 'multiple_choice', options: ['Your credit card', 'A video selfie', 'Your friends\' passwords', 'Your location'], correctOptionIndex: 1 },
+                  { questionText: 'What is the first thing to try if you can\'t log into Instagram?', type: 'multiple_choice', options: ['Create new account', 'Tap \'Forgot password\'', 'Call Instagram', 'Delete the app'], correctOptionIndex: 1, explanation: 'Always try \'Forgot password\' first. Instagram will send a recovery link to your email or phone.' },
+                  { questionText: 'If the hacker changed your email, what option do you use?', type: 'multiple_choice', options: ['Give up', 'Try another way / verify identity', 'Message the hacker', 'Create new email'], correctOptionIndex: 1, explanation: 'Instagram has a \'Try another way\' option for when the hacker changed your contact info.' },
+                  { questionText: 'After recovering your account, what must you do?', type: 'multiple_choice', options: ['Only change password', 'Change password AND log out of all devices', 'Delete account', 'Do nothing'], correctOptionIndex: 1, explanation: 'The hacker may still be logged in on their device. Always log out of all devices.' },
+                  { questionText: 'Should you pay someone who offers to recover your hacked account?', type: 'multiple_choice', options: ['Yes', 'No — it\'s another scam', 'Only if they seem legit', 'Only if they charge under $20'], correctOptionIndex: 1, explanation: 'People offering to recover hacked accounts for money are almost always scammers.' },
+                  { questionText: 'What does Instagram ask for during identity verification?', type: 'multiple_choice', options: ['Your credit card', 'A video selfie', 'Your friends\' passwords', 'Your location'], correctOptionIndex: 1, explanation: 'Instagram\'s identity verification asks for a video selfie where you turn your head. This is normal and safe.' },
                 ],
               },
             ],
@@ -1646,9 +1613,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 2,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'Which is a sign your Facebook was hacked?', type: 'multiple_choice', options: ['You got a new friend request', 'Friends say you sent them spam', 'You changed your profile picture', 'You posted a status'], correctOptionIndex: 1, explanation: 'If friends tell you they received spam or weird messages from you, your account may be hacked.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Step 1: Facebook \'Forgot Password\' Recovery',
@@ -1657,9 +1622,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 3,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'What is the first step to recover a Facebook account?', type: 'multiple_choice', options: ['Create new account', 'Tap \'Forgot password?\'', 'Call Facebook', 'Delete the app'], correctOptionIndex: 1, explanation: 'Always start with \'Forgot password?\' — Facebook will try to send a recovery code to your email or phone.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Step 2: Facebook \'Trusted Contacts\' Recovery',
@@ -1668,9 +1631,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 3,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'What are Facebook Trusted Contacts?', type: 'multiple_choice', options: ['Friends you chat with daily', 'Friends you chose to help recover your account', 'Facebook employees', 'Your family members only'], correctOptionIndex: 1, explanation: 'Trusted Contacts are friends you select ahead of time. If you\'re hacked, they can provide recovery codes.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Step 3: Facebook \'Identity Verification\' (Last Resort)',
@@ -1679,9 +1640,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 4,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'If nothing else works, what can you send Facebook to prove your identity?', type: 'multiple_choice', options: ['Your photo', 'Your ID (driver\'s license or passport)', 'Your friend\'s name', 'Your phone number'], correctOptionIndex: 1, explanation: 'Facebook allows you to upload a government ID to prove you own the account.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Step 4: After Recovery — Secure Your Facebook',
@@ -1690,9 +1649,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 4,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'After recovering Facebook, what should you turn on?', type: 'multiple_choice', options: ['Dark mode', '2-Step Verification', 'Quiet mode', 'Story replies'], correctOptionIndex: 1, explanation: '2-Step Verification (2FA) is the most important security feature to turn on.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Module 4 Quiz',
@@ -1700,11 +1657,11 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 type: 'quiz',
                 resources: [],
                 quizQuestions: [
-                  { questionText: 'What is the first thing to try if you can\'t log into Facebook?', type: 'multiple_choice', options: ['Create new account', 'Tap \'Forgot password?\'', 'Call Facebook', 'Delete the app'], correctOptionIndex: 1 },
-                  { questionText: 'What are Facebook Trusted Contacts?', type: 'multiple_choice', options: ['Friends you chat with', 'Friends who can help recover your account', 'Facebook employees', 'Your family only'], correctOptionIndex: 1 },
-                  { questionText: 'If nothing else works, what can you send Facebook?', type: 'multiple_choice', options: ['Your photo', 'Your ID (driver\'s license/passport)', 'Your friend\'s name', 'Your phone number'], correctOptionIndex: 1 },
-                  { questionText: 'After recovering Facebook, what must you do?', type: 'multiple_choice', options: ['Only change password', 'Change password AND log out of all devices', 'Delete account', 'Do nothing'], correctOptionIndex: 1 },
-                  { questionText: 'What is the most important security feature to turn on?', type: 'multiple_choice', options: ['Dark mode', '2-Step Verification', 'Quiet mode', 'Auto-play videos'], correctOptionIndex: 1 },
+                  { questionText: 'What is the first thing to try if you can\'t log into Facebook?', type: 'multiple_choice', options: ['Create new account', 'Tap \'Forgot password?\'', 'Call Facebook', 'Delete the app'], correctOptionIndex: 1, explanation: 'Always start with \'Forgot password?\' — Facebook will send a recovery code to your email or phone.' },
+                  { questionText: 'What are Facebook Trusted Contacts?', type: 'multiple_choice', options: ['Friends you chat with', 'Friends who can help recover your account', 'Facebook employees', 'Your family only'], correctOptionIndex: 1, explanation: 'Trusted Contacts are friends you select ahead of time who can provide recovery codes.' },
+                  { questionText: 'If nothing else works, what can you send Facebook?', type: 'multiple_choice', options: ['Your photo', 'Your ID (driver\'s license/passport)', 'Your friend\'s name', 'Your phone number'], correctOptionIndex: 1, explanation: 'Facebook accepts government-issued ID to verify your identity.' },
+                  { questionText: 'After recovering Facebook, what must you do?', type: 'multiple_choice', options: ['Only change password', 'Change password AND log out of all devices', 'Delete account', 'Do nothing'], correctOptionIndex: 1, explanation: 'The hacker may still be logged in. Always change password AND log out of all devices.' },
+                  { questionText: 'What is the most important security feature to turn on?', type: 'multiple_choice', options: ['Dark mode', '2-Step Verification', 'Quiet mode', 'Auto-play videos'], correctOptionIndex: 1, explanation: '2-Step Verification (2FA) makes it much harder for hackers to access your account.' },
                 ],
               },
             ],
@@ -1721,9 +1678,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 2,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'Which is a sign your WhatsApp was hacked?', type: 'multiple_choice', options: ['You changed your wallpaper', 'Contacts say you sent them strange messages', 'You got a new contact', 'You updated the app'], correctOptionIndex: 1, explanation: 'If friends tell you they received strange messages from you, your WhatsApp may be hacked.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'How to Recover Hacked WhatsApp',
@@ -1732,9 +1687,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 4,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'What is the first step to recover hacked WhatsApp?', type: 'multiple_choice', options: ['Call WhatsApp', 'Delete and reinstall the app', 'Create new number', 'Ignore it'], correctOptionIndex: 1, explanation: 'Reinstalling WhatsApp forces a fresh verification of your phone number.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'WhatsApp Scams to Avoid',
@@ -1743,9 +1696,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 3,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'You get a WhatsApp message: \'I accidentally reported you. Click this link to cancel.\' What do you do?', type: 'multiple_choice', options: ['Click the link', 'Ignore and delete — it\'s a scam', 'Reply \'thank you\'', 'Forward to friends'], correctOptionIndex: 1, explanation: 'This is a common scam to steal your WhatsApp account. Never click the link.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'How to Recover Hacked Snapchat',
@@ -1754,9 +1705,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 3,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'What is Snapchat\'s 2FA called?', type: 'multiple_choice', options: ['Safe Login', 'Login Verification', 'Snap Lock', 'Password Plus'], correctOptionIndex: 1, explanation: 'Snapchat calls 2FA \'Login Verification\' in Settings.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'How to Recover Hacked Gmail (Google Account)',
@@ -1765,9 +1714,7 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 duration: 5,
                 type: 'article',
                 resources: [],
-                quizQuestions: [
-                  { questionText: 'Why is your Gmail the most important account to protect?', type: 'multiple_choice', options: ['Because it stores photos', 'Because hackers can use it to reset passwords for all other accounts', 'Because it\'s the most popular', 'Because it has games'], correctOptionIndex: 1, explanation: 'If a hacker controls your Gmail, they can click \'Forgot password\' on Instagram, Facebook, and every other app — and take them all over.' },
-                ],
+                quizQuestions: [],
               },
               {
                 title: 'Module 5 Quiz',
@@ -1775,11 +1722,11 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
                 type: 'quiz',
                 resources: [],
                 quizQuestions: [
-                  { questionText: 'What is the first step to recover hacked WhatsApp?', type: 'multiple_choice', options: ['Call WhatsApp', 'Delete and reinstall the app', 'Create new number', 'Ignore it'], correctOptionIndex: 1 },
-                  { questionText: 'You get a WhatsApp message: \'I accidentally reported you. Click this link.\' What do you do?', type: 'multiple_choice', options: ['Click it', 'Ignore and delete — it\'s a scam', 'Reply', 'Forward to friends'], correctOptionIndex: 1 },
-                  { questionText: 'What is Snapchat\'s 2FA called?', type: 'multiple_choice', options: ['Safe Login', 'Login Verification', 'Snap Lock', 'Password Plus'], correctOptionIndex: 1 },
-                  { questionText: 'Why is Gmail the most important account to protect?', type: 'multiple_choice', options: ['It stores photos', 'Hackers can use it to reset all other passwords', 'It\'s the most popular', 'It has games'], correctOptionIndex: 1 },
-                  { questionText: 'Where do you go to recover a hacked Google account?', type: 'multiple_choice', options: ['google.com', 'g.co/recover', 'mail.google.com', 'support.google.com'], correctOptionIndex: 1 },
+                  { questionText: 'What is the first step to recover hacked WhatsApp?', type: 'multiple_choice', options: ['Call WhatsApp', 'Delete and reinstall the app', 'Create new number', 'Ignore it'], correctOptionIndex: 1, explanation: 'Reinstalling WhatsApp forces a fresh verification of your phone number.' },
+                  { questionText: 'You get a WhatsApp message: \'I accidentally reported you. Click this link.\' What do you do?', type: 'multiple_choice', options: ['Click it', 'Ignore and delete — it\'s a scam', 'Reply', 'Forward to friends'], correctOptionIndex: 1, explanation: 'This is a common scam to steal your WhatsApp account. Never click the link.' },
+                  { questionText: 'What is Snapchat\'s 2FA called?', type: 'multiple_choice', options: ['Safe Login', 'Login Verification', 'Snap Lock', 'Password Plus'], correctOptionIndex: 1, explanation: 'Snapchat calls 2FA \'Login Verification\' in Settings → Two-Factor Authentication.' },
+                  { questionText: 'Why is Gmail the most important account to protect?', type: 'multiple_choice', options: ['It stores photos', 'Hackers can use it to reset all other passwords', 'It\'s the most popular', 'It has games'], correctOptionIndex: 1, explanation: 'If a hacker controls your Gmail, they can reset passwords for Instagram, Facebook, and every other app.' },
+                  { questionText: 'Where do you go to recover a hacked Google account?', type: 'multiple_choice', options: ['google.com', 'g.co/recover', 'mail.google.com', 'support.google.com'], correctOptionIndex: 1, explanation: 'Go to g.co/recover in your browser to start Google account recovery.' },
                 ],
               },
             ],
@@ -1787,8 +1734,6 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
         ],
       }).save();
       console.log('✅ Cyber Literacy course seeded successfully!');
-    } else {
-      console.log('⚠️  Cyber Literacy course already exists. Skipping.');
     }
 
     console.log('\n🎉 ALL SEEDING TASKS COMPLETED SUCCESSFULLY!');

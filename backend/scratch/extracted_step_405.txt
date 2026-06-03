@@ -1,0 +1,1 @@
+I will write a script `scratch/search_stress_course.js` to search for the full text of the "Stress Management for Beginners" course (and also "Mental Health & Loneliness" or other courses the user sent) inside the `.gemini` application directory, including the binary protobuf conversation backups.

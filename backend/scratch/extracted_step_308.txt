@@ -1,0 +1,1 @@
+I will now view the active document `/Users/andela/Desktop/backup/ihub_db.courses.json` around the user's cursor line (8958) to locate the complete structure of the "Stress Management for Beginners" course and any subsequent courses the user wants to add.

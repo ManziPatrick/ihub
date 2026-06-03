@@ -12,12 +12,9 @@ const seedPublicSpeakingCourse = async () => {
     await mongoose.connect(MONGO_URI);
     console.log('✅ Connected to MongoDB');
 
-    // Check if course already exists
-    const existing = await Course.findOne({ title: 'Complete Public Speaking Mastery' });
-    if (existing) {
-      console.log('⚠️  Course already exists. Skipping insert.');
-      process.exit(0);
-    }
+    // Delete existing course if it exists
+    console.log('🗑️ Deleting existing Public Speaking course...');
+    await Course.deleteOne({ title: 'Complete Public Speaking Mastery' });
 
     // Find a trainer or admin to be the instructor
     let instructor = await User.findOne({ role: { $in: ['trainer', 'admin', 'super_admin'] } });
