@@ -2376,3 +2376,42 @@ export const GET_ALL_USER_GRADE_REPORTS = gql`
     }
   }
 `;
+
+export const GET_APPLICATION_PHASES = gql`
+  query GetApplicationPhases($programId: ID!) {
+    getApplicationPhases(programId: $programId) {
+      id
+      name
+      description
+      order
+      enableApproval
+      isInterviewPhase
+      allowMeetingScheduling
+    }
+  }
+`;
+
+export const GET_APPLICATION_PROGRESS = gql`
+  query GetApplicationProgress($applicationId: ID!) {
+    getApplicationProgress(applicationId: $applicationId) {
+      application {
+        id
+        status
+        performanceGrades {
+          grade
+          color
+          feedbackType
+        }
+      }
+      currentPhase {
+        id
+        name
+        description
+      }
+      completedPhases {
+        phaseId
+        completedAt
+      }
+    }
+  }
+`;
