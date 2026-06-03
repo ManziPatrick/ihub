@@ -114,11 +114,14 @@ services:
     container_name: ihub_frontend
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-8080}:8080"
+      - "${FRONTEND_PORT:-8080}:${FRONTEND_PORT:-8080}"
     depends_on:
       backend:
         condition: service_healthy
     environment:
+      # Server port (must match the FRONTEND_PORT on the host)
+      PORT: ${FRONTEND_PORT:-8080}
+
       # API endpoints (injected at runtime via generate-env-config.js)
       VITE_API_URL: ${VITE_API_URL}
       VITE_WS_URL: ${VITE_WS_URL}
