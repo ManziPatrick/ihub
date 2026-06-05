@@ -10,6 +10,7 @@ import { ProjectApplication } from '../models/ProjectApplication';
 import { ProjectNDA } from '../models/ProjectNDA';
 import { ProjectOnboarding } from '../models/ProjectOnboarding';
 import { ProjectLifecycleService } from '../services/project-lifecycle.service';
+import { ClientApplication } from '../models/ClientApplication';
 import { logUndoMetric, getUndoMetrics } from '../services/undo-metric.service';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -80,6 +81,7 @@ import { InternshipSprint } from '../models/internship/Sprint';
 import { InternshipTask } from '../models/internship/Task';
 import { InternshipMeeting } from '../models/internship/InternshipMeeting';
 import { logActivity } from '../services/audit.service';
+import { logAdminCrossAccess, getAdminAuditLogs } from '../services/admin-audit.service';
 import { sendNotification, broadcastToTeam } from '../services/notification.service';
 import { createPaymentIntent, createCheckoutSession, confirmPayment, refundPayment } from '../services/stripe.service';
 import {
@@ -209,8 +211,39 @@ export const resolvers = {
       if (!context.user) throw new Error('Unauthorized');
 
       const filter: any = {};
-      if (courseId) filter.courseId = courseId;
       if (lessonId) filter.lessonId = lessonId;
+
+      // Scope: super_admin sees all; admin/trainer sees only submissions for their own courses
+      if (context.user.role !== 'super_admin' && context.user.role !== 'student') {
+        const adminCourseIds = await Course.find({
+          $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
+        }).distinct('_id');
+
+        if (courseId) {
+          // Verify the admin has access to this specific course
+          if (!adminCourseIds.map(id => id.toString()).includes(courseId.toString())) {
+            throw new Error('Unauthorized access to this course\'s submissions');
+          }
+          filter.courseId = courseId;
+        } else {
+          filter.courseId = { $in: adminCourseIds };
+        }
+
+        // Audit: log scope for admin
+        if (context.user.role === 'admin') {
+          logAdminCrossAccess(
+            context.user.id,
+            context.user.username,
+            'getAssignmentSubmissions',
+            'AssignmentSubmission',
+            `Admin accessed assignment submissions scoped to their ${adminCourseIds.length} courses${courseId ? ` (filtered by course ${courseId})` : ''}`,
+            0,
+            !courseId
+          );
+        }
+      } else if (courseId) {
+        filter.courseId = courseId;
+      }
 
       if (context.user.role === 'student') {
         filter.userId = context.user.id;
@@ -349,13 +382,55 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
-      return await User.find({ role: 'student', isDeleted: { $ne: true } });
+
+      // Scope: super_admin sees all; admin/trainer sees only their own students
+      let filter: any = { role: 'student', isDeleted: { $ne: true } };
+      if (context.user.role !== 'super_admin') {
+        const studentIds = await getAdminStudentIds(context.user.id);
+        filter._id = { $in: studentIds };
+
+        // Audit: log scope info
+        if (context.user.role === 'admin') {
+          logAdminCrossAccess(
+            context.user.id,
+            context.user.username,
+            'getAllStudents',
+            'User',
+            `Admin accessed students scoped to their ${studentIds.length} enrolled students`,
+            0,
+            true
+          );
+        }
+      }
+      return await User.find(filter);
     },
     getAllTrainers: async (_: any, __: any, context: any) => {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
-      return await User.find({ role: { $in: ['trainer', 'admin', 'super_admin'] }, isDeleted: { $ne: true } });
+
+      // Scope: super_admin sees all; admin sees only trainers they created; trainers see only themselves
+      let filter: any = { role: { $in: ['trainer', 'admin', 'super_admin'] }, isDeleted: { $ne: true } };
+      if (context.user.role === 'admin') {
+        filter.$or = [
+          { createdBy: context.user.id },
+          { role: 'trainer' }
+        ];
+
+        // Audit: log scope
+        logAdminCrossAccess(
+          context.user.id,
+          context.user.username,
+          'getAllTrainers',
+          'User',
+          `Admin accessed trainers (all trainers + users they created)`,
+          0,
+          true
+        );
+      } else if (context.user.role === 'trainer') {
+        filter._id = context.user.id;
+      }
+      return await User.find(filter);
     },
 
     getUploadSignature: (_: any, { folder, resourceType }: { folder?: string, resourceType?: string }, context: any) => {
@@ -514,7 +589,10 @@ export const resolvers = {
         query.$or = [
           { _id: { $in: enrolledStudentIds } },
           { createdBy: context.user.id, role: 'trainer' },
-          { ...schoolFilter, role: 'student' }
+          { ...schoolFilter, role: 'student' },
+          // Clients created by or assigned to this admin
+          { createdBy: context.user.id, role: 'client' },
+          { assignedAdmin: context.user.id, role: 'client' },
         ];
       } else if (createdBy) {
         query.createdBy = createdBy;
@@ -567,7 +645,8 @@ export const resolvers = {
       if (!conversation) throw new Error('Conversation not found');
 
       const isParticipant = conversation.participants.some((p: any) => p.toString() === context.user.id);
-      if (!isParticipant) throw new Error('Not authorized');
+      const isStaff = ['admin', 'super_admin', 'trainer'].includes(context.user.role);
+      if (!isParticipant && !isStaff) throw new Error('Not authorized');
 
       return await Message.find({ conversationId })
         .populate('sender')
@@ -761,7 +840,26 @@ export const resolvers = {
         throw new Error('Not authorized');
       }
 
-      const query = context.user.role === 'trainer' ? { instructor: context.user.id } : {};
+      // Scope: super_admin sees all; admin/trainer sees only their own course students
+      let query: any = {};
+      if (context.user.role !== 'super_admin') {
+        query = {
+          $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
+        };
+
+        // Audit: log scope
+        if (context.user.role === 'admin') {
+          logAdminCrossAccess(
+            context.user.id,
+            context.user.username,
+            'trainerStudents',
+            'Student',
+            `Admin accessed students via trainerStudents scoped to their courses`,
+            0,
+            true
+          );
+        }
+      }
       const courses = await Course.find(query).populate({
         path: 'studentsEnrolled',
         populate: [
@@ -780,10 +878,10 @@ export const resolvers = {
       return Array.from(studentsMap.values());
     },
     recentActivity: async (_: any, __: any, context: any) => {
-      if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) {
-        throw new Error('Not authorized');
+      if (!context.user || context.user.role !== 'super_admin') {
+        throw new Error('Not authorized. Only super admins can view recent activity.');
       }
-      // Fetch activities from all users (admins, trainers, students) for global audit
+      // Fetch activities from all users for global audit — restricted to super_admin only
       const users = await User.find({}).limit(200); 
       let activities: any[] = [];
 
@@ -1284,7 +1382,28 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
-      const submissions = await AssignmentSubmission.find().populate(['userId', 'courseId']);
+
+      // Scope: super_admin sees all; admin sees only their own courses
+      let courseFilter: any = {};
+      if (context.user.role === 'admin') {
+        const adminCourseIds = await Course.find({
+          $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
+        }).distinct('_id');
+        courseFilter = { courseId: { $in: adminCourseIds } };
+
+        // Audit: log that admin accessed grade reports
+        logAdminCrossAccess(
+          context.user.id,
+          context.user.username,
+          'allUserGradeReports',
+          'AssignmentSubmission',
+          `Admin accessed grade reports scoped to their ${adminCourseIds.length} courses`,
+          0,
+          true
+        );
+      }
+
+      const submissions = await AssignmentSubmission.find(courseFilter).populate(['userId', 'courseId']);
       return submissions.map(s => {
           const course = s.courseId as any;
           let lessonTitle = s.lessonId;
@@ -1318,7 +1437,7 @@ export const resolvers = {
       const adminOwnedCourses = targetCreatedBy ? await Course.find(courseFilter).distinct('_id') : null;
 
       // 1. User Role Distribution
-      const roles = ['student', 'trainer', 'admin', 'super_admin'];
+      const roles = ['student', 'trainer', 'admin', 'super_admin'] as const;
       const roleDistribution = await Promise.all(roles.map(async role => ({
         name: role.charAt(0).toUpperCase() + role.slice(1),
         value: await User.countDocuments({ ...userFilter, role })
@@ -1424,16 +1543,25 @@ export const resolvers = {
         throw new Error('Not authorized');
       }
 
+      // Scope projects: super_admin sees all; admin/trainer sees only projects they mentor or own
+      const projectFilter: any = {};
+      if (context.user.role !== 'super_admin') {
+        projectFilter.$or = [
+          { mentors: { $in: [context.user.id] } },
+          { userId: context.user.id },
+        ];
+      }
+
       const skip = (page - 1) * limit;
       const [items, totalCount] = await Promise.all([
-        Project.find()
+        Project.find(projectFilter)
           .populate('userId')
           .populate('mentors')
           .populate('team.userId')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit),
-        Project.countDocuments()
+        Project.countDocuments(projectFilter)
       ]);
 
       const totalPages = Math.ceil(totalCount / limit);
@@ -1477,7 +1605,27 @@ export const resolvers = {
       if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin' && context.user.role !== 'trainer')) {
         throw new Error('Not authorized');
       }
-      return await Certificate.find().populate('userId courseId').sort({ createdAt: -1 });
+
+      // Scope: super_admin sees all; admin/trainer sees only their own courses' certificates
+      let filter: any = {};
+      if (context.user.role === 'admin' || context.user.role === 'trainer') {
+        const adminCourseIds = await Course.find({
+          $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
+        }).distinct('_id');
+        filter.courseId = { $in: adminCourseIds };
+
+        // Audit: log that admin accessed certificates
+        logAdminCrossAccess(
+          context.user.id,
+          context.user.username,
+          'certificates',
+          'Certificate',
+          `Admin accessed certificates scoped to their ${adminCourseIds.length} courses`,
+          0,
+          true
+        );
+      }
+      return await Certificate.find(filter).populate('userId courseId').sort({ createdAt: -1 });
     },
     myCertificates: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
@@ -1503,6 +1651,23 @@ export const resolvers = {
       if (!courseId || courseId === "" || courseId === "undefined" || courseId === "null") return null;
       let progress = await CourseProgress.findOne({ userId: context.user.id, courseId });
       return progress;
+    },
+
+    clientApplications: async (_: any, __: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      return await ClientApplication.find().sort({ createdAt: -1 });
+    },
+
+    myClientApplication: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      return await ClientApplication.findOne({ userId: context.user.id }).sort({ createdAt: -1 });
+    },
+
+    admins: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      return await User.find({ role: { $in: ['admin', 'super_admin'] }, isDeleted: { $ne: true } }).sort({ username: 1 });
     },
 
     // Internships
@@ -1817,9 +1982,18 @@ export const resolvers = {
       const filter: any = { isDeleted: false };
       const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
 
+      // Scope: super_admin bypasses all scoping; admin sees only teams in their own programs
       if (teamId) {
         const team = await InternshipTeam.findById(teamId);
         if (!team) throw new Error('Team not found');
+
+        // For admin: verify the team belongs to one of their programs
+        if (context.user.role === 'admin') {
+          const myPrograms = await InternshipProgram.find({ createdBy: context.user.id }).distinct('_id');
+          if (!myPrograms.map(id => id.toString()).includes(team.internshipProgramId?.toString())) {
+            throw new Error('Unauthorized access to this team\'s submissions');
+          }
+        }
 
         const isMember = await InternshipTeamMember.findOne({ teamId, userId: context.user.id, isDeleted: false });
         const isMentor = team.mentorId?.toString() === context.user.id;
@@ -1827,12 +2001,27 @@ export const resolvers = {
         if (!isMember && !isAdmin && !isMentor) throw new Error('Unauthorized');
         filter.teamId = teamId;
       } else {
-        // Global view for trainers (all teams they mentor) or admins (everything)
+        // Global view — scope by role
         if (!isAdmin && context.user.role !== 'trainer') {
           throw new Error('Unauthorized for global submissions view');
         }
 
-        if (context.user.role === 'trainer') {
+        if (context.user.role === 'admin') {
+          const myPrograms = await InternshipProgram.find({ createdBy: context.user.id }).distinct('_id');
+          const myTeams = await InternshipTeam.find({ internshipProgramId: { $in: myPrograms } }).distinct('_id');
+          filter.teamId = { $in: myTeams };
+
+          // Audit: log scope
+          logAdminCrossAccess(
+            context.user.id,
+            context.user.username,
+            'internshipSubmissions',
+            'InternshipSubmission',
+            `Admin accessed internship submissions scoped to their ${myTeams.length} teams`,
+            0,
+            true
+          );
+        } else if (context.user.role === 'trainer') {
           const mentoredTeams = await InternshipTeam.find({ mentorId: context.user.id, isDeleted: false });
           const teamIds = mentoredTeams.map(t => t._id);
           filter.teamId = { $in: teamIds };
@@ -1850,11 +2039,29 @@ export const resolvers = {
       const query: any = { isDeleted: false };
       if (teamId) query.teamId = teamId;
 
+      // Scope: super_admin sees all; admin sees only logs for their programs' teams
       if (context.user.role === 'admin') {
-        // Admins can only see logs if they own the program associated with the team
-        // For simplicity, we'll assume they should only see logs for teams they are mentors of or programs they created
         const myPrograms = await InternshipProgram.find({ createdBy: context.user.id }).distinct('_id');
-        // We might need to join with Team model to be perfect, but let's at least enforce basic role checks
+        const myTeams = await InternshipTeam.find({ internshipProgramId: { $in: myPrograms } }).distinct('_id');
+
+        if (teamId) {
+          if (!myTeams.map(id => id.toString()).includes(teamId.toString())) {
+            throw new Error('Unauthorized access to this team\'s time logs');
+          }
+        } else {
+          query.teamId = { $in: myTeams };
+        }
+
+        // Audit: log scope
+        logAdminCrossAccess(
+          context.user.id,
+          context.user.username,
+          'internshipTimeLogs',
+          'InternshipTimeLog',
+          `Admin accessed time logs scoped to their ${myTeams.length} teams${teamId ? ` (filtered by team ${teamId})` : ''}`,
+          0,
+          !teamId
+        );
       }
 
       if (userId) query.userId = userId;
@@ -1939,14 +2146,60 @@ export const resolvers = {
     },
     studentProfiles: async (_: any, __: any, context: any) => {
       if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
-      return await StudentProfile.find({});
+
+      // Scope: super_admin sees all; admin sees only their own students
+      let filter: any = {};
+      if (context.user?.role === 'admin') {
+        const studentIds = await getAdminStudentIds(context.user.id);
+        filter.userId = { $in: studentIds };
+
+        // Audit: log scope
+        logAdminCrossAccess(
+          context.user.id,
+          context.user.username,
+          'studentProfiles',
+          'StudentProfile',
+          `Admin accessed student profiles scoped to their ${studentIds.length} students`,
+          0,
+          true
+        );
+      }
+      return await StudentProfile.find(filter);
     },
 
     // Payment Queries
     internshipPayments: async (_: any, { programId, status }: { programId?: string, status?: string }, context: any) => {
       if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+
       const query: any = { isDeleted: false };
-      if (programId) query.internshipProgramId = programId;
+
+      // Scope: super_admin sees all; admin sees only their own programs
+      if (context.user?.role === 'admin') {
+        const adminProgramIds = await InternshipProgram.find({ createdBy: context.user.id }).distinct('_id');
+        if (programId) {
+          // If a specific programId is provided, verify access
+          if (!adminProgramIds.map(id => id.toString()).includes(programId.toString())) {
+            throw new Error('Unauthorized access to this program\'s payments');
+          }
+          query.internshipProgramId = programId;
+        } else {
+          query.internshipProgramId = { $in: adminProgramIds };
+        }
+
+        // Audit: log admin payment access
+        logAdminCrossAccess(
+          context.user.id,
+          context.user.username,
+          'internshipPayments',
+          'InternshipPayment',
+          `Admin accessed internship payments scoped to their ${adminProgramIds.length} programs${programId ? ` (filtered by program ${programId})` : ''}`,
+          0,
+          !programId
+        );
+      } else if (programId) {
+        query.internshipProgramId = programId;
+      }
+
       if (status) query.status = status;
       return await InternshipPayment.find(query).sort({ createdAt: -1 });
     },
@@ -1968,7 +2221,26 @@ export const resolvers = {
     // Invoice Queries
     internshipInvoices: async (_: any, { userId }: { userId?: string }, context: any) => {
       if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+
       const query: any = { isDeleted: false };
+
+      // Scope: super_admin sees all; admin sees only invoices for their own programs
+      if (context.user?.role === 'admin') {
+        const adminProgramIds = await InternshipProgram.find({ createdBy: context.user.id }).distinct('_id');
+        query.internshipProgramId = { $in: adminProgramIds };
+
+        // Audit: log admin invoice access
+        logAdminCrossAccess(
+          context.user.id,
+          context.user.username,
+          'internshipInvoices',
+          'InternshipInvoice',
+          `Admin accessed internship invoices scoped to their ${adminProgramIds.length} programs`,
+          0,
+          true
+        );
+      }
+
       if (userId) query.userId = userId;
       return await InternshipInvoice.find(query).sort({ issuedAt: -1 });
     },
@@ -1985,8 +2257,35 @@ export const resolvers = {
     // Certificate Queries
     internshipCertificates: async (_: any, { programId }: { programId?: string }, context: any) => {
       if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+
       const query: any = { isDeleted: false };
-      if (programId) query.internshipProgramId = programId;
+
+      // Scope: super_admin sees all; admin sees only their own programs
+      if (context.user?.role === 'admin') {
+        const adminProgramIds = await InternshipProgram.find({ createdBy: context.user.id }).distinct('_id');
+        if (programId) {
+          if (!adminProgramIds.map(id => id.toString()).includes(programId.toString())) {
+            throw new Error('Unauthorized access to this program\'s certificates');
+          }
+          query.internshipProgramId = programId;
+        } else {
+          query.internshipProgramId = { $in: adminProgramIds };
+        }
+
+        // Audit: log scope
+        logAdminCrossAccess(
+          context.user.id,
+          context.user.username,
+          'internshipCertificates',
+          'InternshipCertificate',
+          `Admin accessed internship certificates scoped to their ${adminProgramIds.length} programs${programId ? ` (filtered by program ${programId})` : ''}`,
+          0,
+          !programId
+        );
+      } else if (programId) {
+        query.internshipProgramId = programId;
+      }
+
       return await InternshipCertificate.find(query).sort({ issuedAt: -1 });
     },
     myInternshipCertificates: async (_: any, __: any, context: any) => {
@@ -2019,11 +2318,32 @@ export const resolvers = {
       if (courseId) query.courseId = courseId;
       if (status) query.status = status;
 
-      // If trainer, only show applications for their courses
-      if (context.user.role === 'trainer') {
-        const courses = await Course.find({ instructor: context.user.id });
+      // Scope: trainers see only their courses; admins see only their courses
+      if (context.user.role !== 'super_admin') {
+        const courses = await Course.find({
+          $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
+        });
         const courseIds = courses.map(c => c._id);
-        query.courseId = { $in: courseIds };
+        if (courseId) {
+          if (!courseIds.map(id => id.toString()).includes(courseId.toString())) {
+            throw new Error('Unauthorized access to this course\'s applications');
+          }
+        } else {
+          query.courseId = { $in: courseIds };
+        }
+
+        // Audit: log scope
+        if (context.user.role === 'admin') {
+          logAdminCrossAccess(
+            context.user.id,
+            context.user.username,
+            'courseApplications',
+            'CourseApplication',
+            `Admin accessed course applications scoped to their ${courseIds.length} courses`,
+            0,
+          true
+          );
+        }
       }
 
       const applications = await CourseApplication.find(query)
@@ -2082,15 +2402,48 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
-      const filter: any = {};
+
+      // Scope: super_admin sees all; admin sees only applications linked to projects they mentor
+      let filter: any = {};
+      if (context.user.role === 'admin') {
+        // Find projects where admin is a mentor, get their application IDs
+        const mentoredProjects = await Project.find({ mentors: context.user.id }).select('projectApplicationId');
+        const applicationIds = mentoredProjects
+          .map(p => p.projectApplicationId)
+          .filter(id => id != null);
+        filter._id = { $in: applicationIds };
+
+        // Audit: log scope
+        logAdminCrossAccess(
+          context.user.id,
+          context.user.username,
+          'projectApplications',
+          'ProjectApplication',
+          `Admin accessed project applications scoped to their ${applicationIds.length} mentored projects`,
+          0,
+          true
+        );
+      }
       if (status) filter.status = status;
       return await ProjectApplication.find(filter).populate('clientId').sort({ createdAt: -1 });
     },
     undoMetrics: async (_: any, { days }: { days?: number }, context: any) => {
-      if (!context.user || (context.user.role !== 'admin' && context.user.role !== 'super_admin')) {
-        throw new Error('Not authorized');
+      if (!context.user || context.user.role !== 'super_admin') {
+        throw new Error('Not authorized. Only super admins can view undo metrics.');
       }
       return await getUndoMetrics(days || 30);
+    },
+    adminAuditLogs: async (_: any, { adminId, isCrossAdmin, queryName, page = 1, limit = 50 }: any, context: any) => {
+      if (!context.user || context.user.role !== 'super_admin') {
+        throw new Error('Not authorized. Only super admins can view admin audit logs.');
+      }
+      return await getAdminAuditLogs({
+        adminId,
+        isCrossAdmin,
+        queryName,
+        page,
+        limit,
+      });
     },
     myProjectApplications: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
@@ -2489,7 +2842,7 @@ export const resolvers = {
         totalScore,
         timeTaken,
         grade: gradePercent,
-        status: autoStatus,
+        status: autoStatus as 'approved' | 'failed',
         feedback: hasOpenQuestions
           ? `Auto-graded: ${gradePercent}% (${totalScore}/${maxScore} pts). Open-ended answers reviewed by AI.`
           : `Auto-graded: ${gradePercent}% (${totalScore}/${maxScore} pts).`
@@ -3488,6 +3841,12 @@ export const resolvers = {
         permissions: args.permissions || [],
         createdBy: context.user.id
       });
+
+      // If admin creates a client, auto-assign self as their admin
+      if (args.role === 'client') {
+        (user as any).assignedAdmin = context.user.id;
+      }
+
       await user.save();
 
       // Trigger Emails
@@ -3501,6 +3860,81 @@ export const resolvers = {
       }
 
       return user;
+    },
+
+    // ─── CLIENT APPLICATION MUTATIONS ─────────────────────────────────────────
+    applyToBeClient: async (_: any, { reason }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      if (context.user.role === 'client') throw new Error('You are already a client');
+      if (context.user.role === 'admin' || context.user.role === 'super_admin') {
+        throw new Error('Admins cannot apply to be a client');
+      }
+
+      // One pending application at a time
+      const existing = await ClientApplication.findOne({ userId: context.user.id, status: 'pending' });
+      if (existing) throw new Error('You already have a pending application');
+
+      const application = new ClientApplication({
+        userId: context.user.id,
+        reason,
+        status: 'pending',
+      });
+      await application.save();
+      return application;
+    },
+
+    approveClientApplication: async (_: any, { id, assignedAdminId }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+
+      const application = await ClientApplication.findById(id);
+      if (!application) throw new Error('Application not found');
+
+      const adminToAssign = assignedAdminId || context.user.id;
+
+      application.status = 'approved';
+      (application as any).assignedAdminId = adminToAssign;
+      await application.save();
+
+      // Upgrade user role to client and assign admin
+      await User.findByIdAndUpdate(application.userId, {
+        role: 'client',
+        assignedAdmin: adminToAssign,
+      });
+
+      return application;
+    },
+
+    rejectClientApplication: async (_: any, { id, adminFeedback }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+
+      const application = await ClientApplication.findById(id);
+      if (!application) throw new Error('Application not found');
+
+      application.status = 'rejected';
+      if (adminFeedback) application.adminFeedback = adminFeedback;
+      await application.save();
+      return application;
+    },
+
+    assignAdminToClient: async (_: any, { adminId }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      if (context.user.role !== 'client') throw new Error('Only clients can change their assigned admin');
+
+      const admin = await User.findById(adminId);
+      if (!admin || !['admin', 'super_admin'].includes(admin.role)) {
+        throw new Error('Invalid admin selection');
+      }
+
+      const updated = await User.findByIdAndUpdate(
+        context.user.id,
+        { assignedAdmin: adminId },
+        { new: true }
+      );
+      return updated;
     },
 
     updateUser: async (_: any, { id, ...args }: any, context: any) => {
@@ -7035,7 +7469,7 @@ export const resolvers = {
       return await ProjectLifecycleService.initializeProjectFromApplication(applicationId, course, mentorIds);
     },
     assignDeveloperToProject: async (_: any, { projectId, developerId, role, checklistTasks }: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
       return await ProjectLifecycleService.assignDeveloperToProject(projectId, developerId, role, checklistTasks);
@@ -7146,6 +7580,10 @@ export const resolvers = {
   },
   User: {
     id: (parent: any) => parent.id || parent._id || parent.toString(),
+    assignedAdmin: async (parent: any) => {
+      if (!parent.assignedAdmin) return null;
+      return await User.findById(parent.assignedAdmin);
+    },
     streak: async (parent: any) => {
       if (parent.academicStatus === 'active' || parent.role === 'student') {
         return Math.min((parent.level || 1) * 3 + Math.floor(Math.random() * 3), 100);
@@ -7558,6 +7996,50 @@ export const resolvers = {
     host: async (meeting: any) => {
       return await User.findById(meeting.hostId);
     }
+  },
+  ProjectOnboarding: {
+    // Return only the ID string for the scalar field — Mongoose may have populated
+    // developerId with the full User object, which the `ID` scalar cannot serialize.
+    developerId: (onboarding: any) => {
+      const dev = onboarding.developerId;
+      if (!dev) return null;
+      if (dev._id) return dev._id.toString();
+      return dev.toString();
+    },
+    projectId: (onboarding: any) => {
+      const proj = onboarding.projectId;
+      if (!proj) return null;
+      if (proj._id) return proj._id.toString();
+      return proj.toString();
+    },
+    developer: async (onboarding: any) => {
+      if (onboarding.developerId && onboarding.developerId.fullName) {
+        return onboarding.developerId;
+      }
+      return await User.findById(onboarding.developerId);
+    },
+    project: async (onboarding: any) => {
+      if (onboarding.projectId && onboarding.projectId.title) {
+        return onboarding.projectId;
+      }
+      return await Project.findById(onboarding.projectId);
+    }
+  },
+  ClientApplication: {
+    id: (parent: any) => parent.id || parent._id?.toString(),
+    userId: (parent: any) => parent.userId?.toString?.() || parent.userId,
+    user: async (parent: any) => {
+      if (parent.userId?.username) return parent.userId;
+      return await User.findById(parent.userId);
+    },
+    assignedAdminId: (parent: any) => parent.assignedAdminId?.toString?.() || parent.assignedAdminId || null,
+    assignedAdmin: async (parent: any) => {
+      if (!parent.assignedAdminId) return null;
+      if (parent.assignedAdminId?.username) return parent.assignedAdminId;
+      return await User.findById(parent.assignedAdminId);
+    },
+    createdAt: (parent: any) => parent.createdAt?.toISOString?.() || String(parent.createdAt),
+    updatedAt: (parent: any) => parent.updatedAt?.toISOString?.() || String(parent.updatedAt),
   }
 };
 

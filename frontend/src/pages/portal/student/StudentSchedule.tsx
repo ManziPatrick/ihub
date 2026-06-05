@@ -506,6 +506,7 @@ export default function StudentSchedule() {
                             </Button>
                           )}
                       </div>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}

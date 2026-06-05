@@ -43,7 +43,7 @@ export const getUndoMetrics = async (days: number = 30) => {
         total: { $sum: '$count' },
       },
     },
-    { $sort: { total: -1 } },
+    { $sort: { total: -1 as const } },
   ];
 
   const raw = await UndoMetric.aggregate(pipeline);

@@ -52,7 +52,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe,
-  Building2
+  Building2,
+  RotateCcw,
+  Eye
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePusher } from "@/hooks/use-pusher";
@@ -108,6 +110,7 @@ const trainerNavItems: NavItem[] = [
     children: [
       { label: "Mentorship", href: "/portal/trainer/mentorship", icon: GraduationCap },
       { label: "Internships", href: "/portal/trainer/internships", icon: Briefcase },
+      { label: "Dev Onboarding", href: "/portal/admin/project-onboarding", icon: UserCog },
     ]
   },
   { label: "Schedule", href: "/portal/trainer/schedule", icon: Calendar },
@@ -122,6 +125,7 @@ const adminNavItems: NavItem[] = [
     children: [
       { label: "Users", href: "/portal/admin/users", icon: Users },
       { label: "Courses", href: "/portal/admin/courses", icon: BookOpen },
+      { label: "Course Preview", href: "/portal/admin/course-preview", icon: Eye },
       { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
       { label: "Internships", href: "/portal/admin/internships", icon: Briefcase },
     ]
@@ -168,6 +172,7 @@ const superAdminNavItems: NavItem[] = [
       { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },
       { label: "All Users", href: "/portal/super-admin/users", icon: Users },
       { label: "Configuration", href: "/portal/super-admin/config", icon: Cog },
+      { label: "Undo Metrics", href: "/portal/super-admin/undo-metrics", icon: RotateCcw },
     ]
   },
   { 
@@ -194,6 +199,7 @@ const clientNavItems: NavItem[] = [
       { label: "Feedback", href: "/portal/client/feedback", icon: Star },
     ]
   },
+  { label: "Schedule", href: "/portal/client", icon: Calendar },
   { label: "Messages", href: "/chat", icon: MessageSquare },
 ];
 

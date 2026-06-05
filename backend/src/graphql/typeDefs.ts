@@ -120,6 +120,7 @@ export const typeDefs = `#graphql
     isExternal: Boolean
     isFirst: Boolean
     certificates: [Certificate]
+    assignedAdmin: User
   }
 
   type PaginationInfo {
@@ -803,6 +804,25 @@ export const typeDefs = `#graphql
     createdAt: String!
   }
 
+  type AdminAuditLog {
+    id: ID!
+    accessingAdminId: ID!
+    accessingAdminUsername: String!
+    queryName: String!
+    accessedEntityType: String!
+    isCrossAdmin: Boolean!
+    details: String!
+    resultCount: Int!
+    ipAddress: String
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type AdminAuditLogResponse {
+    items: [AdminAuditLog!]!
+    pagination: PaginationInfo!
+  }
+
   type UndoMetricBreakdown {
     entityType: String!
     deletes: Int!
@@ -860,6 +880,11 @@ export const typeDefs = `#graphql
     getAnalyticsExport: String
     project(id: ID!): Project
     
+    # Client Applications
+    clientApplications: [ClientApplication]
+    myClientApplication: ClientApplication
+    admins: [User]
+    
     # Certificates
     certificates: [Certificate]
     myCertificates: [Certificate]
@@ -890,6 +915,9 @@ export const typeDefs = `#graphql
     
     # Undo Metrics
     undoMetrics(days: Int): UndoMetrics
+    
+    # Admin Audit Logs
+    adminAuditLogs(adminId: ID, isCrossAdmin: Boolean, queryName: String, page: Int, limit: Int): AdminAuditLogResponse
     
     # Course Applications
     courseApplications(courseId: ID, status: String, page: Int, limit: Int): CourseApplicationResponse
@@ -1173,6 +1201,12 @@ export const typeDefs = `#graphql
     createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String): User
     updateUser(id: ID!, username: String, email: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String): User
     deleteUser(id: ID!): Boolean
+    
+    # Client Applications
+    applyToBeClient(reason: String!): ClientApplication!
+    approveClientApplication(id: ID!, assignedAdminId: ID): ClientApplication!
+    rejectClientApplication(id: ID!, adminFeedback: String): ClientApplication!
+    assignAdminToClient(adminId: ID!): User!
     
     # Progress Tracking
     updateLessonProgress(courseId: ID!, lessonId: String!, timeSpent: Int!, completed: Boolean): Boolean
@@ -2652,5 +2686,18 @@ export const typeDefs = `#graphql
       projectId: ID!
       notes: String!
     ): Project
+  }
+
+  type ClientApplication {
+    id: ID!
+    userId: ID!
+    user: User
+    status: String!
+    reason: String!
+    adminFeedback: String
+    assignedAdminId: ID
+    assignedAdmin: User
+    createdAt: String!
+    updatedAt: String!
   }
 `;

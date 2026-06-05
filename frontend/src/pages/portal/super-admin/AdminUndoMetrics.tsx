@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { gql, useQuery } from "@apollo/client/react";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
 import {
   BarChart3,
   RotateCcw,
@@ -108,7 +109,7 @@ export default function AdminUndoMetrics() {
             trend === 'down' ? 'bg-red-500/10 text-red-500' :
             'bg-accent/10 text-accent'
           }`}>
-            <icon className="w-5 h-5" />
+            <Icon className="w-5 h-5" />
           </div>
         </div>
       </CardContent>

@@ -70,7 +70,7 @@ const INITIALIZE_PROJECT = gql`
 
 const GET_TRAINERS = gql`
   query GetTrainers {
-    users(role: "trainer") {
+    getAllTrainers {
       id
       fullName
       email
@@ -107,7 +107,7 @@ export default function AdminProjectApplications() {
   const [initProject, { loading: initializing }] = useMutation(INITIALIZE_PROJECT);
 
   const applications = (data as any)?.projectApplications || [];
-  const trainers = (trainersData as any)?.users || [];
+  const trainers = (trainersData as any)?.getAllTrainers || [];
 
   const filtered = applications.filter((app: any) => {
     const q = searchQuery.toLowerCase();

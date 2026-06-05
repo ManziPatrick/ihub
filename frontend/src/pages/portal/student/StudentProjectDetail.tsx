@@ -25,6 +25,7 @@ import {
     Clock,
 } from "lucide-react";
 import { GET_PROJECT } from "@/lib/graphql/queries";
+import { UPDATE_TASK_PROGRESS } from "@/lib/graphql/mutations";
 import { SubmitProjectDialog, TeamChatDialog, ViewGuidelinesDialog } from "@/components/portal/dialogs";
 import { PPTViewer } from "@/components/portal/PPTViewer";
 import { useState } from "react";
@@ -96,6 +97,7 @@ export default function StudentProjectDetail() {
     });
 
     const [updateChecklist] = useMutation(UPDATE_CHECKLIST);
+    const [updateTaskProgress] = useMutation(UPDATE_TASK_PROGRESS);
 
     const onboarding = (onboardingData as any)?.projectOnboarding?.find((o: any) => o.developerId === user?.id);
 
@@ -111,7 +113,19 @@ export default function StudentProjectDetail() {
         }
     };
 
-    const { data, loading, error } = useQuery(GET_PROJECT, {
+    const handleTaskProgressToggle = async (taskId: string, completed: boolean) => {
+        try {
+            await updateTaskProgress({
+                variables: { projectId, taskId, completed }
+            });
+            refetchProject();
+            toast.success(completed ? "Task marked complete!" : "Task unmarked");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to update task");
+        }
+    };
+
+    const { data, loading, error, refetch: refetchProject } = useQuery(GET_PROJECT, {
         variables: { id: projectId },
         skip: !projectId,
     });
@@ -350,21 +364,35 @@ export default function StudentProjectDetail() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="space-y-2">
-                                            {project.tasks.map((task: any, i: number) => (
-                                                <div key={task.id || i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/20 transition-colors">
-                                                    <CheckCircle
-                                                        className={`w-4 h-4 shrink-0 ${task.completed ? "text-accent" : "text-muted-foreground/30"}`}
-                                                    />
-                                                    <span className={`text-sm flex-1 ${task.completed ? "line-through text-muted-foreground" : "text-card-foreground"}`}>
-                                                        {task.title}
-                                                    </span>
-                                                    {task.approved && (
-                                                        <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-400 border-green-400/30">
-                                                            Approved
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            ))}
+                                            {project.tasks.map((task: any, i: number) => {
+                                                const taskId = task.id || `task-${i}`;
+                                                return (
+                                                    <label
+                                                        key={taskId}
+                                                        className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-accent/10 cursor-pointer group transition-colors border border-transparent hover:border-accent/20"
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={task.completed}
+                                                            onChange={(e) => handleTaskProgressToggle(task.id, e.target.checked)}
+                                                            disabled={task.approved}
+                                                            className="rounded text-accent focus:ring-accent border-border disabled:opacity-50"
+                                                        />
+                                                        <span className={`text-sm flex-1 ${task.completed ? "line-through text-muted-foreground" : "text-card-foreground"}`}>
+                                                            {task.title}
+                                                        </span>
+                                                        {task.approved ? (
+                                                            <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-400 border-green-400/30 shrink-0">
+                                                                Approved
+                                                            </Badge>
+                                                        ) : task.feedback ? (
+                                                            <span className="text-[10px] text-amber-500 shrink-0" title={task.feedback}>
+                                                                Has Feedback
+                                                            </span>
+                                                        ) : null}
+                                                    </label>
+                                                );
+                                            })}
                                         </div>
                                     </CardContent>
                                 </Card>

@@ -25,15 +25,17 @@ import {
 const GET_PROJECTS_WITH_ONBOARDING = gql`
   query GetProjectsForOnboarding {
     projects {
-      id
-      title
-      status
-      category
-      deadline
-      team {
-        userId
-        name
-        role
+      items {
+        id
+        title
+        status
+        category
+        deadline
+        team {
+          userId
+          name
+          role
+        }
       }
     }
   }
@@ -64,7 +66,7 @@ const GET_PROJECT_ONBOARDING = gql`
 
 const GET_STUDENTS = gql`
   query GetStudentsForAssignment {
-    users(role: "student") {
+    getAllStudents {
       id
       fullName
       email
@@ -99,6 +101,7 @@ const UPDATE_CHECKLIST = gql`
   mutation UpdateOnboardingChecklist($onboardingId: ID!, $taskIndex: Int!, $completed: Boolean!) {
     updateOnboardingChecklist(onboardingId: $onboardingId, taskIndex: $taskIndex, completed: $completed) {
       id
+      status
       checklist {
         task
         completed
@@ -150,6 +153,14 @@ function getProjectStatusColor(status: string) {
   }
 }
 
+// Safely parse date strings — handles ISO strings, numeric timestamps, and Date objects
+function parseDate(value: string | number | null | undefined): Date {
+  if (!value) return new Date();
+  const num = Number(value);
+  if (!isNaN(num) && String(value).length <= 13) return new Date(num); // unix ms
+  return new Date(value); // ISO string
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function AdminProjectOnboarding() {
@@ -163,6 +174,7 @@ export default function AdminProjectOnboarding() {
   const [selectedRole, setSelectedRole] = useState("Full-Stack Developer");
   const [checklistTasks, setChecklistTasks] = useState<string[]>(DEFAULT_CHECKLIST);
   const [newTask, setNewTask] = useState("");
+  const [developerSearchQuery, setDeveloperSearchQuery] = useState("");
 
   const { data: projectsData, loading: projectsLoading, refetch: refetchProjects } = useQuery(
     GET_PROJECTS_WITH_ONBOARDING
@@ -176,11 +188,22 @@ export default function AdminProjectOnboarding() {
   const { data: studentsData } = useQuery(GET_STUDENTS);
 
   const [assignDev, { loading: assigning }] = useMutation(ASSIGN_DEVELOPER);
-  const [updateChecklist] = useMutation(UPDATE_CHECKLIST);
+  const [togglingTask, setTogglingTask] = useState<string | null>(null); // "onboardingId-taskIndex"
+  const [updateChecklist] = useMutation(UPDATE_CHECKLIST, {
+    refetchQueries: [{ query: GET_PROJECT_ONBOARDING, variables: { projectId: selectedProjectId } }],
+    awaitRefetchQueries: true,
+  });
 
-  const projects = (projectsData as any)?.projects || [];
+  const projects = (projectsData as any)?.projects?.items || [];
   const onboardings = (onboardingData as any)?.projectOnboarding || [];
-  const students = (studentsData as any)?.users || [];
+  const students = (studentsData as any)?.getAllStudents || [];
+  const filteredStudents = students.filter((student: any) => {
+    const q = developerSearchQuery.toLowerCase();
+    return (
+      student.fullName?.toLowerCase().includes(q) ||
+      student.email?.toLowerCase().includes(q)
+    );
+  });
 
   const filteredProjects = projects.filter((p: any) => {
     const q = searchQuery.toLowerCase();
@@ -214,6 +237,7 @@ export default function AdminProjectOnboarding() {
       toast.success("Developer assigned and onboarding checklist created!");
       setAssignDialogOpen(false);
       setSelectedDeveloperId("");
+      setDeveloperSearchQuery("");
       setChecklistTasks(DEFAULT_CHECKLIST);
       refetchOnboarding();
       refetchProjects();
@@ -223,11 +247,16 @@ export default function AdminProjectOnboarding() {
   };
 
   const handleChecklistToggle = async (onboardingId: string, taskIndex: number, completed: boolean) => {
+    const key = `${onboardingId}-${taskIndex}`;
+    if (togglingTask === key) return; // prevent double-click
+    setTogglingTask(key);
     try {
       await updateChecklist({ variables: { onboardingId, taskIndex, completed } });
-      toast.success(completed ? "Task marked complete!" : "Task unmarked");
+      toast.success(completed ? "✅ Task marked complete!" : "Task unmarked");
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err.message || "Failed to update task");
+    } finally {
+      setTogglingTask(null);
     }
   };
 
@@ -458,32 +487,47 @@ export default function AdminProjectOnboarding() {
                                       <ListChecks className="w-3.5 h-3.5" /> Onboarding Checklist
                                     </h4>
                                     <span className="text-xs text-muted-foreground">
-                                      Assigned {format(new Date(parseInt(ob.createdAt)), "MMM d, yyyy")}
+                                      Assigned {format(parseDate(ob.createdAt), "MMM d, yyyy")}
                                     </span>
                                   </div>
 
-                                  {ob.checklist?.map((task: any, tIdx: number) => (
-                                    <label
-                                      key={tIdx}
-                                      className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-muted/20 cursor-pointer group transition-colors"
-                                    >
-                                      <button
-                                        onClick={() => handleChecklistToggle(ob.id, tIdx, !task.completed)}
-                                        className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all
-                                          ${task.completed ? "bg-green-500 border-green-500" : "border-border group-hover:border-accent"}`}
+                                  {ob.checklist?.map((task: any, tIdx: number) => {
+                                    const taskKey = `${ob.id}-${tIdx}`;
+                                    const isToggling = togglingTask === taskKey;
+                                    return (
+                                      <div
+                                        key={tIdx}
+                                        onClick={() => !isToggling && handleChecklistToggle(ob.id, tIdx, !task.completed)}
+                                        className={`flex items-start gap-3 p-2.5 rounded-lg transition-colors group
+                                          ${isToggling ? "opacity-60 cursor-wait" : "hover:bg-muted/20 cursor-pointer"}`}
                                       >
-                                        {task.completed && <CheckCircle2 className="w-3 h-3 text-white" />}
-                                      </button>
-                                      <span className={`text-xs flex-1 ${task.completed ? "line-through text-muted-foreground" : ""}`}>
-                                        {task.task}
-                                      </span>
-                                      {task.completed && task.completedAt && (
-                                        <span className="text-[10px] text-muted-foreground shrink-0">
-                                          {format(new Date(parseInt(task.completedAt)), "MMM d")}
+                                        <div
+                                          className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all
+                                            ${task.completed
+                                              ? "bg-green-500 border-green-500"
+                                              : "border-border group-hover:border-accent"
+                                            }`}
+                                        >
+                                          {isToggling
+                                            ? <Loader2 className="w-3 h-3 text-white animate-spin" />
+                                            : task.completed
+                                              ? <CheckCircle2 className="w-3 h-3 text-white" />
+                                              : null
+                                          }
+                                        </div>
+                                        <span className={`text-xs flex-1 leading-relaxed ${
+                                          task.completed ? "line-through text-muted-foreground" : ""
+                                        }`}>
+                                          {task.task}
                                         </span>
-                                      )}
-                                    </label>
-                                  ))}
+                                        {task.completed && task.completedAt && (
+                                          <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5">
+                                            {format(parseDate(task.completedAt), "MMM d")}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </motion.div>
                             )}
@@ -500,7 +544,7 @@ export default function AdminProjectOnboarding() {
       </div>
 
       {/* Assign Developer Dialog */}
-      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+      <Dialog open={assignDialogOpen} onOpenChange={(open) => { setAssignDialogOpen(open); if (!open) setDeveloperSearchQuery(""); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -516,11 +560,22 @@ export default function AdminProjectOnboarding() {
             {/* Developer Selection */}
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Developer</label>
+              
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or email..."
+                  value={developerSearchQuery}
+                  onChange={(e) => setDeveloperSearchQuery(e.target.value)}
+                  className="pl-9 bg-card border-border/50 mb-2"
+                />
+              </div>
+
               <div className="max-h-48 overflow-y-auto space-y-2 border border-border/50 rounded-xl p-3 bg-muted/5">
-                {students.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">No students available</p>
+                {filteredStudents.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No students found</p>
                 ) : (
-                  students.map((student: any) => {
+                  filteredStudents.map((student: any) => {
                     const alreadyAssigned = onboardings.some((o: any) => o.developerId === student.id);
                     return (
                       <label

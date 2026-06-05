@@ -945,6 +945,7 @@ export const SEND_MESSAGE_TO_PROJECT = gql`
       id
       content
       createdAt
+      conversationId
       sender {
          id
          username
@@ -2033,6 +2034,63 @@ export const CREATE_APPLICATION_PHASE = gql`
       enableApproval
       isInterviewPhase
       allowMeetingScheduling
+    }
+  }
+`;
+
+// ─── CLIENT APPLICATION MUTATIONS ─────────────────────────────────────────────
+export const APPLY_TO_BE_CLIENT = gql`
+  mutation ApplyToBeClient($reason: String!) {
+    applyToBeClient(reason: $reason) {
+      id
+      status
+      reason
+      createdAt
+    }
+  }
+`;
+
+export const APPROVE_CLIENT_APPLICATION = gql`
+  mutation ApproveClientApplication($id: ID!, $assignedAdminId: ID) {
+    approveClientApplication(id: $id, assignedAdminId: $assignedAdminId) {
+      id
+      status
+      assignedAdminId
+      assignedAdmin {
+        id
+        username
+        fullName
+      }
+      user {
+        id
+        username
+        email
+        role
+      }
+    }
+  }
+`;
+
+export const REJECT_CLIENT_APPLICATION = gql`
+  mutation RejectClientApplication($id: ID!, $adminFeedback: String) {
+    rejectClientApplication(id: $id, adminFeedback: $adminFeedback) {
+      id
+      status
+      adminFeedback
+    }
+  }
+`;
+
+export const ASSIGN_ADMIN_TO_CLIENT = gql`
+  mutation AssignAdminToClient($adminId: ID!) {
+    assignAdminToClient(adminId: $adminId) {
+      id
+      assignedAdmin {
+        id
+        username
+        fullName
+        avatar
+      }
     }
   }
 `;
