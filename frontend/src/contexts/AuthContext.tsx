@@ -13,7 +13,8 @@ export type UserRole =
   | "trainer"
   | "admin"
   | "super_admin"
-  | "mentor";
+  | "mentor"
+  | "client";
 
 export interface User {
   id: string;

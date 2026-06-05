@@ -459,6 +459,9 @@ export const typeDefs = `#graphql
     completed: Boolean!
     approved: Boolean
     feedback: String
+    aiFeedback: String
+    category: String
+    dependencies: [String]
   }
 
   type ProjectLink {
@@ -481,6 +484,9 @@ export const typeDefs = `#graphql
     feedback: String
     status: String
     aiReview: String
+    version: Int
+    fileName: String
+    submittedBy: ID
   }
 
   type MilestoneDetailed {
@@ -494,10 +500,30 @@ export const typeDefs = `#graphql
     aiAnalysis: String
   }
 
+  type ProjectEvaluation {
+    clientFeedback: ProjectClientFeedback
+    developerEvaluations: [ProjectDeveloperEvaluation]
+    reviewerNotes: String
+  }
+
+  type ProjectClientFeedback {
+    rating: Int
+    comment: String
+    submittedAt: String
+  }
+
+  type ProjectDeveloperEvaluation {
+    developerId: ID
+    rating: Int
+    notes: String
+  }
+
   type Project {
     id: ID!
     userId: ID!
     user: User
+    projectApplicationId: ID
+    projectApplication: ProjectApplication
     title: String!
     course: String!
     type: String!
@@ -521,6 +547,9 @@ export const typeDefs = `#graphql
     conversation: Conversation
     milestoneVideos: [MilestoneVideo]
     milestonePPTs: [MilestonePPT]
+    evaluation: ProjectEvaluation
+    isArchived: Boolean
+    archivedAt: String
     createdAt: String!
     updatedAt: String!
   }
@@ -761,6 +790,35 @@ export const typeDefs = `#graphql
     resourceType: String
   }
 
+
+  type UndoMetricEntry {
+    id: ID!
+    actionType: String!
+    entityType: String!
+    entityId: ID!
+    entityTitle: String!
+    userId: ID!
+    user: User
+    timestamp: String!
+    createdAt: String!
+  }
+
+  type UndoMetricBreakdown {
+    entityType: String!
+    deletes: Int!
+    restores: Int!
+    undoRate: Int!
+    total: Int!
+  }
+
+  type UndoMetrics {
+    totalDeletes: Int!
+    totalRestores: Int!
+    overallUndoRate: Int!
+    breakdown: [UndoMetricBreakdown!]!
+    recentEntries: [UndoMetricEntry!]!
+  }
+
   type Query {
     # Resources
     getResources(linkedTo: ID, onModel: String): [Resource!]!
@@ -829,6 +887,9 @@ export const typeDefs = `#graphql
     
     # Assignments
     getAssignmentSubmissions(courseId: ID, lessonId: String, page: Int, limit: Int): AssignmentSubmissionResponse
+    
+    # Undo Metrics
+    undoMetrics(days: Int): UndoMetrics
     
     # Course Applications
     courseApplications(courseId: ID, status: String, page: Int, limit: Int): CourseApplicationResponse
@@ -1186,6 +1247,10 @@ export const typeDefs = `#graphql
       mentorIds: [ID]
     ): Project
     deleteProject(id: ID!): Boolean
+    restoreCourse(id: ID!): Course
+    restoreUser(id: ID!): User
+    restoreBadge(id: ID!): Badge
+    restoreProject(id: ID!): Project
     submitProject(id: ID!, submissionUrl: String!): Project
     # Auto-assign students to teams of 3
     autoGroupStudents(courseId: ID!, projectTitle: String!, description: String!, deadline: String): [Project]
@@ -2342,7 +2407,7 @@ export const typeDefs = `#graphql
       notes: String
     ): UserAssignedTask!
 
-    updateTaskProgress(
+    updateTaskProgressPhase(
       taskId: ID!
       progressPercentage: Int!
       updatedBy: ID!
@@ -2425,5 +2490,167 @@ export const typeDefs = `#graphql
   input ChecklistItemInput {
     item: String!
     completed: Boolean
+  }
+
+  type ProjectApplicationDocuments {
+    overviewUrl: String
+    featuresUrl: String
+    technicalUrl: String
+  }
+
+  type ProjectApplication {
+    id: ID!
+    clientId: ID!
+    client: User
+    title: String!
+    description: String!
+    status: String!
+    requiredDocuments: ProjectApplicationDocuments
+    ndaSigned: Boolean!
+    reviewNotes: String
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type ProjectNDA {
+    id: ID!
+    projectApplicationId: ID!
+    projectApplication: ProjectApplication
+    clientId: ID!
+    client: User
+    signerName: String!
+    signerEmail: String!
+    signedAt: String
+    signerIp: String
+    signatureHash: String
+    status: String!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type OnboardingChecklistItem {
+    task: String!
+    completed: Boolean!
+    completedAt: String
+  }
+
+  type ProjectOnboarding {
+    id: ID!
+    projectId: ID!
+    project: Project
+    developerId: ID!
+    developer: User
+    role: String!
+    status: String!
+    checklist: [OnboardingChecklistItem!]!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  input ProjectApplicationDocumentsInput {
+    overviewUrl: String
+    featuresUrl: String
+    technicalUrl: String
+  }
+
+  extend type Query {
+    projectApplications(status: String): [ProjectApplication]
+    myProjectApplications: [ProjectApplication]
+    projectApplication(id: ID!): ProjectApplication
+    projectNDA(applicationId: ID!): ProjectNDA
+    projectOnboarding(projectId: ID!): [ProjectOnboarding]
+    developerOnboarding(userId: ID!): [ProjectOnboarding]
+    projectByApplicationId(applicationId: ID!): Project
+  }
+
+  extend type Mutation {
+    submitProjectApplication(
+      title: String!
+      description: String!
+      documents: ProjectApplicationDocumentsInput!
+    ): ProjectApplication
+
+    reviewProjectApplication(
+      applicationId: ID!
+      status: String!
+      notes: String
+    ): ProjectApplication
+
+    signProjectNDA(
+      applicationId: ID!
+      signerName: String!
+    ): ProjectNDA
+
+    initializeProjectFromApplication(
+      applicationId: ID!
+      course: String!
+      mentorIds: [ID!]!
+    ): Project
+
+    assignDeveloperToProject(
+      projectId: ID!
+      developerId: ID!
+      role: String!
+      checklistTasks: [String!]!
+    ): ProjectOnboarding
+
+    updateOnboardingChecklist(
+      onboardingId: ID!
+      taskIndex: Int!
+      completed: Boolean!
+    ): ProjectOnboarding
+
+    submitMilestoneDeliverable(
+      projectId: ID!
+      milestoneIndex: Int!
+      fileUrl: String!
+      fileName: String!
+      message: String!
+    ): Project
+
+    archiveProject(
+      projectId: ID!
+      lessonsLearned: String!
+    ): Project
+
+    submitClientEvaluation(
+      projectId: ID!
+      rating: Int!
+      comment: String!
+    ): Project
+
+    submitDeveloperEvaluation(
+      projectId: ID!
+      rating: Int!
+      notes: String!
+    ): Project
+
+    deleteProjectApplication(
+      applicationId: ID!
+    ): ProjectApplication
+
+    restoreProjectApplication(
+      applicationId: ID!
+    ): ProjectApplication
+
+    updateProjectApplication(
+      applicationId: ID!
+      title: String
+      description: String
+      documents: ProjectApplicationDocumentsInput
+    ): ProjectApplication
+
+    cancelBooking(
+      id: ID!
+    ): Booking
+
+    restoreBooking(
+      id: ID!
+    ): Booking
+
+    updateReviewerNotes(
+      projectId: ID!
+      notes: String!
+    ): Project
   }
 `;

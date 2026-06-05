@@ -34,7 +34,7 @@ import { QuestionManagerDialog } from "@/components/portal/QuestionManagerDialog
 import { toast } from "sonner";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
 import { GET_COURSES, GET_STATS, GET_USERS, GET_COURSE, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
-import { UPDATE_COURSE, DELETE_COURSE } from "@/lib/graphql/mutations";
+import { UPDATE_COURSE, DELETE_COURSE, RESTORE_COURSE } from "@/lib/graphql/mutations";
 
 export default function AdminCourses() {
   const navigate = useNavigate();
@@ -61,6 +61,7 @@ export default function AdminCourses() {
   const [deleteCourseMutation] = useMutation(DELETE_COURSE, {
     refetchQueries: [{ query: GET_COURSES }, { query: GET_STATS }, { query: GET_ADMIN_DASHBOARD_DATA }]
   });
+  const [restoreCourseMutation] = useMutation(RESTORE_COURSE);
 
   useEffect(() => {
     const fullData = fullCourseData as any;
@@ -82,9 +83,26 @@ export default function AdminCourses() {
 
   const handleDeleteCourse = async () => {
     if (!deleteCourse) return;
+    const deletedId = deleteCourse.id;
+    const deletedTitle = deleteCourse.title;
     try {
-      await deleteCourseMutation({ variables: { id: deleteCourse.id } });
-      toast.success("Course deleted successfully!");
+      await deleteCourseMutation({ variables: { id: deletedId } });
+      window.dispatchEvent(new CustomEvent('bell-ring'));
+      toast.success(`"${deletedTitle}" deleted`, {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              await restoreCourseMutation({ variables: { id: deletedId } });
+              toast.success("Course restored");
+              refetch();
+            } catch (err: any) {
+              toast.error("Failed to restore course: " + err.message);
+            }
+          }
+        },
+        duration: 10000,
+      });
       refetch();
       setDeleteCourse(null);
     } catch (err: any) {

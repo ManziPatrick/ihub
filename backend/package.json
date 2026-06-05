@@ -12,7 +12,10 @@
     "seed:gamified": "ts-node src/seedGamified.ts",
     "seed:english": "ts-node src/seedEnglishCourses.ts",
     "seed:schools": "ts-node src/seedSchools.ts",
-    "seed:diverse": "ts-node src/seedDiverseCourses.ts"
+    "seed:diverse": "ts-node src/seedDiverseCourses.ts",
+    "seed:pms": "ts-node src/seedProjectLifecycleAndInternships.ts",
+    "seed:intern-module": "ts-node src/seedInternshipModule.ts",
+    "seed:all": "ts-node src/seedAll.ts"
   },
   "keywords": [],
   "author": "",

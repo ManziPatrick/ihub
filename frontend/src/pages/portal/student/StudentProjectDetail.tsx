@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client/react";
+import { gql } from "@apollo/client";
 import { motion } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,39 @@ import { SubmitProjectDialog, TeamChatDialog, ViewGuidelinesDialog } from "@/com
 import { PPTViewer } from "@/components/portal/PPTViewer";
 import { useState } from "react";
 import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+
+// Onboarding GraphQL operations
+const GET_PROJECT_ONBOARDING = gql`
+  query GetProjectOnboarding($projectId: ID!) {
+    projectOnboarding(projectId: $projectId) {
+      id
+      developerId
+      role
+      status
+      createdAt
+      checklist {
+        task
+        completed
+        completedAt
+      }
+    }
+  }
+`;
+
+const UPDATE_CHECKLIST = gql`
+  mutation UpdateOnboardingChecklist($onboardingId: ID!, $taskIndex: Int!, $completed: Boolean!) {
+    updateOnboardingChecklist(onboardingId: $onboardingId, taskIndex: $taskIndex, completed: $completed) {
+      id
+      checklist {
+        task
+        completed
+        completedAt
+      }
+    }
+  }
+`;
 
 const getStatusBadge = (status: string) => {
     switch (status) {
@@ -53,6 +87,29 @@ export default function StudentProjectDetail() {
     const [submitOpen, setSubmitOpen] = useState(false);
     const [chatOpen, setChatOpen] = useState(false);
     const [guidelinesOpen, setGuidelinesOpen] = useState(false);
+
+    const { user } = useAuth();
+
+    const { data: onboardingData, refetch: refetchOnboarding } = useQuery(GET_PROJECT_ONBOARDING, {
+        variables: { projectId },
+        skip: !projectId || !user,
+    });
+
+    const [updateChecklist] = useMutation(UPDATE_CHECKLIST);
+
+    const onboarding = (onboardingData as any)?.projectOnboarding?.find((o: any) => o.developerId === user?.id);
+
+    const handleChecklistToggle = async (onboardingId: string, taskIndex: number, completed: boolean) => {
+        try {
+            await updateChecklist({
+                variables: { onboardingId, taskIndex, completed }
+            });
+            refetchOnboarding();
+            toast.success(completed ? "Task marked complete!" : "Task unmarked");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to update task");
+        }
+    };
 
     const { data, loading, error } = useQuery(GET_PROJECT, {
         variables: { id: projectId },
@@ -185,6 +242,55 @@ export default function StudentProjectDetail() {
                 <div className="grid lg:grid-cols-3 gap-6">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
+                        {/* Onboarding Checklist */}
+                        {onboarding && onboarding.status !== "completed" && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                            >
+                                <Card className="border-accent/40 bg-accent/5 overflow-hidden">
+                                    <CardHeader className="pb-3">
+                                        <CardTitle className="text-base flex items-center justify-between">
+                                            <span className="flex items-center gap-2">
+                                                <CheckCircle className="w-5 h-5 text-accent animate-pulse" />
+                                                Onboarding Checklist ({onboarding.role})
+                                            </span>
+                                            <span className="text-xs font-bold text-accent">
+                                                {onboarding.checklist.filter((t: any) => t.completed).length} / {onboarding.checklist.length} Completed
+                                            </span>
+                                        </CardTitle>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Complete the tasks below to finalize onboarding and activate your project status.
+                                        </p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        {onboarding.checklist.map((task: any, idx: number) => (
+                                            <label
+                                                key={idx}
+                                                className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-accent/10 cursor-pointer group transition-colors border border-transparent hover:border-accent/20"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={task.completed}
+                                                    onChange={(e) => handleChecklistToggle(onboarding.id, idx, e.target.checked)}
+                                                    className="mt-0.5 rounded text-accent focus:ring-accent border-border"
+                                                />
+                                                <span className={`text-sm flex-1 ${task.completed ? "line-through text-muted-foreground" : "text-card-foreground"}`}>
+                                                    {task.task}
+                                                </span>
+                                                {task.completed && task.completedAt && (
+                                                    <span className="text-[10px] text-muted-foreground shrink-0">
+                                                        {format(new Date(parseInt(task.completedAt) || task.completedAt), "MMM d")}
+                                                    </span>
+                                                )}
+                                            </label>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
+
                         {/* Primary PPT Viewer if exists */}
                         {project.documentation?.ppts && project.documentation.ppts.length > 0 && (
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>

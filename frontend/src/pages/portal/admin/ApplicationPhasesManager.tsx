@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useMutation, useQuery } from '@apollo/client';
-import { GET_APPLICATION_PHASES, CREATE_APPLICATION_PHASE } from '@/lib/graphql/queries';
+import { useMutation, useQuery } from '@apollo/client/react';
+import { GET_APPLICATION_PHASES } from '@/lib/graphql/queries';
+import { CREATE_APPLICATION_PHASE } from '@/lib/graphql/mutations';
 
 export const ApplicationPhasesManager = ({ programId }: { programId: string }) => {
   const [formData, setFormData] = useState({
@@ -16,6 +17,7 @@ export const ApplicationPhasesManager = ({ programId }: { programId: string }) =
   });
 
   const { data, refetch } = useQuery(GET_APPLICATION_PHASES, { variables: { programId } });
+  const phases = (data as any)?.getApplicationPhases || [];
   const [createPhase] = useMutation(CREATE_APPLICATION_PHASE, {
     onCompleted: () => {
       setFormData({ name: '', description: '', order: 0, enableApproval: true, isInterviewPhase: false, allowMeetingScheduling: false });
@@ -70,11 +72,11 @@ export const ApplicationPhasesManager = ({ programId }: { programId: string }) =
 
       <Card>
         <CardHeader>
-          <CardTitle>Program Phases ({data?.getApplicationPhases.length || 0})</CardTitle>
+          <CardTitle>Program Phases ({phases.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {data?.getApplicationPhases.map((phase: any) => (
+            {phases.map((phase: any) => (
               <div key={phase.id} className="p-3 border rounded-lg">
                 <p className="font-semibold">
                   {phase.order}. {phase.name}

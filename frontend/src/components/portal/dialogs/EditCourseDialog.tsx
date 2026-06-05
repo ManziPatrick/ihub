@@ -33,7 +33,11 @@ import {
   Settings2,
   FileText as FileTextIcon
 } from "lucide-react";
-import { ManageQuestionsDialog, ResourceBankDialog, ManageAssignmentQuestionsDialog, AssignmentConfigDialog, ExamConfigDialog } from "./index";
+import { ManageQuestionsDialog } from "./ManageQuestionsDialog";
+import { ResourceBankDialog } from "./ResourceBankDialog";
+import { ManageAssignmentQuestionsDialog } from "./ManageAssignmentQuestionsDialog";
+import { AssignmentConfigDialog } from "./AssignmentConfigDialog";
+import { ExamConfigDialog } from "../ExamConfigDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { FileUpload } from "@/components/FileUpload";
 

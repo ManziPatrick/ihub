@@ -42,19 +42,20 @@ import {
 import { toast } from "sonner";
 import { useQuery, useMutation, useApolloClient } from "@apollo/client/react";
 import { GET_USERS, GET_TOP_STUDENTS, GET_ANALYTICS_EXPORT } from "@/lib/graphql/queries";
-import { CREATE_USER, UPDATE_USER, DELETE_USER } from "@/lib/graphql/mutations";
+import { CREATE_USER, UPDATE_USER, DELETE_USER, RESTORE_USER } from "@/lib/graphql/mutations";
 import { useAuth } from "@/contexts/AuthContext";
 
-const getRoleBadge = (role: string) => {
-  const styles: Record<string, string> = {
+const getRoleBadge = (role: string) => {    const styles: Record<string, string> = {
     student: "bg-blue-500/20 text-blue-400 border-blue-400/30",
     trainer: "bg-accent/20 text-accent border-accent/30",
+    client: "bg-emerald-500/20 text-emerald-400 border-emerald-400/30",
     admin: "bg-purple-500/20 text-purple-400 border-purple-400/30",
     super_admin: "bg-red-500/20 text-red-400 border-red-400/30",
   };
   const icons: Record<string, React.ReactNode> = {
     student: <GraduationCap className="w-3 h-3 mr-1" />,
     trainer: <UserCog className="w-3 h-3 mr-1" />,
+    client: <UserCog className="w-3 h-3 mr-1" />,
     admin: <Shield className="w-3 h-3 mr-1" />,
     super_admin: <Shield className="w-3 h-3 mr-1" />,
   };
@@ -101,6 +102,7 @@ export default function AdminUsers() {
   const [deleteUserMutation] = useMutation(DELETE_USER, {
     refetchQueries: [{ query: GET_USERS }]
   });
+  const [restoreUserMutation] = useMutation(RESTORE_USER);
 
   const users = (data as any)?.users?.items || [];
   const pagination = (data as any)?.users?.pagination;
@@ -155,9 +157,26 @@ export default function AdminUsers() {
 
   const handleDeleteUser = async () => {
     if (!deleteUser) return;
+    const deletedId = deleteUser.id;
+    const deletedName = deleteUser.username;
     try {
-      await deleteUserMutation({ variables: { id: deleteUser.id } });
-      toast.success("User deleted successfully!");
+      await deleteUserMutation({ variables: { id: deletedId } });
+      window.dispatchEvent(new CustomEvent('bell-ring'));
+      toast.success(`"${deletedName}" deleted`, {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              await restoreUserMutation({ variables: { id: deletedId } });
+              toast.success("User restored");
+              refetch();
+            } catch (err: any) {
+              toast.error("Failed to restore user: " + err.message);
+            }
+          }
+        },
+        duration: 10000,
+      });
       refetch();
       setDeleteUser(null);
     } catch (err: any) {
@@ -287,7 +306,7 @@ export default function AdminUsers() {
             />
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-            {["all", "student", "trainer", "admin", "super_admin"]
+            {["all", "student", "trainer", "client", "admin", "super_admin"]
               .filter(role => currentUser?.role === "super_admin" || role !== "super_admin")
               .map((role) => (
               <Button

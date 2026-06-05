@@ -192,7 +192,8 @@ const startServer = async () => {
         '/graphql',
         expressMiddleware(server, {
             context: async ({ req }: any) => ({
-                user: req.user
+                user: req.user,
+                req
             }),
         }) as unknown as express.RequestHandler
     );

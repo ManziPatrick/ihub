@@ -90,10 +90,10 @@ export function EditUserDialog({ open, onOpenChange, user, onSave }: EditUserDia
             >
               <SelectTrigger>
                 <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
+              </SelectTrigger>                <SelectContent>
                 <SelectItem value="student">Student</SelectItem>
                 <SelectItem value="trainer">Trainer</SelectItem>
+                <SelectItem value="client">Client</SelectItem>
                 {currentUser?.role === "super_admin" && (
                   <>
                     <SelectItem value="admin">Admin</SelectItem>

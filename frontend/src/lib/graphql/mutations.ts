@@ -231,8 +231,8 @@ export const DELETE_COURSE = gql`
   }
 `;
 export const CREATE_USER = gql`
-  mutation CreateUser($username: String!, $email: String!, $password: String!, $role: String, $permissions: [String]) {
-    createUser(username: $username, email: $email, password: $password, role: $role, permissions: $permissions) {
+  mutation CreateUser($username: String!, $email: String!, $password: String!, $role: String, $permissions: [String], $school: String) {
+    createUser(username: $username, email: $email, password: $password, role: $role, permissions: $permissions, school: $school) {
       id
       username
       email
@@ -1444,6 +1444,140 @@ export const DELETE_RESOURCE = gql`
   }
 `;
 
+export const SUBMIT_CLIENT_EVALUATION = gql`
+  mutation SubmitClientEvaluation($projectId: ID!, $rating: Int!, $comment: String!) {
+    submitClientEvaluation(projectId: $projectId, rating: $rating, comment: $comment) {
+      id
+      evaluation {
+        clientFeedback {
+          rating
+          comment
+          submittedAt
+        }
+      }
+    }
+  }
+`;
+
+export const RESTORE_PROJECT_APPLICATION = gql`
+  mutation RestoreProjectApplication($applicationId: ID!) {
+    restoreProjectApplication(applicationId: $applicationId) {
+      id
+      title
+      status
+    }
+  }
+`;
+
+export const RESTORE_BOOKING = gql`
+  mutation RestoreBooking($id: ID!) {
+    restoreBooking(id: $id) {
+      id
+      status
+    }
+  }
+`;
+
+export const RESTORE_COURSE = gql`
+  mutation RestoreCourse($id: ID!) {
+    restoreCourse(id: $id) {
+      id
+      title
+      status
+    }
+  }
+`;
+
+export const RESTORE_USER = gql`
+  mutation RestoreUser($id: ID!) {
+    restoreUser(id: $id) {
+      id
+      username
+      email
+      role
+    }
+  }
+`;
+
+export const RESTORE_BADGE = gql`
+  mutation RestoreBadge($id: ID!) {
+    restoreBadge(id: $id) {
+      id
+      title
+    }
+  }
+`;
+
+export const RESTORE_PROJECT = gql`
+  mutation RestoreProject($id: ID!) {
+    restoreProject(id: $id) {
+      id
+      title
+      status
+    }
+  }
+`;
+
+export const DELETE_PROJECT_APPLICATION = gql`
+  mutation DeleteProjectApplication($applicationId: ID!) {
+    deleteProjectApplication(applicationId: $applicationId) {
+      id
+      title
+      status
+    }
+  }
+`;
+
+export const UPDATE_PROJECT_APPLICATION = gql`
+  mutation UpdateProjectApplication(
+    $applicationId: ID!
+    $title: String
+    $description: String
+    $documents: ProjectApplicationDocumentsInput
+  ) {
+    updateProjectApplication(applicationId: $applicationId, title: $title, description: $description, documents: $documents) {
+      id
+      title
+      description
+      status
+      requiredDocuments {
+        overviewUrl
+        featuresUrl
+        technicalUrl
+      }
+    }
+  }
+`;
+
+export const CANCEL_BOOKING = gql`
+  mutation CancelBooking($id: ID!) {
+    cancelBooking(id: $id) {
+      id
+      status
+    }
+  }
+`;
+
+export const SUBMIT_MILESTONE_DELIVERABLE = gql`
+  mutation SubmitMilestoneDeliverable($projectId: ID!, $milestoneIndex: Int!, $fileUrl: String!, $fileName: String!, $message: String!) {
+    submitMilestoneDeliverable(projectId: $projectId, milestoneIndex: $milestoneIndex, fileUrl: $fileUrl, fileName: $fileName, message: $message) {
+      id
+      milestones {
+        title
+        completed
+        submissions {
+          url
+          fileName
+          version
+          message
+          status
+          feedback
+        }
+      }
+    }
+  }
+`;
+
 export const SUBMIT_ASSIGNMENT = gql`
   mutation SubmitAssignment($courseId: ID!, $lessonId: String!, $content: String!) {
     submitAssignment(courseId: $courseId, lessonId: $lessonId, content: $content) {
@@ -1869,6 +2003,36 @@ export const AI_GRADE_OPEN_ANSWERS = gql`
       id
       totalScore
       status
+    }
+  }
+`;
+
+export const CREATE_APPLICATION_PHASE = gql`
+  mutation CreateApplicationPhase(
+    $programId: ID!
+    $name: String!
+    $description: String
+    $order: Int
+    $enableApproval: Boolean
+    $isInterviewPhase: Boolean
+    $allowMeetingScheduling: Boolean
+  ) {
+    createApplicationPhase(
+      programId: $programId
+      name: $name
+      description: $description
+      order: $order
+      enableApproval: $enableApproval
+      isInterviewPhase: $isInterviewPhase
+      allowMeetingScheduling: $allowMeetingScheduling
+    ) {
+      id
+      name
+      description
+      order
+      enableApproval
+      isInterviewPhase
+      allowMeetingScheduling
     }
   }
 `;

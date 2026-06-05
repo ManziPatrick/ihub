@@ -1,9 +1,9 @@
-import { ApplicationPhaseService } from '../services/application-phase.service.js';
-import { ApplicationWorkflowService } from '../services/application-workflow.service.js';
-import { MeetingBookingService } from '../services/meeting-booking.service.js';
-import { TaskManagementService } from '../services/task-management.service.js';
-import { InternshipApplication } from '../models/internship/InternshipApplication.js';
-import { Internship } from '../models/Internship.js';
+import { ApplicationPhaseService } from '../services/application-phase.service';
+import { ApplicationWorkflowService } from '../services/application-workflow.service';
+import { MeetingBookingService } from '../services/meeting-booking.service';
+import { TaskManagementService } from '../services/task-management.service';
+import { InternshipApplication } from '../models/internship/InternshipApplication';
+import { Internship } from '../models/Internship';
 
 export const applicationPhaseResolvers = {
   Query: {

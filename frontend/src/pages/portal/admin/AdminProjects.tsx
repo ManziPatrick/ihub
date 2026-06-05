@@ -39,8 +39,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_ALL_PROJECTS, GET_USERS, GET_ASSIGNMENT_SUBMISSIONS } from "@/lib/graphql/queries";
-import { DELETE_PROJECT, UPDATE_PROJECT, GRADE_ASSIGNMENT } from "@/lib/graphql/mutations";
+import { DELETE_PROJECT, UPDATE_PROJECT, GRADE_ASSIGNMENT, RESTORE_PROJECT } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/portal/dialogs/ConfirmDialog";
 import { format } from "date-fns";
 import { TeamChatDialog, ManageProjectTasksDialog, ProjectDetailsDialog, CreateAgileProjectDialog, CreateProjectDialog, GradeProjectDialog, BookCallDialog, ViewSubmissionDialog } from "@/components/portal/dialogs";
 import { Textarea } from "@/components/ui/textarea";
@@ -155,6 +156,36 @@ export default function AdminProjects() {
     }
   };
 
+  const handleDeleteProjectConfirm = async () => {
+    if (!deleteProjectTarget) return;
+    const deletedId = deleteProjectTarget.id;
+    const deletedTitle = deleteProjectTarget.title;
+    try {
+      setDeleteProjectTarget(null);
+      await deleteProject({ variables: { id: deletedId } });
+      window.dispatchEvent(new CustomEvent('bell-ring'));
+      toast.success(`"${deletedTitle}" deleted`, {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              await restoreProjectMutation({ variables: { id: deletedId } });
+              toast.success("Project restored");
+              refetch();
+            } catch (err: any) {
+              toast.error("Failed to restore project: " + err.message);
+            }
+          }
+        },
+        duration: 10000,
+      });
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+
   const { data, loading, refetch } = useQuery(GET_ALL_PROJECTS, {
     variables: { page: currentPage, limit: pageSize }
   });
@@ -162,12 +193,10 @@ export default function AdminProjects() {
   const pagination = (data as any)?.projects?.pagination;
 
   const [deleteProject] = useMutation(DELETE_PROJECT, {
-    onCompleted: () => {
-      toast.success("Project deleted successfully");
-      refetch();
-    },
     onError: (err) => toast.error(err.message),
   });
+  const [restoreProjectMutation] = useMutation(RESTORE_PROJECT);
+  const [deleteProjectTarget, setDeleteProjectTarget] = useState<any>(null);
 
   const filteredProjects = projects.filter((project: any) => {
     const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -345,11 +374,7 @@ export default function AdminProjects() {
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuItem className="gap-2 cursor-pointer text-destructive focus:text-destructive"
-                                onClick={() => {
-                                  if (confirm("Are you sure you want to delete this project?")) {
-                                    deleteProject({ variables: { id: project.id } });
-                                  }
-                                }}
+                                onClick={() => setDeleteProjectTarget(project)}
                               >
                                 <AlertCircle className="w-4 h-4" /> Delete Project
                               </DropdownMenuItem>
@@ -827,6 +852,17 @@ export default function AdminProjects() {
           lessonQuestions: viewSubmission.lesson?.assignmentQuestions,
         } : null}
       />
+
+      <ConfirmDialog
+        open={!!deleteProjectTarget}
+        onOpenChange={(open: boolean) => !open && setDeleteProjectTarget(null)}
+        onConfirm={handleDeleteProjectConfirm}
+        title="Delete Project"
+        description={`Are you sure you want to delete "${deleteProjectTarget?.title || ''}"? It can be restored later.`}
+        confirmText="Delete"
+        variant="destructive"
+      />
+
     </PortalLayout>
   );
 }

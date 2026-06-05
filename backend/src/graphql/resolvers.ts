@@ -6,6 +6,11 @@ import * as admin from 'firebase-admin';
 import * as fs from 'fs';
 import { file as tmpFile } from 'tmp-promise';
 import { OAuth2Client } from 'google-auth-library';
+import { ProjectApplication } from '../models/ProjectApplication';
+import { ProjectNDA } from '../models/ProjectNDA';
+import { ProjectOnboarding } from '../models/ProjectOnboarding';
+import { ProjectLifecycleService } from '../services/project-lifecycle.service';
+import { logUndoMetric, getUndoMetrics } from '../services/undo-metric.service';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 import * as speakeasy from 'speakeasy';
@@ -2073,6 +2078,58 @@ export const resolvers = {
         };
       });
     },
+    projectApplications: async (_: any, { status }: { status?: string }, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      const filter: any = {};
+      if (status) filter.status = status;
+      return await ProjectApplication.find(filter).populate('clientId').sort({ createdAt: -1 });
+    },
+    undoMetrics: async (_: any, { days }: { days?: number }, context: any) => {
+      if (!context.user || (context.user.role !== 'admin' && context.user.role !== 'super_admin')) {
+        throw new Error('Not authorized');
+      }
+      return await getUndoMetrics(days || 30);
+    },
+    myProjectApplications: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      return await ProjectApplication.find({ clientId: context.user.id, status: { $ne: 'deleted' } }).populate('clientId').sort({ createdAt: -1 });
+    },
+    projectApplication: async (_: any, { id }: { id: string }, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const app = await ProjectApplication.findById(id).populate('clientId');
+      if (!app) throw new Error('Project application not found');
+      if (app.clientId.toString() !== context.user.id && !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      return app;
+    },
+    projectNDA: async (_: any, { applicationId }: { applicationId: string }, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const nda = await ProjectNDA.findOne({ projectApplicationId: applicationId }).populate('clientId');
+      if (!nda) return null;
+      if (nda.clientId.toString() !== context.user.id && !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      return nda;
+    },
+    projectOnboarding: async (_: any, { projectId }: { projectId: string }, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      return await ProjectOnboarding.find({ projectId }).populate('developerId');
+    },
+    developerOnboarding: async (_: any, { userId }: { userId: string }, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      return await ProjectOnboarding.find({ developerId: userId }).populate('projectId');
+    },
+    projectByApplicationId: async (_: any, { applicationId }: { applicationId: string }, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const project = await Project.findOne({ projectApplicationId: applicationId })
+        .populate('userId')
+        .populate('mentors')
+        .populate('team.userId');
+      return project;
+    },
   },
   Mutation: {
     applyToCourse: async (_: any, { courseId, applicationAnswers, selectedDeliveryMode }: any, context: any) => {
@@ -3988,7 +4045,8 @@ export const resolvers = {
       if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) throw new Error('Not authorized');
       const badge = await Badge.findById(id);
       if (!badge) throw new Error('Badge not found');
-      await Badge.findByIdAndDelete(id);
+      badge.isDeleted = true;
+      await badge.save();
       return true;
     },
     updateConfig: async (_: any, { key, value, description }: any, context: any) => {
@@ -4222,7 +4280,10 @@ export const resolvers = {
         throw new Error('Not authorized');
       }
 
-      await Project.findByIdAndDelete(id);
+      project.isArchived = true;
+      project.archivedAt = new Date();
+      await project.save();
+      logUndoMetric('delete', 'project', id, project.title, context.user.id);
       return true;
     },
     submitProject: async (_: any, { id, submissionUrl }: any, context: any) => {
@@ -6951,6 +7012,135 @@ export const resolvers = {
         publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
         paymentId: payment.id
       };
+    },
+    submitProjectApplication: async (_: any, { title, description, documents }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      return await ProjectLifecycleService.submitApplication(context.user.id, title, description, documents);
+    },
+    reviewProjectApplication: async (_: any, { applicationId, status, notes }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      return await ProjectLifecycleService.reviewApplication(applicationId, context.user.id, status, notes);
+    },
+    signProjectNDA: async (_: any, { applicationId, signerName }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const ip = context.req?.ip || '127.0.0.1';
+      return await ProjectLifecycleService.signNDA(applicationId, signerName, ip);
+    },
+    initializeProjectFromApplication: async (_: any, { applicationId, course, mentorIds }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      return await ProjectLifecycleService.initializeProjectFromApplication(applicationId, course, mentorIds);
+    },
+    assignDeveloperToProject: async (_: any, { projectId, developerId, role, checklistTasks }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      return await ProjectLifecycleService.assignDeveloperToProject(projectId, developerId, role, checklistTasks);
+    },
+    updateOnboardingChecklist: async (_: any, { onboardingId, taskIndex, completed }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      return await ProjectLifecycleService.updateOnboardingChecklist(onboardingId, taskIndex, completed);
+    },
+    submitMilestoneDeliverable: async (_: any, { projectId, milestoneIndex, fileUrl, fileName, message }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      return await ProjectLifecycleService.submitDeliverable(projectId, milestoneIndex, fileUrl, fileName, message, context.user.id);
+    },
+    archiveProject: async (_: any, { projectId, lessonsLearned }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      return await ProjectLifecycleService.archiveProject(projectId, lessonsLearned);
+    },
+    deleteProjectApplication: async (_: any, { applicationId }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const result = await ProjectLifecycleService.deleteProjectApplication(applicationId, context.user.id);
+      logUndoMetric('delete', 'projectApplication', applicationId, result?.title || 'Project Application', context.user.id);
+      return result;
+    },
+    restoreProjectApplication: async (_: any, { applicationId }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const result = await ProjectLifecycleService.restoreProjectApplication(applicationId, context.user.id);
+      logUndoMetric('restore', 'projectApplication', applicationId, result?.title || 'Project Application', context.user.id);
+      return result;
+    },
+    updateProjectApplication: async (_: any, { applicationId, title, description, documents }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      return await ProjectLifecycleService.updateProjectApplication(applicationId, context.user.id, title, description, documents);
+    },
+    cancelBooking: async (_: any, { id }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const booking = await Booking.findById(id);
+      if (!booking) throw new Error('Booking not found');
+      if (booking.userId.toString() !== context.user.id && !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      booking.status = 'cancelled';
+      await booking.save();
+      logUndoMetric('delete', 'booking', id, booking.topic || 'Booking', context.user.id);
+      return booking;
+    },
+    restoreBooking: async (_: any, { id }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const booking = await Booking.findById(id);
+      if (!booking) throw new Error('Booking not found');
+      if (booking.userId.toString() !== context.user.id && !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      if (booking.status !== 'cancelled') throw new Error('Booking is not cancelled');
+      booking.status = 'pending';
+      await booking.save();
+      logUndoMetric('restore', 'booking', id, booking.topic || 'Booking', context.user.id);
+      return booking;
+    },
+    
+    restoreCourse: async (_: any, { id }: { id: string }, context: any) => {
+      if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) {
+        throw new Error('Not authorized');
+      }
+      const course = await Course.findById(id);
+      if (!course) throw new Error('Course not found');
+      (course as any).isDeleted = false;
+      course.status = 'draft';
+      await course.save();
+      logUndoMetric('restore', 'course', id, course.title, context.user.id);
+      return course;
+    },
+    restoreUser: async (_: any, { id }: { id: string }, context: any) => {
+      if (!context.user || context.user.role !== 'super_admin') {
+        throw new Error('Not authorized');
+      }
+      const user = await User.findById(id);
+      if (!user) throw new Error('User not found');
+      (user as any).isDeleted = false;
+      await user.save();
+      logUndoMetric('restore', 'user', id, user.username, context.user.id);
+      return user;
+    },
+    restoreBadge: async (_: any, { id }: { id: string }, context: any) => {
+      if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) {
+        throw new Error('Not authorized');
+      }
+      const badge = await Badge.findById(id);
+      if (!badge) throw new Error('Badge not found');
+      badge.isDeleted = false;
+      await badge.save();
+      logUndoMetric('restore', 'badge', id, badge.title, context.user.id);
+      return badge;
+    },
+    restoreProject: async (_: any, { id }: { id: string }, context: any) => {
+      if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) {
+        throw new Error('Not authorized');
+      }
+      const project = await Project.findById(id);
+      if (!project) throw new Error('Project not found');
+      project.isArchived = false;
+      project.archivedAt = undefined;
+      await project.save();
+      logUndoMetric('restore', 'project', id, project.title, context.user.id);
+      return project;
     },
     ...applicationPhaseResolvers.Mutation,
   },
