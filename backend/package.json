@@ -17,7 +17,8 @@
     "seed:intern-module": "ts-node src/seedInternshipModule.ts",
     "seed:all": "ts-node src/seedAll.ts",
     "seed:flows": "ts-node src/seedFlows.ts",
-    "seed:normalize": "ts-node src/seedCourseNormalizer.ts"
+    "seed:normalize": "ts-node src/seedCourseNormalizer.ts",
+    "seed:project-tasks": "ts-node src/seedProjectTasks.ts"
   },
   "keywords": [],
   "author": "",

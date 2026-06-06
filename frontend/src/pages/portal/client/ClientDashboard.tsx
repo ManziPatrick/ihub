@@ -887,6 +887,79 @@ export default function ClientDashboard() {
                       ))}
                     </div>
 
+                    {/* Steps Progress Visualization */}
+                    <Card className="border-border/50">
+                      <CardHeader>
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <BarChart3 className="w-4 h-4 text-accent" /> Steps Progress
+                        </CardTitle>
+                        <CardDescription>
+                          <RenderHTML html="Completed vs remaining steps across tasks and milestones." />
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {(() => {
+                          const tasks = project.tasks || [];
+                          const milestones = project.milestones || [];
+                          const totalTasks = tasks.length;
+                          const doneTasks = tasks.filter((t: any) => t.completed).length;
+                          const remainingTasks = totalTasks - doneTasks;
+                          const totalMilestones = milestones.length;
+                          const doneMilestones = milestones.filter((m: any) => m.completed).length;
+                          const remainingMilestones = totalMilestones - doneMilestones;
+                          const totalSteps = totalTasks + totalMilestones;
+                          const doneSteps = doneTasks + doneMilestones;
+                          const remainingSteps = totalSteps - doneSteps;
+                          const pct = totalSteps > 0 ? Math.round((doneSteps / totalSteps) * 100) : 0;
+                          const pctTasks = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+                          const pctMilestones = totalMilestones > 0 ? Math.round((doneMilestones / totalMilestones) * 100) : 0;
+
+                          return (
+                            <div className="space-y-5">
+                              {/* Overall completion */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 rounded-lg bg-green-500/10">
+                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                  </div>
+                                  <div>
+                                    <span className="text-sm font-bold">{doneSteps}/{totalSteps} steps completed</span>
+                                    <p className="text-[11px] text-muted-foreground">{remainingSteps} remaining</p>
+                                  </div>
+                                </div>
+                                <span className="text-2xl font-black text-accent">{pct}%</span>
+                              </div>
+                              <Progress value={pct} className="h-2.5" />
+
+                              {/* Task & Milestone breakdown */}
+                              <div className="grid grid-cols-2 gap-4 pt-2">
+                                <div className="space-y-2.5 p-4 bg-muted/10 rounded-xl border border-border/30">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="font-bold flex items-center gap-1.5">
+                                      <CheckSquare className="w-3.5 h-3.5 text-blue-500" /> Tasks
+                                    </span>
+                                    <span className="text-muted-foreground font-medium">{doneTasks}/{totalTasks}</span>
+                                  </div>
+                                  <Progress value={pctTasks} className="h-2 [&>div]:bg-blue-500" />
+                                  <p className="text-[10px] text-muted-foreground">{remainingTasks} remaining</p>
+                                </div>
+                                <div className="space-y-2.5 p-4 bg-muted/10 rounded-xl border border-border/30">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="font-bold flex items-center gap-1.5">
+                                      <Layers className="w-3.5 h-3.5 text-emerald-500" /> Milestones
+                                    </span>
+                                    <span className="text-muted-foreground font-medium">{doneMilestones}/{totalMilestones}</span>
+                                  </div>
+                                  <Progress value={pctMilestones} className="h-2 [&>div]:bg-emerald-500" />
+                                  <p className="text-[10px] text-muted-foreground">{remainingMilestones} remaining</p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
+
                     {/* Milestones */}
                     <Card className="border-border/50">
                       <CardHeader>

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     ArrowLeft,
     FolderOpen,
@@ -23,10 +24,13 @@ import {
     Target,
     Star,
     Clock,
+    Columns,
 } from "lucide-react";
 import { GET_PROJECT } from "@/lib/graphql/queries";
+import { GET_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 import { UPDATE_TASK_PROGRESS } from "@/lib/graphql/mutations";
-import { SubmitProjectDialog, TeamChatDialog, ViewGuidelinesDialog } from "@/components/portal/dialogs";
+import { SubmitProjectDialog, TeamChatDialog, ViewGuidelinesDialog, ProjectTaskDialog } from "@/components/portal/dialogs";
+import { KanbanBoard } from "@/components/portal/KanbanBoard";
 import { PPTViewer } from "@/components/portal/PPTViewer";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -88,6 +92,8 @@ export default function StudentProjectDetail() {
     const [submitOpen, setSubmitOpen] = useState(false);
     const [chatOpen, setChatOpen] = useState(false);
     const [guidelinesOpen, setGuidelinesOpen] = useState(false);
+    const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+    const [editingTask, setEditingTask] = useState<any | null>(null);
 
     const { user } = useAuth();
 
@@ -129,6 +135,12 @@ export default function StudentProjectDetail() {
         variables: { id: projectId },
         skip: !projectId,
     });
+
+    const { data: tasksData, refetch: refetchTasks } = useQuery(GET_PROJECT_TASKS, {
+        variables: { projectId },
+        skip: !projectId,
+    });
+    const boardTasks = (tasksData as any)?.projectTasks || [];
 
     const project = (data as any)?.project;
 
@@ -253,6 +265,18 @@ export default function StudentProjectDetail() {
                     </Card>
                 </motion.div>
 
+                {/* Tabs: Overview / Board View */}
+                <Tabs defaultValue="overview" className="w-full">
+                    <TabsList className="bg-muted/20 p-1 rounded-xl h-10 border border-border/30 w-fit">
+                        <TabsTrigger value="overview" className="rounded-lg text-sm gap-2">
+                            <FolderOpen className="w-4 h-4" /> Overview
+                        </TabsTrigger>
+                        <TabsTrigger value="board" className="rounded-lg text-sm gap-2">
+                            <Columns className="w-4 h-4" /> Board View
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="overview" className="mt-6">
                 <div className="grid lg:grid-cols-3 gap-6">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
@@ -604,9 +628,53 @@ export default function StudentProjectDetail() {
                         )}
                     </div>
                 </div>
+                    </TabsContent>
+
+                    {/* ── BOARD VIEW TAB ────────────────────────────────────────── */}
+                    <TabsContent value="board" className="mt-4">
+                        <div className="mb-4">
+                            <h3 className="font-heading text-lg font-bold flex items-center gap-2">
+                                <Columns className="w-5 h-5 text-accent" /> Task Board
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                                Drag & drop tasks between columns to update their status. Click a task to view details.
+                            </p>
+                        </div>
+                        {boardTasks.length === 0 ? (
+                            <Card className="border-border/50 py-12 text-center">
+                                <Columns className="w-12 h-12 mx-auto text-muted-foreground/20 mb-4" />
+                                <h3 className="text-lg font-medium">No board tasks yet</h3>
+                                <p className="text-muted-foreground text-sm">
+                                    Tasks will appear here once an admin sets up the project board.
+                                </p>
+                            </Card>
+                        ) : (
+                            <KanbanBoard
+                                tasks={boardTasks}
+                                projectId={projectId || ''}
+                                userRole={user?.role}
+                                onAddTask={() => {
+                                    setEditingTask(null);
+                                    setTaskDialogOpen(true);
+                                }}
+                                onEditTask={(task) => {
+                                    setEditingTask(task);
+                                    setTaskDialogOpen(true);
+                                }}
+                            />
+                        )}
+                    </TabsContent>
+                </Tabs>
             </div>
 
             {/* Dialogs */}
+            <ProjectTaskDialog
+                open={taskDialogOpen}
+                onOpenChange={setTaskDialogOpen}
+                projectId={projectId || ''}
+                task={editingTask}
+                refetch={refetchTasks}
+            />
             <SubmitProjectDialog
                 open={submitOpen}
                 onOpenChange={setSubmitOpen}

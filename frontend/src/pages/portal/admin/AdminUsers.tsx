@@ -138,15 +138,24 @@ export default function AdminUsers() {
 
   const handleSaveUser = async (updatedUser: any) => {
     try {
-      await updateUserMutation({
-        variables: {
-          id: updatedUser.id,
-          username: updatedUser.username,
-          email: updatedUser.email,
-          role: updatedUser.role,
-          school: updatedUser.school
-        }
-      });
+      const variables: any = {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        school: updatedUser.school,
+        fullName: updatedUser.fullName,
+        bio: updatedUser.bio,
+        phone: updatedUser.phone,
+        location: updatedUser.location,
+        title: updatedUser.title,
+        isFirst: updatedUser.isFirst,
+      };
+      // Only include password if it's provided
+      if (updatedUser.password) {
+        variables.password = updatedUser.password;
+      }
+      await updateUserMutation({ variables });
       toast.success("User updated successfully!");
       refetch();
       setEditUser(null);

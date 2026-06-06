@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery } from '@apollo/client/react';
+import { useQuery } from '@apollo/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GET_APPLICATION_PROGRESS } from '@/lib/graphql/queries';
 import { CheckCircle2, Clock, X } from 'lucide-react';
@@ -9,7 +9,7 @@ export const ApplicationProgress = ({ applicationId }: { applicationId: string }
 
   if (loading) return <div>Loading...</div>;
 
-  const progress = (data as any)?.getApplicationProgress;
+  const progress = data?.getApplicationProgress;
   if (!progress) return <div>Application not found</div>;
 
   return (

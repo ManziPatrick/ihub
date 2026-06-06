@@ -28,6 +28,9 @@ import {
   Stars,
   User,
   ChevronLeft,
+  GraduationCap,
+  TrendingUp,
+  Target,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -38,13 +41,17 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_ALL_PROJECTS, GET_USERS, GET_ASSIGNMENT_SUBMISSIONS } from "@/lib/graphql/queries";
+import { GET_ALL_PROJECTS, GET_USERS, GET_ASSIGNMENT_SUBMISSIONS, GET_STUDENT_PROJECT_PROGRESS } from "@/lib/graphql/queries";
+import { GET_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 import { DELETE_PROJECT, UPDATE_PROJECT, GRADE_ASSIGNMENT, RESTORE_PROJECT } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/portal/dialogs/ConfirmDialog";
 import { format } from "date-fns";
-import { TeamChatDialog, ManageProjectTasksDialog, ProjectDetailsDialog, CreateAgileProjectDialog, CreateProjectDialog, GradeProjectDialog, BookCallDialog, ViewSubmissionDialog } from "@/components/portal/dialogs";
+import { TeamChatDialog, ManageProjectTasksDialog, ProjectDetailsDialog, CreateAgileProjectDialog, CreateProjectDialog, GradeProjectDialog, BookCallDialog, ViewSubmissionDialog, ProjectTaskDialog } from "@/components/portal/dialogs";
 import { Textarea } from "@/components/ui/textarea";
+import { KanbanBoard } from "@/components/portal/KanbanBoard";
+import { ArrowLeft } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AssignmentSubmission {
   id: string;
@@ -119,6 +126,12 @@ export default function AdminProjects() {
   const [assignPage, setAssignPage] = useState(1);
   const assignPageSize = 10;
 
+  // Kanban Board state
+  const [boardProjectId, setBoardProjectId] = useState<string | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<any | null>(null);
+
+  const { user } = useAuth();
   // Queries handling
   const { data: assignmentsData, refetch: refetchAssignments } = useQuery<GetAssignmentSubmissionsData>(GET_ASSIGNMENT_SUBMISSIONS, {
       variables: { page: assignPage, limit: assignPageSize }
@@ -192,12 +205,21 @@ export default function AdminProjects() {
   const projects = (data as any)?.projects?.items || [];
   const pagination = (data as any)?.projects?.pagination;
 
+  const { data: studentProgressData, loading: studentsLoading } = useQuery(GET_STUDENT_PROJECT_PROGRESS, {
+    skip: !['admin', 'super_admin'].includes(user?.role || ''),
+  });
+
+  const { data: tasksData, refetch: refetchTasks } = useQuery(GET_PROJECT_TASKS, {
+    variables: { projectId: boardProjectId },
+    skip: !boardProjectId,
+  });
+  const boardTasks = (tasksData as any)?.projectTasks || [];
+
   const [deleteProject] = useMutation(DELETE_PROJECT, {
     onError: (err) => toast.error(err.message),
   });
   const [restoreProjectMutation] = useMutation(RESTORE_PROJECT);
   const [deleteProjectTarget, setDeleteProjectTarget] = useState<any>(null);
-
   const filteredProjects = projects.filter((project: any) => {
     const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || project.status === statusFilter;
@@ -226,11 +248,56 @@ export default function AdminProjects() {
             </div>
             <TabsList className="bg-muted/20 p-1 rounded-xl h-12 border border-border/30">
               <TabsTrigger value="projects" className="rounded-lg px-6">Project Management</TabsTrigger>
+              <TabsTrigger value="students" className="rounded-lg px-6">Student Progress</TabsTrigger>
               <TabsTrigger value="assignments" className="rounded-lg px-6">Assignment Reviews</TabsTrigger>
             </TabsList>
           </div>
 
           <TabsContent value="projects" className="space-y-6">
+            {boardProjectId ? (
+              <>
+                {/* Board View Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setBoardProjectId(null);
+                        setEditingTask(null);
+                      }}
+                      className="h-9"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to List
+                    </Button>
+                    <div>
+                      <h2 className="font-heading text-xl font-bold">
+                        {projects.find((p: any) => p.id === boardProjectId)?.title || 'Project'} Board
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        Drag & drop tasks between columns to update status
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <KanbanBoard
+                  tasks={boardTasks}
+                  projectId={boardProjectId}
+                  userRole={user?.role}
+                  onAddTask={() => {
+                    setEditingTask(null);
+                    setTaskDialogOpen(true);
+                  }}
+                  onEditTask={(task) => {
+                    setEditingTask(task);
+                    setTaskDialogOpen(true);
+                  }}
+                />
+              </>
+            ) : (
+              <>
             <div className="flex justify-end gap-2">
               <Button className="bg-accent hover:bg-accent/90 text-white gap-2" onClick={() => setCreateOpen(true)} variant="outline">
                 <Plus className="w-4 h-4" /> Project Template
@@ -361,6 +428,12 @@ export default function AdminProjects() {
                                 }}
                               >
                                 <CheckCircle2 className="w-4 h-4" /> Manage Tasks
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="gap-2 cursor-pointer text-accent focus:text-accent"
+                                onClick={() => setBoardProjectId(project.id)}
+                              >
+                                <BarChart2 className="w-4 h-4" /> Kanban Board
                               </DropdownMenuItem>
                               {(project.status === 'pending_review' || project.status === 'in_progress') && (
                                 <DropdownMenuItem
@@ -515,6 +588,223 @@ export default function AdminProjects() {
                   >
                     Next <ChevronRight className="w-4 h-4 ml-2" />
                   </Button>
+                </div>
+              </div>
+            )}
+            </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="students" className="space-y-6">
+            {studentsLoading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="h-48 bg-muted/20 animate-pulse rounded-xl" />
+                ))}
+              </div>
+            ) : studentProgressData?.studentProjectProgress?.length === 0 ? (
+              <Card className="border-border/50 py-20 text-center">
+                <GraduationCap className="w-16 h-16 mx-auto text-muted-foreground/20 mb-4" />
+                <h3 className="text-lg font-medium">No student projects found</h3>
+                <p className="text-muted-foreground">Students appear here once they have projects assigned.</p>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {/* Summary Stats */}
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                  <Card className="border-border/50 bg-muted/5">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="p-2 rounded-lg bg-background border border-border/50 text-blue-500">
+                        <GraduationCap className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase">Students w/ Projects</p>
+                        <p className="text-xl font-bold">{studentProgressData?.studentProjectProgress?.length || 0}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-border/50 bg-muted/5">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="p-2 rounded-lg bg-background border border-border/50 text-emerald-500">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase">Total Projects</p>
+                        <p className="text-xl font-bold">{studentProgressData?.studentProjectProgress?.reduce((sum: number, s: any) => sum + s.totalProjects, 0) || 0}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-border/50 bg-muted/5">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="p-2 rounded-lg bg-background border border-border/50 text-green-500">
+                        <TrendingUp className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase">Completed</p>
+                        <p className="text-xl font-bold">{studentProgressData?.studentProjectProgress?.reduce((sum: number, s: any) => sum + s.completedProjects, 0) || 0}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-border/50 bg-muted/5">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="p-2 rounded-lg bg-background border border-border/50 text-amber-500">
+                        <Target className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase">Avg Progress</p>
+                        <p className="text-xl font-bold">
+                          {studentProgressData?.studentProjectProgress?.length > 0
+                            ? Math.round(studentProgressData.studentProjectProgress.reduce((sum: number, s: any) => sum + s.averageProgress, 0) / studentProgressData.studentProjectProgress.length)
+                            : 0}%
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-border/50 bg-muted/5">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="p-2 rounded-lg bg-background border border-border/50 text-purple-500">
+                        <Clock className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase">Total Tasks</p>
+                        <p className="text-xl font-bold">{studentProgressData?.studentProjectProgress?.reduce((sum: number, s: any) => sum + s.totalTasks, 0) || 0}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Student Cards */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {studentProgressData?.studentProjectProgress?.map((summary: any) => {
+                    const student = summary.student;
+                    const initials = (student.fullName || student.username || "?").charAt(0).toUpperCase();
+                    return (
+                      <motion.div
+                        key={student.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        <Card className="border-border/50 bg-card hover:border-accent/30 transition-all">
+                          <CardHeader className="p-5 pb-3">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-3">
+                                <Avatar className="w-10 h-10 ring-2 ring-accent/20">
+                                  <AvatarFallback className="bg-accent/15 text-accent text-sm font-bold">
+                                    {initials}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <CardTitle className="text-base font-heading">{student.fullName || student.username}</CardTitle>
+                                  <p className="text-xs text-muted-foreground">{student.email}</p>
+                                </div>
+                              </div>
+                              <Badge variant="outline" className={`text-[10px] font-bold ${
+                                summary.averageProgress >= 80 ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                                summary.averageProgress >= 50 ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                                "bg-muted/30 text-muted-foreground"
+                              }`}>
+                                {summary.averageProgress}%
+                              </Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-5 pt-0 space-y-3">
+                            {/* Project Stats */}
+                            <div className="grid grid-cols-3 gap-2">
+                              <div className="text-center p-2 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                                <p className="text-lg font-bold text-blue-400">{summary.totalProjects}</p>
+                                <p className="text-[9px] text-muted-foreground uppercase">Projects</p>
+                              </div>
+                              <div className="text-center p-2 rounded-lg bg-green-500/5 border border-green-500/10">
+                                <p className="text-lg font-bold text-green-400">{summary.completedProjects}</p>
+                                <p className="text-[9px] text-muted-foreground uppercase">Done</p>
+                              </div>
+                              <div className="text-center p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                                <p className="text-lg font-bold text-amber-400">{summary.inProgressProjects}</p>
+                                <p className="text-[9px] text-muted-foreground uppercase">Active</p>
+                              </div>
+                            </div>
+
+                            {/* Project Progress Bar */}
+                            <div>
+                              <div className="flex items-center justify-between text-xs mb-1">
+                                <span className="text-muted-foreground">Project Progress</span>
+                                <span className="font-bold">{summary.averageProgress}%</span>
+                              </div>
+                              <Progress value={summary.averageProgress} className="h-2" />
+                            </div>
+
+                            {/* Task Stats */}
+                            <div className="border-t border-border/20 pt-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Tasks</p>
+                                {summary.totalTasks > 0 && (
+                                  <Badge variant="outline" className={`text-[9px] font-bold ${
+                                    summary.taskCompletionPercentage >= 80 ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                                    summary.taskCompletionPercentage >= 50 ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                                    "bg-muted/30 text-muted-foreground"
+                                  }`}>
+                                    {summary.completedTasks}/{summary.totalTasks} done
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-4 gap-1.5 mb-2">
+                                <div className="text-center">
+                                  <p className="text-sm font-bold text-purple-400">{summary.totalTasks}</p>
+                                  <p className="text-[8px] text-muted-foreground">Total</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-sm font-bold text-green-400">{summary.completedTasks}</p>
+                                  <p className="text-[8px] text-muted-foreground">Done</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-sm font-bold text-amber-400">{summary.inProgressTasks}</p>
+                                  <p className="text-[8px] text-muted-foreground">Active</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-sm font-bold text-rose-400">{summary.inReviewTasks}</p>
+                                  <p className="text-[8px] text-muted-foreground">Review</p>
+                                </div>
+                              </div>
+                              {summary.totalTasks > 0 && (
+                                <div>
+                                  <div className="flex items-center justify-between text-xs mb-1">
+                                    <span className="text-muted-foreground">Task Completion</span>
+                                    <span className="font-bold">{summary.taskCompletionPercentage}%</span>
+                                  </div>
+                                  <Progress value={summary.taskCompletionPercentage} className="h-2" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Individual Projects */}
+                            <div className="space-y-1.5">
+                              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Projects</p>
+                              {summary.projects.slice(0, 3).map((project: any) => (
+                                <div key={project.id} className="flex items-center justify-between p-2 rounded-lg bg-background/50 border border-border/30">
+                                  <div className="min-w-0 flex-1 mr-2">
+                                    <p className="text-xs font-medium truncate">{project.title}</p>
+                                    <p className="text-[9px] text-muted-foreground">{project.course}</p>
+                                  </div>
+                                  <Badge className={`text-[8px] uppercase font-bold shrink-0 ${
+                                    project.status === 'completed' ? 'bg-green-500/15 text-green-500' :
+                                    project.status === 'pending_review' ? 'bg-rose-500/15 text-rose-500' :
+                                    'bg-amber-500/15 text-amber-500'
+                                  }`}>
+                                    {project.status?.replace('_', ' ')}
+                                  </Badge>
+                                </div>
+                              ))}
+                              {summary.projects.length > 3 && (
+                                <p className="text-[10px] text-muted-foreground text-center pt-1">
+                                  +{summary.projects.length - 3} more project{(summary.projects.length - 3) !== 1 ? 's' : ''}
+                                </p>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -851,6 +1141,14 @@ export default function AdminProjects() {
           timeTaken: viewSubmission.timeTaken,
           lessonQuestions: viewSubmission.lesson?.assignmentQuestions,
         } : null}
+      />
+
+      <ProjectTaskDialog
+        open={taskDialogOpen}
+        onOpenChange={setTaskDialogOpen}
+        projectId={boardProjectId || ''}
+        task={editingTask}
+        refetch={() => refetchTasks()}
       />
 
       <ConfirmDialog

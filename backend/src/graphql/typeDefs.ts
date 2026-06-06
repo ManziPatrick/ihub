@@ -120,7 +120,6 @@ export const typeDefs = `#graphql
     isExternal: Boolean
     isFirst: Boolean
     certificates: [Certificate]
-    assignedAdmin: User
   }
 
   type PaginationInfo {
@@ -460,9 +459,6 @@ export const typeDefs = `#graphql
     completed: Boolean!
     approved: Boolean
     feedback: String
-    aiFeedback: String
-    category: String
-    dependencies: [String]
   }
 
   type ProjectLink {
@@ -485,9 +481,6 @@ export const typeDefs = `#graphql
     feedback: String
     status: String
     aiReview: String
-    version: Int
-    fileName: String
-    submittedBy: ID
   }
 
   type MilestoneDetailed {
@@ -501,30 +494,10 @@ export const typeDefs = `#graphql
     aiAnalysis: String
   }
 
-  type ProjectEvaluation {
-    clientFeedback: ProjectClientFeedback
-    developerEvaluations: [ProjectDeveloperEvaluation]
-    reviewerNotes: String
-  }
-
-  type ProjectClientFeedback {
-    rating: Int
-    comment: String
-    submittedAt: String
-  }
-
-  type ProjectDeveloperEvaluation {
-    developerId: ID
-    rating: Int
-    notes: String
-  }
-
   type Project {
     id: ID!
     userId: ID!
     user: User
-    projectApplicationId: ID
-    projectApplication: ProjectApplication
     title: String!
     course: String!
     type: String!
@@ -548,9 +521,6 @@ export const typeDefs = `#graphql
     conversation: Conversation
     milestoneVideos: [MilestoneVideo]
     milestonePPTs: [MilestonePPT]
-    evaluation: ProjectEvaluation
-    isArchived: Boolean
-    archivedAt: String
     createdAt: String!
     updatedAt: String!
   }
@@ -791,54 +761,6 @@ export const typeDefs = `#graphql
     resourceType: String
   }
 
-
-  type UndoMetricEntry {
-    id: ID!
-    actionType: String!
-    entityType: String!
-    entityId: ID!
-    entityTitle: String!
-    userId: ID!
-    user: User
-    timestamp: String!
-    createdAt: String!
-  }
-
-  type AdminAuditLog {
-    id: ID!
-    accessingAdminId: ID!
-    accessingAdminUsername: String!
-    queryName: String!
-    accessedEntityType: String!
-    isCrossAdmin: Boolean!
-    details: String!
-    resultCount: Int!
-    ipAddress: String
-    createdAt: String!
-    updatedAt: String!
-  }
-
-  type AdminAuditLogResponse {
-    items: [AdminAuditLog!]!
-    pagination: PaginationInfo!
-  }
-
-  type UndoMetricBreakdown {
-    entityType: String!
-    deletes: Int!
-    restores: Int!
-    undoRate: Int!
-    total: Int!
-  }
-
-  type UndoMetrics {
-    totalDeletes: Int!
-    totalRestores: Int!
-    overallUndoRate: Int!
-    breakdown: [UndoMetricBreakdown!]!
-    recentEntries: [UndoMetricEntry!]!
-  }
-
   type Query {
     # Resources
     getResources(linkedTo: ID, onModel: String): [Resource!]!
@@ -880,11 +802,6 @@ export const typeDefs = `#graphql
     getAnalyticsExport: String
     project(id: ID!): Project
     
-    # Client Applications
-    clientApplications: [ClientApplication]
-    myClientApplication: ClientApplication
-    admins: [User]
-    
     # Certificates
     certificates: [Certificate]
     myCertificates: [Certificate]
@@ -912,12 +829,6 @@ export const typeDefs = `#graphql
     
     # Assignments
     getAssignmentSubmissions(courseId: ID, lessonId: String, page: Int, limit: Int): AssignmentSubmissionResponse
-    
-    # Undo Metrics
-    undoMetrics(days: Int): UndoMetrics
-    
-    # Admin Audit Logs
-    adminAuditLogs(adminId: ID, isCrossAdmin: Boolean, queryName: String, page: Int, limit: Int): AdminAuditLogResponse
     
     # Course Applications
     courseApplications(courseId: ID, status: String, page: Int, limit: Int): CourseApplicationResponse
@@ -1199,14 +1110,8 @@ export const typeDefs = `#graphql
     ): Course
     deleteCourse(id: ID!): Boolean
     createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String): User
-    updateUser(id: ID!, username: String, email: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String): User
+    updateUser(id: ID!, username: String, email: String, password: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String): User
     deleteUser(id: ID!): Boolean
-    
-    # Client Applications
-    applyToBeClient(reason: String!): ClientApplication!
-    approveClientApplication(id: ID!, assignedAdminId: ID): ClientApplication!
-    rejectClientApplication(id: ID!, adminFeedback: String): ClientApplication!
-    assignAdminToClient(adminId: ID!): User!
     
     # Progress Tracking
     updateLessonProgress(courseId: ID!, lessonId: String!, timeSpent: Int!, completed: Boolean): Boolean
@@ -1281,10 +1186,6 @@ export const typeDefs = `#graphql
       mentorIds: [ID]
     ): Project
     deleteProject(id: ID!): Boolean
-    restoreCourse(id: ID!): Course
-    restoreUser(id: ID!): User
-    restoreBadge(id: ID!): Badge
-    restoreProject(id: ID!): Project
     submitProject(id: ID!, submissionUrl: String!): Project
     # Auto-assign students to teams of 3
     autoGroupStudents(courseId: ID!, projectTitle: String!, description: String!, deadline: String): [Project]
@@ -1382,7 +1283,6 @@ export const typeDefs = `#graphql
     updateTheme(primaryColor: String, mode: String, lightBg: String, darkBg: String): User
     updateInternshipTaskLegacy(internshipId: ID!, taskId: ID!, status: String!): Internship
     updateTaskProgress(projectId: ID!, taskId: String!, completed: Boolean!): Project
-    approveProjectTask(projectId: ID!, taskId: String!, approved: Boolean!, feedback: String): Project
     gradeProject(id: ID!, grade: String!, feedback: String!): Project
     assignGroupProject(internshipIds: [ID!], title: String!, description: String!, repoUrl: String, deadline: String, mentorIds: [ID!]): Project
 
@@ -1650,7 +1550,10 @@ export const typeDefs = `#graphql
     internshipTasks(projectId: ID, sprintId: ID, teamId: ID, assigneeId: ID): [InternshipTask]
     internshipTask(id: ID!): InternshipTask
     
-    # Student Profile Queries
+    # Student Progress Queries
+    studentProjectProgress: [StudentProjectSummary!]!
+
+  # Student Profile Queries
     myStudentProfile: StudentProfile
     studentProfile(userId: ID!): StudentProfile
     studentProfiles: [StudentProfile]
@@ -2526,6 +2429,25 @@ export const typeDefs = `#graphql
     completed: Boolean
   }
 
+  # ─── Project Onboarding Types ────────────────────────────────────────────
+  type OnboardingChecklistItem {
+    task: String!
+    completed: Boolean!
+    completedAt: String
+  }
+
+  type ProjectOnboarding {
+    id: ID!
+    projectId: ID!
+    developerId: ID!
+    developer: User
+    role: String!
+    status: String!
+    checklist: [OnboardingChecklistItem!]!
+    createdAt: String!
+  }
+
+  # ─── Project Application Types ────────────────────────────────────────────
   type ProjectApplicationDocuments {
     overviewUrl: String
     featuresUrl: String
@@ -2539,44 +2461,11 @@ export const typeDefs = `#graphql
     title: String!
     description: String!
     status: String!
-    requiredDocuments: ProjectApplicationDocuments
     ndaSigned: Boolean!
-    reviewNotes: String
-    createdAt: String!
-    updatedAt: String!
-  }
-
-  type ProjectNDA {
-    id: ID!
-    projectApplicationId: ID!
-    projectApplication: ProjectApplication
-    clientId: ID!
-    client: User
-    signerName: String!
-    signerEmail: String!
+    signerName: String
     signedAt: String
-    signerIp: String
-    signatureHash: String
-    status: String!
-    createdAt: String!
-    updatedAt: String!
-  }
-
-  type OnboardingChecklistItem {
-    task: String!
-    completed: Boolean!
-    completedAt: String
-  }
-
-  type ProjectOnboarding {
-    id: ID!
-    projectId: ID!
-    project: Project
-    developerId: ID!
-    developer: User
-    role: String!
-    status: String!
-    checklist: [OnboardingChecklistItem!]!
+    reviewNotes: String
+    requiredDocuments: ProjectApplicationDocuments
     createdAt: String!
     updatedAt: String!
   }
@@ -2587,117 +2476,165 @@ export const typeDefs = `#graphql
     technicalUrl: String
   }
 
+  # ─── Project Kanban Board Types ────────────────────────────────────────────
+  type ProjectTask {
+    id: ID!
+    projectId: ID!
+    project: Project
+    title: String!
+    description: String
+    status: String!
+    priority: String!
+    assignee: User
+    assigneeId: ID
+    labels: [String]
+    storyPoints: Int
+    dueDate: String
+    order: Int!
+    dependencies: [ID]
+    approved: Boolean!
+    feedback: String
+    createdAt: String!
+    updatedAt: String!
+  }
+
   extend type Query {
-    projectApplications(status: String): [ProjectApplication]
-    myProjectApplications: [ProjectApplication]
-    projectApplication(id: ID!): ProjectApplication
-    projectNDA(applicationId: ID!): ProjectNDA
-    projectOnboarding(projectId: ID!): [ProjectOnboarding]
-    developerOnboarding(userId: ID!): [ProjectOnboarding]
+    projectTasks(projectId: ID!): [ProjectTask!]!
+    projectTask(id: ID!): ProjectTask
+    myProjectTasks(status: String): [ProjectTask!]!
+    projectBoardStats(projectId: ID!): ProjectBoardStats!
+    projectOnboarding(projectId: ID!): [ProjectOnboarding!]!
+    projectApplications(status: String): [ProjectApplication!]!
+    # Client-facing queries
+    myProjectApplications: [ProjectApplication!]!
     projectByApplicationId(applicationId: ID!): Project
+    getClients: [User!]!
+    getClientWithDetails(clientId: ID!): ClientDetails
+  }
+
+  type ProjectBoardStats {
+    totalTasks: Int!
+    backlogCount: Int!
+    todoCount: Int!
+    inProgressCount: Int!
+    inReviewCount: Int!
+    doneCount: Int!
+    blockedCount: Int!
+    completedPercentage: Float!
+    overdueTasks: Int!
+  }
+
+  type StudentProjectSummary {
+    student: User!
+    totalProjects: Int!
+    completedProjects: Int!
+    inProgressProjects: Int!
+    pendingReviewProjects: Int!
+    averageProgress: Float!
+    projects: [Project!]!
+    totalTasks: Int!
+    completedTasks: Int!
+    inProgressTasks: Int!
+    pendingTasks: Int!
+    inReviewTasks: Int!
+    taskCompletionPercentage: Float!
   }
 
   extend type Mutation {
-    submitProjectApplication(
-      title: String!
-      description: String!
-      documents: ProjectApplicationDocumentsInput!
-    ): ProjectApplication
-
-    reviewProjectApplication(
-      applicationId: ID!
-      status: String!
-      notes: String
-    ): ProjectApplication
-
-    signProjectNDA(
-      applicationId: ID!
-      signerName: String!
-    ): ProjectNDA
-
-    initializeProjectFromApplication(
-      applicationId: ID!
-      course: String!
-      mentorIds: [ID!]!
-    ): Project
-
     assignDeveloperToProject(
       projectId: ID!
       developerId: ID!
       role: String!
       checklistTasks: [String!]!
-    ): ProjectOnboarding
+    ): ProjectOnboarding!
 
     updateOnboardingChecklist(
       onboardingId: ID!
       taskIndex: Int!
       completed: Boolean!
-    ): ProjectOnboarding
+    ): ProjectOnboarding!
 
-    submitMilestoneDeliverable(
-      projectId: ID!
-      milestoneIndex: Int!
-      fileUrl: String!
-      fileName: String!
-      message: String!
-    ): Project
+    reviewProjectApplication(
+      applicationId: ID!
+      status: String!
+      notes: String
+    ): ProjectApplication!
 
-    archiveProject(
+    initializeProjectFromApplication(
+      applicationId: ID!
+      course: String!
+      mentorIds: [ID!]!
+    ): Project!
+
+    createProjectTask(
       projectId: ID!
-      lessonsLearned: String!
-    ): Project
+      title: String!
+      description: String
+      priority: String
+      assigneeId: ID
+      labels: [String]
+      storyPoints: Int
+      dueDate: String
+      dependencies: [ID]
+    ): ProjectTask!
+
+    updateProjectTask(
+      id: ID!
+      title: String
+      description: String
+      status: String
+      priority: String
+      assigneeId: ID
+      labels: [String]
+      storyPoints: Int
+      dueDate: String
+      order: Int
+      dependencies: [ID]
+    ): ProjectTask!
+
+    moveProjectTask(id: ID!, status: String!, order: Int): ProjectTask!
+    deleteProjectTask(id: ID!): Boolean!
+    approveProjectTask(id: ID!, feedback: String): ProjectTask!
+    assignProjectTask(id: ID!, assigneeId: ID!): ProjectTask!
+
+    # Client-facing mutations
+    submitProjectApplication(
+      title: String!
+      description: String!
+      documents: ProjectApplicationDocumentsInput
+    ): ProjectApplication!
+
+    signProjectNDA(
+      applicationId: ID!
+      signerName: String!
+    ): ProjectApplication!
 
     submitClientEvaluation(
       projectId: ID!
       rating: Int!
       comment: String!
-    ): Project
-
-    submitDeveloperEvaluation(
-      projectId: ID!
-      rating: Int!
-      notes: String!
-    ): Project
-
-    deleteProjectApplication(
-      applicationId: ID!
-    ): ProjectApplication
-
-    restoreProjectApplication(
-      applicationId: ID!
-    ): ProjectApplication
-
-    updateProjectApplication(
-      applicationId: ID!
-      title: String
-      description: String
-      documents: ProjectApplicationDocumentsInput
-    ): ProjectApplication
-
-    cancelBooking(
-      id: ID!
-    ): Booking
-
-    restoreBooking(
-      id: ID!
-    ): Booking
-
-    updateReviewerNotes(
-      projectId: ID!
-      notes: String!
-    ): Project
+    ): Project!
   }
 
-  type ClientApplication {
+  # ─── Client Details Type ────────────────────────────────────────────────────
+  type ClientProjectSummary {
     id: ID!
-    userId: ID!
-    user: User
+    title: String!
     status: String!
-    reason: String!
-    adminFeedback: String
-    assignedAdminId: ID
-    assignedAdmin: User
+    progress: Int!
     createdAt: String!
-    updatedAt: String!
+  }
+
+  type ClientDetails {
+    id: ID!
+    fullName: String
+    email: String!
+    avatar: String
+    createdAt: String
+    totalApplications: Int!
+    approvedApplications: Int!
+    activeProjects: Int!
+    applications: [ProjectApplication!]!
+    projects: [ClientProjectSummary!]!
   }
 `;

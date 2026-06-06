@@ -9,17 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  CheckCircle2,
-  XCircle,
-  MessageSquare,
-  Clock,
-  User,
-  AlertCircle,
-  Send,
-  Check
+  Check,
 } from "lucide-react";
 import { useMutation } from "@apollo/client/react";
-import { APPROVE_PROJECT_TASK } from "@/lib/graphql/mutations";
+import { APPROVE_PROJECT_TASK } from "@/lib/graphql/project-tasks";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -35,7 +28,7 @@ export function ManageProjectTasksDialog({ open, onOpenChange, project, refetch 
 
   const [approveTask, { loading: updating }] = useMutation(APPROVE_PROJECT_TASK, {
     onCompleted: () => {
-      toast.success("Task status updated!");
+      toast.success("Task approved!");
       refetch();
     },
     onError: (err) => {
@@ -45,12 +38,10 @@ export function ManageProjectTasksDialog({ open, onOpenChange, project, refetch 
 
   if (!project) return null;
 
-  const handleApprove = (taskId: string, approved: boolean) => {
+  const handleApprove = (taskId: string) => {
     approveTask({
       variables: {
-        projectId: project.id,
-        taskId,
-        approved,
+        id: taskId,
         feedback: feedbackMap[taskId] || ""
       }
     });
@@ -124,21 +115,11 @@ export function ManageProjectTasksDialog({ open, onOpenChange, project, refetch 
                             size="sm" 
                             variant={task.approved ? "default" : "outline"}
                             className={task.approved ? "bg-green-600 hover:bg-green-700 h-9 px-4" : "h-9 px-4 border-green-500/30 text-green-600 hover:bg-green-500/10"}
-                            onClick={() => handleApprove(task.id, true)}
-                            disabled={updating}
+                            onClick={() => handleApprove(task.id)}
+                            disabled={updating || task.approved}
                           >
                             <Check className="w-4 h-4 mr-2" />
-                            Approve
-                         </Button>
-                         <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="h-9 px-4 border-rose-500/30 text-rose-500 hover:bg-rose-500/10"
-                            onClick={() => handleApprove(task.id, false)}
-                            disabled={updating}
-                          >
-                            <XCircle className="w-4 h-4 mr-2" />
-                            Reject
+                            {task.approved ? "Approved" : "Approve"}
                          </Button>
                       </div>
                     )}

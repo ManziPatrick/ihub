@@ -11,6 +11,8 @@ export interface IProjectApplication extends Document {
     technicalUrl?: string;
   };
   ndaSigned: boolean;
+  signerName?: string;
+  signedAt?: Date;
   reviewNotes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -33,6 +35,8 @@ const ProjectApplicationSchema: Schema = new Schema(
       technicalUrl: { type: String },
     },
     ndaSigned: { type: Boolean, default: false },
+    signerName: { type: String },
+    signedAt: { type: Date },
     reviewNotes: { type: String },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }

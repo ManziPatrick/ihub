@@ -243,8 +243,8 @@ export const CREATE_USER = gql`
 `;
 
 export const UPDATE_USER = gql`
-  mutation UpdateUser($id: ID!, $username: String, $email: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $phone: String, $location: String, $title: String, $certificateName: String, $isFirst: Boolean, $school: String) {
-    updateUser(id: $id, username: $username, email: $email, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, phone: $phone, location: $location, title: $title, certificateName: $certificateName, isFirst: $isFirst, school: $school) {
+  mutation UpdateUser($id: ID!, $username: String, $email: String, $password: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $phone: String, $location: String, $title: String, $certificateName: String, $isFirst: Boolean, $school: String) {
+    updateUser(id: $id, username: $username, email: $email, password: $password, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, phone: $phone, location: $location, title: $title, certificateName: $certificateName, isFirst: $isFirst, school: $school) {
       id
       username
       fullName
@@ -489,15 +489,18 @@ export const UPDATE_TASK_PROGRESS = gql`
 `;
 
 export const APPROVE_PROJECT_TASK = gql`
-  mutation ApproveProjectTask($projectId: ID!, $taskId: String!, $approved: Boolean!, $feedback: String) {
-    approveProjectTask(projectId: $projectId, taskId: $taskId, approved: $approved, feedback: $feedback) {
+  mutation ApproveProjectTask($id: ID!, $feedback: String) {
+    approveProjectTask(id: $id, feedback: $feedback) {
       id
-      tasks {
+      title
+      status
+      approved
+      feedback
+      assignee {
         id
-        title
-        completed
-        approved
-        feedback
+        username
+        fullName
+        avatar
       }
     }
   }

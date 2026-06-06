@@ -70,65 +70,6 @@ export const GET_STATS = gql`
   }
 `;
 
-export const GET_CLIENT_APPLICATIONS = gql`
-  query GetClientApplications {
-    clientApplications {
-      id
-      userId
-      user {
-        id
-        username
-        email
-        fullName
-        avatar
-        role
-      }
-      status
-      reason
-      adminFeedback
-      assignedAdminId
-      assignedAdmin {
-        id
-        username
-        fullName
-      }
-      createdAt
-      updatedAt
-    }
-  }
-`;
-
-export const GET_MY_CLIENT_APPLICATION = gql`
-  query GetMyClientApplication {
-    myClientApplication {
-      id
-      status
-      reason
-      adminFeedback
-      assignedAdmin {
-        id
-        username
-        fullName
-        avatar
-      }
-      createdAt
-      updatedAt
-    }
-  }
-`;
-
-export const GET_ADMINS_LIST = gql`
-  query GetAdminsList {
-    admins {
-      id
-      username
-      fullName
-      email
-      avatar
-      role
-    }
-  }
-`;
 
 export const GET_USERS = gql`
   query GetUsers($page: Int, $limit: Int, $createdBy: ID) {
@@ -2138,6 +2079,46 @@ export const GET_RESOURCES = gql`
       createdBy {
         id
         username
+      }
+    }
+  }
+`;
+
+export const GET_STUDENT_PROJECT_PROGRESS = gql`
+  query GetStudentProjectProgress {
+    studentProjectProgress {
+      student {
+        id
+        username
+        fullName
+        email
+        avatar
+        role
+      }
+      totalProjects
+      completedProjects
+      inProgressProjects
+      pendingReviewProjects
+      averageProgress
+      totalTasks
+      completedTasks
+      inProgressTasks
+      pendingTasks
+      inReviewTasks
+      taskCompletionPercentage
+      projects {
+        id
+        title
+        course
+        status
+        progress
+        deadline
+        grade
+        createdAt
+        user {
+          id
+          username
+        }
       }
     }
   }
