@@ -1,36 +1,83 @@
-# Bootskills — Practical Tech & Business Training in Kigali, Rwanda
-> Bootskills is Rwanda's leading practical training platform offering tech, business, and financial literacy courses with real-world projects and internships.
+# Bootskills Academy — #1 Tech & Business Training in Kigali, Rwanda
+> Bootskills is Rwanda's leading practical training platform offering tech, business, and financial literacy courses with real-world projects and internships. Based in Kigali, Rwanda. Serving all of Africa.
 > Website: https://bootskills.com
 > Location: Kigali, Rwanda
 > Founded: 2024 by Manzi Alain Patrick Munyeshuri and Bizimana Eric
 
-## Core Offerings
+## Software Development
+- Full Stack Web Development, Frontend Development, Backend Development
+- React Mastery, Next.js Mastery, Angular Development, Vue.js Development
+- Node.js Development, Express.js Development, NestJS Development
+- TypeScript Mastery, API Development, GraphQL Development
+- Microservices Architecture, Software Testing, DevOps Fundamentals
+- Docker & Kubernetes, CI/CD Engineering
 
-### Training & Courses
-- Full-Stack Web Development (React, Node.js, TypeScript)
-- Mobile App Development
-- Artificial Intelligence & Machine Learning
-- Data Science & Analytics
-- UI/UX Design
-- Business Development & Management
-- Digital Literacy & Financial Literacy
+## Mobile Development
+- Flutter Development, React Native Development
+- Android Development, iOS Development
+- Mobile UI/UX, App Publishing Masterclass
 
-### Internships
-- Structured internship programs with real projects
-- Professional mentorship from industry experts
-- Team-based collaboration on production software
-- Certificate upon completion
+## Artificial Intelligence
+- AI Fundamentals, Prompt Engineering, Generative AI
+- ChatGPT Mastery, Claude AI Mastery, Gemini AI Mastery
+- AI Agents Development, Machine Learning, Deep Learning
+- Computer Vision, NLP (Natural Language Processing)
+- AI for Healthcare, AI for Education, AI for Business, AI Automation
 
-### Software Development
-- Custom web and mobile applications
-- AI-powered solutions
-- API development and integration
-- Cloud infrastructure (AWS, GCP)
+## Data Science
+- Data Analytics, Data Visualization, Power BI, Tableau
+- Python for Data Science, SQL Mastery, Big Data Engineering, Business Intelligence
 
-### Innovation Platform
-- Open ecosystem for trainers and professionals
-- Project-based learning methodology
-- Industry-aligned curriculum
+## Cybersecurity
+- Cyber Literacy, Ethical Hacking, Penetration Testing
+- SOC Analyst Training, Network Security, Digital Forensics
+- Incident Response, Security Operations Center, Cloud Security, Security+
+
+## Cloud Computing
+- AWS Practitioner, AWS Solutions Architect
+- Azure Fundamentals, Azure Administrator
+- Google Cloud Fundamentals, Cloud DevOps
+
+## Networking
+- CCNA Preparation, Network Administration, Wireless Networks, Enterprise Networking
+
+## Design
+- UI/UX Design, Figma Mastery, Graphic Design, Motion Graphics
+- Video Editing, Adobe Creative Suite
+
+## Business & Entrepreneurship
+- Startup Building, Product Management, Digital Marketing, SEO Mastery
+- Social Media Marketing, Branding, Business Development
+
+## Communication
+- Public Speaking, Leadership, Negotiation Skills, Professional Communication, Interview Preparation
+
+## Career Development
+- CV Writing, LinkedIn Optimization, Freelancing, Remote Work Success
+- Tech Career Accelerator, Job Readiness Program
+
+## Internship Programs
+- Software Engineering Internship, Frontend Internship, Backend Internship
+- Mobile Development Internship, AI Engineering Internship
+- Data Science Internship, Cybersecurity Internship, Cloud Engineering Internship
+- UI/UX Internship, Product Management Internship, Digital Marketing Internship
+
+## Real-World Projects
+- Hospital Management System, School Management System
+- Inventory Management System, POS System, E-Commerce Platform
+- Banking System, AI Chatbot, AI Resume Builder, AI Learning Assistant
+- Smart Agriculture Platform, Telemedicine Platform, Fintech Wallet
+- LMS Platform, CRM Platform, ERP Platform
+
+## Certifications
+- BootSkills Certified Developer, BootSkills Certified AI Engineer
+- BootSkills Certified Cybersecurity Analyst, BootSkills Certified Cloud Engineer
+- BootSkills Certified Data Analyst, BootSkills Certified Digital Marketer
+
+## Countries Served
+Rwanda, Kenya, Uganda, Tanzania, Burundi, DR Congo, South Sudan,
+Nigeria, Ghana, South Africa, Zambia, Zimbabwe, Ethiopia,
+Africa-wide Online Training
 
 ## Key Pages
 - Home: https://bootskills.com/
@@ -45,7 +92,7 @@
 - Contact: https://bootskills.com/contact
 
 ## Leadership
-- Manzi Alain Patrick Munyeshuri — Founder & CEO. Rwandan technologist focused on bridging education and employability.
+- Manzi Alain Patrick Munyeshuri — Founder & CEO. Rwandan technologist bridging education and employability.
 - Bizimana Eric — Co-Founder & CTO. Technical and operational leadership.
 
 ## Contact
