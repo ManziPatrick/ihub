@@ -205,7 +205,7 @@ export default function AdminProjects() {
   const projects = (data as any)?.projects?.items || [];
   const pagination = (data as any)?.projects?.pagination;
 
-  const { data: studentProgressData, loading: studentsLoading } = useQuery(GET_STUDENT_PROJECT_PROGRESS, {
+  const { data: studentProgressData, loading: studentsLoading } = useQuery<{ studentProjectProgress: any[] }>(GET_STUDENT_PROJECT_PROGRESS, {
     skip: !['admin', 'super_admin'].includes(user?.role || ''),
   });
 

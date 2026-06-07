@@ -1,11 +1,11 @@
 import React from 'react';
-import { useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GET_APPLICATION_PROGRESS } from '@/lib/graphql/queries';
 import { CheckCircle2, Clock, X } from 'lucide-react';
 
 export const ApplicationProgress = ({ applicationId }: { applicationId: string }) => {
-  const { data, loading } = useQuery(GET_APPLICATION_PROGRESS, { variables: { applicationId } });
+  const { data, loading } = useQuery<{ getApplicationProgress: any }>(GET_APPLICATION_PROGRESS, { variables: { applicationId } });
 
   if (loading) return <div>Loading...</div>;
 

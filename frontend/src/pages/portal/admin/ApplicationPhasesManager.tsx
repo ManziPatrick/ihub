@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useMutation, useQuery } from '@apollo/client';
-import { GET_APPLICATION_PHASES, CREATE_APPLICATION_PHASE } from '@/lib/graphql/queries';
+import { useMutation, useQuery } from '@apollo/client/react';
+import { GET_APPLICATION_PHASES } from '@/lib/graphql/queries';
+import { CREATE_APPLICATION_PHASE } from '@/lib/graphql/mutations';
 
 export const ApplicationPhasesManager = ({ programId }: { programId: string }) => {
   const [formData, setFormData] = useState({
@@ -15,7 +16,7 @@ export const ApplicationPhasesManager = ({ programId }: { programId: string }) =
     allowMeetingScheduling: false,
   });
 
-  const { data, refetch } = useQuery(GET_APPLICATION_PHASES, { variables: { programId } });
+  const { data, refetch } = useQuery<{ getApplicationPhases: any[] }>(GET_APPLICATION_PHASES, { variables: { programId } });
   const [createPhase] = useMutation(CREATE_APPLICATION_PHASE, {
     onCompleted: () => {
       setFormData({ name: '', description: '', order: 0, enableApproval: true, isInterviewPhase: false, allowMeetingScheduling: false });

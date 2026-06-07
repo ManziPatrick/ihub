@@ -51,7 +51,7 @@ export function useProjectChat({ projectId, conversationId: initialConversationI
           content
         }
       });
-      const newConvId = response.data?.sendMessageToProject?.conversationId;
+      const newConvId = (response.data as { sendMessageToProject?: { conversationId?: string } })?.sendMessageToProject?.conversationId;
       if (newConvId && !activeConversationId) {
         setActiveConversationId(newConvId);
       }
