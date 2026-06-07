@@ -11,6 +11,8 @@ export interface IInternshipMeeting extends Document {
   location?: string;
   startTime: Date;
   endTime: Date;
+  recurrenceDays?: number[]; // 0=Sun,1=Mon...6=Sat
+  recurrenceEndDate?: Date;
   teamIds: mongoose.Types.ObjectId[];
   userIds: mongoose.Types.ObjectId[]; // Selective users
   mentorIds: mongoose.Types.ObjectId[]; // Selective trainers/mentors
