@@ -257,7 +257,7 @@ export default function CourseDetail() {
           <p class="course">in the course</p>
           <p class="module-name" style="font-size:18px;">${course.title}</p>
           <div class="date">Completed on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-          <div class="footer">MultiCourses Academy · multicourses.com</div>
+          <div class="footer">Bootskills Academy · bootskills.com</div>
         </div>
       </body>
       </html>
@@ -446,7 +446,7 @@ export default function CourseDetail() {
               <div className="flex items-center flex-wrap gap-2 mt-1">
                 <Badge variant="secondary" className="text-[9px] uppercase font-black bg-accent/10 text-accent border-accent/20 gap-1 px-1.5 py-0.5">
                   <Building2 className="w-2.5 h-2.5" />
-                  {course.school || "MultiCourses Academy"}
+                  {course.school || "Bootskills Academy"}
                 </Badge>
                 <Badge variant="outline" className="text-[9px] uppercase text-card-foreground/60 px-1.5 py-0.5">{course.level}</Badge>
                 <span className="text-muted-foreground text-[10px] font-medium">{progressPercent}% done</span>

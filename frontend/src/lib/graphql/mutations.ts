@@ -231,8 +231,8 @@ export const DELETE_COURSE = gql`
   }
 `;
 export const CREATE_USER = gql`
-  mutation CreateUser($username: String!, $email: String!, $password: String!, $role: String, $permissions: [String]) {
-    createUser(username: $username, email: $email, password: $password, role: $role, permissions: $permissions) {
+  mutation CreateUser($username: String!, $email: String!, $password: String!, $role: String, $permissions: [String], $school: String) {
+    createUser(username: $username, email: $email, password: $password, role: $role, permissions: $permissions, school: $school) {
       id
       username
       email
@@ -243,8 +243,8 @@ export const CREATE_USER = gql`
 `;
 
 export const UPDATE_USER = gql`
-  mutation UpdateUser($id: ID!, $username: String, $email: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $phone: String, $location: String, $title: String, $certificateName: String, $isFirst: Boolean, $school: String) {
-    updateUser(id: $id, username: $username, email: $email, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, phone: $phone, location: $location, title: $title, certificateName: $certificateName, isFirst: $isFirst, school: $school) {
+  mutation UpdateUser($id: ID!, $username: String, $email: String, $password: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $phone: String, $location: String, $title: String, $certificateName: String, $isFirst: Boolean, $school: String) {
+    updateUser(id: $id, username: $username, email: $email, password: $password, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, phone: $phone, location: $location, title: $title, certificateName: $certificateName, isFirst: $isFirst, school: $school) {
       id
       username
       fullName
@@ -489,15 +489,18 @@ export const UPDATE_TASK_PROGRESS = gql`
 `;
 
 export const APPROVE_PROJECT_TASK = gql`
-  mutation ApproveProjectTask($projectId: ID!, $taskId: String!, $approved: Boolean!, $feedback: String) {
-    approveProjectTask(projectId: $projectId, taskId: $taskId, approved: $approved, feedback: $feedback) {
+  mutation ApproveProjectTask($id: ID!, $feedback: String) {
+    approveProjectTask(id: $id, feedback: $feedback) {
       id
-      tasks {
+      title
+      status
+      approved
+      feedback
+      assignee {
         id
-        title
-        completed
-        approved
-        feedback
+        username
+        fullName
+        avatar
       }
     }
   }
@@ -945,6 +948,7 @@ export const SEND_MESSAGE_TO_PROJECT = gql`
       id
       content
       createdAt
+      conversationId
       sender {
          id
          username
@@ -1444,6 +1448,140 @@ export const DELETE_RESOURCE = gql`
   }
 `;
 
+export const SUBMIT_CLIENT_EVALUATION = gql`
+  mutation SubmitClientEvaluation($projectId: ID!, $rating: Int!, $comment: String!) {
+    submitClientEvaluation(projectId: $projectId, rating: $rating, comment: $comment) {
+      id
+      evaluation {
+        clientFeedback {
+          rating
+          comment
+          submittedAt
+        }
+      }
+    }
+  }
+`;
+
+export const RESTORE_PROJECT_APPLICATION = gql`
+  mutation RestoreProjectApplication($applicationId: ID!) {
+    restoreProjectApplication(applicationId: $applicationId) {
+      id
+      title
+      status
+    }
+  }
+`;
+
+export const RESTORE_BOOKING = gql`
+  mutation RestoreBooking($id: ID!) {
+    restoreBooking(id: $id) {
+      id
+      status
+    }
+  }
+`;
+
+export const RESTORE_COURSE = gql`
+  mutation RestoreCourse($id: ID!) {
+    restoreCourse(id: $id) {
+      id
+      title
+      status
+    }
+  }
+`;
+
+export const RESTORE_USER = gql`
+  mutation RestoreUser($id: ID!) {
+    restoreUser(id: $id) {
+      id
+      username
+      email
+      role
+    }
+  }
+`;
+
+export const RESTORE_BADGE = gql`
+  mutation RestoreBadge($id: ID!) {
+    restoreBadge(id: $id) {
+      id
+      title
+    }
+  }
+`;
+
+export const RESTORE_PROJECT = gql`
+  mutation RestoreProject($id: ID!) {
+    restoreProject(id: $id) {
+      id
+      title
+      status
+    }
+  }
+`;
+
+export const DELETE_PROJECT_APPLICATION = gql`
+  mutation DeleteProjectApplication($applicationId: ID!) {
+    deleteProjectApplication(applicationId: $applicationId) {
+      id
+      title
+      status
+    }
+  }
+`;
+
+export const UPDATE_PROJECT_APPLICATION = gql`
+  mutation UpdateProjectApplication(
+    $applicationId: ID!
+    $title: String
+    $description: String
+    $documents: ProjectApplicationDocumentsInput
+  ) {
+    updateProjectApplication(applicationId: $applicationId, title: $title, description: $description, documents: $documents) {
+      id
+      title
+      description
+      status
+      requiredDocuments {
+        overviewUrl
+        featuresUrl
+        technicalUrl
+      }
+    }
+  }
+`;
+
+export const CANCEL_BOOKING = gql`
+  mutation CancelBooking($id: ID!) {
+    cancelBooking(id: $id) {
+      id
+      status
+    }
+  }
+`;
+
+export const SUBMIT_MILESTONE_DELIVERABLE = gql`
+  mutation SubmitMilestoneDeliverable($projectId: ID!, $milestoneIndex: Int!, $fileUrl: String!, $fileName: String!, $message: String!) {
+    submitMilestoneDeliverable(projectId: $projectId, milestoneIndex: $milestoneIndex, fileUrl: $fileUrl, fileName: $fileName, message: $message) {
+      id
+      milestones {
+        title
+        completed
+        submissions {
+          url
+          fileName
+          version
+          message
+          status
+          feedback
+        }
+      }
+    }
+  }
+`;
+
 export const SUBMIT_ASSIGNMENT = gql`
   mutation SubmitAssignment($courseId: ID!, $lessonId: String!, $content: String!) {
     submitAssignment(courseId: $courseId, lessonId: $lessonId, content: $content) {
@@ -1869,6 +2007,93 @@ export const AI_GRADE_OPEN_ANSWERS = gql`
       id
       totalScore
       status
+    }
+  }
+`;
+
+export const CREATE_APPLICATION_PHASE = gql`
+  mutation CreateApplicationPhase(
+    $programId: ID!
+    $name: String!
+    $description: String
+    $order: Int
+    $enableApproval: Boolean
+    $isInterviewPhase: Boolean
+    $allowMeetingScheduling: Boolean
+  ) {
+    createApplicationPhase(
+      programId: $programId
+      name: $name
+      description: $description
+      order: $order
+      enableApproval: $enableApproval
+      isInterviewPhase: $isInterviewPhase
+      allowMeetingScheduling: $allowMeetingScheduling
+    ) {
+      id
+      name
+      description
+      order
+      enableApproval
+      isInterviewPhase
+      allowMeetingScheduling
+    }
+  }
+`;
+
+// ─── CLIENT APPLICATION MUTATIONS ─────────────────────────────────────────────
+export const APPLY_TO_BE_CLIENT = gql`
+  mutation ApplyToBeClient($reason: String!) {
+    applyToBeClient(reason: $reason) {
+      id
+      status
+      reason
+      createdAt
+    }
+  }
+`;
+
+export const APPROVE_CLIENT_APPLICATION = gql`
+  mutation ApproveClientApplication($id: ID!, $assignedAdminId: ID) {
+    approveClientApplication(id: $id, assignedAdminId: $assignedAdminId) {
+      id
+      status
+      assignedAdminId
+      assignedAdmin {
+        id
+        username
+        fullName
+      }
+      user {
+        id
+        username
+        email
+        role
+      }
+    }
+  }
+`;
+
+export const REJECT_CLIENT_APPLICATION = gql`
+  mutation RejectClientApplication($id: ID!, $adminFeedback: String) {
+    rejectClientApplication(id: $id, adminFeedback: $adminFeedback) {
+      id
+      status
+      adminFeedback
+    }
+  }
+`;
+
+export const ASSIGN_ADMIN_TO_CLIENT = gql`
+  mutation AssignAdminToClient($adminId: ID!) {
+    assignAdminToClient(adminId: $adminId) {
+      id
+      assignedAdmin {
+        id
+        username
+        fullName
+        avatar
+      }
     }
   }
 `;

@@ -35,14 +35,52 @@ import {
   Plus
 } from "lucide-react";
 import { ViewSessionDialog, BookCallDialog } from "@/components/portal/dialogs";
+import { ConfirmDialog } from "@/components/portal/dialogs/ConfirmDialog";
 import { toast } from "sonner";
-import { useQuery } from "@apollo/client/react";
+import { RESTORE_BOOKING } from "@/lib/graphql/mutations";
+import { useQuery, useMutation } from "@apollo/client/react";
+import { gql } from "@apollo/client";
 import { Calendar as UICalendar } from "@/components/ui/calendar";
 import { GET_MY_BOOKINGS, GET_MY_INTERNSHIP_MEETINGS } from "@/lib/graphql/queries";
+
+const CANCEL_BOOKING = gql`
+  mutation CancelStudentBooking($id: ID!) {
+    cancelBooking(id: $id) {
+      id
+      status
+    }
+  }
+`;
 
 export default function StudentSchedule() {
   const [viewSession, setViewSession] = useState<any | null>(null);
   const [bookOpen, setBookOpen] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<string | null>(null);
+  const [restoreBooking] = useMutation(RESTORE_BOOKING);
+  const [cancelBook, { loading: cancelling }] = useMutation(CANCEL_BOOKING, {
+    onCompleted: (data: any) => {
+      const bookingId = data?.cancelBooking?.id;
+      setCancelTarget(null);
+      if (!bookingId) return;
+      window.dispatchEvent(new CustomEvent('bell-ring'));
+      toast.success("Booking cancelled", {
+        description: "You can undo this action within 10 seconds.",
+        duration: 10000,
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              await restoreBooking({ variables: { id: bookingId } });
+              toast.success("Booking restored!");
+            } catch (err: any) {
+              toast.error(err.message);
+            }
+          },
+        },
+      });
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
   const [timeFilter, setTimeFilter] = useState<'today' | '3days' | 'week' | 'month' | 'all'>('all');
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [viewDate, setViewDate] = useState(startOfToday());
@@ -458,7 +496,16 @@ export default function StudentSchedule() {
                             <Eye className="w-4 h-4 mr-2" />
                             Details
                           </Button>
-                        </div>
+                          {(booking.status === "pending" || booking.status === "confirmed") && (
+                            <Button
+                              variant="outline"
+                              className="h-11 rounded-xl font-bold text-red-400 border-red-500/20 hover:bg-red-500/10"
+                              onClick={() => setCancelTarget(booking.id)}
+                            >
+                              Cancel
+                            </Button>
+                          )}
+                      </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -482,6 +529,20 @@ export default function StudentSchedule() {
           link: viewSession?.meetingLink
         }}
         onJoin={() => handleJoinSession(viewSession?.meetingLink)}
+      />
+
+      {/* Cancel Confirmation */}
+      <ConfirmDialog
+        open={!!cancelTarget}
+        onOpenChange={(open) => { if (!open) setCancelTarget(null); }}
+        title="Cancel Booking"
+        description="Are you sure you want to cancel this meeting? This action cannot be undone."
+        confirmText="Cancel Booking"
+        variant="destructive"
+        loading={cancelling}          onConfirm={async () => {
+          if (!cancelTarget) return;
+          await cancelBook({ variables: { id: cancelTarget } });
+        }}
       />
 
       <BookCallDialog

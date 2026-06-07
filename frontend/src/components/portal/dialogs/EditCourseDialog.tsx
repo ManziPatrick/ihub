@@ -33,7 +33,11 @@ import {
   Settings2,
   FileText as FileTextIcon
 } from "lucide-react";
-import { ManageQuestionsDialog, ResourceBankDialog, ManageAssignmentQuestionsDialog, AssignmentConfigDialog, ExamConfigDialog } from "./index";
+import { ManageQuestionsDialog } from "./ManageQuestionsDialog";
+import { ResourceBankDialog } from "./ResourceBankDialog";
+import { ManageAssignmentQuestionsDialog } from "./ManageAssignmentQuestionsDialog";
+import { AssignmentConfigDialog } from "./AssignmentConfigDialog";
+import { ExamConfigDialog } from "../ExamConfigDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { FileUpload } from "@/components/FileUpload";
 
@@ -802,7 +806,7 @@ export function EditCourseDialog({
 
                       <div className="space-y-4">
                         <div>
-                          <label className="text-xs font-bold mb-1.5 block text-muted-foreground flex items-center gap-2">
+                          <label className="text-xs font-bold mb-1.5 text-muted-foreground flex items-center gap-2">
                             Course Title
                             {!isAdmin && <Lock className="w-2.5 h-2.5" />}
                           </label>
@@ -863,7 +867,7 @@ export function EditCourseDialog({
                               <option value="Kingdavid" />
                               <option value="Greenhill Academy" />
                               <option value="Andela" />
-                              <option value="iHub" />
+                              <option value="Bootskills" />
                             </datalist>
                           </div>
                         </div>

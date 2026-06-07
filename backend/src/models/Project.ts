@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IProject extends Document {
   userId: mongoose.Types.ObjectId;
+  projectApplicationId?: mongoose.Types.ObjectId;
   title: string;
   course: string;
   type: string; // 'Team Project' or 'Individual'
@@ -23,6 +24,8 @@ export interface IProject extends Document {
     approved?: boolean;
     feedback?: string;
     aiFeedback?: string; // AI review of the task
+    category?: 'Frontend' | 'Backend';
+    dependencies?: string[];
   }>;
   milestoneVideos?: Array<{
     title: string;
@@ -47,6 +50,9 @@ export interface IProject extends Document {
       feedback?: string;
       status: 'pending' | 'approved' | 'rejected';
       aiReview?: string;
+      version?: number;
+      fileName?: string;
+      submittedBy?: mongoose.Types.ObjectId;
     }>;
     feedback?: string;
     aiAnalysis?: string;
@@ -73,6 +79,13 @@ export interface IProject extends Document {
       feedback?: string;
     }>;
   };
+  evaluation?: {
+    clientFeedback?: { rating: number; comment: string; submittedAt: Date };
+    developerEvaluations?: Array<{ developerId: mongoose.Types.ObjectId; rating: number; notes: string }>;
+    reviewerNotes?: string;
+  };
+  isArchived?: boolean;
+  archivedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -80,6 +93,7 @@ export interface IProject extends Document {
 const ProjectSchema: Schema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    projectApplicationId: { type: Schema.Types.ObjectId, ref: 'ProjectApplication' },
     title: { type: String, required: true },
     course: { type: String, required: true },
     type: { type: String, required: true, enum: ['Team Project', 'Individual'] },
@@ -108,6 +122,8 @@ const ProjectSchema: Schema = new Schema(
         approved: { type: Boolean, default: false },
         feedback: { type: String },
         aiFeedback: { type: String },
+        category: { type: String, enum: ['Frontend', 'Backend'], default: 'Frontend' },
+        dependencies: [{ type: String }],
       },
     ],
     milestoneVideos: [
@@ -139,7 +155,10 @@ const ProjectSchema: Schema = new Schema(
             message: String,
             feedback: String,
             status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
-            aiReview: String
+            aiReview: String,
+            version: { type: Number, default: 1 },
+            fileName: String,
+            submittedBy: { type: Schema.Types.ObjectId, ref: 'User' }
           }
         ],
         feedback: { type: String }, // General mentor feedback
@@ -169,7 +188,24 @@ const ProjectSchema: Schema = new Schema(
           feedback: { type: String }
         }
       ]
-    }
+    },
+    evaluation: {
+      clientFeedback: {
+        rating: { type: Number },
+        comment: { type: String },
+        submittedAt: { type: Date }
+      },
+      developerEvaluations: [
+        {
+          developerId: { type: Schema.Types.ObjectId, ref: 'User' },
+          rating: { type: Number },
+          notes: { type: String }
+        }
+      ],
+      reviewerNotes: { type: String }
+    },
+    isArchived: { type: Boolean, default: false },
+    archivedAt: { type: Date }
   },
   { timestamps: true }
 );

@@ -51,7 +51,10 @@ import {
   ClipboardList,
   ChevronLeft,
   ChevronRight,
-  Globe
+  Globe,
+  Building2,
+  RotateCcw,
+  Eye
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePusher } from "@/hooks/use-pusher";
@@ -68,6 +71,7 @@ interface NavItem {
 
 const studentNavItems: NavItem[] = [
   { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },
+  { label: "Projects", href: "/portal/student/projects", icon: FolderOpen },
   { 
     label: "Academics", 
     icon: GraduationCap,
@@ -107,6 +111,7 @@ const trainerNavItems: NavItem[] = [
     children: [
       { label: "Mentorship", href: "/portal/trainer/mentorship", icon: GraduationCap },
       { label: "Internships", href: "/portal/trainer/internships", icon: Briefcase },
+      { label: "Dev Onboarding", href: "/portal/admin/project-onboarding", icon: UserCog },
     ]
   },
   { label: "Schedule", href: "/portal/trainer/schedule", icon: Calendar },
@@ -121,15 +126,24 @@ const adminNavItems: NavItem[] = [
     children: [
       { label: "Users", href: "/portal/admin/users", icon: Users },
       { label: "Courses", href: "/portal/admin/courses", icon: BookOpen },
+      { label: "Course Preview", href: "/portal/admin/course-preview", icon: Eye },
       { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
       { label: "Internships", href: "/portal/admin/internships", icon: Briefcase },
+    ]
+  },
+  {
+    label: "Projects",
+    icon: FolderOpen,
+    children: [
+      { label: "All Projects", href: "/portal/admin/projects", icon: FolderOpen },
+      { label: "Applications", href: "/portal/admin/project-applications", icon: ClipboardList },
+      { label: "Dev Onboarding", href: "/portal/admin/project-onboarding", icon: UserCog },
     ]
   },
   { 
     label: "Content", 
     icon: FileText,
     children: [
-      { label: "Projects", href: "/portal/admin/projects", icon: FolderOpen },
       { label: "Assignments", href: "/portal/admin/assignment-reviews", icon: GraduationCap },
       { label: "Badges", href: "/portal/admin/badges", icon: Award },
       { label: "Blog", href: "/portal/admin/blogs", icon: FileText },
@@ -159,6 +173,7 @@ const superAdminNavItems: NavItem[] = [
       { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },
       { label: "All Users", href: "/portal/super-admin/users", icon: Users },
       { label: "Configuration", href: "/portal/super-admin/config", icon: Cog },
+      { label: "Undo Metrics", href: "/portal/super-admin/undo-metrics", icon: RotateCcw },
     ]
   },
   { 
@@ -174,12 +189,28 @@ const superAdminNavItems: NavItem[] = [
   { label: "Messages", href: "/chat", icon: MessageSquare },
 ];
 
+const clientNavItems: NavItem[] = [
+  { label: "Dashboard", href: "/portal/client", icon: LayoutDashboard },
+  { 
+    label: "Projects", 
+    icon: Building2,
+    children: [
+      { label: "Applications", href: "/portal/client/applications", icon: ClipboardList },
+      { label: "My Workspace", href: "/portal/client/workspace", icon: Building2 },
+      { label: "Feedback", href: "/portal/client/feedback", icon: Star },
+    ]
+  },
+  { label: "Schedule", href: "/portal/client", icon: Calendar },
+  { label: "Messages", href: "/chat", icon: MessageSquare },
+];
+
 const navItemsByRole: Record<UserRole, NavItem[]> = {
   student: studentNavItems,
   trainer: trainerNavItems,
   mentor: trainerNavItems,
   admin: adminNavItems,
   super_admin: superAdminNavItems,
+  client: clientNavItems,
 };
 
 const roleLabels: Record<UserRole, string> = {
@@ -188,6 +219,7 @@ const roleLabels: Record<UserRole, string> = {
   mentor: "Trainer Portal",
   admin: "Admin Dashboard",
   super_admin: "Super Admin",
+  client: "Client Portal",
 };
 
 interface PortalLayoutProps {
@@ -241,12 +273,23 @@ export function PortalLayout({ children }: PortalLayoutProps) {
   };
 
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [bellRinging, setBellRinging] = useState(false);
   const [markRead] = useMutation(MARK_NOTIFICATION_READ);
   const [markAllRead] = useMutation(MARK_ALL_NOTIFICATIONS_READ, {
     onCompleted: () => {
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     }
   });
+
+  // Listen for bell-ring custom event (dispatched by undo toasts)
+  useEffect(() => {
+    const handler = () => {
+      setBellRinging(true);
+      setTimeout(() => setBellRinging(false), 1200);
+    };
+    window.addEventListener('bell-ring', handler);
+    return () => window.removeEventListener('bell-ring', handler);
+  }, []);
 
   useEffect(() => {
     if (notifData?.notifications) {
@@ -378,7 +421,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                 <img src={branding.logoUrl} alt={branding.siteName} className="h-8 w-auto" />
               ) : (
                 <span className="font-heading font-black text-2xl tracking-tighter text-card-foreground">
-                  {isSidebarMinimized ? 'M' : 'Multi'}<span className="text-accent">{isSidebarMinimized ? 'C' : 'Courses'}</span>
+                  {isSidebarMinimized ? 'B' : 'Boot'}<span className="text-accent">{isSidebarMinimized ? 'S' : 'skills'}</span>
                 </span>
               )}
             </Link>
@@ -666,7 +709,14 @@ export function PortalLayout({ children }: PortalLayoutProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="relative p-2 text-card-foreground/70 hover:text-card-foreground transition-colors">
-                  <Bell className="w-5 h-5" />
+                  <motion.div
+                    animate={bellRinging ? {
+                      rotate: [0, -15, 10, -10, 5, -5, 0],
+                      transition: { duration: 0.6, ease: 'easeInOut' }
+                    } : {}}
+                  >
+                    <Bell className={`w-5 h-5 ${bellRinging ? 'text-accent' : ''}`} />
+                  </motion.div>
                   {notifications.filter(n => !n.read).length > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-accent text-accent-foreground text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
                       {notifications.filter(n => !n.read).length > 99 ? '99+' : notifications.filter(n => !n.read).length}

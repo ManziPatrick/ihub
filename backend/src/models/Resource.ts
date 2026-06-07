@@ -6,7 +6,7 @@ export interface IResource extends Document {
     source: 'cloudinary' | 'google_drive' | 'external';
     url: string;
     linkedTo?: mongoose.Types.ObjectId;
-    onModel?: 'Course' | 'Lesson' | 'InternshipMilestone' | 'Project' | 'ProjectTask' | 'DailyTracker';
+    onModel?: 'Course' | 'Lesson' | 'InternshipMilestone' | 'Project' | 'ProjectTask' | 'DailyTracker' | 'Internship';
     visibility: 'public' | 'private' | 'interns_only';
     createdBy: mongoose.Types.ObjectId;
     createdAt: Date;
@@ -30,7 +30,7 @@ const ResourceSchema: Schema = new Schema(
         linkedTo: { type: Schema.Types.ObjectId, refPath: 'onModel' },
         onModel: {
             type: String,
-            enum: ['Course', 'Lesson', 'InternshipMilestone', 'Project', 'ProjectTask', 'DailyTracker']
+            enum: ['Course', 'Lesson', 'InternshipMilestone', 'Project', 'ProjectTask', 'DailyTracker', 'Internship']
         },
         visibility: {
             type: String,

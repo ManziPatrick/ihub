@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['student', 'trainer', 'admin', 'super_admin'],
+    enum: ['student', 'trainer', 'admin', 'super_admin', 'client'],
     default: 'student',
   },
   authProvider: {
@@ -115,6 +115,7 @@ const userSchema = new mongoose.Schema({
   certificateName: { type: String },
   school: { type: String, trim: true },
   isFirst: { type: Boolean, default: true },
+  assignedAdmin: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 
 export const User = mongoose.model('User', userSchema);

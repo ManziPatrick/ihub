@@ -20,12 +20,22 @@ interface UseProjectChatOptions {
   enabled?: boolean;
 }
 
-export function useProjectChat({ projectId, conversationId, enabled = true }: UseProjectChatOptions) {
-  
+export function useProjectChat({ projectId, conversationId: initialConversationId, enabled = true }: UseProjectChatOptions) {
+  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(initialConversationId || undefined);
+
+  // Update local state if prop changes
+  useEffect(() => {
+    if (initialConversationId) {
+      setActiveConversationId(initialConversationId);
+    } else if (!initialConversationId) {
+      setActiveConversationId(undefined);
+    }
+  }, [initialConversationId]);
+
   // Poll every 3 seconds for new messages
-  const { data, loading, error, startPolling, stopPolling } = useQuery(GET_MESSAGES, {
-    variables: { conversationId: conversationId || "" },
-    skip: !enabled || !conversationId,
+  const { data, loading, error } = useQuery(GET_MESSAGES, {
+    variables: { conversationId: activeConversationId },
+    skip: !enabled || !activeConversationId,
     pollInterval: 3000, 
     fetchPolicy: "network-only"
   });
@@ -35,14 +45,16 @@ export function useProjectChat({ projectId, conversationId, enabled = true }: Us
   const sendMessage = async (content: string) => {
     if (!content.trim()) return;
     try {
-      await sendMessageMutation({
+      const response = await sendMessageMutation({
         variables: {
           projectId,
           content
         }
       });
-      // No need to manually update state, polling/cache will handle it shortly
-      // or we can optimistic update if needed
+      const newConvId = response.data?.sendMessageToProject?.conversationId;
+      if (newConvId && !activeConversationId) {
+        setActiveConversationId(newConvId);
+      }
     } catch (err: any) {
       toast.error("Failed to send message: " + err.message);
     }
@@ -60,7 +72,7 @@ export function useProjectChat({ projectId, conversationId, enabled = true }: Us
   return {
     messages,
     sendMessage,
-    isConnected: !!conversationId,
+    isConnected: true, // Always allow typing; backend will auto-create the conversation on first message
     loading
   };
 }

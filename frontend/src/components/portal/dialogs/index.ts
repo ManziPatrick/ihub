@@ -60,3 +60,4 @@ export { ManageTeamMembersDialog } from "./ManageTeamMembersDialog";
 export { ManageAssignmentQuestionsDialog } from "./ManageAssignmentQuestionsDialog";
 export { AssignmentConfigDialog } from "./AssignmentConfigDialog";
 export { ExamConfigDialog } from "../ExamConfigDialog";
+export { ProjectTaskDialog } from "./ProjectTaskDialog";

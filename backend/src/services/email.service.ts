@@ -21,11 +21,11 @@ const getEmailConfig = async (): Promise<EmailConfig> => {
     const passConfig = await Config.findOne({ key: 'emailAppPassword' });
     const siteNameConfig = await Config.findOne({ key: 'siteName' });
 
-    let host = serverConfig ? String(serverConfig.value) : process.env.SMTP_HOST || 'smtp.gmail.com';
-    let portStr = portConfig ? String(portConfig.value) : process.env.SMTP_PORT || '587';
+    let host = serverConfig ? String(serverConfig.value) : process.env.SMTP_HOST || 'smtp.zoho.com';
+    let portStr = portConfig ? String(portConfig.value) : process.env.SMTP_PORT || '465';
     let user = senderConfig ? String(senderConfig.value) : process.env.SMTP_USER;
     let pass = passConfig ? String(passConfig.value) : process.env.SMTP_PASS;
-    let siteName = siteNameConfig ? String(siteNameConfig.value) : "MultiCourses Academy";
+    let siteName = siteNameConfig ? String(siteNameConfig.value) : "Bootskills Academy";
     
     // Clear quotes if present from JSON strings
     host = host.replace(/^"|"$/g, '');
@@ -34,17 +34,17 @@ const getEmailConfig = async (): Promise<EmailConfig> => {
     pass = pass?.replace(/^"|"$/g, '');
     siteName = siteName.replace(/^"|"$/g, '');
 
-    let from = user ? `${siteName} <${user}>` : process.env.EMAIL_FROM || `${siteName} <noreply@ihub.com>`;
+    let from = user ? `${siteName} <${user}>` : process.env.EMAIL_FROM || `${siteName} <noreply@bootskills.com>`;
 
     return { host, port: parseInt(portStr), user, pass, from, siteName };
   } catch (error) {
     return {
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
+      host: process.env.SMTP_HOST || 'smtp.zoho.com',
+      port: parseInt(process.env.SMTP_PORT || '465'),
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
-      from: process.env.EMAIL_FROM || 'MultiCourses Academy <noreply@ihub.com>',
-      siteName: "MultiCourses Academy"
+      from: process.env.EMAIL_FROM || 'Bootskills Academy <noreply@bootskills.com>',
+      siteName: "Bootskills Academy"
     };
   }
 };
@@ -116,13 +116,13 @@ export const sendWelcomeEmail = async (
     <body>
       <div class="container">
         <div class="header">
-          <h1>Welcome to MultiCourses Academy!</h1>
+          <h1>Welcome to Bootskills Academy!</h1>
         </div>
         <div class="content">
           <h2>Hi ${username},</h2>
           <p>We're thrilled to have you join our community of innovators and builders!</p>
           <p>Your account has been successfully created as a <strong>${role.charAt(0).toUpperCase() + role.slice(1)}</strong>.</p>
-          <p>At MultiCourses Academy, we focus on real-world engineering skills that matter. You can now access your dashboard to start your learning journey.</p>
+          <p>At Bootskills Academy, we focus on real-world engineering skills that matter. You can now access your dashboard to start your learning journey.</p>
           <a href="${process.env.CLIENT_ORIGIN}/login" class="btn">Access My Dashboard</a>
         </div>
         <div class="footer">
@@ -135,7 +135,7 @@ export const sendWelcomeEmail = async (
 
   return sendEmail({
     to: email,
-    subject: `Welcome to MultiCourses Academy, ${username}!`,
+    subject: `Welcome to Bootskills Academy, ${username}!`,
     html
   });
 };
@@ -273,7 +273,7 @@ export const sendApplicationConfirmation = async (
         </div>
         <div class="content">
           <h2>Hi ${studentName},</h2>
-          <p>Thank you for applying to the <strong>${programTitle}</strong> internship program at MultiCourses Academy!</p>
+          <p>Thank you for applying to the <strong>${programTitle}</strong> internship program at Bootskills Academy!</p>
           <p>Your application has been received and is now under review. Here's what happens next:</p>
           <ol>
             <li>Our team will review your application within 3-5 business days</li>
@@ -584,7 +584,7 @@ export const sendPasswordResetEmail = async (
         </div>
         <div class="content">
           <h2>Hello,</h2>
-          <p>We received a request to reset the password for your MultiCourses Academy account.</p>
+          <p>We received a request to reset the password for your Bootskills Academy account.</p>
           <p>If you made this request, please click the button below to choose a new password:</p>
           
           <div style="text-align: center;">
@@ -610,7 +610,7 @@ export const sendPasswordResetEmail = async (
 
   return sendEmail({
     to: email,
-    subject: 'Reset Your Password - MultiCourses Academy',
+    subject: 'Reset Your Password - Bootskills Academy',
     html
   });
 };
@@ -649,7 +649,7 @@ export const sendLoginOTPEmail = async (email: string, code: string): Promise<bo
     <body>
       <div class="container">
         <div class="header">
-          <h1 style="margin: 0; font-size: 24px;">MULTICOURSES ACADEMY</h1>
+          <h1 style="margin: 0; font-size: 24px;">BOOTSKILLS ACADEMY</h1>
         </div>
         <div class="content">
           <h2 style="margin-top: 0; color: #1a1a1a;">Verification Code</h2>

@@ -163,7 +163,7 @@ export function StartLiveSessionDialog({
                     onChange={(e) => setForm({ ...form, meetingLink: e.target.value })}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Paste your Google Meet link here, or leave empty to generate a IHub Meet link.
+                    Paste your Google Meet link here, or leave empty to generate a Bootskills Meet link.
                   </p>
                 </div>
 

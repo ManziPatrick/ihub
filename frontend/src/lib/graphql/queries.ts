@@ -926,14 +926,6 @@ export const GET_ALL_PROJECTS = gql`
         }
         createdAt
         updatedAt
-        stats {
-          totalApplications
-          approvedApplications
-          rejectedApplications
-          pendingApplications
-          enrolledStudents
-          totalRevenue
-        }
       }
       pagination {
         ...PaginationFragment
@@ -2092,6 +2084,46 @@ export const GET_RESOURCES = gql`
   }
 `;
 
+export const GET_STUDENT_PROJECT_PROGRESS = gql`
+  query GetStudentProjectProgress {
+    studentProjectProgress {
+      student {
+        id
+        username
+        fullName
+        email
+        avatar
+        role
+      }
+      totalProjects
+      completedProjects
+      inProgressProjects
+      pendingReviewProjects
+      averageProgress
+      totalTasks
+      completedTasks
+      inProgressTasks
+      pendingTasks
+      inReviewTasks
+      taskCompletionPercentage
+      projects {
+        id
+        title
+        course
+        status
+        progress
+        deadline
+        grade
+        createdAt
+        user {
+          id
+          username
+        }
+      }
+    }
+  }
+`;
+
 export const GET_ASSIGNMENT_SUBMISSIONS = gql`
   query GetAssignmentSubmissions($courseId: ID, $lessonId: String, $page: Int, $limit: Int) {
     getAssignmentSubmissions(courseId: $courseId, lessonId: $lessonId, page: $page, limit: $limit) {
@@ -2373,6 +2405,45 @@ export const GET_ALL_USER_GRADE_REPORTS = gql`
       score
       gradedAt
       status
+    }
+  }
+`;
+
+export const GET_APPLICATION_PHASES = gql`
+  query GetApplicationPhases($programId: ID!) {
+    getApplicationPhases(programId: $programId) {
+      id
+      name
+      description
+      order
+      enableApproval
+      isInterviewPhase
+      allowMeetingScheduling
+    }
+  }
+`;
+
+export const GET_APPLICATION_PROGRESS = gql`
+  query GetApplicationProgress($applicationId: ID!) {
+    getApplicationProgress(applicationId: $applicationId) {
+      application {
+        id
+        status
+        performanceGrades {
+          grade
+          color
+          feedbackType
+        }
+      }
+      currentPhase {
+        id
+        name
+        description
+      }
+      completedPhases {
+        phaseId
+        completedAt
+      }
     }
   }
 `;

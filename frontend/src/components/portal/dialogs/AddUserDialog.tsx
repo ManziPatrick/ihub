@@ -86,6 +86,7 @@ export function AddUserDialog({ open, onOpenChange, onSave }: AddUserDialogProps
                 <SelectContent>
                   <SelectItem value="student">Student</SelectItem>
                   <SelectItem value="trainer">Trainer</SelectItem>
+                  <SelectItem value="client">Client</SelectItem>
                   {currentUser?.role === "super_admin" && (
                     <>
                       <SelectItem value="admin">Admin</SelectItem>

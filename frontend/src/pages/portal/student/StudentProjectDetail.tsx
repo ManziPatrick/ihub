@@ -1,11 +1,13 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client/react";
+import { gql } from "@apollo/client";
 import { motion } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     ArrowLeft,
     FolderOpen,
@@ -22,12 +24,49 @@ import {
     Target,
     Star,
     Clock,
+    Columns,
 } from "lucide-react";
 import { GET_PROJECT } from "@/lib/graphql/queries";
-import { SubmitProjectDialog, TeamChatDialog, ViewGuidelinesDialog } from "@/components/portal/dialogs";
+import { GET_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
+import { UPDATE_TASK_PROGRESS } from "@/lib/graphql/mutations";
+import { SubmitProjectDialog, TeamChatDialog, ViewGuidelinesDialog, ProjectTaskDialog } from "@/components/portal/dialogs";
+import { KanbanBoard } from "@/components/portal/KanbanBoard";
 import { PPTViewer } from "@/components/portal/PPTViewer";
 import { useState } from "react";
 import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+
+// Onboarding GraphQL operations
+const GET_PROJECT_ONBOARDING = gql`
+  query GetProjectOnboarding($projectId: ID!) {
+    projectOnboarding(projectId: $projectId) {
+      id
+      developerId
+      role
+      status
+      createdAt
+      checklist {
+        task
+        completed
+        completedAt
+      }
+    }
+  }
+`;
+
+const UPDATE_CHECKLIST = gql`
+  mutation UpdateOnboardingChecklist($onboardingId: ID!, $taskIndex: Int!, $completed: Boolean!) {
+    updateOnboardingChecklist(onboardingId: $onboardingId, taskIndex: $taskIndex, completed: $completed) {
+      id
+      checklist {
+        task
+        completed
+        completedAt
+      }
+    }
+  }
+`;
 
 const getStatusBadge = (status: string) => {
     switch (status) {
@@ -53,11 +92,55 @@ export default function StudentProjectDetail() {
     const [submitOpen, setSubmitOpen] = useState(false);
     const [chatOpen, setChatOpen] = useState(false);
     const [guidelinesOpen, setGuidelinesOpen] = useState(false);
+    const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+    const [editingTask, setEditingTask] = useState<any | null>(null);
 
-    const { data, loading, error } = useQuery(GET_PROJECT, {
+    const { user } = useAuth();
+
+    const { data: onboardingData, refetch: refetchOnboarding } = useQuery(GET_PROJECT_ONBOARDING, {
+        variables: { projectId },
+        skip: !projectId || !user,
+    });
+
+    const [updateChecklist] = useMutation(UPDATE_CHECKLIST);
+    const [updateTaskProgress] = useMutation(UPDATE_TASK_PROGRESS);
+
+    const onboarding = (onboardingData as any)?.projectOnboarding?.find((o: any) => o.developerId === user?.id);
+
+    const handleChecklistToggle = async (onboardingId: string, taskIndex: number, completed: boolean) => {
+        try {
+            await updateChecklist({
+                variables: { onboardingId, taskIndex, completed }
+            });
+            refetchOnboarding();
+            toast.success(completed ? "Task marked complete!" : "Task unmarked");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to update task");
+        }
+    };
+
+    const handleTaskProgressToggle = async (taskId: string, completed: boolean) => {
+        try {
+            await updateTaskProgress({
+                variables: { projectId, taskId, completed }
+            });
+            refetchProject();
+            toast.success(completed ? "Task marked complete!" : "Task unmarked");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to update task");
+        }
+    };
+
+    const { data, loading, error, refetch: refetchProject } = useQuery(GET_PROJECT, {
         variables: { id: projectId },
         skip: !projectId,
     });
+
+    const { data: tasksData, refetch: refetchTasks } = useQuery(GET_PROJECT_TASKS, {
+        variables: { projectId },
+        skip: !projectId,
+    });
+    const boardTasks = (tasksData as any)?.projectTasks || [];
 
     const project = (data as any)?.project;
 
@@ -182,9 +265,70 @@ export default function StudentProjectDetail() {
                     </Card>
                 </motion.div>
 
+                {/* Tabs: Overview / Board View */}
+                <Tabs defaultValue="overview" className="w-full">
+                    <TabsList className="bg-muted/20 p-1 rounded-xl h-10 border border-border/30 w-fit">
+                        <TabsTrigger value="overview" className="rounded-lg text-sm gap-2">
+                            <FolderOpen className="w-4 h-4" /> Overview
+                        </TabsTrigger>
+                        <TabsTrigger value="board" className="rounded-lg text-sm gap-2">
+                            <Columns className="w-4 h-4" /> Board View
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="overview" className="mt-6">
                 <div className="grid lg:grid-cols-3 gap-6">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
+                        {/* Onboarding Checklist */}
+                        {onboarding && onboarding.status !== "completed" && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                            >
+                                <Card className="border-accent/40 bg-accent/5 overflow-hidden">
+                                    <CardHeader className="pb-3">
+                                        <CardTitle className="text-base flex items-center justify-between">
+                                            <span className="flex items-center gap-2">
+                                                <CheckCircle className="w-5 h-5 text-accent animate-pulse" />
+                                                Onboarding Checklist ({onboarding.role})
+                                            </span>
+                                            <span className="text-xs font-bold text-accent">
+                                                {onboarding.checklist.filter((t: any) => t.completed).length} / {onboarding.checklist.length} Completed
+                                            </span>
+                                        </CardTitle>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Complete the tasks below to finalize onboarding and activate your project status.
+                                        </p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        {onboarding.checklist.map((task: any, idx: number) => (
+                                            <label
+                                                key={idx}
+                                                className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-accent/10 cursor-pointer group transition-colors border border-transparent hover:border-accent/20"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={task.completed}
+                                                    onChange={(e) => handleChecklistToggle(onboarding.id, idx, e.target.checked)}
+                                                    className="mt-0.5 rounded text-accent focus:ring-accent border-border"
+                                                />
+                                                <span className={`text-sm flex-1 ${task.completed ? "line-through text-muted-foreground" : "text-card-foreground"}`}>
+                                                    {task.task}
+                                                </span>
+                                                {task.completed && task.completedAt && (
+                                                    <span className="text-[10px] text-muted-foreground shrink-0">
+                                                        {format(new Date(parseInt(task.completedAt) || task.completedAt), "MMM d")}
+                                                    </span>
+                                                )}
+                                            </label>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )}
+
                         {/* Primary PPT Viewer if exists */}
                         {project.documentation?.ppts && project.documentation.ppts.length > 0 && (
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
@@ -244,21 +388,35 @@ export default function StudentProjectDetail() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="space-y-2">
-                                            {project.tasks.map((task: any, i: number) => (
-                                                <div key={task.id || i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/20 transition-colors">
-                                                    <CheckCircle
-                                                        className={`w-4 h-4 shrink-0 ${task.completed ? "text-accent" : "text-muted-foreground/30"}`}
-                                                    />
-                                                    <span className={`text-sm flex-1 ${task.completed ? "line-through text-muted-foreground" : "text-card-foreground"}`}>
-                                                        {task.title}
-                                                    </span>
-                                                    {task.approved && (
-                                                        <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-400 border-green-400/30">
-                                                            Approved
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            ))}
+                                            {project.tasks.map((task: any, i: number) => {
+                                                const taskId = task.id || `task-${i}`;
+                                                return (
+                                                    <label
+                                                        key={taskId}
+                                                        className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-accent/10 cursor-pointer group transition-colors border border-transparent hover:border-accent/20"
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={task.completed}
+                                                            onChange={(e) => handleTaskProgressToggle(task.id, e.target.checked)}
+                                                            disabled={task.approved}
+                                                            className="rounded text-accent focus:ring-accent border-border disabled:opacity-50"
+                                                        />
+                                                        <span className={`text-sm flex-1 ${task.completed ? "line-through text-muted-foreground" : "text-card-foreground"}`}>
+                                                            {task.title}
+                                                        </span>
+                                                        {task.approved ? (
+                                                            <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-400 border-green-400/30 shrink-0">
+                                                                Approved
+                                                            </Badge>
+                                                        ) : task.feedback ? (
+                                                            <span className="text-[10px] text-amber-500 shrink-0" title={task.feedback}>
+                                                                Has Feedback
+                                                            </span>
+                                                        ) : null}
+                                                    </label>
+                                                );
+                                            })}
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -470,9 +628,53 @@ export default function StudentProjectDetail() {
                         )}
                     </div>
                 </div>
+                    </TabsContent>
+
+                    {/* ── BOARD VIEW TAB ────────────────────────────────────────── */}
+                    <TabsContent value="board" className="mt-4">
+                        <div className="mb-4">
+                            <h3 className="font-heading text-lg font-bold flex items-center gap-2">
+                                <Columns className="w-5 h-5 text-accent" /> Task Board
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                                Drag & drop tasks between columns to update their status. Click a task to view details.
+                            </p>
+                        </div>
+                        {boardTasks.length === 0 ? (
+                            <Card className="border-border/50 py-12 text-center">
+                                <Columns className="w-12 h-12 mx-auto text-muted-foreground/20 mb-4" />
+                                <h3 className="text-lg font-medium">No board tasks yet</h3>
+                                <p className="text-muted-foreground text-sm">
+                                    Tasks will appear here once an admin sets up the project board.
+                                </p>
+                            </Card>
+                        ) : (
+                            <KanbanBoard
+                                tasks={boardTasks}
+                                projectId={projectId || ''}
+                                userRole={user?.role}
+                                onAddTask={() => {
+                                    setEditingTask(null);
+                                    setTaskDialogOpen(true);
+                                }}
+                                onEditTask={(task) => {
+                                    setEditingTask(task);
+                                    setTaskDialogOpen(true);
+                                }}
+                            />
+                        )}
+                    </TabsContent>
+                </Tabs>
             </div>
 
             {/* Dialogs */}
+            <ProjectTaskDialog
+                open={taskDialogOpen}
+                onOpenChange={setTaskDialogOpen}
+                projectId={projectId || ''}
+                task={editingTask}
+                refetch={refetchTasks}
+            />
             <SubmitProjectDialog
                 open={submitOpen}
                 onOpenChange={setSubmitOpen}

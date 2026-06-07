@@ -90,11 +90,11 @@ export const generateCertificatePDF = async (data: CertificateData): Promise<str
                 .lineTo(pageWidth - 25, pageHeight - 25 - cornerSize)
                 .stroke('#667eea');
 
-            // Header - MultiCourses Logo area
+            // Header - Bootskills Logo area
             doc.fontSize(16)
                 .font('Helvetica-Bold')
                 .fillColor('#667eea')
-                .text('MultiCourses', centerX - 60, 60, { width: 120, align: 'center' });
+                .text('Bootskills', centerX - 60, 60, { width: 120, align: 'center' });
 
             doc.fontSize(10)
                 .font('Helvetica')
@@ -297,7 +297,7 @@ export const generateInvoicePDF = async (data: {
             doc.fontSize(24)
                 .font('Helvetica-Bold')
                 .fillColor('#667eea')
-                .text('MultiCourses', 50, 50);
+                .text('Bootskills', 50, 50);
 
             doc.fontSize(10)
                 .font('Helvetica')
@@ -374,8 +374,8 @@ export const generateInvoicePDF = async (data: {
             doc.fontSize(10)
                 .font('Helvetica')
                 .fillColor('#999999')
-                .text('Thank you for choosing MultiCourses Academy!', 50, 700, { align: 'center', width: 500 })
-                .text('For questions, contact: support@ihub.com', 50, 715, { align: 'center', width: 500 });
+                .text('Thank you for choosing Bootskills Academy!', 50, 700, { align: 'center', width: 500 })
+                .text('For questions, contact: support@bootskills.com', 50, 715, { align: 'center', width: 500 });
 
             doc.end();
 

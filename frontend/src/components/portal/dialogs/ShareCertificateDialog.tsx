@@ -29,7 +29,7 @@ export function ShareCertificateDialog({
   if (!certificate) return null;
 
   const shareUrl = `${window.location.origin}/verify/${certificate.credentialId}`;
-  const shareText = `I just earned my ${certificate.courseName} certificate from MultiCourses! 🎓`;
+  const shareText = `I just earned my ${certificate.courseName} certificate from Bootskills! 🎓`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);

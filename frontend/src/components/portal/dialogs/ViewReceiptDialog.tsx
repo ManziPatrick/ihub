@@ -145,7 +145,7 @@ export function ViewReceiptDialog({
                     <h4 className="text-[10px] font-black text-accent uppercase tracking-[0.3em] mb-4 border-b border-accent/20 pb-1 w-fit">Billed To</h4>
                     <div className="space-y-1">
                       <h3 className="font-heading font-bold text-xl text-foreground">{(user as any)?.username || 'Valued Student'}</h3>
-                      <p className="text-sm text-muted-foreground font-medium">{user?.email || 'student@ihub.com'}</p>
+                      <p className="text-sm text-muted-foreground font-medium">{user?.email || 'student@bootskills.com'}</p>
                       <p className="text-sm text-muted-foreground">Kigali, Rwanda</p>
                     </div>
                   </div>
@@ -251,14 +251,14 @@ export function ViewReceiptDialog({
                     <Globe className="w-3.5 h-3.5" />
                     <span className="text-[10px] font-black uppercase tracking-tighter">Website</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground font-medium">ihub.com</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">bootskills.com</p>
                 </div>
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2 text-accent">
                     <Mail className="w-3.5 h-3.5" />
                     <span className="text-[10px] font-black uppercase tracking-tighter">Support</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground font-medium">academy@ihub.com</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">academy@bootskills.com</p>
                 </div>
                 <div className="flex flex-col gap-1 text-right md:text-left">
                   <div className="flex items-center gap-2 text-accent justify-end md:justify-start">

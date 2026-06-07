@@ -36,8 +36,9 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_BADGES } from "@/lib/graphql/queries";
-import { CREATE_BADGE, UPDATE_BADGE, DELETE_BADGE } from "@/lib/graphql/mutations";
+import { CREATE_BADGE, UPDATE_BADGE, DELETE_BADGE, RESTORE_BADGE } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/portal/dialogs/ConfirmDialog";
 
 export default function AdminBadges() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -82,13 +83,11 @@ export default function AdminBadges() {
   });
 
   const [deleteBadge] = useMutation(DELETE_BADGE, {
-    refetchQueries: [{ query: GET_BADGES }],
-    onCompleted: () => {
-      toast.success("Badge deleted successfully!");
-      refetch();
-    },
-    onError: (error) => toast.error(error.message),
+    refetchQueries: [{ query: GET_BADGES }]
   });
+  const [restoreBadgeMutation] = useMutation(RESTORE_BADGE);
+
+  const [deleteBadgeTarget, setDeleteBadgeTarget] = useState<any>(null);
 
   const handleOpenDialog = (badge?: any) => {
     if (badge) {
@@ -136,9 +135,32 @@ export default function AdminBadges() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this badge?")) {
-      await deleteBadge({ variables: { id } });
+  const handleDeleteBadgeConfirm = async () => {
+    if (!deleteBadgeTarget) return;
+    const deletedId = deleteBadgeTarget.id;
+    const deletedTitle = deleteBadgeTarget.title;
+    try {
+      setDeleteBadgeTarget(null);
+      await deleteBadge({ variables: { id: deletedId } });
+      window.dispatchEvent(new CustomEvent('bell-ring'));
+      toast.success(`"${deletedTitle}" deleted`, {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              await restoreBadgeMutation({ variables: { id: deletedId } });
+              toast.success("Badge restored");
+              refetch();
+            } catch (err: any) {
+              toast.error("Failed to restore badge: " + err.message);
+            }
+          }
+        },
+        duration: 10000,
+      });
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 
@@ -241,7 +263,7 @@ export default function AdminBadges() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(badge.id)}
+                        onClick={() => setDeleteBadgeTarget(badge)}
                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -378,6 +400,17 @@ export default function AdminBadges() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <ConfirmDialog
+          open={!!deleteBadgeTarget}
+          onOpenChange={(open: boolean) => !open && setDeleteBadgeTarget(null)}
+          onConfirm={handleDeleteBadgeConfirm}
+          title="Delete Badge"
+          description={`Are you sure you want to delete "${deleteBadgeTarget?.title || ''}"? It can be restored later.`}
+          confirmText="Delete"
+          variant="destructive"
+        />
+
       </div>
     </PortalLayout>
   );

@@ -36,7 +36,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { TextEditor } from "@/components/ui/text-editor";
-import { BookCallDialog, ViewSubmissionDialog } from "@/components/portal/dialogs";
+import { BookCallDialog, ViewSubmissionDialog, ProjectTaskDialog } from "@/components/portal/dialogs";
+import { KanbanBoard } from "@/components/portal/KanbanBoard";
+import { GET_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 import {
     Trash2,
     Link as LinkIcon,
@@ -52,7 +54,9 @@ import {
     Users,
     FileCode,
     Download,
-    Eye
+    Eye,
+    BarChart2,
+    ArrowLeft,
 } from "lucide-react";
 
 interface AssignmentSubmission {
@@ -153,6 +157,11 @@ export default function TrainerProjects() {
     const [viewSubmission, setViewSubmission] = useState<AssignmentSubmission | null>(null);
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
+    // Kanban Board state
+    const [boardProjectId, setBoardProjectId] = useState<string | null>(null);
+    const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+    const [editingTask, setEditingTask] = useState<any | null>(null);
+
     const [assignPage, setAssignPage] = useState(1);
     const assignPageSize = 10;
 
@@ -162,6 +171,12 @@ export default function TrainerProjects() {
     const { data: projectsData, loading: projectsLoading } = useQuery<GetMyProjectsData>(GET_MY_PROJECTS);
     const { data: coursesData } = useQuery(GET_COURSES);
     const { data: studentsData } = useQuery(GET_ALL_STUDENTS);
+
+    const { data: tasksData, refetch: refetchTasks } = useQuery(GET_PROJECT_TASKS, {
+        variables: { projectId: boardProjectId },
+        skip: !boardProjectId,
+    });
+    const boardTasks = (tasksData as any)?.projectTasks || [];
 
     const [gradeAssignmentMutation, { loading: grading }] = useMutation(GRADE_ASSIGNMENT);
     const [createProject, { loading: creatingProject }] = useMutation(CREATE_PROJECT);
@@ -755,6 +770,50 @@ export default function TrainerProjects() {
 
             {/* PROJECTS TAB */}
             <TabsContent value="projects">
+                {boardProjectId ? (
+                    <>
+                        {/* Board View Header */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setBoardProjectId(null);
+                                        setEditingTask(null);
+                                    }}
+                                    className="h-9"
+                                >
+                                    <ArrowLeft className="w-4 h-4 mr-2" />
+                                    Back to Projects
+                                </Button>
+                                <div>
+                                    <h2 className="font-heading text-xl font-bold">
+                                        {projects.find((p: any) => p.id === boardProjectId)?.title || 'Project'} Board
+                                    </h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Review & manage project tasks
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <KanbanBoard
+                            tasks={boardTasks}
+                            projectId={boardProjectId}
+                            userRole={user?.role}
+                            onAddTask={() => {
+                                setEditingTask(null);
+                                setTaskDialogOpen(true);
+                            }}
+                            onEditTask={(task) => {
+                                setEditingTask(task);
+                                setTaskDialogOpen(true);
+                            }}
+                        />
+                    </>
+                ) : (
+                <>
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h1 className="font-heading text-3xl font-bold">Project Management</h1>
@@ -1029,22 +1088,41 @@ export default function TrainerProjects() {
                                         </div>
                                     </div>
                                 </CardContent>
-                                <CardFooter className="pt-0">
+                                <CardFooter className="pt-0 flex gap-2">
                                     <Button
                                         variant="outline"
-                                        className="w-full group-hover:bg-accent group-hover:text-accent-foreground"
+                                        className="flex-1 group-hover:bg-accent group-hover:text-accent-foreground"
                                         onClick={() => setManagingProject(project)}
                                     >
                                         Manage Project
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1 border-accent/30 text-accent hover:bg-accent/10"
+                                        onClick={() => setBoardProjectId(project.id)}
+                                    >
+                                        <BarChart2 className="w-4 h-4 mr-1.5" />
+                                        Board
                                     </Button>
                                 </CardFooter>
                             </Card>
                         ))}
                     </div>
                 )}
+                </>
+                )}
             </TabsContent>
         </Tabs>
             </div>
+
+        {/* Project Task Dialog */}
+        <ProjectTaskDialog
+            open={taskDialogOpen}
+            onOpenChange={setTaskDialogOpen}
+            projectId={boardProjectId || ''}
+            task={editingTask}
+            refetch={() => refetchTasks()}
+        />
 
         {/* Manage Project Dialog */}
         <Dialog

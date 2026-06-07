@@ -30,7 +30,7 @@ export const ChatBot: React.FC = () => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Hello! 🌟 Welcome to the **MultiCourses Academy Hub** — it\'s great to have you here! How can I assist you today? 😊\n\nAre you looking to:\n- Explore a new **course** or upgrade your skills\n- Book a **mentorship session**\n- Check your **dashboard**, schedule, or progress\n- Get help with a **technical blocker** in your code\n\nJust let me know — I\'m here to help you succeed! 🚀' }
+    { role: 'assistant', content: 'Hello! 🌟 Welcome to **Bootskills** — it\'s great to have you here! How can I assist you today? 😊\n\nAre you looking to:\n- Explore a new **course** or upgrade your skills\n- Book a **mentorship session**\n- Check your **dashboard**, schedule, or progress\n- Get help with a **technical blocker** in your code\n\nJust let me know — I\'m here to help you succeed! 🚀' }
   ]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -94,7 +94,7 @@ export const ChatBot: React.FC = () => {
                   <BrainCircuit className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-sm">MultiCourses Brain</h3>
+                  <h3 className="font-semibold text-sm">Bootskills Brain</h3>
                   <div className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Online</span>
@@ -190,7 +190,7 @@ export const ChatBot: React.FC = () => {
                     </Button>
                   </form>
                   <p className="text-[10px] text-center text-muted-foreground mt-2">
-                    Powered by MultiCourses Intelligence
+                    Powered by Bootskills Intelligence
                   </p>
                 </div>
               </>

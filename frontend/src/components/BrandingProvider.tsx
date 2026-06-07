@@ -24,8 +24,8 @@ const defaultBranding: Branding = {
   secondaryColor: "#2B2B2D",
   accentColor: "#C9A24D",
   logoUrl: "",
-  siteName: "MultiCourses",
-  portalTitle: "Academy Hub",
+  siteName: "Bootskills",
+  portalTitle: "Bootskills",
   maintenanceMode: false,
 };
 

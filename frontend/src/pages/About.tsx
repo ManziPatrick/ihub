@@ -66,9 +66,9 @@ const About = () => {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "MultiCourses",
-    "url": "https://ihub.com",
-    "logo": "https://ihub.com/logo.png",
+    "name": "Bootskills",
+    "url": "https://bootskills.com",
+    "logo": "https://bootskills.com/logo.png",
     "founder": [
       {
         "@type": "Person",
@@ -79,7 +79,7 @@ const About = () => {
         "name": "Bizimana Eric"
       }
     ],
-    "description": "Meet with iHub",
+    "description": "Bootskills empowers learners with practical skills and real-world project training.",
     "address": {
       "@type": "PostalAddress",
       "addressLocality": "Kigali",
@@ -90,8 +90,8 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>About Us | MultiCourses - Leaders in Professional Growth</title>
-        <meta name="description" content="Meet with iHub" />
+        <title>About Us | Bootskills - Leaders in Professional Growth</title>
+        <meta name="description" content="Bootskills empowers learners with practical skills and real-world project training." />
         <script type="application/ld+json">
           {JSON.stringify(jsonLd)}
         </script>
@@ -124,7 +124,7 @@ const About = () => {
                 Empowering Africa through Practical Skills & Excellence
               </h1>
               <p className="text-card-foreground/80 text-lg leading-relaxed">
-                Meet with iHub.
+                Bootskills connects learners with career-ready courses, internships, and project-based experiences across technology, business, and creative industries.
               </p>
             </motion.div>
           </div>
@@ -145,7 +145,7 @@ const About = () => {
                 </h2>
                 <div className="space-y-4 text-muted-foreground leading-relaxed text-lg">
                   <p>
-                    We believe opportunity should not depend on location. MultiCourses uses online and
+                    We believe opportunity should not depend on location. Bootskills uses online and
                     in-person delivery, remote collaboration, and affordable internet access to serve
                     learners beyond major cities.
                   </p>
@@ -174,7 +174,7 @@ const About = () => {
                     src={aboutImage}
                     srcSet={`${aboutImageMobile} 600w, ${aboutImage} 1280w`}
                     sizes="(max-width: 1024px) 100vw, 50vw"
-                    alt="MultiCourses training session"
+                    alt="Bootskills training session"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                   />
@@ -195,7 +195,7 @@ const About = () => {
             <div className="max-w-4xl mx-auto text-center mb-16">
               <h2 className="font-heading text-2xl lg:text-4xl font-medium text-card-foreground mb-6">Our Story</h2>
               <p className="text-card-foreground/80 text-lg leading-relaxed">
-                MultiCourses was founded by <strong>Manzi Alain Patrick Munyeshuri</strong>, a Rwandan technologist driven
+                Bootskills was founded by <strong>Manzi Alain Patrick Munyeshuri</strong>, a Rwandan technologist driven
                 by the need to close the gap between education and employability. He envisioned a platform where
                 learning is directly connected to real projects and mentorship.
               </p>
