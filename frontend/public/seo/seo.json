@@ -1,8 +1,8 @@
 {
-    "title": "About MultiCourses | Professional Academy & Innovation Hub Rwanda",
-    "description": "Meet with iHub",
+    "title": "About Bootskills | Professional Academy & Innovation Hub Rwanda",
+    "description": "Bootskills empowers learners with practical skills and real-world project training.",
     "keywords": [
-        "MultiCourses",
+        "Bootskills",
         "Rwanda Tech",
         "Software Development Kigali",
         "AI Training Africa",
@@ -10,11 +10,11 @@
         "Bizimana Eric",
         "Tech Careers Rwanda"
     ],
-    "author": "MultiCourses",
+    "author": "Bootskills",
     "og": {
         "type": "website",
-        "url": "https://ihub.com/about",
-        "title": "About MultiCourses - Building the Future of African Tech",
-        "image": "https://ihub.com/og-about.jpg"
+        "url": "https://bootskills.com/about",
+        "title": "About Bootskills - Building the Future of African Tech",
+        "image": "https://bootskills.com/og-about.jpg"
     }
 }

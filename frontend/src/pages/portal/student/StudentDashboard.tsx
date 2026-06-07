@@ -25,6 +25,7 @@ import {
   Trophy,
   Info,
   XCircle,
+  FolderOpen,
 } from "lucide-react";
 import { useQuery } from "@apollo/client/react";
 import {
@@ -514,6 +515,66 @@ export default function StudentDashboard() {
                 ))}
               </CardContent>
             </Card>
+
+            {projects.length > 0 && (() => {
+              const currentProject = projects.find((p: any) => p.status !== 'completed') || projects[0];
+              const projectTasks = currentProject?.tasks || [];
+
+              return (
+                <Card className="border-border/50">
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <div>
+                      <CardTitle className="text-lg font-heading">Assigned Project Tasks</CardTitle>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {currentProject.title}
+                      </p>
+                    </div>
+                    <Link to={`/portal/student/projects/${currentProject.id}`}>
+                      <Button variant="ghost" size="sm" className="text-accent">
+                        Open Board <ArrowRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </Link>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {projectTasks.length === 0 ? (
+                      <div className="text-center py-8 border border-dashed rounded-lg">
+                        <p className="text-xs text-muted-foreground">No tasks have been assigned for this project yet.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {projectTasks.slice(0, 5).map((task: any) => (
+                          <div key={task.id} className="flex items-center justify-between gap-2 p-3 bg-background/50 rounded-lg border border-border/50">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className={`w-4 h-4 ${task.completed ? 'text-accent' : 'text-card-foreground/30'}`} />
+                              <div>
+                                <p className={`text-sm ${task.completed ? 'text-muted-foreground line-through' : 'text-card-foreground'}`}>
+                                  {task.title}
+                                </p>
+                                {task.feedback && !task.completed && (
+                                  <p className="text-[10px] text-amber-500">Feedback available</p>
+                                )}
+                              </div>
+                            </div>
+                            {task.completed ? (
+                              <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-500 border-green-500/20">
+                                Done
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[10px] bg-accent/10 text-accent border-accent/20">
+                                Pending
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
+                        {projectTasks.length > 5 && (
+                          <p className="text-[10px] text-muted-foreground">Showing first 5 tasks. View the board for the full task list.</p>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
           </motion.div>
 
           {/* Sidebar Content */}

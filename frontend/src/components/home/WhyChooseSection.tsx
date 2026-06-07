@@ -55,7 +55,7 @@ export function WhyChooseSection() {
             transition={{ duration: 0.5 }}
           >
             <h2 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mb-2">
-              Why Choose MultiCourses
+              Why Choose Bootskills
             </h2>
             <p className="text-card-foreground/70 text-sm">
               Learning That Leads to Real Impact

@@ -48,14 +48,14 @@ export default function SuperAdminConfig() {
   };
 
   const [settings, setSettings] = useState({
-    siteName: "Ihub Academy",
+    siteName: "Bootskills Academy",
     siteDescription: "Leading tech education in Rwanda.",
-    contactEmail: "contact@ihub.com",
+    contactEmail: "contact@bootskills.com",
     maintenanceMode: false,
     registrationEnabled: true,
     emailServer: "smtp.zoho.com",
     emailPort: "465",
-    emailSender: "admin@ihub.com",
+    emailSender: "admin@bootskills.com",
     emailAppPassword: "0EN2iaThnZAz",
     paymentGateway: "Mobile Money",
     primaryColor: "#EAB308",

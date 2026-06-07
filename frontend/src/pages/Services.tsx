@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
 import { Code, Database, Wifi, Briefcase, BookOpen, Building2, CheckCircle, Users, Award, Zap, ArrowRight, Globe, Cpu, BarChart3 } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import internshipImage from "@/assets/internship-work.webp";
@@ -13,14 +14,14 @@ import internshipImageMobile from "@/assets/internship-work-mobile.webp";
 const trainingServices = [
   {
     icon: Code,
-    title: "Software Development Training",
-    description: "Comprehensive web and mobile development programs",
+    title: "Software & Product Training",
+    description: "Comprehensive web, mobile and product development programs",
     details: [
       "Frontend: HTML, CSS, JavaScript, React, Vue.js",
       "Backend: Node.js, Python, PHP, Java",
       "Mobile: React Native, Flutter, Android/iOS",
       "Version control with Git & GitHub",
-      "Agile methodologies & team collaboration"
+      "Product thinking, planning and delivery"
     ],
     duration: "3-6 months",
     level: "Beginner to Advanced"
@@ -67,13 +68,27 @@ const trainingServices = [
     duration: "1-2 months",
     level: "Beginner"
   },
+  {
+    icon: Briefcase,
+    title: "Career Pathways & Internships",
+    description: "Real internship placements and project guidance for learners ready to move from training to work.",
+    details: [
+      "Industry internship matching",
+      "Project-based learning support",
+      "Mentor-led career coaching",
+      "Portfolio and resume preparation",
+      "Employer-ready soft skills"
+    ],
+    duration: "2-4 months",
+    level: "Beginner to Intermediate"
+  },
 ];
 
 const techServices = [
   {
     icon: Code,
-    title: "Custom Software Development",
-    description: "Tailored software solutions for your business needs",
+    title: "Project Delivery & Product Support",
+    description: "Support for real client projects, product launches and digital transformation initiatives.",
     offerings: [
       "Web application development",
       "Mobile app development (iOS & Android)",
@@ -143,15 +158,19 @@ const corporateServices = [
 ];
 
 const whyChooseUs = [
-  { icon: Award, title: "Industry-Aligned Curriculum", description: "Our programs are designed with input from leading tech companies" },
+  { icon: Award, title: "Industry-Aligned Curriculum", description: "Programs shaped by employers, local market needs, and regional career opportunities" },
   { icon: Users, title: "Expert Instructors", description: "Learn from professionals with real-world industry experience" },
-  { icon: Briefcase, title: "Practical Projects", description: "Build a portfolio with hands-on, real-world projects" },
+  { icon: Briefcase, title: "Practical Projects", description: "Build a portfolio with hands-on, real-world projects and internship deliverables" },
   { icon: Globe, title: "Career Support", description: "Job placement assistance and career guidance for all graduates" },
 ];
 
 const Services = () => {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Services | Bootskills - Courses, Internships & Projects in Rwanda</title>
+        <meta name="description" content="Bootskills provides practical courses, internships, and project-based learning across tech, business, creative and leadership fields from Kigali, Rwanda to East Africa." />
+      </Helmet>
       <Header />
       <main className="pt-20">
         {/* Hero */}
@@ -175,11 +194,11 @@ const Services = () => {
                 Our Services
               </span>
               <h1 className="font-heading text-3xl lg:text-5xl font-medium text-card-foreground mb-6">
-                Comprehensive Skills Development & Professional Solutions
+                Practical Courses, Internships & Project-Based Learning
               </h1>
               <p className="text-card-foreground/80 max-w-3xl mx-auto text-lg leading-relaxed">
-                From foundational digital skills to advanced professional solutions, we provide
-                end-to-end education and services for individuals, businesses, and institutions.
+                Bootskills offers career-focused training across tech, business, creative, and leadership areas with internships,
+                real client projects, and local delivery from Kigali, Rwanda to East Africa.
               </p>
               <div className="flex flex-wrap justify-center gap-4 mt-8">
                 <Link to="/explore">
@@ -204,11 +223,11 @@ const Services = () => {
             >
               <span className="text-accent text-sm font-medium uppercase tracking-wider">For Individuals</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-foreground mt-2 mb-4">
-                Training & Education Programs
+                Training, Internships & Project Pathways
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Industry-ready programs designed to transform beginners into job-ready professionals
-                with practical skills and recognized certifications.
+                Practical learning designed to make learners industry-ready through hands-on courses,
+                internship placements, and live project experience across multiple sectors.
               </p>
             </motion.div>
             <div className="grid md:grid-cols-2 gap-8">
@@ -302,11 +321,10 @@ const Services = () => {
             >
               <span className="text-accent text-sm font-medium uppercase tracking-wider">For Organizations</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mt-2 mb-4">
-                Professional Services & Solutions
+                Business Training, Project Support & Talent Development
               </h2>
               <p className="text-card-foreground/80 max-w-2xl mx-auto">
-                End-to-end strategic solutions to help your business innovate, automate,
-                and thrive in the digital economy.
+                Practical services for teams, projects and local businesses that need training, internships, and operational support.
               </p>
             </motion.div>
             <div className="grid sm:grid-cols-2 gap-6">
@@ -386,9 +404,9 @@ const Services = () => {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <span className="text-accent text-sm font-medium uppercase tracking-wider">The MultiCourses Advantage</span>
+              <span className="text-accent text-sm font-medium uppercase tracking-wider">The Bootskills Advantage</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mt-2">
-                Why Choose MultiCourses?
+                Why Choose Bootskills?
               </h2>
             </motion.div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">

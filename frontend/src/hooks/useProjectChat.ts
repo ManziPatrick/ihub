@@ -21,18 +21,20 @@ interface UseProjectChatOptions {
 }
 
 export function useProjectChat({ projectId, conversationId: initialConversationId, enabled = true }: UseProjectChatOptions) {
-  const [activeConversationId, setActiveConversationId] = useState(initialConversationId || "");
+  const [activeConversationId, setActiveConversationId] = useState<string | undefined>(initialConversationId || undefined);
 
   // Update local state if prop changes
   useEffect(() => {
     if (initialConversationId) {
       setActiveConversationId(initialConversationId);
+    } else if (!initialConversationId) {
+      setActiveConversationId(undefined);
     }
   }, [initialConversationId]);
 
   // Poll every 3 seconds for new messages
   const { data, loading, error } = useQuery(GET_MESSAGES, {
-    variables: { conversationId: activeConversationId || "" },
+    variables: { conversationId: activeConversationId },
     skip: !enabled || !activeConversationId,
     pollInterval: 3000, 
     fetchPolicy: "network-only"

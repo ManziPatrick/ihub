@@ -34,7 +34,7 @@ export function CTASection() {
           </h2>
           
           <p className="text-card-foreground/80 mb-6 max-w-xl mx-auto">
-            Meet with iHub.
+            Meet with Bootskills.
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4">

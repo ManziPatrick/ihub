@@ -37,10 +37,10 @@ const startServer = async () => {
 
     const app = express();
 
-    // Redirect www.ihub.com to ihub.com
+    // Redirect www.bootskills.com to bootskills.com
     app.use((req, res, next) => {
-        if (req.headers.host === 'www.ihub.com') {
-            return res.redirect(301, 'https://ihub.com' + req.url);
+        if (req.headers.host === 'www.bootskills.com') {
+            return res.redirect(301, 'https://bootskills.com' + req.url);
         }
         next();
     });
@@ -55,7 +55,7 @@ const startServer = async () => {
 
     const allowedOrigins = (
         process.env.ALLOWED_ORIGINS ||
-        'http://localhost:8080,http://localhost:5173,https://www.ihub.com,https://ihub.com,https://*.ihub.com'
+        'http://localhost:8080,http://localhost:5173,http://localhost:8081,https://www.bootskills.com,https://bootskills.com,https://*.bootskills.com'
     )
         .split(',')
         .map(o => o.trim())

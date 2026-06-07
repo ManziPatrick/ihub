@@ -12,7 +12,7 @@ export const chatWithAIService = async (userMessage: string, contextUser: any) =
     const now = new Date();
     const dateTimeStr = now.toLocaleString();
 
-    let userContext = `You are the "MultiCourses Brain", a highly intelligent and specialized AI mentor for the MultiCourses Academy Hub.
+    let userContext = `You are the "Bootskills Brain", a highly intelligent and specialized AI mentor for Bootskills Academy Hub.
   
   Your personality:
   - Human-centric, encouraging, and clear.
@@ -27,7 +27,7 @@ export const chatWithAIService = async (userMessage: string, contextUser: any) =
   Current Date & Time: ${dateTimeStr}
 
   What we do:
-  MultiCourses is an online learning platform offering professional courses, mentorship sessions, and internship programs.
+  Bootskills is an online learning platform offering professional courses, mentorship sessions, and internship programs.
   
   Available Courses:
   ${courses.map(c => `- ${c.title}: ${c.description} ($${c.price})`).join('\n')}
@@ -41,7 +41,7 @@ export const chatWithAIService = async (userMessage: string, contextUser: any) =
   - Role: ${contextUser?.role || 'Guest'}
   
   Instructions:
-  - You are MultiCourses's brain. Use "we" when referring to the platform.
+  - You are Bootskills's brain. Use "we" when referring to the platform.
   - Tone: Professional, helpful, and concise. 
   - EMOJI POLICY: Use no more than 2-3 emojis in total per response. Avoid excessive icons.
   - STRUCTURE: Use bullet points, numbered lists, and clear paragraph breaks to make your response easy to read.
@@ -59,7 +59,7 @@ export const chatWithAIService = async (userMessage: string, contextUser: any) =
     - Courses: /portal/student/courses
     - Internship: /portal/student/internship
     - Schedule: /portal/student/schedule
-  - IMPORTANT: Always answer as "MultiCourses".
+  - IMPORTANT: Always answer as "Bootskills".
   `;
 
     try {
@@ -90,7 +90,7 @@ export const chatWithAIService = async (userMessage: string, contextUser: any) =
 };
 
 export const explainTaskService = async (taskTitle: string, description: string) => {
-    const prompt = `You are a helpful AI mentor at MultiCourses Academy. 
+    const prompt = `You are a helpful AI mentor at Bootskills Academy. 
     Explain the following task in simple, clear words.
     
     Task: ${taskTitle}
@@ -122,7 +122,7 @@ export const explainTaskService = async (taskTitle: string, description: string)
 };
 
 export const reviewSubmissionService = async (taskTitle: string, submissionContent: string) => {
-    const prompt = `You are an expert mentor at MultiCourses Academy. 
+    const prompt = `You are an expert mentor at Bootskills Academy. 
     Review the following task submission. Be encouraging but honest.
     Identify 2 things done well and 2 areas for improvement.
     Assign a preliminary score out of 100 based on quality.
@@ -162,7 +162,7 @@ export const reviewSubmissionService = async (taskTitle: string, submissionConte
 };
 
 export const generateAIQuizService = async (courseTitle: string, lessonTitle: string, content: string, questionCount: number = 3, userPrompt: string = "") => {
-    const prompt = `You are an educator at MultiCourses Academy, specialized in making learning effective for students.
+    const prompt = `You are an educator at Bootskills Academy, specialized in making learning effective for students.
     Generate a ${questionCount}-question quiz for the following lesson.
     
     Course: ${courseTitle}
@@ -210,7 +210,7 @@ export const generateAIQuizService = async (courseTitle: string, lessonTitle: st
 };
 
 export const hintForQuestionService = async (questionText: string, options: string[]) => {
-    const prompt = `You are a helpful tutor at MultiCourses Academy. A student is taking a quiz and needs a hint for the following question.
+    const prompt = `You are a helpful tutor at Bootskills Academy. A student is taking a quiz and needs a hint for the following question.
 
 Question: ${questionText}
 Options:
@@ -248,7 +248,7 @@ Your hint:`;
 };
 
 export const generateQuestionExplanationService = async (questionText: string, options: string[], correctOptionIndex: number) => {
-    const prompt = `You are an expert educator at MultiCourses Academy. 
+    const prompt = `You are an expert educator at Bootskills Academy. 
     Provide a concise, clear, and professional explanation for why the following answer is correct.
 
     Question: ${questionText}

@@ -45,7 +45,7 @@ export const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
             <div className="w-16 h-16 rounded-full bg-[#1a3d3d] flex items-center justify-center p-3">
               <img 
                 src="/assets/logo.png" 
-                alt="Ihub Logo" 
+                alt="Bootskills Logo" 
                 className="w-full h-full object-contain brightness-0 invert" 
               />
             </div>
@@ -111,10 +111,10 @@ export const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
         <div className="mt-8 pt-6 border-t border-[#d4af37]/10 w-full flex justify-between items-center text-[10px] font-bold text-[#1a3d3d]/40 uppercase tracking-[0.2em]">
           <div className="flex items-center gap-2">
             <Globe className="w-3 h-3" />
-            {typeof window !== 'undefined' ? window.location.host : 'academy.multicourses.org'}/verify/{credentialId}
+            {typeof window !== 'undefined' ? window.location.host : 'academy.bootskills.com'}/verify/{credentialId}
           </div>
           <div>
-            {schoolName ? schoolName.toUpperCase() : "MULTICOURSES ACADEMY"} • KIGALI, RWANDA
+            {schoolName ? schoolName.toUpperCase() : "BOOTSKILLS ACADEMY"} • KIGALI, RWANDA
           </div>
         </div>
       </div>

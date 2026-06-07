@@ -71,6 +71,7 @@ interface NavItem {
 
 const studentNavItems: NavItem[] = [
   { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },
+  { label: "Projects", href: "/portal/student/projects", icon: FolderOpen },
   { 
     label: "Academics", 
     icon: GraduationCap,
@@ -420,7 +421,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                 <img src={branding.logoUrl} alt={branding.siteName} className="h-8 w-auto" />
               ) : (
                 <span className="font-heading font-black text-2xl tracking-tighter text-card-foreground">
-                  {isSidebarMinimized ? 'M' : 'Multi'}<span className="text-accent">{isSidebarMinimized ? 'C' : 'Courses'}</span>
+                  {isSidebarMinimized ? 'B' : 'Boot'}<span className="text-accent">{isSidebarMinimized ? 'S' : 'skills'}</span>
                 </span>
               )}
             </Link>

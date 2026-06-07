@@ -1,9 +1,9 @@
-# About IHUB
+## About Bootskills
 
-Meet with iHub.
+Bootskills empowers learners with practical skills and real-world project training.
 
 ## Our Story
-Founded by tech visionaries Manzi Alain Patrick and Bizimana Eric, IHUB began as a mission to solve the local skills gap in Rwanda. Today, it stands as a bridge between talented individuals and the global tech industry.
+Founded by tech visionaries Manzi Alain Patrick and Kalisa Jonathan, Bootskills began as a mission to solve the local skills gap in Africa. Today, it stands as a bridge between talented individuals and the global tech industry.
 
 ## Leadership
 - **Manzi Alain Patrick Munyeshuri**: Founder & CEO. Expert in digital transformation and strategic growth.

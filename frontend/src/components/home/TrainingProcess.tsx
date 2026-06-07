@@ -28,7 +28,7 @@ export function TrainingProcess() {
           viewport={{ once: true }}
           className="text-center text-muted-foreground mb-10 text-sm"
         >
-          From Learning to Industry — Your journey with MultiCourses
+          From Learning to Industry — Your journey with Bootskills
         </motion.p>
 
         {/* Web3 Tree Structure */}

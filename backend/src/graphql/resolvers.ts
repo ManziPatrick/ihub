@@ -7,7 +7,8 @@ import * as fs from 'fs';
 import { file as tmpFile } from 'tmp-promise';
 import { OAuth2Client } from 'google-auth-library';
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '70229201375-gvb1jt3q0q9kjg4ivrahsl25h9n5qo4v.apps.googleusercontent.com';
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
 import { PaymentTransaction } from '../models/PaymentTransaction';
@@ -26,7 +27,7 @@ if (!admin.apps.length) {
   } else {
     console.log('🔥 Initializing Firebase Admin with Project ID only');
     admin.initializeApp({
-      projectId: process.env.FIREBASE_PROJECT_ID || "ihub-d218d"
+      projectId: process.env.FIREBASE_PROJECT_ID || "bootskills"
     });
   }
 }
@@ -3778,7 +3779,7 @@ export const resolvers = {
       try {
         const ticket = await googleClient.verifyIdToken({
           idToken: token,
-          audience: process.env.GOOGLE_CLIENT_ID,
+          audience: GOOGLE_CLIENT_ID,
         });
         const decodedToken = ticket.getPayload();
 
@@ -5983,7 +5984,8 @@ export const resolvers = {
         type: 'TEAM_ASSIGNMENT',
         title: 'New Team Assignment',
         teamId,
-        message: `You have been assigned to a new internship team.`
+        message: `You have been assigned to a new internship team.`,
+        link: '/portal/student/internship'
       });
 
       return membership;
@@ -6156,7 +6158,8 @@ export const resolvers = {
           type: 'TASK_ASSIGNED',
           title: 'New Task Assigned',
           taskId: task.id,
-          message: `You have been assigned a new task: "${task.title}"`
+          message: `You have been assigned a new task: "${task.title}"`,
+          link: '/portal/student/internship'
         });
       }
 
@@ -6179,7 +6182,8 @@ export const resolvers = {
           type: 'TASK_ASSIGNED',
           title: 'Task Assigned To You',
           taskId: task.id,
-          message: `You have been assigned: "${task.title}"`
+          message: `You have been assigned: "${task.title}"`,
+          link: '/portal/student/internship'
         });
       }
       await logActivity(context.user.id, 'UPDATE', 'InternshipTask', id, `Updated task: ${task.title}`);
@@ -6244,7 +6248,8 @@ export const resolvers = {
           type: 'TASK_STATUS_CHANGED',
           title: 'Task Status Updated',
           taskId: id,
-          message: `Your task "${task.title}" was moved to ${targetStage.label}`
+          message: `Your task "${task.title}" was moved to ${targetStage.label}`,
+          link: '/portal/student/internship'
         });
       }
 

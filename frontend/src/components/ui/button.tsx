@@ -15,9 +15,9 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-white/5 hover:text-white",
         link: "text-primary underline-offset-4 hover:underline",
-        // MultiCourses Primary Button - Gold background, dark text
+        // Bootskills Primary Button - Gold background, dark text
         hero: "bg-primary text-white hover:bg-primary/90 hover:shadow-lg transition-all",
-        // MultiCourses Secondary Button - Transparent, gold border
+        // Bootskills Secondary Button - Transparent, gold border
         heroOutline: "bg-transparent text-primary border-2 border-primary hover:bg-primary/10 transition-all",
         // Gold accent button for CTAs
         gold: "bg-accent text-white border border-accent hover:bg-accent/80 hover:shadow-gold-glow rounded-md font-semibold",
