@@ -67,7 +67,7 @@ vi.mock("../models/AssignmentSubmission", () => ({
   },
 }));
 
-vi.mock("../services/admin-audit.service", () => mockAdminAudit);
+vi.mock("../services/admin-audit.service.js", () => mockAdminAudit);
 
 // ---------------------------------------------------------------------------
 // Import the resolver AFTER mocks are set up
