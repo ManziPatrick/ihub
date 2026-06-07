@@ -68,7 +68,7 @@ const About = () => {
     "@type": "Organization",
     "name": "Bootskills",
     "url": "https://bootskills.com",
-    "logo": "https://bootskills.com/logo.png",
+    "logo": "https://codemande.com/placeholder.svg",
     "founder": [
       {
         "@type": "Person",

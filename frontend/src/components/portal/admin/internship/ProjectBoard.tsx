@@ -162,8 +162,8 @@ export function ProjectBoard({ projectId, teamId, teamName, projectTitle: propTi
     const targetStage = columns.find((c: any) => c.id === destination.droppableId);
     if (!targetStage) return;
 
-    // Students can move ANY tasks forward through the workflow, but final "Done/Staged/Completed" remains restricted to trainers/admins.
-    const isFinalStage = ['staged', 'completed', 'done', 'Done ⏳'].includes(targetStage.label || targetStage.id);
+    // Students can move tasks forward through the workflow, but final approval stages remain restricted to trainers/admins.
+    const isFinalStage = ['staged', 'completed'].includes(targetStage.type || targetStage.id);
 
     if (isFinalStage && !isAdminOrTrainer) {
       toast.error(`Only trainers or admins can move tasks to ${targetStage.label}.`);

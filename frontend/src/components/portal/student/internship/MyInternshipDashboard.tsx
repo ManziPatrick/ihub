@@ -56,6 +56,16 @@ export function MyInternshipDashboard({ team, loading, enrolledCount = 0, onBrow
   const [showDocs, setShowDocs] = useState(false);
   const [selectedMilestone, setSelectedMilestone] = useState<{ id: string; title: string, description: string } | null>(null);
 
+  const { data: meetingsData } = useQuery(GET_MY_INTERNSHIP_MEETINGS);
+  const [timeFilter, setTimeFilter] = useState<'3days' | 'week' | 'month' | 'all'>('3days');
+  const [viewDate, setViewDate] = useState(startOfToday());
+
+  const { data: submissionsData } = useQuery(GET_INTERNSHIP_SUBMISSIONS, {
+     variables: { teamId: team?.id },
+     skip: !team?.id,
+     fetchPolicy: 'network-only' // ensure fresh data after submission
+  });
+
   if (loading) {
     return <div className="flex items-center justify-center p-20">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
@@ -175,17 +185,7 @@ export function MyInternshipDashboard({ team, loading, enrolledCount = 0, onBrow
     ? 100
     : (milestones.length > 0 ? (completedMilestones / milestones.length) * 100 : 0);
 
-   const { data: meetingsData } = useQuery(GET_MY_INTERNSHIP_MEETINGS);
    const meetings = (meetingsData as any)?.getMyInternshipMeetings || [];
-   
-   const [timeFilter, setTimeFilter] = useState<'3days' | 'week' | 'month' | 'all'>('3days');
-   const [viewDate, setViewDate] = useState(startOfToday());
-
-   const { data: submissionsData } = useQuery(GET_INTERNSHIP_SUBMISSIONS, {
-      variables: { teamId: team?.id },
-      skip: !team?.id,
-      fetchPolicy: 'network-only' // ensure fresh data after submission
-   });
    const submissions = (submissionsData as any)?.internshipSubmissions || [];
 
    const expandedMeetings = meetings.flatMap((m: any) => {
