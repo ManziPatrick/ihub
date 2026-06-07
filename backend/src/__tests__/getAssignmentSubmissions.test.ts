@@ -47,8 +47,8 @@ const {
   return {
     mockDistinct: d,
     mockCourseFind: cFind,
-    mockSubmissionFind: vi.fn(makeSubmissionFind),
-    mockCountDocuments: countDocs,
+    mockSubmissionFind: vi.fn(makeSubmissionFind) as any,
+    mockCountDocuments: countDocs as any,
     mockAdminAudit: audit,
   };
 });
@@ -126,7 +126,7 @@ describe("getAssignmentSubmissions — scoping", () => {
     // Course.find should NOT have been called for a student
     expect(mockCourseFind).not.toHaveBeenCalled();
 
-    const findFilter = mockSubmissionFind.mock.calls[0][0];
+    const [findFilter] = mockSubmissionFind.mock.calls[0] ?? [];
     expect(findFilter).toHaveProperty("userId", "student-1");
     // No courseId should be present
     expect(Object.prototype.hasOwnProperty.call(findFilter, "courseId")).toBe(false);
@@ -141,7 +141,7 @@ describe("getAssignmentSubmissions — scoping", () => {
 
     expect(mockCourseFind).not.toHaveBeenCalled();
 
-    const findFilter = mockSubmissionFind.mock.calls[0][0];
+    const [findFilter] = mockSubmissionFind.mock.calls[0] ?? [];
     expect(Object.prototype.hasOwnProperty.call(findFilter, "courseId")).toBe(false);
   });
 
@@ -156,7 +156,7 @@ describe("getAssignmentSubmissions — scoping", () => {
 
     expect(mockCourseFind).toHaveBeenCalled();
 
-    const findFilter = mockSubmissionFind.mock.calls[0][0];
+    const [findFilter] = mockSubmissionFind.mock.calls[0] ?? [];
     expect(findFilter.courseId).toEqual({ $in: [] });
   });
 
@@ -169,7 +169,7 @@ describe("getAssignmentSubmissions — scoping", () => {
 
     await expect(getAssignmentSubmissions(_, defaultArgs, ctx)).resolves.toBeDefined();
 
-    const findFilter = mockSubmissionFind.mock.calls[0][0];
+    const [findFilter] = mockSubmissionFind.mock.calls[0] ?? [];
     expect(findFilter.courseId).toEqual({ $in: ["course-a", "course-b"] });
   });
 
@@ -184,7 +184,7 @@ describe("getAssignmentSubmissions — scoping", () => {
       getAssignmentSubmissions(_, { ...defaultArgs, courseId: "course-1" }, ctx)
     ).resolves.toBeDefined();
 
-    const findFilter = mockSubmissionFind.mock.calls[0][0];
+    const [findFilter] = mockSubmissionFind.mock.calls[0] ?? [];
     expect(findFilter.courseId).toBe("course-1");
   });
 
@@ -209,7 +209,7 @@ describe("getAssignmentSubmissions — scoping", () => {
 
     await expect(getAssignmentSubmissions(_, defaultArgs, ctx)).resolves.toBeDefined();
 
-    const findFilter = mockSubmissionFind.mock.calls[0][0];
+    const [findFilter] = mockSubmissionFind.mock.calls[0] ?? [];
     expect(findFilter.courseId).toEqual({ $in: ["trainer-course"] });
   });
 
@@ -222,7 +222,7 @@ describe("getAssignmentSubmissions — scoping", () => {
       getAssignmentSubmissions(_, { ...defaultArgs, lessonId: "lesson-42" }, ctx)
     ).resolves.toBeDefined();
 
-    const findFilter = mockSubmissionFind.mock.calls[0][0];
+    const [findFilter] = mockSubmissionFind.mock.calls[0] ?? [];
     expect(findFilter.lessonId).toBe("lesson-42");
   });
 
@@ -231,7 +231,7 @@ describe("getAssignmentSubmissions — scoping", () => {
   it("triggers audit logging when admin accesses without courseId (isCrossAdmin=true)", async () => {
     mockDistinct.mockResolvedValue(["c1", "c2"]);
 
-    const { logAdminCrossAccess } = await import("../services/admin-audit.service");
+    const { logAdminCrossAccess } = await import("../services/admin-audit.service.js");
 
     const ctx = makeContext({ role: "admin" });
 
@@ -251,7 +251,7 @@ describe("getAssignmentSubmissions — scoping", () => {
   it("triggers audit logging with isCrossAdmin=false when a courseId is provided", async () => {
     mockDistinct.mockResolvedValue(["c1"]);
 
-    const { logAdminCrossAccess } = await import("../services/admin-audit.service");
+    const { logAdminCrossAccess } = await import("../services/admin-audit.service.js");
 
     const ctx = makeContext({ role: "admin" });
 
@@ -271,7 +271,7 @@ describe("getAssignmentSubmissions — scoping", () => {
   it("does NOT audit log for trainer role", async () => {
     mockDistinct.mockResolvedValue(["c1"]);
 
-    const { logAdminCrossAccess } = await import("../services/admin-audit.service");
+    const { logAdminCrossAccess } = await import("../services/admin-audit.service.js");
 
     const ctx = makeContext({ role: "trainer" });
 
@@ -290,8 +290,8 @@ describe("getAssignmentSubmissions — scoping", () => {
     await getAssignmentSubmissions(_, defaultArgs, ctx);
 
     // The resolver passes the SAME `filter` to both .find() and .countDocuments()
-    const findFilter = mockSubmissionFind.mock.calls[0][0];
-    const countFilter = mockCountDocuments.mock.calls[0][0];
+    const [findFilter] = mockSubmissionFind.mock.calls[0] ?? [];
+    const [countFilter] = mockCountDocuments.mock.calls[0] ?? [];
     expect(countFilter).toEqual(findFilter);
   });
 });
