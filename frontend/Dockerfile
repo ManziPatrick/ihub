@@ -21,12 +21,7 @@ COPY --from=builder /app/dist ./dist
 COPY frontend/generate-env-config.js ./
 COPY frontend/package.json ./
 
-# Default port — override at runtime via -e PORT=xxxx or in docker-compose.yml
-ENV PORT=8080
-ENV HOST=::
-ENV NODE_ENV=production
 
-EXPOSE ${PORT}
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
   CMD wget --quiet --tries=1 --spider http://localhost:${PORT} || exit 1
