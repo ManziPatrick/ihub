@@ -1,28 +1,205 @@
-{
+[
+  {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "IHUB",
-    "url": "https://ihub.com",
-    "logo": "https://ihub.com/logo.png",
+    "@id": "https://bootskills.com/#organization",
+    "name": "Bootskills",
+    "alternateName": "Bootskills Academy",
+    "url": "https://bootskills.com",
+    "logo": "https://bootskills.com/logo.png",
+    "description": "Bootskills empowers learners with practical skills and real-world project training in Kigali, Rwanda. Offering courses in software development, AI, business, and digital literacy.",
+    "foundingDate": "2024",
     "founder": [
-        {
-            "@type": "Person",
-            "name": "Manzi Alain Patrick Munyeshuri"
-        },
-        {
-            "@type": "Person",
-            "name": "Bizimana Eric"
-        }
+      {
+        "@type": "Person",
+        "name": "Manzi Alain Patrick Munyeshuri",
+        "jobTitle": "Founder & CEO",
+        "url": "https://bootskills.com/team"
+      },
+      {
+        "@type": "Person",
+        "name": "Bizimana Eric",
+        "jobTitle": "Co-Founder & CTO",
+        "url": "https://bootskills.com/team"
+      }
     ],
     "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Kigali",
-        "addressCountry": "Rwanda"
+      "@type": "PostalAddress",
+      "addressLocality": "Kigali",
+      "addressRegion": "Kigali City",
+      "addressCountry": "RW"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+250-XXX-XXX-XXX",
+      "contactType": "customer service",
+      "availableLanguage": ["English", "French", "Kinyarwanda"]
     },
     "sameAs": [
-        "https://twitter.com/ihub",
-        "https://linkedin.com/company/ihub",
-        "https://github.com/ManziPatrick"
+      "https://twitter.com/bootskills",
+      "https://linkedin.com/company/bootskills",
+      "https://github.com/ManziPatrick",
+      "https://facebook.com/bootskills"
     ],
-    "description": "A leading technology academy and software development firm in Rwanda."
-}
+    "areaServed": [
+      {
+        "@type": "Country",
+        "name": "Rwanda"
+      },
+      {
+        "@type": "City",
+        "name": "Kigali"
+      },
+      {
+        "@type": "Continent",
+        "name": "Africa"
+      }
+    ],
+    "knowsAbout": ["Software Development", "AI Training", "Business Skills", "Digital Literacy", "Internships", "Professional Training"]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "@id": "https://bootskills.com/#educational",
+    "name": "Bootskills Academy",
+    "url": "https://bootskills.com",
+    "parentOrganization": {
+      "@id": "https://bootskills.com/#organization"
+    },
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Kigali",
+      "addressRegion": "Kigali City",
+      "addressCountry": "RW"
+    },
+    "areaServed": ["Kigali", "Rwanda", "East Africa"],
+    "teaches": ["Web Development", "Mobile Development", "Artificial Intelligence", "Data Science", "Business Management", "Digital Marketing", "Financial Literacy", "UI/UX Design"],
+    "educationalCredentialAwarded": "Professional Certificate",
+    "offers": [
+      {
+        "@type": "Offer",
+        "category": "Paid",
+        "name": "Professional Training Programs"
+      },
+      {
+        "@type": "Offer",
+        "category": "Free",
+        "name": "Free Trial Courses"
+      }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": "https://bootskills.com/#localbusiness",
+    "name": "Bootskills",
+    "image": "https://bootskills.com/logo.png",
+    "url": "https://bootskills.com",
+    "telephone": "+250-XXX-XXX-XXX",
+    "priceRange": "$$",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Kigali",
+      "addressRegion": "Kigali City",
+      "addressCountry": "RW"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": -1.9441,
+      "longitude": 30.0619
+    },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "08:00",
+        "closes": "17:00"
+      }
+    ],
+    "parentOrganization": {
+      "@id": "https://bootskills.com/#organization"
+    },
+    "areaServed": ["Kigali", "Rwanda", "East Africa"],
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Training & Development Services",
+      "itemListElement": [
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Software Development Training",
+            "description": "Full-stack development, mobile apps, and AI solutions training in Kigali"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Professional Internships",
+            "description": "Real-world project experience with mentorship from industry professionals"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Business & Digital Skills",
+            "description": "Practical training in business development and digital literacy"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": "https://bootskills.com/#website",
+    "url": "https://bootskills.com",
+    "name": "Bootskills - Tech, Business & Financial Literacy Training in Kigali, Rwanda",
+    "description": "Bootskills empowers learners with practical skills and real-world project training. Based in Kigali, Rwanda, serving Africa.",
+    "publisher": {
+      "@id": "https://bootskills.com/#organization"
+    },
+    "inLanguage": "en-RW",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://bootskills.com/explore?q={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "@id": "https://bootskills.com/#breadcrumb",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://bootskills.com/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "About",
+        "item": "https://bootskills.com/about"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Services",
+        "item": "https://bootskills.com/services"
+      },
+      {
+        "@type": "ListItem",
+        "position": 4,
+        "name": "Contact",
+        "item": "https://bootskills.com/contact"
+      }
+    ]
+  }
+]

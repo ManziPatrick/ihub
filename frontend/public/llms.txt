@@ -1,0 +1,54 @@
+# Bootskills — Practical Tech & Business Training in Kigali, Rwanda
+> Bootskills is Rwanda's leading practical training platform offering tech, business, and financial literacy courses with real-world projects and internships.
+> Website: https://bootskills.com
+> Location: Kigali, Rwanda
+> Founded: 2024 by Manzi Alain Patrick Munyeshuri and Bizimana Eric
+
+## Core Offerings
+
+### Training & Courses
+- Full-Stack Web Development (React, Node.js, TypeScript)
+- Mobile App Development
+- Artificial Intelligence & Machine Learning
+- Data Science & Analytics
+- UI/UX Design
+- Business Development & Management
+- Digital Literacy & Financial Literacy
+
+### Internships
+- Structured internship programs with real projects
+- Professional mentorship from industry experts
+- Team-based collaboration on production software
+- Certificate upon completion
+
+### Software Development
+- Custom web and mobile applications
+- AI-powered solutions
+- API development and integration
+- Cloud infrastructure (AWS, GCP)
+
+### Innovation Platform
+- Open ecosystem for trainers and professionals
+- Project-based learning methodology
+- Industry-aligned curriculum
+
+## Key Pages
+- Home: https://bootskills.com/
+- About: https://bootskills.com/about
+- Services: https://bootskills.com/services
+- Explore Courses: https://bootskills.com/explore
+- Internships: https://bootskills.com/internships
+- Projects: https://bootskills.com/projects
+- Partners: https://bootskills.com/partners
+- Team: https://bootskills.com/team
+- Blog: https://bootskills.com/blog
+- Contact: https://bootskills.com/contact
+
+## Leadership
+- Manzi Alain Patrick Munyeshuri — Founder & CEO. Rwandan technologist focused on bridging education and employability.
+- Bizimana Eric — Co-Founder & CTO. Technical and operational leadership.
+
+## Contact
+- Website: https://bootskills.com
+- Location: Kigali, Rwanda
+- Services: Training, Internships, Software Development, AI Solutions
