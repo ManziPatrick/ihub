@@ -505,6 +505,72 @@ export const sendCertificateIssued = async (
 };
 
 /**
+ * Send course enrollment confirmation email
+ */
+export const sendCourseEnrollmentConfirmation = async (
+  email: string,
+  studentName: string,
+  courseTitle: string
+): Promise<boolean> => {
+  const config = await getEmailConfig();
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .course-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+        .btn { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: bold; }
+        .steps { padding-left: 20px; }
+        .steps li { margin-bottom: 10px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🎉 Welcome to Your Course!</h1>
+        </div>
+        <div class="content">
+          <h2>Hi ${studentName},</h2>
+          <p>Congratulations! You have been successfully enrolled in:</p>
+          
+          <div class="course-box">
+            <h3>📚 ${courseTitle}</h3>
+          </div>
+          
+          <p>Your learning journey starts now! Here's what you can do next:</p>
+          <ol class="steps">
+            <li><strong>Access your dashboard</strong> — Start exploring your course materials</li>
+            <li><strong>Complete your first lesson</strong> — Begin with the first module</li>
+            <li><strong>Track your progress</strong> — Monitor your completion and achievements</li>
+          </ol>
+          
+          <div style="text-align: center;">
+            <a href="${process.env.CLIENT_ORIGIN}/portal/student/dashboard" class="btn">Go to My Dashboard</a>
+          </div>
+          
+          <p style="margin-top: 20px;">If you have any questions, feel free to reach out to your instructor or our support team.</p>
+        </div>
+        <div class="footer">
+          <p>© 2026 ${config.siteName}. Building Africa's Tech Talent.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `🎓 Enrolled in ${courseTitle} - Welcome!`,
+    html
+  });
+};
+
+/**
  * Send new feedback notification
  */
 export const sendFeedbackNotification = async (
@@ -690,5 +756,6 @@ export default {
   sendLoginOTPEmail,
   sendWelcomeEmail,
   sendAdminNewUserNotification,
-  sendMeetingInvitation
+  sendMeetingInvitation,
+  sendCourseEnrollmentConfirmation
 };

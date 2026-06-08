@@ -88,7 +88,8 @@ import {
   sendPasswordResetEmail,
   sendWelcomeEmail,
   sendAdminNewUserNotification,
-  sendMeetingInvitation
+  sendMeetingInvitation,
+  sendCourseEnrollmentConfirmation
 } from '../services/email.service';
 import { generateCertificatePDF, generateInvoicePDF } from '../services/pdf.service';
 import * as bcrypt from 'bcryptjs';
@@ -2196,6 +2197,20 @@ export const resolvers = {
       });
       await app.save();
 
+      // Send application confirmation email
+      try {
+        const user = await User.findById(context.user.id).select('email username fullName');
+        if (user?.email) {
+          await sendApplicationConfirmation(
+            user.email,
+            user.fullName || user.username || 'Student',
+            course.title
+          );
+        }
+      } catch (emailErr) {
+        console.error('[ApplyToCourse] Email error:', emailErr);
+      }
+
       return app;
     },
 
@@ -2232,6 +2247,32 @@ export const resolvers = {
           await user.save();
           await course.save();
         }
+      }
+
+      // Send email notification about the status change
+      try {
+        const user = await User.findById(app.userId).select('email username fullName');
+        const course = await Course.findById(app.courseId).select('title');
+        if (user?.email && course) {
+          await sendApplicationStatusUpdate(
+            user.email,
+            user.fullName || user.username || 'Student',
+            course.title,
+            status,
+            rejectionReason || undefined
+          );
+
+          // If approved, also send course enrollment confirmation
+          if (status === 'approved') {
+            await sendCourseEnrollmentConfirmation(
+              user.email,
+              user.fullName || user.username || 'Student',
+              course.title
+            );
+          }
+        }
+      } catch (emailErr) {
+        console.error('[UpdateApplicationStatus] Email error:', emailErr);
       }
 
       // Re-fetch with populated fields so frontend receives user + course
@@ -5771,6 +5812,21 @@ export const resolvers = {
       }
 
       await logActivity(context.user.id, 'APPLY', 'InternshipApplication', application.id, `Applied to program: ${program.title}`);
+
+      // Send internship application confirmation email
+      try {
+        const user = await User.findById(context.user.id).select('email username fullName');
+        if (user?.email) {
+          await sendApplicationConfirmation(
+            user.email,
+            user.fullName || user.username || 'Student',
+            program.title
+          );
+        }
+      } catch (emailErr) {
+        console.error('[ApplyToInternshipProgram] Email error:', emailErr);
+      }
+
       return application;
     },
 
@@ -6917,6 +6973,22 @@ export const resolvers = {
         certificateNumber: certificate.certificateNumber,
         message: `Congratulations! Your certificate for ${program.title} is ready for download.`
       });
+
+      // Send certificate issued email
+      try {
+        if (user?.email) {
+          const baseUrl = process.env.FRONTEND_URL || 'https://ihub.ac.rw';
+          await sendCertificateIssued(
+            user.email,
+            (user as any).fullName || user.username || 'Student',
+            program.title,
+            certificate.certificateNumber || '',
+            `${baseUrl}/verify-certificate?code=${certificate.certificateNumber}`
+          );
+        }
+      } catch (emailErr) {
+        console.error('[GenerateInternshipCertificate] Email error:', emailErr);
+      }
 
       return certificate;
     },

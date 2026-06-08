@@ -14,6 +14,7 @@ import { Internship } from '../models/Internship';
 import { Payment } from '../models/Payment';
 import { InternshipProgram } from '../models/internship/InternshipProgram';
 import { CourseProgress } from '../models/CourseProgress';
+import { sendPaymentConfirmation, sendCourseEnrollmentConfirmation } from '../services/email.service';
 
 // Extend Express Request to include user property
 declare global {
@@ -560,6 +561,44 @@ class PaymentController {
             }
           }
         });
+      }
+
+      // 5. Send email confirmations
+      try {
+        // Get user info for emails
+        const user = await User.findById(userId).select('email username fullName');
+        if (user) {
+          const studentName = user.fullName || user.username || 'Student';
+          const userEmail = user.email;
+
+          // Send payment receipt for any payment
+          if (userEmail) {
+            const invoiceNumber = `INV-${Date.now()}`;
+            await sendPaymentConfirmation(
+              userEmail,
+              studentName,
+              description || 'Course Enrollment',
+              amount || 0,
+              'RWF',
+              invoiceNumber
+            );
+          }
+
+          // Send course enrollment confirmation if courses were purchased
+          const allCourseIds = [...(courseIds || []), ...(courseId ? [courseId] : [])];
+          if (allCourseIds.length > 0 && userEmail) {
+            const courses = await Course.find({ _id: { $in: allCourseIds } }).select('title').lean();
+            for (const course of courses) {
+              await sendCourseEnrollmentConfirmation(
+                userEmail,
+                studentName,
+                (course as any).title
+              );
+            }
+          }
+        }
+      } catch (emailErr) {
+        console.error('Failed to send payment confirmation email:', emailErr);
       }
 
       transaction.processedAt = new Date();
