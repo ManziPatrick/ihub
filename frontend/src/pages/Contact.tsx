@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import { supabase } from "@/integrations/supabase/client";
+import { Helmet } from "react-helmet-async";
 
 const contactInfo = [
   { icon: MapPin, label: "Address", value: "Kigali, Rwanda" },
