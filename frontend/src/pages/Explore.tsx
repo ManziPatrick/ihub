@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
+import { Helmet } from "react-helmet-async";
 import {
   Sheet,
   SheetContent,
@@ -196,6 +197,18 @@ const Explore = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Explore Courses | Bootskills - Tech & Business Training in Kigali, Rwanda</title>
+        <meta name="description" content="Browse industry-ready tech and business training programs from top providers. Explore courses in software development, AI, data science, cybersecurity, and more in Kigali, Rwanda." />
+        <link rel="canonical" href="https://bootskills.com/explore" />
+        <meta property="og:title" content="Explore Courses | Bootskills - Tech & Business Training Kigali" />
+        <meta property="og:description" content="Browse industry-ready training programs in software development, AI, data science, and more. Based in Kigali, Rwanda." />
+        <meta property="og:url" content="https://bootskills.com/explore" />
+        <meta property="og:type" content="website" />
+        <meta name="geo.region" content="RW-01" />
+        <meta name="geo.placename" content="Kigali" />
+        <meta name="geo.position" content="-1.9441;30.0619" />
+      </Helmet>
       <Header />
       <main className="pt-20">
         {/* Hero */}

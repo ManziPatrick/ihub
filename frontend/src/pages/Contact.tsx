@@ -71,6 +71,18 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Contact Us | Bootskills - Kigali, Rwanda</title>
+        <meta name="description" content="Get in touch with Bootskills in Kigali, Rwanda. Contact us for training programs, internships, corporate solutions, or general inquiries. We typically respond within 24 hours." />
+        <link rel="canonical" href="https://bootskills.com/contact" />
+        <meta property="og:title" content="Contact Us | Bootskills - Kigali, Rwanda" />
+        <meta property="og:description" content="Reach out to Bootskills for tech training, internships, and corporate solutions in Kigali, Rwanda." />
+        <meta property="og:url" content="https://bootskills.com/contact" />
+        <meta property="og:type" content="website" />
+        <meta name="geo.region" content="RW-01" />
+        <meta name="geo.placename" content="Kigali" />
+        <meta name="geo.position" content="-1.9441;30.0619" />
+      </Helmet>
       <Header />
       <main className="pt-20">
         {/* Hero */}

@@ -191,7 +191,7 @@ export default function Auth() {
       >
         <div className="flex justify-center mb-6">
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-accent text-3xl font-bold">≪</span>
+            {/* <span className="text-accent text-3xl font-bold">BS</span> */}
             <span className="text-2xl font-bold text-foreground tracking-tight">Bootskills</span>
           </Link>
         </div>

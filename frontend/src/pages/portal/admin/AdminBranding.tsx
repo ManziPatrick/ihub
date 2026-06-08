@@ -340,7 +340,7 @@ export default function AdminBranding() {
                 >
                   <div className="h-12 border-b border-border/50 bg-card px-4 flex items-center justify-between">
                      <div className="flex items-center gap-2">
-                       <div className="w-6 h-6 rounded flex items-center justify-center text-[10px] text-white font-bold" style={{ backgroundColor: formData.primaryColor }}>≪</div>
+                       {/* <div className="w-6 h-6 rounded flex items-center justify-center text-[10px] text-white font-bold" style={{ backgroundColor: formData.primaryColor }}>BS</div> */}
                        <span className="text-xs font-bold" style={{ color: formData.primaryColor }}>{formData.siteName}</span>
                      </div>
                      <div className="flex gap-2">

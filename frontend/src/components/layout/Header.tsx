@@ -80,7 +80,7 @@ export function Header() {
               />
             ) : (
               <>
-                <span className="text-accent text-2xl font-bold leading-none">≪</span>
+                {/* <span className="text-accent text-2xl font-bold leading-none">BS</span> */}
                 <span className="font-semibold text-base lg:text-lg text-foreground tracking-wide">
                   {branding.siteName}
                 </span>

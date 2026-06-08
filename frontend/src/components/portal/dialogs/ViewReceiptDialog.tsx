@@ -115,7 +115,7 @@ export function ViewReceiptDialog({
               <div className="relative z-10 flex flex-col md:flex-row justify-between items-start gap-8 mb-16">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 bg-accent flex items-center justify-center rounded-2xl shadow-lg shadow-accent/20">
-                    <span className="text-4xl font-bold text-white leading-none">≪</span>
+                    {/* <span className="text-4xl font-bold text-white leading-none">BS</span> */}
                   </div>
                   <div className="flex flex-col">
                     <h1 className="text-3xl font-heading font-black text-foreground tracking-tighter uppercase leading-none">

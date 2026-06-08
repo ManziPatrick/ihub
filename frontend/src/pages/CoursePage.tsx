@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Helmet } from "react-helmet-async";
 import { CheckCircle, Clock, BookOpen, User, PlayCircle, Lock, Award, ShoppingCart, ArrowRight, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
@@ -64,6 +65,19 @@ import { useState } from "react"; export default function CoursePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Helmet>
+        <title>{course?.title ? `${course.title} | Bootskills - Course in Kigali, Rwanda` : "Course Details | Bootskills"}</title>
+        <meta name="description" content={course?.description?.substring(0, 160) || "Explore this course from Bootskills. Practical, project-based training in Kigali, Rwanda."} />
+        <link rel="canonical" href={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"} />
+        <meta property="og:title" content={course?.title ? `${course.title} | Bootskills` : "Course | Bootskills"} />
+        <meta property="og:description" content={course?.description?.substring(0, 160) || "Explore practical training from Bootskills in Kigali, Rwanda."} />
+        <meta property="og:url" content={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"} />
+        <meta property="og:type" content="article" />
+        {course?.thumbnail && <meta property="og:image" content={course.thumbnail} />}
+        <meta name="geo.region" content="RW-01" />
+        <meta name="geo.placename" content="Kigali" />
+        <meta name="geo.position" content="-1.9441;30.0619" />
+      </Helmet>
       <Header />
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 lg:px-8">

@@ -2,6 +2,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import testimonialEmmanuel from "@/assets/testimonial-emmanuel.webp";
 import testimonialMarie from "@/assets/testimonial-marie.webp";
 import testimonialJean from "@/assets/testimonial-jean.webp";
@@ -92,6 +93,18 @@ const testimonials = [
 const Partners = () => {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Partners | Bootskills - Collaborate for Impact in Rwanda & Africa</title>
+        <meta name="description" content="Partner with Bootskills to drive Africa's digital transformation. Collaborate with us on training, technology solutions, and talent development across Rwanda and East Africa." />
+        <link rel="canonical" href="https://bootskills.com/partners" />
+        <meta property="og:title" content="Partners | Bootskills - Collaborate for Impact" />
+        <meta property="og:description" content="Partner with Bootskills to drive Africa's digital transformation through training, technology solutions, and talent development." />
+        <meta property="og:url" content="https://bootskills.com/partners" />
+        <meta property="og:type" content="website" />
+        <meta name="geo.region" content="RW-01" />
+        <meta name="geo.placename" content="Kigali" />
+        <meta name="geo.position" content="-1.9441;30.0619" />
+      </Helmet>
       <Header />
       <main className="pt-20">
         {/* Hero */}

@@ -4,6 +4,7 @@ import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
 
@@ -21,6 +22,11 @@ export default function PaymentSuccess() {
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-background p-4 relative overflow-hidden">
+            <Helmet>
+                <title>Payment Successful | Bootskills - Kigali, Rwanda</title>
+                <meta name="description" content="Your payment was successful. You can now access your enrolled courses and start learning with Bootskills." />
+                <meta name="robots" content="noindex" />
+            </Helmet>
             {showConfetti && <Confetti width={width} height={height} numberOfPieces={200} recycle={false} />}
 
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=2560&auto=format&fit=crop')] bg-cover bg-center opacity-5" />

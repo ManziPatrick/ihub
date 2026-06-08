@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
+import { Helmet } from "react-helmet-async";
 import testimonialEmmanuel from "@/assets/testimonial-emmanuel.webp";
 import testimonialMarie from "@/assets/testimonial-marie.webp";
 import testimonialJean from "@/assets/testimonial-jean.webp";
@@ -73,6 +74,18 @@ const Internships = () => {
   };
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Internships | Bootskills - Real-World Experience in Kigali, Rwanda</title>
+        <meta name="description" content="Gain real-world experience with Bootskills internships in Kigali, Rwanda. Work on real projects, get mentored by experts, and build a portfolio that stands out." />
+        <link rel="canonical" href="https://bootskills.com/internships" />
+        <meta property="og:title" content="Internships | Bootskills - Real-World Experience in Kigali, Rwanda" />
+        <meta property="og:description" content="Bridge the gap between learning and employment with structured internship programs. Work on real projects, get mentored by experts." />
+        <meta property="og:url" content="https://bootskills.com/internships" />
+        <meta property="og:type" content="website" />
+        <meta name="geo.region" content="RW-01" />
+        <meta name="geo.placename" content="Kigali" />
+        <meta name="geo.position" content="-1.9441;30.0619" />
+      </Helmet>
       <Header />
       <main className="pt-20">
         {/* Hero */}

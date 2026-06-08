@@ -5,6 +5,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { getApiBaseUrl } from "@/lib/env";
+import { Helmet } from "react-helmet-async";
 
 interface TeamMember {
     _id: string;
@@ -47,6 +48,18 @@ export default function Team() {
     return (
         <PageTransition>
             <div className="min-h-screen bg-background">
+                <Helmet>
+                    <title>Our Team | Bootskills - Meet the Innovators in Kigali, Rwanda</title>
+                    <meta name="description" content="Meet the passionate professionals building the future of tech education in Africa. Our team at Bootskills is led by founder Manzi Alain Patrick Munyeshuri and co-founder Bizimana Eric." />
+                    <link rel="canonical" href="https://bootskills.com/team" />
+                    <meta property="og:title" content="Our Team | Bootskills - Meet the Innovators" />
+                    <meta property="og:description" content="Meet the passionate professionals building the future of tech education in Africa at Bootskills." />
+                    <meta property="og:url" content="https://bootskills.com/team" />
+                    <meta property="og:type" content="website" />
+                    <meta name="geo.region" content="RW-01" />
+                    <meta name="geo.placename" content="Kigali" />
+                    <meta name="geo.position" content="-1.9441;30.0619" />
+                </Helmet>
                 <Header />
                 <main className="pt-20">
                     <div className="bg-gradient-to-br from-background via-background to-accent/5">
