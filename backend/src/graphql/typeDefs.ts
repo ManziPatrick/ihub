@@ -494,6 +494,18 @@ export const typeDefs = `#graphql
     aiAnalysis: String
   }
 
+  type ProjectStage {
+    name: String!
+    description: String
+    order: Int!
+    status: String!
+    assignee: User
+    assigneeId: ID
+    dueDate: String
+    completed: Boolean!
+    completedAt: String
+  }
+
   type Project {
     id: ID!
     userId: ID!
@@ -513,6 +525,7 @@ export const typeDefs = `#graphql
     team: [TeamMember]
     tasks: [Task]
     milestones: [MilestoneDetailed]
+    stages: [ProjectStage]
     documentation: Documentation
     description: String!
     submissionUrl: String
@@ -791,7 +804,7 @@ export const typeDefs = `#graphql
     allUserGradeReports: [UserGradeReport]
 
     # Projects
-    projects(page: Int, limit: Int): ProjectResponse
+    projects(page: Int, limit: Int, course: String): ProjectResponse
     projectTemplates(category: String, course: String): [Project]
     myProjects(status: String): [Project]
     myInternships(status: String): [Internship]
@@ -2613,6 +2626,41 @@ export const typeDefs = `#graphql
       projectId: ID!
       rating: Int!
       comment: String!
+    ): Project!
+
+    # Project Stage Mutations
+    addProjectStage(
+      projectId: ID!
+      name: String!
+      description: String
+      order: Int!
+      dueDate: String
+    ): Project!
+
+    updateProjectStage(
+      projectId: ID!
+      order: Int!
+      name: String
+      description: String
+      status: String
+      assigneeId: ID
+      dueDate: String
+    ): Project!
+
+    assignProjectStage(
+      projectId: ID!
+      order: Int!
+      assigneeId: ID!
+    ): Project!
+
+    completeProjectStage(
+      projectId: ID!
+      order: Int!
+    ): Project!
+
+    removeProjectStage(
+      projectId: ID!
+      order: Int!
     ): Project!
   }
 

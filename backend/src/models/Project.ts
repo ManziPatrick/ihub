@@ -6,7 +6,7 @@ export interface IProject extends Document {
   title: string;
   course: string;
   type: string; // 'Team Project' or 'Individual'
-  status: string; // 'in_progress', 'pending_review', 'completed', 'pending_approval', 'rejected'
+  status: string; // 'in_progress', 'pending_review', 'completed', 'pending_approval', 'rejected', 'onboarding'
   isTemplate: boolean;
   visibility: string; // 'public', 'private', 'draft'
   category: string; // 'Internship', 'Training', 'Capstone', 'Other'
@@ -79,6 +79,17 @@ export interface IProject extends Document {
       feedback?: string;
     }>;
   };
+  // Project stages/phases workflow with assignees
+  stages?: Array<{
+    name: string;
+    description?: string;
+    order: number;
+    status: 'pending' | 'in_progress' | 'completed' | 'blocked';
+    assigneeId?: mongoose.Types.ObjectId;
+    dueDate?: Date;
+    completed: boolean;
+    completedAt?: Date;
+  }>;
   evaluation?: {
     clientFeedback?: { rating: number; comment: string; submittedAt: Date };
     developerEvaluations?: Array<{ developerId: mongoose.Types.ObjectId; rating: number; notes: string }>;
@@ -97,7 +108,7 @@ const ProjectSchema: Schema = new Schema(
     title: { type: String, required: true },
     course: { type: String, required: true },
     type: { type: String, required: true, enum: ['Team Project', 'Individual'] },
-    status: { type: String, required: true, enum: ['in_progress', 'pending_review', 'completed', 'pending_approval', 'rejected'], default: 'in_progress' },
+    status: { type: String, required: true, enum: ['in_progress', 'pending_review', 'completed', 'pending_approval', 'rejected', 'onboarding'], default: 'in_progress' },
     isTemplate: { type: Boolean, default: false },
     visibility: { type: String, enum: ['public', 'private', 'draft'], default: 'draft' },
     category: { type: String, enum: ['Internship', 'Training', 'Capstone', 'Other'], default: 'Other' },
@@ -189,6 +200,22 @@ const ProjectSchema: Schema = new Schema(
         }
       ]
     },
+    stages: [
+      {
+        name: { type: String, required: true },
+        description: { type: String },
+        order: { type: Number, required: true },
+        status: {
+          type: String,
+          enum: ['pending', 'in_progress', 'completed', 'blocked'],
+          default: 'pending'
+        },
+        assigneeId: { type: Schema.Types.ObjectId, ref: 'User' },
+        dueDate: { type: Date },
+        completed: { type: Boolean, default: false },
+        completedAt: { type: Date }
+      }
+    ],
     evaluation: {
       clientFeedback: {
         rating: { type: Number },

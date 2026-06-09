@@ -1,4 +1,5 @@
 import { ProjectTask } from '../models/ProjectTask';
+import { sendNotification } from '../services/notification.service';
 
 export const projectTaskResolvers = {
   Query: {
@@ -21,7 +22,7 @@ export const projectTaskResolvers = {
       if (!context.user) throw new Error('Not authenticated');
       const filter: any = { assigneeId: context.user.id, isDeleted: false };
       if (status) filter.status = status;
-      return await ProjectTask.find(filter).populate('assigneeId').sort({ updatedAt: -1 });
+      return await ProjectTask.find(filter).populate('assigneeId').populate('projectId').sort({ updatedAt: -1 });
     },
 
     projectBoardStats: async (_: any, { projectId }: any, context: any) => {
@@ -57,16 +58,57 @@ export const projectTaskResolvers = {
         order: (lastTask?.order || 0) + 1,
       });
       await task.save();
-      return await task.populate('assigneeId');
+      const populated = await task.populate('assigneeId');
+
+      // Notify assignee if one was set
+      if (args.assigneeId && args.assigneeId.toString() !== context.user.id) {
+        sendNotification(args.assigneeId.toString(), {
+          type: 'TASK_ASSIGNED',
+          title: 'New Task Assigned',
+          message: `You have been assigned task: ${args.title}`,
+          link: `/portal/student`,
+        });
+      }
+
+      return populated;
     },
 
     updateProjectTask: async (_: any, { id, ...updates }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
+      // Fetch original task to detect changes
+      const original = await ProjectTask.findById(id);
+      if (!original) throw new Error('Task not found');
+
       const task = await ProjectTask.findByIdAndUpdate(id, { $set: updates }, { new: true })
         .populate('assigneeId');
       if (!task) throw new Error('Task not found');
+
+      // Notify new assignee if assignee changed
+      if (updates.assigneeId && updates.assigneeId !== original.assigneeId?.toString() && updates.assigneeId !== context.user.id) {
+        sendNotification(updates.assigneeId, {
+          type: 'TASK_ASSIGNED',
+          title: 'New Task Assigned',
+          message: `You have been assigned task: ${task.title}`,
+          link: `/portal/student`,
+        });
+      }
+
+      // Notify assignee if status changed
+      if (updates.status && updates.status !== original.status && task.assigneeId && task.assigneeId.toString() !== context.user.id) {
+        const statusLabels: Record<string, string> = {
+          backlog: 'Backlog', todo: 'To Do', in_progress: 'In Progress',
+          in_review: 'In Review', done: 'Done', blocked: 'Blocked',
+        };
+        sendNotification(task.assigneeId.toString(), {
+          type: 'TASK_STATUS_CHANGED',
+          title: 'Task Moved',
+          message: `Task "${task.title}" moved from ${statusLabels[original.status] || original.status} to ${statusLabels[updates.status] || updates.status}`,
+          link: `/portal/student`,
+        });
+      }
+
       return task;
     },
 
@@ -75,6 +117,7 @@ export const projectTaskResolvers = {
       const task = await ProjectTask.findById(id);
       if (!task || task.isDeleted) throw new Error('Task not found');
 
+      const previousStatus = task.status;
       let targetStatus = status;
 
       // Students cannot move directly to 'done' — redirect to 'in_review'
@@ -94,7 +137,23 @@ export const projectTaskResolvers = {
       task.status = targetStatus;
       if (order !== undefined) task.order = order;
       await task.save();
-      return await task.populate('assigneeId');
+      const populated = await task.populate('assigneeId');
+
+      // Notify assignee when their task status changes (skip if they moved it themselves)
+      if (task.assigneeId && task.assigneeId.toString() !== context.user.id && previousStatus !== targetStatus) {
+        const statusLabels: Record<string, string> = {
+          backlog: 'Backlog', todo: 'To Do', in_progress: 'In Progress',
+          in_review: 'In Review', done: 'Done', blocked: 'Blocked',
+        };
+        sendNotification(task.assigneeId.toString(), {
+          type: 'TASK_STATUS_CHANGED',
+          title: 'Task Moved',
+          message: `Task "${task.title}" moved from ${statusLabels[previousStatus] || previousStatus} to ${statusLabels[targetStatus] || targetStatus}`,
+          link: `/portal/student`,
+        });
+      }
+
+      return populated;
     },
 
     deleteProjectTask: async (_: any, { id }: any, context: any) => {
@@ -115,6 +174,17 @@ export const projectTaskResolvers = {
         { new: true }
       ).populate('assigneeId');
       if (!task) throw new Error('Task not found');
+
+      // Notify assignee that their task was approved
+      if (task.assigneeId && task.assigneeId.toString() !== context.user.id) {
+        sendNotification(task.assigneeId.toString(), {
+          type: 'TASK_APPROVED',
+          title: 'Task Approved',
+          message: `Task "${task.title}" has been approved` + (feedback ? ` with feedback: ${feedback}` : ''),
+          link: `/portal/student`,
+        });
+      }
+
       return task;
     },
 
@@ -125,6 +195,17 @@ export const projectTaskResolvers = {
       const task = await ProjectTask.findByIdAndUpdate(id, { assigneeId }, { new: true })
         .populate('assigneeId');
       if (!task) throw new Error('Task not found');
+
+      // Notify the new assignee
+      if (assigneeId && assigneeId.toString() !== context.user.id) {
+        sendNotification(assigneeId.toString(), {
+          type: 'TASK_ASSIGNED',
+          title: 'New Task Assigned',
+          message: `You have been assigned task: ${task.title}`,
+          link: `/portal/student`,
+        });
+      }
+
       return task;
     },
   },

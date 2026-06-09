@@ -72,6 +72,7 @@ interface NavItem {
 const studentNavItems: NavItem[] = [
   { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },
   { label: "Projects", href: "/portal/student/projects", icon: FolderOpen },
+  { label: "My Tasks", href: "/portal/student/my-tasks", icon: ClipboardList },
   { 
     label: "Academics", 
     icon: GraduationCap,
@@ -86,7 +87,6 @@ const studentNavItems: NavItem[] = [
     href: "/portal/student/internship", 
     icon: Briefcase 
   },
-  { label: "AI Voice Tutor", href: "/portal/student/voice-tutor", icon: Globe },
   { label: "Schedule", href: "/portal/student/schedule", icon: Calendar },
   { label: "Billing", href: "/portal/student/billing", icon: CreditCard },
   { label: "Messages", href: "/chat", icon: MessageSquare },
@@ -762,6 +762,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                               notif.type === 'booking' ? <Calendar className="w-3.5 h-3.5" /> :
                               notif.type.startsWith('ASSIGNMENT') ? <GraduationCap className="w-3.5 h-3.5" /> :
                               notif.type === 'CERTIFICATE_READY' ? <Award className="w-3.5 h-3.5" /> :
+                              ['TASK_ASSIGNED', 'TASK_STATUS_CHANGED', 'TASK_APPROVED'].includes(notif.type) ? <ClipboardList className="w-3.5 h-3.5" /> :
                                 <Bell className="w-3.5 h-3.5" />}
                           </div>
                           <div className="flex-1 min-w-0">
