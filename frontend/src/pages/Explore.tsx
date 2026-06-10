@@ -21,7 +21,7 @@ import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import aboutImage from "@/assets/about-training.webp";
 import aboutImageMobile from "@/assets/about-training-mobile.webp";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_COURSES, MY_COURSE_APPLICATIONS, GET_ME } from "@/lib/graphql/queries";
 import { useAuth } from "@/contexts/AuthContext";
@@ -87,8 +87,17 @@ const faqs = [
 const API_BASE_URL = getApiBaseUrl();
 
 const Explore = () => {
-  const { data, loading: apolloLoading } = useQuery(GET_COURSES);
-  const courses = (data as any)?.courses || [];
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const COURSES_PAGE_SIZE = 9;
+
+  const { data, loading: apolloLoading, fetchMore } = useQuery(GET_COURSES, {
+    variables: { page: 1, limit: COURSES_PAGE_SIZE },
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const coursesResponse = (data as any)?.courses || { items: [], pagination: { hasNextPage: false, currentPage: 1, totalPages: 1, totalCount: 0 } };
+  const loadedCourses = coursesResponse.items || [];
 
   const [aiCourses, setAICourses] = useState<AICourse[]>([]);
   const [aiLoading, setAILoading] = useState(true);
@@ -161,15 +170,17 @@ const Explore = () => {
   const [activeSchool, setActiveSchool] = useState<string>("ALL");
   const [schoolPage, setSchoolPage] = useState<number>(0);
 
-  const schools = Array.from(new Set(courses?.items?.map((c: any) => c.school).filter(Boolean))) as string[];
+  const schools = useMemo(() => Array.from(new Set(loadedCourses.map((c: any) => c.school).filter(Boolean))) as string[], [loadedCourses]);
   const ITEMS_PER_PAGE = 10;
   const totalSchoolPages = Math.ceil(schools.length / ITEMS_PER_PAGE);
   const paginatedSchools = schools.slice(schoolPage * ITEMS_PER_PAGE, (schoolPage + 1) * ITEMS_PER_PAGE);
 
-  const filteredCourses = (courses?.items || []).filter((course: any) => {
-    if (activeSchool === "ALL") return true;
-    return course.school === activeSchool;
-  });
+  const filteredCourses = useMemo(() => {
+    return loadedCourses.filter((course: any) => {
+      if (activeSchool === "ALL") return true;
+      return course.school === activeSchool;
+    });
+  }, [loadedCourses, activeSchool]);
 
   const departments = ["ALL", "GENERAL", "HEALTHCARE", "FINANCE", "EDUCATION", "MARKETING", "MANUFACTURING", "HR", "CYBERSECURITY"];
 
@@ -430,6 +441,7 @@ const Explore = () => {
                   <div className="aspect-video relative overflow-hidden">
                     <img
                       src={course.thumbnail || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600"}
+                      loading="lazy"
                       onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600"; }}
                       alt={course.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -572,6 +584,46 @@ const Explore = () => {
                 </motion.div>
               ))}
               </div>
+
+              {!apolloLoading && coursesResponse.pagination?.hasNextPage && (
+                <div className="flex justify-center mt-10">
+                  <Button
+                    onClick={async () => {
+                      if (loadingMore || !coursesResponse.pagination?.hasNextPage) return;
+                      const nextPage = currentPage + 1;
+                      setLoadingMore(true);
+                      try {
+                        await fetchMore({
+                          variables: { page: nextPage, limit: COURSES_PAGE_SIZE },
+                          updateQuery: (previousResult: any, { fetchMoreResult }: any) => {
+                            if (!fetchMoreResult?.courses?.items?.length) {
+                              return previousResult;
+                            }
+                            return {
+                              courses: {
+                                ...fetchMoreResult.courses,
+                                items: [
+                                  ...previousResult.courses.items,
+                                  ...fetchMoreResult.courses.items,
+                                ],
+                              },
+                            };
+                          },
+                        });
+                        setCurrentPage(nextPage);
+                      } catch (error) {
+                        console.error("Error loading more courses:", error);
+                      } finally {
+                        setLoadingMore(false);
+                      }
+                    }}
+                    disabled={loadingMore}
+                    className="h-11 px-8"
+                  >
+                    {loadingMore ? "Loading more courses..." : "Load more courses"}
+                  </Button>
+                </div>
+              )}
             </div>
             </div>
           </div>

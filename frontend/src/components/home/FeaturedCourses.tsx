@@ -48,7 +48,8 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import topImage from "@/assets/top.jpg";
 import { 
-  GET_COURSES, 
+  GET_COURSES,
+  GET_COURSES_SUMMARY,
   GET_INTERNSHIP_PROGRAMS, 
   MY_COURSE_APPLICATIONS, 
   GET_MY_INTERNSHIP_APPLICATIONS, 
@@ -264,12 +265,16 @@ export function FeaturedCourses() {
   const [filterPrice, setFilterPrice] = useState<string>("all");
   const [filterLevel, setFilterLevel] = useState<string>("all");
   const [filterSchool, setFilterSchool] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [loadingMoreCourses, setLoadingMoreCourses] = useState(false);
 
   const tabScrollRef = useRef<HTMLDivElement>(null);
 
+  const COURSES_PAGE_SIZE = 8;
+
   // Courses
-  const { data: courseData, loading: courseLoading } = useQuery(GET_COURSES, {
-    variables: { page: 1, limit: 200 },
+  const { data: courseData, loading: courseLoading, fetchMore } = useQuery(GET_COURSES_SUMMARY, {
+    variables: { page: 1, limit: COURSES_PAGE_SIZE },
   });
 
   // Internship programs

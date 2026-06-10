@@ -342,6 +342,33 @@ export const GET_COURSES = gql`
   ${PAGINATION_FRAGMENT}
 `;
 
+export const GET_COURSES_SUMMARY = gql`
+  query GetCoursesSummary($page: Int, $limit: Int) {
+    courses(page: $page, limit: $limit) {
+      items {
+        id
+        title
+        thumbnail
+        price
+        discountPrice
+        level
+        category
+        enrollmentMode
+        school
+        instructor {
+          id
+          username
+        }
+        createdAt
+      }
+      pagination {
+        ...PaginationFragment
+      }
+    }
+  }
+  ${PAGINATION_FRAGMENT}
+`;
+
 export const GET_COURSE = gql`
   query GetCourse($id: ID!) {
     course(id: $id) {
