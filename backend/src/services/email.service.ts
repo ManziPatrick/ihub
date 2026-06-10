@@ -745,74 +745,6 @@ export const sendLoginOTPEmail = async (email: string, code: string): Promise<bo
   });
 };
 
-/**
- * Send email when developer submits task feedback / resources
- */
-export const sendTaskFeedbackEmail = async (
-  mentorEmail: string,
-  mentorName: string,
-  developerName: string,
-  projectTitle: string,
-  taskTitle: string,
-  message: string,
-  resources?: { title: string; url: string }[]
-): Promise<boolean> => {
-  const config = await getEmailConfig();
-  const resourcesHtml = resources && resources.length > 0
-    ? `<h3>Attached Resources:</h3>
-       <ul>
-         ${resources.map(r => `<li><a href="${r.url}" target="_blank" rel="noopener noreferrer">${r.title}</a></li>`).join('')}
-       </ul>`
-    : '';
-
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #3b82f6; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-        .feedback-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6; }
-        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-        .btn { display: inline-block; background: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 10px; font-weight: bold; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>Task Feedback Submitted</h1>
-        </div>
-        <div class="content">
-          <h2>Hi ${mentorName},</h2>
-          <p>Developer <strong>${developerName}</strong> has submitted feedback/resources for the task <strong>"${taskTitle}"</strong> under the project <strong>"${projectTitle}"</strong>.</p>
-          
-          <div class="feedback-box">
-            <p><strong>Message:</strong></p>
-            <p style="white-space: pre-wrap; font-style: italic;">"${message}"</p>
-          </div>
-          
-          ${resourcesHtml}
-          
-          <p>Please review the task status and developer submission in the portal.</p>
-          <a href="${process.env.CLIENT_ORIGIN}/portal/trainer/projects" class="btn">View Project Board</a>
-        </div>
-        <div class="footer">
-          <p>© 2026 ${config.siteName}. All rights reserved.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-
-  return sendEmail({
-    to: mentorEmail,
-    subject: `Task Update: ${developerName} submitted feedback for "${taskTitle}"`,
-    html
-  });
-};
-
 export default {
   sendEmail,
   sendApplicationConfirmation,
@@ -825,6 +757,5 @@ export default {
   sendWelcomeEmail,
   sendAdminNewUserNotification,
   sendMeetingInvitation,
-  sendCourseEnrollmentConfirmation,
-  sendTaskFeedbackEmail
+  sendCourseEnrollmentConfirmation
 };

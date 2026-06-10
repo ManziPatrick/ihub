@@ -41,7 +41,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_ALL_PROJECTS, GET_COURSES, GET_USERS, GET_ASSIGNMENT_SUBMISSIONS, GET_STUDENT_PROJECT_PROGRESS } from "@/lib/graphql/queries";
+import { GET_ALL_PROJECTS, GET_USERS, GET_ASSIGNMENT_SUBMISSIONS, GET_STUDENT_PROJECT_PROGRESS } from "@/lib/graphql/queries";
 import { GET_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 import { DELETE_PROJECT, UPDATE_PROJECT, GRADE_ASSIGNMENT, RESTORE_PROJECT } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
@@ -114,7 +114,6 @@ export default function AdminProjects() {
   const [gradeProject, setGradeProject] = useState<any>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [courseFilter, setCourseFilter] = useState("all");
   const pageSize = 10;
 
   // Assignment states
@@ -200,10 +199,8 @@ export default function AdminProjects() {
   };
 
 
-  const { data: coursesData } = useQuery(GET_COURSES);
-
   const { data, loading, refetch } = useQuery(GET_ALL_PROJECTS, {
-    variables: { page: currentPage, limit: pageSize, course: courseFilter !== "all" ? courseFilter : undefined }
+    variables: { page: currentPage, limit: pageSize }
   });
   const projects = (data as any)?.projects?.items || [];
   const pagination = (data as any)?.projects?.pagination;
@@ -232,7 +229,6 @@ export default function AdminProjects() {
   const stats = [
     { label: "Total Projects", value: projects.length, icon: FolderOpen, color: "text-blue-500" },
     { label: "Active", value: projects.filter((p: any) => p.status === "in_progress").length, icon: Clock, color: "text-amber-500" },
-    { label: "Onboarding", value: projects.filter((p: any) => p.status === "onboarding").length, icon: Stars, color: "text-purple-500" },
     { label: "Completed", value: projects.filter((p: any) => p.status === "completed").length, icon: CheckCircle2, color: "text-green-500" },
     { label: "Pending Review", value: projects.filter((p: any) => p.status === "pending_review").length, icon: AlertCircle, color: "text-rose-500" },
   ];
@@ -361,25 +357,11 @@ export default function AdminProjects() {
               <div className="flex gap-2">
                 <select
                   className="px-4 py-2 bg-muted/20 border border-border/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20"
-                  value={courseFilter}
-                  onChange={(e) => {
-                    setCourseFilter(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <option value="all">All Courses</option>
-                  {(coursesData as any)?.courses?.items?.map((course: any) => (
-                    <option key={course.id} value={course.title}>{course.title}</option>
-                  ))}
-                </select>
-                <select
-                  className="px-4 py-2 bg-muted/20 border border-border/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
                   <option value="all">All Status</option>
                   <option value="in_progress">In Progress</option>
-                  <option value="onboarding">Onboarding</option>
                   <option value="pending_review">Pending Review</option>
                   <option value="completed">Completed</option>
                 </select>
@@ -539,11 +521,10 @@ export default function AdminProjects() {
                           <Badge
                             className={`text-[9px] uppercase font-black ${project.status === 'completed' ? 'bg-green-500/20 text-green-500' :
                               project.status === 'pending_review' ? 'bg-rose-500/20 text-rose-500' :
-                              project.status === 'onboarding' ? 'bg-purple-500/20 text-purple-500' :
                                 'bg-amber-500/20 text-amber-500'
                               }`}
                           >
-                            {project.status === 'onboarding' ? 'Ready for Onboarding' : project.status?.replace('_', ' ')}
+                            {project.status?.replace('_', ' ')}
                           </Badge>
                         </div>
                         <Button

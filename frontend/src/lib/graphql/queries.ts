@@ -886,8 +886,8 @@ export const GET_PROJECT = gql`
 `;
 
 export const GET_ALL_PROJECTS = gql`
-  query GetAllProjects($page: Int, $limit: Int, $course: String) {
-    projects(page: $page, limit: $limit, course: $course) {
+  query GetAllProjects($page: Int, $limit: Int) {
+    projects(page: $page, limit: $limit) {
       items {
         id
         title
@@ -909,9 +909,6 @@ export const GET_ALL_PROJECTS = gql`
           user {
             id
             username
-            fullName
-            avatar
-            email
           }
         }
         mentors {
@@ -926,9 +923,6 @@ export const GET_ALL_PROJECTS = gql`
         user {
           id
           username
-          fullName
-          avatar
-          email
         }
         createdAt
         updatedAt

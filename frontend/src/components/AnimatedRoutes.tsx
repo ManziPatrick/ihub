@@ -38,7 +38,7 @@ const StudentSchedule = lazy(() => import("@/pages/portal/student/StudentSchedul
 const StudentSupport = lazy(() => import("@/pages/portal/student/StudentSupport"));
 const StudentPayments = lazy(() => import("@/pages/portal/student/StudentPayments"));
 const StudentGrades = lazy(() => import("@/pages/portal/student/StudentGrades"));
-const StudentTasks = lazy(() => import("@/pages/portal/student/StudentTasks"));
+const AIVoiceTutor = lazy(() => import("@/pages/portal/student/AIVoiceTutor"));
 const ClientDashboard = lazy(() => import("@/pages/portal/client/ClientDashboard"));
 const ClientApplications = lazy(() => import("@/pages/portal/client/ClientApplications"));
 const ClientProjectWorkspace = lazy(() => import("@/pages/portal/client/ClientProjectWorkspace"));
@@ -151,7 +151,6 @@ export function AnimatedRoutes() {
           <Route path="/portal/student/courses/:courseId" element={<ProtectedRoute allowedRoles={["student"]}><CourseDetail /></ProtectedRoute>} />
           <Route path="/portal/student/projects" element={<ProtectedRoute allowedRoles={["student"]}><StudentProjects /></ProtectedRoute>} />
           <Route path="/portal/student/projects/:projectId" element={<ProtectedRoute allowedRoles={["student"]}><StudentProjectDetail /></ProtectedRoute>} />
-          <Route path="/portal/student/my-tasks" element={<ProtectedRoute allowedRoles={["student"]}><StudentTasks /></ProtectedRoute>} />
           <Route path="/portal/student/certificates" element={<ProtectedRoute allowedRoles={["student"]}><StudentCertificates /></ProtectedRoute>} />
           <Route path="/portal/student/internship" element={<ProtectedRoute allowedRoles={["student"]}><StudentInternships /></ProtectedRoute>} />
           <Route path="/portal/student/schedule" element={<ProtectedRoute allowedRoles={["student"]}><StudentSchedule /></ProtectedRoute>} />
@@ -159,6 +158,7 @@ export function AnimatedRoutes() {
           <Route path="/portal/student/gradings" element={<ProtectedRoute allowedRoles={["student"]}><StudentGrades /></ProtectedRoute>} />
           <Route path="/portal/student/profile" element={<ProtectedRoute allowedRoles={["student"]}><PortalSettings /></ProtectedRoute>} />
           <Route path="/portal/student/module-access" element={<ProtectedRoute allowedRoles={["student"]}><ModuleAccessDashboard /></ProtectedRoute>} />
+          <Route path="/portal/student/voice-tutor" element={<ProtectedRoute allowedRoles={["student"]}><AIVoiceTutor /></ProtectedRoute>} />
 
           {/* Client Portal */}
           <Route path="/portal/client" element={<ProtectedRoute allowedRoles={["client"]}><ClientDashboard /></ProtectedRoute>} />
