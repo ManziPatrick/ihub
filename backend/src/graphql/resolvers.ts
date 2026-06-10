@@ -185,6 +185,32 @@ export const resolvers = {
   Query: {
     ...applicationPhaseResolvers.Query,
     ...projectTaskResolvers.Query,
+    // Ensure non-nullability: schema defines [ProjectApplication!]! but missing resolvers can return null.
+    // This resolver returns an empty array when the user has no applications.
+    myProjectApplications: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const { ProjectApplication } = require('../models/ProjectApplication');
+
+      // Client-facing apps are keyed by clientId in the schema.
+      // Support both clientId (current) and userId (legacy) to avoid empty arrays.
+      const apps = await ProjectApplication.find({
+        status: { $ne: 'deleted' },
+        $or: [
+          { clientId: context.user.id },
+          { userId: context.user.id },
+        ],
+      }).sort({ createdAt: -1 });
+
+      return apps.map((app: any) => {
+        const obj = app.toObject();
+        return {
+          ...obj,
+          id: app._id,
+          userId: app.userId?.toString?.() || app.userId,
+          clientId: app.clientId?.toString?.() || app.clientId,
+        };
+      });
+    },
     hello: () => 'Hello world from Apollo Server!',
 
     // Resource Queries

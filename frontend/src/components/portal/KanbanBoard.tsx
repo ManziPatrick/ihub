@@ -198,7 +198,7 @@ export function KanbanBoard({ tasks, projectId, userRole, onAddTask, onEditTask 
 
                           {task.description && (
                             <p className="text-[10px] text-muted-foreground line-clamp-2 mb-2">
-                              {task.description}
+                              {task.description.replace(/<[^>]*>/g, "")}
                             </p>
                           )}
 

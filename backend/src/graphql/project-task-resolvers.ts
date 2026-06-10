@@ -63,6 +63,87 @@ export const projectTaskResolvers = {
         overdueTasks: allTasks.filter(t => t.dueDate && new Date(t.dueDate) < now && t.status !== 'done').length,
       };
     },
+
+    projectDeveloperTaskSummary: async (_: any, { projectId }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+
+      const tasks = await ProjectTask.find({ projectId, isDeleted: false })
+        .populate('assigneeId')
+        .populate('projectId');
+
+      // Weighted mapping
+      const weights: Record<string, number> = {
+        todo: 25,
+        in_progress: 50,
+        in_review: 75,
+        done: 100,
+        blocked: 0,
+        backlog: 0,
+      };
+
+      const byDeveloper = new Map<string, { developer: any; tasks: any[] }>();
+      for (const task of tasks) {
+        const assignee = (task as any).assigneeId;
+        if (!assignee) continue;
+        const devId = assignee._id.toString();
+        if (!byDeveloper.has(devId)) {
+          byDeveloper.set(devId, { developer: assignee, tasks: [] });
+        }
+        byDeveloper.get(devId)!.tasks.push(task);
+      }
+
+      const results = Array.from(byDeveloper.values()).map(({ developer, tasks: devTasks }) => {
+        const totalTasks = devTasks.length;
+        const doneTasks = devTasks.filter(t => t.status === 'done').length;
+        const inProgressTasks = devTasks.filter(t => t.status === 'in_progress' || t.status === 'todo' || t.status === 'in_review').length;
+        const todoTasks = devTasks.filter(t => t.status === 'todo').length;
+        const inReviewTasks = devTasks.filter(t => t.status === 'in_review').length;
+        const blockedTasks = devTasks.filter(t => t.status === 'blocked').length;
+
+        const weightedSum = devTasks.reduce((sum: number, t: any) => {
+          const w = weights[t.status] ?? 0;
+          return sum + w;
+        }, 0);
+
+        const progressPercentage = totalTasks > 0 ? Math.round(weightedSum / totalTasks) : 0;
+
+        const taskItems = devTasks
+          .slice()
+          .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+          .map((t: any) => ({
+            id: t._id.toString(),
+            title: t.title,
+            status: t.status,
+            priority: t.priority,
+            dueDate: t.dueDate ? t.dueDate.toISOString() : null,
+            order: t.order,
+            approved: t.approved,
+            feedback: t.feedback,
+            assigneeId: t.assigneeId?._id?.toString() ?? null,
+          }));
+
+        return {
+          developer: {
+            id: developer._id.toString(),
+            username: developer.username,
+            fullName: developer.fullName,
+            avatar: developer.avatar,
+          },
+          totalTasks,
+          todoTasks,
+          inProgressTasks,
+          inReviewTasks,
+          doneTasks,
+          blockedTasks,
+          progressPercentage,
+          tasks: taskItems,
+        };
+      });
+
+      // Stable sort by progress desc then name
+      results.sort((a: any, b: any) => (b.progressPercentage - a.progressPercentage) || (a.developer.username.localeCompare(b.developer.username)));
+      return results;
+    },
   },
 
   Mutation: {

@@ -459,7 +459,9 @@ export const typeDefs = `#graphql
     completed: Boolean!
     approved: Boolean
     feedback: String
+    category: String
   }
+
 
   type ProjectLink {
     title: String!
@@ -481,7 +483,12 @@ export const typeDefs = `#graphql
     feedback: String
     status: String
     aiReview: String
+    # Additional fields used by some clients
+    version: String
+    fileName: String
+    submittedBy: ID
   }
+
 
   type MilestoneDetailed {
     title: String!
@@ -494,7 +501,37 @@ export const typeDefs = `#graphql
     aiAnalysis: String
   }
 
+  type ProjectStage {
+    name: String!
+    description: String
+    order: Int!
+    status: String!
+    assignee: User
+    assigneeId: ID
+    dueDate: String
+    completed: Boolean!
+    completedAt: String
+  }
+
+  type Evaluation {
+    rating: Int
+    comment: String
+    summary: String
+
+    clientFeedback: String
+    developerEvaluations: [DeveloperEvaluation!]
+    reviewerNotes: String
+  }
+
+  type DeveloperEvaluation {
+    rating: Int
+    comment: String
+    reviewerNotes: String
+  }
+
+
   type Project {
+
     id: ID!
     userId: ID!
     user: User
@@ -510,9 +547,14 @@ export const typeDefs = `#graphql
     submittedAt: String
     grade: String
     feedback: String
+    # Field used by some clients
+    evaluation: Evaluation
+
     team: [TeamMember]
+
     tasks: [Task]
     milestones: [MilestoneDetailed]
+    stages: [ProjectStage]
     documentation: Documentation
     description: String!
     submissionUrl: String
@@ -524,6 +566,7 @@ export const typeDefs = `#graphql
     createdAt: String!
     updatedAt: String!
   }
+
 
   type MilestonePPT {
     title: String!
@@ -791,7 +834,7 @@ export const typeDefs = `#graphql
     allUserGradeReports: [UserGradeReport]
 
     # Projects
-    projects(page: Int, limit: Int): ProjectResponse
+    projects(page: Int, limit: Int, course: String): ProjectResponse
     projectTemplates(category: String, course: String): [Project]
     myProjects(status: String): [Project]
     myInternships(status: String): [Internship]
@@ -2544,6 +2587,34 @@ export const typeDefs = `#graphql
     overdueTasks: Int!
   }
 
+  type ProjectDeveloperTask {
+    id: ID!
+    title: String!
+    status: String!
+    priority: String!
+    dueDate: String
+    order: Int!
+    approved: Boolean!
+    feedback: String
+    assigneeId: ID
+  }
+
+  type DeveloperTaskSummary {
+    developer: User!
+    totalTasks: Int!
+    todoTasks: Int!
+    inProgressTasks: Int!
+    inReviewTasks: Int!
+    doneTasks: Int!
+    blockedTasks: Int!
+    progressPercentage: Int!
+    tasks: [ProjectDeveloperTask!]!
+  }
+
+  extend type Query {
+    projectDeveloperTaskSummary(projectId: ID!): [DeveloperTaskSummary!]!
+  }
+
   type StudentProjectSummary {
     student: User!
     totalProjects: Int!
@@ -2634,6 +2705,41 @@ export const typeDefs = `#graphql
       projectId: ID!
       rating: Int!
       comment: String!
+    ): Project!
+
+    # Project Stage Mutations
+    addProjectStage(
+      projectId: ID!
+      name: String!
+      description: String
+      order: Int!
+      dueDate: String
+    ): Project!
+
+    updateProjectStage(
+      projectId: ID!
+      order: Int!
+      name: String
+      description: String
+      status: String
+      assigneeId: ID
+      dueDate: String
+    ): Project!
+
+    assignProjectStage(
+      projectId: ID!
+      order: Int!
+      assigneeId: ID!
+    ): Project!
+
+    completeProjectStage(
+      projectId: ID!
+      order: Int!
+    ): Project!
+
+    removeProjectStage(
+      projectId: ID!
+      order: Int!
     ): Project!
   }
 
