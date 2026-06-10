@@ -624,7 +624,7 @@ export default function ClientApplications() {
                           {app.status.replace("_", " ")}
                         </Badge>
                       </div>
-                      <div className="text-xs text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: app.description }} />
+                      <p className="text-xs text-muted-foreground line-clamp-2">{app.description}</p>
 
                       {app.reviewNotes && (
                         <div className="p-2 bg-accent/5 rounded border border-accent/10 text-[11px] text-muted-foreground">

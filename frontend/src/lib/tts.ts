@@ -1,63 +1,50 @@
-type SpeakCallback = () => void;
+class TTS {
+  private synth: SpeechSynthesis;
+  private utterance: SpeechSynthesisUtterance | null;
+  
+  constructor() {
+    this.synth = window.speechSynthesis;
+    this.utterance = null;
+  }
 
-interface TTS {
-  speak: (text: string, callback?: SpeakCallback) => void;
-  stop: () => void;
-  pause: () => void;
-  resume: () => void;
-  speaking: boolean;
-}
-
-function createTTS(): TTS {
-  let utterance: SpeechSynthesisUtterance | null = null;
-  let onEnd: SpeakCallback | null = null;
-
-  const tts: TTS = {
-    speaking: false,
-
-    speak(text: string, callback?: SpeakCallback) {
-      if (!window.speechSynthesis) {
-        console.warn('Speech synthesis not supported');
-        callback?.();
-        return;
+  speak(text: string, onEnd?: () => void) {
+    this.stop();
+    
+    setTimeout(() => {
+      this.utterance = new SpeechSynthesisUtterance(text);
+      
+      const voices = this.synth.getVoices();
+      const preferredVoice = voices.find(v => v.lang.startsWith('en-') && (v.name.includes('Google') || v.name.includes('Premium')));
+      if (preferredVoice) {
+        this.utterance.voice = preferredVoice;
       }
+      
+      if (onEnd) {
+        this.utterance.onend = onEnd;
+        this.utterance.onerror = () => onEnd();
+      }
+      
+      this.synth.speak(this.utterance);
+    }, 50);
+  }
 
-      window.speechSynthesis.cancel();
-      utterance = new SpeechSynthesisUtterance(text);
-      onEnd = callback || null;
+  pause() {
+    if (this.synth.speaking && !this.synth.paused) {
+      this.synth.pause();
+    }
+  }
 
-      utterance.onend = () => {
-        tts.speaking = false;
-        onEnd?.();
-        onEnd = null;
-      };
+  resume() {
+    if (this.synth.paused) {
+      this.synth.resume();
+    }
+  }
 
-      utterance.onerror = () => {
-        tts.speaking = false;
-        onEnd?.();
-        onEnd = null;
-      };
-
-      tts.speaking = true;
-      window.speechSynthesis.speak(utterance);
-    },
-
-    stop() {
-      tts.speaking = false;
-      window.speechSynthesis.cancel();
-      onEnd = null;
-    },
-
-    pause() {
-      window.speechSynthesis.pause();
-    },
-
-    resume() {
-      window.speechSynthesis.resume();
-    },
-  };
-
-  return tts;
+  stop() {
+    if (this.synth.speaking || this.synth.pending) {
+      this.synth.cancel();
+    }
+  }
 }
 
-export const tts = createTTS();
+export const tts = new TTS();

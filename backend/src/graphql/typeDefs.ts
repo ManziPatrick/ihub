@@ -494,18 +494,6 @@ export const typeDefs = `#graphql
     aiAnalysis: String
   }
 
-  type ProjectStage {
-    name: String!
-    description: String
-    order: Int!
-    status: String!
-    assignee: User
-    assigneeId: ID
-    dueDate: String
-    completed: Boolean!
-    completedAt: String
-  }
-
   type Project {
     id: ID!
     userId: ID!
@@ -525,7 +513,6 @@ export const typeDefs = `#graphql
     team: [TeamMember]
     tasks: [Task]
     milestones: [MilestoneDetailed]
-    stages: [ProjectStage]
     documentation: Documentation
     description: String!
     submissionUrl: String
@@ -804,7 +791,7 @@ export const typeDefs = `#graphql
     allUserGradeReports: [UserGradeReport]
 
     # Projects
-    projects(page: Int, limit: Int, course: String): ProjectResponse
+    projects(page: Int, limit: Int): ProjectResponse
     projectTemplates(category: String, course: String): [Project]
     myProjects(status: String): [Project]
     myInternships(status: String): [Internship]
@@ -2489,25 +2476,6 @@ export const typeDefs = `#graphql
     technicalUrl: String
   }
 
-  type ResourceItem {
-    title: String!
-    url: String!
-  }
-
-  type DeveloperFeedback {
-    id: ID
-    userId: ID!
-    user: User
-    message: String!
-    resources: [ResourceItem!]
-    createdAt: String!
-  }
-
-  input ResourceItemInput {
-    title: String!
-    url: String!
-  }
-
   # ─── Project Kanban Board Types ────────────────────────────────────────────
   type ProjectTask {
     id: ID!
@@ -2526,7 +2494,6 @@ export const typeDefs = `#graphql
     dependencies: [ID]
     approved: Boolean!
     feedback: String
-    developerFeedback: [DeveloperFeedback!]
     createdAt: String!
     updatedAt: String!
   }
@@ -2629,7 +2596,6 @@ export const typeDefs = `#graphql
     deleteProjectTask(id: ID!): Boolean!
     approveProjectTask(id: ID!, feedback: String): ProjectTask!
     assignProjectTask(id: ID!, assigneeId: ID!): ProjectTask!
-    sendTaskFeedback(taskId: ID!, message: String!, resources: [ResourceItemInput!]): ProjectTask!
 
     # Client-facing mutations
     submitProjectApplication(
@@ -2647,41 +2613,6 @@ export const typeDefs = `#graphql
       projectId: ID!
       rating: Int!
       comment: String!
-    ): Project!
-
-    # Project Stage Mutations
-    addProjectStage(
-      projectId: ID!
-      name: String!
-      description: String
-      order: Int!
-      dueDate: String
-    ): Project!
-
-    updateProjectStage(
-      projectId: ID!
-      order: Int!
-      name: String
-      description: String
-      status: String
-      assigneeId: ID
-      dueDate: String
-    ): Project!
-
-    assignProjectStage(
-      projectId: ID!
-      order: Int!
-      assigneeId: ID!
-    ): Project!
-
-    completeProjectStage(
-      projectId: ID!
-      order: Int!
-    ): Project!
-
-    removeProjectStage(
-      projectId: ID!
-      order: Int!
     ): Project!
   }
 
