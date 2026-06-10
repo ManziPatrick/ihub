@@ -909,6 +909,9 @@ export const GET_ALL_PROJECTS = gql`
           user {
             id
             username
+            fullName
+            avatar
+            email
           }
         }
         mentors {
@@ -923,6 +926,9 @@ export const GET_ALL_PROJECTS = gql`
         user {
           id
           username
+          fullName
+          avatar
+          email
         }
         createdAt
         updatedAt

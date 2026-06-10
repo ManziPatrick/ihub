@@ -7557,6 +7557,13 @@ export const resolvers = {
     trainer: async (parent: any) => await User.findById(parent.trainerId),
     revokedByUser: async (parent: any) => parent.revokedBy ? await User.findById(parent.revokedBy) : null,
   },
+  DeveloperFeedback: {
+    user: async (parent: any) => {
+      if (!parent.userId) return null;
+      if (parent.userId.username) return parent.userId;
+      return await User.findById(parent.userId);
+    }
+  },
 
   PaymentTransaction: {
     courses: async (parent: any) => {

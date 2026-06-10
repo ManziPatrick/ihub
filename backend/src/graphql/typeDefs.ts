@@ -2476,6 +2476,25 @@ export const typeDefs = `#graphql
     technicalUrl: String
   }
 
+  type ResourceItem {
+    title: String!
+    url: String!
+  }
+
+  type DeveloperFeedback {
+    id: ID
+    userId: ID!
+    user: User
+    message: String!
+    resources: [ResourceItem!]
+    createdAt: String!
+  }
+
+  input ResourceItemInput {
+    title: String!
+    url: String!
+  }
+
   # ─── Project Kanban Board Types ────────────────────────────────────────────
   type ProjectTask {
     id: ID!
@@ -2494,6 +2513,7 @@ export const typeDefs = `#graphql
     dependencies: [ID]
     approved: Boolean!
     feedback: String
+    developerFeedback: [DeveloperFeedback!]
     createdAt: String!
     updatedAt: String!
   }
@@ -2596,6 +2616,7 @@ export const typeDefs = `#graphql
     deleteProjectTask(id: ID!): Boolean!
     approveProjectTask(id: ID!, feedback: String): ProjectTask!
     assignProjectTask(id: ID!, assigneeId: ID!): ProjectTask!
+    sendTaskFeedback(taskId: ID!, message: String!, resources: [ResourceItemInput!]): ProjectTask!
 
     # Client-facing mutations
     submitProjectApplication(
