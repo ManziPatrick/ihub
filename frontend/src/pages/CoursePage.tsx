@@ -14,7 +14,10 @@ import { CheckCircle, Clock, BookOpen, User, PlayCircle, Lock, Award, ShoppingCa
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { ApplyCourseDialog } from "@/components/portal/dialogs";
-import { useState } from "react"; export default function CoursePage() {
+import { useState } from "react";
+import { stripHtml } from "@/lib/utils";
+
+export default function CoursePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
@@ -67,10 +70,10 @@ import { useState } from "react"; export default function CoursePage() {
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
         <title>{course?.title ? `${course.title} | Bootskills - Course in Kigali, Rwanda` : "Course Details | Bootskills"}</title>
-        <meta name="description" content={course?.description?.substring(0, 160) || "Explore this course from Bootskills. Practical, project-based training in Kigali, Rwanda."} />
+        <meta name="description" content={stripHtml(course?.description)?.substring(0, 160) || "Explore this course from Bootskills. Practical, project-based training in Kigali, Rwanda."} />
         <link rel="canonical" href={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"} />
         <meta property="og:title" content={course?.title ? `${course.title} | Bootskills` : "Course | Bootskills"} />
-        <meta property="og:description" content={course?.description?.substring(0, 160) || "Explore practical training from Bootskills in Kigali, Rwanda."} />
+        <meta property="og:description" content={stripHtml(course?.description)?.substring(0, 160) || "Explore practical training from Bootskills in Kigali, Rwanda."} />
         <meta property="og:url" content={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"} />
         <meta property="og:type" content="article" />
         {course?.thumbnail && <meta property="og:image" content={course.thumbnail} />}
@@ -95,7 +98,7 @@ import { useState } from "react"; export default function CoursePage() {
                 </Badge>
                 <h1 className="text-4xl font-bold font-heading">{course.title}</h1>
                 <p className="text-xl text-muted-foreground leading-relaxed">
-                  {course.description}
+                  {stripHtml(course.description) || course.description}
                 </p>
 
                 <div className="flex flex-wrap gap-6 pt-4 text-sm text-muted-foreground">

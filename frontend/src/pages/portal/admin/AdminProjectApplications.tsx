@@ -13,7 +13,8 @@ import { format } from "date-fns";
 import {
   FileText, Search, CheckCircle2, XCircle, Clock, Eye,
   ChevronRight, Loader2, Building2, User2, Calendar,
-  FileCheck, AlertCircle, Shield, ExternalLink, Filter, RefreshCw
+  FileCheck, AlertCircle, Shield, ExternalLink, Filter, RefreshCw,
+  Code
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -77,6 +78,17 @@ const GET_TRAINERS = gql`
     }
   }
 `;
+
+// ─── Render HTML Content ────────────────────────────────────────────
+function RenderHTML({ html, className = "" }: { html: string; className?: string }) {
+  if (!html) return null;
+  return (
+    <div
+      className={`prose prose-sm dark:prose-invert max-w-none ${className}`}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   submitted: { label: "Submitted", color: "bg-blue-500/10 text-blue-500 border-blue-500/20", icon: Clock },
@@ -173,6 +185,8 @@ export default function AdminProjectApplications() {
     setSelectedApp(app);
     setViewMode("initialize");
   };
+  // Full View Dialog state
+  const [fullViewApp, setFullViewApp] = useState<any>(null);
 
   return (
     <PortalLayout>
@@ -280,7 +294,9 @@ export default function AdminProjectApplications() {
                             )}
                           </div>
 
-                          <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{app.description}</p>
+                          <div className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                            <RenderHTML html={app.description} />
+                          </div>
 
                           <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1.5">
@@ -332,6 +348,9 @@ export default function AdminProjectApplications() {
 
                         {/* Action Buttons */}
                         <div className="flex flex-col gap-2 shrink-0">
+                          <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => setFullViewApp(app)}>
+                            <Code className="w-3.5 h-3.5 mr-1" /> View Full
+                          </Button>
                           <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => openReview(app)}>
                             <Eye className="w-3.5 h-3.5 mr-1" /> Review
                           </Button>
@@ -373,7 +392,7 @@ export default function AdminProjectApplications() {
 
                 <div className="p-3 bg-muted/20 rounded-xl text-sm">
                   <p className="text-xs text-muted-foreground mb-1">Description</p>
-                  <p className="text-sm leading-relaxed">{selectedApp.description}</p>
+                  <RenderHTML html={selectedApp.description} className="text-sm leading-relaxed" />
                 </div>
 
                 <div className="space-y-2">
@@ -478,6 +497,93 @@ export default function AdminProjectApplications() {
                   {initializing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ChevronRight className="w-4 h-4 mr-1" />}
                   Launch Project
                 </Button>
+              </DialogFooter>            </DialogContent>
+            </Dialog>
+          )}
+        {/* Full View Raw HTML Dialog */}
+        {fullViewApp && (
+          <Dialog open onOpenChange={() => setFullViewApp(null)}>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Code className="w-5 h-5 text-accent" />
+                  Full Application Details — {fullViewApp.title}
+                </DialogTitle>
+                <DialogDescription>
+                  Raw description content including HTML tags.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-sm">
+                  <Badge variant="outline" className="text-[10px] uppercase font-bold">
+                    Status: {fullViewApp.status}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    Client: {fullViewApp.client?.fullName || fullViewApp.client?.email}
+                  </span>
+                </div>
+
+                {/* Rendered HTML (preview) */}
+                <div className="p-4 bg-muted/10 border border-border/30 rounded-xl">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                    Rendered Preview
+                  </p>
+                  <RenderHTML html={fullViewApp.description} />
+                </div>
+
+                {/* Raw HTML with tags visible */}
+                <div className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Code className="w-3.5 h-3.5" /> Raw HTML Source
+                  </p>
+                  <pre className="p-4 bg-muted/20 border border-border/30 rounded-xl text-xs font-mono whitespace-pre-wrap overflow-x-auto max-h-80 overflow-y-auto">
+                    {fullViewApp.description}
+                  </pre>
+                </div>
+
+                {/* Documents */}
+                {(fullViewApp.requiredDocuments?.overviewUrl || fullViewApp.requiredDocuments?.featuresUrl || fullViewApp.requiredDocuments?.technicalUrl) && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Documents</p>
+                    <div className="flex flex-wrap gap-2">
+                      {fullViewApp.requiredDocuments.overviewUrl && (
+                        <a href={fullViewApp.requiredDocuments.overviewUrl} target="_blank" rel="noreferrer">
+                          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1">
+                            <FileText className="w-3 h-3" /> Overview
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </Button>
+                        </a>
+                      )}
+                      {fullViewApp.requiredDocuments.featuresUrl && (
+                        <a href={fullViewApp.requiredDocuments.featuresUrl} target="_blank" rel="noreferrer">
+                          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1">
+                            <FileCheck className="w-3 h-3" /> Features
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </Button>
+                        </a>
+                      )}
+                      {fullViewApp.requiredDocuments.technicalUrl && (
+                        <a href={fullViewApp.requiredDocuments.technicalUrl} target="_blank" rel="noreferrer">
+                          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1">
+                            <AlertCircle className="w-3 h-3" /> Technical
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {fullViewApp.reviewNotes && (
+                  <div className="p-3 bg-muted/20 rounded-lg text-xs text-muted-foreground border border-border/30">
+                    <strong>Admin Note:</strong> {fullViewApp.reviewNotes}
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setFullViewApp(null)}>Close</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

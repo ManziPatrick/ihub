@@ -26,7 +26,6 @@ import aiCourseRoutes from './routes/AICourseRoutes';
 import moduleAccessRoutes from './routes/ModuleAccessRoutes';
 import paymentRoutes from './routes/PaymentRoutes';
 import certificateRoutes from './routes/CertificateRoutes';
-import voiceTutorRoutes from './routes/VoiceTutorRoutes';
 import { authMiddleware } from './middleware/auth';
 import { maintenanceMiddleware } from './middleware/maintenance';
 
@@ -218,7 +217,6 @@ const startServer = async () => {
     app.use('/api/payments', paymentRoutes);
     app.use('/api/certificates', certificateRoutes);
     app.use('/api/ai-courses', aiCourseRoutes); // Enabled for deployment
-    app.use('/api/voice-tutor', voiceTutorRoutes);
 
     // =============================
     // GLOBAL ERROR HANDLER

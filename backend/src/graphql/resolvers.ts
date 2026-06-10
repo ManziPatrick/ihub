@@ -562,12 +562,15 @@ export const resolvers = {
     messages: async (_: any, { conversationId }: { conversationId: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
+      // Gracefully handle missing/invalid conversationId
+      if (!conversationId || conversationId === 'new') return [];
+
       // Verify user is part of this conversation
       const conversation = await Conversation.findById(conversationId);
-      if (!conversation) throw new Error('Conversation not found');
+      if (!conversation) return []; // Return empty instead of throwing for graceful UI
 
       const isParticipant = conversation.participants.some((p: any) => p.toString() === context.user.id);
-      if (!isParticipant) throw new Error('Not authorized');
+      if (!isParticipant) return []; // Return empty instead of throwing for graceful UI
 
       return await Message.find({ conversationId })
         .populate('sender')
@@ -1419,21 +1422,26 @@ export const resolvers = {
     },
 
     // Projects
-    projects: async (_: any, { page = 1, limit = 10 }: any, context: any) => {
+    projects: async (_: any, { page = 1, limit = 10, course }: any, context: any) => {
       if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin' && context.user.role !== 'trainer')) {
         throw new Error('Not authorized');
       }
 
+      const query: any = {};
+      if (course) {
+        query.course = { $regex: course, $options: 'i' };
+      }
+
       const skip = (page - 1) * limit;
       const [items, totalCount] = await Promise.all([
-        Project.find()
+        Project.find(query)
           .populate('userId')
           .populate('mentors')
           .populate('team.userId')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit),
-        Project.countDocuments()
+        Project.countDocuments(query)
       ]);
 
       const totalPages = Math.ceil(totalCount / limit);
@@ -7192,11 +7200,235 @@ export const resolvers = {
         title: app.title,
         description: app.description,
         course,
-        type: 'Client Project',
+        type: 'Individual',
         status: 'in_progress',
         mentors: mentorIds,
         progress: 0,
       });
+      await project.save();
+    },
+
+    submitProjectApplication: async (_: any, { title, description, documents }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const { ProjectApplication } = require('../models/ProjectApplication');
+      const app = new ProjectApplication({
+        clientId: context.user.id,
+        title,
+        description,
+        requiredDocuments: {
+          overviewUrl: documents?.overviewUrl,
+          featuresUrl: documents?.featuresUrl,
+          technicalUrl: documents?.technicalUrl,
+        },
+        status: 'submitted',
+      });
+      await app.save();
+      return await app.populate('clientId');
+    },
+
+    // ─── Project Stage Mutations ────────────────────────────────────────
+    addProjectStage: async (_: any, { projectId, name, description, order, dueDate }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      const project = await Project.findById(projectId);
+      if (!project) throw new Error('Project not found');
+
+      if (!project.stages) project.stages = [];
+      project.stages.push({
+        name,
+        description,
+        order,
+        status: 'pending',
+        completed: false,
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+      });
+      await project.save();
+      return project;
+    },
+
+    updateProjectStage: async (_: any, { projectId, order, name, description, status, assigneeId, dueDate }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      const project = await Project.findById(projectId);
+      if (!project) throw new Error('Project not found');
+      if (!project.stages || project.stages.length === 0) throw new Error('No stages found');
+
+      const stage = project.stages.find((s: any) => s.order === order);
+      if (!stage) throw new Error("Stage with order " + order + " not found");
+
+      if (name !== undefined) stage.name = name;
+      if (description !== undefined) stage.description = description;
+      if (status !== undefined) {
+        stage.status = status;
+        if (status === 'completed') {
+          stage.completed = true;
+          stage.completedAt = new Date();
+        }
+      }
+      if (assigneeId !== undefined) stage.assigneeId = assigneeId;
+      if (dueDate !== undefined) stage.dueDate = new Date(dueDate);
+
+      await project.save();
+      return project;
+    },
+
+    assignProjectStage: async (_: any, { projectId, order, assigneeId }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      const project = await Project.findById(projectId);
+      if (!project) throw new Error('Project not found');
+      if (!project.stages || project.stages.length === 0) throw new Error('No stages found');
+
+      const stage = project.stages.find((s: any) => s.order === order);
+      if (!stage) throw new Error("Stage with order " + order + " not found");
+
+      stage.assigneeId = assigneeId;
+      await project.save();
+      return project;
+    },
+
+    completeProjectStage: async (_: any, { projectId, order }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      const project = await Project.findById(projectId);
+      if (!project) throw new Error('Project not found');
+      if (!project.stages || project.stages.length === 0) throw new Error('No stages found');
+
+      const stage = project.stages.find((s: any) => s.order === order);
+      if (!stage) throw new Error("Stage with order " + order + " not found");
+
+      stage.status = 'completed';
+      stage.completed = true;
+      stage.completedAt = new Date();
+      await project.save();
+
+      // ── Auto Dev Onboarding ──────────────────────────────────────────────
+      // After the last stage is completed, flag project and create onboarding
+      const allStagesCompleted = project.stages.every((s: any) => s.completed === true);
+      if (allStagesCompleted && project.userId) {
+        const { ProjectOnboarding } = require('../models/ProjectOnboarding');
+
+        // Set project status to onboarding
+        project.status = 'onboarding';
+        await project.save();
+
+        // Create onboarding record for the project owner
+        const existingOnboarding = await ProjectOnboarding.findOne({ projectId, developerId: project.userId });
+        if (!existingOnboarding) {
+          const onboarding = new ProjectOnboarding({
+            projectId,
+            developerId: project.userId,
+            role: 'developer',
+            status: 'active',
+            checklistTasks: [],
+          });
+          await onboarding.save();
+        }
+
+        // Notify all super_admins and the project owner
+        const admins = await User.find({ role: 'super_admin' });
+        const adminIds = admins.map((a: any) => a._id.toString());
+        const uniqueTargets = [...new Set([...adminIds, project.userId.toString()])];
+
+        for (const userId of uniqueTargets) {
+          sendNotification(userId, {
+            type: 'PROJECT_READY_FOR_ONBOARDING',
+            title: 'Project Ready for Developer Onboarding',
+            message: `All stages for project "${project.title || 'Untitled'}" are completed. The developer is ready for onboarding.`,
+            link: `/portal/admin/project-onboarding?projectId=${projectId}`,
+          });
+        }
+
+        // ── Auto Create Onboarding Meeting ─────────────────────────────────
+        // Schedule a project onboarding meeting for 2 days from now
+        const meetingDate = new Date();
+        meetingDate.setDate(meetingDate.getDate() + 2);
+        const dateStr = meetingDate.toISOString().split('T')[0];
+        const timeStr = '10:00';
+
+        // Check for existing booking to avoid duplicates
+        const existingBooking = await Booking.findOne({
+          userId: project.userId,
+          type: 'project_onboarding',
+          date: dateStr,
+        });
+        if (!existingBooking) {
+          const booking = new Booking({
+            userId: project.userId,
+            mentorId: context.user.id,
+            type: 'project_onboarding',
+            date: dateStr,
+            time: timeStr,
+            topic: `Project Onboarding - ${project.title || 'Untitled'}`,
+            notes: `All project stages completed. Meeting to discuss developer onboarding and next steps for project "${project.title || 'Untitled'}".`,
+            status: 'confirmed',
+            deliveryMode: 'online',
+          });
+          await booking.save();
+        }
+
+        // Notify the project owner about the scheduled meeting (always send)
+        sendNotification(project.userId.toString(), {
+          type: 'MEETING_SCHEDULED',
+          title: 'Onboarding Meeting Scheduled',
+          message: `An onboarding meeting has been scheduled for ${dateStr} at ${timeStr} to discuss the completed project and next steps.`,
+          link: `/portal/student/schedule`,
+        });
+
+        // Also create bookings for each mentor/trainer assigned to the project
+        if (project.mentors && project.mentors.length > 0) {
+          for (const mentorId of project.mentors) {
+            const mentorExists = await User.findById(mentorId);
+            if (mentorExists) {
+              // Check for existing mentor booking to avoid duplicates
+              const existingMentorBooking = await Booking.findOne({
+                userId: project.userId,
+                mentorId: mentorId.toString(),
+                type: 'project_onboarding',
+                date: dateStr,
+              });
+              if (!existingMentorBooking) {
+                const mentorBooking = new Booking({
+                  userId: project.userId,
+                  mentorId: mentorId.toString(),
+                  type: 'project_onboarding',
+                  date: dateStr,
+                  time: timeStr,
+                  topic: `Project Onboarding - ${project.title || 'Untitled'}`,
+                  notes: `Onboarding meeting for project "${project.title || 'Untitled'}". Trainer ${mentorExists.fullName || mentorExists.username} is invited.`,
+                  status: 'confirmed',
+                  deliveryMode: 'online',
+                });
+                await mentorBooking.save();
+              }
+
+              sendNotification(mentorId.toString(), {
+                type: 'MEETING_SCHEDULED',
+                title: 'Onboarding Meeting Invitation',
+                message: `You are invited to an onboarding meeting for project "${project.title || 'Untitled'}" on ${dateStr} at ${timeStr}.`,
+                link: `/portal/trainer/projects`,
+              });
+            }
+          }
+        }
+      }
+
+      return project;
+    },
+
+    removeProjectStage: async (_: any, { projectId, order }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      const project = await Project.findById(projectId);
+      if (!project) throw new Error('Project not found');
+      if (!project.stages || project.stages.length === 0) throw new Error('No stages found');
+
+      project.stages = project.stages.filter((s: any) => s.order !== order);
       await project.save();
       return project;
     },
@@ -7274,6 +7506,22 @@ export const resolvers = {
   },
   Project: {
     id: (parent: any) => parent.id || parent._id || parent.toString(),
+    stages: async (parent: any, _: any, context: any) => {
+      if (!parent.stages || parent.stages.length === 0) return [];
+      const populatedStages = await Promise.all(
+        parent.stages.map(async (stage: any) => {
+          if (stage.assigneeId) {
+            const user = await User.findById(stage.assigneeId).select('id username fullName avatar');
+            return {
+              ...stage.toObject ? stage.toObject() : stage,
+              assignee: user,
+            };
+          }
+          return stage.toObject ? stage.toObject() : stage;
+        })
+      );
+      return populatedStages;
+    },
     userId: (parent: any) => {
       if (!parent.userId) return null;
       return (parent.userId as any)._id || parent.userId;
@@ -7556,6 +7804,13 @@ export const resolvers = {
     team: async (parent: any) => await InternshipTeam.findById(parent.teamId),
     trainer: async (parent: any) => await User.findById(parent.trainerId),
     revokedByUser: async (parent: any) => parent.revokedBy ? await User.findById(parent.revokedBy) : null,
+  },
+  DeveloperFeedback: {
+    user: async (parent: any) => {
+      if (!parent.userId) return null;
+      if (parent.userId.username) return parent.userId;
+      return await User.findById(parent.userId);
+    }
   },
 
   PaymentTransaction: {

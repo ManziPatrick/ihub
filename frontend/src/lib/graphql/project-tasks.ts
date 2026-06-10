@@ -31,6 +31,21 @@ export const GET_PROJECT_TASKS = gql`
       dependencies
       approved
       feedback
+      developerFeedback {
+        userId
+        user {
+          id
+          username
+          fullName
+          avatar
+        }
+        message
+        resources {
+          title
+          url
+        }
+        createdAt
+      }
       createdAt
       updatedAt
     }
@@ -60,6 +75,21 @@ export const GET_PROJECT_TASK = gql`
       dependencies
       approved
       feedback
+      developerFeedback {
+        userId
+        user {
+          id
+          username
+          fullName
+          avatar
+        }
+        message
+        resources {
+          title
+          url
+        }
+        createdAt
+      }
       createdAt
       updatedAt
     }
@@ -71,6 +101,12 @@ export const GET_MY_PROJECT_TASKS = gql`
     myProjectTasks(status: $status) {
       id
       projectId
+      project {
+        id
+        title
+        status
+        progress
+      }
       title
       description
       status
@@ -232,6 +268,169 @@ export const ASSIGN_PROJECT_TASK = gql`
         avatar
       }
       assigneeId
+    }
+  }
+`;
+
+// ─── PROJECT STAGE MUTATIONS ────────────────────────────────────────────────
+
+export const ADD_PROJECT_STAGE = gql`
+  mutation AddProjectStage(
+    $projectId: ID!
+    $name: String!
+    $description: String
+    $order: Int!
+    $dueDate: String
+  ) {
+    addProjectStage(
+      projectId: $projectId
+      name: $name
+      description: $description
+      order: $order
+      dueDate: $dueDate
+    ) {
+      id
+      stages {
+        name
+        description
+        order
+        status
+        assignee {
+          id
+          username
+          fullName
+          avatar
+        }
+        dueDate
+        completed
+        completedAt
+      }
+    }
+  }
+`;
+
+export const UPDATE_PROJECT_STAGE = gql`
+  mutation UpdateProjectStage(
+    $projectId: ID!
+    $order: Int!
+    $name: String
+    $description: String
+    $status: String
+    $assigneeId: ID
+    $dueDate: String
+  ) {
+    updateProjectStage(
+      projectId: $projectId
+      order: $order
+      name: $name
+      description: $description
+      status: $status
+      assigneeId: $assigneeId
+      dueDate: $dueDate
+    ) {
+      id
+      stages {
+        name
+        description
+        order
+        status
+        assignee {
+          id
+          username
+          fullName
+          avatar
+        }
+        dueDate
+        completed
+        completedAt
+      }
+    }
+  }
+`;
+
+export const ASSIGN_PROJECT_STAGE = gql`
+  mutation AssignProjectStage(
+    $projectId: ID!
+    $order: Int!
+    $assigneeId: ID!
+  ) {
+    assignProjectStage(
+      projectId: $projectId
+      order: $order
+      assigneeId: $assigneeId
+    ) {
+      id
+      stages {
+        name
+        description
+        order
+        status
+        assignee {
+          id
+          username
+          fullName
+          avatar
+        }
+        dueDate
+        completed
+      }
+    }
+  }
+`;
+
+export const COMPLETE_PROJECT_STAGE = gql`
+  mutation CompleteProjectStage($projectId: ID!, $order: Int!) {
+    completeProjectStage(projectId: $projectId, order: $order) {
+      id
+      stages {
+        name
+        description
+        order
+        status
+        assignee {
+          id
+          username
+          fullName
+          avatar
+        }
+        completed
+        completedAt
+      }
+    }
+  }
+`;
+
+export const REMOVE_PROJECT_STAGE = gql`
+  mutation RemoveProjectStage($projectId: ID!, $order: Int!) {
+    removeProjectStage(projectId: $projectId, order: $order) {
+      id
+      stages {
+        name
+        order
+      }
+    }
+  }
+`;
+
+export const SEND_TASK_FEEDBACK = gql`
+  mutation SendTaskFeedback($taskId: ID!, $message: String!, $resources: [ResourceItemInput!]!) {
+    sendTaskFeedback(taskId: $taskId, message: $message, resources: $resources) {
+      id
+      developerFeedback {
+        userId
+        user {
+          id
+          username
+          fullName
+          avatar
+        }
+        message
+        resources {
+          title
+          url
+        }
+        createdAt
+      }
     }
   }
 `;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, CheckCheck, Clock, MessageSquare, Calendar, Trash2, Filter } from "lucide-react";
+import { Bell, CheckCheck, Clock, MessageSquare, Calendar, Trash2, Filter, ClipboardList } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
@@ -15,13 +15,16 @@ import { MARK_NOTIFICATION_READ, MARK_ALL_NOTIFICATIONS_READ } from "@/lib/graph
 const typeIcon = (type: string) => {
     if (type === "message") return <MessageSquare className="w-4 h-4" />;
     if (type === "booking" || type === "BOOKING_UPDATED") return <Calendar className="w-4 h-4" />;
+    if (type === "TASK_ASSIGNED" || type === "TASK_STATUS_CHANGED" || type === "TASK_APPROVED") return <ClipboardList className="w-4 h-4" />;
     return <Bell className="w-4 h-4" />;
 };
 
 const typeColor = (type: string) => {
     if (type === "message") return "bg-blue-500/20 text-blue-400";
     if (type === "booking" || type === "BOOKING_UPDATED") return "bg-purple-500/20 text-purple-400";
-    if (type === "PROJECT_ASSIGNED") return "bg-green-500/20 text-green-400";
+    if (type === "PROJECT_ASSIGNED" || type === "TASK_ASSIGNED") return "bg-green-500/20 text-green-400";
+    if (type === "TASK_STATUS_CHANGED") return "bg-amber-500/20 text-amber-400";
+    if (type === "TASK_APPROVED") return "bg-emerald-500/20 text-emerald-400";
     return "bg-accent/20 text-accent";
 };
 

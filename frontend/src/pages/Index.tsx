@@ -1,12 +1,22 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { HeroSection } from "@/components/home/HeroSection";
 import { FeaturedCourses } from "@/components/home/FeaturedCourses";
+import { TrustStrip } from "@/components/home/TrustStrip";
+import { FeaturesBar } from "@/components/home/FeaturesBar";
+import { AboutSection } from "@/components/home/AboutSection";
+import { ServicesSection } from "@/components/home/ServicesSection";
+import { WhyChooseSection } from "@/components/home/WhyChooseSection";
+import { TrainingProcess } from "@/components/home/TrainingProcess";
+import { InternshipsSection } from "@/components/home/InternshipsSection";
+import { WhoWeServe } from "@/components/home/WhoWeServe";
+import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { CTASection } from "@/components/home/CTASection";
 import { Helmet } from "react-helmet-async";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-background">
       <Helmet>
         <title>Bootskills | #1 Tech & Business Training in Kigali, Rwanda — Practical Skills. Real Projects.</title>
         <meta name="description" content="Bootskills is Rwanda's leading practical training platform in Kigali — offering tech, business & financial literacy courses, AI development, and real-world internships. Learn skills that land jobs." />
@@ -23,10 +33,18 @@ const Index = () => {
         <meta name="ICBM" content="-1.9441, 30.0619" />
       </Helmet>
       <Header />
-      <main className="flex-1 overflow-x-hidden">
-        {/* 1. Integrated Hero search + Programs/Internships filtering */}
+      <main>
+        <HeroSection />
         <FeaturedCourses />
-        {/* 2. Simple call-to-action */}
+        <TrustStrip />
+        <FeaturesBar />
+        <AboutSection />
+        <ServicesSection />
+        <WhyChooseSection />
+        <TrainingProcess />
+        <InternshipsSection />
+        <WhoWeServe />
+        <TestimonialsSection />
         <CTASection />
       </main>
       <Footer />
