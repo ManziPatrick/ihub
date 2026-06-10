@@ -103,7 +103,7 @@ const users = [
         level: 6,
         xp: 800,
         streak: 5,
-        academicStatus: 'student'
+        academicStatus: 'active'
     },
     {
         username: 'student_carla',
@@ -119,7 +119,7 @@ const users = [
         level: 7,
         xp: 950,
         streak: 7,
-        academicStatus: 'student'
+        academicStatus: 'active'
     },
     {
         username: 'student_dan',
@@ -135,7 +135,7 @@ const users = [
         level: 5,
         xp: 600,
         streak: 3,
-        academicStatus: 'student'
+        academicStatus: 'active'
     },
     {
         username: 'student_ella',
@@ -151,7 +151,7 @@ const users = [
         level: 4,
         xp: 450,
         streak: 2,
-        academicStatus: 'student'
+        academicStatus: 'active'
     }
 ];
 
