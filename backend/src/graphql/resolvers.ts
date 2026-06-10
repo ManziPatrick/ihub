@@ -7206,6 +7206,7 @@ export const resolvers = {
         progress: 0,
       });
       await project.save();
+    },
 
     submitProjectApplication: async (_: any, { title, description, documents }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
