@@ -91,7 +91,7 @@ const seedData = async () => {
 
     const superAdmin = await new User({
       username: 'super_admin',
-      email: 'superadmin@ihub.com',
+      email: 'superadmin@bootskills.com',
       password: hashedPassword,
       role: 'super_admin',
       fullName: 'System Super Admin',
@@ -101,7 +101,7 @@ const seedData = async () => {
 
     const admin = await new User({
       username: 'admin',
-      email: 'admin@ihub.com',
+      email: 'admin@bootskills.com',
       password: hashedPassword,
       role: 'admin',
       fullName: 'System Administrator',
