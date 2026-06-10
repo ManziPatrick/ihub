@@ -153,6 +153,23 @@ const users = [
         streak: 2,
         academicStatus: 'active'
     }
+    ,
+    {
+        username: 'student_fiona',
+        fullName: 'Fiona Ingabire',
+        email: 'fiona@example.com',
+        password: 'password123',
+        role: 'student',
+        bio: 'Keen on full-stack engineering and product design.',
+        avatar: 'https://images.unsplash.com/photo-1545996124-1b7a3f8a1d0b?auto=format&fit=crop&q=80&w=250',
+        location: 'Kigali, Rwanda',
+        status: 'active',
+        isEmailVerified: true,
+        level: 3,
+        xp: 300,
+        streak: 1,
+        academicStatus: 'active'
+    }
 ];
 
 async function seedFullUsers() {
