@@ -1,5 +1,25 @@
 import { ProjectTask } from '../models/ProjectTask';
+import { Project } from '../models/Project';
+import { User } from '../models/User';
 import { sendNotification } from '../services/notification.service';
+import { sendTaskFeedbackEmail } from '../services/email.service';
+
+const checkProjectAuthorization = async (projectId: string, context: any) => {
+  if (!context.user) throw new Error('Not authenticated');
+  const isStaff = ['admin', 'super_admin', 'trainer'].includes(context.user.role);
+  if (isStaff) return true;
+
+  const project = await Project.findById(projectId);
+  if (!project) throw new Error('Project not found');
+
+  const isOwner = project.userId?.toString() === context.user.id;
+  const isTeamMember = project.team?.some(member => member.userId?.toString() === context.user.id);
+
+  if (!isOwner && !isTeamMember) {
+    throw new Error('Not authorized');
+  }
+  return true;
+};
 
 export const projectTaskResolvers = {
   Query: {
@@ -47,9 +67,7 @@ export const projectTaskResolvers = {
 
   Mutation: {
     createProjectTask: async (_: any, args: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
-        throw new Error('Not authorized');
-      }
+      await checkProjectAuthorization(args.projectId, context);
       const lastTask = await ProjectTask.findOne({ projectId: args.projectId })
         .sort({ order: -1 });
       const task = new ProjectTask({
@@ -74,12 +92,10 @@ export const projectTaskResolvers = {
     },
 
     updateProjectTask: async (_: any, { id, ...updates }: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
-        throw new Error('Not authorized');
-      }
       // Fetch original task to detect changes
       const original = await ProjectTask.findById(id);
       if (!original) throw new Error('Task not found');
+      await checkProjectAuthorization(original.projectId.toString(), context);
 
       const task = await ProjectTask.findByIdAndUpdate(id, { $set: updates }, { new: true })
         .populate('assigneeId');
@@ -113,9 +129,9 @@ export const projectTaskResolvers = {
     },
 
     moveProjectTask: async (_: any, { id, status, order }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
       const task = await ProjectTask.findById(id);
       if (!task || task.isDeleted) throw new Error('Task not found');
+      await checkProjectAuthorization(task.projectId.toString(), context);
 
       const previousStatus = task.status;
       let targetStatus = status;
@@ -157,9 +173,10 @@ export const projectTaskResolvers = {
     },
 
     deleteProjectTask: async (_: any, { id }: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
-        throw new Error('Not authorized');
-      }
+      const task = await ProjectTask.findById(id);
+      if (!task) throw new Error('Task not found');
+      await checkProjectAuthorization(task.projectId.toString(), context);
+
       const result = await ProjectTask.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
       return !!result;
     },
@@ -189,12 +206,13 @@ export const projectTaskResolvers = {
     },
 
     assignProjectTask: async (_: any, { id, assigneeId }: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
-        throw new Error('Not authorized');
-      }
-      const task = await ProjectTask.findByIdAndUpdate(id, { assigneeId }, { new: true })
-        .populate('assigneeId');
+      const task = await ProjectTask.findById(id);
       if (!task) throw new Error('Task not found');
+      await checkProjectAuthorization(task.projectId.toString(), context);
+
+      const updatedTask = await ProjectTask.findByIdAndUpdate(id, { assigneeId }, { new: true })
+        .populate('assigneeId');
+      if (!updatedTask) throw new Error('Task not found');
 
       // Notify the new assignee
       if (assigneeId && assigneeId.toString() !== context.user.id) {
@@ -206,7 +224,61 @@ export const projectTaskResolvers = {
         });
       }
 
-      return task;
+      return updatedTask;
     },
+
+    sendTaskFeedback: async (_: any, { taskId, message, resources }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+
+      const task = await ProjectTask.findById(taskId);
+      if (!task || task.isDeleted) throw new Error('Task not found');
+
+      // Authorize
+      await checkProjectAuthorization(task.projectId.toString(), context);
+
+      // Add feedback
+      const feedbackItem = {
+        userId: context.user.id,
+        message,
+        resources: resources || [],
+        createdAt: new Date()
+      };
+
+      task.developerFeedback = task.developerFeedback || [];
+      task.developerFeedback.push(feedbackItem as any);
+      await task.save();
+
+      const populated = await ProjectTask.findById(taskId)
+        .populate('assigneeId');
+
+      // Notify Mentors via Email and Notification
+      const project = await Project.findById(task.projectId).populate('mentors');
+      if (project) {
+        const developerName = context.user.fullName || context.user.username;
+        for (const mentor of (project.mentors || [])) {
+          const mentorUser = mentor as any;
+          if (mentorUser.email) {
+            sendTaskFeedbackEmail(
+              mentorUser.email,
+              mentorUser.fullName || mentorUser.username,
+              developerName,
+              project.title,
+              task.title,
+              message,
+              resources
+            ).catch(err => console.error('Error sending task feedback email:', err));
+          }
+          // Also send in-app notification to mentors
+          sendNotification(mentorUser._id.toString(), {
+            type: 'TASK_FEEDBACK_SUBMITTED',
+            title: 'Developer Task Update',
+            message: `${developerName} submitted feedback on task "${task.title}"`,
+            link: `/portal/trainer/projects`,
+          });
+        }
+      }
+
+      return populated;
+    }
   },
 };

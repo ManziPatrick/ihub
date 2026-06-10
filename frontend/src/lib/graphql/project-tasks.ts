@@ -31,6 +31,21 @@ export const GET_PROJECT_TASKS = gql`
       dependencies
       approved
       feedback
+      developerFeedback {
+        userId
+        user {
+          id
+          username
+          fullName
+          avatar
+        }
+        message
+        resources {
+          title
+          url
+        }
+        createdAt
+      }
       createdAt
       updatedAt
     }
@@ -60,6 +75,21 @@ export const GET_PROJECT_TASK = gql`
       dependencies
       approved
       feedback
+      developerFeedback {
+        userId
+        user {
+          id
+          username
+          fullName
+          avatar
+        }
+        message
+        resources {
+          title
+          url
+        }
+        createdAt
+      }
       createdAt
       updatedAt
     }
@@ -377,6 +407,29 @@ export const REMOVE_PROJECT_STAGE = gql`
       stages {
         name
         order
+      }
+    }
+  }
+`;
+
+export const SEND_TASK_FEEDBACK = gql`
+  mutation SendTaskFeedback($taskId: ID!, $message: String!, $resources: [ResourceItemInput!]!) {
+    sendTaskFeedback(taskId: $taskId, message: $message, resources: $resources) {
+      id
+      developerFeedback {
+        userId
+        user {
+          id
+          username
+          fullName
+          avatar
+        }
+        message
+        resources {
+          title
+          url
+        }
+        createdAt
       }
     }
   }

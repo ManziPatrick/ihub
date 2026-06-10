@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { Internship } from '../models/Internship';
 import { Project } from '../models/Project';
+import { ProjectTask } from '../models/ProjectTask';
 import { Booking } from '../models/Booking';
 import { CourseProgress } from '../models/CourseProgress';
 import { Certificate } from '../models/Certificate';
@@ -125,6 +126,35 @@ export const initKronos = () => {
             }
         } catch (err) {
             console.error('Error in PMS Lifecycle Reminders Job:', err);
+        }
+    });
+
+    // 6. Developer Project Task Due Date Reminders (Daily at 9:00 AM)
+    cron.schedule('0 9 * * *', async () => {
+        try {
+            console.log('Running Developer Project Task Due Date Reminders Job...');
+            const now = new Date();
+            const twoDaysFromNow = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+            const dueTasks = await ProjectTask.find({
+                status: { $nin: ['done', 'in_review'] },
+                assigneeId: { $exists: true, $ne: null },
+                dueDate: { $lte: twoDaysFromNow, $gt: now },
+                isDeleted: false
+            });
+
+            for (const task of dueTasks) {
+                if (task.assigneeId) {
+                    await sendNotification(task.assigneeId.toString(), {
+                        type: 'project_task_due_near',
+                        title: 'Task Due Soon',
+                        message: `Your task "${task.title}" is due soon (by ${new Date(task.dueDate!).toLocaleDateString()}).`,
+                        link: `/portal/student`
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('Error in Developer Project Task Due Date Reminders Job:', e);
         }
     });
 };

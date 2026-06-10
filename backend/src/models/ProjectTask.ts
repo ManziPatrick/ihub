@@ -10,6 +10,13 @@ export type ProjectTaskStatus =
 
 export type ProjectTaskPriority = 'low' | 'medium' | 'high' | 'critical';
 
+export interface IDeveloperFeedback {
+  userId: mongoose.Types.ObjectId;
+  message: string;
+  resources?: { title: string; url: string }[];
+  createdAt: Date;
+}
+
 export interface IProjectTask extends Document {
   projectId: mongoose.Types.ObjectId;
   title: string;
@@ -26,6 +33,7 @@ export interface IProjectTask extends Document {
   approvedBy?: mongoose.Types.ObjectId;
   approvedAt?: Date;
   feedback?: string;
+  developerFeedback?: IDeveloperFeedback[];
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -57,6 +65,12 @@ const ProjectTaskSchema: Schema = new Schema(
     approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     approvedAt: { type: Date },
     feedback: { type: String },
+    developerFeedback: [{
+      userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+      message: { type: String, required: true },
+      resources: [{ title: { type: String }, url: { type: String } }],
+      createdAt: { type: Date, default: Date.now },
+    }],
     isDeleted: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
