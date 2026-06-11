@@ -24,6 +24,7 @@ import { SubmitProjectDialog, TeamChatDialog, ViewGuidelinesDialog } from "@/com
 import { toast } from "sonner";
 import { useQuery } from "@apollo/client/react";
 import { GET_MY_PROJECTS } from "@/lib/graphql/queries";
+import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectMarketplace } from "@/components/portal/student/ProjectMarketplace";
 import { AIHelper } from "@/components/portal/AIHelper";
@@ -56,6 +57,11 @@ interface Project {
   submittedAt?: string;
   grade?: string;
   feedback?: string;
+  userId: string;
+  user?: {
+    id: string;
+    username: string;
+  };
   team?: TeamMember[];
   tasks?: Task[];
   description: string;
@@ -87,9 +93,17 @@ export default function StudentProjects() {
   const [chatProject, setChatProject] = useState<Project | null>(null);
   const [guidelinesProject, setGuidelinesProject] = useState<Project | null>(null);
 
+  // Current user
+  const { user } = useAuth();
+
   // Fetch projects from GraphQL
   const { data, loading, error } = useQuery(GET_MY_PROJECTS);
   const projects: Project[] = (data as any)?.myProjects || [];
+
+  const currentUserId = user?.id;
+
+  const isProjectOwner = (project: Project) =>
+    project.userId === currentUserId || project.user?.id === currentUserId;
 
   const handleViewSubmission = (projectTitle: string) => {
     toast.info(`Opening submission for ${projectTitle}...`);
@@ -221,11 +235,20 @@ export default function StudentProjects() {
                           <div className="flex-1">
                             <div className="flex items-start justify-between mb-3">
                               <div>
-                                <div className="flex items-center gap-3 mb-1">
+                                <div className="flex items-center gap-3 mb-1 flex-wrap">
                                   <h3 className="font-heading text-lg font-semibold text-card-foreground">
                                     {project.title}
                                   </h3>
                                   {getStatusBadge(project.status)}
+                                  {isProjectOwner(project) ? (
+                                    <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/20 shrink-0">
+                                      Your Project
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shrink-0">
+                                      Assigned
+                                    </Badge>
+                                  )}
                                 </div>
                                 <p className="text-sm text-card-foreground/60">
                                   {project.course} • {project.type}

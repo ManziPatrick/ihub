@@ -2046,7 +2046,7 @@ export const typeDefs = `#graphql
   }
 
   type Subscription {
-    messageAdded(conversationId: ID!): Message
+    messageAdded(conversationId: ID): Message
     notificationAdded(userId: ID!): Notification
   }
   input WorkflowStageInput {
@@ -2480,7 +2480,7 @@ export const typeDefs = `#graphql
   type ProjectOnboarding {
     id: ID!
     projectId: ID!
-    developerId: ID!
+    developerId: ID
     developer: User
     role: String!
     status: String!
@@ -2506,9 +2506,32 @@ export const typeDefs = `#graphql
     signerName: String
     signedAt: String
     reviewNotes: String
+    ndaPdfUrl: String
     requiredDocuments: ProjectApplicationDocuments
     createdAt: String!
     updatedAt: String!
+  }
+
+  type SignedNDA {
+    id: ID!
+    applicationId: ID!
+    clientId: ID!
+    client: User
+    signerName: String!
+    signerEmail: String!
+    signedAt: String
+    signerIp: String
+    signatureHash: String
+    pdfUrl: String
+    status: String!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type NDADailyLimitStatus {
+    limit: Int!
+    used: Int!
+    remaining: Int!
   }
 
   input ProjectApplicationDocumentsInput {
@@ -2568,6 +2591,8 @@ export const typeDefs = `#graphql
     projectApplications(status: String): [ProjectApplication!]!
     # Client-facing queries
     myProjectApplications: [ProjectApplication!]!
+    getSignedNDA(applicationId: ID!): SignedNDA
+    ndaDailyLimitStatus: NDADailyLimitStatus!
     projectByApplicationId(applicationId: ID!): Project
     getClients: [User!]!
     getClientWithDetails(clientId: ID!): ClientDetails

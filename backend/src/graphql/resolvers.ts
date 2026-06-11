@@ -291,10 +291,12 @@ export const resolvers = {
 
     myProjects: async (_: any, { status }: { status?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
+      // Also find projects where user is a team member
       const filter: any = {
         $or: [
           { userId: context.user.id },
-          { mentors: context.user.id }
+          { mentors: context.user.id },
+          { 'team.userId': context.user.id }
         ]
       };
       if (status) filter.status = status;
@@ -2187,6 +2189,70 @@ export const resolvers = {
           course: obj.courseId,
         };
       });
+    },
+
+    getSignedNDA: async (_: any, { applicationId }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const { ProjectNDA } = require('../models/ProjectNDA');
+
+      if (!applicationId) throw new Error('applicationId is required');
+
+      // applicationId can be a string or ObjectId; ensure robust lookup.
+      const appIdStr = typeof applicationId === 'string' ? applicationId : applicationId?.toString?.();
+      if (!appIdStr) throw new Error('Invalid applicationId');
+
+      // Try direct match first
+      let nda = await ProjectNDA.findOne({ projectApplicationId: applicationId }).populate('clientId');
+
+      // Fallback: match by stringified id
+      if (!nda) {
+        nda = await ProjectNDA.findOne({ projectApplicationId: { $in: [appIdStr] } }).populate('clientId');
+      }
+
+      // If still not found, return a clearer error with the id used.
+      if (!nda) {
+        throw new Error(`Pending NDA not found for this application (${appIdStr})`);
+      }
+
+      const obj = nda.toObject();
+      return {
+        ...obj,
+        id: nda._id.toString(),
+        applicationId: nda.projectApplicationId.toString(),
+        clientId: nda.clientId?._id?.toString() || nda.clientId?.toString(),
+        client: nda.clientId,
+        pdfUrl: nda.pdfUrl,
+      };
+    },
+
+    ndaDailyLimitStatus: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const { ProjectNDA } = require('../models/ProjectNDA');
+      const { Config } = require('../models/Config');
+      
+      const DAILY_LIMIT = parseInt(
+        process.env.NDA_DAILY_LIMIT ||
+          (await Config.findOne({ key: 'ndaDailyLimit' }))?.value?.toString() ||
+          '10',
+        10
+      );
+      
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      
+      const used = await ProjectNDA.countDocuments({
+        clientId: context.user.id,
+        status: 'signed',
+        signedAt: { $gte: todayStart, $lte: todayEnd },
+      });
+      
+      return {
+        limit: DAILY_LIMIT,
+        used,
+        remaining: Math.max(0, DAILY_LIMIT - used),
+      };
     },
 
     projectOnboarding: async (_: any, { projectId }: any, context: any) => {
@@ -7213,13 +7279,10 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
+      const { ProjectLifecycleService } = require('../services/project-lifecycle.service');
+      await ProjectLifecycleService.reviewApplication(applicationId, context.user.id, status, notes);
       const { ProjectApplication } = require('../models/ProjectApplication');
-      const app = await ProjectApplication.findById(applicationId);
-      if (!app) throw new Error('Application not found');
-      app.status = status;
-      if (notes) app.reviewNotes = notes;
-      await app.save();
-      return await app.populate('clientId');
+      return await ProjectApplication.findById(applicationId).populate('clientId');
     },
 
     initializeProjectFromApplication: async (_: any, { applicationId, course, mentorIds }: any, context: any) => {
@@ -7232,7 +7295,7 @@ export const resolvers = {
 
       const { Project } = require('../models/Project');
       const project = new Project({
-        userId: (app.clientId as any)._id || app.clientId,
+        userId: (app.clientId as any)?._id || app.clientId,
         title: app.title,
         description: app.description,
         course,
@@ -7242,6 +7305,7 @@ export const resolvers = {
         progress: 0,
       });
       await project.save();
+      return project;
     },
 
     submitProjectApplication: async (_: any, { title, description, documents }: any, context: any) => {
@@ -7260,6 +7324,26 @@ export const resolvers = {
       });
       await app.save();
       return await app.populate('clientId');
+    },
+
+    signProjectNDA: async (_: any, { applicationId, signerName }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const { ProjectLifecycleService } = require('../services/project-lifecycle.service');
+      const ipAddress = context.req?.ip || context.req?.headers?.['x-forwarded-for'] || '127.0.0.1';
+      await ProjectLifecycleService.signNDA(applicationId, signerName, ipAddress);
+      const { ProjectApplication } = require('../models/ProjectApplication');
+      const app = await ProjectApplication.findById(applicationId).populate('clientId');
+      if (!app) throw new Error('Application not found');
+      const obj = app.toObject();
+      return {
+        ...obj,
+        id: app._id.toString(),
+        clientId: app.clientId?._id?.toString() || app.clientId?.toString(),
+        ndaSigned: app.ndaSigned,
+        signerName: app.signerName,
+        signedAt: app.signedAt?.toISOString(),
+
+      };
     },
 
     // ─── Project Stage Mutations ────────────────────────────────────────
@@ -7882,7 +7966,10 @@ export const resolvers = {
   },
   ProjectOnboarding: {
     id: (parent: any) => parent.id || parent._id,
-    developerId: (parent: any) => parent.developerId?._id?.toString() || parent.developerId?.toString(),
+    developerId: (parent: any) => {
+      if (!parent.developerId) return null;
+      return parent.developerId?._id?.toString() || parent.developerId?.toString();
+    },
     developer: async (parent: any) => {
       if (parent.developerId && (parent.developerId as any).username) return parent.developerId;
       return await User.findById(parent.developerId);
@@ -7894,6 +7981,15 @@ export const resolvers = {
       if (parent.clientId && (parent.clientId as any).username) return parent.clientId;
       return await User.findById(parent.clientId);
     },
+    ndaPdfUrl: async (parent: any) => {
+      const { ProjectNDA } = require('../models/ProjectNDA');
+      try {
+        const nda = await ProjectNDA.findOne({ projectApplicationId: parent._id || parent.id });
+        return nda?.pdfUrl || null;
+      } catch {
+        return null;
+      }
+    },
   },
   Subscription: {
     messageAdded: {
@@ -7901,6 +7997,7 @@ export const resolvers = {
         () => (pubsub as any).asyncIterator(['MESSAGE_ADDED']),
 
         (payload, variables) => {
+          if (!variables.conversationId || !payload.messageAdded.conversationId) return false;
           return payload.messageAdded.conversationId.toString() === variables.conversationId;
         }
       ),

@@ -44,6 +44,7 @@ const GET_MY_APPLICATIONS = gql`
       description
       status
       ndaSigned
+      ndaPdfUrl
       reviewNotes
       requiredDocuments {
         overviewUrl
@@ -102,6 +103,7 @@ const SIGN_NDA = gql`
       status
       signerName
       signedAt
+      ndaPdfUrl
     }
   }
 `;

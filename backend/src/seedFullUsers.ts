@@ -274,9 +274,15 @@ async function seedFullUsers() {
         await connectDB();
         console.log('✅ Connected to MongoDB');
 
-        // Delete existing users to avoid duplicates
-        await User.deleteMany({ email: { $in: users.map(u => u.email) } });
-        console.log('🗑️  Cleared existing users');
+        // Delete existing users to avoid duplicates.
+        // Clear by both `username` and `email` to guarantee idempotent runs.
+        await User.deleteMany({
+            $or: [
+                { username: { $in: users.map(u => u.username) } },
+                { email: { $in: users.map(u => u.email) } },
+            ]
+        });
+        console.log('🗑️  Cleared existing users (by username/email)');
 
         for (const userData of users) {
             const hashedPassword = await bcrypt.hash(userData.password, 10);

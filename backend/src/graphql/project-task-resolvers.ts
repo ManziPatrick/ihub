@@ -149,6 +149,21 @@ export const projectTaskResolvers = {
   Mutation: {
     createProjectTask: async (_: any, args: any, context: any) => {
       await checkProjectAuthorization(args.projectId, context);
+      
+      // Prevent duplicate task assignment: no two devs can have the same active task on the same project
+      if (args.assigneeId) {
+        const existingTask = await ProjectTask.findOne({
+          projectId: args.projectId,
+          title: args.title,
+          isDeleted: false,
+          status: { $ne: 'done' },
+          assigneeId: { $ne: args.assigneeId }
+        });
+        if (existingTask) {
+          throw new Error('This task is already assigned to another developer on this project');
+        }
+      }
+
       const lastTask = await ProjectTask.findOne({ projectId: args.projectId })
         .sort({ order: -1 });
       const task = new ProjectTask({
@@ -290,6 +305,21 @@ export const projectTaskResolvers = {
       const task = await ProjectTask.findById(id);
       if (!task) throw new Error('Task not found');
       await checkProjectAuthorization(task.projectId.toString(), context);
+
+      // Prevent duplicate assignment: no two devs can have the same task title on same project
+      if (assigneeId) {
+        const existingTask = await ProjectTask.findOne({
+          projectId: task.projectId,
+          assigneeId,
+          title: task.title,
+          _id: { $ne: id },
+          isDeleted: false,
+          status: { $ne: 'done' }
+        });
+        if (existingTask) {
+          throw new Error('This task is already assigned to another developer on this project');
+        }
+      }
 
       const updatedTask = await ProjectTask.findByIdAndUpdate(id, { assigneeId }, { new: true })
         .populate('assigneeId');

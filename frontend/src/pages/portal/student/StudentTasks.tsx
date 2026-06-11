@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+
 import { motion } from "framer-motion";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { PortalLayout } from "@/components/portal/PortalLayout";
@@ -19,8 +19,7 @@ import {
   Plus,
   ArrowRight,
   ExternalLink,
-  ChevronLeft,
-  ChevronRight,
+
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -58,31 +57,20 @@ const PRIORITY_COLORS: Record<string, string> = {
   critical: "bg-red-500/20 text-red-400",
 };
 
-const PAGE_SIZE = 50;
-
 export default function StudentTasks() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [page, setPage] = useState(1);
 
   const { data, loading, error } = useQuery(GET_MY_PROJECT_TASKS, {
-    variables: { page, limit: PAGE_SIZE },
+    variables: {},
     fetchPolicy: "network-only",
   });
-  const tasks: Task[] = (data as any)?.myProjectTasks?.items || [];
-  const pagination = (data as any)?.myProjectTasks?.pagination;
-
-  const totalPages = pagination?.totalPages || 1;
-  const totalCount = pagination?.totalCount || tasks.length;
-
-  const handlePageChange = useCallback((newPage: number) => {
-    setPage(newPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  const tasks: Task[] = (data as any)?.myProjectTasks || [];
+  const totalCount = tasks.length;
 
   const [moveTask] = useMutation(MOVE_PROJECT_TASK, {
     onError: (err) => toast.error(err.message || "Failed to move task"),
-    refetchQueries: [{ query: GET_MY_PROJECT_TASKS, variables: { page, limit: PAGE_SIZE } }],
+    refetchQueries: [{ query: GET_MY_PROJECT_TASKS }],
   });
 
   const handleDragEnd = async (result: DropResult) => {
@@ -285,9 +273,9 @@ export default function StudentTasks() {
                                 </div>
 
                                 {task.description && (
-                                  <p className="text-[10px] text-muted-foreground line-clamp-2 mb-2">
-                                    {task.description}
-                                  </p>
+                                  <p className="text-[10px] text-muted-foreground line-clamp-2 mb-2"
+                                     dangerouslySetInnerHTML={{ __html: task.description }}
+                                  />
                                 )}
 
                                 <div className="flex items-center justify-between mt-1">
@@ -368,77 +356,6 @@ export default function StudentTasks() {
           </DragDropContext>
         )}
 
-        {/* Pagination Controls */}
-        {!loading && totalPages > 1 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between px-2 py-4 bg-card rounded-xl border border-border/50"
-          >
-            <p className="text-xs text-muted-foreground">
-              Showing <span className="font-semibold text-foreground">{tasks.length}</span> of{" "}
-              <span className="font-semibold text-foreground">{totalCount}</span> total tasks
-              {totalCount > PAGE_SIZE && (
-                <span className="ml-1">— Page {page} of {totalPages}</span>
-              )}
-            </p>
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page <= 1}
-                className="h-8 px-3 text-xs"
-              >
-                <ChevronLeft className="w-3.5 h-3.5 mr-1" />
-                Previous
-              </Button>
-
-              {/* Page number buttons */}
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                  // Show pages around current page
-                  let pageNum: number;
-                  if (totalPages <= 7) {
-                    pageNum = i + 1;
-                  } else if (page <= 4) {
-                    pageNum = i + 1;
-                  } else if (page >= totalPages - 3) {
-                    pageNum = totalPages - 6 + i;
-                  } else {
-                    pageNum = page - 3 + i;
-                  }
-                  return (
-                    <Button
-                      key={pageNum}
-                      variant={page === pageNum ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`w-8 h-8 p-0 text-xs ${
-                        page === pageNum
-                          ? "bg-accent text-accent-foreground hover:bg-accent/90"
-                          : ""
-                      }`}
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page >= totalPages}
-                className="h-8 px-3 text-xs"
-              >
-                Next
-                <ChevronRight className="w-3.5 h-3.5 ml-1" />
-              </Button>
-            </div>
-          </motion.div>
-        )}
       </div>
     </PortalLayout>
   );

@@ -800,6 +800,11 @@ export const GET_MY_PROJECTS = gql`
       submittedAt
       grade
       feedback
+      userId
+      user {
+        id
+        username
+      }
       team {
         userId
         name
