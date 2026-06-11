@@ -20,7 +20,7 @@ async function seedAll() {
     // Step 1: Seed project lifecycle + individual internships
     console.log('\n📌 STEP 1: Project Lifecycle & Individual Internships');
     console.log('-'.repeat(50));
-    execSync('npx ts-node src/seedFullProjectManagement.ts', {
+    execSync('npx ts-node src/seedProjectLifecycleAndInternships.ts', {
       stdio: 'inherit',
       cwd: projectRoot,
     });
@@ -29,22 +29,6 @@ async function seedAll() {
     console.log('\n📌 STEP 2: Internship Module (Programs, Projects, Teams)');
     console.log('-'.repeat(50));
     execSync('npx ts-node src/seedInternshipModule.ts', {
-      stdio: 'inherit',
-      cwd: projectRoot,
-    });
-
-    // Step 3: Seed full courses (and full course scenarios)
-    console.log('\n📌 STEP 3: Seed full courses');
-    console.log('-'.repeat(50));
-    execSync('npx ts-node src/seedFinal.ts', {
-      stdio: 'inherit',
-      cwd: projectRoot,
-    });
-
-    // Step 4: Seed full course enrollments + course enrollment payments
-    console.log('\n📌 STEP 4: Course Full Enrollments + Payments');
-    console.log('-'.repeat(50));
-    execSync('npx ts-node src/seedCourseFullPaid.ts', {
       stdio: 'inherit',
       cwd: projectRoot,
     });
@@ -60,4 +44,3 @@ async function seedAll() {
 }
 
 seedAll();
-
