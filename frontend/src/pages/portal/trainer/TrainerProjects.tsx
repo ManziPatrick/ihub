@@ -203,6 +203,7 @@ export default function TrainerProjects() {
     const gradedSubmissions = submissions.filter((s: AssignmentSubmission) => s.status === "reviewed" || s.status === "graded" || s.status === "revision_requested");
 
     const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("all");
+    const [projectCourseFilter, setProjectCourseFilter] = useState<string>("all");
     
     // Extract unique course titles
     const availableCourses = Array.from(new Set(submissions.map((s: any) => s.course?.title || (s.courseId && typeof s.courseId === 'object' ? s.courseId.title : null)))).filter(Boolean) as string[];
@@ -219,7 +220,10 @@ export default function TrainerProjects() {
         return cTitle === selectedCourseFilter;
     });
 
-    const projects = projectsData?.myProjects || [];
+    const projects = (projectsData?.myProjects || []).filter((project: any) => {
+        if (projectCourseFilter === "all") return true;
+        return project.course === projectCourseFilter;
+    });
 
     const handleQuickApprove = async () => {
         if (!selectedSubmission) return;
@@ -1038,6 +1042,20 @@ export default function TrainerProjects() {
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
+                </div>
+
+                {/* Course Filter for Projects */}
+                <div className="flex items-center justify-end gap-2 mb-4">
+                    <select
+                        className="px-4 py-2 bg-muted/20 border border-border/50 rounded-lg text-sm outline-none focus:ring-2 focus:ring-accent/20"
+                        value={projectCourseFilter}
+                        onChange={(e) => setProjectCourseFilter(e.target.value)}
+                    >
+                        <option value="all">All Courses</option>
+                        {(coursesData as any)?.courses?.items?.map((course: any) => (
+                            <option key={course.id} value={course.title}>{course.title}</option>
+                        ))}
+                    </select>
                 </div>
 
                 {projects.length === 0 ? (

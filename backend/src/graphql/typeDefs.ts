@@ -528,8 +528,6 @@ export const typeDefs = `#graphql
     comment: String
     reviewerNotes: String
   }
-
-
   type Project {
 
     id: ID!

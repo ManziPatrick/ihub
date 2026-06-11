@@ -913,8 +913,8 @@ export const GET_PROJECT = gql`
 `;
 
 export const GET_ALL_PROJECTS = gql`
-  query GetAllProjects($page: Int, $limit: Int) {
-    projects(page: $page, limit: $limit) {
+  query GetAllProjects($page: Int, $limit: Int, $course: String) {
+    projects(page: $page, limit: $limit, course: $course) {
       items {
         id
         title
