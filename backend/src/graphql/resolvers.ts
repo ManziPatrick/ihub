@@ -3983,7 +3983,17 @@ export const resolvers = {
 
     trackActivity: async (_: any, { action, details, path }: { action: string, details?: string, path?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      const user = await User.findById(context.user.id);
+      const userId = context.user?.id || context.user?._id || context.user?.sub;
+      let user = null;
+
+      if (userId) {
+        user = await User.findById(userId);
+      }
+
+      if (!user && context.user?.email) {
+        user = await User.findOne({ email: context.user.email, isDeleted: { $ne: true } });
+      }
+
       if (!user) throw new Error('User not found');
 
       const now = new Date();

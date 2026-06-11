@@ -19,7 +19,7 @@ const seedFinal = async () => {
       instructor = await new User({
         fullName: 'Master Admin',
         username: 'admin',
-        email: 'admin@ihub.com',
+        email: 'admin@bootskills.com',
         password: 'Password123',
         role: 'admin',
         status: 'active',

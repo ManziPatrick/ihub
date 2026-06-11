@@ -15,7 +15,7 @@ import { InternshipActivityLog } from './models/internship/ActivityLog';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://alain:Password123@alain0.fwqgt9m.mongodb.net/ihub_db?retryWrites=true&w=majority';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongo:Jonathan%402026.@109.123.252.110:27018/bootskillsdb?authSource=admin&directConnection=true';
 
 const DEFAULT_WORKFLOW: any = [
   { id: 'todo', label: 'To Do', color: 'slate', order: 0, type: 'todo' },
@@ -43,7 +43,7 @@ const seedEverything = async () => {
         { username: 'admin' },
         {
           username: 'admin',
-          email: 'admin@ihub.com',
+          email: 'admin@bootskills.com',
           password,
           role: 'admin',
           fullName: 'System Administrator'
@@ -63,7 +63,7 @@ const seedEverything = async () => {
         { username: 'mentor_js' },
         {
           username: 'mentor_js',
-          email: 'mentorjs@ihub.com',
+          email: 'mentorjs@bootskills.com',
           password,
           role: 'trainer',
           fullName: 'JS Master Mentor'
@@ -1067,13 +1067,13 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
       console.log('👥 Setup Team and tasks...');
       const student1 = await User.findOneAndUpdate(
         { username: 'student_alice' },
-        { username: 'student_alice', email: 'alice@ihub.com', password, role: 'student', fullName: 'Alice Peterson' },
+        { username: 'student_alice', email: 'alice@bootskills.com', password, role: 'student', fullName: 'Alice Peterson' },
         { upsert: true, new: true }
       );
 
       const student2 = await User.findOneAndUpdate(
         { username: 'student_bob' },
-        { username: 'student_bob', email: 'bob@ihub.com', password, role: 'student', fullName: 'Bob Builder' },
+        { username: 'student_bob', email: 'bob@bootskills.com', password, role: 'student', fullName: 'Bob Builder' },
         { upsert: true, new: true }
       );
 

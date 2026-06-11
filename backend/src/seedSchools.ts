@@ -17,7 +17,7 @@ const seedSchools = async () => {
       console.log('Creating temporary admin user...');
       admin = await new User({
         username: 'admin',
-        email: 'admin@ihub.com',
+        email: 'admin@bootskills.com',
         password: 'password', // will be hashed in pre-save if standard
         role: 'admin',
         fullName: 'Admin User'
@@ -34,7 +34,7 @@ const seedSchools = async () => {
         description: "Intensive 12-week software engineering program focusing on full-stack development with React and Node.js.",
         thumbnail: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800",
         instructor: admin._id,
-        price: 500000,
+        price: 5000,
         level: "Beginner",
         category: "Development",
         status: "published",
@@ -45,7 +45,7 @@ const seedSchools = async () => {
         description: "Master machine learning, deep learning, and big data technologies.",
         thumbnail: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800",
         instructor: admin._id,
-        price: 750000,
+        price: 7000,
         level: "Advanced",
         category: "Data Science",
         status: "published",
@@ -56,11 +56,11 @@ const seedSchools = async () => {
         description: "Learn to design beautiful, user-friendly interfaces using Figma and modern design principles.",
         thumbnail: "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=800",
         instructor: admin._id,
-        price: 300000,
+        price: 3000,
         level: "Intermediate",
         category: "Design",
         status: "published",
-        school: "IHUB Academy"
+        school: "bootskills Academy"
       },
       {
         title: "Digital Marketing Fundamentals",
@@ -78,7 +78,7 @@ const seedSchools = async () => {
         description: "Learn how to protect networks, systems, and data from digital attacks.",
         thumbnail: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800",
         instructor: admin._id,
-        price: 600000,
+        price: 6000,
         level: "Advanced",
         category: "IT & Software",
         status: "published",
@@ -89,7 +89,7 @@ const seedSchools = async () => {
         description: "Develop critical leadership skills and learn how to manage modern organizations effectively.",
         thumbnail: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=800",
         instructor: admin._id,
-        price: 450000,
+        price: 4500,
         level: "Intermediate",
         category: "Business",
         status: "published",

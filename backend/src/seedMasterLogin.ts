@@ -33,7 +33,7 @@ const users = [
   {
     username: 'trainer_sarah',
     fullName: 'Sarah Uwase',
-    email: 'trainer@ihub.com',
+    email: 'trainer@bootskills.com',
     password: 'password123',
     role: 'trainer',
     isEmailVerified: true,
@@ -44,7 +44,7 @@ const users = [
   {
     username: 'student_jean',
     fullName: 'Jean Claude',
-    email: 'student@ihub.com',
+    email: 'student@bootskills.com',
     password: 'password123',
     role: 'student',
     isEmailVerified: true,

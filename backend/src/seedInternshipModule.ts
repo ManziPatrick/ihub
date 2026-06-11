@@ -192,8 +192,7 @@ async function seedInternshipModule() {
     const admins = await User.find({ role: { $in: ['admin', 'super_admin'] } }).limit(4);
 
     if (students.length < 6) {
-      console.error('❌ Need at least 6 students. Found:', students.length);
-      process.exit(1);
+      console.warn('⚠️ Need at least 6 students for full internship module richness. Found:', students.length);
     }
 
     console.log(`   ✅ ${students.length} students loaded`);

@@ -19,7 +19,7 @@ const seedDiverseCourses = async () => {
       instructor = await new User({
         fullName: 'Dr. Sarah Wilson',
         username: 'sarah.wilson',
-        email: 'sarah.wilson@ihub.com',
+        email: 'sarah.wilson@bootskills.com',
         password: 'Password@123',
         role: 'trainer',
         status: 'active',

@@ -66,10 +66,13 @@ async function seedFullProjectManagement() {
 
     // ====== STEP 0: Load admin user ======
     console.log('👤 Loading admin user...');
-    const admin = await User.findById(ADMIN_ID);
+    let admin = await User.findById(ADMIN_ID);
     if (!admin) {
-      console.error(`❌ Admin user with ID ${ADMIN_ID} (${ADMIN_EMAIL}) not found!`);
-      console.error('   Please ensure this admin exists in the database first.');
+      // Fallback to seeded admin by email/username
+      admin = (await User.findOne({ email: ADMIN_EMAIL })) || (await User.findOne({ username: 'admin' })) || (await User.findOne({ role: { $in: ['admin', 'super_admin'] } }));
+    }
+    if (!admin) {
+      console.error(`❌ Admin user not found. Tried id=${ADMIN_ID}, email=${ADMIN_EMAIL}, username=admin.`);
       process.exit(1);
     }
     console.log(`   ✅ Found admin: ${admin.fullName || admin.username} (${admin._id})`);
@@ -108,18 +111,18 @@ async function seedFullProjectManagement() {
     // ====== STEP 2: Ensure student users ======
     console.log('\n🎓 Ensuring student users...');
     const studentData = [
-      { username: 'student_amina', email: 'amina@ihub.com', fullName: 'Amina Diallo' },
-      { username: 'student_brian', email: 'brian@ihub.com', fullName: 'Brian Kagame' },
-      { username: 'celine_niyo', email: 'celine@ihub.com', fullName: 'Celine Niyonzima' },
-      { username: 'david_mugisha', email: 'david.m@ihub.com', fullName: 'David Mugisha' },
-      { username: 'esther_umutoni', email: 'esther@ihub.com', fullName: 'Esther Umutoni' },
-      { username: 'felix_habimana', email: 'felix@ihub.com', fullName: 'Felix Habimana' },
-      { username: 'gloria_ishimwe', email: 'gloria@ihub.com', fullName: 'Gloria Ishimwe' },
-      { username: 'henry_kamanzi', email: 'henry@ihub.com', fullName: 'Henry Kamanzi' },
-      { username: 'iris_mbabazi', email: 'iris@ihub.com', fullName: 'Iris Mbabazi' },
-      { username: 'james_muhire', email: 'james@ihub.com', fullName: 'James Muhire' },
-      { username: 'keziah_uwimana', email: 'keziah@ihub.com', fullName: 'Keziah Uwimana' },
-      { username: 'leon_gasana', email: 'leon@ihub.com', fullName: 'Leon Gasana' },
+      { username: 'student_amina', email: 'amina@bootskills.com', fullName: 'Amina Diallo' },
+      { username: 'student_brian', email: 'brian@bootskills.com', fullName: 'Brian Kagame' },
+      { username: 'celine_niyo', email: 'celine@bootskills.com', fullName: 'Celine Niyonzima' },
+      { username: 'david_mugisha', email: 'david.m@bootskills.com', fullName: 'David Mugisha' },
+      { username: 'esther_umutoni', email: 'esther@bootskills.com', fullName: 'Esther Umutoni' },
+      { username: 'felix_habimana', email: 'felix@bootskills.com', fullName: 'Felix Habimana' },
+      { username: 'gloria_ishimwe', email: 'gloria@bootskills.com', fullName: 'Gloria Ishimwe' },
+      { username: 'henry_kamanzi', email: 'henry@bootskills.com', fullName: 'Henry Kamanzi' },
+      { username: 'iris_mbabazi', email: 'iris@bootskills.com', fullName: 'Iris Mbabazi' },
+      { username: 'james_muhire', email: 'james@bootskills.com', fullName: 'James Muhire' },
+      { username: 'keziah_uwimana', email: 'keziah@bootskills.com', fullName: 'Keziah Uwimana' },
+      { username: 'leon_gasana', email: 'leon@bootskills.com', fullName: 'Leon Gasana' },
     ];
 
     const students: any[] = [];

@@ -9,7 +9,7 @@ dotenv.config();
 const users = [
   {
     username: 'LeadTrainer',
-    email: 'trainer@ihub.com',
+    email: 'trainer@bootskills.com',
     password: 'Password@123',
     role: 'trainer',
     fullName: 'Lead Instructor',
@@ -18,7 +18,7 @@ const users = [
   },
   {
     username: 'StudentOne',
-    email: 'student@ihub.com',
+    email: 'student@bootskills.com',
     password: 'Password@123',
     role: 'student',
     fullName: 'Alex Student',
@@ -27,7 +27,7 @@ const users = [
   },
   {
     username: 'WorkshopAsst',
-    email: 'assistant@ihub.com',
+    email: 'assistant@bootskills.com',
     password: 'Password@123',
     role: 'trainer',
     fullName: 'Sarah Assistant',

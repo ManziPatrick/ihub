@@ -11,8 +11,8 @@ const extendedUsers = [
   { username: 'student_kevin', fullName: 'Kevin M.', email: 'kevin@example.com', role: 'student' },
   { username: 'student_bella', fullName: 'Bella R.', email: 'bella@example.com', role: 'student' },
   { username: 'student_dave', fullName: 'David O.', email: 'dave@example.com', role: 'student' },
-  { username: 'trainer_mike', fullName: 'Mike Johnson', email: 'mike@ihub.com', role: 'trainer', title: 'Python Expert' },
-  { username: 'trainer_lisa', fullName: 'Lisa Wong', email: 'lisa@ihub.com', role: 'trainer', title: 'Security Consultant' }
+  { username: 'trainer_mike', fullName: 'Mike Johnson', email: 'mike@bootskills.com', role: 'trainer', title: 'Python Expert' },
+  { username: 'trainer_lisa', fullName: 'Lisa Wong', email: 'lisa@bootskills.com', role: 'trainer', title: 'Security Consultant' }
 ];
 
 const seedExtended = async () => {
@@ -32,7 +32,7 @@ const seedExtended = async () => {
     }
 
     // Add some random engagement data (mocking courses)
-    const trainerMike = await User.findOne({ email: 'mike@ihub.com' });
+    const trainerMike = await User.findOne({ email: 'mike@bootskills.com' });
     
     if (trainerMike) {
       const course = new Course({

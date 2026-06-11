@@ -147,16 +147,16 @@ async function seedFlows() {
     // ====== STEP 2: Ensure student users ======
     console.log('\n🎓 Ensuring student users...');
     const studentData = [
-      { username: 'student_alice', email: 'alice@ihub.com', fullName: 'Alice Peterson' },
-      { username: 'student_bob', email: 'bob@ihub.com', fullName: 'Bob Builder' },
-      { username: 'alex.johnson', email: 'alex@ihub.com', fullName: 'Alex Johnson' },
-      { username: 'sarah.connor', email: 'sarah.c@ihub.com', fullName: 'Sarah Connor' },
-      { username: 'kevin.hart', email: 'kevin@ihub.com', fullName: 'Kevin Hart' },
-      { username: 'lisa.ray', email: 'lisa@ihub.com', fullName: 'Lisa Ray' },
-      { username: 'mike.dean', email: 'mike@ihub.com', fullName: 'Mike Dean' },
-      { username: 'nancy.smith', email: 'nancy@ihub.com', fullName: 'Nancy Smith' },
-      { username: 'oscar.park', email: 'oscar@ihub.com', fullName: 'Oscar Park' },
-      { username: 'pamela.jones', email: 'pam@ihub.com', fullName: 'Pamela Jones' },
+      { username: 'student_alice', email: 'alice@bootskills.com', fullName: 'Alice Peterson' },
+      { username: 'student_bob', email: 'bob@bootskills.com', fullName: 'Bob Builder' },
+      { username: 'alex.johnson', email: 'alex@bootskills.com', fullName: 'Alex Johnson' },
+      { username: 'sarah.connor', email: 'sarah.c@bootskills.com', fullName: 'Sarah Connor' },
+      { username: 'kevin.hart', email: 'kevin@bootskills.com', fullName: 'Kevin Hart' },
+      { username: 'lisa.ray', email: 'lisa@bootskills.com', fullName: 'Lisa Ray' },
+      { username: 'mike.dean', email: 'mike@bootskills.com', fullName: 'Mike Dean' },
+      { username: 'nancy.smith', email: 'nancy@bootskills.com', fullName: 'Nancy Smith' },
+      { username: 'oscar.park', email: 'oscar@bootskills.com', fullName: 'Oscar Park' },
+      { username: 'pamela.jones', email: 'pam@bootskills.com', fullName: 'Pamela Jones' },
     ];
 
     const students: any[] = [];

@@ -61,6 +61,22 @@ const startServer = async () => {
         .map(o => o.trim())
         .filter(Boolean);
 
+    if (process.env.NODE_ENV !== 'production') {
+        const localDevOrigins = [
+            'http://127.0.0.1:8080',
+            'http://127.0.0.1:5173',
+            'http://127.0.0.1:8081',
+            'http://[::1]:8080',
+            'http://[::1]:5173',
+            'http://[::1]:8081',
+        ];
+        for (const origin of localDevOrigins) {
+            if (!allowedOrigins.includes(origin)) {
+                allowedOrigins.push(origin);
+            }
+        }
+    }
+
     const isAllowedOrigin = (origin: string) => {
         return allowedOrigins.some((allowed) => {
             if (allowed === '*') return true;

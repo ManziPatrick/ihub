@@ -265,7 +265,7 @@ const seedUsers = async (): Promise<{ trainer: any, students: any[] }> => {
     let trainer = await User.findOne({
         $or: [
             { fullName: 'Manzi Alain Patrick' },
-            { email: 'manzi.alain@ihub.com' },
+            { email: 'manzi.alain@bootskills.com' },
             { role: 'trainer' }
         ]
     });
@@ -276,7 +276,7 @@ const seedUsers = async (): Promise<{ trainer: any, students: any[] }> => {
         trainer = new User({
             fullName: 'Manzi Alain Patrick',
             username: 'manzi.alain',
-            email: 'manzi.alain@ihub.com',
+            email: 'manzi.alain@bootskills.com',
             password: trainerPassword,
             role: 'trainer', // Changed from 'instructor' to 'trainer'
             title: 'Senior Software Engineer',
@@ -1887,7 +1887,7 @@ Capstone Projects      : ${students.length * preparedCoursesData.length}
 🔐 ACCESS CREDENTIALS:
 ────────────────────────────────────────────────
 Trainer:
-  Email: manzi.alain@ihub.com
+  Email: manzi.alain@bootskills.com
   Password: Trainer@2024
 
 Student (sample):

@@ -6,7 +6,7 @@ import { User } from './models/User';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://alain:Password123@alain0.fwqgt9m.mongodb.net/ihub_db?retryWrites=true&w=majority';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongo:Jonathan%402026.@109.123.252.110:27018/bootskillsdb?authSource=admin&directConnection=true';
 
 const seedStressCourses = async () => {
   try {
@@ -20,7 +20,7 @@ const seedStressCourses = async () => {
     if (!admin) {
       admin = await User.findOneAndUpdate(
         { username: 'admin' },
-        { username: 'admin', email: 'admin@ihub.com', password, role: 'admin', fullName: 'System Administrator' },
+        { username: 'admin', email: 'admin@bootskills.com', password, role: 'admin', fullName: 'System Administrator' },
         { upsert: true, new: true }
       );
     }

@@ -210,7 +210,7 @@ Developed by the Ihub Academy team.
 
 ## 📞 Support
 
-For support, email support@ihub.com or join our Discord community.
+For support, email support@bootskills.com or join our Discord community.
 
 ---
 

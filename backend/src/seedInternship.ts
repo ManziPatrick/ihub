@@ -131,19 +131,19 @@ const seedInternshipData = async () => {
 
     const lead = await User.findOneAndUpdate(
       { username: 'student_alice' },
-      { username: 'student_alice', email: 'alice@ihub.com', password, role: 'student', fullName: 'Alice Peterson' },
+      { username: 'student_alice', email: 'alice@bootskills.com', password, role: 'student', fullName: 'Alice Peterson' },
       { upsert: true, new: true }
     );
 
     const dev1 = await User.findOneAndUpdate(
       { username: 'student_bob' },
-      { username: 'student_bob', email: 'bob@ihub.com', password, role: 'student', fullName: 'Bob Builder' },
+      { username: 'student_bob', email: 'bob@bootskills.com', password, role: 'student', fullName: 'Bob Builder' },
       { upsert: true, new: true }
     );
 
     const dev2 = await User.findOneAndUpdate(
       { username: 'alex.johnson' },
-      { username: 'alex.johnson', email: 'alex@ihub.com', password, role: 'student', fullName: 'Alex Johnson' },
+      { username: 'alex.johnson', email: 'alex@bootskills.com', password, role: 'student', fullName: 'Alex Johnson' },
       { upsert: true, new: true }
     );
 

@@ -111,7 +111,7 @@ const seedData = async () => {
 
     const trainer1 = await new User({
       username: 'innovator_john',
-      email: 'john@ihub.com',
+      email: 'john@bootskills.com',
       password: hashedPassword,
       role: 'trainer',
       fullName: 'John Innovator',
@@ -123,7 +123,7 @@ const seedData = async () => {
 
     const trainer2 = await new User({
       username: 'sarah_ai',
-      email: 'sarah@ihub.com',
+      email: 'sarah@bootskills.com',
       password: hashedPassword,
       role: 'trainer',
       fullName: 'Sarah Data',
