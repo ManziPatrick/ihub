@@ -807,7 +807,7 @@ export const typeDefs = `#graphql
     getResources(linkedTo: ID, onModel: String): [Resource!]!
     getResource(id: ID!): Resource!
     hello: String
-    users(page: Int, limit: Int, createdBy: ID): UserResponse
+    users(page: Int, limit: Int, createdBy: ID, role: String): UserResponse
     conversations: [Conversation]
     messages(conversationId: ID!): [Message]
     courses(page: Int, limit: Int): CourseResponse

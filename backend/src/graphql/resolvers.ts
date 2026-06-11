@@ -191,15 +191,17 @@ export const resolvers = {
       if (!context.user) throw new Error('Not authenticated');
       const { ProjectApplication } = require('../models/ProjectApplication');
 
-      // Client-facing apps are keyed by clientId in the schema.
-      // Support both clientId (current) and userId (legacy) to avoid empty arrays.
-      const apps = await ProjectApplication.find({
-        status: { $ne: 'deleted' },
-        $or: [
+      // Admins and super_admins see all applications; clients see only their own.
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = { status: { $ne: 'deleted' } };
+      if (!isAdmin) {
+        filter.$or = [
           { clientId: context.user.id },
           { userId: context.user.id },
-        ],
-      }).sort({ createdAt: -1 });
+        ];
+      }
+
+      const apps = await ProjectApplication.find(filter).sort({ createdAt: -1 });
 
       return apps.map((app: any) => {
         const obj = app.toObject();
@@ -291,8 +293,9 @@ export const resolvers = {
 
     myProjects: async (_: any, { status }: { status?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      // Also find projects where user is a team member
-      const filter: any = {
+      // Admins and super_admins see all projects; others see only their own.
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = isAdmin ? {} : {
         $or: [
           { userId: context.user.id },
           { mentors: context.user.id },
@@ -305,7 +308,8 @@ export const resolvers = {
 
     myInternships: async (_: any, { status }: { status?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      const filter: any = {
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = isAdmin ? {} : {
         $or: [
           { mentorId: context.user.id },
           { mentors: context.user.id }
@@ -318,18 +322,17 @@ export const resolvers = {
     myBookings: async (_: any, { status }: { status?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
-      let filter: any = {
-        $or: [{ userId: context.user.id }, { mentorId: context.user.id }]
-      };
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      let filter: any = {};
 
-      if (context.user.role === 'trainer') {
+      if (isAdmin) {
+        // Admins see all bookings (no user filter)
+      } else if (context.user.role === 'trainer') {
         const courses = await Course.find({ instructor: context.user.id });
         const studentIds = courses.reduce((acc: any[], course: any) => {
           return [...acc, ...course.studentsEnrolled];
         }, []);
 
-        // Broaden: allow trainers to see unassigned pending sessions GLOBALLY, 
-        // OR sessions for their specific students
         filter.$or = [
           { userId: context.user.id },
           { mentorId: context.user.id }
@@ -339,8 +342,9 @@ export const resolvers = {
           filter.$or.push({ userId: { $in: studentIds }, mentorId: null });
         }
 
-        // Add Global Queue: Unassigned pending sessions
         filter.$or.push({ mentorId: null, status: 'pending' });
+      } else {
+        filter.$or = [{ userId: context.user.id }, { mentorId: context.user.id }];
       }
 
       if (status) filter.status = status;
@@ -522,12 +526,12 @@ export const resolvers = {
       return questions;
     },
 
-    users: async (_: any, { page = 1, limit = 10, createdBy }: any, context: any) => {
+    users: async (_: any, { page = 1, limit = 10, createdBy, role }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
 
-      const query: any = {};
+      const query: any = { isDeleted: { $ne: true } };
 
       if (context.user.role === 'admin' || context.user.role === 'trainer') {
         const courses = await Course.find({
@@ -539,13 +543,28 @@ export const resolvers = {
 
         const schoolFilter = context.user.school ? { school: context.user.school } : {};
 
-        query.$or = [
+        // Build role-aware $or conditions
+        const orConditions: any[] = [
           { _id: { $in: enrolledStudentIds } },
           { createdBy: context.user.id, role: 'trainer' },
           { ...schoolFilter, role: 'student' }
         ];
+
+        if (role) {
+          // Filter $or conditions to only include the matching role,
+          // plus a catch-all for that role to cover admin/super_admin users
+          query.$or = [
+            ...orConditions.filter((c) => !c.role || c.role === role),
+            { role },
+          ];
+        } else {
+          query.$or = orConditions;
+        }
       } else if (createdBy) {
         query.createdBy = createdBy;
+        if (role) query.role = role;
+      } else if (role) {
+        query.role = role;
       }
 
       const skip = (page - 1) * limit;
@@ -1001,9 +1020,12 @@ export const resolvers = {
     myPayments: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const paymentFilter = isAdmin ? {} : { userId: context.user.id };
+
       const [standardPayments, internshipPayments] = await Promise.all([
-        Payment.find({ userId: context.user.id }).sort({ createdAt: -1 }).lean(),
-        InternshipPayment.find({ userId: context.user.id, isDeleted: false }).populate('internshipProgramId').sort({ createdAt: -1 }).lean()
+        Payment.find(paymentFilter).sort({ createdAt: -1 }).lean(),
+        InternshipPayment.find({ ...paymentFilter, isDeleted: false }).populate('internshipProgramId').sort({ createdAt: -1 }).lean()
       ]);
 
       const allPayments = [
@@ -1517,7 +1539,9 @@ export const resolvers = {
     },
     myCertificates: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      return await Certificate.find({ userId: context.user.id }).populate('userId courseId').sort({ createdAt: -1 });
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter = isAdmin ? {} : { userId: context.user.id };
+      return await Certificate.find(filter).populate('userId courseId').sort({ createdAt: -1 });
     },
     certificate: async (_: any, { id }: { id: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
@@ -1759,7 +1783,10 @@ export const resolvers = {
     },
     myInternshipApplications: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      return await InternshipApplication.find({ userId: context.user.id, isDeleted: false }).sort({ createdAt: -1 });
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = { isDeleted: false };
+      if (!isAdmin) filter.userId = context.user.id;
+      return await InternshipApplication.find(filter).sort({ createdAt: -1 });
     },
     internshipProject: async (_: any, { id }: { id: string }) => await InternshipProject.findById(id),
     internshipProjects: async (_: any, { programId, page = 1, limit = 10 }: any, context: any) => {
@@ -2055,7 +2082,10 @@ export const resolvers = {
     },
     myInternshipPayments: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      return await InternshipPayment.find({ userId: context.user.id, isDeleted: false }).sort({ createdAt: -1 });
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = { isDeleted: false };
+      if (!isAdmin) filter.userId = context.user.id;
+      return await InternshipPayment.find(filter).sort({ createdAt: -1 });
     },
     internshipPayment: async (_: any, { id }: { id: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
@@ -2094,7 +2124,10 @@ export const resolvers = {
     },
     myInternshipCertificates: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      return await InternshipCertificate.find({ userId: context.user.id, isDeleted: false, isRevoked: false }).sort({ issuedAt: -1 });
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = { isDeleted: false, isRevoked: false };
+      if (!isAdmin) filter.userId = context.user.id;
+      return await InternshipCertificate.find(filter).sort({ issuedAt: -1 });
     },
     internshipCertificate: async (_: any, { id }: { id: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
@@ -2173,7 +2206,10 @@ export const resolvers = {
     },
     myCourseApplications: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      const apps = await CourseApplication.find({ userId: context.user.id, isDeleted: false })
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = { isDeleted: false };
+      if (!isAdmin) filter.userId = context.user.id;
+      const apps = await CourseApplication.find(filter)
         .populate({ path: 'courseId', model: 'Course' })
         .sort({ createdAt: -1 });
 
@@ -2233,7 +2269,7 @@ export const resolvers = {
       const DAILY_LIMIT = parseInt(
         process.env.NDA_DAILY_LIMIT ||
           (await Config.findOne({ key: 'ndaDailyLimit' }))?.value?.toString() ||
-          '10',
+          '50',
         10
       );
       

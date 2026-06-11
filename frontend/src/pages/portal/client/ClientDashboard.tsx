@@ -423,12 +423,26 @@ export default function ClientDashboard() {
   const [signingAppId, setSigningAppId] = useState<string | null>(null);
   const [cancelTarget, setCancelTarget] = useState<string | null>(null);
   const [signerName, setSignerName] = useState("");
-  // Queries
-  const { data: limitData, refetch: refetchLimit } = useQuery(NDA_DAILY_LIMIT_STATUS, {
-    fetchPolicy: "cache-and-network",
-  });
+
+  // NDA daily signing token status
+  const { data: limitData, refetch: refetchLimit } = useQuery(
+    gql`
+      query NDA_Daily_Limit_Status {
+        ndaDailyLimitStatus {
+          remaining
+          limit
+        }
+
+      }
+    `,
+    {
+      fetchPolicy: "cache-and-network",
+    }
+  );
+
   const limitStatus = (limitData as any)?.ndaDailyLimitStatus;
   const tokens = limitStatus?.remaining ?? 0;
+
 
   // Queries
   const { data: appsData, loading: appsLoading, refetch: refetchApps } = useQuery(GET_MY_APPLICATIONS);
