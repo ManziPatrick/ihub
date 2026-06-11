@@ -730,8 +730,8 @@ export default function ClientDashboard() {
                         {app.status.replace("_", " ")}
                       </Badge>
                     </div>
-                    <RenderHTML html={`<p class='text-xs text-muted-foreground line-clamp-2'>${app.description || "No description."}</p>`} />
-                    <RenderHTML html={`<p class='text-[10px] text-muted-foreground'>Submitted ${app.createdAt ? format(new Date(parseInt(app.createdAt)), "MMM d, yyyy") : "—"}</p>`} />
+                    <div className="text-xs text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: app.description || "No description." }} />
+                    <p className="text-[10px] text-muted-foreground">Submitted {app.createdAt ? format(new Date(parseInt(app.createdAt)), "MMM d, yyyy") : "—"}</p>
 
                     {app.reviewNotes && (
                       <div className="p-3 bg-accent/5 border border-accent/10 rounded-xl">

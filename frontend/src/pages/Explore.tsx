@@ -29,6 +29,7 @@ import { useNavigate } from "react-router-dom";
 import { EnrollCourseDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
 import { useToast } from "@/hooks/use-toast";
+import { stripHtml } from "@/lib/utils";
 
 interface AICourse {
   _id: string;
@@ -464,10 +465,9 @@ const Explore = () => {
                     <h3 className="font-heading text-xl font-bold text-card-foreground mb-3 line-clamp-2">
                       {course.title}
                     </h3>
-                    <div
-                      className="text-muted-foreground text-sm mb-6 line-clamp-3 prose prose-sm dark:prose-invert max-w-none"
-                      dangerouslySetInnerHTML={{ __html: course.description }}
-                    />
+                    <p className="text-muted-foreground text-sm mb-6 line-clamp-3">
+                      {stripHtml(course.description)}
+                    </p>
 
                     {(() => {
                       const isEnrolled = (me?.enrolledCourses || user?.enrolledCourses)?.some((c: any) => (c.id || c).toString() === (course.id || course._id).toString()) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
