@@ -34,17 +34,9 @@ const Index = () => {
       </Helmet>
       <Header />
       <main>
-        <HeroSection />
+        
         <FeaturedCourses />
-        <TrustStrip />
-        <FeaturesBar />
-        <AboutSection />
-        <ServicesSection />
-        <WhyChooseSection />
-        <TrainingProcess />
-        <InternshipsSection />
-        <WhoWeServe />
-        <TestimonialsSection />
+        
         <CTASection />
       </main>
       <Footer />
