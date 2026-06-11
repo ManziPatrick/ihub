@@ -35,6 +35,7 @@ const GET_MY_APPLICATIONS = gql`
       description
       status
       ndaSigned
+      ndaPdfUrl
       reviewNotes
       requiredDocuments {
         overviewUrl
@@ -128,7 +129,7 @@ const SUBMIT_CLIENT_EVALUATION_MUTATION = gql`
 const SIGN_NDA = gql`
   mutation SignProjectNDA($applicationId: ID!, $signerName: String!) {
     signProjectNDA(applicationId: $applicationId, signerName: $signerName) {
-      id status signerName signedAt
+      id status signerName signedAt ndaPdfUrl
     }
   }
 `;
@@ -145,23 +146,6 @@ interface CalendarEvent {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const INITIAL_TOKENS = 3;
-const TOKEN_KEY = "ihub_nda_tokens";
-
-function useSigningTokens() {
-  const [tokens, setTokens] = useState<number>(() => {
-    const stored = localStorage.getItem(TOKEN_KEY);
-    return stored ? parseInt(stored, 10) : INITIAL_TOKENS;
-  });
-  const consume = () => {
-    setTokens((prev) => {
-      const next = Math.max(0, prev - 1);
-      localStorage.setItem(TOKEN_KEY, String(next));
-      return next;
-    });
-  };
-  return { tokens, consume };
-}
 
 const lifecycleStages = [
   { key: "draft", label: "Draft", icon: FileText },
@@ -439,7 +423,26 @@ export default function ClientDashboard() {
   const [signingAppId, setSigningAppId] = useState<string | null>(null);
   const [cancelTarget, setCancelTarget] = useState<string | null>(null);
   const [signerName, setSignerName] = useState("");
-  const { tokens, consume } = useSigningTokens();
+
+  // NDA daily signing token status
+  const { data: limitData, refetch: refetchLimit } = useQuery(
+    gql`
+      query NDA_Daily_Limit_Status {
+        ndaDailyLimitStatus {
+          remaining
+          limit
+        }
+
+      }
+    `,
+    {
+      fetchPolicy: "cache-and-network",
+    }
+  );
+
+  const limitStatus = (limitData as any)?.ndaDailyLimitStatus;
+  const tokens = limitStatus?.remaining ?? 0;
+
 
   // Queries
   const { data: appsData, loading: appsLoading, refetch: refetchApps } = useQuery(GET_MY_APPLICATIONS);
@@ -513,7 +516,7 @@ export default function ClientDashboard() {
     if (tokens <= 0) { toast.error("No signing tokens remaining."); return; }
     try {
       await signNda({ variables: { applicationId: signingAppId, signerName } });
-      consume();
+      refetchLimit();
       toast.success("NDA executed successfully!");
       setSigningAppId(null); setSignerName(""); refetchApps();
     } catch (err: any) { toast.error(err.message); }
@@ -531,6 +534,7 @@ export default function ClientDashboard() {
             <RenderHTML html="<p>Manage your projects, schedule meetings, and track progress in real time.</p>" className="text-muted-foreground text-sm mt-1" />
           </div>
           <div className="flex items-center gap-3">
+            <TokenBadge tokens={tokens} />
             <Button variant="gold" size="sm" onClick={() => setNewAppDialogOpen(true)} className="gap-1.5">
               <Plus className="w-4 h-4" /> New Proposal
             </Button>
@@ -699,6 +703,9 @@ export default function ClientDashboard() {
                 <div className="flex-1">
                   <RenderHTML html={`<p class='text-sm font-bold text-amber-400'>${pendingNdAs} NDA${pendingNdAs > 1 ? "s" : ""} Pending Signature</p>`} />
                   <RenderHTML html="<p class='text-xs text-muted-foreground mt-0.5'>Review and sign your Non-Disclosure Agreement to move your project forward.</p>" />
+                  <div className="mt-2">
+                    <TokenBadge tokens={tokens} />
+                  </div>
                 </div>
               </div>
             )}
@@ -788,9 +795,19 @@ export default function ClientDashboard() {
                     )}
 
                     {app.ndaSigned && (
-                      <div className="flex items-center gap-1.5 text-xs text-green-500 font-bold border-t border-border/30 pt-3">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        NDA Executed
+                      <div className="flex items-center justify-between border-t border-border/30 pt-3">
+                        <div className="flex items-center gap-1.5 text-xs text-green-500 font-bold">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          NDA Executed
+                        </div>
+                        {app.ndaPdfUrl && (
+                          <a href={app.ndaPdfUrl} target="_blank" rel="noreferrer">
+                            <Button variant="outline" size="sm" className="text-[10px] h-7 gap-1">
+                              <Download className="w-3 h-3" />
+                              Download NDA
+                            </Button>
+                          </a>
+                        )}
                       </div>
                     )}
                   </motion.div>

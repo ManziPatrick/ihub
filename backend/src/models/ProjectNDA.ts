@@ -8,6 +8,7 @@ export interface IProjectNDA extends Document {
   signedAt?: Date;
   signerIp?: string;
   signatureHash?: string;
+  pdfUrl?: string;
   status: 'pending' | 'signed';
   createdAt: Date;
   updatedAt: Date;
@@ -22,6 +23,7 @@ const ProjectNDASchema: Schema = new Schema(
     signedAt: { type: Date },
     signerIp: { type: String },
     signatureHash: { type: String },
+    pdfUrl: { type: String },
     status: {
       type: String,
       enum: ['pending', 'signed'],

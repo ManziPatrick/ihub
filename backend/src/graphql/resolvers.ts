@@ -191,15 +191,17 @@ export const resolvers = {
       if (!context.user) throw new Error('Not authenticated');
       const { ProjectApplication } = require('../models/ProjectApplication');
 
-      // Client-facing apps are keyed by clientId in the schema.
-      // Support both clientId (current) and userId (legacy) to avoid empty arrays.
-      const apps = await ProjectApplication.find({
-        status: { $ne: 'deleted' },
-        $or: [
+      // Admins and super_admins see all applications; clients see only their own.
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = { status: { $ne: 'deleted' } };
+      if (!isAdmin) {
+        filter.$or = [
           { clientId: context.user.id },
           { userId: context.user.id },
-        ],
-      }).sort({ createdAt: -1 });
+        ];
+      }
+
+      const apps = await ProjectApplication.find(filter).sort({ createdAt: -1 });
 
       return apps.map((app: any) => {
         const obj = app.toObject();
@@ -291,10 +293,13 @@ export const resolvers = {
 
     myProjects: async (_: any, { status }: { status?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      const filter: any = {
+      // Admins and super_admins see all projects; others see only their own.
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = isAdmin ? {} : {
         $or: [
           { userId: context.user.id },
-          { mentors: context.user.id }
+          { mentors: context.user.id },
+          { 'team.userId': context.user.id }
         ]
       };
       if (status) filter.status = status;
@@ -303,7 +308,8 @@ export const resolvers = {
 
     myInternships: async (_: any, { status }: { status?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      const filter: any = {
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = isAdmin ? {} : {
         $or: [
           { mentorId: context.user.id },
           { mentors: context.user.id }
@@ -316,18 +322,17 @@ export const resolvers = {
     myBookings: async (_: any, { status }: { status?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
-      let filter: any = {
-        $or: [{ userId: context.user.id }, { mentorId: context.user.id }]
-      };
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      let filter: any = {};
 
-      if (context.user.role === 'trainer') {
+      if (isAdmin) {
+        // Admins see all bookings (no user filter)
+      } else if (context.user.role === 'trainer') {
         const courses = await Course.find({ instructor: context.user.id });
         const studentIds = courses.reduce((acc: any[], course: any) => {
           return [...acc, ...course.studentsEnrolled];
         }, []);
 
-        // Broaden: allow trainers to see unassigned pending sessions GLOBALLY, 
-        // OR sessions for their specific students
         filter.$or = [
           { userId: context.user.id },
           { mentorId: context.user.id }
@@ -337,8 +342,9 @@ export const resolvers = {
           filter.$or.push({ userId: { $in: studentIds }, mentorId: null });
         }
 
-        // Add Global Queue: Unassigned pending sessions
         filter.$or.push({ mentorId: null, status: 'pending' });
+      } else {
+        filter.$or = [{ userId: context.user.id }, { mentorId: context.user.id }];
       }
 
       if (status) filter.status = status;
@@ -520,12 +526,12 @@ export const resolvers = {
       return questions;
     },
 
-    users: async (_: any, { page = 1, limit = 10, createdBy }: any, context: any) => {
+    users: async (_: any, { page = 1, limit = 10, createdBy, role }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
 
-      const query: any = {};
+      const query: any = { isDeleted: { $ne: true } };
 
       if (context.user.role === 'admin' || context.user.role === 'trainer') {
         const courses = await Course.find({
@@ -537,13 +543,28 @@ export const resolvers = {
 
         const schoolFilter = context.user.school ? { school: context.user.school } : {};
 
-        query.$or = [
+        // Build role-aware $or conditions
+        const orConditions: any[] = [
           { _id: { $in: enrolledStudentIds } },
           { createdBy: context.user.id, role: 'trainer' },
           { ...schoolFilter, role: 'student' }
         ];
+
+        if (role) {
+          // Filter $or conditions to only include the matching role,
+          // plus a catch-all for that role to cover admin/super_admin users
+          query.$or = [
+            ...orConditions.filter((c) => !c.role || c.role === role),
+            { role },
+          ];
+        } else {
+          query.$or = orConditions;
+        }
       } else if (createdBy) {
         query.createdBy = createdBy;
+        if (role) query.role = role;
+      } else if (role) {
+        query.role = role;
       }
 
       const skip = (page - 1) * limit;
@@ -999,9 +1020,12 @@ export const resolvers = {
     myPayments: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const paymentFilter = isAdmin ? {} : { userId: context.user.id };
+
       const [standardPayments, internshipPayments] = await Promise.all([
-        Payment.find({ userId: context.user.id }).sort({ createdAt: -1 }).lean(),
-        InternshipPayment.find({ userId: context.user.id, isDeleted: false }).populate('internshipProgramId').sort({ createdAt: -1 }).lean()
+        Payment.find(paymentFilter).sort({ createdAt: -1 }).lean(),
+        InternshipPayment.find({ ...paymentFilter, isDeleted: false }).populate('internshipProgramId').sort({ createdAt: -1 }).lean()
       ]);
 
       const allPayments = [
@@ -1515,7 +1539,9 @@ export const resolvers = {
     },
     myCertificates: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      return await Certificate.find({ userId: context.user.id }).populate('userId courseId').sort({ createdAt: -1 });
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter = isAdmin ? {} : { userId: context.user.id };
+      return await Certificate.find(filter).populate('userId courseId').sort({ createdAt: -1 });
     },
     certificate: async (_: any, { id }: { id: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
@@ -1757,7 +1783,10 @@ export const resolvers = {
     },
     myInternshipApplications: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      return await InternshipApplication.find({ userId: context.user.id, isDeleted: false }).sort({ createdAt: -1 });
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = { isDeleted: false };
+      if (!isAdmin) filter.userId = context.user.id;
+      return await InternshipApplication.find(filter).sort({ createdAt: -1 });
     },
     internshipProject: async (_: any, { id }: { id: string }) => await InternshipProject.findById(id),
     internshipProjects: async (_: any, { programId, page = 1, limit = 10 }: any, context: any) => {
@@ -2053,7 +2082,10 @@ export const resolvers = {
     },
     myInternshipPayments: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      return await InternshipPayment.find({ userId: context.user.id, isDeleted: false }).sort({ createdAt: -1 });
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = { isDeleted: false };
+      if (!isAdmin) filter.userId = context.user.id;
+      return await InternshipPayment.find(filter).sort({ createdAt: -1 });
     },
     internshipPayment: async (_: any, { id }: { id: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
@@ -2092,7 +2124,10 @@ export const resolvers = {
     },
     myInternshipCertificates: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      return await InternshipCertificate.find({ userId: context.user.id, isDeleted: false, isRevoked: false }).sort({ issuedAt: -1 });
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = { isDeleted: false, isRevoked: false };
+      if (!isAdmin) filter.userId = context.user.id;
+      return await InternshipCertificate.find(filter).sort({ issuedAt: -1 });
     },
     internshipCertificate: async (_: any, { id }: { id: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
@@ -2171,7 +2206,10 @@ export const resolvers = {
     },
     myCourseApplications: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      const apps = await CourseApplication.find({ userId: context.user.id, isDeleted: false })
+      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const filter: any = { isDeleted: false };
+      if (!isAdmin) filter.userId = context.user.id;
+      const apps = await CourseApplication.find(filter)
         .populate({ path: 'courseId', model: 'Course' })
         .sort({ createdAt: -1 });
 
@@ -2187,6 +2225,70 @@ export const resolvers = {
           course: obj.courseId,
         };
       });
+    },
+
+    getSignedNDA: async (_: any, { applicationId }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const { ProjectNDA } = require('../models/ProjectNDA');
+
+      if (!applicationId) throw new Error('applicationId is required');
+
+      // applicationId can be a string or ObjectId; ensure robust lookup.
+      const appIdStr = typeof applicationId === 'string' ? applicationId : applicationId?.toString?.();
+      if (!appIdStr) throw new Error('Invalid applicationId');
+
+      // Try direct match first
+      let nda = await ProjectNDA.findOne({ projectApplicationId: applicationId }).populate('clientId');
+
+      // Fallback: match by stringified id
+      if (!nda) {
+        nda = await ProjectNDA.findOne({ projectApplicationId: { $in: [appIdStr] } }).populate('clientId');
+      }
+
+      // If still not found, return a clearer error with the id used.
+      if (!nda) {
+        throw new Error(`Pending NDA not found for this application (${appIdStr})`);
+      }
+
+      const obj = nda.toObject();
+      return {
+        ...obj,
+        id: nda._id.toString(),
+        applicationId: nda.projectApplicationId.toString(),
+        clientId: nda.clientId?._id?.toString() || nda.clientId?.toString(),
+        client: nda.clientId,
+        pdfUrl: nda.pdfUrl,
+      };
+    },
+
+    ndaDailyLimitStatus: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const { ProjectNDA } = require('../models/ProjectNDA');
+      const { Config } = require('../models/Config');
+      
+      const DAILY_LIMIT = parseInt(
+        process.env.NDA_DAILY_LIMIT ||
+          (await Config.findOne({ key: 'ndaDailyLimit' }))?.value?.toString() ||
+          '50',
+        10
+      );
+      
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      
+      const used = await ProjectNDA.countDocuments({
+        clientId: context.user.id,
+        status: 'signed',
+        signedAt: { $gte: todayStart, $lte: todayEnd },
+      });
+      
+      return {
+        limit: DAILY_LIMIT,
+        used,
+        remaining: Math.max(0, DAILY_LIMIT - used),
+      };
     },
 
     projectOnboarding: async (_: any, { projectId }: any, context: any) => {
@@ -7213,13 +7315,10 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
+      const { ProjectLifecycleService } = require('../services/project-lifecycle.service');
+      await ProjectLifecycleService.reviewApplication(applicationId, context.user.id, status, notes);
       const { ProjectApplication } = require('../models/ProjectApplication');
-      const app = await ProjectApplication.findById(applicationId);
-      if (!app) throw new Error('Application not found');
-      app.status = status;
-      if (notes) app.reviewNotes = notes;
-      await app.save();
-      return await app.populate('clientId');
+      return await ProjectApplication.findById(applicationId).populate('clientId');
     },
 
     initializeProjectFromApplication: async (_: any, { applicationId, course, mentorIds }: any, context: any) => {
@@ -7232,7 +7331,7 @@ export const resolvers = {
 
       const { Project } = require('../models/Project');
       const project = new Project({
-        userId: (app.clientId as any)._id || app.clientId,
+        userId: (app.clientId as any)?._id || app.clientId,
         title: app.title,
         description: app.description,
         course,
@@ -7242,6 +7341,7 @@ export const resolvers = {
         progress: 0,
       });
       await project.save();
+      return project;
     },
 
     submitProjectApplication: async (_: any, { title, description, documents }: any, context: any) => {
@@ -7260,6 +7360,26 @@ export const resolvers = {
       });
       await app.save();
       return await app.populate('clientId');
+    },
+
+    signProjectNDA: async (_: any, { applicationId, signerName }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const { ProjectLifecycleService } = require('../services/project-lifecycle.service');
+      const ipAddress = context.req?.ip || context.req?.headers?.['x-forwarded-for'] || '127.0.0.1';
+      await ProjectLifecycleService.signNDA(applicationId, signerName, ipAddress);
+      const { ProjectApplication } = require('../models/ProjectApplication');
+      const app = await ProjectApplication.findById(applicationId).populate('clientId');
+      if (!app) throw new Error('Application not found');
+      const obj = app.toObject();
+      return {
+        ...obj,
+        id: app._id.toString(),
+        clientId: app.clientId?._id?.toString() || app.clientId?.toString(),
+        ndaSigned: app.ndaSigned,
+        signerName: app.signerName,
+        signedAt: app.signedAt?.toISOString(),
+
+      };
     },
 
     // ─── Project Stage Mutations ────────────────────────────────────────
@@ -7882,7 +8002,10 @@ export const resolvers = {
   },
   ProjectOnboarding: {
     id: (parent: any) => parent.id || parent._id,
-    developerId: (parent: any) => parent.developerId?._id?.toString() || parent.developerId?.toString(),
+    developerId: (parent: any) => {
+      if (!parent.developerId) return null;
+      return parent.developerId?._id?.toString() || parent.developerId?.toString();
+    },
     developer: async (parent: any) => {
       if (parent.developerId && (parent.developerId as any).username) return parent.developerId;
       return await User.findById(parent.developerId);
@@ -7894,6 +8017,15 @@ export const resolvers = {
       if (parent.clientId && (parent.clientId as any).username) return parent.clientId;
       return await User.findById(parent.clientId);
     },
+    ndaPdfUrl: async (parent: any) => {
+      const { ProjectNDA } = require('../models/ProjectNDA');
+      try {
+        const nda = await ProjectNDA.findOne({ projectApplicationId: parent._id || parent.id });
+        return nda?.pdfUrl || null;
+      } catch {
+        return null;
+      }
+    },
   },
   Subscription: {
     messageAdded: {
@@ -7901,6 +8033,7 @@ export const resolvers = {
         () => (pubsub as any).asyncIterator(['MESSAGE_ADDED']),
 
         (payload, variables) => {
+          if (!variables.conversationId || !payload.messageAdded.conversationId) return false;
           return payload.messageAdded.conversationId.toString() === variables.conversationId;
         }
       ),

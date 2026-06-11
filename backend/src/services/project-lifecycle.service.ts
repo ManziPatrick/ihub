@@ -5,8 +5,11 @@ import { ProjectApplication } from '../models/ProjectApplication';
 import { ProjectNDA } from '../models/ProjectNDA';
 import { ProjectOnboarding } from '../models/ProjectOnboarding';
 import { User } from '../models/User';
+import { Config } from '../models/Config';
 import { sendNotification } from './notification.service';
+import Notification from '../models/Notification';
 import { sendEmail } from './email.service';
+import { generateNDAPDF } from './pdf.service';
 
 export class ProjectLifecycleService {
   /**
@@ -125,6 +128,72 @@ export class ProjectLifecycleService {
     const app = await ProjectApplication.findById(applicationId);
     if (!app) throw new Error('Project application not found');
 
+    // ─── Daily signing limit check (max 10 per day per user) ────────────────
+    // Priority: env var > Config model > hardcoded default (10)
+    const DAILY_LIMIT = parseInt(
+      process.env.NDA_DAILY_LIMIT ||
+        (await Config.findOne({ key: 'ndaDailyLimit' }))?.value?.toString() ||
+        '10',
+      10
+    );
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const signedToday = await ProjectNDA.countDocuments({
+      clientId: nda.clientId,
+      status: 'signed',
+      signedAt: { $gte: todayStart, $lte: todayEnd },
+    });
+
+    if (signedToday >= DAILY_LIMIT) {
+      // ─── Notify admins when a user hits the daily limit (once per day) ─
+      try {
+        const alreadyNotified = await Notification.countDocuments({          type: 'nda_daily_limit_reached',
+              clientId: nda.clientId.toString(),
+          createdAt: { $gte: todayStart },
+        });
+        if (alreadyNotified === 0) {
+          const clientUser = await User.findById(nda.clientId);
+          const admins = await User.find({ role: { $in: ['admin', 'super_admin'] } });
+          for (const admin of admins) {
+            await sendNotification(admin._id.toString(), {
+              type: 'nda_daily_limit_reached',
+              title: 'NDA Daily Limit Reached',
+              message: `Client ${clientUser?.fullName || clientUser?.username || 'Unknown'} (${clientUser?.email || 'no email'}) has hit their daily NDA signing limit of ${DAILY_LIMIT}.`,
+              link: `/portal/admin/applications`,
+              clientId: nda.clientId.toString(),
+            });
+          }
+          // Also send email notification to admins
+          const adminEmails = admins.filter(a => a.email).map(a => a.email);
+          if (adminEmails.length > 0) {
+            for (const email of adminEmails) {
+              await sendEmail({
+                to: email,
+                subject: `⚠️ NDA Limit Reached — ${clientUser?.fullName || clientUser?.username || 'Client'}`,
+                html: `<h3>NDA Daily Signing Limit Reached</h3>
+<p><strong>Client:</strong> ${clientUser?.fullName || clientUser?.username || 'Unknown'}</p>
+<p><strong>Email:</strong> ${clientUser?.email || 'N/A'}</p>
+<p><strong>Limit:</strong> ${DAILY_LIMIT} per day</p>
+<p>The client attempted to sign an NDA but has reached the daily limit.</p>
+<p>You can increase the limit by setting the <code>NDA_DAILY_LIMIT</code> environment variable, or by creating a Config entry with key <code>ndaDailyLimit</code>.</p>
+<p><a href="${process.env.CLIENT_ORIGIN || ''}/portal/admin/applications">View Applications →</a></p>`,
+              });
+            }
+          }
+        }
+      } catch (notifyErr) {
+        console.error('Failed to notify admins about NDA limit:', notifyErr);
+        // Non-blocking — user still gets the limit error regardless
+      }
+
+      throw new Error(
+        `Daily NDA signing limit of ${DAILY_LIMIT} reached. Please try again tomorrow.`
+      );
+    }
+
     const timestamp = new Date();
     // Cryptographic audit proof signature hash
     const signatureHash = crypto
@@ -137,6 +206,25 @@ export class ProjectLifecycleService {
     nda.signedAt = timestamp;
     nda.signerIp = ipAddress;
     nda.signatureHash = signatureHash;
+
+    // Generate and store the NDA PDF
+    try {
+      const clientUser = await User.findById(app.clientId);
+      const pdfUrl = await generateNDAPDF({
+        ndaId: nda._id.toString(),
+        applicationTitle: app.title,
+        clientName: clientUser?.fullName || clientUser?.username || 'Client',
+        signerName,
+        signerEmail: clientUser?.email || '',
+        signedAt: timestamp,
+        signatureHash,
+        signerIp: ipAddress,
+      });
+      nda.pdfUrl = pdfUrl;
+    } catch (pdfErr) {
+      console.error('Failed to generate NDA PDF:', pdfErr);
+      // Non-blocking — NDA is still considered signed
+    }
 
     const savedNda = await nda.save();
 

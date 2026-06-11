@@ -44,6 +44,7 @@ const GET_MY_APPLICATIONS = gql`
       description
       status
       ndaSigned
+      ndaPdfUrl
       reviewNotes
       requiredDocuments {
         overviewUrl
@@ -102,6 +103,7 @@ const SIGN_NDA = gql`
       status
       signerName
       signedAt
+      ndaPdfUrl
     }
   }
 `;
@@ -127,7 +129,7 @@ interface Application {
 // ─── Constants ───────────────────────────────────────────────────────────────
 // Signing tokens give the system "signing credits". We start with 3, each
 // successful NDA execution costs 1. Display the remaining count prominently.
-const INITIAL_TOKENS = 3;
+const INITIAL_TOKENS = 50;
 const TOKEN_KEY = "ihub_nda_tokens";
 
 function useSigningTokens() {
