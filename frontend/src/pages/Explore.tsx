@@ -90,6 +90,13 @@ const API_BASE_URL = getApiBaseUrl();
 const Explore = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [aiCourses, setAICourses] = useState<AICourse[]>([]);
+  const [aiLoading, setAILoading] = useState(true);
+  const [filter, setFilter] = useState("ALL");
+  const [enrollCourse, setEnrollCourse] = useState<any>(null);
+  const [applyCourse, setApplyCourse] = useState<any>(null);
+  const [sortBy, setSortBy] = useState<string>('latest');
+  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const COURSES_PAGE_SIZE = 9;
 
   const { data, loading: apolloLoading, fetchMore } = useQuery(GET_COURSES, {
@@ -100,13 +107,6 @@ const Explore = () => {
   const coursesResponse = (data as any)?.courses || { items: [], pagination: { hasNextPage: false, currentPage: 1, totalPages: 1, totalCount: 0 } };
   const loadedCourses = coursesResponse.items || [];
 
-  const [aiCourses, setAICourses] = useState<AICourse[]>([]);
-  const [aiLoading, setAILoading] = useState(true);
-  const [filter, setFilter] = useState("ALL");
-  const [enrollCourse, setEnrollCourse] = useState<any>(null);
-  const [applyCourse, setApplyCourse] = useState<any>(null);
-  const [sortBy, setSortBy] = useState<string>('latest');
-  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const { user, isAuthenticated, updateUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
