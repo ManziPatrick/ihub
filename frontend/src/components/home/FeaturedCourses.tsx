@@ -219,6 +219,7 @@ export function FeaturedCourses() {
   const [isInterestsOpen, setIsInterestsOpen] = useState(false);
   const [selectedInternshipId, setSelectedInternshipId] = useState<string | null>(null);
   const [applyCourse, setApplyCourse] = useState<any | null>(null);
+  const [sortBy, setSortBy] = useState<string>('latest');
   
   const { addToCart, cartItems } = useCart();
   const { isAuthenticated, user, updateUser } = useAuth();
@@ -267,9 +268,9 @@ export function FeaturedCourses() {
 
   const tabScrollRef = useRef<HTMLDivElement>(null);
 
-  // Courses
+  // Courses — only featured courses with sort
   const { data: courseData, loading: courseLoading } = useQuery(GET_COURSES, {
-    variables: { page: 1, limit: 200 },
+    variables: { page: 1, limit: 200, featured: true, sortBy },
   });
 
   // Internship programs
@@ -689,45 +690,78 @@ export function FeaturedCourses() {
         <div className="container mx-auto px-4 lg:px-8">
           
           {/* Section header */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6"
-          >
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-semibold text-foreground">Featured Programs</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Browse courses and internships — all in one place.
+                Top courses and internships handpicked for you.
               </p>
             </div>
 
-            {/* Programs / Internships toggle */}
-            <div className="flex bg-muted/40 p-1 rounded-xl border border-border/50 w-fit">
-              <button
-                onClick={() => switchSection("programs")}
-                className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
-                  section === "programs"
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <BookOpen className="w-3.5 h-3.5" />
-                Courses
-              </button>
-              <button
-                onClick={() => switchSection("internships")}
-                className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
-                  section === "internships"
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Briefcase className="w-3.5 h-3.5" />
-                Internships
-              </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {section === 'programs' && (
+                <div className="flex bg-muted/40 p-1 rounded-xl border border-border/50">
+                  <button
+                    onClick={() => setSortBy('latest')}
+                    className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      sortBy === 'latest'
+                        ? "bg-foreground text-background shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Clock className="w-3 h-3" />
+                    Latest
+                  </button>
+                  <button
+                    onClick={() => setSortBy('popular')}
+                    className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      sortBy === 'popular'
+                        ? "bg-foreground text-background shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Users className="w-3 h-3" />
+                    Popular
+                  </button>
+                  <button
+                    onClick={() => setSortBy('trending')}
+                    className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      sortBy === 'trending'
+                        ? "bg-foreground text-background shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <TrendingUp className="w-3 h-3" />
+                    Trending
+                  </button>
+                </div>
+              )}
+              <div className="flex bg-muted/40 p-1 rounded-xl border border-border/50">
+                <button
+                  onClick={() => switchSection("programs")}
+                  className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                    section === "programs"
+                      ? "bg-foreground text-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  Courses
+                </button>
+                <button
+                  onClick={() => switchSection("internships")}
+                  className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${
+                    section === "internships"
+                      ? "bg-foreground text-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Briefcase className="w-3.5 h-3.5" />
+                  Internships
+                </button>
+              </div>
             </div>
-          </motion.div>
+          </div>
 
           <motion.div
             initial={{ opacity: 0 }}

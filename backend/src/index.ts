@@ -26,6 +26,7 @@ import aiCourseRoutes from './routes/AICourseRoutes';
 import moduleAccessRoutes from './routes/ModuleAccessRoutes';
 import paymentRoutes from './routes/PaymentRoutes';
 import certificateRoutes from './routes/CertificateRoutes';
+import { Course } from './models/Course';
 import { authMiddleware } from './middleware/auth';
 import { maintenanceMiddleware } from './middleware/maintenance';
 
@@ -219,6 +220,73 @@ const startServer = async () => {
 
     app.get('/health', (_req, res) => {
         res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+    });
+
+    // =============================
+    // SEO / SITEMAP ROUTES
+    // =============================
+
+    // Dynamic course sitemap for search engines & AI crawlers
+    app.get('/course-sitemap.xml', async (_req, res) => {
+      try {
+        const courses = await Course.find({
+          isDeleted: { $ne: true },
+          status: { $in: ['published'] }
+        }).select('title description updatedAt').lean();
+
+        const baseUrl = process.env.FRONTEND_URL || 'https://bootskills.com';
+        const urls = courses.map((c: any) => `
+    <url>
+      <loc>${baseUrl}/courses/${c._id}</loc>
+      <lastmod>${c.updatedAt ? new Date(c.updatedAt).toISOString().split('T')[0] : '2026-06-08'}</lastmod>
+      <changefreq>weekly</changefreq>
+      <priority>0.9</priority>
+      <image:image>
+        <image:loc>${baseUrl}/og-course.jpg</image:loc>
+        <image:title>${c.title?.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</image:title>
+      </image:image>
+    </url>`).join('');
+
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  ${urls}
+</urlset>`;
+
+        res.header('Content-Type', 'application/xml');
+        res.send(xml);
+      } catch (err) {
+        console.error('❌ Failed to generate sitemap:', err);
+        res.status(500).send('Sitemap generation failed');
+      }
+    });
+
+    // AI crawler / GEO optimized endpoint — returns course listing as structured JSON
+    app.get('/api/seo/courses', async (_req, res) => {
+      try {
+        const courses = await Course.find({
+          isDeleted: { $ne: true },
+          status: { $in: ['published'] }
+        }).select('title description price level category school instructor createdAt').populate('instructor', 'username').limit(100).lean();
+
+        const baseUrl = process.env.FRONTEND_URL || 'https://bootskills.com';
+        const data = (courses as any[]).map(c => ({
+          '@type': 'Course',
+          name: c.title,
+          description: c.description?.substring(0, 300),
+          url: `${baseUrl}/courses/${c._id}`,
+          provider: { '@type': 'Organization', name: c.school || 'Bootskills', sameAs: baseUrl },
+          offers: { '@type': 'Offer', price: c.price || 0, priceCurrency: 'USD', availability: 'https://schema.org/InStock' },
+          educationalLevel: c.level || 'Beginner',
+          category: c.category
+        }));
+
+        res.json({ '@context': 'https://schema.org', '@graph': data });
+      } catch (err) {
+        console.error('❌ Failed to fetch SEO courses:', err);
+        res.status(500).json({ error: 'Failed to fetch courses' });
+      }
     });
 
     // =============================

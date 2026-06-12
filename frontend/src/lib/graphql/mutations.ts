@@ -158,8 +158,8 @@ export const CREATE_COURSE = gql`
 `;
 
 export const UPDATE_COURSE = gql`
-  mutation UpdateCourse($id: ID!, $title: String, $description: String, $thumbnail: String, $price: Float, $discountPrice: Float, $level: String, $category: String, $instructorId: ID, $status: String, $enrollmentMode: String, $submissionRequired: Boolean, $modules: [ModuleInput!], $signerName: String, $signerSignature: String, $applicationQuestions: [ApplicationQuestionInput], $school: String) {
-    updateCourse(id: $id, title: $title, description: $description, thumbnail: $thumbnail, price: $price, discountPrice: $discountPrice, level: $level, category: $category, instructorId: $instructorId, status: $status, enrollmentMode: $enrollmentMode, submissionRequired: $submissionRequired, modules: $modules, signerName: $signerName, signerSignature: $signerSignature, applicationQuestions: $applicationQuestions, school: $school) {
+  mutation UpdateCourse($id: ID!, $title: String, $description: String, $thumbnail: String, $price: Float, $discountPrice: Float, $level: String, $category: String, $instructorId: ID, $status: String, $enrollmentMode: String, $submissionRequired: Boolean, $modules: [ModuleInput!], $signerName: String, $signerSignature: String, $applicationQuestions: [ApplicationQuestionInput], $school: String, $isFeatured: Boolean) {
+    updateCourse(id: $id, title: $title, description: $description, thumbnail: $thumbnail, price: $price, discountPrice: $discountPrice, level: $level, category: $category, instructorId: $instructorId, status: $status, enrollmentMode: $enrollmentMode, submissionRequired: $submissionRequired, modules: $modules, signerName: $signerName, signerSignature: $signerSignature, applicationQuestions: $applicationQuestions, school: $school, isFeatured: $isFeatured) {
       id
       title
       status

@@ -7,7 +7,7 @@ Founded by tech visionaries Manzi Alain Patrick and Kalisa Jonathan, Bootskills 
 
 ## Leadership
 - **Manzi Alain Patrick Munyeshuri**: Founder & CEO. Expert in digital transformation and strategic growth.
-- **Bizimana Eric**: Co-Founder & CTO. Lead architect with expertise in AI, Cloud, and Software Engineering.
+- **KALISA Jonathan**: Co-Founder & CTO. Lead architect with expertise in AI, Cloud, and Software Engineering.
 
 ## Our Core Services
 1. **Academy**: Practical, job-ready training in FullStack Dev, AI, and IoT.

@@ -2,7 +2,7 @@
 > Bootskills is Rwanda's leading practical training platform offering tech, business, and financial literacy courses with real-world projects and internships. Based in Kigali, Rwanda. Serving all of Africa.
 > Website: https://bootskills.com
 > Location: Kigali, Rwanda
-> Founded: 2024 by Manzi Alain Patrick Munyeshuri and Bizimana Eric
+> Founded: 2024 by Manzi Alain Patrick Munyeshuri and KALISA Jonathan
 
 ## Software Development
 - Full Stack Web Development, Frontend Development, Backend Development
@@ -91,9 +91,15 @@ Africa-wide Online Training
 - Blog: https://bootskills.com/blog
 - Contact: https://bootskills.com/contact
 
+## Course Data (JSON-LD)
+All 68+ courses with full metadata (title, description, price, level, category, instructor) are available at:
+- Dynamic sitemap: https://bootskills.com/course-sitemap.xml
+- Structured JSON: https://bootskills.com/api/seo/courses
+- Individual courses: https://bootskills.com/courses/{courseId}
+
 ## Leadership
-- Manzi Alain Patrick Munyeshuri — Founder & CEO. Rwandan technologist bridging education and employability.
-- Bizimana Eric — Co-Founder & CTO. Technical and operational leadership.
+- Manzi Alain Patrick Munyeshuri — Co-Founder. Rwandan technologist bridging education and employability.
+- KALISA Jonathan — Co-Founder. Technical and operational leadership.
 
 ## Contact
 - Website: https://bootskills.com

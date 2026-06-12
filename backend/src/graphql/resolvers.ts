@@ -624,12 +624,17 @@ export const resolvers = {
         .sort({ createdAt: 1 }); // Oldest first for chat history usually, but depends on UI
     },
 
-    courses: async (_: any, { page = 1, limit = 10 }: any, context: any) => {
+    courses: async (_: any, { page = 1, limit = 10, sortBy = 'latest', featured }: any, context: any) => {
       const query: any = { isDeleted: { $ne: true } };
 
       // Filter for students/guests: Only published courses
       if (!context.user || (context.user.role !== 'admin' && context.user.role !== 'super_admin' && context.user.role !== 'trainer')) {
         query.status = { $nin: ['DRAFT', 'CLOSED', 'ARCHIVED', 'draft', 'closed', 'archived'] };
+      }
+
+      // Optional: Only featured courses
+      if (featured === true) {
+        query.isFeatured = true;
       }
 
       // Admin isolation: Admins see courses they created, are instructors for, or belong to their school
@@ -644,15 +649,80 @@ export const resolvers = {
       }
 
       const skip = (page - 1) * limit;
-      const [items, totalCount] = await Promise.all([
-        Course.find(query).populate('instructor').populate('studentsEnrolled').sort({ createdAt: -1 }).skip(skip).limit(limit),
-        Course.countDocuments(query)
-      ]);
+
+      // Compute trending scores (recent enrollments in last 30 days)
+      let trendingScores: Map<string, number> = new Map();
+      if (sortBy === 'trending') {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const recentPayments = await Payment.find({
+          status: 'completed',
+          createdAt: { $gte: thirtyDaysAgo },
+          $or: [
+            { courseId: { $exists: true, $ne: null } },
+            { courseIds: { $exists: true, $ne: null, $not: { $size: 0 } } }
+          ]
+        }).select('courseId courseIds').lean();
+
+        for (const p of recentPayments) {
+          const ids: string[] = [];
+          if (p.courseId) ids.push(p.courseId.toString());
+          if ((p as any).courseIds) {
+            (p as any).courseIds.forEach((id: any) => {
+              if (id) ids.push(id.toString());
+            });
+          }
+          for (const id of ids) {
+            trendingScores.set(id, (trendingScores.get(id) || 0) + 1);
+          }
+        }
+      }
+
+      const totalCount = await Course.countDocuments(query);
+
+      let items;
+
+      // For popular and trending, fetch all matching courses and sort in-memory
+      // (skip/limit applied manually to ensure correct global ordering)
+      if (sortBy === 'popular' || sortBy === 'trending') {
+        const allItems = await Course.find(query)
+          .populate('instructor')
+          .populate('studentsEnrolled')
+          .sort({ createdAt: -1 })
+          .lean({ virtuals: true });
+
+        if (sortBy === 'popular') {
+          allItems.sort((a: any, b: any) => (b.studentsEnrolled?.length || 0) - (a.studentsEnrolled?.length || 0));
+        } else if (sortBy === 'trending') {
+          allItems.sort((a: any, b: any) => {
+            const scoreA = trendingScores.get((a as any)._id.toString()) || 0;
+            const scoreB = trendingScores.get((b as any)._id.toString()) || 0;
+            return scoreB - scoreA;
+          });
+        }
+
+        items = allItems.slice(skip, skip + limit);
+      } else {
+        // Latest: use DB-level sort with skip/limit (efficient)
+        items = await Course.find(query)
+          .populate('instructor')
+          .populate('studentsEnrolled')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean({ virtuals: true });
+      }
 
       const totalPages = Math.ceil(totalCount / limit);
 
+      // Serialize items for GraphQL
+      const serialized = items.map((item: any) => ({
+        ...item,
+        id: item._id.toString(),
+        isFeatured: item.isFeatured || false
+      }));
+
       return {
-        items,
+        items: serialized,
         pagination: {
           totalCount,
           totalPages,
@@ -664,9 +734,9 @@ export const resolvers = {
       };
     },
 
-    course: async (_: any, { id }: { id: string }, context: any) => {
+    course: async (_: any, { id, lite }: { id: string; lite?: boolean }, context: any) => {
       const targetId = typeof id === 'object' ? ((id as any).id || (id as any)._id) : id;
-      console.log('--- course query targetId:', targetId);
+      console.log('--- course query targetId:', targetId, 'lite:', lite);
 
       if (!targetId || targetId === "" || targetId === "undefined" || targetId === "null") {
         console.log('--- course query: Invalid targetId, returning null');
@@ -688,6 +758,25 @@ export const resolvers = {
         throw new Error(`Course not found for ID: ${targetId}`);
       }
 
+      const courseObj = (course as any).toObject({ virtuals: true });
+
+      // LITE mode: Only return module/lesson structure (no content, quizzes, assignments)
+      if (lite) {
+        if (courseObj.modules) {
+          courseObj.modules = courseObj.modules.map((mod: any) => ({
+            ...mod,
+            lessons: mod.lessons ? mod.lessons.map((lesson: any) => ({
+              id: lesson._id || lesson.id,
+              title: lesson.title,
+              duration: lesson.duration,
+              type: lesson.type,
+              order: lesson.order
+            })) : []
+          }));
+        }
+        return courseObj;
+      }
+
       // Check enrollment
       let isEnrolled = false;
       if (context.user) {
@@ -700,8 +789,6 @@ export const resolvers = {
           isEnrolled = true;
         }
       }
-
-      const courseObj = (course as any).toObject({ virtuals: true });
 
       // If NOT enrolled: Apply Free Trial Logic (First 2 lessons visible)
       if (!isEnrolled) {
@@ -724,6 +811,70 @@ export const resolvers = {
 
       return courseObj;
     },
+
+    lessonContent: async (_: any, { courseId, lessonId }: { courseId: string; lessonId: string }, context: any) => {
+      console.log('--- lessonContent query: courseId:', courseId, 'lessonId:', lessonId);
+
+      if (!courseId || !lessonId) {
+        throw new Error('courseId and lessonId are required');
+      }
+
+      const course = await Course.findById(courseId).populate('instructor').populate('studentsEnrolled');
+      if (!course) {
+        throw new Error('Course not found');
+      }
+
+      // Find the lesson in course modules
+      let foundLesson: any = null;
+      let lessonIndex = 0;
+      if (course.modules) {
+        for (const mod of course.modules) {
+          if (mod.lessons) {
+            for (const lesson of mod.lessons) {
+              const lessonDoc = (lesson as any);
+              const lid = lessonDoc._id ? lessonDoc._id.toString() : '';
+              if (lid === lessonId) {
+                foundLesson = lessonDoc;
+                break;
+              }
+              lessonIndex++;
+            }
+          }
+          if (foundLesson) break;
+        }
+      }
+
+      if (!foundLesson) {
+        throw new Error('Lesson not found in course');
+      }
+
+      // Check enrollment for content restriction
+      let isEnrolled = false;
+      if (context.user) {
+        isEnrolled = (course.studentsEnrolled as any).some((s: any) => s._id.toString() === context.user.id || s.id === context.user.id);
+        if ((course.instructor as any)._id.toString() === context.user.id ||
+          ['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
+          isEnrolled = true;
+        }
+      }
+
+      // Free trial: only first 2 lessons visible without enrollment
+      if (!isEnrolled && lessonIndex >= 2) {
+        return {
+          ...foundLesson.toObject(),
+          content: "🔒 Enrollment Required to view this content.",
+          videoUrl: null,
+          fileUrl: null,
+          quizQuestions: [],
+          assignmentQuestions: [],
+          assignmentDescription: null
+        };
+      }
+
+      const lessonObj = foundLesson.toObject?.() || foundLesson;
+      return lessonObj;
+    },
+
     stats: async (_: any, __: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Not authorized');

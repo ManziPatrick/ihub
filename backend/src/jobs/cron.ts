@@ -157,4 +157,108 @@ export const initKronos = () => {
             console.error('Error in Developer Project Task Due Date Reminders Job:', e);
         }
     });
+
+    // 7. Weekly Database Cleanup (Every Sunday at 2:00 AM)
+    cron.schedule('0 2 * * 0', async () => {
+        console.log('🧹 Running Weekly Database Cleanup Job...');
+        try {
+            const courses = await Course.find({ isDeleted: { $ne: true } });
+            let totalDups = 0;
+
+            for (const course of courses) {
+                let moduleDups = 0, lessonDups = 0, quizDups = 0, assignDups = 0;
+                const modules = course.modules || [];
+                let updated = false;
+
+                // Dedup modules by title, merging unique lessons into the kept one
+                const seenModules = new Map<string, number>();
+                const modulesToKeep: any[] = [];
+                for (const mod of modules) {
+                    const key = mod.title?.toLowerCase().trim() || '';
+                    if (seenModules.has(key)) {
+                        const keptIdx = seenModules.get(key)!;
+                        const keptMod = modulesToKeep[keptIdx];
+                        if (mod.lessons) {
+                            const existingTitles = new Set((keptMod.lessons || []).map((l: any) => l.title?.toLowerCase().trim()));
+                            for (const lesson of mod.lessons) {
+                                if (!existingTitles.has(lesson.title?.toLowerCase().trim())) {
+                                    keptMod.lessons.push(lesson);
+                                }
+                            }
+                        }
+                        moduleDups++;
+                        updated = true;
+                    } else {
+                        seenModules.set(key, modulesToKeep.length);
+                        modulesToKeep.push(mod);
+                    }
+                }
+
+                // Dedup lessons by title, quiz questions, and assignment questions within each module
+                const dedupedModules = modulesToKeep.map((mod: any) => {
+                    if (!mod.lessons || mod.lessons.length === 0) return mod;
+                    const seenLessons = new Set<string>();
+                    const uniqueLessons: any[] = [];
+                    let modLessonDups = 0;
+
+                    for (const lesson of mod.lessons) {
+                        const key = lesson.title?.toLowerCase().trim() || '';
+                        if (seenLessons.has(key)) {
+                            modLessonDups++;
+                        } else {
+                            seenLessons.add(key);
+
+                            // Dedup quiz questions within this lesson
+                            let lessonQuizDups = 0;
+                            if (lesson.quizQuestions?.length) {
+                                const seenQuiz = new Set<string>();
+                                lesson.quizQuestions = lesson.quizQuestions.filter((q: any) => {
+                                    const key = q.questionText?.toLowerCase().trim() || '';
+                                    if (seenQuiz.has(key)) { lessonQuizDups++; return false; }
+                                    seenQuiz.add(key);
+                                    return true;
+                                });
+                            }
+
+                            // Dedup assignment questions within this lesson
+                            let lessonAssignDups = 0;
+                            if (lesson.assignmentQuestions?.length) {
+                                const seenAssign = new Set<string>();
+                                lesson.assignmentQuestions = lesson.assignmentQuestions.filter((q: any) => {
+                                    const key = q.questionText?.toLowerCase().trim() || '';
+                                    if (seenAssign.has(key)) { lessonAssignDups++; return false; }
+                                    seenAssign.add(key);
+                                    return true;
+                                });
+                            }
+
+                            quizDups += lessonQuizDups;
+                            assignDups += lessonAssignDups;
+                            uniqueLessons.push(lesson);
+                        }
+                    }
+
+                    lessonDups += modLessonDups;
+                    if (modLessonDups > 0 || quizDups > 0 || assignDups > 0) updated = true;
+                    return { ...mod, lessons: uniqueLessons };
+                });
+
+                if (updated) {
+                    await Course.updateOne(
+                        { _id: course._id },
+                        { $set: { modules: dedupedModules } }
+                    );
+                    totalDups += moduleDups + lessonDups + quizDups + assignDups;
+                }
+            }
+
+            if (totalDups > 0) {
+                console.log(`  ✅ Weekly cleanup: removed ${totalDups} duplicate(s) across courses`);
+            } else {
+                console.log('  ✅ Database already clean — no duplicates found');
+            }
+        } catch (e) {
+            console.error('Error in Weekly Cleanup Job:', e);
+        }
+    });
 };

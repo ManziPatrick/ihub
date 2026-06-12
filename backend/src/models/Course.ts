@@ -115,6 +115,7 @@ const courseSchema = new mongoose.Schema({
   signerName: { type: String },
   signerSignature: { type: String },
   school: { type: String, trim: true },
+  isFeatured: { type: Boolean, default: false },
 }, { timestamps: true });
 
 export const Course = mongoose.model('Course', courseSchema);

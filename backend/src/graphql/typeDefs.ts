@@ -360,6 +360,7 @@ export const typeDefs = `#graphql
     signerName: String
     signerSignature: String
     school: String
+    isFeatured: Boolean
     createdAt: String!
     updatedAt: String!
   }
@@ -810,8 +811,9 @@ export const typeDefs = `#graphql
     users(page: Int, limit: Int, createdBy: ID, role: String): UserResponse
     conversations: [Conversation]
     messages(conversationId: ID!): [Message]
-    courses(page: Int, limit: Int): CourseResponse
-    course(id: ID!): Course
+    courses(page: Int, limit: Int, sortBy: String, featured: Boolean): CourseResponse
+    course(id: ID!, lite: Boolean): Course
+    lessonContent(courseId: ID!, lessonId: ID!): Lesson
     stats: Stats
     me: User
     categories: [String]
@@ -1146,6 +1148,7 @@ export const typeDefs = `#graphql
       signerName: String
       signerSignature: String
       school: String
+      isFeatured: Boolean
       applicationQuestions: [ApplicationQuestionInput]
       modules: [ModuleInput!]
     ): Course

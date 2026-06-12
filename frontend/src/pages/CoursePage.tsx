@@ -1,21 +1,23 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_COURSE, MY_COURSE_APPLICATIONS, GET_ME, GET_COURSES } from "@/lib/graphql/queries";
+import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
+import { GET_COURSE_LITE, GET_LESSON_CONTENT, MY_COURSE_APPLICATIONS, GET_ME, GET_COURSES } from "@/lib/graphql/queries";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Helmet } from "react-helmet-async";
-import { CheckCircle, Clock, BookOpen, User, PlayCircle, Lock, Award, ShoppingCart, ArrowRight, XCircle } from "lucide-react";
+import { CheckCircle, Clock, BookOpen, User, PlayCircle, Lock, Award, ShoppingCart, ArrowRight, XCircle, ChevronDown, ChevronUp, FileText, Youtube, Loader2, ScrollText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { ApplyCourseDialog } from "@/components/portal/dialogs";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { stripHtml } from "@/lib/utils";
+
+const MODULES_PER_PAGE = 5;
 
 export default function CoursePage() {
   const { id } = useParams();
@@ -24,8 +26,18 @@ export default function CoursePage() {
   const { toast } = useToast();
   const { addToCart, cartItems } = useCart();
   const [applyCourse, setApplyCourse] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
+  const [loadingLesson, setLoadingLesson] = useState<string | null>(null);
+  const [lessonCache, setLessonCache] = useState<Record<string, any>>({});
 
-  const { data, loading, error, refetch } = useQuery(GET_COURSE, {
+  const [fetchLessonContent] = useLazyQuery(GET_LESSON_CONTENT, {
+    fetchPolicy: 'no-cache',
+    // onError is handled in the promise chain to keep types compatible
+  });
+
+
+  const { data, loading, error, refetch } = useQuery(GET_COURSE_LITE, {
     variables: { id },
     skip: !id
   });
@@ -53,11 +65,59 @@ export default function CoursePage() {
     }
   });
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading course...</div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error.message}</div>;
+  // Lazy load lesson content when expanded
+  const handleLessonClick = useCallback((lessonId: string) => {
+    if (expandedLesson === lessonId) {
+      setExpandedLesson(null);
+      return;
+    }
+
+    // If already cached, just expand
+    if (lessonCache[lessonId]) {
+      setExpandedLesson(lessonId);
+      return;
+    }
+
+    setLoadingLesson(lessonId);
+    fetchLessonContent({
+      variables: { courseId: id, lessonId }
+    }).then(({ data: result }: any) => {
+      const lesson = result?.lessonContent as any;
+
+      if (lesson) {
+        setLessonCache(prev => ({ ...prev, [lessonId]: lesson }));
+      }
+      setExpandedLesson(lessonId);
+    }).catch(() => {
+      // Error handled by onError callback
+    }).finally(() => {
+      setLoadingLesson(null);
+    });
+  }, [id, lessonCache, expandedLesson, fetchLessonContent]);
+
+  if (loading) return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-8 h-8 text-accent animate-spin" />
+        <p className="text-muted-foreground text-sm">Loading course...</p>
+      </div>
+    </div>
+  );
+  if (error) return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="min-h-[60vh] flex items-center justify-center text-red-500">{error.message}</div>
+    </div>
+  );
 
   const course = (data as any)?.course;
-  if (!course) return <div className="min-h-screen flex items-center justify-center">Course not found</div>;
+  if (!course) return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="min-h-[60vh] flex items-center justify-center">Course not found</div>
+    </div>
+  );
 
   const isEnrolled = user?.enrolledCourses?.some((c: any) => c.id === (course.id || course._id)) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
   const application = myApplications.find((app: any) => app.courseId === (course.id || course._id));
@@ -66,21 +126,85 @@ export default function CoursePage() {
   const statusLower = course.status?.toLowerCase();
   const isOpen = !course.status || statusLower === "published" || statusLower === "active" || statusLower === "open";
 
+  // Module pagination
+  const modules = course.modules || [];
+  const totalPages = Math.ceil(modules.length / MODULES_PER_PAGE);
+  const paginatedModules = modules.slice((currentPage - 1) * MODULES_PER_PAGE, currentPage * MODULES_PER_PAGE);
+
+  const totalLessons = modules.reduce((sum: number, m: any) => sum + (m.lessons?.length || 0), 0);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
         <title>{course?.title ? `${course.title} | Bootskills - Course in Kigali, Rwanda` : "Course Details | Bootskills"}</title>
         <meta name="description" content={stripHtml(course?.description)?.substring(0, 160) || "Explore this course from Bootskills. Practical, project-based training in Kigali, Rwanda."} />
+        <meta name="keywords" content={`${course?.category || 'course'}, ${course?.title || 'training'}, ${course?.level || 'beginner'} course, online learning, Kigali, Rwanda, tech training, Bootskills`} />
+        <meta name="author" content={course?.instructor?.username || 'Bootskills'} />
+        <meta name="robots" content="index, follow, max-snippet:200, max-image-preview:large" />
         <link rel="canonical" href={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"} />
-        <meta property="og:title" content={course?.title ? `${course.title} | Bootskills` : "Course | Bootskills"} />
+        <link rel="alternate" hrefLang="en" href={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"} />
+
+
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={course?.title ? `${course.title} | Bootskills Academy` : "Course | Bootskills"} />
         <meta property="og:description" content={stripHtml(course?.description)?.substring(0, 160) || "Explore practical training from Bootskills in Kigali, Rwanda."} />
         <meta property="og:url" content={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"} />
-        <meta property="og:type" content="article" />
         {course?.thumbnail && <meta property="og:image" content={course.thumbnail} />}
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="Bootskills Academy" />
+        <meta property="og:locale" content="en_RW" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={course?.title ? `${course.title} | Bootskills` : "Course | Bootskills"} />
+        <meta name="twitter:description" content={stripHtml(course?.description)?.substring(0, 160) || "Practical training from Bootskills in Kigali, Rwanda."} />
+        {course?.thumbnail && <meta name="twitter:image" content={course.thumbnail} />}
+        <meta name="twitter:site" content="@bootskills" />
+
+
+        {/* Geo tags for local SEO */}
         <meta name="geo.region" content="RW-01" />
         <meta name="geo.placename" content="Kigali" />
         <meta name="geo.position" content="-1.9441;30.0619" />
+        <meta name="ICBM" content="-1.9441, 30.0619" />
       </Helmet>
+
+      {/* JSON-LD structured data for search engines & AI crawlers */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Course',
+            name: course?.title,
+            description: stripHtml(course?.description)?.substring(0, 300) || course?.description?.substring(0, 300),
+            url: course?.id ? `https://bootskills.com/courses/${course.id}` : 'https://bootskills.com/explore',
+            image: course?.thumbnail,
+            provider: {
+              '@type': 'Organization',
+              name: course?.school || 'Bootskills Academy',
+              sameAs: 'https://bootskills.com'
+            },
+            offers: {
+              '@type': 'Offer',
+              price: course?.price || 0,
+              priceCurrency: 'USD',
+              availability: course?.price === 0 ? 'https://schema.org/Free' : 'https://schema.org/InStock',
+              url: course?.id ? `https://bootskills.com/courses/${course.id}` : 'https://bootskills.com/explore'
+            },
+            educationalLevel: course?.level || 'Beginner',
+            author: {
+              '@type': 'Person',
+              name: course?.instructor?.username || 'Bootskills Instructor'
+            },
+            inLanguage: 'en-RW',
+            coursePrerequisites: course?.level === 'Advanced' ? 'Intermediate level knowledge recommended' : 'No prerequisites required'
+          })
+        }}
+      />
+
       <Header />
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 lg:px-8">
@@ -104,7 +228,7 @@ export default function CoursePage() {
                 <div className="flex flex-wrap gap-6 pt-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-2">
                     <User className="w-4 h-4 text-accent" />
-                    Instructor: <span className="text-foreground font-medium">{course.instructor.username}</span>
+                    Instructor: <span className="text-foreground font-medium">{course.instructor?.username || "TBD"}</span>
                   </span>
                   <span className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-accent" />
@@ -112,40 +236,208 @@ export default function CoursePage() {
                   </span>
                   <span className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-accent" />
-                    {course.modules.length} Modules
+                    {modules.length} Modules · {totalLessons} Lessons
                   </span>
                 </div>
               </motion.div>
 
+              {/* Course Curriculum with Pagination & Lazy Loading */}
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold">Course Curriculum</h2>
-                <div className="space-y-4">
-                  {course.modules.map((module: any, idx: number) => (
-                    <Card key={module.id} className="border-border/50 shadow-sm overflow-hidden">
-                      <CardHeader className="bg-slate-50/50 py-3">
-                        <CardTitle className="text-sm font-bold flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px]">{idx + 1}</span>
-                          {module.title}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-0 max-h-80 overflow-y-auto custom-scrollbar">
-                        {module.lessons.map((lesson: any) => (
-                          <div key={lesson.id} className="flex items-center justify-between p-4 border-t border-border/30 hover:bg-slate-50 transition-colors">
-                            <div className="flex items-center gap-3">
-                              {isEnrolled ? (
-                                <PlayCircle className="w-4 h-4 text-indigo-500" />
-                              ) : (
-                                <Lock className="w-4 h-4 text-gray-300" />
-                              )}
-                              <span className={`text-sm ${!isEnrolled && 'text-muted-foreground'}`}>{lesson.title}</span>
-                            </div>
-                            <span className="text-xs text-muted-foreground">{lesson.duration}m</span>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Course Curriculum</h2>
+                  {totalPages > 1 && (
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                  )}
                 </div>
+                <div className="space-y-4">
+                  <AnimatePresence mode="wait">
+                    {paginatedModules.map((module: any, idx: number) => (
+                      <motion.div
+                        key={module.id || module._id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2, delay: idx * 0.05 }}
+                      >
+                        <Card className="border-border/50 shadow-sm overflow-hidden">
+                          <CardHeader className="bg-slate-50/50 py-3">
+                            <CardTitle className="text-sm font-bold flex items-center gap-2">
+                              <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px]">
+                                {(currentPage - 1) * MODULES_PER_PAGE + idx + 1}
+                              </span>
+                              {module.title}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-0">
+                            {module.lessons?.map((lesson: any) => {
+                              const lessonId = lesson.id || lesson._id;
+                              const isExpanded = expandedLesson === lessonId;
+                              const isLoading = loadingLesson === lessonId;
+                              const cachedLesson = lessonCache[lessonId];
+
+                              return (
+                                <div key={lessonId}>
+                                  <button
+                                    onClick={() => handleLessonClick(lessonId)}
+                                    className="w-full flex items-center justify-between p-4 border-t border-border/30 hover:bg-slate-50 transition-colors text-left"
+                                  >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      {isEnrolled ? (
+                                        <PlayCircle className="w-4 h-4 text-indigo-500 shrink-0" />
+                                      ) : (
+                                        <Lock className="w-4 h-4 text-gray-300 shrink-0" />
+                                      )}
+                                      <span className={`text-sm truncate ${!isEnrolled && 'text-muted-foreground'}`}>
+                                        {lesson.title}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      {lesson.type && (
+                                        <span className="text-[10px] uppercase text-muted-foreground font-medium hidden sm:inline">
+                                          {lesson.type === 'video' ? <Youtube className="w-3 h-3" /> : lesson.type === 'reading' ? <FileText className="w-3 h-3" /> : <ScrollText className="w-3 h-3" />}
+                                        </span>
+                                      )}
+                                      <span className="text-xs text-muted-foreground">{lesson.duration}m</span>
+                                      {isLoading ? (
+                                        <Loader2 className="w-3 h-3 text-accent animate-spin" />
+                                      ) : (
+                                        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                      )}
+                                    </div>
+                                  </button>
+
+                                  {/* Expanded lesson content (lazy-loaded) */}
+                                  <AnimatePresence>
+                                    {isExpanded && cachedLesson && (
+                                      <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="overflow-hidden border-t border-border/20"
+                                      >
+                                        <div className="p-4 bg-slate-50/30 space-y-4">
+                                          {/* Video player */}
+                                          {cachedLesson.videoUrl && (
+                                            <div className="aspect-video rounded-lg overflow-hidden bg-black/5">
+                                              <video
+                                                src={cachedLesson.videoUrl}
+                                                controls
+                                                className="w-full h-full"
+                                                controlsList="nodownload"
+                                              />
+                                            </div>
+                                          )}
+
+                                          {/* Content */}
+                                          {isEnrolled ? (
+                                            <div className="prose prose-sm max-w-none">
+                                              <div dangerouslySetInnerHTML={{ __html: cachedLesson.content || '' }} />
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center justify-center p-8 bg-muted/30 rounded-lg border border-dashed border-border">
+                                              <div className="text-center space-y-2">
+                                                <Lock className="w-8 h-8 text-muted-foreground mx-auto" />
+                                                <p className="text-sm text-muted-foreground font-medium">Enroll to view this content</p>
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* Quiz questions if available */}
+                                          {cachedLesson.quizQuestions?.length > 0 && isEnrolled && (
+                                            <div className="space-y-3 pt-2">
+                                              <h4 className="text-sm font-bold flex items-center gap-2">
+                                                <ScrollText className="w-4 h-4 text-accent" />
+                                                Quiz ({cachedLesson.quizQuestions.length} questions)
+                                              </h4>
+                                              {/* Show first 2 quiz questions as preview */}
+                                              {cachedLesson.quizQuestions.slice(0, 2).map((q: any, qi: number) => (
+                                                <div key={q.id || qi} className="bg-white rounded-lg p-3 border border-border/40">
+                                                  <p className="text-sm font-medium mb-2">{qi + 1}. {q.questionText}</p>
+                                                  <div className="space-y-1">
+                                                    {q.options?.slice(0, 2).map((opt: string, oi: number) => (
+                                                      <div key={oi} className="text-xs text-muted-foreground flex items-center gap-2">
+                                                        <span className="w-4 h-4 rounded-full border border-border flex items-center justify-center text-[10px]">{String.fromCharCode(65 + oi)}</span>
+                                                        {opt}
+                                                      </div>
+                                                    ))}
+                                                    {q.options?.length > 2 && (
+                                                      <p className="text-[10px] text-muted-foreground italic">+{q.options.length - 2} more options</p>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              ))}
+                                              {cachedLesson.quizQuestions.length > 2 && (
+                                                <p className="text-xs text-muted-foreground italic">
+                                                  +{cachedLesson.quizQuestions.length - 2} more questions in the full quiz
+                                                </p>
+                                              )}
+                                            </div>
+                                          )}
+
+                                          {/* Assignment info */}
+                                          {cachedLesson.isAssignment && isEnrolled && (
+                                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                              <p className="text-xs font-bold text-amber-700 flex items-center gap-2">
+                                                <FileText className="w-3 h-3" />
+                                                {cachedLesson.assignmentDescription || "Assignment"}
+                                              </p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                              );
+                            })}
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+
+                {/* Module Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-3 pt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage <= 1}
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className="text-xs"
+                    >
+                      ← Previous
+                    </Button>
+                    <div className="flex items-center gap-1.5">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-7 h-7 rounded-full text-xs font-medium transition-all ${
+                            page === currentPage
+                              ? 'bg-accent text-white shadow-sm'
+                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className="text-xs"
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 

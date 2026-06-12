@@ -50,7 +50,7 @@ export default function Team() {
             <div className="min-h-screen bg-background">
                 <Helmet>
                     <title>Our Team | Bootskills - Meet the Innovators in Kigali, Rwanda</title>
-                    <meta name="description" content="Meet the passionate professionals building the future of tech education in Africa. Our team at Bootskills is led by founder Manzi Alain Patrick Munyeshuri and co-founder Bizimana Eric." />
+                    <meta name="description" content="Meet the passionate professionals building the future of tech education in Africa. Our team at Bootskills is led by founder Manzi Alain Patrick Munyeshuri and co-founder KALISA Jonathan." />
                     <link rel="canonical" href="https://bootskills.com/team" />
                     <meta property="og:title" content="Our Team | Bootskills - Meet the Innovators" />
                     <meta property="og:description" content="Meet the passionate professionals building the future of tech education in Africa at Bootskills." />

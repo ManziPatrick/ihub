@@ -35,6 +35,8 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
 import { GET_COURSES, GET_STATS, GET_USERS, GET_COURSE, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
 import { UPDATE_COURSE, DELETE_COURSE, RESTORE_COURSE } from "@/lib/graphql/mutations";
+import { Star } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 export default function AdminCourses() {
   const navigate = useNavigate();
@@ -296,6 +298,7 @@ export default function AdminCourses() {
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Price</th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Mode</th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Status</th>
+                        <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Featured</th>
                         <th className="text-right p-4 text-sm font-medium text-card-foreground/70">Actions</th>
                       </tr>
                     </thead>
@@ -359,6 +362,28 @@ export default function AdminCourses() {
                                 {course.status === 'published' ? 'Live' : course.status === 'draft' ? 'Draft' : 'Archived'}
                               </Badge>
                             </td>
+                            <td className="p-4 text-center">
+                              <div className="flex items-center justify-center">
+                                <Switch
+                                  checked={!!course.isFeatured}
+                                  onCheckedChange={async (checked) => {
+                                    try {
+                                      await updateCourseMutation({
+                                        variables: {
+                                          id: course.id,
+                                          isFeatured: checked,
+                                        },
+                                      });
+                                      toast.success(checked ? '⭐ Featured!' : 'Unfeatured');
+                                      refetch();
+                                    } catch (err: any) {
+                                      toast.error(err.message);
+                                    }
+                                  }}
+                                  className={course.isFeatured ? 'bg-amber-500' : ''}
+                                />
+                              </div>
+                            </td>
                             <td className="p-4 text-right">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -389,6 +414,23 @@ export default function AdminCourses() {
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleUpdateStatus(course.id, 'archived')} disabled={course.status === 'archived'}>
                                     <div className="w-2 h-2 rounded-full bg-red-500 mr-2" /> Archive
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={async () => {
+                                    try {
+                                      await updateCourseMutation({
+                                        variables: {
+                                          id: course.id,
+                                          isFeatured: !course.isFeatured,
+                                        },
+                                      });
+                                      toast.success(course.isFeatured ? 'Unfeatured' : '⭐ Featured!');
+                                      refetch();
+                                    } catch (err: any) {
+                                      toast.error(err.message);
+                                    }
+                                  }}>
+                                    <Star className={`w-4 h-4 mr-2 ${course.isFeatured ? 'text-amber-500 fill-amber-500' : ''}`} />
+                                    {course.isFeatured ? 'Unfeature' : 'Feature'}
                                   </DropdownMenuItem>
                                   <div className="h-px bg-border/50 my-1" />
                                   <DropdownMenuItem

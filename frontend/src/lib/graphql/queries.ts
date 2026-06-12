@@ -255,8 +255,8 @@ export const GET_MESSAGES = gql`
 `;
 
 export const GET_COURSES = gql`
-  query GetCourses($page: Int, $limit: Int) {
-    courses(page: $page, limit: $limit) {
+  query GetCourses($page: Int, $limit: Int, $sortBy: String, $featured: Boolean) {
+    courses(page: $page, limit: $limit, sortBy: $sortBy, featured: $featured) {
       items {
         id
         title
@@ -271,6 +271,7 @@ export const GET_COURSES = gql`
         allowedDeliveryModes
         submissionRequired
         school
+        isFeatured
         instructor {
           id
           username
@@ -343,8 +344,8 @@ export const GET_COURSES = gql`
 `;
 
 export const GET_COURSES_SUMMARY = gql`
-  query GetCoursesSummary($page: Int, $limit: Int) {
-    courses(page: $page, limit: $limit) {
+  query GetCoursesSummary($page: Int, $limit: Int, $sortBy: String, $featured: Boolean) {
+    courses(page: $page, limit: $limit, sortBy: $sortBy, featured: $featured) {
       items {
         id
         title
@@ -355,6 +356,7 @@ export const GET_COURSES_SUMMARY = gql`
         category
         enrollmentMode
         school
+        isFeatured
         instructor {
           id
           username
@@ -371,7 +373,7 @@ export const GET_COURSES_SUMMARY = gql`
 
 export const GET_COURSE = gql`
   query GetCourse($id: ID!) {
-    course(id: $id) {
+    course(id: $id, lite: false) {
       id
       title
       description
@@ -382,6 +384,7 @@ export const GET_COURSE = gql`
       category
       status
       school
+      isFeatured
       enrollmentMode
       allowedDeliveryModes
       submissionRequired
@@ -446,6 +449,100 @@ export const GET_COURSE = gql`
       studentsEnrolled {
         id
         username
+      }
+    }
+  }
+`;
+
+export const GET_COURSE_LITE = gql`
+  query GetCourseLite($id: ID!) {
+    course(id: $id, lite: true) {
+      id
+      title
+      description
+      thumbnail
+      price
+      discountPrice
+      level
+      category
+      status
+      school
+      isFeatured
+      enrollmentMode
+      allowedDeliveryModes
+      submissionRequired
+      instructor {
+        id
+        username
+      }
+      applicationQuestions {
+        label
+        type
+        required
+        options
+      }
+      modules {
+        id
+        title
+        description
+        lessons {
+          id
+          title
+          duration
+          type
+        }
+      }
+      studentsEnrolled {
+        id
+        username
+      }
+    }
+  }
+`;
+
+export const GET_LESSON_CONTENT = gql`
+  query GetLessonContent($courseId: ID!, $lessonId: ID!) {
+    lessonContent(courseId: $courseId, lessonId: $lessonId) {
+      id
+      title
+      content
+      videoUrl
+      fileUrl
+      duration
+      type
+      isAssignment
+      requiredAssignment
+      assignmentDescription
+      assignmentDeliverables
+      assignmentQuestions {
+        id
+        questionText
+        type
+        options
+        correctOptionIndex
+        explanation
+        points
+      }
+      assignmentConfig {
+        timeLimit
+        allowRetakes
+        disableRightClick
+        mode
+      }
+      quizQuestions {
+        id
+        questionText
+        type
+        imageUrl
+        options
+        correctOptionIndex
+        explanation
+      }
+      quizConfig {
+        disableRightClick
+        timeLimit
+        quizType
+        questionsPerPage
       }
     }
   }

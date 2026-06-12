@@ -16,7 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Shield, Building2, Stethoscope, GraduationCap, Landmark, ShoppingBag, Factory, BarChart, ChevronRight, User, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye, XCircle, Filter, Search, LayoutGrid } from "lucide-react";
+import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Shield, Building2, Stethoscope, GraduationCap, Landmark, ShoppingBag, Factory, TrendingUp, ChevronRight, User, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye, XCircle, Filter, Search, LayoutGrid, Star } from "lucide-react";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import aboutImage from "@/assets/about-training.webp";
@@ -93,7 +93,7 @@ const Explore = () => {
   const COURSES_PAGE_SIZE = 9;
 
   const { data, loading: apolloLoading, fetchMore } = useQuery(GET_COURSES, {
-    variables: { page: 1, limit: COURSES_PAGE_SIZE },
+    variables: { page: 1, limit: COURSES_PAGE_SIZE, sortBy, featured: showFeaturedOnly || undefined },
     notifyOnNetworkStatusChange: true,
   });
 
@@ -105,6 +105,8 @@ const Explore = () => {
   const [filter, setFilter] = useState("ALL");
   const [enrollCourse, setEnrollCourse] = useState<any>(null);
   const [applyCourse, setApplyCourse] = useState<any>(null);
+  const [sortBy, setSortBy] = useState<string>('latest');
+  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const { user, isAuthenticated, updateUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -400,7 +402,65 @@ const Explore = () => {
                 )}
               </div>
 
-              {/* Main Grid */}
+              {/* Sort bar */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex bg-muted/40 p-1 rounded-xl border border-border/50">
+                    <button
+                      onClick={() => setSortBy('latest')}
+                      className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        sortBy === 'latest'
+                          ? "bg-foreground text-background shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      Latest
+                    </button>
+                    <button
+                      onClick={() => setSortBy('popular')}
+                      className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        sortBy === 'popular'
+                          ? "bg-foreground text-background shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      Popular
+                    </button>
+                    <button
+                      onClick={() => setSortBy('trending')}
+                      className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        sortBy === 'trending'
+                          ? "bg-foreground text-background shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      Trending
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowFeaturedOnly(prev => !prev);
+                      setCurrentPage(1);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
+                      showFeaturedOnly
+                        ? "bg-amber-500 text-white border-amber-400 shadow-sm"
+                        : "bg-muted/40 text-muted-foreground border-border/50 hover:text-foreground hover:border-amber-300"
+                    }`}
+                  >
+                    <Star className={`w-3.5 h-3.5 ${showFeaturedOnly ? 'fill-white' : ''}`} />
+                    Featured
+                  </button>
+                </div>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
+                </span>
+              </div>
+
+      {/* Main Grid */}
               <div className="flex-1 w-full">
                 {apolloLoading && (
                   <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -447,8 +507,14 @@ const Explore = () => {
                       alt={course.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
-                    <div className="absolute top-4 left-4">
+                    <div className="absolute top-4 left-4 flex gap-2">
                       <Badge className="bg-white/90 text-black hover:bg-white border-0 shadow-sm">{course.category}</Badge>
+                      {course.isFeatured && (
+                        <Badge className="bg-amber-500 text-white border-0 shadow-lg flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-white" />
+                          Featured
+                        </Badge>
+                      )}
                     </div>
                   </div>
 

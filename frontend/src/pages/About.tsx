@@ -33,7 +33,7 @@ const team = [
     bio: "Rwandan technologist and innovator driven by closing the gap between education and employability."
   },
   {
-    name: "Bizimana Eric",
+    name: "KALISA Jonathan",
     role: "Co-Founder & Operations Lead",
     bio: "Brings operational and technical leadership to scale training programs and software delivery."
   }
@@ -76,7 +76,7 @@ const About = () => {
       },
       {
         "@type": "Person",
-        "name": "Bizimana Eric"
+        "name": "KALISA Jonathan"
       }
     ],
     "description": "Bootskills empowers learners with practical skills and real-world project training.",
@@ -200,7 +200,7 @@ const About = () => {
                 learning is directly connected to real projects and mentorship.
               </p>
               <p className="text-card-foreground/80 text-lg leading-relaxed mt-4">
-                He was later joined by <strong>Bizimana Eric</strong>, Co-Founder, who brought operational and technical
+                He was later joined by <strong>KALISA Jonathan</strong>, Co-Founder, who brought operational and technical
                 leadership to help scale training programs, internships, and software delivery.
               </p>
             </div>
