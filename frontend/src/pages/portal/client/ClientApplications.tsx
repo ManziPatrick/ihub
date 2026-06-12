@@ -127,9 +127,9 @@ interface Application {
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-// Signing tokens give the system "signing credits". We start with 3, each
+// Signing tokens give the system "signing credits". We start with 100, each
 // successful NDA execution costs 1. Display the remaining count prominently.
-const INITIAL_TOKENS = 50;
+const INITIAL_TOKENS = 100;
 const TOKEN_KEY = "ihub_nda_tokens";
 
 function useSigningTokens() {

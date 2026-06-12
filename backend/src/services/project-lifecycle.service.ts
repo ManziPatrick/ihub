@@ -133,7 +133,7 @@ export class ProjectLifecycleService {
     const DAILY_LIMIT = parseInt(
       process.env.NDA_DAILY_LIMIT ||
         (await Config.findOne({ key: 'ndaDailyLimit' }))?.value?.toString() ||
-        '10',
+        '100',
       10
     );
     const todayStart = new Date();

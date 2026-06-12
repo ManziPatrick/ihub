@@ -2269,7 +2269,7 @@ export const resolvers = {
       const DAILY_LIMIT = parseInt(
         process.env.NDA_DAILY_LIMIT ||
           (await Config.findOne({ key: 'ndaDailyLimit' }))?.value?.toString() ||
-          '50',
+          '100',
         10
       );
       
@@ -2312,6 +2312,9 @@ export const resolvers = {
         .populate('clientId')
         .sort({ createdAt: -1 });
     },
+  },
+  ProjectTask: {
+    ...projectTaskResolvers.ProjectTask,
   },
   Mutation: {
     applyToCourse: async (_: any, { courseId, applicationAnswers, selectedDeliveryMode }: any, context: any) => {

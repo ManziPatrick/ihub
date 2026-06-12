@@ -1,5 +1,6 @@
 
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,15 +12,17 @@ import {
   GET_MY_PROJECT_TASKS,
   MOVE_PROJECT_TASK,
 } from "@/lib/graphql/project-tasks";
+
+import { GET_PROJECT_TASKS_BY_PROJECT_ID } from "@/lib/graphql/project-tasks-project";
+
 import {
   Loader2,
   AlertCircle,
   CheckCircle2,
   Clock,
-  Plus,
   ArrowRight,
   ExternalLink,
-
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -60,6 +63,9 @@ const PRIORITY_COLORS: Record<string, string> = {
 export default function StudentTasks() {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  const [projectDrawerOpen, setProjectDrawerOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   const { data, loading, error } = useQuery(GET_MY_PROJECT_TASKS, {
     variables: {},
@@ -249,7 +255,8 @@ export default function StudentTasks() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      navigate(`/portal/student/projects/${task.projectId}`);
+                                      setSelectedProjectId(task.projectId);
+                                      setProjectDrawerOpen(true);
                                     }}
                                     className="flex items-center gap-1 text-[9px] text-accent font-bold uppercase tracking-wider mb-2 hover:underline"
                                   >

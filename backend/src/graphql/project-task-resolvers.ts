@@ -40,9 +40,36 @@ export const projectTaskResolvers = {
 
     myProjectTasks: async (_: any, { status }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      const filter: any = { assigneeId: context.user.id, isDeleted: false };
+
+      // Only fetch *string* project ids; avoid passing full docs/objects into Mongoose casting.
+      const userProjectIds = (await Project.find({
+        $or: [
+          { userId: context.user.id },
+          { 'team.userId': context.user.id },
+        ],
+      }).select('_id')
+        .lean())
+        .map((p: any) => p._id.toString());
+
+
+      const filter: any = { isDeleted: false };
       if (status) filter.status = status;
-      return await ProjectTask.find(filter).populate('assigneeId').populate('projectId').sort({ updatedAt: -1 });
+
+      if (userProjectIds.length > 0) {
+        filter.$or = [
+          { assigneeId: context.user.id },
+          { assigneeId: null, projectId: { $in: userProjectIds } },
+          { assigneeId: { $exists: false }, projectId: { $in: userProjectIds } },
+        ];
+      } else {
+        filter.assigneeId = context.user.id;
+      }
+
+      // IMPORTANT: filter projectId with {$in: ...} to avoid Mongoose casting errors when userProjectIds already contains full docs.
+      return await ProjectTask.find(filter)
+        .populate('assigneeId')
+        .populate('projectId')
+        .sort({ updatedAt: -1 });
     },
 
     projectBoardStats: async (_: any, { projectId }: any, context: any) => {
@@ -143,6 +170,38 @@ export const projectTaskResolvers = {
       // Stable sort by progress desc then name
       results.sort((a: any, b: any) => (b.progressPercentage - a.progressPercentage) || (a.developer.username.localeCompare(b.developer.username)));
       return results;
+    },
+  },
+
+  ProjectTask: {
+    id: (parent: any) => parent.id || parent._id,
+    projectId: (parent: any) => {
+      if (!parent.projectId) return null;
+      if (typeof parent.projectId === 'object' && (parent.projectId._id || parent.projectId.id)) {
+        return (parent.projectId._id || parent.projectId.id).toString();
+      }
+      return parent.projectId?.toString?.() || parent.projectId;
+    },
+    assigneeId: (parent: any) => {
+      if (!parent.assigneeId) return null;
+      if (typeof parent.assigneeId === 'object' && (parent.assigneeId._id || parent.assigneeId.id)) {
+        return (parent.assigneeId._id || parent.assigneeId.id).toString();
+      }
+      return parent.assigneeId?.toString?.() || parent.assigneeId;
+    },
+    assignee: async (parent: any) => {
+      if (!parent.assigneeId) return null;
+      if (typeof parent.assigneeId === 'object' && (parent.assigneeId._id || parent.assigneeId.id)) {
+        return parent.assigneeId;
+      }
+      return await User.findById(parent.assigneeId);
+    },
+    project: async (parent: any) => {
+      if (!parent.projectId) return null;
+      if (typeof parent.projectId === 'object' && (parent.projectId._id || parent.projectId.id)) {
+        return parent.projectId;
+      }
+      return await Project.findById(parent.projectId);
     },
   },
 
