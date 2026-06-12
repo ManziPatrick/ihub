@@ -342,6 +342,9 @@ export default function SuperAdminUsers() {
                           Role
                         </th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
+                          Courses
+                        </th>
+                        <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
                           Status
                         </th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
@@ -385,6 +388,9 @@ export default function SuperAdminUsers() {
                             >
                               {user.role.replace("_", " ")}
                             </Badge>
+                          </td>
+                          <td className="p-4 text-center text-sm text-card-foreground/80">
+                            {user.enrolledCourses?.length || 0}
                           </td>
                           <td className="p-4 text-center">
                             <Badge

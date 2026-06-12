@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, User, LogOut, Bell, ShoppingCart } from "lucide-react";
+import { Menu, X, User, LogOut, Bell, ShoppingCart, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -30,6 +31,7 @@ export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const { cartItems, setIsCartOpen } = useCart();
   const { branding } = useBranding();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: notificationData } = useQuery<{ unreadNotificationCount: number }>(
     GET_UNREAD_NOTIFICATIONS,
@@ -58,6 +60,15 @@ export function Header() {
       : user?.role === "admin" || user?.role === "super_admin"
       ? "/portal/admin"
       : "/portal/student";
+
+  const handleHeaderSearch = () => {
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      navigate(`/explore?q=${encodeURIComponent(trimmed)}`);
+    } else {
+      navigate("/explore");
+    }
+  };
 
   return (
     <header
@@ -113,6 +124,26 @@ export function Header() {
 
           {/* ── Right side actions ── */}
           <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2 border border-border/30 rounded-full px-3 py-1 bg-background">
+              <Search size={16} className="text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") handleHeaderSearch();
+                }}
+                placeholder="Search courses"
+                className="h-9 w-48 rounded-full border-0 bg-transparent focus:ring-0"
+              />
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden md:inline-flex h-9 px-3 rounded-full"
+              onClick={handleHeaderSearch}
+            >
+              Search
+            </Button>
             <ThemeToggle />
 
             {/* Notification bell */}

@@ -2,10 +2,11 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
 import { toast as sonnerToast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { getApiBaseUrl } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
 import { Helmet } from "react-helmet-async";
@@ -23,9 +24,8 @@ import aboutImage from "@/assets/about-training.webp";
 import aboutImageMobile from "@/assets/about-training-mobile.webp";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_COURSES, MY_COURSE_APPLICATIONS, GET_ME } from "@/lib/graphql/queries";
+import { GET_COURSES_SUMMARY, MY_COURSE_APPLICATIONS, GET_ME } from "@/lib/graphql/queries";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { EnrollCourseDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
 import { useToast } from "@/hooks/use-toast";
@@ -90,6 +90,10 @@ const API_BASE_URL = getApiBaseUrl();
 const Explore = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const courseSearchQuery = searchTerm.toLowerCase();
   const [aiCourses, setAICourses] = useState<AICourse[]>([]);
   const [aiLoading, setAILoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
@@ -99,7 +103,7 @@ const Explore = () => {
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const COURSES_PAGE_SIZE = 9;
 
-  const { data, loading: apolloLoading, fetchMore } = useQuery(GET_COURSES, {
+  const { data, loading: apolloLoading, fetchMore } = useQuery(GET_COURSES_SUMMARY, {
     variables: { page: 1, limit: COURSES_PAGE_SIZE, sortBy, featured: showFeaturedOnly || undefined },
     notifyOnNetworkStatusChange: true,
   });
@@ -142,7 +146,7 @@ const Explore = () => {
         navigate(`/portal/student/courses/${courseId}`);
       }, 1500);
     },
-    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES }, { query: MY_COURSE_APPLICATIONS }],
+    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES_SUMMARY }, { query: MY_COURSE_APPLICATIONS }],
     onError: (err) => {
       toast({
         title: "Error",
@@ -178,12 +182,35 @@ const Explore = () => {
   const totalSchoolPages = Math.ceil(schools.length / ITEMS_PER_PAGE);
   const paginatedSchools = schools.slice(schoolPage * ITEMS_PER_PAGE, (schoolPage + 1) * ITEMS_PER_PAGE);
 
+  useEffect(() => {
+    setSearchTerm(searchParams.get("q") || "");
+  }, [searchParams]);
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    const params = new URLSearchParams(searchParams.toString());
+    if (value.trim()) {
+      params.set("q", value);
+    } else {
+      params.delete("q");
+    }
+    setSearchParams(params, { replace: true });
+  };
+
   const filteredCourses = useMemo(() => {
     return loadedCourses.filter((course: any) => {
-      if (activeSchool === "ALL") return true;
-      return course.school === activeSchool;
+      const matchesSchool = activeSchool === "ALL" || course.school === activeSchool;
+      const matchesSearch = !courseSearchQuery || [
+        course.title,
+        course.description,
+        course.category,
+        course.school,
+        course.level,
+        course.instructor?.username,
+      ].some((value) => (value || "").toString().toLowerCase().includes(courseSearchQuery));
+      return matchesSchool && matchesSearch;
     });
-  }, [loadedCourses, activeSchool]);
+  }, [loadedCourses, activeSchool, courseSearchQuery]);
 
   const departments = ["ALL", "GENERAL", "HEALTHCARE", "FINANCE", "EDUCATION", "MARKETING", "MANUFACTURING", "HR", "CYBERSECURITY"];
 
@@ -285,14 +312,17 @@ const Explore = () => {
               </p>
             </motion.div>
 
-            <div className="flex flex-col lg:flex-row gap-8 items-start">
+            <div className="grid gap-8 lg:grid-cols-[minmax(280px,_320px)_minmax(0,1fr)] items-start">
               {/* Side Panel Filter */}
-              <div className="w-full lg:w-64 shrink-0 lg:bg-card lg:p-6 lg:rounded-2xl lg:border lg:border-border/30 lg:sticky lg:top-24">
+              <div className="w-full lg:bg-card lg:p-6 lg:rounded-2xl lg:border lg:border-border/30 lg:sticky lg:top-24">
                 <div className="flex items-center justify-between mb-4 lg:mb-6">
-                  <h3 className="font-heading font-bold text-foreground text-sm lg:text-base flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-accent" />
-                    Schools & Providers
-                  </h3>
+                  <div>
+                    <h3 className="font-heading font-bold text-foreground text-sm lg:text-base flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-accent" />
+                      Schools & Providers
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">Search and filter the programs available on Explore.</p>
+                  </div>
                   <div className="lg:hidden">
                     <Sheet>
                       <SheetTrigger asChild>
@@ -339,6 +369,18 @@ const Explore = () => {
                         </div>
                       </SheetContent>
                     </Sheet>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <div className="relative text-muted-foreground">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
+                    <Input
+                      value={searchTerm}
+                      onChange={(event) => handleSearchChange(event.target.value)}
+                      placeholder="Search courses, providers, skills..."
+                      className="pl-10"
+                    />
                   </div>
                 </div>
 
@@ -402,6 +444,7 @@ const Explore = () => {
                 )}
               </div>
 
+              <div className="flex flex-col gap-6">
               {/* Sort bar */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -497,7 +540,8 @@ const Explore = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 group hover:shadow-xl transition-all h-full flex flex-col"
+                  onClick={() => navigate(`/courses/${course.id}`)}
+                  className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 group hover:shadow-xl transition-all h-full flex flex-col cursor-pointer"
                 >
                   <div className="aspect-video relative overflow-hidden">
                     <img
@@ -593,7 +637,7 @@ const Explore = () => {
                           return (
                             <Button 
                               className="w-full bg-green-600 hover:bg-green-700 h-10 rounded-xl text-sm font-bold shadow-lg"
-                              onClick={() => navigate(`/portal/student/courses/${course.id || course._id}`)}
+                              onClick={(e) => { e.stopPropagation(); navigate(`/portal/student/courses/${course.id || course._id}`); }}
                             >
                               <CheckCircle className="w-4 h-4 mr-2" /> Learning
                             </Button>
@@ -604,7 +648,7 @@ const Explore = () => {
                           return (
                             <Button 
                               className="w-full bg-green-600 hover:bg-green-700 h-10 rounded-xl text-sm font-bold shadow-lg"
-                              onClick={() => navigate(`/portal/student/courses/${course.id || course._id}`)}
+                              onClick={(e) => { e.stopPropagation(); navigate(`/portal/student/courses/${course.id || course._id}`); }}
                             >
                               <ArrowRight className="w-4 h-4 mr-2" /> Continue
                             </Button>
@@ -616,6 +660,7 @@ const Explore = () => {
                             <Button 
                               disabled
                               className="w-full bg-amber-500 h-10 rounded-xl text-sm font-bold"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <Clock className="w-4 h-4 mr-2" /> Applied (Pending)
                             </Button>
@@ -627,6 +672,7 @@ const Explore = () => {
                             <Button 
                               disabled
                               className="w-full bg-red-500 h-10 rounded-xl text-sm font-bold"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <XCircle className="w-4 h-4 mr-2" /> Rejected
                             </Button>
@@ -638,7 +684,7 @@ const Explore = () => {
                             variant="gold" 
                             size="sm" 
                             className="w-full rounded-xl font-bold h-10 shadow-lg shadow-gold/20"
-                            onClick={() => handleEnrollClick(course)}
+                            onClick={(e) => { e.stopPropagation(); handleEnrollClick(course); }}
                             disabled={enrolling}
                           >
                             {enrolling ? "Enrolling..." : "Enroll Now"} <ArrowRight className="w-4 h-4 ml-2" />
@@ -691,6 +737,7 @@ const Explore = () => {
                 </div>
               )}
             </div>
+          </div>
             </div>
           </div>
         </section>
