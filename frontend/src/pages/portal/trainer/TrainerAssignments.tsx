@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import {
   GET_ALL_PROJECTS,
-  GET_COURSES,
+  GET_COURSES_SUMMARY,
   GET_ALL_STUDENTS
 } from "@/lib/graphql/queries";
 import {
@@ -78,7 +78,9 @@ export default function TrainerAssignments() {
 
   // Queries
   const { data, loading, refetch } = useQuery(GET_ALL_PROJECTS);
-  const { data: coursesData } = useQuery(GET_COURSES);
+  const { data: coursesData } = useQuery(GET_COURSES_SUMMARY, {
+    fetchPolicy: "cache-first",
+  });
   const { data: studentsData } = useQuery(GET_ALL_STUDENTS);
 
   const [updateProject] = useMutation(UPDATE_PROJECT);

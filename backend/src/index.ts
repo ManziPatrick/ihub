@@ -1,3 +1,4 @@
+import path from 'path';
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
@@ -17,6 +18,7 @@ import { graphqlUploadExpress } from 'graphql-upload';
 import connectDB from './config/db';
 import { typeDefs } from './graphql/typeDefs';
 import { resolvers } from './graphql/resolvers';
+import { monitoringPlugin } from './graphql/monitoringPlugin';
 import { initKronos } from './jobs/cron';
 import blogRoutes from './routes/BlogRoutes';
 import blogCategoryRoutes from './routes/BlogCategoryRoutes';
@@ -199,6 +201,7 @@ const startServer = async () => {
                     };
                 },
             },
+            monitoringPlugin,
         ],
     });
 
@@ -296,6 +299,11 @@ const startServer = async () => {
     app.use('/api/blogs', blogRoutes);
     app.use('/api/blog-categories', blogCategoryRoutes);
     app.use('/api/upload', uploadRoutes);
+    // =============================
+    // STATIC FILES — serve uploaded PDFs (NDAs, certificates, invoices)
+    // =============================
+    app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
     app.use('/api/team', teamRoutes);
     app.use('/api/module-access', moduleAccessRoutes);
     app.use('/api/payments', paymentRoutes);

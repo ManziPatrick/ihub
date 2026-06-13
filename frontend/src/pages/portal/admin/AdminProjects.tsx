@@ -41,7 +41,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_ALL_PROJECTS, GET_COURSES, GET_USERS, GET_ASSIGNMENT_SUBMISSIONS, GET_STUDENT_PROJECT_PROGRESS } from "@/lib/graphql/queries";
+import { GET_ALL_PROJECTS, GET_COURSES_SUMMARY, GET_USERS, GET_ASSIGNMENT_SUBMISSIONS, GET_STUDENT_PROJECT_PROGRESS } from "@/lib/graphql/queries";
 import { GET_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 import { DELETE_PROJECT, UPDATE_PROJECT, GRADE_ASSIGNMENT, RESTORE_PROJECT } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
@@ -200,7 +200,9 @@ export default function AdminProjects() {
   };
 
 
-  const { data: coursesData } = useQuery(GET_COURSES);
+  const { data: coursesData } = useQuery(GET_COURSES_SUMMARY, {
+    fetchPolicy: "cache-first",
+  });
 
   const { data, loading, refetch } = useQuery(GET_ALL_PROJECTS, {
     variables: { page: currentPage, limit: pageSize, course: courseFilter !== "all" ? courseFilter : undefined }

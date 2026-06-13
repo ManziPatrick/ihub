@@ -53,7 +53,7 @@ import { toast } from "sonner";
 
 
 import { useQuery } from "@apollo/client/react";
-import { GET_ME, GET_COURSES, GET_MY_PROJECTS, MY_COURSE_APPLICATIONS } from "@/lib/graphql/queries";
+import { GET_ME, GET_COURSES_LITE_SUMMARY, GET_MY_PROJECTS, MY_COURSE_APPLICATIONS } from "@/lib/graphql/queries";
 
 export default function StudentCourses() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,7 +61,9 @@ export default function StudentCourses() {
   
   // Queries
   const { data: meData, loading: meLoading } = useQuery(GET_ME);
-  const { data: coursesData, loading: coursesLoading } = useQuery(GET_COURSES);
+  const { data: coursesData, loading: coursesLoading } = useQuery(GET_COURSES_LITE_SUMMARY, {
+    fetchPolicy: "cache-first",
+  });
   const { data: projectsData, loading: projectsLoading } = useQuery(GET_MY_PROJECTS);
   const { data: appsData, loading: appsLoading } = useQuery(MY_COURSE_APPLICATIONS);
 
@@ -419,7 +421,7 @@ export default function StudentCourses() {
           <TabsContent value="available" className="space-y-4">
             <div className={`grid gap-4 ${viewMode === "grid" ? "md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
               {availableCourses.map((course: any, index: number) => {
-                const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
+                const totalLessons = course.totalLessonsCount || 0;
                 const isFree = course.price === 0;
 
                 return (
@@ -471,7 +473,7 @@ export default function StudentCourses() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Users className="w-3.5 h-3.5" />
-                            {course.studentsEnrolled?.length || 0}
+                            {course.studentsEnrolledCount || 0}
                           </span>
                         </div>
                         {course.school && (

@@ -344,6 +344,7 @@ export const typeDefs = `#graphql
     id: ID!
     title: String!
     description: String!
+    descriptionSnippet: String
     thumbnail: String
     instructor: User
     price: Float
@@ -355,7 +356,10 @@ export const typeDefs = `#graphql
     enrollmentMode: String
     applicationQuestions: [ApplicationQuestion]
     modules: [Module!]!
+    modulesCount: Int!
+    totalLessonsCount: Int!
     studentsEnrolled: [User]!
+    studentsEnrolledCount: Int!
     submissionRequired: Boolean
     signerName: String
     signerSignature: String
@@ -519,14 +523,23 @@ export const typeDefs = `#graphql
     comment: String
     summary: String
 
-    clientFeedback: String
+    clientFeedback: ClientFeedback
     developerEvaluations: [DeveloperEvaluation!]
     reviewerNotes: String
   }
 
-  type DeveloperEvaluation {
+  type ClientFeedback {
     rating: Int
     comment: String
+    submittedAt: String
+  }
+
+  type DeveloperEvaluation {
+    developerId: ID
+    developer: User
+    rating: Int
+    comment: String
+    notes: String
     reviewerNotes: String
   }
   type Project {
@@ -2510,6 +2523,7 @@ export const typeDefs = `#graphql
     signedAt: String
     reviewNotes: String
     ndaPdfUrl: String
+    assignedAdmin: User
     requiredDocuments: ProjectApplicationDocuments
     createdAt: String!
     updatedAt: String!
@@ -2541,6 +2555,12 @@ export const typeDefs = `#graphql
     overviewUrl: String
     featuresUrl: String
     technicalUrl: String
+  }
+
+  input ProjectApplicationInput {
+    title: String!
+    description: String!
+    documents: ProjectApplicationDocumentsInput
   }
 
   type ResourceItem {
@@ -2599,6 +2619,9 @@ export const typeDefs = `#graphql
     projectByApplicationId(applicationId: ID!): Project
     getClients: [User!]!
     getClientWithDetails(clientId: ID!): ClientDetails
+    getRegisteredCompanies: [String!]!
+    getCourseEnrolledStudents(courseId: ID!): [User!]!
+    getAvailableAdmins: [User!]!
   }
 
   type ProjectBoardStats {
@@ -2720,7 +2743,10 @@ export const typeDefs = `#graphql
       title: String!
       description: String!
       documents: ProjectApplicationDocumentsInput
+      assignedAdminId: ID
     ): ProjectApplication!
+
+    claimProjectApplication(applicationId: ID!): ProjectApplication!
 
     signProjectNDA(
       applicationId: ID!

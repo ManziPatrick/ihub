@@ -35,6 +35,7 @@ import { Message } from '../models/Message';
 import { Conversation } from '../models/Conversation';
 import { sendEmail, sendLoginOTPEmail } from '../services/email.service';
 import { Course } from '../models/Course';
+import { ProjectApplication } from '../models/ProjectApplication';
 import AICourse from '../models/AICourse';
 import { Question } from '../models/Question';
 import { PubSub, withFilter } from 'graphql-subscriptions';
@@ -189,7 +190,6 @@ export const resolvers = {
     // This resolver returns an empty array when the user has no applications.
     myProjectApplications: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      const { ProjectApplication } = require('../models/ProjectApplication');
 
       // Admins and super_admins see all applications; clients see only their own.
       const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
@@ -207,9 +207,11 @@ export const resolvers = {
         const obj = app.toObject();
         return {
           ...obj,
-          id: app._id,
-          userId: app.userId?.toString?.() || app.userId,
+          id: app._id.toString(),
+          _id: app._id.toString(),
           clientId: app.clientId?.toString?.() || app.clientId,
+          userId: app.userId?.toString?.() || app.userId,
+          assignedAdmin: app.assignedAdmin?.toString?.() || app.assignedAdmin || undefined,
         };
       });
     },
@@ -388,6 +390,36 @@ export const resolvers = {
         throw new Error('Unauthorized');
       }
       return await User.find({ role: { $in: ['trainer', 'admin', 'super_admin'] }, isDeleted: { $ne: true } });
+    },
+
+    getAvailableAdmins: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      return await User.find({ role: { $in: ['admin', 'super_admin'] }, isDeleted: { $ne: true } });
+    },
+
+    getRegisteredCompanies: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const companies = await User.distinct('company', { company: { $ne: '', $exists: true } });
+      return companies.filter(Boolean).sort();
+    },
+
+    getCourseEnrolledStudents: async (_: any, { courseId }: { courseId: string }, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const course = await Course.findById(courseId).populate({
+        path: 'studentsEnrolled',
+        select: 'id username',
+      });
+      if (!course) throw new Error('Course not found');
+      return course.studentsEnrolled || [];
+    },
+
+    projectByApplicationId: async (_: any, { applicationId }: { applicationId: string }, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const project = await Project.findOne({ projectApplicationId: applicationId })
+        .populate('userId')
+        .populate('mentors')
+        .populate('team.userId');
+      return project;
     },
 
     getUploadSignature: (_: any, { folder, resourceType }: { folder?: string, resourceType?: string }, context: any) => {
@@ -948,9 +980,9 @@ export const resolvers = {
     me: async (_: any, __: any, context: any) => {
       if (!context.user) return null;
       return await User.findById(context.user.id)
-        .populate('enrolledCourses')
-        .populate('completedCourses')
-        .populate('badges.badgeId');
+        .populate({ path: 'enrolledCourses', select: 'id title thumbnail price discountPrice level category school modulesCount totalLessonsCount status isFeatured' })
+        .populate({ path: 'completedCourses', select: 'id title' })
+        .populate({ path: 'badges.badgeId', select: 'id title description icon category' });
     },
     categories: async () => {
       const courses = await Course.find();
@@ -2456,16 +2488,48 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
-      const { ProjectApplication } = require('../models/ProjectApplication');
+
       const query: any = { status: { $ne: 'deleted' } };
+      
+      // Super admin sees all; admin sees only their assigned or unassigned apps
+      if (context.user.role !== 'super_admin') {
+        query.$or = [
+          { assignedAdmin: context.user.id },
+          { assignedAdmin: { $exists: false } },
+          { assignedAdmin: null },
+        ];
+      }
+      
       if (status) query.status = status;
-      return await ProjectApplication.find(query)
+      const apps = await ProjectApplication.find(query)
         .populate('clientId')
+        .populate('assignedAdmin')
         .sort({ createdAt: -1 });
+
+      return apps.map((app: any) => {
+        const obj = app.toObject();
+        return {
+          ...obj,
+          id: app._id.toString(),
+          _id: app._id.toString(),
+          clientId: app.clientId?._id?.toString() || app.clientId?.toString?.() || app.clientId,
+          userId: app.userId?.toString?.() || app.userId,
+          assignedAdmin: app.assignedAdmin,
+        };
+      });
     },
   },
   ProjectTask: {
     ...projectTaskResolvers.ProjectTask,
+  },
+  DeveloperEvaluation: {
+    developer: async (parent: any) => {
+      if (!parent.developerId) return null;
+      if (typeof parent.developerId === 'object' && (parent.developerId as any).username) {
+        return parent.developerId;
+      }
+      return await User.findById(parent.developerId);
+    },
   },
   Mutation: {
     applyToCourse: async (_: any, { courseId, applicationAnswers, selectedDeliveryMode }: any, context: any) => {
@@ -7471,7 +7535,6 @@ export const resolvers = {
       }
       const { ProjectLifecycleService } = require('../services/project-lifecycle.service');
       await ProjectLifecycleService.reviewApplication(applicationId, context.user.id, status, notes);
-      const { ProjectApplication } = require('../models/ProjectApplication');
       return await ProjectApplication.findById(applicationId).populate('clientId');
     },
 
@@ -7479,7 +7542,6 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
-      const { ProjectApplication } = require('../models/ProjectApplication');
       const app = await ProjectApplication.findById(applicationId).populate('clientId');
       if (!app) throw new Error('Application not found');
 
@@ -7498,13 +7560,13 @@ export const resolvers = {
       return project;
     },
 
-    submitProjectApplication: async (_: any, { title, description, documents }: any, context: any) => {
+    submitProjectApplication: async (_: any, { title, description, documents, assignedAdminId }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      const { ProjectApplication } = require('../models/ProjectApplication');
       const app = new ProjectApplication({
         clientId: context.user.id,
         title,
         description,
+        assignedAdmin: assignedAdminId || undefined,
         requiredDocuments: {
           overviewUrl: documents?.overviewUrl,
           featuresUrl: documents?.featuresUrl,
@@ -7516,12 +7578,31 @@ export const resolvers = {
       return await app.populate('clientId');
     },
 
+    claimProjectApplication: async (_: any, { applicationId }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      const app = await ProjectApplication.findById(applicationId);
+      if (!app) throw new Error('Application not found');
+      if (app.assignedAdmin && app.assignedAdmin.toString() !== context.user.id) {
+        throw new Error('This application is already assigned to another admin');
+      }
+      app.assignedAdmin = context.user.id;
+      await app.save();
+      return await ProjectApplication.findById(applicationId).populate('clientId');
+    },
+
+    submitClientEvaluation: async (_: any, { projectId, rating, comment }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const { ProjectLifecycleService } = require('../services/project-lifecycle.service');
+      return await ProjectLifecycleService.submitClientEvaluation(projectId, context.user.id, rating, comment);
+    },
+
     signProjectNDA: async (_: any, { applicationId, signerName }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
       const { ProjectLifecycleService } = require('../services/project-lifecycle.service');
       const ipAddress = context.req?.ip || context.req?.headers?.['x-forwarded-for'] || '127.0.0.1';
       await ProjectLifecycleService.signNDA(applicationId, signerName, ipAddress);
-      const { ProjectApplication } = require('../models/ProjectApplication');
       const app = await ProjectApplication.findById(applicationId).populate('clientId');
       if (!app) throw new Error('Application not found');
       const obj = app.toObject();
@@ -7996,7 +8077,22 @@ export const resolvers = {
       }
 
       return await User.findById(parent.instructor);
-    }
+    },
+    descriptionSnippet: (parent: any) => {
+      if (!parent.description) return null;
+      const stripped = parent.description.replace(/<[^>]*>/g, '');
+      return stripped.length > 120 ? stripped.slice(0, 120) + '...' : stripped;
+    },
+    modulesCount: (parent: any) => {
+      return parent.modules?.length || 0;
+    },
+    totalLessonsCount: (parent: any) => {
+      if (!parent.modules) return 0;
+      return parent.modules.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0);
+    },
+    studentsEnrolledCount: (parent: any) => {
+      return parent.studentsEnrolled?.length || 0;
+    },
   },
   Module: {
     id: (parent: any) => parent.id || parent._id || parent.toString(),
@@ -8166,10 +8262,15 @@ export const resolvers = {
     },
   },
   ProjectApplication: {
-    id: (parent: any) => parent.id || parent._id,
+    id: (parent: any) => (parent.id || parent._id)?.toString(),
     client: async (parent: any) => {
       if (parent.clientId && (parent.clientId as any).username) return parent.clientId;
       return await User.findById(parent.clientId);
+    },
+    assignedAdmin: async (parent: any) => {
+      if (parent.assignedAdmin && (parent.assignedAdmin as any).username) return parent.assignedAdmin;
+      if (parent.assignedAdmin) return await User.findById(parent.assignedAdmin);
+      return null;
     },
     ndaPdfUrl: async (parent: any) => {
       const { ProjectNDA } = require('../models/ProjectNDA');

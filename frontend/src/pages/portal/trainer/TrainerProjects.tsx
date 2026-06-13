@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "@apollo/client/react";
 import {
     GET_ASSIGNMENT_SUBMISSIONS,
     GET_MY_PROJECTS,
-    GET_COURSES,
+    GET_COURSES_SUMMARY,
     GET_ALL_STUDENTS
 } from "@/lib/graphql/queries";
 import {
@@ -169,7 +169,9 @@ export default function TrainerProjects() {
         variables: { page: assignPage, limit: assignPageSize }
     });
     const { data: projectsData, loading: projectsLoading } = useQuery<GetMyProjectsData>(GET_MY_PROJECTS);
-    const { data: coursesData } = useQuery(GET_COURSES);
+    const { data: coursesData } = useQuery(GET_COURSES_SUMMARY, {
+    fetchPolicy: "cache-first",
+  });
     const { data: studentsData } = useQuery(GET_ALL_STUDENTS);
 
     const { data: tasksData, refetch: refetchTasks } = useQuery(GET_PROJECT_TASKS, {

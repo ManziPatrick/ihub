@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,11 +10,12 @@ import { useQuery, useMutation } from "@apollo/client/react";
 import { gql } from "@apollo/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   FileText, Search, CheckCircle2, XCircle, Clock, Eye,
-  ChevronRight, Loader2, Building2, User2, Calendar,
+  Loader2, Building2, User2, Calendar,
   FileCheck, AlertCircle, Shield, ExternalLink, Filter, RefreshCw,
-  Code
+  Code, Hand, Flag, UserCheck, Rocket
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -39,6 +40,10 @@ const GET_PROJECT_APPLICATIONS = gql`
         email
         avatar
       }
+      assignedAdmin {
+        id
+        fullName
+      }
       requiredDocuments {
         overviewUrl
         featuresUrl
@@ -59,25 +64,18 @@ const REVIEW_APPLICATION = gql`
   }
 `;
 
-const INITIALIZE_PROJECT = gql`
-  mutation InitializeProjectFromApplication($applicationId: ID!, $course: String!, $mentorIds: [ID!]!) {
-    initializeProjectFromApplication(applicationId: $applicationId, course: $course, mentorIds: $mentorIds) {
+const CLAIM_APPLICATION = gql`
+  mutation ClaimProjectApplication($applicationId: ID!) {
+    claimProjectApplication(applicationId: $applicationId) {
       id
-      title
-      status
+      assignedAdmin {
+        id
+        fullName
+      }
     }
   }
 `;
 
-const GET_TRAINERS = gql`
-  query GetTrainers {
-    getAllTrainers {
-      id
-      fullName
-      email
-    }
-  }
-`;
 
 // ─── Render HTML Content ────────────────────────────────────────────
 function RenderHTML({ html, className = "" }: { html: string; className?: string }) {
@@ -98,14 +96,13 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
 };
 
 export default function AdminProjectApplications() {
+  const { user: currentUser } = useAuth();
   const [tab, setTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedApp, setSelectedApp] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<"review" | "initialize" | null>(null);
+  const [viewMode, setViewMode] = useState<"review" | null>(null);
   const [reviewStatus, setReviewStatus] = useState("approved");
   const [reviewNotes, setReviewNotes] = useState("");
-  const [courseName, setCourseName] = useState("");
-  const [selectedMentorIds, setSelectedMentorIds] = useState<string[]>([]);
 
   const statusFilter = tab === "all" ? undefined : tab;
   const { data, loading, refetch } = useQuery(GET_PROJECT_APPLICATIONS, {
@@ -113,13 +110,13 @@ export default function AdminProjectApplications() {
     fetchPolicy: "cache-and-network",
   });
 
-  const { data: trainersData } = useQuery(GET_TRAINERS);
-
   const [reviewApp, { loading: reviewing }] = useMutation(REVIEW_APPLICATION);
-  const [initProject, { loading: initializing }] = useMutation(INITIALIZE_PROJECT);
+  const [claimApp, { loading: claiming }] = useMutation(CLAIM_APPLICATION, {
+    onCompleted: () => { toast.success("Application claimed!"); refetch(); },
+    onError: (err: any) => toast.error(err.message),
+  });
 
   const applications = (data as any)?.projectApplications || [];
-  const trainers = (trainersData as any)?.getAllTrainers || [];
 
   const filtered = applications.filter((app: any) => {
     const q = searchQuery.toLowerCase();
@@ -130,13 +127,22 @@ export default function AdminProjectApplications() {
     );
   });
 
+  const myApps = useMemo(
+    () => applications.filter((a: any) => a.assignedAdmin?.id === currentUser?.id),
+    [applications, currentUser?.id]
+  );
+
   const tabCounts = {
     all: applications.length,
+    my: myApps.length,
     submitted: applications.filter((a: any) => a.status === "submitted").length,
     under_review: applications.filter((a: any) => a.status === "under_review").length,
     approved: applications.filter((a: any) => a.status === "approved").length,
     rejected: applications.filter((a: any) => a.status === "rejected").length,
   };
+
+  // When on "my" tab, use filtered list; otherwise use status-filtered list
+  const displayList = tab === "my" ? myApps : filtered;
 
   const handleReview = async () => {
     if (!selectedApp) return;
@@ -154,39 +160,78 @@ export default function AdminProjectApplications() {
     }
   };
 
-  const handleInitialize = async () => {
-    if (!selectedApp || !courseName) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-    try {
-      await initProject({
-        variables: { applicationId: selectedApp.id, course: courseName, mentorIds: selectedMentorIds },
-      });
-      toast.success("Project created and workspace initialized!");
-      setSelectedApp(null);
-      setViewMode(null);
-      setCourseName("");
-      setSelectedMentorIds([]);
-      refetch();
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-  };
-
   const openReview = (app: any) => {
     setSelectedApp(app);
     setReviewStatus(app.status === "submitted" ? "under_review" : "approved");
     setReviewNotes(app.reviewNotes || "");
     setViewMode("review");
   };
-
-  const openInitialize = (app: any) => {
-    setSelectedApp(app);
-    setViewMode("initialize");
-  };
   // Full View Dialog state
   const [fullViewApp, setFullViewApp] = useState<any>(null);
+
+  // ── Initialize Project Dialog ──
+  const [initApp, setInitApp] = useState<any>(null);
+  const [initCourse, setInitCourse] = useState("");
+  const [initMentorIds, setInitMentorIds] = useState<string[]>([]);
+
+  const { data: coursesData } = useQuery(gql`
+    query GetCoursesForInit {
+      courses(page: 1, limit: 200) {
+        items {
+          id
+          title
+        }
+      }
+    }
+  `, { fetchPolicy: "cache-first" });
+
+  const { data: trainersData } = useQuery(gql`
+    query GetTrainersForInit {
+      getAllTrainers {
+        id
+        fullName
+      }
+    }
+  `, { fetchPolicy: "cache-first" });
+
+  const allCourses = ((coursesData as any)?.courses?.items || []).filter((c: any) => c.title);
+  const allTrainers = ((trainersData as any)?.getAllTrainers || []).filter((t: any) => t.fullName);
+
+  const [initProject, { loading: initializing }] = useMutation(gql`
+    mutation InitProject($applicationId: ID!, $course: String!, $mentorIds: [ID!]!) {
+      initializeProjectFromApplication(applicationId: $applicationId, course: $course, mentorIds: $mentorIds) {
+        id
+        title
+        status
+      }
+    }
+  `, {
+    onCompleted: () => {
+      toast.success("Project initialized successfully!");
+      setInitApp(null); setInitCourse(""); setInitMentorIds([]);
+      refetch();
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const handleInitProject = async () => {
+    if (!initApp || !initCourse) {
+      toast.error("Please select a course for this project.");
+      return;
+    }
+    try {
+      await initProject({
+        variables: {
+          applicationId: initApp.id,
+          course: initCourse,
+          mentorIds: initMentorIds,
+        },
+      });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
 
   return (
     <PortalLayout>
@@ -240,6 +285,13 @@ export default function AdminProjectApplications() {
         {/* Tabs */}
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="bg-card border border-border/50 rounded-xl p-1 flex-wrap h-auto">
+            <TabsTrigger value="my" className="rounded-lg text-xs font-semibold gap-1">
+              <UserCheck className="w-3.5 h-3.5" />
+              My Apps
+              <span className="ml-1 text-[10px] bg-accent/15 text-accent px-1.5 py-0.5 rounded-full font-bold">
+                {myApps.length}
+              </span>
+            </TabsTrigger>
             {["all", "submitted", "under_review", "approved", "rejected"].map((t) => (
               <TabsTrigger key={t} value={t} className="rounded-lg text-xs font-semibold capitalize">
                 {t.replace("_", " ")}
@@ -255,7 +307,7 @@ export default function AdminProjectApplications() {
               <div className="flex items-center justify-center min-h-[30vh]">
                 <Loader2 className="w-8 h-8 animate-spin text-accent" />
               </div>
-            ) : filtered.length === 0 ? (
+            ) : displayList.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground border-2 border-dashed rounded-xl">
                 <Building2 className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p className="text-sm font-medium">No applications found</p>
@@ -265,7 +317,7 @@ export default function AdminProjectApplications() {
               </div>
             ) : (
               <div className="space-y-3">
-                {filtered.map((app: any) => {
+                {displayList.map((app: any) => {
                   const cfg = statusConfig[app.status] || statusConfig.submitted;
                   const StatusIcon = cfg.icon;
                   return (
@@ -292,6 +344,11 @@ export default function AdminProjectApplications() {
                                 <Shield className="w-3 h-3" /> NDA Signed
                               </Badge>
                             )}
+                            {!app.assignedAdmin && (
+                              <Badge className="text-[10px] bg-amber-500/10 text-amber-400 border-amber-500/20 gap-1">
+                                <Flag className="w-3 h-3" /> Unassigned
+                              </Badge>
+                            )}
                           </div>
 
                           <div className="text-xs text-muted-foreground line-clamp-2 mb-3">
@@ -307,6 +364,12 @@ export default function AdminProjectApplications() {
                               <Calendar className="w-3.5 h-3.5" />
                               Submitted {format(new Date(parseInt(app.createdAt)), "MMM d, yyyy")}
                             </span>
+                            {app.assignedAdmin && (
+                              <span className="flex items-center gap-1.5 text-accent">
+                                <Hand className="w-3.5 h-3.5" />
+                                Assigned to {app.assignedAdmin.fullName}
+                              </span>
+                            )}
                           </div>
 
                           {/* Document Links */}
@@ -348,6 +411,18 @@ export default function AdminProjectApplications() {
 
                         {/* Action Buttons */}
                         <div className="flex flex-col gap-2 shrink-0">
+                          {!app.assignedAdmin && (
+                            <Button
+                              variant="gold"
+                              size="sm"
+                              className="text-xs h-8"
+                              onClick={() => claimApp({ variables: { applicationId: app.id } })}
+                              disabled={claiming}
+                            >
+                              {claiming ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Hand className="w-3.5 h-3.5 mr-1" />}
+                              Claim
+                            </Button>
+                          )}
                           <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => setFullViewApp(app)}>
                             <Code className="w-3.5 h-3.5 mr-1" /> View Full
                           </Button>
@@ -355,8 +430,12 @@ export default function AdminProjectApplications() {
                             <Eye className="w-3.5 h-3.5 mr-1" /> Review
                           </Button>
                           {app.status === "approved" && app.ndaSigned && (
-                            <Button variant="gold" size="sm" className="text-xs h-8" onClick={() => openInitialize(app)}>
-                              <ChevronRight className="w-3.5 h-3.5 mr-1" /> Init Project
+                            <Button variant="gold" size="sm" className="text-xs h-8" onClick={() => {
+                              setInitApp(app);
+                              setInitCourse("");
+                              setInitMentorIds([]);
+                            }}>
+                              <Rocket className="w-3.5 h-3.5 mr-1" /> Init Project
                             </Button>
                           )}
                         </div>
@@ -435,71 +514,6 @@ export default function AdminProjectApplications() {
           </Dialog>
         )}
 
-        {/* Initialize Project Dialog */}
-        {viewMode === "initialize" && selectedApp && (
-          <Dialog open onOpenChange={() => { setSelectedApp(null); setViewMode(null); }}>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <ChevronRight className="w-5 h-5 text-accent" />
-                  Initialize Project Workspace
-                </DialogTitle>
-                <DialogDescription>
-                  Set up the development environment for "{selectedApp.title}". This will create a live project and enable the client workspace.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4 py-2">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Project Category / Course Area</label>
-                  <Input
-                    placeholder="e.g., Full-Stack Web Development, Mobile App"
-                    value={courseName}
-                    onChange={(e) => setCourseName(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Assign Project Mentors</label>
-                  <div className="max-h-48 overflow-y-auto space-y-2 border border-border/50 rounded-xl p-3">
-                    {trainers.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">No trainers available</p>
-                    ) : (
-                      trainers.map((t: any) => (
-                        <label key={t.id} className="flex items-center gap-3 cursor-pointer group">
-                          <input
-                            type="checkbox"
-                            className="rounded"
-                            checked={selectedMentorIds.includes(t.id)}
-                            onChange={(e) => {
-                              setSelectedMentorIds(prev =>
-                                e.target.checked ? [...prev, t.id] : prev.filter(id => id !== t.id)
-                              );
-                            }}
-                          />
-                          <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent">
-                            {t.fullName?.[0]}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium group-hover:text-accent transition-colors">{t.fullName}</p>
-                            <p className="text-[10px] text-muted-foreground">{t.email}</p>
-                          </div>
-                        </label>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button variant="outline" onClick={() => { setSelectedApp(null); setViewMode(null); }}>Cancel</Button>
-                <Button variant="gold" onClick={handleInitialize} disabled={initializing || !courseName}>
-                  {initializing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ChevronRight className="w-4 h-4 mr-1" />}
-                  Launch Project
-                </Button>
-              </DialogFooter>            </DialogContent>
-            </Dialog>
-          )}
         {/* Full View Raw HTML Dialog */}
         {fullViewApp && (
           <Dialog open onOpenChange={() => setFullViewApp(null)}>
@@ -584,6 +598,89 @@ export default function AdminProjectApplications() {
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setFullViewApp(null)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* ── Initialize Project Dialog ───────────────────────────────── */}
+        {initApp && (
+          <Dialog open onOpenChange={() => { setInitApp(null); setInitCourse(""); setInitMentorIds([]); }}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Rocket className="w-5 h-5 text-accent" />
+                  Initialize Project Workspace
+                </DialogTitle>
+                <DialogDescription>
+                  Set up the development environment for "{initApp.title}". This will create a live project and enable the client workspace.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 py-2">
+                {/* Course Selection */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Course / Project Category
+                  </label>
+                  <Select value={initCourse} onValueChange={setInitCourse}>
+                    <SelectTrigger className="bg-card">
+                      <SelectValue placeholder="Select course..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allCourses.length === 0 ? (
+                        <SelectItem value="__none__" disabled>No courses available</SelectItem>
+                      ) : (
+                        allCourses.map((c: any) => (
+                          <SelectItem key={c.id} value={c.title}>{c.title}</SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Mentors Selection */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Assign Trainers / Mentors
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {allTrainers.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No trainers available</p>
+                    ) : (
+                      allTrainers.map((t: any) => {
+                        const selected = initMentorIds.includes(t.id);
+                        return (
+                          <Button
+                            key={t.id}
+                            variant={selected ? "gold" : "outline"}
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              setInitMentorIds(prev =>
+                                selected ? prev.filter(id => id !== t.id) : [...prev, t.id]
+                              );
+                            }}
+                          >
+                            <UserCheck className="w-3 h-3 mr-1" />
+                            {t.fullName}
+                          </Button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setInitApp(null); setInitCourse(""); setInitMentorIds([]); }}>Cancel</Button>
+                <Button
+                  variant="gold"
+                  onClick={handleInitProject}
+                  disabled={initializing || !initCourse}
+                >
+                  {initializing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Initializing…</> : <><Rocket className="w-4 h-4 mr-2" /> Initialize Project</>}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

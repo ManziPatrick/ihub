@@ -7,7 +7,6 @@ import { getApiBaseUrl } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
 import { Helmet } from "react-helmet-async";
 import {
@@ -29,7 +28,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { EnrollCourseDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
 import { useToast } from "@/hooks/use-toast";
-import { stripHtml } from "@/lib/utils";
 
 interface AICourse {
   _id: string;
@@ -106,6 +104,7 @@ const Explore = () => {
   const { data, loading: apolloLoading, fetchMore } = useQuery(GET_COURSES_SUMMARY, {
     variables: { page: 1, limit: COURSES_PAGE_SIZE, sortBy, featured: showFeaturedOnly || undefined },
     notifyOnNetworkStatusChange: true,
+    fetchPolicy: "cache-first",
   });
 
   const coursesResponse = (data as any)?.courses || { items: [], pagination: { hasNextPage: false, currentPage: 1, totalPages: 1, totalCount: 0 } };
@@ -117,7 +116,6 @@ const Explore = () => {
 
   const { data: meData } = useQuery(GET_ME, { skip: !isAuthenticated });
   const me = (meData as any)?.me;
-  const completedLessons = me?.completedLessons || [];
 
   const { data: appsData } = useQuery(MY_COURSE_APPLICATIONS, { skip: !isAuthenticated });
   const myApplications = (appsData as any)?.myCourseApplications || [];
@@ -202,7 +200,6 @@ const Explore = () => {
       const matchesSchool = activeSchool === "ALL" || course.school === activeSchool;
       const matchesSearch = !courseSearchQuery || [
         course.title,
-        course.description,
         course.category,
         course.school,
         course.level,
@@ -572,31 +569,15 @@ const Explore = () => {
                         </span>
                       )}
                     </div>
-                    <h3 className="font-heading text-xl font-bold text-card-foreground mb-3 line-clamp-2">
+                    <h3 className="font-heading text-xl font-bold text-card-foreground mb-2 line-clamp-2">
                       {course.title}
                     </h3>
-                    <p className="text-muted-foreground text-sm mb-6 line-clamp-3">
-                      {stripHtml(course.description)}
-                    </p>
 
-                    {(() => {
-                      const isEnrolled = (me?.enrolledCourses || user?.enrolledCourses)?.some((c: any) => (c.id || c).toString() === (course.id || course._id).toString()) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
-                      if (!isEnrolled) return null;
-
-                      const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
-                      const completedCount = completedLessons.filter((l: any) => l.courseId === (course.id || course._id)).length;
-                      const progress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
-
-                      return (
-                        <div className="mb-4 space-y-1">
-                          <div className="flex justify-between items-center text-[10px] font-bold">
-                            <span className="text-muted-foreground uppercase">Progress</span>
-                            <span className="text-accent">{progress}%</span>
-                          </div>
-                          <Progress value={progress} className="h-1.5" />
-                        </div>
-                      );
-                    })()}
+                    {course.descriptionSnippet && (
+                      <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-2">
+                        {course.descriptionSnippet}
+                      </p>
+                    )}
 
                     <div className="mt-auto pt-6 border-t border-border/30 flex flex-col gap-3">
                       <div className="flex items-center justify-between">
@@ -629,7 +610,9 @@ const Explore = () => {
                       </div>
 
                       {(() => {
-                        const isEnrolled = (me?.enrolledCourses || user?.enrolledCourses)?.some((c: any) => (c.id || c).toString() === (course.id || course._id).toString()) || course.studentsEnrolled?.some((s: any) => s.id === user?.id);
+                        const isEnrolled = (me?.enrolledCourses || user?.enrolledCourses)?.some(
+                          (c: any) => (c.id || c).toString() === (course.id || course._id).toString()
+                        );
                         const application = myApplications.find((app: any) => app.courseId === (course.id || course._id));
                         const appStatus = application?.status;
 

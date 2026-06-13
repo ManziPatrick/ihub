@@ -14,6 +14,7 @@ export interface IProjectApplication extends Document {
   signerName?: string;
   signedAt?: Date;
   reviewNotes?: string;
+  assignedAdmin?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,6 +39,7 @@ const ProjectApplicationSchema: Schema = new Schema(
     signerName: { type: String },
     signedAt: { type: Date },
     reviewNotes: { type: String },
+    assignedAdmin: { type: Schema.Types.ObjectId, ref: 'User', index: true },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

@@ -22,7 +22,7 @@ import {
   Plus, Clock, CheckCircle2, Users, Rocket, TrendingUp, Package,
   ChevronRight, Loader2, Video, BarChart3, Layers, Globe, ShieldCheck,
   GitBranch, Eye, PenLine, ThumbsUp, Download, AlertCircle, X,
-  XCircle, Building2, Circle, CheckSquare,
+  XCircle, Building2, Circle, CheckSquare, Building,
   Coins, FileSignature, Lock
 } from "lucide-react";
 
@@ -236,18 +236,28 @@ function NewApplicationDialog({
   const [technicalUrl, setTechnicalUrl] = useState("");
   const [submitApp, { loading }] = useMutation(SUBMIT_APPLICATION);
 
+
+
   const handleSubmit = async () => {
     if (!title || !description) { toast.error("Title and description required."); return; }
     try {
       await submitApp({
         variables: {
-          title, description,
+          title,
+          description,
           documents: { overviewUrl: overviewUrl || "", featuresUrl: featuresUrl || "", technicalUrl: technicalUrl || "" },
         },
       });
+
       toast.success("Project proposal submitted!");
-      setTitle(""); setDescription(""); setOverviewUrl(""); setFeaturesUrl(""); setTechnicalUrl("");
-      onCreated(); onClose();
+      setTitle("");
+      setDescription("");
+      setOverviewUrl("");
+      setFeaturesUrl("");
+      setTechnicalUrl("");
+      onCreated();
+      onClose();
+
     } catch (err: any) { toast.error(err.message); }
   };
 
@@ -283,6 +293,9 @@ function NewApplicationDialog({
                 <label className="text-sm font-semibold">Detailed Description</label>
                 <TextEditor value={description} onChange={setDescription} placeholder="Describe the project scope, objectives, and key features…" />
               </div>
+              {/* Company / Provider removed — admins are selected on the Applications page instead */}
+
+
               <div className="border-t border-border/30 pt-4 space-y-4">
                 <h4 className="text-sm font-bold text-accent uppercase tracking-wider">Specification Documents</h4>
                 {[

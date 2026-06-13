@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { GET_ALL_PROJECTS, GET_USERS, GET_COURSES } from '@/lib/graphql/queries';
+import { GET_ALL_PROJECTS, GET_USERS, GET_COURSES_SUMMARY } from '@/lib/graphql/queries';
 import { Link as LinkIcon, Plus, Trash2, Book, Box, Layout, X, Check, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { FileUpload } from '@/components/FileUpload';
@@ -35,7 +35,9 @@ export function CreateProjectDialog({ open, onOpenChange, refetch }: CreateProje
 
     const { data: usersData } = useQuery(GET_USERS);
     const { data: projectsData } = useQuery(GET_ALL_PROJECTS);
-    const { data: coursesData } = useQuery(GET_COURSES);
+    const { data: coursesData } = useQuery(GET_COURSES_SUMMARY, {
+      fetchPolicy: "cache-first",
+    });
 
     const users = (usersData as any)?.users?.items || (usersData as any)?.users || [];
     const allProjects = (projectsData as any)?.projects?.items || (projectsData as any)?.projects || [];

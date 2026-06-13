@@ -260,6 +260,7 @@ export const GET_COURSES = gql`
       items {
         id
         title
+        descriptionSnippet
         description
         thumbnail
         price
@@ -349,6 +350,7 @@ export const GET_COURSES_SUMMARY = gql`
       items {
         id
         title
+        descriptionSnippet
         thumbnail
         price
         discountPrice
@@ -357,6 +359,41 @@ export const GET_COURSES_SUMMARY = gql`
         enrollmentMode
         school
         isFeatured
+        status
+        instructor {
+          id
+          username
+        }
+        createdAt
+      }
+      pagination {
+        ...PaginationFragment
+      }
+    }
+  }
+  ${PAGINATION_FRAGMENT}
+`;
+
+export const GET_COURSES_LITE_SUMMARY = gql`
+  query GetCoursesLiteSummary($page: Int, $limit: Int, $sortBy: String, $featured: Boolean) {
+    courses(page: $page, limit: $limit, sortBy: $sortBy, featured: $featured) {
+      items {
+        id
+        title
+        descriptionSnippet
+        description
+        thumbnail
+        price
+        discountPrice
+        level
+        category
+        enrollmentMode
+        school
+        isFeatured
+        status
+        modulesCount
+        totalLessonsCount
+        studentsEnrolledCount
         instructor {
           id
           username
@@ -566,58 +603,15 @@ export const GET_ME = gql`
       enrolledCourses {
         id
         title
-        description
         thumbnail
         price
         discountPrice
         level
         category
         school
-        modules {
-          title
-          description
-          lessons {
-            title
-            duration
-            type
-            content
-            videoUrl
-            fileUrl
-            isAssignment
-            requiredAssignment
-            assignmentDescription
-            assignmentQuestions {
-              id
-              questionText
-              type
-              options
-              correctOptionIndex
-              explanation
-              points
-            }
-            assignmentConfig {
-              timeLimit
-              allowRetakes
-              disableRightClick
-              mode
-            }
-            quizQuestions {
-              id
-              questionText
-              type
-              imageUrl
-              options
-              correctOptionIndex
-              explanation
-            }
-            quizConfig {
-              disableRightClick
-              timeLimit
-              quizType
-              questionsPerPage
-            }
-          }
-        }
+        modulesCount
+        totalLessonsCount
+        status
       }
       completedLessons {
         courseId
@@ -630,22 +624,10 @@ export const GET_ME = gql`
         badge {
           id
           title
-          description
           icon
           category
         }
         awardedAt
-      }
-      grades {
-        courseId
-        lessonId
-        lesson {
-          title
-          type
-        }
-        score
-        feedback
-        gradedAt
       }
       level
       xp
@@ -2454,6 +2436,15 @@ export const GET_INTERNSHIP_ACTIVITY_LOGS = gql`
   }
   ${PAGINATION_FRAGMENT}
 `;
+export const GET_COURSE_ENROLLED_STUDENTS = gql`
+  query GetCourseEnrolledStudents($courseId: ID!) {
+    getCourseEnrolledStudents(courseId: $courseId) {
+      id
+      username
+    }
+  }
+`;
+
 export const GET_COURSE_APPLICATIONS = gql`
   query GetCourseApplications($courseId: ID, $status: String, $page: Int, $limit: Int) {
     courseApplications(courseId: $courseId, status: $status, page: $page, limit: $limit) {

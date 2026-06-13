@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Search, UserPlus, CheckCircle, User } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_USERS, GET_COURSES } from "@/lib/graphql/queries";
+import { GET_USERS, GET_COURSES_SUMMARY } from "@/lib/graphql/queries";
 import { ENROLL_STUDENT_IN_COURSE } from "@/lib/graphql/mutations";
 
 interface EnrollStudentDialogProps {
@@ -20,7 +20,7 @@ export function EnrollStudentDialog({ open, onOpenChange, course }: EnrollStuden
     const { data: usersData, loading: usersLoading } = useQuery(GET_USERS, { variables: { limit: 200 } });
 
     const [enrollStudent, { loading: enrolling }] = useMutation(ENROLL_STUDENT_IN_COURSE, {
-        refetchQueries: [{ query: GET_COURSES }],
+        refetchQueries: [{ query: GET_COURSES_SUMMARY }],
         onCompleted: (data) => {
             toast.success(`Student enrolled successfully!`);
         },

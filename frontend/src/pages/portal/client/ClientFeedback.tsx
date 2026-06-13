@@ -480,9 +480,9 @@ export default function ClientFeedback() {
 
       {/* Feedback Dialog */}
       <FeedbackDialog
-        open={feedbackDialogOpen && !!selectedProjectId}
+        open={feedbackDialogOpen && !!selectedProjectId && !!project?.id}
         onClose={() => setFeedbackDialogOpen(false)}
-        projectId={selectedProjectId || ""}
+        projectId={project?.id || ""}
         projectTitle={project?.title || ""}
         onSubmitted={handleRefresh}
       />

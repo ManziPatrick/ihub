@@ -33,7 +33,7 @@ import { ViewCourseDialog, EditCourseDialog, DeleteConfirmDialog } from "@/compo
 import { QuestionManagerDialog } from "@/components/portal/QuestionManagerDialog";
 import { toast } from "sonner";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
-import { GET_COURSES, GET_STATS, GET_USERS, GET_COURSE, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
+import { GET_COURSES_LITE_SUMMARY, GET_STATS, GET_USERS, GET_COURSE, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
 import { UPDATE_COURSE, DELETE_COURSE, RESTORE_COURSE } from "@/lib/graphql/mutations";
 import { Star } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -52,16 +52,17 @@ export default function AdminCourses() {
   const [manageQuestionsCourse, setManageQuestionsCourse] = useState<any | null>(null);
 
   // Queries & Mutations
-  const { data, loading, refetch } = useQuery(GET_COURSES, {
+  const { data, loading, refetch } = useQuery(GET_COURSES_LITE_SUMMARY, {
+    fetchPolicy: "cache-first",
     variables: { page: currentPage, limit: pageSize },
     pollInterval: 30000
   });
   const [loadCourse, { data: fullCourseData, loading: courseLoading }] = useLazyQuery(GET_COURSE);
   const [updateCourseMutation, { loading: updateLoading }] = useMutation(UPDATE_COURSE, {
-    refetchQueries: [{ query: GET_COURSES }, { query: GET_STATS }, { query: GET_ADMIN_DASHBOARD_DATA }]
+    refetchQueries: [{ query: GET_COURSES_LITE_SUMMARY }, { query: GET_STATS }, { query: GET_ADMIN_DASHBOARD_DATA }]
   });
   const [deleteCourseMutation] = useMutation(DELETE_COURSE, {
-    refetchQueries: [{ query: GET_COURSES }, { query: GET_STATS }, { query: GET_ADMIN_DASHBOARD_DATA }]
+    refetchQueries: [{ query: GET_COURSES_LITE_SUMMARY }, { query: GET_STATS }, { query: GET_ADMIN_DASHBOARD_DATA }]
   });
   const [restoreCourseMutation] = useMutation(RESTORE_COURSE);
 
@@ -312,15 +313,20 @@ export default function AdminCourses() {
                                   {course.title}
                                 </p>
                                 <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-0.5">
-                                  {course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0} units
+                                  {course.totalLessonsCount || 0} units
                                 </p>
+                                {course.descriptionSnippet && (
+                                  <p className="text-[10px] text-muted-foreground/60 leading-tight mt-1 line-clamp-2 border-l-2 border-accent/30 pl-2 italic">
+                                    {course.descriptionSnippet}
+                                  </p>
+                                )}
                               </div>
                             </td>
                             <td className="p-4 text-sm text-card-foreground/70 group-hover:text-foreground dark:group-hover:text-white transition-colors">
                               {course.instructor?.username || <span className="text-destructive/60 italic">TBD</span>}
                             </td>
                             <td className="p-4 text-center">
-                              <span className="text-sm font-bold">{course.studentsEnrolled?.length || 0}</span>
+                              <span className="text-sm font-bold">{course.studentsEnrolledCount || 0}</span>
                             </td>
                             <td className="p-4 text-center">
                               {course.price === 0 ? (

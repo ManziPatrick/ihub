@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache, split } from "@apollo/client";
+import { ApolloClient, InMemoryCache, split, from } from "@apollo/client";
 import { setContext } from '@apollo/client/link/context';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
@@ -6,6 +6,7 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { createClient } from 'graphql-ws';
 import { env } from './env';
+import { createMonitoringLink, trackTimingGlobally } from './graphql/monitoringLink';
 
 const httpLink = new UploadHttpLink({
   uri: env.API_URL || 'http://localhost:4000/graphql',
@@ -36,6 +37,23 @@ const authLink = setContext((_, { headers }) => {
   }
 });
 
+// Monitoring link — tracks query response times and payload sizes
+// Only tracks operations matching tracked patterns
+const monitoringLink = createMonitoringLink({
+  devLogging: process.env.NODE_ENV !== 'production',
+  slowThresholdMs: 500,
+  trackOperations: [
+    /^GetCourses/,
+    /^GetCourse/,
+    /^GetMe/,
+    /^GetAnalytics/,
+    /^GetAdmin/,
+    /^GetStats/,
+  ],
+  onTiming: trackTimingGlobally,
+  includeQueryBody: false,
+});
+
 const link = split(
   ({ query }) => {
     const definition = getMainDefinition(query);
@@ -45,7 +63,7 @@ const link = split(
     );
   },
   wsLink,
-  authLink.concat(httpLink),
+  from([monitoringLink, authLink.concat(httpLink)]),
 );
 
 const client = new ApolloClient({
@@ -59,9 +77,16 @@ const client = new ApolloClient({
               return incoming;
             },
           },
+          // Cache course list results separately by sort/filter params
+          courses: {
+            keyArgs: ["sortBy", "featured"],
+          },
         },
       },
-    }
+      Course: {
+        keyFields: ["id"],
+      },
+    },
   }),
 });
 

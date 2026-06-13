@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@apollo/client/react";
-import { GET_COURSE, GET_COURSES } from "@/lib/graphql/queries";
+import { GET_COURSE, GET_COURSES_LITE_SUMMARY } from "@/lib/graphql/queries";
 import {
   BookOpen,
   CheckCircle2,
@@ -76,7 +76,9 @@ function getLessonLabel(type: LessonType): string {
 function CourseSelector() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const { data, loading } = useQuery(GET_COURSES);
+  const { data, loading } = useQuery(GET_COURSES_LITE_SUMMARY, {
+    fetchPolicy: "cache-first",
+  });
   const courses = (data as any)?.courses?.items || [];
 
   const filtered = courses.filter((c: any) =>
@@ -130,8 +132,8 @@ function CourseSelector() {
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
             {filtered.map((course: any, idx: number) => {
-              const totalMods = course.modules?.length || 0;
-              const totalLessons = course.modules?.reduce((a: number, m: any) => a + (m.lessons?.length || 0), 0) || 0;
+              const totalMods = course.modulesCount || 0;
+              const totalLessons = course.totalLessonsCount || 0;
               return (
                 <motion.div
                   key={course.id}

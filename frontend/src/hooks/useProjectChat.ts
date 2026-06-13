@@ -34,11 +34,11 @@ export function useProjectChat({ projectId, conversationId: initialConversationI
 
   // Poll every 3 seconds for new messages
   const { data, loading, error } = useQuery(GET_MESSAGES, {
-    variables: { conversationId: activeConversationId },
+    variables: activeConversationId ? { conversationId: activeConversationId } : ({} as any),
     skip: !enabled || !activeConversationId,
-    pollInterval: 3000, 
     fetchPolicy: "network-only"
   });
+
 
   const [sendMessageMutation, { loading: sending }] = useMutation(SEND_MESSAGE_TO_PROJECT);
 

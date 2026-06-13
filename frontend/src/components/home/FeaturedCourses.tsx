@@ -48,7 +48,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import topImage from "@/assets/top.jpg";
 import { 
-  GET_COURSES, 
+  GET_COURSES_SUMMARY, 
   GET_INTERNSHIP_PROGRAMS, 
   MY_COURSE_APPLICATIONS, 
   GET_MY_INTERNSHIP_APPLICATIONS, 
@@ -250,7 +250,7 @@ export function FeaturedCourses() {
         navigate(`/portal/student/courses/${courseId}`);
       }, 1500);
     },
-    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES }, { query: MY_COURSE_APPLICATIONS }],
+    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES_SUMMARY }, { query: MY_COURSE_APPLICATIONS }],
     onError: (err) => {
       toast({
         title: "Error",
@@ -269,8 +269,9 @@ export function FeaturedCourses() {
   const tabScrollRef = useRef<HTMLDivElement>(null);
 
   // Courses — only featured courses with sort
-  const { data: courseData, loading: courseLoading } = useQuery(GET_COURSES, {
+  const { data: courseData, loading: courseLoading } = useQuery(GET_COURSES_SUMMARY, {
     variables: { page: 1, limit: 200, featured: true, sortBy },
+    fetchPolicy: "cache-first",
   });
 
   // Internship programs
@@ -897,10 +898,19 @@ export function FeaturedCourses() {
                               {course.title}
                             </h3>
 
+                            {course.descriptionSnippet && (
+                              <p className="text-muted-foreground text-[11px] leading-relaxed mb-2 line-clamp-2">
+                                {course.descriptionSnippet}
+                              </p>
+                            )}
+
                             {isEnrolled && (
                               <div className="mt-2 mb-2">
                                 {(() => {
-                                  const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
+                                  const enrolledCourse = (me?.enrolledCourses || []).find(
+                                    (ec: any) => (ec.id || ec._id)?.toString() === (course.id || course._id)?.toString()
+                                  );
+                                  const totalLessons = enrolledCourse?.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
                                   const completedCount = completedLessons.filter((l: any) => l.courseId === (course.id || course._id)).length;
                                   const progress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
                                   

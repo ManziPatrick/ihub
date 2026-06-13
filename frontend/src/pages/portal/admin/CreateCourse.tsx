@@ -44,7 +44,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_USERS, GET_COURSES, GET_ADMIN_DASHBOARD_DATA, GET_CATEGORIES } from "@/lib/graphql/queries";
+import { GET_USERS, GET_COURSES_SUMMARY, GET_ADMIN_DASHBOARD_DATA, GET_CATEGORIES } from "@/lib/graphql/queries";
 import { CREATE_COURSE } from "@/lib/graphql/mutations";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -442,7 +442,7 @@ export default function CreateCourse() {
 
   const [createCourse] = useMutation(CREATE_COURSE, {
     refetchQueries: [
-      { query: GET_COURSES, variables: { page: 1, limit: 10 } },
+      { query: GET_COURSES_SUMMARY, variables: { page: 1, limit: 10 } },
       { query: GET_ADMIN_DASHBOARD_DATA }
     ],
     onCompleted: () => {

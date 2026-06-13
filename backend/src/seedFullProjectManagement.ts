@@ -261,16 +261,22 @@ async function seedFullProjectManagement() {
       app.reviewNotes = `✅ Approved by ${admin.fullName || admin.username}. ${reviewNotes[i % reviewNotes.length]}`;
       await app.save();
 
-      // Create NDA record
+      // Create NDA record (idempotent to avoid duplicate unique index on projectApplicationId)
       const client = clients.find((c: any) => c._id.toString() === app.clientId.toString());
-      await ProjectNDA.create({
-        projectApplicationId: app._id,
-        clientId: app.clientId,
-        signerName: client?.fullName || 'Client',
-        signerEmail: client?.email || '',
-        status: 'pending',
-      });
+      await ProjectNDA.findOneAndUpdate(
+        { projectApplicationId: app._id },
+        {
+          $set: {
+            clientId: app.clientId,
+            signerName: client?.fullName || 'Client',
+            signerEmail: client?.email || '',
+            status: 'pending',
+          },
+        },
+        { upsert: true, new: true }
+      );
       console.log(`   ✅ Stage 2→3: "${app.title}" → under_review → approved`);
+
     }
 
     // ── Stage 4: Sign NDA ──

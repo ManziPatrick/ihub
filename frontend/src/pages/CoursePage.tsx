@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
-import { GET_COURSE_LITE, GET_LESSON_CONTENT, MY_COURSE_APPLICATIONS, GET_ME, GET_COURSES } from "@/lib/graphql/queries";
+import { GET_COURSE_LITE, GET_LESSON_CONTENT, MY_COURSE_APPLICATIONS, GET_ME, GET_COURSES_SUMMARY } from "@/lib/graphql/queries";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -55,7 +55,7 @@ export default function CoursePage() {
       });
       refetch();
     },
-    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES }, { query: MY_COURSE_APPLICATIONS }],
+    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES_SUMMARY }, { query: MY_COURSE_APPLICATIONS }],
     onError: (err) => {
       toast({
         title: "Error",
@@ -334,7 +334,11 @@ export default function CoursePage() {
                                           {/* Content */}
                                           {isEnrolled ? (
                                             <div className="prose prose-sm max-w-none">
-                                              <div dangerouslySetInnerHTML={{ __html: cachedLesson.content || '' }} />
+                                              <div
+                                                className="prose prose-sm max-w-none"
+                                                // Backend sometimes returns non-string/HTML payloads; ensure string + safe fallback.
+                                                dangerouslySetInnerHTML={{ __html: typeof cachedLesson.content === 'string' ? cachedLesson.content : '' }}
+                                              />
                                             </div>
                                           ) : (
                                             <div className="flex items-center justify-center p-8 bg-muted/30 rounded-lg border border-dashed border-border">

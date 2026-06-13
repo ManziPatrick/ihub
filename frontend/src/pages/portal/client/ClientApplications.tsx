@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,27 +12,21 @@ import { gql } from "@apollo/client";
 import { toast } from "sonner";
 import { RESTORE_PROJECT_APPLICATION } from "@/lib/graphql/mutations";
 import { ConfirmDialog } from "@/components/portal/dialogs/ConfirmDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   FileText,
   CheckCircle,
   FileSignature,
-  AlertCircle,
   Send,
   Loader2,
-  Lock,
-  Building,
-  Upload,
+  UserCheck,
   X,
-  ZoomIn,
-  ZoomOut,
-  ChevronLeft,
-  ChevronRight,
-  PenLine,
   Trash2,
   Shield,
-  Eye,
   Coins,
   Link2,
+  PenLine,
+  Building,
 } from "lucide-react";
 
 // ─── GraphQL ──────────────────────────────────────────────────────────────────
@@ -46,6 +40,10 @@ const GET_MY_APPLICATIONS = gql`
       ndaSigned
       ndaPdfUrl
       reviewNotes
+      assignedAdmin {
+        id
+        fullName
+      }
       requiredDocuments {
         overviewUrl
         featuresUrl
@@ -56,13 +54,23 @@ const GET_MY_APPLICATIONS = gql`
   }
 `;
 
+const NDA_DAILY_LIMIT_STATUS = gql`
+  query NdaDailyLimitStatus {
+    ndaDailyLimitStatus {
+      remaining
+      limit
+    }
+  }
+`;
+
 const SUBMIT_APPLICATION = gql`
   mutation SubmitProjectApplication(
     $title: String!
     $description: String!
     $documents: ProjectApplicationDocumentsInput!
+    $assignedAdminId: ID
   ) {
-    submitProjectApplication(title: $title, description: $description, documents: $documents) {
+    submitProjectApplication(title: $title, description: $description, documents: $documents, assignedAdminId: $assignedAdminId) {
       id
       title
       status
@@ -109,13 +117,6 @@ const SIGN_NDA = gql`
 `;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface SignatureField {
-  id: string;
-  x: number; // percent of page width
-  y: number; // percent of page height
-  label: string;
-}
-
 interface Application {
   id: string;
   title: string;
@@ -125,181 +126,6 @@ interface Application {
   reviewNotes?: string;
   createdAt: string;
 }
-
-// ─── Constants ───────────────────────────────────────────────────────────────
-// Signing tokens give the system "signing credits". We start with 100, each
-// successful NDA execution costs 1. Display the remaining count prominently.
-const INITIAL_TOKENS = 100;
-const TOKEN_KEY = "ihub_nda_tokens";
-
-function useSigningTokens() {
-  const [tokens, setTokens] = useState<number>(() => {
-    const stored = localStorage.getItem(TOKEN_KEY);
-    return stored ? parseInt(stored, 10) : INITIAL_TOKENS;
-  });
-
-  const consume = () => {
-    setTokens((prev) => {
-      const next = Math.max(0, prev - 1);
-      localStorage.setItem(TOKEN_KEY, String(next));
-      return next;
-    });
-  };
-
-  return { tokens, consume };
-}
-
-// ─── PDF Viewer (vanilla canvas — no react-pdf needed) ───────────────────────
-// We render a placeholder canvas-based "PDF page" when the browser can't
-// load the PDF natively, and let the <embed> handle real PDF viewing.
-// For signature placement we overlay a transparent drag surface.
-
-interface PdfViewerProps {
-  file: File | null;
-  signatureFields: SignatureField[];
-  onAddField: (x: number, y: number) => void;
-  onRemoveField: (id: string) => void;
-  draggingField: string | null;
-  setDraggingField: (id: string | null) => void;
-  onFieldMove: (id: string, x: number, y: number) => void;
-}
-
-function PdfViewer({
-  file,
-  signatureFields,
-  onAddField,
-  onRemoveField,
-  draggingField,
-  setDraggingField,
-  onFieldMove,
-}: PdfViewerProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
-  const [placingMode, setPlacingMode] = useState(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (!file) { setObjectUrl(null); return; }
-    const url = URL.createObjectURL(file);
-    setObjectUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
-
-  const handleContainerClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!placingMode) return;
-      const rect = containerRef.current!.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      onAddField(Math.max(0, Math.min(90, x)), Math.max(0, Math.min(95, y)));
-      setPlacingMode(false);
-    },
-    [placingMode, onAddField]
-  );
-
-  const handleFieldMouseDown = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    const el = (e.target as HTMLElement).closest("[data-field]") as HTMLElement;
-    const rect = el?.getBoundingClientRect();
-    dragOffset.current = {
-      x: e.clientX - (rect?.left ?? 0),
-      y: e.clientY - (rect?.top ?? 0),
-    };
-    setDraggingField(id);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!draggingField) return;
-    const rect = containerRef.current!.getBoundingClientRect();
-    const x = ((e.clientX - rect.left - dragOffset.current.x) / rect.width) * 100;
-    const y = ((e.clientY - rect.top - dragOffset.current.y) / rect.height) * 100;
-    onFieldMove(draggingField, Math.max(0, Math.min(90, x)), Math.max(0, Math.min(95, y)));
-  };
-
-  if (!file || !objectUrl) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 bg-muted/20 rounded-xl border-2 border-dashed border-border/50 text-muted-foreground text-sm gap-2">
-        <FileText className="w-10 h-10 opacity-30" />
-        <span>No document loaded</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          size="sm"
-          variant={placingMode ? "gold" : "outline"}
-          className="text-xs gap-1.5"
-          onClick={() => setPlacingMode((p) => !p)}
-        >
-          <PenLine className="w-3.5 h-3.5" />
-          {placingMode ? "Click to Place Signature" : "Add Signature Field"}
-        </Button>
-        <span className="text-xs text-muted-foreground ml-auto">
-          {signatureFields.length} field{signatureFields.length !== 1 ? "s" : ""} placed
-        </span>
-      </div>
-
-      {placingMode && (
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 text-xs text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2"
-        >
-          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-          Click anywhere on the document to place a signature field
-        </motion.div>
-      )}
-
-      {/* PDF + overlay */}
-      <div
-        ref={containerRef}
-        className={`relative rounded-xl overflow-hidden border border-border/50 bg-neutral-900 select-none ${
-          placingMode ? "cursor-crosshair" : draggingField ? "cursor-grabbing" : "cursor-default"
-        }`}
-        style={{ minHeight: 520 }}
-        onClick={handleContainerClick}
-        onMouseMove={handleMouseMove}
-        onMouseUp={() => setDraggingField(null)}
-        onMouseLeave={() => setDraggingField(null)}
-      >
-        {/* Native PDF embed */}
-        <embed
-          src={objectUrl + "#toolbar=0&navpanes=0"}
-          type="application/pdf"
-          className="w-full"
-          style={{ height: 520, pointerEvents: placingMode || draggingField ? "none" : "auto" }}
-        />
-
-        {/* Signature fields */}
-        {signatureFields.map((field) => (
-          <div
-            key={field.id}
-            data-field={field.id}
-            className={`absolute group flex items-center gap-1 bg-accent/90 text-accent-foreground text-[11px] font-semibold rounded px-2 py-1 shadow-lg ${
-              draggingField === field.id ? "opacity-80 scale-105" : ""
-            } cursor-grab`}
-            style={{ left: `${field.x}%`, top: `${field.y}%`, zIndex: 10 }}
-            onMouseDown={(e) => handleFieldMouseDown(e, field.id)}
-          >
-            <PenLine className="w-3 h-3 shrink-0" />
-            {field.label}
-            <button
-              className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity text-red-300 hover:text-red-500"
-              onClick={(e) => { e.stopPropagation(); onRemoveField(field.id); }}
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ─── Token Badge ──────────────────────────────────────────────────────────────
 function TokenBadge({ tokens }: { tokens: number }) {
   const color =
@@ -320,22 +146,20 @@ export default function ClientApplications() {
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [assignedAdminId, setAssignedAdminId] = useState("");
   const [overviewUrl, setOverviewUrl] = useState("");
   const [featuresUrl, setFeaturesUrl] = useState("");
   const [technicalUrl, setTechnicalUrl] = useState("");
 
-  // NDA signing modal
+  // NDA signing
   const [signingAppId, setSigningAppId] = useState<string | null>(null);
   const [signerName, setSignerName] = useState("");
-  const [step, setStep] = useState<"upload" | "place" | "confirm">("upload");
-  const [ndaFile, setNdaFile] = useState<File | null>(null);
-  const [signatureFields, setSignatureFields] = useState<SignatureField[]>([]);
-  const [draggingField, setDraggingField] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Tokens
-  const { tokens, consume } = useSigningTokens();
+  // Tokens from server
+  const { data: limitData } = useQuery(NDA_DAILY_LIMIT_STATUS, { fetchPolicy: "cache-and-network" });
+  const limitStatus = (limitData as any)?.ndaDailyLimitStatus;
+  const tokens = limitStatus?.remaining ?? 0;
 
   // Apollo
   const { data, loading, refetch } = useQuery(GET_MY_APPLICATIONS);
@@ -381,44 +205,22 @@ export default function ClientApplications() {
   const resetModal = () => {
     setSigningAppId(null);
     setSignerName("");
-    setStep("upload");
-    setNdaFile(null);
-    setSignatureFields([]);
     setAgreed(false);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.type !== "application/pdf") {
-      toast.error("Only PDF files are accepted for NDA signing.");
-      return;
+  // Admins available for selection
+  const { data: adminsData } = useQuery(gql`
+    query GetAdminsForSelection {
+      getAvailableAdmins {
+        id
+        fullName
+        email
+      }
     }
-    setNdaFile(file);
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    if (file.type !== "application/pdf") { toast.error("Only PDF files are accepted."); return; }
-    setNdaFile(file);
-  };
-
-  const addSignatureField = (x: number, y: number) => {
-    setSignatureFields((prev) => [
-      ...prev,
-      { id: `sig_${Date.now()}`, x, y, label: "Signature" },
-    ]);
-  };
-
-  const removeSignatureField = (id: string) =>
-    setSignatureFields((prev) => prev.filter((f) => f.id !== id));
-
-  const moveField = (id: string, x: number, y: number) =>
-    setSignatureFields((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, x, y } : f))
-    );
+  `, { fetchPolicy: "cache-and-network" });
+  const availableAdmins = ((adminsData as any)?.getAvailableAdmins || []).filter(
+    (u: any) => u.fullName || u.email
+  );
 
   // ── Form submit ────────────────────────────────────────────────────────────
   const handleCreateApplication = async (e: React.FormEvent) => {
@@ -432,6 +234,7 @@ export default function ClientApplications() {
         variables: {
           title,
           description,
+          assignedAdminId: assignedAdminId || undefined,
           documents: {
             overviewUrl: overviewUrl || "https://example.com/doc-overview.pdf",
             featuresUrl: featuresUrl || "https://example.com/doc-features.pdf",
@@ -440,7 +243,7 @@ export default function ClientApplications() {
         },
       });
       toast.success("Project proposal submitted successfully!");
-      setTitle(""); setDescription(""); setOverviewUrl(""); setFeaturesUrl(""); setTechnicalUrl("");
+      setTitle(""); setDescription(""); setAssignedAdminId(""); setOverviewUrl(""); setFeaturesUrl(""); setTechnicalUrl("");
       refetch();
     } catch (err: any) {
       toast.error(err.message || "Failed to submit proposal.");
@@ -453,7 +256,6 @@ export default function ClientApplications() {
     if (tokens <= 0) { toast.error("No signing tokens remaining."); return; }
     try {
       await signNda({ variables: { applicationId: signingAppId, signerName } });
-      consume();
       toast.success("NDA executed successfully!");
       resetModal();
       refetch();
@@ -472,13 +274,6 @@ export default function ClientApplications() {
       default: return "bg-muted text-muted-foreground";
     }
   };
-
-  // ── Step labels ────────────────────────────────────────────────────────────
-  const steps = [
-    { key: "upload", label: "Upload Document" },
-    { key: "place", label: "Place Signatures" },
-    { key: "confirm", label: "Execute NDA" },
-  ];
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -529,6 +324,35 @@ export default function ClientApplications() {
                       onChange={setDescription}
                       placeholder="Detail the scope of work, technical guidelines, and objectives…"
                     />
+                  </div>
+
+                  {/* Admin Selection */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold flex items-center gap-1.5">
+                      <UserCheck className="w-4 h-4 text-accent" />
+                      Assign to Admin
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Select an admin to review and manage your project proposal.
+                    </p>
+                    <Select value={assignedAdminId} onValueChange={setAssignedAdminId}>
+                      <SelectTrigger className="bg-card">
+                        <SelectValue placeholder="Choose an admin..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableAdmins.length === 0 ? (
+                          <SelectItem value="__none__" disabled>
+                            No admins available
+                          </SelectItem>
+                        ) : (
+                          availableAdmins.map((admin: any) => (
+                            <SelectItem key={admin.id} value={admin.id}>
+                              {admin.fullName || admin.email}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Document URLs */}
@@ -667,16 +491,26 @@ export default function ClientApplications() {
                             variant="gold"
                             size="sm"
                             className="w-full text-xs font-bold"
-                            onClick={() => { setSigningAppId(app.id); setStep("upload"); }}
+                            onClick={() => { setSigningAppId(app.id); setAgreed(false); }}
                           >
                             <FileSignature className="w-3.5 h-3.5 mr-1" />
                             Sign Pending NDA
                           </Button>
                         )}
                         {app.ndaSigned && (
-                          <div className="flex items-center gap-1.5 text-xs text-green-500 font-bold">
-                            <CheckCircle className="w-3.5 h-3.5" />
-                            NDA Executed
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 text-xs text-green-500 font-bold">
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              NDA Executed
+                            </div>
+                            {(app as any).ndaPdfUrl && (
+                              <a href={(app as any).ndaPdfUrl} target="_blank" rel="noreferrer">
+                                <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1">
+                                  <FileSignature className="w-3 h-3" />
+                                  View NDA
+                                </Button>
+                              </a>
+                            )}
                           </div>
                         )}
                       </div>
@@ -688,7 +522,7 @@ export default function ClientApplications() {
           </div>
         </div>
 
-        {/* ── NDA SIGNING MODAL ──────────────────────────────────────────────── */}
+        {/* ── NDA SIGNING MODAL (SIMPLIFIED) ────────────────────────────────── */}
         <AnimatePresence>
           {signingAppId && (
             <motion.div
@@ -698,325 +532,100 @@ export default function ClientApplications() {
               exit={{ opacity: 0 }}
             >
               <motion.div
-                className="bg-card border border-border/50 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-                style={{ maxHeight: "92vh" }}
+                className="bg-card border border-border/50 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
               >
                 {/* Modal Header */}
-                <div className="p-5 border-b border-border/30 flex items-center justify-between shrink-0">
+                <div className="p-5 border-b border-border/30 flex items-center justify-between">
                   <h3 className="font-heading text-lg font-bold flex items-center gap-2">
-                    <Lock className="w-5 h-5 text-accent" />
-                    Mutual Non-Disclosure Agreement
+                    <FileSignature className="w-5 h-5 text-accent" />
+                    Sign Non-Disclosure Agreement
                   </h3>
-                  <div className="flex items-center gap-3">
-                    <TokenBadge tokens={tokens} />
-                    <button
-                      onClick={resetModal}
-                      className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors text-muted-foreground"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Step Indicator */}
-                <div className="px-6 pt-4 shrink-0">
-                  <div className="flex items-center gap-0">
-                    {steps.map((s, i) => {
-                      const current = steps.findIndex((x) => x.key === step);
-                      const done = i < current;
-                      const active = i === current;
-                      return (
-                        <div key={s.key} className="flex items-center flex-1">
-                          <div className={`flex flex-col items-center ${i < steps.length - 1 ? "flex-1" : ""}`}>
-                            <div
-                              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
-                                done
-                                  ? "bg-green-500 border-green-500 text-white"
-                                  : active
-                                  ? "bg-accent border-accent text-accent-foreground"
-                                  : "bg-muted border-border/50 text-muted-foreground"
-                              }`}
-                            >
-                              {done ? <CheckCircle className="w-4 h-4" /> : i + 1}
-                            </div>
-                            <span className={`text-[10px] mt-1 font-medium ${active ? "text-accent" : "text-muted-foreground"}`}>
-                              {s.label}
-                            </span>
-                          </div>
-                          {i < steps.length - 1 && (
-                            <div
-                              className={`h-0.5 flex-1 mb-4 mx-1 rounded transition-colors ${done ? "bg-green-500" : "bg-border/50"}`}
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <button onClick={resetModal} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors text-muted-foreground">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
 
                 {/* Modal Body */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div className="p-6 space-y-5">
+                  {/* Agreement summary */}
+                  <div className="bg-muted/20 rounded-xl p-4 border border-border/30 space-y-2">
+                    <p className="text-xs font-bold uppercase tracking-wider text-accent flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5" /> Agreement
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      You are about to electronically sign a Mutual Non-Disclosure Agreement. This
+                      legally binds you to protect confidential information shared during the project.
+                    </p>
+                  </div>
 
-                  {/* STEP 1: Upload PDF */}
-                  {step === "upload" && (
-                    <motion.div
-                      key="upload"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      className="space-y-5"
-                    >
-                      <div>
-                        <h4 className="font-semibold text-foreground mb-1">Upload NDA Document</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Upload the NDA PDF provided by your project manager. You'll place signature fields in the next step.
-                        </p>
-                      </div>
+                  {/* Tokens */}
+                  <div className={`flex items-start gap-3 p-4 rounded-xl border ${
+                    tokens <= 0
+                      ? "bg-red-500/10 border-red-500/20 text-red-400"
+                      : tokens <= 1
+                      ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                      : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                  }`}>
+                    <Coins className="w-5 h-5 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-sm">
+                        {tokens <= 0 ? "No signing tokens remaining" : `${tokens} signing token${tokens !== 1 ? "s" : ""} remaining (daily limit 100)`}
+                      </p>
+                      <p className="text-xs mt-0.5 opacity-80">
+                        {tokens <= 0 ? "Contact support to increase your daily limit." : `Each signature uses 1 token.`}
+                      </p>
+                    </div>
+                  </div>
 
-                      {/* Drop zone */}
-                      <div
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={handleDrop}
-                        onClick={() => fileInputRef.current?.click()}
-                        className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
-                          ndaFile
-                            ? "border-green-500/50 bg-green-500/5"
-                            : "border-border/50 hover:border-accent/50 hover:bg-accent/5"
-                        }`}
-                      >
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="application/pdf"
-                          className="hidden"
-                          onChange={handleFileSelect}
-                        />
-                        {ndaFile ? (
-                          <div className="space-y-2">
-                            <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
-                            <p className="font-semibold text-green-400">{ndaFile.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {(ndaFile.size / 1024).toFixed(1)} KB — PDF ready for signing
-                            </p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-xs text-muted-foreground"
-                              onClick={(e) => { e.stopPropagation(); setNdaFile(null); }}
-                            >
-                              <Trash2 className="w-3.5 h-3.5 mr-1" /> Remove
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <Upload className="w-12 h-12 text-muted-foreground/40 mx-auto" />
-                            <div>
-                              <p className="font-semibold text-foreground">Drag & drop your PDF here</p>
-                              <p className="text-xs text-muted-foreground mt-1">or click to browse files</p>
-                            </div>
-                            <Badge variant="outline" className="text-[10px]">PDF files only</Badge>
-                          </div>
-                        )}
-                      </div>
+                  {/* Name input */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Digital Signature — Full Legal Name
+                    </label>
+                    <Input
+                      placeholder="e.g., Jane Doe"
+                      value={signerName}
+                      onChange={(e) => setSignerName(e.target.value)}
+                      className="text-sm"
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Your name, timestamp, and IP address will be recorded for compliance.
+                    </p>
+                  </div>
 
-                      {/* NDA preview summary */}
-                      <div className="bg-muted/20 rounded-xl p-4 border border-border/30 space-y-3">
-                        <p className="text-xs font-bold uppercase tracking-wider text-accent flex items-center gap-1.5">
-                          <Shield className="w-3.5 h-3.5" /> Agreement Summary
-                        </p>
-                        {[
-                          ["Purpose", "Protect confidentiality of proprietary information exchanged during development."],
-                          ["Scope", "Covers product designs, software code, databases, system specs, and strategic roadmaps."],
-                          ["Term", "3 years from the execution date."],
-                          ["Obligations", "Both parties maintain strict security controls to prevent unauthorized distribution."],
-                        ].map(([k, v]) => (
-                          <div key={k}>
-                            <span className="text-[11px] font-bold text-foreground">{k}: </span>
-                            <span className="text-[11px] text-muted-foreground">{v}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* STEP 2: Place signatures */}
-                  {step === "place" && (
-                    <motion.div
-                      key="place"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      className="space-y-4"
-                    >
-                      <div>
-                        <h4 className="font-semibold text-foreground mb-1">Place Signature Fields</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Use "Add Signature Field" to click where you'll sign. Drag fields to reposition them.
-                        </p>
-                      </div>
-
-                      <PdfViewer
-                        file={ndaFile}
-                        signatureFields={signatureFields}
-                        onAddField={addSignatureField}
-                        onRemoveField={removeSignatureField}
-                        draggingField={draggingField}
-                        setDraggingField={setDraggingField}
-                        onFieldMove={moveField}
-                      />
-
-                      {signatureFields.length === 0 && (
-                        <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
-                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                          Place at least one signature field before proceeding.
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-
-                  {/* STEP 3: Confirm & Sign */}
-                  {step === "confirm" && (
-                    <motion.div
-                      key="confirm"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      className="space-y-5"
-                    >
-                      {/* Token warning */}
-                      <div
-                        className={`flex items-start gap-3 p-4 rounded-xl border ${
-                          tokens === 0
-                            ? "bg-red-500/10 border-red-500/20 text-red-400"
-                            : tokens === 1
-                            ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
-                            : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                        }`}
-                      >
-                        <Coins className="w-5 h-5 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-bold text-sm">
-                            {tokens === 0
-                              ? "No signing tokens remaining"
-                              : `${tokens} signing token${tokens !== 1 ? "s" : ""} remaining`}
-                          </p>
-                          <p className="text-xs mt-0.5 opacity-80">
-                            {tokens === 0
-                              ? "You have exhausted your signing tokens. Contact support to purchase more."
-                              : `Executing this NDA will consume 1 token. You will have ${tokens - 1} remaining after signing.`}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Signature fields summary */}
-                      <div className="bg-muted/20 border border-border/30 rounded-xl p-4 space-y-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                          <Eye className="w-3.5 h-3.5" /> Signature Placement Summary
-                        </p>
-                        {signatureFields.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">No signature fields placed.</p>
-                        ) : (
-                          signatureFields.map((f, i) => (
-                            <div key={f.id} className="flex items-center gap-2 text-xs">
-                              <PenLine className="w-3 h-3 text-accent" />
-                              <span className="text-foreground font-medium">Field {i + 1}</span>
-                              <span className="text-muted-foreground">
-                                — position ({f.x.toFixed(0)}%, {f.y.toFixed(0)}%)
-                              </span>
-                            </div>
-                          ))
-                        )}
-                      </div>
-
-                      {/* Name input */}
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                          Digital Signature — Full Legal Name
-                        </label>
-                        <p className="text-[11px] text-muted-foreground">
-                          Type your full legal name below. The system will record your name, timestamp, and IP address for compliance auditing.
-                        </p>
-                        <Input
-                          placeholder="e.g., Jane Doe"
-                          value={signerName}
-                          onChange={(e) => setSignerName(e.target.value)}
-                          className="text-sm"
-                        />
-                      </div>
-
-                      {/* Agreement checkbox */}
-                      <label className="flex items-start gap-3 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          className="mt-0.5 accent-amber-400 w-4 h-4"
-                          checked={agreed}
-                          onChange={(e) => setAgreed(e.target.checked)}
-                        />
-                        <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors leading-relaxed">
-                          I confirm that I have read, understood, and agree to be legally bound by the terms of this
-                          Non-Disclosure Agreement on behalf of myself and my organization.
-                        </span>
-                      </label>
-                    </motion.div>
-                  )}
+                  {/* Agreement checkbox */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 accent-amber-400 w-4 h-4"
+                      checked={agreed}
+                      onChange={(e) => setAgreed(e.target.checked)}
+                    />
+                    <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors leading-relaxed">
+                      I confirm that I have read, understood, and agree to be legally bound by the terms of this
+                      Non-Disclosure Agreement on behalf of myself and my organization.
+                    </span>
+                  </label>
                 </div>
 
                 {/* Modal Footer */}
-                <div className="p-5 border-t border-border/30 flex items-center justify-between shrink-0 gap-3">
+                <div className="p-5 border-t border-border/30 flex items-center justify-between gap-3">
+                  <Button variant="ghost" onClick={resetModal}>Cancel</Button>
                   <Button
-                    variant="ghost"
-                    onClick={() => {
-                      if (step === "upload") resetModal();
-                      else if (step === "place") setStep("upload");
-                      else setStep("place");
-                    }}
+                    variant="gold"
+                    disabled={signing || !signerName.trim() || !agreed || tokens <= 0}
+                    onClick={handleSignNda}
+                    className="min-w-40"
                   >
-                    {step === "upload" ? "Cancel" : (
-                      <><ChevronLeft className="w-4 h-4 mr-1" /> Back</>
+                    {signing ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Signing…</>
+                    ) : (
+                      <><FileSignature className="w-4 h-4 mr-2" /> Execute Agreement</>
                     )}
                   </Button>
-
-                  <div className="flex items-center gap-3">
-                    {step !== "confirm" && <TokenBadge tokens={tokens} />}
-
-                    {step === "upload" && (
-                      <Button
-                        variant="gold"
-                        disabled={!ndaFile}
-                        onClick={() => setStep("place")}
-                      >
-                        Next — Place Signatures <ChevronRight className="w-4 h-4 ml-1" />
-                      </Button>
-                    )}
-
-                    {step === "place" && (
-                      <Button
-                        variant="gold"
-                        disabled={signatureFields.length === 0}
-                        onClick={() => setStep("confirm")}
-                      >
-                        Next — Review & Sign <ChevronRight className="w-4 h-4 ml-1" />
-                      </Button>
-                    )}
-
-                    {step === "confirm" && (
-                      <Button
-                        variant="gold"
-                        disabled={signing || !signerName.trim() || !agreed || tokens <= 0}
-                        onClick={handleSignNda}
-                        className="min-w-40"
-                      >
-                        {signing ? (
-                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Signing…</>
-                        ) : (
-                          <><FileSignature className="w-4 h-4 mr-2" /> Execute Agreement</>
-                        )}
-                      </Button>
-                    )}
-                  </div>
                 </div>
               </motion.div>
             </motion.div>
