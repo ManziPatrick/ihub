@@ -254,6 +254,17 @@ export const GET_MESSAGES = gql`
   }
 `;
 
+export const GET_CHAT_GREETING = gql`
+  query GetChatGreeting {
+    chatBotGreeting {
+      content
+      role
+      action
+      actionData
+    }
+  }
+`;
+
 export const GET_COURSES = gql`
   query GetCourses($page: Int, $limit: Int, $sortBy: String, $featured: Boolean) {
     courses(page: $page, limit: $limit, sortBy: $sortBy, featured: $featured) {
@@ -345,8 +356,8 @@ export const GET_COURSES = gql`
 `;
 
 export const GET_COURSES_SUMMARY = gql`
-  query GetCoursesSummary($page: Int, $limit: Int, $sortBy: String, $featured: Boolean) {
-    courses(page: $page, limit: $limit, sortBy: $sortBy, featured: $featured) {
+  query GetCoursesSummary($page: Int, $limit: Int, $sortBy: String, $featured: Boolean, $search: String, $category: String, $price: String, $level: String, $school: String) {
+    courses(page: $page, limit: $limit, sortBy: $sortBy, featured: $featured, search: $search, category: $category, price: $price, level: $level, school: $school) {
       items {
         id
         title
@@ -651,6 +662,12 @@ export const GET_ME = gql`
 export const GET_CATEGORIES = gql`
   query GetCategories {
     categories
+  }
+`;
+
+export const GET_SCHOOLS = gql`
+  query GetSchools {
+    schools
   }
 `;
 
@@ -1476,8 +1493,8 @@ export const GET_PAYMENTS = gql`
 // --- New Internship Module Queries ---
 
 export const GET_INTERNSHIP_PROGRAMS = gql`
-  query GetInternshipPrograms($page: Int, $limit: Int) {
-    internshipPrograms(page: $page, limit: $limit) {
+  query GetInternshipPrograms($page: Int, $limit: Int, $search: String, $category: String, $price: String, $level: String, $school: String) {
+    internshipPrograms(page: $page, limit: $limit, search: $search, category: $category, price: $price, level: $level, school: $school) {
       items {
         id
         title

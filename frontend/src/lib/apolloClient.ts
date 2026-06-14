@@ -79,7 +79,7 @@ const client = new ApolloClient({
           },
           // Cache course list results separately by sort/filter params
           courses: {
-            keyArgs: ["sortBy", "featured"],
+            keyArgs: ["sortBy", "featured", "search", "category", "price", "level", "school"],
           },
         },
       },

@@ -95,7 +95,7 @@ import {
 import { generateCertificatePDF, generateInvoicePDF } from '../services/pdf.service';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { chatWithAIService, explainTaskService, reviewSubmissionService, generateAIQuizService, hintForQuestionService, generateQuestionExplanationService } from '../services/ai.service';
+import { chatWithAIService, explainTaskService, reviewSubmissionService, generateAIQuizService, hintForQuestionService, generateQuestionExplanationService, getChatGreeting } from '../services/ai.service';
 
 
 const DEFAULT_WORKFLOW = [
@@ -656,7 +656,7 @@ export const resolvers = {
         .sort({ createdAt: 1 }); // Oldest first for chat history usually, but depends on UI
     },
 
-    courses: async (_: any, { page = 1, limit = 10, sortBy = 'latest', featured }: any, context: any) => {
+    courses: async (_: any, { page = 1, limit = 10, sortBy = 'latest', featured, search, category, price, level, school }: any, context: any) => {
       const query: any = { isDeleted: { $ne: true } };
 
       // Filter for students/guests: Only published courses
@@ -677,6 +677,87 @@ export const resolvers = {
         ];
         if (context.user.school) {
           query.$or.push({ school: context.user.school });
+        }
+      }
+
+      // Server-side text search across title, category, school, level, descriptionSnippet
+      if (search && search.trim()) {
+        const q = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const searchRegex = new RegExp(q, 'i');
+        const searchConditions = { $or: [
+          { title: searchRegex },
+          { category: searchRegex },
+          { school: searchRegex },
+          { level: searchRegex },
+          { descriptionSnippet: searchRegex },
+        ]};
+
+        if (query.$or) {
+          // Combine with existing $or via $and
+          const existingOr = query.$or;
+          delete query.$or;
+          query.$and = [
+            { $or: existingOr },
+            searchConditions,
+          ];
+        } else {
+          query.$or = searchConditions.$or;
+        }
+      }
+
+      // Server-side category filter
+      if (category && category !== 'All') {
+        const catCondition = { category: new RegExp(category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') };
+        if (query.$and) {
+          query.$and.push(catCondition);
+        } else if (query.$or) {
+          const existingOr = query.$or;
+          delete query.$or;
+          query.$and = [{ $or: existingOr }, catCondition];
+        } else {
+          query.category = catCondition.category;
+        }
+      }
+
+      // Server-side price filter
+      if (price && price !== 'all') {
+        const priceCondition = price === 'free' ? { price: 0 } : { price: { $gt: 0 } };
+        if (query.$and) {
+          query.$and.push(priceCondition);
+        } else if (query.$or) {
+          const existingOr = query.$or;
+          delete query.$or;
+          query.$and = [{ $or: existingOr }, priceCondition];
+        } else {
+          Object.assign(query, priceCondition);
+        }
+      }
+
+      // Server-side level filter
+      if (level && level !== 'all') {
+        const levelCondition = { level: new RegExp('^' + level.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') };
+        if (query.$and) {
+          query.$and.push(levelCondition);
+        } else if (query.$or) {
+          const existingOr = query.$or;
+          delete query.$or;
+          query.$and = [{ $or: existingOr }, levelCondition];
+        } else {
+          query.level = levelCondition.level;
+        }
+      }
+
+      // Server-side school filter
+      if (school && school !== 'all') {
+        const schoolCondition = { school: new RegExp(school.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') };
+        if (query.$and) {
+          query.$and.push(schoolCondition);
+        } else if (query.$or) {
+          const existingOr = query.$or;
+          delete query.$or;
+          query.$and = [{ $or: existingOr }, schoolCondition];
+        } else {
+          query.school = schoolCondition.school;
         }
       }
 
@@ -988,6 +1069,14 @@ export const resolvers = {
       const courses = await Course.find();
       const categories = new Set(courses.map(c => c.category).filter(Boolean));
       return Array.from(categories);
+    },
+    schools: async () => {
+      const courses = await Course.find();
+      const schools = new Set(courses.map(c => c.school).filter(Boolean));
+      return Array.from(schools);
+    },
+    chatBotGreeting: async (_: any, __: any, context: any) => {
+      return await getChatGreeting(context.user);
     },
     trainerStudents: async (_: any, __: any, context: any) => {
       if (!context.user || !['trainer', 'admin', 'super_admin'].includes(context.user.role)) {
@@ -1900,15 +1989,78 @@ export const resolvers = {
       };
     },
     // Internship Module Queries
-    internshipPrograms: async (_: any, { page = 1, limit = 10 }: any, context: any) => {
+    internshipPrograms: async (_: any, { page = 1, limit = 10, search, category, price, level, school }: any, context: any) => {
       const query: any = { isDeleted: false };
       if (context.user?.role === 'admin') {
         query.createdBy = context.user.id;
       }
 
+      // Server-side text search across title and description
+      if (search && search.trim()) {
+        const q = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const searchRegex = new RegExp(q, 'i');
+        query.$or = [
+          { title: searchRegex },
+          { description: searchRegex },
+        ];
+      }
+
+      // Server-side category filter (search in title as proxy, since internship programs may not have a dedicated category field)
+      if (category && category !== 'All') {
+        const catRegex = new RegExp(category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        if (query.$or) {
+          query.$and = [{ $or: query.$or }, { title: catRegex }];
+          delete query.$or;
+        } else {
+          query.title = catRegex;
+        }
+      }
+
+      // Server-side price filter
+      if (price && price !== 'all') {
+        const priceCondition = price === 'free' ? { $or: [{ price: 0 }, { price: { $exists: false } }] } : { price: { $gt: 0 } };
+        if (query.$and) {
+          query.$and.push(priceCondition);
+        } else if (query.$or) {
+          query.$and = [{ $or: query.$or }, priceCondition];
+          delete query.$or;
+        } else {
+          Object.assign(query, priceCondition);
+        }
+      }
+
+      // Server-side level filter (searches eligibility array as proxy)
+      if (level && level !== 'all') {
+        const escaped = level.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const levelCondition = { eligibility: { $regex: new RegExp('^' + escaped + '$', 'i') } };
+        if (query.$and) {
+          query.$and.push(levelCondition);
+        } else if (query.$or) {
+          const existingOr = query.$or;
+          delete query.$or;
+          query.$and = [{ $or: existingOr }, levelCondition];
+        } else {
+          Object.assign(query, levelCondition);
+        }
+      }
+
+      // Server-side school filter (searches description as proxy, since InternshipProgram has no dedicated school field)
+      if (school && school !== 'all') {
+        const schoolCondition = { description: new RegExp(school.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') };
+        if (query.$and) {
+          query.$and.push(schoolCondition);
+        } else if (query.$or) {
+          const existingOr = query.$or;
+          delete query.$or;
+          query.$and = [{ $or: existingOr }, schoolCondition];
+        } else {
+          Object.assign(query, schoolCondition);
+        }
+      }
+
       const skip = (page - 1) * limit;
       const [items, totalCount] = await Promise.all([
-        InternshipProgram.find(query).skip(skip).limit(limit),
+        InternshipProgram.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
         InternshipProgram.countDocuments(query)
       ]);
       const totalPages = Math.ceil(totalCount / limit);

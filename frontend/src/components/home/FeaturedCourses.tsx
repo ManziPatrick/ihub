@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from "react";
+import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@apollo/client/react";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,7 @@ import {
   Languages,
   Building2
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import topImage from "@/assets/top.jpg";
@@ -53,7 +53,9 @@ import {
   MY_COURSE_APPLICATIONS, 
   GET_MY_INTERNSHIP_APPLICATIONS, 
   GET_ME, 
-  GET_MY_INTERNSHIP 
+  GET_MY_INTERNSHIP, 
+  GET_CATEGORIES, 
+  GET_SCHOOLS 
 } from "@/lib/graphql/queries";
 import { ApplyInternshipDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
@@ -213,9 +215,39 @@ function getCategoryMeta(cat: string): CategoryMeta {
 type Section = "programs" | "internships";
 
 export function FeaturedCourses() {
+  const [pageSize, setPageSize] = useState(12);
+
   const [section, setSection] = useState<Section>("programs");
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Debounce search input: update debouncedSearchQuery 300ms after user stops typing
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [searchQuery]);
+  // ── Search cache: avoid re-fetching previously searched queries ──
+  interface SearchCacheEntry {
+    courses: any[];
+    internships: any[];
+  }
+  const searchCacheRef = useRef<Map<string, SearchCacheEntry>>(new Map());
+  const MAX_CACHE_ENTRIES = 80;
+  const CACHE_STORAGE_KEY = 'ihub_search_cache';
+
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestionIdx, setSelectedSuggestionIdx] = useState(-1);
+  const suggestionRef = useRef<HTMLDivElement>(null);
+
   const [isInterestsOpen, setIsInterestsOpen] = useState(false);
   const [selectedInternshipId, setSelectedInternshipId] = useState<string | null>(null);
   const [applyCourse, setApplyCourse] = useState<any | null>(null);
@@ -268,15 +300,63 @@ export function FeaturedCourses() {
 
   const tabScrollRef = useRef<HTMLDivElement>(null);
 
-  // Courses — only featured courses with sort
-  const { data: courseData, loading: courseLoading } = useQuery(GET_COURSES_SUMMARY, {
-    variables: { page: 1, limit: 200, featured: true, sortBy },
+  // Fetch all categories and schools separately for filter dropdowns (not affected by pagination)
+  const { data: catData } = useQuery(GET_CATEGORIES, {
+    fetchPolicy: "cache-first",
+  });
+  const { data: schData } = useQuery(GET_SCHOOLS, {
     fetchPolicy: "cache-first",
   });
 
-  // Internship programs
-  const { data: internData, loading: internLoading } = useQuery(GET_INTERNSHIP_PROGRAMS, {
-    variables: { page: 1, limit: 100 },
+
+  const allCategories: string[] = useMemo(() => {
+    const cats: string[] = (catData as any)?.categories || [];
+    // Use raw category names from DB so server-side filtering matches correctly
+    const seen = new Set<string>();
+    cats.forEach((c: string) => { if (c) seen.add(c); });
+    const list = Array.from(seen).sort((a, b) => a.localeCompare(b));
+    return ["All", ...list];
+  }, [catData]);
+
+  const allSchools: string[] = useMemo(() => {
+    const schools: string[] = (schData as any)?.schools || [];
+    return ["all", ...schools.slice().sort()];
+  }, [schData]);
+
+  // Courses — all courses with server-side pagination, search, and filters
+  const queryVariables = useMemo(() => ({
+    page: currentPage,
+    limit: pageSize,
+    sortBy,
+    search: debouncedSearchQuery.trim() || undefined,
+    category: activeCategory === "All" ? undefined : activeCategory,
+    price: filterPrice === "all" ? undefined : filterPrice,
+    level: filterLevel === "all" ? undefined : filterLevel,
+    school: filterSchool === "all" ? undefined : filterSchool,
+  }), [currentPage, pageSize, sortBy, debouncedSearchQuery, activeCategory, filterPrice, filterLevel, filterSchool]);
+
+  const { data: courseData, loading: courseLoading, previousData: prevCourseData } = useQuery(GET_COURSES_SUMMARY, {
+    variables: queryVariables,
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
+  });
+
+  // Internship programs — with server-side pagination, search, and filters
+  const [internshipPage, setInternshipPage] = useState(1);
+  const internshipQueryVariables = useMemo(() => ({
+    page: internshipPage,
+    limit: pageSize,
+    search: debouncedSearchQuery.trim() || undefined,
+    category: activeCategory === "All" ? undefined : activeCategory,
+    price: filterPrice === "all" ? undefined : filterPrice,
+    level: filterLevel === "all" ? undefined : filterLevel,
+    school: filterSchool === "all" ? undefined : filterSchool,
+  }), [internshipPage, pageSize, debouncedSearchQuery, activeCategory, filterPrice, filterLevel, filterSchool]);
+
+  const { data: internData, loading: internLoading, previousData: prevInternData } = useQuery(GET_INTERNSHIP_PROGRAMS, {
+    variables: internshipQueryVariables,
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
   });
 
   const { data: meData } = useQuery(GET_ME, {
@@ -304,13 +384,19 @@ export function FeaturedCourses() {
   const myInternApplications = useMemo(() => (internAppData as any)?.myInternshipApplications || [], [internAppData]);
 
   const rawCourses: any[] = useMemo(
-    () => (courseData as any)?.courses?.items || [],
-    [courseData]
+    () => (courseData as any)?.courses?.items || (prevCourseData as any)?.courses?.items || [],
+    [courseData, prevCourseData]
   );
   const rawInternships: any[] = useMemo(
-    () => (internData as any)?.internshipPrograms?.items || [],
-    [internData]
+    () => (internData as any)?.internshipPrograms?.items || (prevInternData as any)?.internshipPrograms?.items || [],
+    [internData, prevInternData]
   );
+
+  const internshipPagination = useMemo(() => {
+    const resp = (internData as any)?.internshipPrograms?.pagination || (prevInternData as any)?.internshipPrograms?.pagination;
+
+    return resp || { totalCount: 0, totalPages: 1, currentPage: 1, hasNextPage: false, hasPreviousPage: false };
+  }, [internData, prevInternData]);
 
   const courses = useMemo(
     () =>
@@ -331,81 +417,199 @@ export function FeaturedCourses() {
     [rawInternships]
   );
 
-  const courseCategories = useMemo(() => {
-    const seen = new Set<string>(["Languages", "Technology"]);
-    courses.forEach((c: any) => seen.add(c.normalizedCategory));
-    const list = Array.from(seen).sort((a, b) => {
-      if (a === "Languages") return -1;
-      if (b === "Languages") return 1;
-      if (a === "Technology") return -1;
-      if (b === "Technology") return 1;
-      return a.localeCompare(b);
-    });
-    return ["All", ...list];
-  }, [courses]);
+  // ── Restore search cache from localStorage on mount ──
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(CACHE_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          const restored = new Map<string, SearchCacheEntry>(parsed);
+          searchCacheRef.current = restored;
+        }
+      }
+    } catch {
+      // Corrupted cache — silently ignore
+      localStorage.removeItem(CACHE_STORAGE_KEY);
+    }
+  }, []);
 
-  const courseSchools = useMemo(() => {
+  // ── Persist search cache to localStorage whenever it changes ──
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = setTimeout(() => {
+      try {
+        const entries = Array.from(searchCacheRef.current.entries());
+        localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(entries));
+      } catch {
+        // localStorage full or unavailable — ignore
+      }
+    }, 2000); // debounced 2s so we don't write on every keystroke
+    return () => {
+      if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+      // Flush latest cache on unmount so refresh doesn't lose pending entries
+      try {
+        localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(Array.from(searchCacheRef.current.entries())));
+      } catch { /* ignore */ }
+    };
+  }, [debouncedSearchQuery, section, rawCourses, rawInternships]);
+
+  // ── Populate search cache whenever fresh data arrives ──
+  useEffect(() => {
+    if (!debouncedSearchQuery.trim()) return;
+    const key = `${section}:${debouncedSearchQuery.trim().toLowerCase()}`;
+    const cache = searchCacheRef.current;
+    if (!cache.has(key) && (rawCourses.length > 0 || rawInternships.length > 0)) {
+      // Evict oldest entries if over limit
+      if (cache.size >= MAX_CACHE_ENTRIES) {
+        const firstKey = cache.keys().next().value;
+        if (firstKey) cache.delete(firstKey);
+      }
+      cache.set(key, {
+        courses: rawCourses,
+        internships: rawInternships,
+      });
+    }
+  }, [debouncedSearchQuery, section, rawCourses, rawInternships]);
+
+  // ── Derive autocomplete suggestions from cache + current loaded data ──
+  const suggestions = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q || q.length < 1) return [];
+
     const seen = new Set<string>();
-    courses.forEach((c: any) => {
-      if (c.school) seen.add(c.school);
-    });
-    return ["all", ...Array.from(seen).sort()];
-  }, [courses]);
+    const results: { label: string; type: 'course' | 'internship'; id: string; category?: string; fromCache: boolean }[] = [];
 
-  const internshipCategories = useMemo(() => {
-    const seen = new Set<string>(["Languages", "Technology"]);
-    internships.forEach((i: any) => seen.add(i.normalizedCategory));
-    const list = Array.from(seen).sort((a, b) => {
-      if (a === "Languages") return -1;
-      if (b === "Languages") return 1;
-      if (a === "Technology") return -1;
-      if (b === "Technology") return 1;
-      return a.localeCompare(b);
-    });
-    return ["All", ...list];
-  }, [internships]);
+    // Helper to add items from an array
+    const addItems = (items: any[], type: 'course' | 'internship', fromCache: boolean) => {
+      for (const item of items) {
+        const title = item.title;
+        if (!title || seen.has(title)) continue;
+        const lower = title.toLowerCase();
+        if (lower.includes(q)) {
+          seen.add(title);
+          results.push({
+            label: title,
+            type,
+            id: item.id || item._id,
+            category: item.normalizedCategory || item.category,
+            fromCache,
+          });
+        }
+      }
+    };
 
-  const currentCategories = section === "programs" ? courseCategories : internshipCategories;
+    // 1. Current loaded items (fresh, not from cache)
+    addItems(courses, 'course', false);
+    addItems(internships, 'internship', false);
+
+    // 2. Cached items from previous searches (only if not already added fresh)
+    const cache = searchCacheRef.current;
+    for (const entry of cache.values()) {
+      addItems(entry.courses, 'course', true);
+      addItems(entry.internships, 'internship', true);
+    }
+
+    return results.slice(0, 10); // max 10 suggestions
+  }, [searchQuery, courses, internships]);
+
+  // ── Close suggestions on click outside ──
+  useEffect(() => {
+    if (!showSuggestions) return;
+    const handler = (e: MouseEvent) => {
+      if (suggestionRef.current && !suggestionRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+        setSelectedSuggestionIdx(-1);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showSuggestions]);
+
+  const handleSuggestionSelect = useCallback((item: { type: string; id: string }) => {
+    setShowSuggestions(false);
+    setSelectedSuggestionIdx(-1);
+    if (item.type === 'course') {
+      navigate(`/courses/${item.id}`);
+    } else if (item.type === 'internship') {
+      if (!isAuthenticated) {
+        navigate("/auth", { state: { from: { pathname: "/" } } });
+      } else {
+        setSelectedInternshipId(item.id);
+      }
+    }
+  }, [navigate, isAuthenticated]);
+
+  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedSuggestionIdx(prev => Math.min(prev + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedSuggestionIdx(prev => Math.max(prev - 1, -1));
+    } else if (e.key === 'Enter' && selectedSuggestionIdx >= 0) {
+      e.preventDefault();
+      handleSuggestionSelect(suggestions[selectedSuggestionIdx]);
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+      setSelectedSuggestionIdx(-1);
+    }
+  }, [showSuggestions, suggestions, selectedSuggestionIdx, handleSuggestionSelect]);
+
+  const currentCategories = allCategories;
+
+  // Restore search/page/perPage from URL on mount
+  useEffect(() => {
+    const q = searchParams.get("q");
+    const page = searchParams.get("page");
+    const cat = searchParams.get("category");
+    const perPage = searchParams.get("perPage");
+    const internPage = searchParams.get("internPage");
+    if (q) setSearchQuery(q);
+    if (page) setCurrentPage(parseInt(page, 10));
+    if (cat) setActiveCategory(cat);
+    if (perPage) setPageSize(parseInt(perPage, 10));
+    if (internPage) setInternshipPage(parseInt(internPage, 10));
+  }, []);
+
+  // Sync search/page/perPage to URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (searchQuery.trim()) params.set("q", searchQuery.trim());
+    if (currentPage > 1) params.set("page", String(currentPage));
+    if (internshipPage > 1) params.set("internPage", String(internshipPage));
+    if (activeCategory !== "All") params.set("category", activeCategory);
+    if (pageSize !== 12) params.set("perPage", String(pageSize));
+    setSearchParams(params, { replace: true });
+  }, [searchQuery, currentPage, internshipPage, activeCategory, pageSize]);
 
   const filteredCourses = useMemo(() => {
+    // All filtering (search, category, price, level, school) is now server-side.
+    // Just filter out non-published status as an extra safety net.
     return courses.filter((c: any) => {
-      const matchCat = activeCategory === "All" || c.normalizedCategory === activeCategory;
-      const q = searchQuery.toLowerCase();
-      const matchSearch =
-        !q ||
-        c.title?.toLowerCase().includes(q) ||
-        c.category?.toLowerCase().includes(q) ||
-        c.normalizedCategory?.toLowerCase().includes(q) ||
-        c.instructor?.username?.toLowerCase().includes(q);
-      
-      const matchPrice = filterPrice === "all" ? true : filterPrice === "free" ? c.price === 0 : c.price > 0;
-      const matchLevel = filterLevel === "all" ? true : c.level?.toLowerCase() === filterLevel;
-      const matchSchool = filterSchool === "all" ? true : c.school === filterSchool;
       const statusLower = c.status?.toLowerCase();
       const isOpen = !c.status || statusLower === "published" || statusLower === "active" || statusLower === "open";
-
-      return matchCat && matchSearch && matchPrice && matchLevel && matchSchool && isOpen;
+      return isOpen;
     });
-  }, [courses, activeCategory, searchQuery, filterPrice, filterLevel, filterSchool]);
+  }, [courses]);
+
+  // Get pagination info from server
+  const pagination = useMemo(() => {
+    const resp = (courseData as any)?.courses?.pagination || (prevCourseData as any)?.courses?.pagination;
+    return resp || { totalCount: 0, totalPages: 1, currentPage: 1, hasNextPage: false, hasPreviousPage: false };
+  }, [courseData, prevCourseData]);
 
   const filteredInternships = useMemo(() => {
+    // All filtering (search, category, price) is now server-side.
+    // Just filter out non-open status as an extra safety net.
     return internships.filter((intern: any) => {
-      const matchCat = activeCategory === "All" || intern.normalizedCategory === activeCategory;
-      const q = searchQuery.toLowerCase();
-      const matchSearch =
-        !q ||
-        intern.title?.toLowerCase().includes(q) ||
-        intern.category?.toLowerCase().includes(q) ||
-        intern.normalizedCategory?.toLowerCase().includes(q);
-        
-      const matchPrice = filterPrice === "all" ? true : filterPrice === "free" ? intern.price === 0 : intern.price > 0;
-      
       const statusLower = intern.status?.toLowerCase();
       const isOpen = !intern.status || statusLower === "open" || statusLower === "active" || statusLower === "published";
-
-      return matchCat && matchSearch && matchPrice && isOpen;
+      return isOpen;
     });
-  }, [internships, activeCategory, searchQuery, filterPrice]);
+  }, [internships]);
 
   const scrollTabs = (dir: "left" | "right") => {
     tabScrollRef.current?.scrollBy({ left: dir === "left" ? -220 : 220, behavior: "smooth" });
@@ -415,10 +619,44 @@ export function FeaturedCourses() {
     setSection(s);
     setActiveCategory("All");
     setSearchQuery("");
+    setCurrentPage(1);
+    setInternshipPage(1);
     setFilterPrice("all");
     setFilterLevel("all");
     setFilterSchool("all");
   };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1); // Reset courses page on new search
+    setInternshipPage(1); // Reset internships page on new search
+  };
+
+  // Whether any filter is active (show a reset button)
+  const hasActiveFilters = useMemo(() =>
+    searchQuery.trim() !== "" ||
+    activeCategory !== "All" ||
+    filterPrice !== "all" ||
+    filterLevel !== "all" ||
+    filterSchool !== "all",
+  [searchQuery, activeCategory, filterPrice, filterLevel, filterSchool]);
+
+  const filterCount = useMemo(() =>
+    [searchQuery.trim() !== "", activeCategory !== "All", filterPrice !== "all", filterLevel !== "all", filterSchool !== "all"].filter(Boolean).length,
+  [searchQuery, activeCategory, filterPrice, filterLevel, filterSchool]);
+
+  const handleResetFilters = useCallback(() => {
+    setSearchQuery("");
+    setActiveCategory("All");
+    setFilterPrice("all");
+    setFilterLevel("all");
+    setFilterSchool("all");
+    setCurrentPage(1);
+    setInternshipPage(1);
+    setShowSuggestions(false);
+    setIsInterestsOpen(false);
+    setIsFilterOpen(false);
+  }, []);
 
   // Lock body scroll when filter is open
   useEffect(() => {
@@ -476,8 +714,24 @@ export function FeaturedCourses() {
                       <input
                         type="text"
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onFocus={() => setIsInterestsOpen(true)}
+                        onChange={(e) => {
+                          handleSearchChange(e.target.value);
+                          if (e.target.value.trim()) {
+                            setShowSuggestions(true);
+                            setIsInterestsOpen(false);
+                          } else {
+                            setShowSuggestions(false);
+                            setIsInterestsOpen(true);
+                          }
+                        }}
+                        onFocus={() => {
+                          if (searchQuery.trim()) {
+                            setShowSuggestions(true);
+                          } else {
+                            setIsInterestsOpen(true);
+                          }
+                        }}
+                        onKeyDown={handleSearchKeyDown}
                         placeholder={
                           section === "programs"
                             ? "Search by program, topic, or location..."
@@ -486,14 +740,90 @@ export function FeaturedCourses() {
                         className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/40 transition-all"
                       />
                     </div>
+                    {hasActiveFilters && (
+                      <button
+                        onClick={handleResetFilters}
+                        className="flex-shrink-0 p-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30 hover:text-red-200 transition-all group relative"
+                        aria-label="Reset all filters"
+                        title="Reset all filters"
+                      >
+                        <X className="w-4 h-4" />
+                        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] text-white/60 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                          Reset filters
+                        </span>
+                      </button>
+                    )}
                     <button
-                      onClick={() => setIsFilterOpen(true)}
-                      className="flex-shrink-0 p-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all"
+                      onClick={() => {
+                        setIsFilterOpen(true);
+                        setIsInterestsOpen(false);
+                        setShowSuggestions(false);
+                      }}
+                      className={`flex-shrink-0 p-2.5 rounded-xl border transition-all ${
+                        hasActiveFilters
+                          ? 'bg-accent/20 border-accent/30 text-accent hover:bg-accent/30'
+                          : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                      }`}
                       aria-label="Filter options"
                     >
-                      <SlidersHorizontal className="w-4 h-4" />
+                      <div className="relative">
+                        <SlidersHorizontal className="w-4 h-4" />
+                        {filterCount > 0 && (
+                          <span className="absolute -top-2 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-accent text-accent-foreground text-[9px] font-bold flex items-center justify-center leading-none shadow-sm">
+                            {filterCount}
+                          </span>
+                        )}
+                      </div>
                     </button>
                   </div>
+
+                  {/* ── Autocomplete Suggestions ── */}
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div
+                      ref={suggestionRef}
+                      className="absolute left-0 right-0 top-full mt-1 bg-card border border-border/40 rounded-xl shadow-2xl overflow-hidden z-[70]"
+                    >
+                      <div className="max-h-72 overflow-y-auto py-1">
+                        {suggestions.map((item, idx) => (
+                          <button
+                            key={`${item.type}-${item.id}`}
+                            onMouseDown={(e) => { e.preventDefault(); handleSuggestionSelect(item); }}
+                            onMouseEnter={() => setSelectedSuggestionIdx(idx)}
+                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
+                              idx === selectedSuggestionIdx
+                                ? 'bg-accent/10 text-foreground'
+                                : 'text-muted-foreground hover:bg-muted/50'
+                            }`}
+                          >
+                            <div className={`flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-bold uppercase ${
+                              item.type === 'course'
+                                ? 'bg-indigo-500/10 text-indigo-400'
+                                : 'bg-amber-500/10 text-amber-400'
+                            }`}>
+                              {item.type === 'course' ? 'C' : 'I'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-xs truncate flex items-center gap-2">
+                                {item.label}
+                              </div>
+                              {item.category && (
+                                <div className="text-[10px] text-muted-foreground/60 mt-0.5">{item.category}</div>
+                              )}
+                            </div>
+                            {item.type === 'course' ? (
+                              <BookOpen className="w-3 h-3 flex-shrink-0 opacity-40" />
+                            ) : (
+                              <Briefcase className="w-3 h-3 flex-shrink-0 opacity-40" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="px-4 py-1.5 border-t border-border/20 bg-muted/20 text-[10px] text-muted-foreground/50 flex items-center justify-between">
+                        <span>Type to search · ↑↓ navigate · Enter to open</span>
+                        <span className="text-accent/60 font-medium">{suggestions.length} result{suggestions.length !== 1 ? 's' : ''}</span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Interests Overlay (Search Recommendations) */}
                   <InterestsOverlay
@@ -610,9 +940,8 @@ export function FeaturedCourses() {
                   </div>
                 </div>
 
-                {/* Level Filter (Only for Courses) */}
-                {section === "programs" && (
-                  <div>
+                {/* Level Filter */}
+                <div>
                     <h4 className="text-sm font-medium text-foreground mb-3">Level</h4>
                     <div className="flex flex-col gap-2">
                       {["all", "beginner", "intermediate", "advanced"].map((l) => (
@@ -633,14 +962,13 @@ export function FeaturedCourses() {
                       ))}
                     </div>
                   </div>
-                )}
 
-                {/* School Filter (Only for Courses) */}
-                {section === "programs" && courseSchools.length > 1 && (
+                {/* School Filter */}
+                {allSchools.length > 1 && (
                   <div>
                     <h4 className="text-sm font-medium text-foreground mb-3">School / Provider</h4>
                     <div className="flex flex-col gap-2">
-                      {courseSchools.map((s) => (
+                      {allSchools.map((s) => (
                         <label 
                           key={s} 
                           className="flex items-center gap-3 cursor-pointer group p-1"
@@ -693,9 +1021,13 @@ export function FeaturedCourses() {
           {/* Section header */}
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-2xl font-semibold text-foreground">Featured Programs</h2>
+              <h2 className="text-2xl font-semibold text-foreground">
+                {searchQuery.trim() ? `Results for "${searchQuery.trim()}"` : "All Programs"}
+              </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Top courses and internships handpicked for you.
+                {searchQuery.trim()
+                  ? `${pagination.totalCount} course${pagination.totalCount !== 1 ? 's' : ''} found`
+                  : `Browse all available courses and programs — page ${currentPage} of ${pagination.totalPages}`}
               </p>
             </div>
 
@@ -780,7 +1112,7 @@ export function FeaturedCourses() {
                 return (
                   <button
                     key={cat}
-                    onClick={() => setActiveCategory(cat)}
+                    onClick={() => { setActiveCategory(cat); setCurrentPage(1); }}
                     className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                       isActive
                         ? "bg-white text-black shadow-lg scale-105"
@@ -796,7 +1128,7 @@ export function FeaturedCourses() {
               })}
               
               <button
-                onClick={() => setIsInterestsOpen(true)}
+                onClick={() => { setIsInterestsOpen(true); setCurrentPage(1); }}
                 className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-[#1a1a1a] text-white/70 border border-white/5 hover:border-white/20 hover:text-white transition-all"
               >
                 <MoreHorizontal className="w-4 h-4" />
@@ -805,25 +1137,34 @@ export function FeaturedCourses() {
             </div>
           </motion.div>
 
-          {/* Loading */}
-          {loading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-[420px] bg-card rounded-2xl border border-border/50 animate-pulse overflow-hidden">
-                  <div className="h-48 bg-muted/50"></div>
-                  <div className="p-6 space-y-4">
-                    <div className="flex gap-2">
-                      <div className="h-5 w-16 bg-muted/50 rounded-full"></div>
-                      <div className="h-5 w-20 bg-muted/50 rounded-full"></div>
+          {/* Loading — animated skeleton grid, only when there's truly no data to display */}
+          {loading && rawCourses.length === 0 && (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Array.from({ length: pageSize > 12 ? 12 : pageSize }, (_, i) => (
+                <div key={i} className="bg-card rounded-2xl border border-border/30 overflow-hidden">
+                  {/* Thumbnail skeleton — matches h-36 on real card */}
+                  <div className="h-36 bg-gradient-to-r from-muted/40 via-muted/60 to-muted/40 bg-[length:400%_100%] animate-shimmer" />
+                  <div className="p-4 space-y-3">
+                    {/* Badge + level pills */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-16 rounded-full bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 bg-[length:400%_100%] animate-shimmer" />
+                      <div className="h-4 w-20 rounded-full bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 bg-[length:400%_100%] animate-shimmer" />
                     </div>
-                    <div className="h-6 w-3/4 bg-muted/50 rounded"></div>
-                    <div className="space-y-2">
-                      <div className="h-4 w-full bg-muted/50 rounded"></div>
-                      <div className="h-4 w-2/3 bg-muted/50 rounded"></div>
+                    {/* Title skeleton */}
+                    <div className="h-5 w-full rounded bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 bg-[length:400%_100%] animate-shimmer" />
+                    <div className="h-5 w-3/4 rounded bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 bg-[length:400%_100%] animate-shimmer" />
+                    {/* Description skeletons */}
+                    <div className="space-y-1.5">
+                      <div className="h-3 w-full rounded bg-gradient-to-r from-muted/20 via-muted/40 to-muted/20 bg-[length:400%_100%] animate-shimmer" />
+                      <div className="h-3 w-5/6 rounded bg-gradient-to-r from-muted/20 via-muted/40 to-muted/20 bg-[length:400%_100%] animate-shimmer" />
                     </div>
-                    <div className="flex justify-between items-center pt-4 border-t border-border/50">
-                      <div className="h-6 w-20 bg-muted/50 rounded"></div>
-                      <div className="h-9 w-28 bg-muted/50 rounded-xl"></div>
+                    {/* Footer area */}
+                    <div className="pt-3 border-t border-border/30 flex justify-between items-center">
+                      <div className="space-y-1">
+                        <div className="h-2.5 w-14 rounded bg-gradient-to-r from-muted/20 via-muted/40 to-muted/20 bg-[length:400%_100%] animate-shimmer" />
+                        <div className="h-4 w-20 rounded bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 bg-[length:400%_100%] animate-shimmer" />
+                      </div>
+                      <div className="h-8 w-24 rounded-xl bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30 bg-[length:400%_100%] animate-shimmer" />
                     </div>
                   </div>
                 </div>
@@ -831,11 +1172,11 @@ export function FeaturedCourses() {
             </div>
           )}
 
-          {/* COURSES listing */}
-          {!loading && section === "programs" && (
+          {/* COURSES listing — visible during loading if any data exists (current, previous, or cached) */}
+          {(!loading || rawCourses.length > 0) && section === "programs" && (
             <AnimatePresence mode="wait">
               <motion.div
-                key={activeCategory + searchQuery + filterPrice + filterLevel}
+                key={activeCategory + debouncedSearchQuery + filterPrice + filterLevel}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -1060,15 +1401,91 @@ export function FeaturedCourses() {
                     })}
                   </div>
                 )}
+
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                  <div className="flex flex-col items-center gap-4 mt-10 pb-4">
+                    <div className="flex items-center gap-4">
+                      <p className="text-xs text-muted-foreground">
+                        Page {pagination.currentPage} of {pagination.totalPages}
+                        {' '}({" "}
+                        <span className="font-medium">{pagination.totalCount}</span>
+                        {' '}total courses)
+                      </p>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span>Per page:</span>
+                        <select
+                          value={pageSize}
+                          onChange={(e) => {
+                            const newSize = parseInt(e.target.value, 10);
+                            setPageSize(newSize);
+                            setCurrentPage(1);
+                          }}
+                          className="bg-muted/40 border border-border/30 rounded-lg px-2 py-1 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-accent/30 cursor-pointer"
+                        >
+                          <option value={12}>12</option>
+                          <option value={24}>24</option>
+                          <option value={48}>48</option>
+                          <option value={96}>96</option>
+                          <option value={120}>120</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl"
+                        disabled={!pagination.hasPreviousPage || courseLoading}
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+
+                      {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                        .filter(p => p === 1 || p === pagination.totalPages || Math.abs(p - currentPage) <= 1)
+                        .map((p, idx, arr) => (
+                          <React.Fragment key={p}>
+                            {idx > 0 && arr[idx - 1] !== p - 1 && (
+                              <span className="text-muted-foreground/50 text-xs px-1">...</span>
+                            )}
+                            <Button
+                              variant={currentPage === p ? "default" : "outline"}
+                              size="icon"
+                              className={`h-9 w-9 rounded-xl text-xs font-bold ${
+                                currentPage === p
+                                  ? "bg-foreground text-background shadow-sm"
+                                  : "text-muted-foreground hover:text-foreground"
+                              }`}
+                              onClick={() => setCurrentPage(p)}
+                              disabled={courseLoading}
+                            >
+                              {p}
+                            </Button>
+                          </React.Fragment>
+                        ))}
+
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 rounded-xl"
+                        disabled={!pagination.hasNextPage || courseLoading}
+                        onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
           )}
 
-          {/* INTERNSHIPS listing */}
-          {!loading && section === "internships" && (
+          {/* INTERNSHIPS listing — visible during loading if any data exists */}
+          {(!loading || rawInternships.length > 0) && section === "internships" && (
             <AnimatePresence mode="wait">
               <motion.div
-                key={"internships" + searchQuery + activeCategory + filterPrice}
+                key={"internships" + activeCategory + filterPrice + debouncedSearchQuery}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -1078,180 +1495,200 @@ export function FeaturedCourses() {
                   <div className="text-center py-20">
                     <Briefcase className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">
-                      {searchQuery
-                        ? `No internships found for "${searchQuery}".`
+                      {debouncedSearchQuery
+                        ? `No internships found for "${debouncedSearchQuery}".`
                         : "No internship programs available right now. Check back soon!"}
                     </p>
                   </div>
                 ) : (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {filteredInternships.map((intern: any, idx: number) => {
-                      const meta = getCategoryMeta(intern.normalizedCategory);
-                      const Icon = meta.icon;
-                      // isOpen is already guaranteed to be true here due to the filter above,
-                      // but we keep the variable for consistency.
-                      const isOpen = true;
-                      const deadline = intern.applicationDeadline
-                        ? new Date(parseInt(intern.applicationDeadline)).toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })
-                        : null;
-                      return (
-                        <motion.div
-                          key={intern.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: Math.min(idx * 0.03, 0.3) }}
-                          onClick={() => {
-                            if (isOpen) {
-                              if (!isAuthenticated) {
-                                navigate("/auth", { state: { from: { pathname: "/" } } });
-                              } else {
-                                setSelectedInternshipId(intern.id);
+                  <>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {filteredInternships.map((intern: any, idx: number) => {
+                        const meta = getCategoryMeta(intern.normalizedCategory);
+                        const Icon = meta.icon;
+                        const isOpen = true;
+                        const deadline = intern.applicationDeadline
+                          ? new Date(parseInt(intern.applicationDeadline)).toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : null;
+                        return (
+                          <motion.div
+                            key={intern.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: Math.min(idx * 0.03, 0.3) }}
+                            onClick={() => {
+                              if (isOpen) {
+                                if (!isAuthenticated) {
+                                  navigate("/auth", { state: { from: { pathname: "/" } } });
+                                } else {
+                                  setSelectedInternshipId(intern.id);
+                                }
                               }
-                            }
-                          }}
-                          className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 group hover:shadow-xl transition-all h-full flex flex-col cursor-pointer"
-                        >
-                          <div className="h-36 relative overflow-hidden">
-                            <ImageWithSkeleton
-                              src={intern.thumbnail || `https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&q=80&w=300&q=internship,${encodeURIComponent(intern.title || 'work')}`}
-                              alt={intern.title}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            />
-                            <div className="absolute top-3 left-3">
-                              <Badge className="bg-white/90 text-black hover:bg-white border-0 shadow-sm text-[10px] px-2 py-0">{intern.normalizedCategory} Internship</Badge>
-                            </div>
-                            <div className={`absolute top-3 right-3 p-1.5 rounded-md ${meta.bg} border ${meta.border} backdrop-blur-sm opacity-90`}>
-                              <Icon className={`w-3 h-3 ${meta.text}`} />
-                            </div>
-                          </div>
-
-                          <div className="p-4 flex-1 flex flex-col">
-                            <h3 className="font-heading text-sm font-bold text-card-foreground mb-2 line-clamp-2 group-hover:text-accent transition-colors">
-                              {intern.title}
-                            </h3>
-
-                            {(() => {
-                              const isEnrolledIntern = myInternship && myInternship.title === intern.title;
-                              if (!isEnrolledIntern) return null;
-
-                              const progress = myInternship.progress || 0;
-                              
-                              return (
-                                <div className="mt-2 mb-2">
-                                  <div className="space-y-1">
-                                    <div className="flex justify-between items-center text-[9px] font-bold">
-                                      <span className="text-muted-foreground uppercase">Progress</span>
-                                      <span className="text-accent">{progress}%</span>
-                                    </div>
-                                    <Progress value={progress} className="h-1.5" />
-                                  </div>
-                                </div>
-                              );
-                            })()}
-
-                            <div className="mt-auto pt-3 border-t border-border/30 flex flex-col gap-2">
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="flex flex-col">
-                                  <span className="text-[9px] uppercase tracking-wide text-muted-foreground/60 font-medium">Duration</span>
-                                  <span className="text-[10px] font-semibold text-foreground/80 flex items-center gap-1">
-                                    <Clock className="w-2.5 h-2.5 text-muted-foreground/60" /> {intern.duration || "Flexible"}
-                                  </span>
-                                </div>
-                                <div className="flex flex-col items-end">
-                                  <span className="text-[9px] uppercase tracking-wide text-muted-foreground/60 font-medium">Spots</span>
-                                  <span className="text-[10px] font-semibold text-foreground/80 flex items-center gap-1">
-                                    <Users className="w-2.5 h-2.5 text-muted-foreground/60" /> {intern.maxSpots ?? "Open"}
-                                  </span>
-                                </div>
+                            }}
+                            className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 group hover:shadow-xl transition-all h-full flex flex-col cursor-pointer"
+                          >
+                            <div className="h-36 relative overflow-hidden">
+                              <ImageWithSkeleton
+                                src={intern.thumbnail || `https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&q=80&w=300&q=internship,${encodeURIComponent(intern.title || 'work')}`}
+                                alt={intern.title}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              />
+                              <div className="absolute top-3 left-3">
+                                <Badge className="bg-white/90 text-black hover:bg-white border-0 shadow-sm text-[10px] px-2 py-0">{intern.normalizedCategory} Internship</Badge>
                               </div>
-                              
-                              <div className="flex items-center justify-between pt-2 border-t border-border/10 mb-2">
-                                <div className="flex flex-col">
-                                  <span className="text-[9px] text-muted-foreground uppercase font-medium">Fee</span>
-                                  <span className="text-[10px] font-bold text-foreground">
-                                    {intern.price === 0 || intern.price == null ? "Free" : `${intern.price.toLocaleString()} ${intern.currency || "RWF"}`}
-                                  </span>
-                                </div>
-                                {deadline && (
-                                  <div className="flex flex-col items-end">
-                                    <span className="text-[9px] text-muted-foreground uppercase font-medium">Deadline</span>
-                                    <span className="text-[10px] font-medium text-foreground/80 flex items-center gap-1">
-                                      <Calendar className="w-2.5 h-2.5" /> {deadline}
-                                    </span>
-                                  </div>
-                                )}
+                              <div className={`absolute top-3 right-3 p-1.5 rounded-md ${meta.bg} border ${meta.border} backdrop-blur-sm opacity-90`}>
+                                <Icon className={`w-3 h-3 ${meta.text}`} />
                               </div>
+                            </div>
+
+                            <div className="p-4 flex-1 flex flex-col">
+                              <h3 className="font-heading text-sm font-bold text-card-foreground mb-2 line-clamp-2 group-hover:text-accent transition-colors">
+                                {intern.title}
+                              </h3>
 
                               {(() => {
-                                const application = myInternApplications.find((app: any) => app.internshipProgram?.id === intern.id);
-                                const appStatus = application?.status;
-
-                                if (appStatus === 'approved') {
-                                  return (
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      className="w-full rounded-xl font-bold h-8 text-[11px] border-green-500 text-green-500 hover:bg-green-50"
-                                      onClick={(e) => { e.stopPropagation(); navigate(`/portal/student/internship`); }}
-                                    >
-                                      <ArrowRight className="w-3 h-3 mr-1.5" /> Continue
-                                    </Button>
-                                  );
-                                } else if (appStatus === 'pending') {
-                                  return (
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      disabled
-                                      className="w-full rounded-xl font-bold h-8 text-[11px] border-amber-500 text-amber-500"
-                                    >
-                                      <Clock className="w-3 h-3 mr-1.5" /> Pending
-                                    </Button>
-                                  );
-                                } else if (appStatus === 'rejected') {
-                                  return (
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      disabled
-                                      className="w-full rounded-xl font-bold h-8 text-[11px] border-red-500 text-red-500"
-                                    >
-                                      <XCircle className="w-3 h-3 mr-1.5" /> Rejected
-                                    </Button>
-                                  );
-                                }
-
+                                const isEnrolledIntern = myInternship && myInternship.title === intern.title;
+                                if (!isEnrolledIntern) return null;
+                                const progress = myInternship.progress || 0;
                                 return (
-                                  <Button 
-                                    variant="gold" 
-                                    size="sm" 
-                                    className={`w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20 ${!isOpen ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    disabled={!isOpen}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (isOpen) {
-                                        if (!isAuthenticated) {
-                                          navigate("/auth", { state: { from: { pathname: "/" } } });
-                                        } else {
-                                          setSelectedInternshipId(intern.id);
-                                        }
-                                      }
-                                    }}
-                                  >
-                                    {isOpen ? "Apply Now" : "Closed"} <ArrowRight className="w-3 h-3 ml-1.5" />
-                                  </Button>
+                                  <div className="mt-2 mb-2">
+                                    <div className="space-y-1">
+                                      <div className="flex justify-between items-center text-[9px] font-bold">
+                                        <span className="text-muted-foreground uppercase">Progress</span>
+                                        <span className="text-accent">{progress}%</span>
+                                      </div>
+                                      <Progress value={progress} className="h-1.5" />
+                                    </div>
+                                  </div>
                                 );
                               })()}
+
+                              <div className="mt-auto pt-3 border-t border-border/30 flex flex-col gap-2">
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="flex flex-col">
+                                    <span className="text-[9px] uppercase tracking-wide text-muted-foreground/60 font-medium">Duration</span>
+                                    <span className="text-[10px] font-semibold text-foreground/80 flex items-center gap-1">
+                                      <Clock className="w-2.5 h-2.5 text-muted-foreground/60" /> {intern.duration || "Flexible"}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col items-end">
+                                    <span className="text-[9px] uppercase tracking-wide text-muted-foreground/60 font-medium">Spots</span>
+                                    <span className="text-[10px] font-semibold text-foreground/80 flex items-center gap-1">
+                                      <Users className="w-2.5 h-2.5 text-muted-foreground/60" /> {intern.maxSpots ?? "Open"}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-2 border-t border-border/10 mb-2">
+                                  <div className="flex flex-col">
+                                    <span className="text-[9px] text-muted-foreground uppercase font-medium">Fee</span>
+                                    <span className="text-[10px] font-bold text-foreground">
+                                      {intern.price === 0 || intern.price == null ? "Free" : `${intern.price.toLocaleString()} ${intern.currency || "RWF"}`}
+                                    </span>
+                                  </div>
+                                  {deadline && (
+                                    <div className="flex flex-col items-end">
+                                      <span className="text-[9px] text-muted-foreground uppercase font-medium">Deadline</span>
+                                      <span className="text-[10px] font-medium text-foreground/80 flex items-center gap-1">
+                                        <Calendar className="w-2.5 h-2.5" /> {deadline}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {(() => {
+                                  const application = myInternApplications.find((app: any) => app.internshipProgram?.id === intern.id);
+                                  const appStatus = application?.status;
+                                  if (appStatus === 'approved') {
+                                    return (
+                                      <Button variant="outline" size="sm" className="w-full rounded-xl font-bold h-8 text-[11px] border-green-500 text-green-500 hover:bg-green-50" onClick={(e) => { e.stopPropagation(); navigate(`/portal/student/internship`); }}>
+                                        <ArrowRight className="w-3 h-3 mr-1.5" /> Continue
+                                      </Button>
+                                    );
+                                  } else if (appStatus === 'pending') {
+                                    return (
+                                      <Button variant="outline" size="sm" disabled className="w-full rounded-xl font-bold h-8 text-[11px] border-amber-500 text-amber-500">
+                                        <Clock className="w-3 h-3 mr-1.5" /> Pending
+                                      </Button>
+                                    );
+                                  } else if (appStatus === 'rejected') {
+                                    return (
+                                      <Button variant="outline" size="sm" disabled className="w-full rounded-xl font-bold h-8 text-[11px] border-red-500 text-red-500">
+                                        <XCircle className="w-3 h-3 mr-1.5" /> Rejected
+                                      </Button>
+                                    );
+                                  }
+                                  return (
+                                    <Button variant="gold" size="sm" className={`w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20 ${!isOpen ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isOpen} onClick={(e) => { e.stopPropagation(); if (isOpen) { if (!isAuthenticated) { navigate("/auth", { state: { from: { pathname: "/" } } }); } else { setSelectedInternshipId(intern.id); } } }}>
+                                      {isOpen ? "Apply Now" : "Closed"} <ArrowRight className="w-3 h-3 ml-1.5" />
+                                    </Button>
+                                  );
+                                })()}
+                              </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Internship Pagination */}
+                    {internshipPagination.totalPages > 1 && (
+                      <div className="flex flex-col items-center gap-4 mt-10 pb-4">
+                        <p className="text-xs text-muted-foreground">
+                          Page {internshipPagination.currentPage} of {internshipPagination.totalPages}
+                          {' '}({" "}
+                          <span className="font-medium">{internshipPagination.totalCount}</span>
+                          {' '}total internships)
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 rounded-xl"
+                            disabled={!internshipPagination.hasPreviousPage || internLoading}
+                            onClick={() => setInternshipPage(prev => Math.max(1, prev - 1))}
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </Button>
+                          {Array.from({ length: internshipPagination.totalPages }, (_, i) => i + 1)
+                            .filter(p => p === 1 || p === internshipPagination.totalPages || Math.abs(p - internshipPage) <= 1)
+                            .map((p, idx, arr) => (
+                              <React.Fragment key={p}>
+                                {idx > 0 && arr[idx - 1] !== p - 1 && (
+                                  <span className="text-muted-foreground/50 text-xs px-1">...</span>
+                                )}
+                                <Button
+                                  variant={internshipPage === p ? "default" : "outline"}
+                                  size="icon"
+                                  className={`h-9 w-9 rounded-xl text-xs font-bold ${
+                                    internshipPage === p
+                                      ? "bg-foreground text-background shadow-sm"
+                                      : "text-muted-foreground hover:text-foreground"
+                                  }`}
+                                  onClick={() => setInternshipPage(p)}
+                                  disabled={internLoading}
+                                >
+                                  {p}
+                                </Button>
+                              </React.Fragment>
+                            ))}
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 rounded-xl"
+                            disabled={!internshipPagination.hasNextPage || internLoading}
+                            onClick={() => setInternshipPage(prev => Math.min(internshipPagination.totalPages, prev + 1))}
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </motion.div>
             </AnimatePresence>

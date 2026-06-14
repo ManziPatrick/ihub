@@ -11,30 +11,81 @@ import {
   Minus,
   Maximize2
 } from 'lucide-react';
-import { useMutation } from "@apollo/client/react";
+import { useMutation, useQuery } from "@apollo/client/react";
 import { CHAT_WITH_AI } from '@/lib/graphql/mutations';
+import { GET_CHAT_GREETING } from '@/lib/graphql/queries';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useNavigate } from 'react-router-dom';
+
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  action?: string;
+  actionData?: string;
 }
+
+type AIActionLink = { path: string; label?: string };
+
+const parseLinksActionData = (actionData: string | undefined): AIActionLink[] => {
+  if (!actionData) return [];
+  try {
+    const parsed = JSON.parse(actionData);
+    const links = parsed?.links;
+    if (Array.isArray(links)) {
+      return links
+        .map((l: any) => ({
+          path: String(l?.path || ''),
+          label: l?.label ? String(l.label) : undefined,
+        }))
+        .filter((l: AIActionLink) => l.path);
+    }
+    return [];
+  } catch {
+    return [];
+  }
+};
 
 export const ChatBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Hello! 🌟 Welcome to **Bootskills** — it\'s great to have you here! How can I assist you today? 😊\n\nAre you looking to:\n- Explore a new **course** or upgrade your skills\n- Book a **mentorship session**\n- Check your **dashboard**, schedule, or progress\n- Get help with a **technical blocker** in your code\n\nJust let me know — I\'m here to help you succeed! 🚀' }
+    { role: 'assistant', content: 'Hello! 👋 Welcome to **Bootskills Academy Hub** — loading your personalized experience...' }
   ]);
 
+  const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const greetingSet = useRef(false);
   const [chatWithAI, { loading }] = useMutation<{ chatWithAI: { content: string, role: string, action?: string, actionData?: string } }, { message: string }>(CHAT_WITH_AI);
+
+  // Fetch dynamic greeting on mount
+  const { data: greetingData, error: greetingError, loading: greetingLoading } = useQuery(GET_CHAT_GREETING, {
+    fetchPolicy: 'network-only',
+  });
+
+  // Set greeting when query completes (only once per mount)
+  useEffect(() => {
+    if (greetingSet.current || greetingLoading) return;
+
+    if (greetingData?.chatBotGreeting?.content) {
+      greetingSet.current = true;
+      setMessages([{
+        role: 'assistant',
+        content: greetingData.chatBotGreeting.content,
+        action: greetingData.chatBotGreeting.action,
+        actionData: greetingData.chatBotGreeting.actionData,
+      }]);
+    } else if (greetingError) {
+      greetingSet.current = true;
+      setMessages([{ role: 'assistant', content: 'Hello! 👋 Welcome to **Bootskills Academy Hub**! How can I assist you today?\n\nFeel free to ask about:\n- **Courses** we offer\n- **Internship programs**\n- **Mentorship bookings**\n- Help with a **technical blocker**\n\nJust let me know what you\'d like to do!' }]);
+    }
+  }, [greetingData, greetingError]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -55,9 +106,29 @@ export const ChatBot: React.FC = () => {
       });
 
       if (data?.chatWithAI) {
+        const { content, action, actionData } = data.chatWithAI as any;
+
+        // Auto-navigate if AI asks to navigate.
+        if (action === 'NAVIGATE' && actionData) {
+          try {
+            const parsed = JSON.parse(actionData);
+            const path = parsed?.path;
+            if (typeof path === 'string' && path) {
+              if (path.startsWith('/')) navigate(path);
+              else window.open(path, '_blank', 'noreferrer');
+            }
+          } catch {
+            // ignore parse errors
+          }
+        }
+
+        const links = action === 'LINKS' ? parseLinksActionData(actionData) : [];
+
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: data.chatWithAI.content
+          content,
+          action,
+          actionData
         }]);
       }
     } catch (error) {
@@ -138,6 +209,24 @@ export const ChatBot: React.FC = () => {
                           ? "bg-primary text-primary-foreground rounded-tr-none"
                           : "bg-muted rounded-tl-none"
                       )}>
+                        {msg.role === 'assistant' && msg.action === 'LINKS' && msg.actionData && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {parseLinksActionData(msg.actionData).map((l, idx) => (
+                              <Button
+                                key={idx}
+                                variant="secondary"
+                                className="h-8 text-xs"
+                                onClick={() => {
+                                  if (l.path.startsWith('/')) navigate(l.path);
+                                  else window.open(l.path, '_blank', 'noreferrer');
+                                }}
+                              >
+                                {l.label || 'Open'}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+                        
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
                           components={{

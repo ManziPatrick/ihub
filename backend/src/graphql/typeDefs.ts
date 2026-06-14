@@ -824,12 +824,13 @@ export const typeDefs = `#graphql
     users(page: Int, limit: Int, createdBy: ID, role: String): UserResponse
     conversations: [Conversation]
     messages(conversationId: ID!): [Message]
-    courses(page: Int, limit: Int, sortBy: String, featured: Boolean): CourseResponse
+    courses(page: Int, limit: Int, sortBy: String, featured: Boolean, search: String, category: String, price: String, level: String, school: String): CourseResponse
     course(id: ID!, lite: Boolean): Course
     lessonContent(courseId: ID!, lessonId: ID!): Lesson
     stats: Stats
     me: User
     categories: [String]
+    schools: [String]
     trainerStudents: [User]
     recentActivity: [ActivityLogEntry]
     questions(courseId: ID!, lessonId: ID, moduleNumber: String, lessonNumber: String): [Question]
@@ -841,6 +842,7 @@ export const typeDefs = `#graphql
     myPayments: [PaymentTransaction]
     myCourseProgress(courseId: ID!): CourseProgress
     badges(page: Int, limit: Int): BadgeResponse
+    chatBotGreeting: ChatResponse
     
     trainerStats: TrainerStats
     adminDashboardData(createdBy: ID): AdminDashboardData
@@ -1590,7 +1592,7 @@ export const typeDefs = `#graphql
   }
 
   extend type Query {
-    internshipPrograms(page: Int, limit: Int): InternshipProgramResponse
+    internshipPrograms(page: Int, limit: Int, search: String, category: String, price: String, level: String, school: String): InternshipProgramResponse
     internshipProgram(id: ID!): InternshipProgram
     internshipApplications(programId: ID, status: String, page: Int, limit: Int): InternshipApplicationResponse
     myInternshipApplications: [InternshipApplication]

@@ -254,6 +254,20 @@
   }
 }
 
+/* Shimmer loading animation for skeleton loaders */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
 /* Custom Scrollbar - Minimalist Premium */
 ::-webkit-scrollbar {
   width: 6px;
