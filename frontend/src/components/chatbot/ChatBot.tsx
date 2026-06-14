@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MessageSquare,
@@ -16,7 +17,7 @@ import { CHAT_WITH_AI } from '@/lib/graphql/mutations';
 import { GET_CHAT_GREETING } from '@/lib/graphql/queries';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
