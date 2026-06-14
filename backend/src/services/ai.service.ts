@@ -152,7 +152,7 @@ export const getChatGreeting = async (contextUser: any): Promise<{ content: stri
       ];
       break;
     case 'client':
-      roleSection = `As a **client**, you can:\n- 📋 View your project applications → /portal/client/applications\n- 🖥️ Access your workspace → /portal/client/workspace\n- 💬 Submit feedback → /portal/client/feedback`;
+      roleSection = `As a **client**, you can:\n-  View your project applications → /portal/client/applications\n- 🖥️ Access your workspace → /portal/client/workspace\n- 💬 Submit feedback → /portal/client/feedback`;
       quickLinks = [
         { path: '/portal/client/applications', label: 'My Applications' },
         { path: '/portal/client/workspace', label: 'Workspace' },
@@ -177,8 +177,8 @@ export const getChatGreeting = async (contextUser: any): Promise<{ content: stri
     default:
       roleSection = `You can:\n- 🔍 **Explore our courses** → /courses\n- 🎓 Apply for **internship programs** → /internships\n- 📖 Read our **blog** → /blog\n- 📞 **Contact us** → /contact\n- 🔑 **Sign in** to access your personalized dashboard → /auth`;
       quickLinks = [
-        { path: '/courses', label: 'Explore Courses' },
-        { path: '/internships', label: 'Internship Programs' },
+        { path: '/explore', label: 'Explore Courses' },
+        { path: '/', label: 'Internship Programs' },
         { path: '/auth', label: 'Sign In' },
       ];
   }

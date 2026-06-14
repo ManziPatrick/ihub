@@ -134,19 +134,13 @@ type GreetingQueryData = {
                 // This prevents trying to navigate to non-existing routes.
                 const isLikelyAppRoute =
                   path === '/' ||
-                  path === '/about' ||
-                  path === '/services' ||
+                 
                   path === '/explore' ||
-                  path === '/internships' ||
-                  path === '/projects' ||
-                  path === '/partners' ||
-                  path === '/team' ||
+                  
                   path.startsWith('/blog/') ||
-                  path === '/blog' ||
-                  path === '/contact' ||
+                 
                   path === '/auth' ||
-                  path === '/reset-password' ||
-                  path === '/success' ||
+                  
                   path.startsWith('/portal/student') ||
                   path.startsWith('/portal/client') ||
                   path.startsWith('/portal/trainer') ||
@@ -158,7 +152,7 @@ type GreetingQueryData = {
                   path.startsWith('/courses/') ||
                   path === '/courses' ||
                   path === '/chat' ||
-                  path === '/maintenance' ||
+                 
                   path.startsWith('/portal/internship/meetings');
 
                 if (isLikelyAppRoute) {
