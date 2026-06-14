@@ -103,8 +103,8 @@
   <script src="https://analytics.ahrefs.com/analytics.js" data-key="BB+FKC4n1QE/C0pyPhiwIQ" async></script>
 
   <!-- ─── Structured Data (Schema.org) ────────────────────────────────── -->
+  <!-- Split into multiple JSON-LD scripts to avoid parsers crashing when they expect a single object -->
   <script type="application/ld+json">
-  [
     {
       "@context": "https://schema.org",
       "@type": "Organization",
@@ -149,7 +149,10 @@
         "DevOps", "UI/UX Design", "Digital Marketing", "Business Development",
         "Financial Literacy", "Prompt Engineering", "Generative AI", "Project Management"
       ]
-    },
+    }
+  </script>
+
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "EducationalOrganization",
@@ -204,7 +207,10 @@
         {"@type": "Offer", "category": "Paid", "name": "Structured Internship Programs"},
         {"@type": "Offer", "category": "Free", "name": "Career Development Resources"}
       ]
-    },
+    }
+  </script>
+
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
@@ -313,7 +319,10 @@
           }
         ]
       }
-    },
+    }
+  </script>
+
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
@@ -328,7 +337,10 @@
         "target": {"@type": "EntryPoint", "urlTemplate": "https://bootskills.com/explore?q={search_term_string}"},
         "query-input": "required name=search_term_string"
       }
-    },
+    }
+  </script>
+
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
@@ -342,7 +354,6 @@
         {"@type": "ListItem", "position": 6, "name": "Contact", "item": "https://bootskills.com/contact"}
       ]
     }
-  ]
   </script>
 </head>
 
