@@ -65,7 +65,20 @@ export const ChatBot: React.FC = () => {
   const [chatWithAI, { loading }] = useMutation<{ chatWithAI: { content: string, role: string, action?: string, actionData?: string } }, { message: string }>(CHAT_WITH_AI);
 
   // Fetch dynamic greeting on mount
-  const { data: greetingData, error: greetingError, loading: greetingLoading } = useQuery(GET_CHAT_GREETING, {
+type GreetingQueryData = {
+    chatBotGreeting?: {
+      content?: string;
+      role?: string;
+      action?: string;
+      actionData?: string;
+    };
+  };
+
+  const {
+    data: greetingData,
+    error: greetingError,
+    loading: greetingLoading,
+  } = useQuery<GreetingQueryData>(GET_CHAT_GREETING, {
     fetchPolicy: 'network-only',
   });
 
@@ -113,9 +126,55 @@ export const ChatBot: React.FC = () => {
           try {
             const parsed = JSON.parse(actionData);
             const path = parsed?.path;
+
             if (typeof path === 'string' && path) {
-              if (path.startsWith('/')) navigate(path);
-              else window.open(path, '_blank', 'noreferrer');
+              if (path.startsWith('/')) {
+                // Route existence guard: only navigate to paths handled by our router.
+                // This prevents trying to navigate to non-existing routes.
+                const isLikelyAppRoute =
+                  path === '/' ||
+                  path === '/about' ||
+                  path === '/services' ||
+                  path === '/explore' ||
+                  path === '/internships' ||
+                  path === '/projects' ||
+                  path === '/partners' ||
+                  path === '/team' ||
+                  path.startsWith('/blog/') ||
+                  path === '/blog' ||
+                  path === '/contact' ||
+                  path === '/auth' ||
+                  path === '/reset-password' ||
+                  path === '/success' ||
+                  path.startsWith('/portal/student') ||
+                  path.startsWith('/portal/client') ||
+                  path.startsWith('/portal/trainer') ||
+                  path.startsWith('/portal/admin') ||
+                  path.startsWith('/portal/super-admin') ||
+                  path.startsWith('/portal/settings') ||
+                  path.startsWith('/portal/help') ||
+                  path.startsWith('/portal/notifications') ||
+                  path.startsWith('/courses/') ||
+                  path === '/courses' ||
+                  path === '/chat' ||
+                  path === '/maintenance' ||
+                  path.startsWith('/portal/internship/meetings');
+
+                if (isLikelyAppRoute) {
+                  navigate(path);
+                } else {
+                  // Fallback: keep user in the app; show a friendly message.
+                  setMessages(prev => [
+                    ...prev,
+                    {
+                      role: 'assistant',
+                      content: `I couldn't find a page for: ${path}`,
+                    },
+                  ]);
+                }
+              } else {
+                window.open(path, '_blank', 'noreferrer');
+              }
             }
           } catch {
             // ignore parse errors
@@ -239,7 +298,12 @@ export const ChatBot: React.FC = () => {
                             a: ({ node, ...props }) => <a className="text-primary underline hover:opacity-80 transition-opacity" {...props} />
                           }}
                         >
-                          {msg.content}
+                        {String(msg.content)
+                          // Reduce overly long AI responses to keep the chat readable.
+                          .replace(/\n{3,}/g, '\n\n')
+                          .replace(/(\s*\*[^\*]+\*\s*)\s*\n\s*/g, '$1\n')
+                          // Trim extremely long content blocks while keeping markdown structure.
+                          .slice(0, 1200)}
                         </ReactMarkdown>
                       </div>
                     </div>
