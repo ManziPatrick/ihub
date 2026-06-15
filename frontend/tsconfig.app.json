@@ -19,12 +19,7 @@
     "strict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noImplicitAny": false,
-"noFallthroughCasesInSwitch": false,
-
-
-
-    "ignoreDeprecations": "6.0",
+    "noImplicitAny": false,    "noFallthroughCasesInSwitch": false,
     "baseUrl": ".",
 
     "paths": {
