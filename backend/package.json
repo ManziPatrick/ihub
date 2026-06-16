@@ -18,7 +18,8 @@
     "seed:all": "ts-node src/seedAll.ts",
     "seed:flows": "ts-node src/seedFlows.ts",
     "seed:normalize": "ts-node src/seedCourseNormalizer.ts",
-    "seed:project-tasks": "ts-node src/seedProjectTasks.ts"
+    "seed:project-tasks": "ts-node src/seedProjectTasks.ts",
+    "seed:ds-course": "ts-node src/seedDataStructuresCourse.ts"
   },
   "keywords": [],
   "author": "",

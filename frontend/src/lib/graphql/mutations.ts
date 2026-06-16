@@ -204,6 +204,11 @@ export const UPDATE_COURSE = gql`
             options
             correctOptionIndex
             explanation
+            matchingPairs {
+              id
+              left
+              right
+            }
           }
           quizConfig {
             disableRightClick

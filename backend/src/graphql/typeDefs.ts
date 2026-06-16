@@ -258,7 +258,14 @@ export const typeDefs = `#graphql
     imageUrl: String
     options: [String]
     correctOptionIndex: Int
+    matchingPairs: [MatchingPair]
     explanation: String
+  }
+
+  type MatchingPair {
+    id: String
+    left: String
+    right: String
   }
 
   type AssignmentQuestion {
@@ -267,6 +274,7 @@ export const typeDefs = `#graphql
     type: String!
     options: [String]
     correctOptionIndex: Int
+    matchingPairs: [MatchingPair]
     explanation: String
     points: Int
   }
@@ -941,7 +949,14 @@ export const typeDefs = `#graphql
     imageUrl: String
     options: [String]
     correctOptionIndex: Int
+    matchingPairs: [MatchingPairInput]
     explanation: String
+  }
+
+  input MatchingPairInput {
+    id: String
+    left: String
+    right: String
   }
 
   input QuizConfigInput {

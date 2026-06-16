@@ -46,10 +46,15 @@ const lessonSchema = new mongoose.Schema({
   },
   quizQuestions: [{
     questionText: { type: String },
-    type: { type: String, enum: ['multiple_choice', 'open_ended'], default: 'multiple_choice' },
+    type: { type: String, enum: ['multiple_choice', 'open_ended', 'true_false', 'matching'], default: 'multiple_choice' },
     imageUrl: { type: String },
     options: [{ type: String }],
     correctOptionIndex: { type: Number },
+    matchingPairs: [{
+      id: { type: String },
+      left: { type: String },
+      right: { type: String }
+    }],
     explanation: { type: String }
   }],
   quizConfig: {
@@ -82,6 +87,8 @@ const courseSchema = new mongoose.Schema({
   category: { type: String, required: true },
   modules: [moduleSchema],
   studentsEnrolled: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+
+  passingScore: { type: Number, default: 70 }, // Minimum percentage to pass exams
 
   // Configuration & limits
   maxStudents: { type: Number }, // If null, unlimited

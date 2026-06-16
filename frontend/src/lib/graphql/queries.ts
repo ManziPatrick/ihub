@@ -337,6 +337,11 @@ export const GET_COURSES = gql`
               options
               correctOptionIndex
               explanation
+              matchingPairs {
+                id
+                left
+                right
+              }
             }
             quizConfig {
               disableRightClick
@@ -765,8 +770,14 @@ export const GET_QUESTIONS = gql`
       moduleNumber
       lessonNumber
       questionText
+      type
       options
       correctOptionIndex
+      matchingPairs {
+        id
+        left
+        right
+      }
       explanation
       createdAt
     }

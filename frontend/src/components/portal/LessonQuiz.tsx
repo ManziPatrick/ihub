@@ -220,11 +220,13 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
   const [loadingAiExplanation, setLoadingAiExplanation] = useState(false);
 
   const handleSubmitAnswer = async () => {
-    if (selectedOption === null) return;
+    // For matching type, skip option selection check
+    if (currentQuestion.type !== 'matching' && selectedOption === null) return;
     setIsAnswered(true);
     setShowHint(false);
     
-    const isCorrect = selectedOption === currentQuestion.correctOptionIndex;
+    const isMatching = currentQuestion.type === 'matching';
+    const isCorrect = !isMatching && selectedOption === currentQuestion.correctOptionIndex;
     
     if (isCorrect) {
       setScore(score + 1);
@@ -241,19 +243,29 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
         origin: { y: 0.6 },
         colors: ['#EAB308', '#FACC15', '#FFFFFF']
       });
-    } else {
+    } else if (!isMatching) {
       setStreak(0);
       setExpression('sad');
       if (incorrectAudio.current) {
         incorrectAudio.current.currentTime = 0;
         incorrectAudio.current.play().catch(e => console.error("Audio error:", e));
       }
+    } else {
+      // Matching questions: always award points for reviewing
+      setScore(score + 1);
+      setStreak(streak + 1);
+      setExpression('happy');
     }
 
-    // ALWAYS trigger AI Explanation for "long and correct" reasoning
-    setLoadingAiExplanation(true);
-    try {
-      const prompt = `Explain why "${currentQuestion.options[currentQuestion.correctOptionIndex]}" is correct for: "${currentQuestion.questionText}".
+    // If question already has a stored explanation, use it directly — no AI call needed
+    if (currentQuestion.explanation) {
+      setAiExplanation(null); // will fallback to currentQuestion.explanation in render
+    } else if (!isMatching) {
+      // No stored explanation — use AI to generate one (skip for matching)
+      setLoadingAiExplanation(true);
+      try {
+        const correctAnswer = currentQuestion.options?.[currentQuestion.correctOptionIndex] || '';
+        const prompt = `Explain why "${correctAnswer}" is correct for: "${currentQuestion.questionText}".
       
       Keep it ultra-concise:
       ### 🎯 Key Insight
@@ -262,18 +274,19 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
       ### ⚡ Quick Dive
       [Max 2 sentences explaining the logic. No fluff. Keep under 50 words.]`;
       
-      const { data } = await chatWithAI({
-        variables: { message: prompt }
-      });
+        const { data } = await chatWithAI({
+          variables: { message: prompt }
+        });
       
-      if (data?.chatWithAI?.content) {
-        setAiExplanation(data.chatWithAI.content);
+        if (data?.chatWithAI?.content) {
+          setAiExplanation(data.chatWithAI.content);
+        }
+      } catch (err) {
+        console.error("AI Explanation Error:", err);
+        setAiExplanation("Great job! Keep going to the next challenge.");
+      } finally {
+        setLoadingAiExplanation(false);
       }
-    } catch (err) {
-      console.error("AI Explanation Error:", err);
-      setAiExplanation(currentQuestion.explanation || "Great job! Keep going to the next challenge.");
-    } finally {
-      setLoadingAiExplanation(false);
     }
 
     setShowExplanation(true);
@@ -445,9 +458,9 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
             {/* Question Text */}
             <div className="flex flex-col gap-4">
               <div className="flex items-start justify-between gap-4">
-                <h4 className="text-xl font-bold leading-tight text-foreground flex-1">
-                  {currentQuestion.questionText}
-                </h4>
+                <div className="text-xl font-bold leading-tight text-foreground flex-1 prose dark:prose-invert max-w-none" 
+                     dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }} 
+                />
                 <div className="flex items-center gap-1 bg-secondary/50 p-1.5 rounded-full border border-border/50 transition-all duration-300">
                   {speechStatus === "idle" ? (
                     <Button
@@ -521,35 +534,72 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
               </div>
             </div>
 
-            <div className="grid gap-3">
-              {currentQuestion.options.map((option: string, i: number) => {
-                const isCorrectOption = i === currentQuestion.correctOptionIndex;
-                const isSelectedOption = i === selectedOption;
-                
-                let stateClass = "bg-card border-border hover:border-gold/50";
-                if (isAnswered) {
-                  if (isCorrectOption) stateClass = "bg-green-500/10 border-green-500 text-green-400 scale-[1.02] shadow-lg shadow-green-500/10";
-                  else if (isSelectedOption) stateClass = "bg-red-500/10 border-red-500 text-red-500 opacity-80";
-                  else stateClass = "bg-muted/5 border-border/20 text-muted-foreground opacity-40";
-                } else if (isSelectedOption) {
-                  stateClass = "bg-gold/10 border-gold text-gold shadow-lg shadow-gold/10";
-                }
+            {currentQuestion.type === 'matching' ? (
+              <div className="space-y-4">
+                <p className="text-sm font-black uppercase tracking-widest text-muted-foreground/60 mb-3">Match the items below:</p>
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    {currentQuestion.matchingPairs?.map((pair: any) => (
+                      <div key={pair.id} className="p-3 rounded-xl bg-card border border-border/50 font-bold text-sm text-foreground">
+                        {pair.left}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    {/* Shuffle right items for display */}
+                    {[...(currentQuestion.matchingPairs || [])].sort(() => Math.random() - 0.5).map((pair: any) => (
+                      <div key={pair.id} className="p-3 rounded-xl bg-card border border-border/50 font-bold text-sm text-foreground">
+                        {pair.right}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {isAnswered && (
+                  <div className="p-4 rounded-2xl bg-green-500/5 border border-green-500/20">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-green-500 mb-2">Correct Matches:</p>
+                    <div className="space-y-1.5">
+                      {currentQuestion.matchingPairs?.map((pair: any) => (
+                        <div key={pair.id} className="flex items-center gap-2 text-sm font-bold text-foreground">
+                          <span>{pair.left}</span>
+                          <span className="text-muted-foreground">⟷</span>
+                          <span className="text-green-400">{pair.right}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {currentQuestion.options?.map((option: string, i: number) => {
+                  const isCorrectOption = i === currentQuestion.correctOptionIndex;
+                  const isSelectedOption = i === selectedOption;
+                  
+                  let stateClass = "bg-card border-border hover:border-gold/50";
+                  if (isAnswered) {
+                    if (isCorrectOption) stateClass = "bg-green-500/10 border-green-500 text-green-400 scale-[1.02] shadow-lg shadow-green-500/10";
+                    else if (isSelectedOption) stateClass = "bg-red-500/10 border-red-500 text-red-500 opacity-80";
+                    else stateClass = "bg-muted/5 border-border/20 text-muted-foreground opacity-40";
+                  } else if (isSelectedOption) {
+                    stateClass = "bg-gold/10 border-gold text-gold shadow-lg shadow-gold/10";
+                  }
 
-                return (
-                  <motion.button
-                    key={i}
-                    whileHover={!isAnswered ? { scale: 1.01 } : {}}
-                    whileTap={!isAnswered ? { scale: 0.98 } : {}}
-                    onClick={() => handleOptionSelect(i)}
-                    disabled={isAnswered}
-                    className={`w-full text-left p-4 sm:p-6 rounded-xl sm:rounded-3xl border-2 transition-all flex items-center justify-between font-bold text-base sm:text-xl ${stateClass}`}
-                  >
-                    <span>{option}</span>
-                    {isAnswered && isCorrectOption && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 fill-current shrink-0" />}
-                  </motion.button>
-                );
-              })}
-            </div>
+                  return (
+                    <motion.button
+                      key={i}
+                      whileHover={!isAnswered ? { scale: 1.01 } : {}}
+                      whileTap={!isAnswered ? { scale: 0.98 } : {}}
+                      onClick={() => handleOptionSelect(i)}
+                      disabled={isAnswered}
+                      className={`w-full text-left p-4 sm:p-6 rounded-xl sm:rounded-3xl border-2 transition-all flex items-center justify-between font-bold text-base sm:text-xl ${stateClass}`}
+                    >
+                      <span dangerouslySetInnerHTML={{ __html: option }} />
+                      {isAnswered && isCorrectOption && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 fill-current shrink-0" />}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Hint Button and Panel below options */}
             <div className="pt-2">
@@ -689,10 +739,10 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
                     ? '✅ Correct Logic'
                     : '💡 Answer Logic'}
                 </p>
-                {selectedOption !== currentQuestion.correctOptionIndex && (
-                  <p className="text-sm font-black text-green-400 mb-2">
-                    ✓ {currentQuestion.options[currentQuestion.correctOptionIndex]}
-                  </p>
+                {currentQuestion.type !== 'matching' && selectedOption !== currentQuestion.correctOptionIndex && (
+                  <p className="text-sm font-black text-green-400 mb-2"
+                     dangerouslySetInnerHTML={{ __html: `✓ ${currentQuestion.options?.[currentQuestion.correctOptionIndex] || ''}` }} 
+                  />
                 )}
 
                 {loadingAiExplanation ? (
@@ -739,10 +789,10 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
           <Button 
             variant="gold" 
             onClick={handleSubmitAnswer} 
-            disabled={selectedOption === null}
+            disabled={currentQuestion.type !== 'matching' && selectedOption === null}
             className="w-full sm:w-auto h-14 px-8 rounded-2xl font-black shadow-gold"
           >
-            CHECK ANSWER
+            {currentQuestion.type === 'matching' ? 'VIEW MATCHES' : 'CHECK ANSWER'}
           </Button>
         </div>
       )}

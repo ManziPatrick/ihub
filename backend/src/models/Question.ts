@@ -6,9 +6,15 @@ const questionSchema = new mongoose.Schema({
   moduleNumber: { type: String }, // For tracking questions by module position
   lessonNumber: { type: String }, // For tracking questions by lesson position
   questionText: { type: String, required: true },
+  type: { type: String, enum: ['multiple_choice', 'open_ended', 'true_false', 'matching'], default: 'multiple_choice' },
   imageUrl: { type: String }, // Optional image for the question
   options: [{ type: String, required: true }],
   correctOptionIndex: { type: Number, required: true },
+  matchingPairs: [{
+    id: { type: String },
+    left: { type: String },
+    right: { type: String }
+  }],
   explanation: { type: String },
 }, { timestamps: true });
 

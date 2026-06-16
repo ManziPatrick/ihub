@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Trash2, CheckCircle2, AlertCircle, Loader2, Pencil, Sparkles, Save, X, ArrowLeft, Settings, Type } from "lucide-react";
+import { Plus, Trash2, CheckCircle2, AlertCircle, Loader2, Pencil, Sparkles, Save, X, ArrowLeft, Settings, Type, Shuffle } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_QUESTIONS, GET_COURSE } from "@/lib/graphql/queries";
 import { CREATE_QUESTION, UPDATE_QUESTION, DELETE_QUESTION, GENERATE_AI_QUIZ, GENERATE_QUESTION_EXPLANATION, UPDATE_QUIZ_CONFIG } from "@/lib/graphql/mutations";
@@ -13,6 +13,7 @@ import { Image as ImageIcon, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { TextEditor } from "@/components/ui/text-editor";
 
 interface ManageQuestionsDialogProps {
   open: boolean;
@@ -52,6 +53,7 @@ export function ManageQuestionsDialog({
     imageUrl: "",
     options: ["", ""],
     correctOptionIndex: 0,
+    matchingPairs: [{ id: "1", left: "", right: "" }, { id: "2", left: "", right: "" }],
     explanation: ""
   });
 
@@ -130,7 +132,7 @@ export function ManageQuestionsDialog({
       const newQuestion = {
         id: editingId || `new-${Date.now()}`,
         ...formData,
-        options: formData.type === 'open_ended' ? [] : formData.options
+        options: formData.type === 'open_ended' || formData.type === 'matching' ? [] : formData.options
       };
 
       if (editingId) {
@@ -141,7 +143,7 @@ export function ManageQuestionsDialog({
         toast.success("Question added locally!");
       }
 
-      setFormData({ type: "multiple_choice", questionText: "", imageUrl: "", options: ["", ""], correctOptionIndex: 0, explanation: "" });
+      setFormData({ type: "multiple_choice", questionText: "", imageUrl: "", options: ["", ""], correctOptionIndex: 0, matchingPairs: [{ id: "1", left: "", right: "" }, { id: "2", left: "", right: "" }], explanation: "" });
       setIsAdding(false);
       setEditingId(null);
     } catch (err: any) {
@@ -212,6 +214,7 @@ export function ManageQuestionsDialog({
       imageUrl: q.imageUrl || "",
       options: q.options?.length ? [...q.options] : ["", ""],
       correctOptionIndex: q.correctOptionIndex || 0,
+      matchingPairs: q.matchingPairs?.length ? [...q.matchingPairs] : [{ id: "1", left: "", right: "" }, { id: "2", left: "", right: "" }],
       explanation: q.explanation || ""
     });
     setEditingId(q.id);
@@ -288,8 +291,9 @@ export function ManageQuestionsDialog({
       type: draft.type || 'multiple_choice',
       questionText: draft.questionText,
       imageUrl: draft.imageUrl || "",
-      options: [...draft.options],
-      correctOptionIndex: draft.correctOptionIndex,
+      options: draft.options?.length ? [...draft.options] : ["", ""],
+      correctOptionIndex: draft.correctOptionIndex || 0,
+      matchingPairs: draft.matchingPairs?.length ? [...draft.matchingPairs] : [{ id: "1", left: "", right: "" }, { id: "2", left: "", right: "" }],
       explanation: draft.explanation || ""
     });
     setDraftQuestions(prev => prev.filter((_, i) => i !== index));
@@ -419,19 +423,35 @@ export function ManageQuestionsDialog({
                           )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 bg-muted/30 p-3 rounded-lg border border-border/20">
+                        <div className="grid grid-cols-4 gap-3 bg-muted/30 p-3 rounded-lg border border-border/20">
                           <Button 
                             variant={formData.type === 'multiple_choice' ? 'gold' : 'ghost'}
                             size="sm"
-                            className="h-9 text-[10px] font-black uppercase tracking-widest rounded-lg"
-                            onClick={() => setFormData({ ...formData, type: 'multiple_choice' })}
+                            className="h-9 text-[9px] font-black uppercase tracking-widest rounded-lg"
+                            onClick={() => setFormData({ ...formData, type: 'multiple_choice', options: formData.options.length >= 2 ? formData.options : ["", ""] })}
                           >
                             Multiple Choice
                           </Button>
                           <Button 
+                            variant={formData.type === 'true_false' ? 'gold' : 'ghost'}
+                            size="sm"
+                            className="h-9 text-[9px] font-black uppercase tracking-widest rounded-lg"
+                            onClick={() => setFormData({ ...formData, type: 'true_false', options: ["True", "False"], correctOptionIndex: 0 })}
+                          >
+                            True / False
+                          </Button>
+                          <Button 
+                            variant={formData.type === 'matching' ? 'gold' : 'ghost'}
+                            size="sm"
+                            className="h-9 text-[9px] font-black uppercase tracking-widest rounded-lg"
+                            onClick={() => setFormData({ ...formData, type: 'matching', matchingPairs: [{ id: "1", left: "", right: "" }, { id: "2", left: "", right: "" }] })}
+                          >
+                            Matching
+                          </Button>
+                          <Button 
                             variant={formData.type === 'open_ended' ? 'gold' : 'ghost'}
                             size="sm"
-                            className="h-9 text-[10px] font-black uppercase tracking-widest rounded-lg"
+                            className="h-9 text-[9px] font-black uppercase tracking-widest rounded-lg"
                             onClick={() => setFormData({ ...formData, type: 'open_ended' })}
                           >
                             Open-ended
@@ -440,9 +460,9 @@ export function ManageQuestionsDialog({
 
                         <div>
                           <label className="text-xs font-medium mb-1.5 block">Question Text *</label>
-                          <Input
+                          <TextEditor
                             value={formData.questionText}
-                            onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
+                            onChange={(val) => setFormData({ ...formData, questionText: val })}
                             placeholder="Enter the question here..."
                           />
                         </div>
@@ -486,18 +506,20 @@ export function ManageQuestionsDialog({
                           </div>
                         </div>
 
-                        {formData.type === 'multiple_choice' && (
+                        {(formData.type === 'multiple_choice' || formData.type === 'true_false') && (
                           <div className="space-y-3">
                             <div className="flex items-center justify-between">
                               <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Answer Options *</label>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="h-7 px-2 text-[9px] font-black uppercase border-dashed border-accent/30 text-accent hover:bg-accent/5"
-                                onClick={() => setFormData({ ...formData, options: [...formData.options, ""] })}
-                              >
-                                <Plus className="w-3 h-3 mr-1" /> Add Choice
-                              </Button>
+                              {formData.type === 'multiple_choice' && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-7 px-2 text-[9px] font-black uppercase border-dashed border-accent/30 text-accent hover:bg-accent/5"
+                                  onClick={() => setFormData({ ...formData, options: [...formData.options, ""] })}
+                                >
+                                  <Plus className="w-3 h-3 mr-1" /> Add Choice
+                                </Button>
+                              )}
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -506,7 +528,7 @@ export function ManageQuestionsDialog({
                                   <div className="flex items-center justify-between mb-2">
                                     <span className="text-[10px] font-black text-muted-foreground/30 uppercase tracking-widest">Option {i + 1}</span>
                                     <div className="flex items-center gap-2">
-                                      {formData.options.length > 2 && (
+                                      {formData.type === 'multiple_choice' && formData.options.length > 2 && (
                                         <button 
                                           className="opacity-0 group-hover/opt:opacity-100 transition-opacity text-red-400/50 hover:text-red-400"
                                           onClick={() => {
@@ -531,16 +553,84 @@ export function ManageQuestionsDialog({
                                       </button>
                                     </div>
                                   </div>
-                                  <Input
+                                  <TextEditor
                                     value={opt}
-                                    onChange={(e) => {
+                                    onChange={(val) => {
                                       const newOpts = [...formData.options];
-                                      newOpts[i] = e.target.value;
+                                      newOpts[i] = val;
                                       setFormData({ ...formData, options: newOpts });
                                     }}
                                     placeholder={`Enter choice ${i + 1}...`}
-                                    className="h-9 text-sm bg-transparent border-transparent focus:border-border/10 p-0"
                                   />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {formData.type === 'matching' && (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                                <Shuffle className="w-3.5 h-3.5 inline mr-1" /> Matching Pairs *
+                              </label>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-7 px-2 text-[9px] font-black uppercase border-dashed border-accent/30 text-accent hover:bg-accent/5"
+                                onClick={() => {
+                                  const newId = String(Date.now());
+                                  setFormData({ ...formData, matchingPairs: [...formData.matchingPairs, { id: newId, left: "", right: "" }] });
+                                }}
+                              >
+                                <Plus className="w-3 h-3 mr-1" /> Add Pair
+                              </Button>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              {formData.matchingPairs.map((pair, i) => (
+                                <div key={pair.id} className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-start p-3 rounded-xl border border-border/20 bg-muted/20">
+                                  <div>
+                                    <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1 block">Left Item</label>
+                                    <TextEditor
+                                      value={pair.left}
+                                      onChange={(val) => {
+                                        const newPairs = [...formData.matchingPairs];
+                                        newPairs[i] = { ...newPairs[i], left: val };
+                                        setFormData({ ...formData, matchingPairs: newPairs });
+                                      }}
+                                      placeholder="e.g. Rwanda"
+                                    />
+                                  </div>
+                                  <div className="flex items-center justify-center pt-6">
+                                    <div className="w-6 h-6 rounded-full border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
+                                      <Shuffle className="w-3 h-3 text-muted-foreground/40" />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/40 mb-1 block">Right Item</label>
+                                    <TextEditor
+                                      value={pair.right}
+                                      onChange={(val) => {
+                                        const newPairs = [...formData.matchingPairs];
+                                        newPairs[i] = { ...newPairs[i], right: val };
+                                        setFormData({ ...formData, matchingPairs: newPairs });
+                                      }}
+                                      placeholder="e.g. Kigali"
+                                    />
+                                  </div>
+                                  {formData.matchingPairs.length > 2 && (
+                                    <div className="sm:col-span-3 flex justify-end">
+                                      <button 
+                                        className="text-[9px] font-black text-red-400/50 hover:text-red-400 uppercase tracking-widest"
+                                        onClick={() => {
+                                          setFormData({ ...formData, matchingPairs: formData.matchingPairs.filter((_, idx) => idx !== i) });
+                                        }}
+                                      >
+                                        <Trash2 className="w-3 h-3 inline mr-1" /> Remove
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -561,11 +651,10 @@ export function ManageQuestionsDialog({
                               AI Explain
                             </Button>
                           </label>
-                          <Input
+                          <TextEditor
                             value={formData.explanation}
-                            onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
+                            onChange={(val) => setFormData({ ...formData, explanation: val })}
                             placeholder="Provide reasoning for the correct answer..."
-                            className="h-10 bg-muted/20 border-border/40 text-sm"
                           />
                         </div>
 
@@ -584,7 +673,7 @@ export function ManageQuestionsDialog({
                               setIsAdding(false);
                               setCreationMode(null);
                               setEditingId(null);
-                              setFormData({ type: "multiple_choice", questionText: "", imageUrl: "", options: ["", ""], correctOptionIndex: 0, explanation: "" });
+                              setFormData({ type: "multiple_choice", questionText: "", imageUrl: "", options: ["", ""], correctOptionIndex: 0, matchingPairs: [{ id: "1", left: "", right: "" }, { id: "2", left: "", right: "" }], explanation: "" });
                             }}
                           >
                             Cancel
@@ -700,7 +789,7 @@ export function ManageQuestionsDialog({
                                   </Button>
                                 </div>
                               </div>
-                              {q.type !== 'open_ended' && q.options && (
+                              {q.type !== 'open_ended' && q.type !== 'matching' && q.options && (
                                 <div className="grid grid-cols-2 gap-2 mb-3">
                                   {q.options.map((opt: string, i: number) => (
                                     <div
@@ -712,6 +801,17 @@ export function ManageQuestionsDialog({
                                     >
                                       {i === q.correctOptionIndex && <CheckCircle2 className="w-3 h-3" />}
                                       <span className="truncate">{opt}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {q.type === 'matching' && q.matchingPairs && (
+                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                  {q.matchingPairs.map((pair: any, pi: number) => (
+                                    <div key={pair.id || pi} className="text-[10px] p-2 rounded-lg border border-border/30 flex items-center gap-2 bg-muted/20">
+                                      <span className="font-bold text-accent">{pair.left}</span>
+                                      <span className="text-muted-foreground">⟷</span>
+                                      <span className="font-bold text-green-500">{pair.right}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -762,7 +862,7 @@ export function ManageQuestionsDialog({
                               </Button>
                             </div>
                           </div>
-                          {q.type !== 'open_ended' && q.options && (
+                          {q.type !== 'open_ended' && q.type !== 'matching' && q.options && (
                             <div className="grid grid-cols-2 gap-2 mb-3">
                               {q.options.map((opt: string, i: number) => (
                                 <div
@@ -774,6 +874,17 @@ export function ManageQuestionsDialog({
                                 >
                                   {i === q.correctOptionIndex && <CheckCircle2 className="w-3 h-3" />}
                                   <span className="truncate">{opt}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {q.type === 'matching' && q.matchingPairs && (
+                            <div className="grid grid-cols-2 gap-2 mb-3">
+                              {q.matchingPairs.map((pair: any, pi: number) => (
+                                <div key={pair.id || pi} className="text-[10px] p-2 rounded-lg border border-border/30 flex items-center gap-2 bg-muted/20">
+                                  <span className="font-bold text-accent">{pair.left}</span>
+                                  <span className="text-muted-foreground">⟷</span>
+                                  <span className="font-bold text-green-500">{pair.right}</span>
                                 </div>
                               ))}
                             </div>

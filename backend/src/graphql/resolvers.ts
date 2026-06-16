@@ -93,6 +93,7 @@ import {
   sendCourseEnrollmentConfirmation
 } from '../services/email.service';
 import { generateCertificatePDF, generateInvoicePDF } from '../services/pdf.service';
+import { autoGenerateCertificate } from '../controllers/CertificateController';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { chatWithAIService, explainTaskService, reviewSubmissionService, generateAIQuizService, hintForQuestionService, generateQuestionExplanationService, getChatGreeting } from '../services/ai.service';
@@ -3070,7 +3071,8 @@ export const resolvers = {
 
       // Determine if all answers are auto-gradeable (MCQ only, or AI grading ran for all open questions)
       const hasOpenQuestions = targetLesson.assignmentQuestions.some((q: any) => q.type === 'open');
-      const autoStatus: 'approved' | 'failed' = gradePercent >= 50 ? 'approved' : 'failed';
+      const passingThreshold = course.passingScore || 50;
+      const autoStatus: 'approved' | 'failed' = gradePercent >= passingThreshold ? 'approved' : 'failed';
 
       const submissionData = {
         userId: context.user.id,
@@ -3117,8 +3119,8 @@ export const resolvers = {
         await user.save();
       }
 
-      // Auto-complete the lesson if passing grade (≥50%)
-      if (gradePercent >= 50) {
+      // Auto-complete the lesson if passing grade
+      if (gradePercent >= passingThreshold) {
         try {
           const userDoc = await User.findById(context.user.id);
           if (userDoc) {
@@ -3137,6 +3139,42 @@ export const resolvers = {
       }
 
       await logActivity(context.user.id, 'SUBMIT_ASSIGNMENT_EXAM', 'AssignmentSubmission', submission.id, `Submitted exam for lesson ${lessonId} — Score: ${gradePercent}%`);
+
+      // ── Certificate auto-issuance on exam pass ──
+      if (gradePercent >= passingThreshold) {
+        try {
+          // Update CourseProgress to 100%
+          await CourseProgress.findOneAndUpdate(
+            { userId: context.user.id, courseId },
+            {
+              userId: context.user.id,
+              courseId,
+              overallProgress: 100,
+              status: 'completed',
+              completionDate: new Date(),
+              lastAccessed: new Date()
+            },
+            { upsert: true, new: true }
+          );
+
+          // Generate the certificate
+          const cert = await autoGenerateCertificate(context.user.id, courseId, 'course');
+          if (cert) {
+            console.log(`🎓 Certificate auto-issued for user ${context.user.id} in course ${courseId} (exam pass: ${gradePercent}%)`);
+
+            // Send in-app notification
+            await sendNotification(context.user.id, {
+              type: 'certificate_issued',
+              title: '🎉 Certificate Issued!',
+              message: `Congratulations! You've earned a certificate for "${course.title}" with a score of ${gradePercent}%.`,
+              link: '/portal/student/certificates'
+            });
+          }
+        } catch (certError) {
+          // Non-critical — certificate generation failure shouldn't block exam result
+          console.error('Error issuing certificate on exam pass:', certError);
+        }
+      }
 
       const populated = await submission.populate(['userId', 'courseId']);
       return {
