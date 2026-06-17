@@ -1240,9 +1240,7 @@ export function FeaturedCourses() {
                             </h3>
 
                             {course.descriptionSnippet && (
-                              <p className="text-muted-foreground text-[11px] leading-relaxed mb-2 line-clamp-2">
-                                {course.descriptionSnippet}
-                              </p>
+                              <p className="text-muted-foreground text-[11px] leading-relaxed mb-2 line-clamp-2" dangerouslySetInnerHTML={{ __html: course.descriptionSnippet }} />
                             )}
 
                             {isEnrolled && (

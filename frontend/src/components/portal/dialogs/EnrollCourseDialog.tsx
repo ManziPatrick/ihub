@@ -197,7 +197,7 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
                     </div>
                     <div>
                       <h3 className="font-semibold text-lg text-foreground">{course.title}</h3>
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{course.description}</p>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2" dangerouslySetInnerHTML={{ __html: course.description }} />
                     </div>
                   </div>
                 </div>

@@ -97,6 +97,7 @@ import { autoGenerateCertificate } from '../controllers/CertificateController';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { chatWithAIService, explainTaskService, reviewSubmissionService, generateAIQuizService, hintForQuestionService, generateQuestionExplanationService, getChatGreeting } from '../services/ai.service';
+import { compileCode } from '../services/compiler.service';
 
 
 const DEFAULT_WORKFLOW = [
@@ -3408,6 +3409,12 @@ export const resolvers = {
     },
     reviewSubmission: async (_: any, { taskTitle, submissionContent }: { taskTitle: string, submissionContent: string }) => {
       return await reviewSubmissionService(taskTitle, submissionContent);
+    },
+
+    // Code Execution
+    runCode: async (_: any, { code, language, testCode, exerciseType, setupCode }: any) => {
+      const result = await compileCode({ code, language, testCode, exerciseType, setupCode });
+      return result;
     },
     enroll: async (_: any, { courseId, selectedDeliveryMode }: { courseId: string, selectedDeliveryMode?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');

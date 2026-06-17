@@ -367,9 +367,7 @@ export default function StudentCourses() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm text-card-foreground/60 mb-3 line-clamp-2">
-                              {course.description}
-                            </p>
+                            <p className="text-sm text-card-foreground/60 mb-3 line-clamp-2" dangerouslySetInnerHTML={{ __html: course.description }} />
                             <Progress value={progress} className="h-2 mb-3" />
                             <div className="flex items-center justify-between text-xs text-card-foreground/60 mb-4">
                               <span className="flex items-center gap-1">
@@ -459,9 +457,7 @@ export default function StudentCourses() {
                         <h3 className="font-heading font-semibold text-card-foreground mb-2">
                           {course.title}
                         </h3>
-                        <p className="text-sm text-card-foreground/60 mb-3 line-clamp-2 flex-1">
-                          {course.description}
-                        </p>
+                        <p className="text-sm text-card-foreground/60 mb-3 line-clamp-2 flex-1" dangerouslySetInnerHTML={{ __html: course.description }} />
                         <div className="flex items-center gap-4 text-xs text-card-foreground/60 mb-3">
                           <span className="flex items-center gap-1">
                             <BookOpen className="w-3.5 h-3.5" />

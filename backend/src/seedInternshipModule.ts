@@ -204,13 +204,26 @@ async function seedInternshipModule() {
     const mentor2 = trainers.find(t => t.username === 'sarah_ai') || trainers[1] || admins[1] || mentor1;
     const adminUser = admins[0];
 
-    // Named students for clarity
-    const studentAlice = students.find(s => s.username === 'student_alice')!;
-    const studentBob = students.find(s => s.username === 'student_bob')!;
-    const remainingStudents = students.filter(s =>
-      s._id.toString() !== studentAlice._id.toString() &&
-      s._id.toString() !== studentBob._id.toString()
-    );
+    if (!mentor1 || !mentor2) {
+      throw new Error('Missing required mentors. Ensure trainer/admin users exist before running this seeder.');
+    }
+    if (!adminUser) {
+      throw new Error('Missing required admin user. Ensure admin/super_admin users exist before running this seeder.');
+    }
+
+    // Named students for clarity (fallback to first two students if special ones are missing)
+    const studentAlice = students.find(s => s.username === 'student_alice') || students[0];
+    const studentBob = students.find(s => s.username === 'student_bob') || students[1];
+
+    if (!studentAlice || !studentBob) {
+      throw new Error(
+        `Need at least 2 students to seed internship module. Found students=${students.length}`
+      );
+    }
+
+    const remainingStudents = students.filter((s) => {
+      return s._id.toString() !== studentAlice._id.toString() && s._id.toString() !== studentBob._id.toString();
+    });
 
     // ====== STEP 3: Create Internship Programs ======
     console.log('\n🚀 Creating Internship Programs...');

@@ -33,6 +33,22 @@ async function seedAll() {
       cwd: projectRoot,
     });
 
+    // Step 3: Seed advanced JS practice modules
+    console.log('\n📌 STEP 3: Advanced JavaScript Modules (Exercises + Tests)');
+    console.log('-'.repeat(50));
+    execSync('npx ts-node src/seedsAdvancedJsModules.ts', {
+      stdio: 'inherit',
+      cwd: projectRoot,
+    });
+
+    // Step 4: Seed Intro to JavaScript & Python courses with code exercises
+    console.log('\n📌 STEP 4: Introduction to JavaScript & Python Courses (with Code Exercises)');
+    console.log('-'.repeat(50));
+    execSync('npx ts-node src/seedIntroToJSAndPython.ts', {
+      stdio: 'inherit',
+      cwd: projectRoot,
+    });
+
     console.log('\n' + '='.repeat(60));
     console.log('✅ ALL SEEDS COMPLETED SUCCESSFULLY');
     console.log('='.repeat(60));
@@ -44,3 +60,4 @@ async function seedAll() {
 }
 
 seedAll();
+

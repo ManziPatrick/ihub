@@ -574,9 +574,7 @@ const Explore = () => {
                     </h3>
 
                     {course.descriptionSnippet && (
-                      <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-2">
-                        {course.descriptionSnippet}
-                      </p>
+                      <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-2" dangerouslySetInnerHTML={{ __html: course.descriptionSnippet }} />
                     )}
 
                     <div className="mt-auto pt-6 border-t border-border/30 flex flex-col gap-3">

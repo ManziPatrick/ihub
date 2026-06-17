@@ -31,6 +31,7 @@ import certificateRoutes from './routes/CertificateRoutes';
 import { Course } from './models/Course';
 import { authMiddleware } from './middleware/auth';
 import { maintenanceMiddleware } from './middleware/maintenance';
+import { compileCode } from './services/compiler.service';
 
 dotenv.config();
 
@@ -57,7 +58,7 @@ const startServer = async () => {
 
     const allowedOrigins = (
         process.env.ALLOWED_ORIGINS ||
-        'http://localhost:8080,http://localhost:5173,http://localhost:8081,https://www.bootskills.com,https://bootskills.com,https://*.bootskills.com'
+        'http://localhost:8080,http://localhost:5173,http://localhost:8081,http://localhost:8082,https://www.bootskills.com,https://bootskills.com,https://*.bootskills.com'
     )
         .split(',')
         .map(o => o.trim())
@@ -309,6 +310,37 @@ const startServer = async () => {
     app.use('/api/payments', paymentRoutes);
     app.use('/api/certificates', certificateRoutes);
     app.use('/api/ai-courses', aiCourseRoutes); // Enabled for deployment
+
+    // =============================
+    // ONLINE CODE COMPILER ENDPOINT
+    // =============================
+    app.post('/api/compile', async (req, res) => {
+      try {
+        const { code, language, testCode, exerciseType, setupCode } = req.body;
+        
+        if (!code) {
+          return res.status(400).json({ error: 'No code provided' });
+        }
+
+        const result = await compileCode({
+          code,
+          language: language || 'javascript',
+          testCode,
+          exerciseType,
+          setupCode,
+        });
+
+        res.json(result);
+      } catch (err: any) {
+        console.error('❌ Compile error:', err);
+        res.status(500).json({
+          output: '',
+          passed: false,
+          testResults: [],
+          error: err.message || 'Compilation failed',
+        });
+      }
+    });
 
     // =============================
     // GLOBAL ERROR HANDLER

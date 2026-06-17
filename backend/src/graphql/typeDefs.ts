@@ -231,6 +231,34 @@ export const typeDefs = `#graphql
     createdAt: String
   }
 
+  type CodeExercise {
+    id: ID
+    title: String!
+    description: String
+    language: String!
+    initialCode: String!
+    solutionCode: String
+    testCode: String
+    type: String!
+    setupCode: String
+    expectedOutput: String
+  }
+
+  type CodeExecResult {
+    output: String!
+    passed: Boolean!
+    testResults: [TestResult!]
+    error: String
+  }
+
+  type TestResult {
+    name: String!
+    passed: Boolean!
+    expected: String!
+    actual: String!
+    error: String
+  }
+
   type Lesson {
     id: ID!
     title: String!
@@ -248,6 +276,7 @@ export const typeDefs = `#graphql
     assignmentConfig: AssignmentConfig
     quizQuestions: [QuizQuestion]
     quizConfig: QuizConfig
+    codeExercises: [CodeExercise]
     order: Int
   }
 
@@ -922,6 +951,19 @@ export const typeDefs = `#graphql
 
 
 
+  input CodeExerciseInput {
+    id: ID
+    title: String!
+    description: String
+    language: String!
+    initialCode: String!
+    solutionCode: String
+    testCode: String
+    type: String!
+    setupCode: String
+    expectedOutput: String
+  }
+
   input LessonInput {
     id: ID
     title: String!
@@ -939,6 +981,7 @@ export const typeDefs = `#graphql
     assignmentConfig: AssignmentConfigInput
     quizQuestions: [QuizQuestionInput]
     quizConfig: QuizConfigInput
+    codeExercises: [CodeExerciseInput]
     order: Int
   }
 
@@ -1110,6 +1153,9 @@ export const typeDefs = `#graphql
     generateAIQuiz(courseId: ID, lessonId: ID, courseTitle: String, lessonTitle: String, lessonContent: String, questionCount: Int, prompt: String): [Question]
     hintForQuestion(questionText: String!, options: [String!]!): String
     generateQuestionExplanation(questionText: String!, options: [String!]!, correctOptionIndex: Int!): String
+
+    # Code Execution
+    runCode(code: String!, language: String!, testCode: String, exerciseType: String, setupCode: String): CodeExecResult!
 
     # Uploads
     getUploadSignature(folder: String, resourceType: String): UploadSignature!

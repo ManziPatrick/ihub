@@ -617,7 +617,7 @@ const parseAIResponse = async (aiContent: string, contextUser: any) => {
 const handleAIError = (error: any) => {
     console.error('AI Service Error:', error?.response?.data || error.message);
     return {
-        content: "I'm having a bit of a brain fog right now. I couldn't reach the Qwen core at Hugging Face. Please try again!",
+        content: "I'm having a bit of a brain fog right now. I couldn't reach the Bootskills Model. Please try again!",
         role: 'assistant',
         action: null,
         actionData: null

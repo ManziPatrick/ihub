@@ -316,9 +316,7 @@ export default function AdminCourses() {
                                   {course.totalLessonsCount || 0} units
                                 </p>
                                 {course.descriptionSnippet && (
-                                  <p className="text-[10px] text-muted-foreground/60 leading-tight mt-1 line-clamp-2 border-l-2 border-accent/30 pl-2 italic">
-                                    {course.descriptionSnippet}
-                                  </p>
+                                  <p className="text-[10px] text-muted-foreground/60 leading-tight mt-1 line-clamp-2 border-l-2 border-accent/30 pl-2 italic" dangerouslySetInnerHTML={{ __html: course.descriptionSnippet }} />
                                 )}
                               </div>
                             </td>

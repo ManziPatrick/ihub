@@ -63,6 +63,21 @@ const lessonSchema = new mongoose.Schema({
     quizType: { type: String, enum: ['exercise', 'once'], default: 'exercise' },
     questionsPerPage: { type: Number, default: 5 }
   },
+
+  // Code Exercise fields — inline code editor challenges
+  codeExercises: [{
+    id: { type: String },
+    title: { type: String },
+    description: { type: String },
+    language: { type: String, enum: ['javascript', 'python', 'html', 'css'], default: 'javascript' },
+    initialCode: { type: String, default: '' },
+    solutionCode: { type: String, default: '' },
+    testCode: { type: String, default: '' },
+    type: { type: String, enum: ['fill-in', 'write', 'fix', 'test'], default: 'write' },
+    setupCode: { type: String, default: '' },
+    expectedOutput: { type: String, default: '' },
+  }],
+
   order: { type: Number }
 });
 

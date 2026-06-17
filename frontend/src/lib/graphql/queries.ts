@@ -497,6 +497,18 @@ export const GET_COURSE = gql`
             quizType
             questionsPerPage
           }
+          codeExercises {
+            id
+            title
+            description
+            language
+            initialCode
+            solutionCode
+            testCode
+            type
+            setupCode
+            expectedOutput
+          }
         }
       }
       studentsEnrolled {
@@ -596,6 +608,18 @@ export const GET_LESSON_CONTENT = gql`
         timeLimit
         quizType
         questionsPerPage
+      }
+      codeExercises {
+        id
+        title
+        description
+        language
+        initialCode
+        solutionCode
+        testCode
+        type
+        setupCode
+        expectedOutput
       }
     }
   }

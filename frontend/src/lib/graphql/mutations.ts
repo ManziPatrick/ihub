@@ -224,6 +224,18 @@ export const UPDATE_COURSE = gql`
             source
             visibility
           }
+          codeExercises {
+            id
+            title
+            description
+            language
+            initialCode
+            solutionCode
+            testCode
+            type
+            setupCode
+            expectedOutput
+          }
         }
       }
     }
@@ -331,6 +343,23 @@ export const HINT_FOR_QUESTION = gql`
 export const GENERATE_QUESTION_EXPLANATION = gql`
   mutation GenerateQuestionExplanation($questionText: String!, $options: [String!]!, $correctOptionIndex: Int!) {
     generateQuestionExplanation(questionText: $questionText, options: $options, correctOptionIndex: $correctOptionIndex)
+  }
+`;
+
+export const RUN_CODE = gql`
+  mutation RunCode($code: String!, $language: String!, $testCode: String, $exerciseType: String, $setupCode: String) {
+    runCode(code: $code, language: $language, testCode: $testCode, exerciseType: $exerciseType, setupCode: $setupCode) {
+      output
+      passed
+      testResults {
+        name
+        passed
+        expected
+        actual
+        error
+      }
+      error
+    }
   }
 `;
 

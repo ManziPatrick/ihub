@@ -85,7 +85,7 @@ export function AIHelper({ type, taskTitle, description, submissionContent }: AI
                                 </div>
                                 <div className="mt-4 flex justify-end">
                                     <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest italic opacity-50">
-                                        Powered by Hugging Face Qwen-3
+                                        Powered by Bootskills Ai
                                     </p>
                                 </div>
                             </div>

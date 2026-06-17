@@ -29,6 +29,8 @@ import {
   ChevronUp,
   ChevronDown,
   ClipboardList,
+  Code,
+  Terminal,
   ListOrdered,
   Settings2,
   FileText as FileTextIcon
@@ -36,6 +38,7 @@ import {
 import { ManageQuestionsDialog } from "./ManageQuestionsDialog";
 import { ResourceBankDialog } from "./ResourceBankDialog";
 import { ManageAssignmentQuestionsDialog } from "./ManageAssignmentQuestionsDialog";
+import { ManageCodeExercisesDialog } from "./ManageCodeExercisesDialog";
 import { AssignmentConfigDialog } from "./AssignmentConfigDialog";
 import { ExamConfigDialog } from "../ExamConfigDialog";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,16 +58,17 @@ import { useQuery } from "@apollo/client/react";
 import { GET_CATEGORIES } from "@/lib/graphql/queries";
 
 // ─── Lesson Card (Modernized) ──────────────────────────────────────────────────
-type LessonTab = "details" | "quiz" | "assignment";
+type LessonTab = "details" | "quiz" | "assignment" | "codeExercises";
 
 function LessonCard({
-  lesson, lIdx, mIdx, module, formData, setFormData, onQuizOpen, onAssignmentQuestionsOpen, onAssignmentConfigOpen
+  lesson, lIdx, mIdx, module, formData, setFormData, onQuizOpen, onAssignmentQuestionsOpen, onAssignmentConfigOpen, onCodeExercisesOpen
 }: {
   lesson: any; lIdx: number; mIdx: number; module: any;
   formData: any; setFormData: (d: any) => void;
   onQuizOpen: (lesson: any) => void;
   onAssignmentQuestionsOpen: (lesson: any) => void;
   onAssignmentConfigOpen: (lesson: any) => void;
+  onCodeExercisesOpen: (lesson: any) => void;
 }) {
   const [expanded, setExpanded] = useState(!lesson.title || lesson.title === "New Lesson" || lesson.title === "");
   const [tab, setTab] = useState<LessonTab>("details");
@@ -194,6 +198,7 @@ function LessonCard({
               { key: "details", label: "Details", icon: FileTextIcon },
               { key: "quiz", label: "Quiz Builder", icon: HelpCircle },
               { key: "assignment", label: "Assignment", icon: ClipboardList },
+              { key: "codeExercises", label: "Code", icon: Code },
             ] as { key: LessonTab; label: string; icon: any }[]).map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
@@ -401,6 +406,57 @@ function LessonCard({
             </div>
           )}
 
+          {/* Tab: Code Exercises */}
+          {tab === "codeExercises" && (
+            <div className="p-4">
+              <div className="rounded-xl border border-indigo-500/15 bg-indigo-500/5 p-5 space-y-4">
+                {/* Header */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                    <Terminal className="w-5 h-5 text-indigo-400" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-foreground/80">Code Exercises</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">
+                      {lesson.codeExercises?.length > 0
+                        ? `${lesson.codeExercises.length} exercise${lesson.codeExercises.length !== 1 ? "s" : ""} added`
+                        : "No exercises yet"}
+                    </p>
+                  </div>
+                  {lesson.codeExercises?.length > 0 && (
+                    <div className="ml-auto px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30">
+                      <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{lesson.codeExercises.length}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Exercise preview pills */}
+                {lesson.codeExercises?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {lesson.codeExercises.map((ex: any, i: number) => (
+                      <div key={ex.id || i} className="px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-1">
+                        <Code className="w-3 h-3 text-indigo-400" />
+                        <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">{ex.language}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground">
+                  Interactive coding challenges students complete directly in the browser. Supports JavaScript, Python, and HTML/CSS.
+                </p>
+                <Button
+                  variant="outline"
+                  className="h-10 w-full text-[10px] font-black uppercase tracking-widest border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300 hover:border-indigo-500/40 gap-2 transition-colors"
+                  onClick={() => onCodeExercisesOpen(lesson)}
+                >
+                  <Terminal className="w-4 h-4" />
+                  {lesson.codeExercises?.length > 0 ? "Manage Code Exercises" : "Add Code Exercises"}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* ── Action Bar (Done Button) ── */}
           <div className="p-4 pt-0 flex justify-end">
             <Button
@@ -457,6 +513,7 @@ export function EditCourseDialog({
   const [questionLesson, setQuestionLesson] = useState<{ id: string, title: string, mIdx: number, lIdx: number } | null>(null);
   const [assignmentQuestionLesson, setAssignmentQuestionLesson] = useState<{ mIdx: number, lIdx: number, title: string } | null>(null);
   const [assignmentConfigLesson, setAssignmentConfigLesson] = useState<{ mIdx: number, lIdx: number, title: string } | null>(null);
+  const [codeExerciseLesson, setCodeExerciseLesson] = useState<{ mIdx: number, lIdx: number, title: string } | null>(null);
   const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({ 0: true });
   const [showResourceBank, setShowResourceBank] = useState(false);
   const [resourceBankTarget, setResourceBankTarget] = useState<{ mIdx: number, lIdx: number } | null>(null);
@@ -546,7 +603,19 @@ export function EditCourseDialog({
                   timeLimit: l.quizConfig.timeLimit || 0,
                   quizType: l.quizConfig.quizType || 'exercise',
                   questionsPerPage: l.quizConfig.questionsPerPage || 5
-                } : { disableRightClick: false, timeLimit: 0, quizType: 'exercise', questionsPerPage: 5 }
+                } : { disableRightClick: false, timeLimit: 0, quizType: 'exercise', questionsPerPage: 5 },
+                codeExercises: l.codeExercises?.map((ex: any) => ({
+                  id: ex.id || ex._id,
+                  title: ex.title || "",
+                  description: ex.description || "",
+                  language: ex.language || "javascript",
+                  initialCode: ex.initialCode || "",
+                  solutionCode: ex.solutionCode || "",
+                  testCode: ex.testCode || "",
+                  type: ex.type || "write",
+                  setupCode: ex.setupCode || "",
+                  expectedOutput: ex.expectedOutput || "",
+                })) || [],
               })) || []
             })) || []
           };
@@ -618,7 +687,19 @@ export function EditCourseDialog({
                   timeLimit: l.quizConfig.timeLimit || 0,
                   quizType: l.quizConfig.quizType || 'exercise',
                   questionsPerPage: l.quizConfig.questionsPerPage || 5
-                } : { disableRightClick: false, timeLimit: 0, quizType: 'exercise', questionsPerPage: 5 }
+                } : { disableRightClick: false, timeLimit: 0, quizType: 'exercise', questionsPerPage: 5 },
+                codeExercises: l.codeExercises?.map((ex: any) => ({
+                  id: ex.id || ex._id,
+                  title: ex.title || "",
+                  description: ex.description || "",
+                  language: ex.language || "javascript",
+                  initialCode: ex.initialCode || "",
+                  solutionCode: ex.solutionCode || "",
+                  testCode: ex.testCode || "",
+                  type: ex.type || "write",
+                  setupCode: ex.setupCode || "",
+                  expectedOutput: ex.expectedOutput || "",
+                })) || [],
               })) || []
             })) : prev.modules
           };
@@ -683,7 +764,19 @@ export function EditCourseDialog({
           type: r.type,
           source: r.source,
           visibility: r.visibility
-        })) || []
+        })) || [],
+        codeExercises: l.codeExercises?.map((ex: any) => ({
+          id: ex.id || ex._id,
+          title: ex.title,
+          description: ex.description || "",
+          language: ex.language,
+          initialCode: ex.initialCode || "",
+          solutionCode: ex.solutionCode || "",
+          testCode: ex.testCode || "",
+          type: ex.type || "write",
+          setupCode: ex.setupCode || "",
+          expectedOutput: ex.expectedOutput || "",
+        })) || [],
       }))
     }));
 
@@ -1367,6 +1460,9 @@ export function EditCourseDialog({
                                     onAssignmentConfigOpen={(lesson) => {
                                       setAssignmentConfigLesson({ mIdx, lIdx, title: lesson.title });
                                     }}
+                                    onCodeExercisesOpen={(lesson) => {
+                                      setCodeExerciseLesson({ mIdx, lIdx, title: lesson.title });
+                                    }}
                                   />
                                 ))}
 
@@ -1498,6 +1594,20 @@ export function EditCourseDialog({
           }
         }}
         title={`Exam Settings: ${assignmentConfigLesson?.title || 'Module Assessment'}`}
+      />
+      <ManageCodeExercisesDialog
+        open={!!codeExerciseLesson}
+        onOpenChange={(open) => !open && setCodeExerciseLesson(null)}
+        exercises={codeExerciseLesson ? formData.modules[codeExerciseLesson.mIdx].lessons[codeExerciseLesson.lIdx].codeExercises : []}
+        onSave={(exercises) => {
+          if (codeExerciseLesson) {
+            const newModules = [...formData.modules];
+            const newLessons = [...newModules[codeExerciseLesson.mIdx].lessons];
+            newLessons[codeExerciseLesson.lIdx] = { ...newLessons[codeExerciseLesson.lIdx], codeExercises: exercises };
+            newModules[codeExerciseLesson.mIdx] = { ...newModules[codeExerciseLesson.mIdx], lessons: newLessons };
+            setFormData({ ...formData, modules: newModules });
+          }
+        }}
       />
     </Dialog >
   );

@@ -57,6 +57,7 @@ import {
 import { RequestHelpDialog, BookCallDialog } from "@/components/portal/dialogs";
 import { LessonQuiz } from "@/components/portal/LessonQuiz";
 import { AssignmentExamView } from "@/components/portal/AssignmentExamView";
+import { CodeExercise } from "@/components/portal/CodeExercise";
 import { PPTViewer } from "@/components/portal/PPTViewer";
 import { toast } from "sonner";
 import { useQuery, useMutation } from "@apollo/client/react";
@@ -90,6 +91,7 @@ export default function CourseDetail() {
   const [isSubmittingAssignment, setIsSubmittingAssignment] = useState(false);
   const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
   const [forcedProgressLessonIds, setForcedProgressLessonIds] = useState<string[]>([]);
+  const [completedCodeExerciseIds, setCompletedCodeExerciseIds] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Queries
@@ -274,7 +276,13 @@ export default function CourseDetail() {
   const currentLessonSubmissionStatus = currentLessonSubmission?.status;
   const currentLessonCompleted = completedLessons.some((cl: any) => cl.lessonId === (currentLesson?.id || currentLesson?._id));
   const isPassed = currentLessonSubmissionStatus === 'approved' || (currentLessonSubmissionStatus === 'reviewed' && (currentLessonSubmission?.grade || 0) >= 70);
-  const canMarkCurrentLessonComplete = !currentLessonRequiresAssignment || currentLessonCompleted || isPassed;
+  // Code exercises with tests must be completed to mark lesson done
+  const hasCodeExercisesWithTests = currentLesson?.codeExercises?.some((ex: any) => ex.testCode || ex.expectedOutput);
+  const exercisesWithTests = currentLesson?.codeExercises?.filter((ex: any) => ex.testCode || ex.expectedOutput) || [];
+  const allCodeExercisesPassed = !hasCodeExercisesWithTests ||
+    exercisesWithTests.every((ex: any) => completedCodeExerciseIds.includes(ex.id));
+  const canMarkCurrentLessonComplete = (!currentLessonRequiresAssignment || currentLessonCompleted || isPassed) &&
+    allCodeExercisesPassed;
   const currentLessonFirstSlidePreview = currentLesson?.resources?.find((resource: any) =>
     resource?.type === 'image' && /first slide/i.test(resource?.title || '')
   )?.url;
@@ -566,8 +574,9 @@ export default function CourseDetail() {
               }
 
               const isSatisfied = isLessonSatisfied(currentLesson);
-              const hasQuiz = (currentLesson?.quizQuestions?.length > 0) || (currentLesson?.type === 'quiz');
-              const hasAssignment = (currentLesson?.assignmentQuestions?.length > 0);
+  const hasQuiz = (currentLesson?.quizQuestions?.length > 0) || (currentLesson?.type === 'quiz');
+  const hasAssignment = (currentLesson?.assignmentQuestions?.length > 0);
+  const hasCodeExercises = currentLesson?.codeExercises?.length > 0;
 
               // Prevent infinite loop: If already satisfied AND no questions, don't render active quiz
               if (hasQuiz && isSatisfied && (!currentLesson?.quizQuestions || currentLesson?.quizQuestions.length === 0)) {
@@ -654,6 +663,36 @@ export default function CourseDetail() {
                     <CardContent className="p-8">
                       <h2 className="text-2xl font-bold mb-4">{currentLesson?.title}</h2>
                       <div className="prose dark:prose-invert max-w-none mb-8 lesson-content-viewer" dangerouslySetInnerHTML={{ __html: currentLesson?.content || currentLesson?.description || "" }} />
+
+                      {/* Code Exercises */}
+                      {hasCodeExercises && (
+                        <div className="space-y-6 mb-8">
+                          {currentLesson.codeExercises.map((ex: any, idx: number) => (
+                            <CodeExercise
+                              key={ex.id || idx}
+                              exercise={{
+                                id: ex.id,
+                                title: ex.title,
+                                description: ex.description,
+                                language: ex.language,
+                                initialCode: ex.initialCode,
+                                solutionCode: ex.solutionCode,
+                                testCode: ex.testCode,
+                                type: ex.type,
+                                setupCode: ex.setupCode,
+                                expectedOutput: ex.expectedOutput,
+                              }}
+                              onComplete={() => {
+                                if (ex.id) {
+                                  setCompletedCodeExerciseIds((prev) =>
+                                    prev.includes(ex.id) ? prev : [...prev, ex.id]
+                                  );
+                                }
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
 
                       {currentLessonFirstSlidePreview && (
                         <div className="mb-6 p-4 rounded-xl border border-border/40 bg-muted/10 flex items-center justify-between gap-3">

@@ -469,8 +469,14 @@ async function normalizeAllCourses() {
       console.log(`     🗑️  Deleted ${oldQuestionCount} orphaned question records`);
     }
 
-    // Skip the Cyber Literacy course we just updated
-    if (title === cyberTitle) continue;
+    const skipTitles = [
+      'Introduction to JavaScript — Complete Beginner Course',
+      'Advanced JavaScript — Practical Exercises & Tests',
+      'Data Structures Mastery for Beginners — Complete 20-Module Course'
+    ];
+
+    // Skip courses that already have hand-authored full curriculum
+    if (title === cyberTitle || skipTitles.includes(title)) continue;
 
     const oldModules = course.modules || [];
     const newModules: any[] = [];

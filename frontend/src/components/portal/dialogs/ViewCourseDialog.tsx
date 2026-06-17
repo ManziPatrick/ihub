@@ -31,7 +31,7 @@ export function ViewCourseDialog({ open, onOpenChange, course }: ViewCourseDialo
         </DialogHeader>
         <ScrollArea className="flex-1 px-4 pb-4 sm:px-6 sm:pb-6 overflow-y-auto">
           <div className="space-y-4 py-4">
-            <p className="text-muted-foreground text-sm">{course.description}</p>
+            <p className="text-muted-foreground text-sm" dangerouslySetInnerHTML={{ __html: course.description }} />
 
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-background/50 rounded-lg">

@@ -47,7 +47,7 @@ const seedDataStructuresCourse = async () => {
 
     // === COURSE DATA (stripped of videoUrl fields, level fixed) ===
     const courseData = {
-      title: 'Data Structures Mastery for Beginners — Complete 20-Module Course',
+      title: 'Data Structures Mastery for Beginners for all',
       description:
         '<p>The most comprehensive data structures course for absolute beginners. Covers everything from pseudocode basics to advanced data structures. No programming experience needed. Includes interactive games, video links, and free resources.</p>',
       thumbnail: 'https://res.cloudinary.com/example/data_structures_mastery.webp',
