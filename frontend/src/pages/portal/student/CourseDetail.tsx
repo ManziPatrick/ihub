@@ -327,6 +327,33 @@ export default function CourseDetail() {
     return !prevModule.lessons?.every((l: any) => isLessonSatisfied(l));
   };
 
+  // Returns true if the lesson is blocked because a previous lesson in the same module
+  // has code exercises that haven't been completed.
+  const isLessonCodeExerciseLocked = (lessonId: string) => {
+    if (!course?.modules) return false;
+    const modules = course.modules as any[];
+
+    for (const mod of modules) {
+      const lessons = mod.lessons || [];
+      for (let i = 0; i < lessons.length; i++) {
+        const l = lessons[i];
+        if ((l.id || l._id) !== lessonId) continue;
+        if (i === 0) return false; // first lesson in module is always accessible
+
+        // Check if the previous lesson has code exercises that aren't completed
+        const prevLesson = lessons[i - 1];
+        const prevHasCode = prevLesson?.codeExercises?.length > 0;
+        const prevExercisesWithTests = prevLesson?.codeExercises?.filter((ex: any) => ex.testCode || ex.expectedOutput) || [];
+        const prevAllPassed = !prevHasCode ||
+          prevExercisesWithTests.every((ex: any) => completedCodeExerciseIds.includes(ex.id));
+
+        if (prevHasCode && !prevAllPassed) return true;
+        return false;
+      }
+    }
+    return false;
+  };
+
   const handleNext = () => {
     if (currentIndex < allLessons.length - 1) {
       const nextLesson = allLessons[currentIndex + 1];
@@ -338,7 +365,17 @@ export default function CourseDetail() {
         return;
       }
 
-      // Also block if there's a required final assignment (non-quiz) in previous lessons
+      // Block if current lesson has code exercises that haven't all passed
+      const currentHasCodeExercises = currentLesson?.codeExercises?.length > 0;
+      const currentExercisesWithTests = currentLesson?.codeExercises?.filter((ex: any) => ex.testCode || ex.expectedOutput) || [];
+      const currentAllPassed = !currentHasCodeExercises ||
+        currentExercisesWithTests.every((ex: any) => completedCodeExerciseIds.includes(ex.id));
+      if (currentHasCodeExercises && !currentAllPassed) {
+        toast.error('Complete all code exercises and pass all tests before moving to the next lesson.');
+        return;
+      }
+
+      // Block if a required assignment (non-quiz) in previous lessons isn't satisfied
       const nextIndex = currentIndex + 1;
       const hardGate = allLessons.slice(0, nextIndex).find(l =>
         (l.requiredAssignment || l.type === 'assignment') && l.type !== 'quiz' && !isLessonSatisfied(l)
@@ -867,7 +904,7 @@ export default function CourseDetail() {
                                   const lesId = les.id || les._id;
                                   const isActive = lesId === activeLessonId;
                                   const isComp = completedLessons.some((cl: any) => cl.lessonId === lesId) || forcedProgressLessonIds.includes(lesId);
-                                  const isLock = isModuleLocked(lesId);
+                                  const isLock = isModuleLocked(lesId) || isLessonCodeExerciseLocked(lesId);
                                   return (
                                     <button
                                       key={lesId}

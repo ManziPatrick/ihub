@@ -49,6 +49,14 @@ async function seedAll() {
       cwd: projectRoot,
     });
 
+    // Step 5: Seed comprehensive JavaScript mastery course (16 modules, variables to advanced)
+    console.log('\n📌 STEP 5: Comprehensive JavaScript Mastery Course (Variables → Advanced)');
+    console.log('-'.repeat(50));
+    execSync('npx ts-node src/seedComprehensiveJSCourse.ts', {
+      stdio: 'inherit',
+      cwd: projectRoot,
+    });
+
     console.log('\n' + '='.repeat(60));
     console.log('✅ ALL SEEDS COMPLETED SUCCESSFULLY');
     console.log('='.repeat(60));

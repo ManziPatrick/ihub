@@ -190,6 +190,15 @@ function HtmlPreview({ html }: { html: string }) {
   );
 }
 
+interface RunCodeResponse {
+  runCode: {
+    output: string;
+    passed: boolean;
+    testResults: Array<{ name: string; passed: boolean; expected: string; actual: string; error?: string }>;
+    error?: string;
+  };
+}
+
 export function CodeExercise({ exercise, onComplete, compact = false }: CodeExerciseProps) {
   const [code, setCode] = useState(exercise.initialCode || "");
   const [output, setOutput] = useState<string>("");
@@ -201,7 +210,7 @@ export function CodeExercise({ exercise, onComplete, compact = false }: CodeExer
   const [attempts, setAttempts] = useState(0);
   const [outputTab, setOutputTab] = useState<"output" | "tests">("output");
 
-  const [runCode] = useMutation(RUN_CODE);
+  const [runCode] = useMutation<RunCodeResponse>(RUN_CODE);
 
   const handleRun = useCallback(async () => {
     setRunning(true);
