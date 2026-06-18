@@ -1,14 +1,8 @@
 # TODO
 
-- [ ] Inspect GraphQL schema/resolver for `CHAT_WITH_AI` output fields (content/role/action/actionData).
-- [ ] Update `backend/src/services/ai.service.ts`:
-  - [ ] Add new AI action protocol tags for navigation/links (NAVIGATE/LINKS).
-  - [ ] Extend `parseAIResponse()` to detect and return `action` and `actionData`.
-  - [ ] Update the AI system prompt to instruct when to return navigation actions.
-- [ ] Update GraphQL resolver/type defs if needed so frontend can access `action` and `actionData`.
-- [ ] Update `frontend/src/components/chatbot/ChatBot.tsx`:
-  - [ ] Render cld ickable link cards/buttons based on `action`.
-  - [ ] Use React Router navigation for internal paths.
-- [ ] Run frontend typecheck and backend build/tests.
-- [ ] Manual test chatbot flows: courses page, internship page, student dashboard/schedule.
+## Frontend build fixes (tsc + vite)
+- [ ] Fix shared languageConfig import resolution by adding `frontend/src/shared` with re-exports from `backend/src/config/languageConfig.ts`.
+- [ ] Ensure existing `@shared/*` imports (LANGUAGE_NAMES, LANGUAGE_COLORS, DEFAULT_INITIAL_CODE, etc.) resolve.
+- [ ] Fix TS2322: `unknown` not assignable to `ReactNode` in `ManageCodeExercisesDialog.tsx`.
+- [ ] Re-run `frontend` build (tsc -b && vite build) to confirm Docker build passes.
 

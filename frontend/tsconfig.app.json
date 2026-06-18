@@ -24,8 +24,10 @@
 
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/*": ["../backend/src/config/*"]
+      "@shared/*": ["./src/shared/*"],
+      "@shared": ["./src/shared/index"]
     }
+
   },
   "include": ["src"]
 }
