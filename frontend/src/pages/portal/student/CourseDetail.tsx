@@ -571,9 +571,7 @@ export default function CourseDetail() {
             {sidebarOpen ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />}
             {sidebarOpen ? 'Hide Track' : 'Show Track'}
           </Button>
-        </div>
-
-        <div className={`grid gap-6 transition-all duration-300 ${sidebarOpen ? 'lg:grid-cols-12' : 'lg:grid-cols-1'}`}>
+        </div>          <div className={`grid gap-6 transition-all duration-300 w-full min-w-0 ${sidebarOpen ? 'lg:grid-cols-12' : 'lg:grid-cols-1'}`}>
           {/* Main Area */}
           <div className={sidebarOpen ? 'lg:col-span-8 space-y-6' : 'space-y-6'}>
             {(() => {
@@ -863,7 +861,7 @@ export default function CourseDetail() {
 
           {/* Track Overview — inline on mobile, right column on desktop — controlled by sidebarOpen */}
           {sidebarOpen && (
-            <div className="lg:col-span-4 h-fit lg:sticky lg:top-24">
+            <div className="lg:col-span-4 h-fit lg:sticky lg:top-24 w-full min-w-0">
               <Card className="border-border/50">
                 <div className="p-3 border-b border-border/30 bg-muted/10 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2">
                   <ListOrdered className="w-3.5 h-3.5 text-accent" />

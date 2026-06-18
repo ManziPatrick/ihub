@@ -176,7 +176,7 @@ const Blog = () => {
               <div className="container mx-auto px-4 lg:px-8">
                 <div className="grid lg:grid-cols-4 gap-12">
                   {/* Sidebar */}
-                  <aside className="lg:col-span-1 space-y-10">
+                  <aside className="lg:col-span-1 space-y-10 w-full overflow-hidden">
                     <div className="bg-card p-6 rounded-xl border border-border/50">
                       <h3 className="font-heading font-bold text-lg mb-4 flex items-center gap-2">
                         <Search className="w-4 h-4 text-accent" /> Search
@@ -232,8 +232,8 @@ const Blog = () => {
                   </aside>
 
                   {/* Posts Grid */}
-                  <div className="lg:col-span-3">
-                    <div className="grid md:grid-cols-2 gap-8">
+                  <div className="lg:col-span-3 w-full min-w-0">
+                    <div className="grid md:grid-cols-2 gap-4 lg:gap-8">
                       {filteredBlogs.map((post, index) => (
                         <Link to={`/blog/${post.slug}`} key={post._id} className="group">
                           <motion.article

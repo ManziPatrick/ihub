@@ -180,8 +180,8 @@ const BlogDetail = () => {
             <Header />
             <main className="pt-28 pb-20">
                 <div className="container mx-auto px-4 lg:px-8">
-                    <div className="max-w-4xl mx-auto">
-                        <Link to="/blog" className="inline-flex items-center gap-2 text-accent text-sm font-medium mb-8 hover:gap-3 transition-all">
+                    <div className="max-w-4xl mx-auto w-full min-w-0">
+                        <Link to="/blog" className="inline-flex items-center gap-2 text-accent text-sm font-medium mb-6 lg:mb-8 hover:gap-3 transition-all">
                             <ArrowLeft className="w-4 h-4" /> Back to Articles
                         </Link>
 
@@ -221,7 +221,7 @@ const BlogDetail = () => {
                             </div>
 
                             <div
-                                className="prose prose-lg dark:prose-invert max-w-none pt-8 text-foreground/80 leading-relaxed font-sans text-lg lg:text-xl ql-editor"
+                                className="prose prose-lg dark:prose-invert max-w-none pt-8 text-foreground/80 leading-relaxed font-sans text-base lg:text-xl ql-editor break-words"
                                 dangerouslySetInnerHTML={{ __html: blog?.content || "No content available." }}
                             />
 

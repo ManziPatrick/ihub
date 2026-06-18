@@ -298,7 +298,7 @@ export default function StudentCourses() {
 
         {/* Tabs */}
         <Tabs defaultValue="enrolled" className="space-y-6">
-          <TabsList className="w-full justify-start overflow-x-auto no-scrollbar bg-background/50 border border-border/50 p-1 rounded-xl h-auto flex-nowrap min-w-full">
+          <TabsList className="w-full justify-start overflow-x-auto no-scrollbar bg-background/50 border border-border/50 p-1 rounded-xl h-auto snap-x snap-mandatory">
             <TabsTrigger value="enrolled" className="px-4 py-2 text-xs sm:text-sm whitespace-nowrap">Enrolled ({enrolledCourses.length})</TabsTrigger>
             <TabsTrigger value="available" className="px-4 py-2 text-xs sm:text-sm whitespace-nowrap">Available Courses</TabsTrigger>
             <TabsTrigger value="projects" className="px-4 py-2 text-xs sm:text-sm whitespace-nowrap">My Projects ({(projectsData as any)?.myProjects?.length || 0})</TabsTrigger>

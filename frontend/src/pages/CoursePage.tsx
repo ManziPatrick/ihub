@@ -208,10 +208,10 @@ export default function CoursePage() {
       <Header />
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-3 gap-6 lg:gap-8 w-full min-w-0">
 
             {/* Left Rail: Course Info */}
-            <div className="lg:col-span-2 space-y-8">
+            <div className="lg:col-span-2 space-y-8 w-full min-w-0">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -446,8 +446,8 @@ export default function CoursePage() {
             </div>
 
             {/* Right Rail: Enrollment Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24 space-y-6">
+            <div className="lg:col-span-1 w-full">
+              <div className="lg:sticky lg:top-24 space-y-6">
                 <Card className="border-0 shadow-xl bg-card overflow-hidden ring-1 ring-border/50">
                   <div className="aspect-video relative overflow-hidden">
                     <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />

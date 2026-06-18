@@ -682,7 +682,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
           {/* Student Stats - Live Tracking */}
           {user.role === 'student' && (
-            <div className="hidden md:flex items-center gap-4 px-4 h-10 bg-background/50 border border-border/50 rounded-xl">
+            <div className="hidden lg:flex items-center gap-4 px-4 h-10 bg-background/50 border border-border/50 rounded-xl">
               <div className="flex items-center gap-1.5 pr-4 border-r border-border/50">
                 <Star className="w-4 h-4 text-gold fill-current" />
                 <span className="text-sm font-black text-gold">{(meData as any)?.me?.xp || 0} XP</span>
@@ -844,7 +844,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 lg:p-6 pb-24 overflow-y-auto custom-scrollbar">
+        <main className="flex-1 p-3 sm:p-4 lg:p-6 pb-28 overflow-y-auto custom-scrollbar">
           <ProfileCompletionGuard>
             {children}
           </ProfileCompletionGuard>

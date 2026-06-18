@@ -395,10 +395,10 @@ export default function StudentDashboard() {
               </CardHeader>
               <CardContent className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
                 {enrolledCourses.length === 0 && myApplications.length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">You haven't enrolled in any courses or applied yet.</p>
+                  <div className="text-center py-6 sm:py-8">
+                    <p className="text-muted-foreground mb-4 text-sm sm:text-base">You haven't enrolled in any courses or applied yet.</p>
                     <Link to="/explore">
-                      <Button variant="gold">Browse Courses</Button>
+                      <Button variant="gold" size="sm">Browse Courses</Button>
                     </Link>
                   </div>
                 )}

@@ -383,7 +383,7 @@ const Explore = () => {
 
                 {!apolloLoading && schools.length > 0 ? (
                   <>
-                    <div className="flex flex-row overflow-x-auto lg:flex-col gap-2 pb-4 lg:pb-0 no-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
+                    <div className="flex flex-row overflow-x-auto lg:flex-col gap-2 pb-4 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-none w-full">
                       <button
                         onClick={() => setActiveSchool("ALL")}
                         className={`shrink-0 flex items-center gap-2 text-center lg:text-left px-4 lg:px-3 py-2 lg:py-2.5 rounded-full lg:rounded-xl text-[10px] lg:text-sm font-black lg:font-medium uppercase lg:capitalize tracking-widest lg:tracking-normal transition-all border lg:border-none ${
