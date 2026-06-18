@@ -10,6 +10,7 @@ on:
     paths:
       - 'frontend/src/shared/languageConfig.ts'
       - 'backend/src/config/languageConfig.ts'
+  workflow_dispatch:
 
 jobs:
   check-sync:

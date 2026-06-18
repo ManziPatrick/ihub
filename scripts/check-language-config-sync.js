@@ -90,8 +90,21 @@ function main() {
   let exitCode = 0;
   const errors = [];
 
-  const frontendSource = fs.readFileSync(FRONTEND_FILE, "utf-8");
-  const backendSource = fs.readFileSync(BACKEND_FILE, "utf-8");
+  let frontendSource, backendSource;
+  try {
+    frontendSource = fs.readFileSync(FRONTEND_FILE, "utf-8");
+  } catch (err) {
+    console.error(`✗ Could not read ${FRONTEND_FILE}`);
+    console.error(`  Make sure you are running from the project root directory.`);
+    process.exit(1);
+  }
+  try {
+    backendSource = fs.readFileSync(BACKEND_FILE, "utf-8");
+  } catch (err) {
+    console.error(`✗ Could not read ${BACKEND_FILE}`);
+    console.error(`  Make sure you are running from the project root directory.`);
+    process.exit(1);
+  }
 
   for (const exportName of EXPORTS_TO_CHECK) {
     const frontendKeys = extractKeys(frontendSource, exportName);

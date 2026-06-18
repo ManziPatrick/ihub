@@ -19,7 +19,8 @@
     "seed:flows": "ts-node src/seedFlows.ts",
     "seed:normalize": "ts-node src/seedCourseNormalizer.ts",
     "seed:project-tasks": "ts-node src/seedProjectTasks.ts",
-    "seed:ds-course": "ts-node src/seedDataStructuresCourse.ts"
+    "seed:ds-course": "ts-node src/seedDataStructuresCourse.ts",
+    "check:config-sync": "node ../scripts/check-language-config-sync.js"
   },
   "keywords": [],
   "author": "",

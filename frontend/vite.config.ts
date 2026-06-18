@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@shared": path.resolve(__dirname, "../backend/src/config"),
+      "@shared": path.resolve(__dirname, "./src/shared"),
     },
   },
   optimizeDeps: {
