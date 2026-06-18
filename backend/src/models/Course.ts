@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { ALL_LANGUAGES } from '../config/languageConfig';
 
 const resourceSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -69,7 +70,7 @@ const lessonSchema = new mongoose.Schema({
     id: { type: String },
     title: { type: String },
     description: { type: String },
-    language: { type: String, enum: ['javascript', 'python', 'html', 'css'], default: 'javascript' },
+    language: { type: String, enum: ALL_LANGUAGES, default: 'javascript' },
     initialCode: { type: String, default: '' },
     solutionCode: { type: String, default: '' },
     testCode: { type: String, default: '' },

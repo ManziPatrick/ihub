@@ -23,7 +23,8 @@
     "baseUrl": ".",
 
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@shared/*": ["../backend/src/config/*"]
     }
   },
   "include": ["src"]

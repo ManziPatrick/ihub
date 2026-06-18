@@ -432,7 +432,7 @@ describe("compileCode", () => {
   it("returns error for unsupported language", async () => {
     const result = await compileCode({
       code: 'print("hello")',
-      language: "ruby",
+      language: "brainfuck",
     });
     expect(result.error).toContain("Unsupported language");
     expect(result.passed).toBe(false);
@@ -487,11 +487,11 @@ describe("HTML execution", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Python execution tests (mocked fetch)
+// Judge0 execution tests (mocked fetch for Python via Judge0)
 // ---------------------------------------------------------------------------
-describe("Python execution", () => {
+describe("Judge0 execution (Python)", () => {
   beforeEach(() => {
-    // Mock global fetch for Python API calls
+    // Mock global fetch for Judge0 API calls
     vi.stubGlobal("fetch", vi.fn());
   });
 
@@ -500,17 +500,42 @@ describe("Python execution", () => {
     vi.unstubAllEnvs();
   });
 
-  it("returns output from the HuggingFace API when fetch succeeds", async () => {
+  function mockJudge0Success(stdout: string) {
     const mockFetch = vi.mocked(fetch);
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        choices: [{ message: { content: "42" } }],
+        stdout,
+        stderr: null,
+        compile_output: null,
+        message: null,
+        status: { id: 3, description: "Accepted" },
+        time: "0.001",
+        memory: 1024,
       }),
     } as any);
+    return mockFetch;
+  }
 
-    // Set HF_TOKEN so the API call is attempted
-    vi.stubEnv("HF_TOKEN", "test-token");
+  function mockJudge0CompileError(stderr: string) {
+    const mockFetch = vi.mocked(fetch);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        stdout: null,
+        stderr: null,
+        compile_output: stderr,
+        message: null,
+        status: { id: 6, description: "Compilation Error" },
+        time: "0.001",
+        memory: 0,
+      }),
+    } as any);
+    return mockFetch;
+  }
+
+  it("returns output from Judge0 API when execution succeeds", async () => {
+    mockJudge0Success("42");
 
     const result = await compileCode({
       code: "print(42)",
@@ -522,17 +547,15 @@ describe("Python execution", () => {
     expect(result.passed).toBe(true);
 
     // Verify the API was called
+    const mockFetch = vi.mocked(fetch);
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const callArgs = mockFetch.mock.calls[0];
-    expect(callArgs[0]).toBe("https://router.huggingface.co/v1/chat/completions");
-    expect(callArgs[1]?.headers).toHaveProperty("Authorization", "Bearer test-token");
+    expect(callArgs[0]).toContain("/submissions");
   });
 
-  it("handles API errors gracefully", async () => {
+  it("handles network errors gracefully", async () => {
     const mockFetch = vi.mocked(fetch);
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
-
-    vi.stubEnv("HF_TOKEN", "test-token");
 
     const result = await compileCode({
       code: "print('hello')",
@@ -540,18 +563,17 @@ describe("Python execution", () => {
     });
 
     expect(result.error).not.toBeNull();
-    expect(result.error).toContain("Python execution unavailable");
+    expect(result.error).toContain("not reachable");
     expect(result.passed).toBe(false);
   });
 
-  it("handles non-ok response from API", async () => {
+  it("handles non-ok response from Judge0", async () => {
     const mockFetch = vi.mocked(fetch);
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 429,
+      text: async () => "Rate limit exceeded",
     } as any);
-
-    vi.stubEnv("HF_TOKEN", "test-token");
 
     const result = await compileCode({
       code: "print('test')",
@@ -559,46 +581,111 @@ describe("Python execution", () => {
     });
 
     expect(result.error).not.toBeNull();
-    expect(result.error).toContain("Python execution unavailable");
+    expect(result.error).toContain("temporarily unavailable");
     expect(result.passed).toBe(false);
   });
 
-  it("includes setup code with Python code", async () => {
-    const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        choices: [{ message: { content: "Hello, Bob!" } }],
-      }),
-    } as any);
+  it("reports compilation errors from Judge0", async () => {
+    mockJudge0CompileError("SyntaxError: invalid syntax");
 
-    vi.stubEnv("HF_TOKEN", "test-token");
+    const result = await compileCode({
+      code: "print(42",
+      language: "python",
+    });
+
+    expect(result.error).not.toBeNull();
+    expect(result.error).toContain("Compilation Error");
+    expect(result.error).toContain("invalid syntax");
+    expect(result.passed).toBe(false);
+  });
+
+  it("includes setup code with Python code via Judge0", async () => {
+    mockJudge0Success("Hello, Bob!");
 
     const result = await compileCode({
       code: 'print(greet("Bob"))',
       language: "python",
-      setupCode: "def greet(name):\\n    return f\\\"Hello, {name}!\\\"",
+      setupCode: "def greet(name):\n    return f'Hello, {name}!'",
     });
 
     expect(result.error).toBeNull();
+    expect(result.output).toBe("Hello, Bob!");
     expect(result.passed).toBe(true);
   });
 
-  it("fails when HF_TOKEN is not set", async () => {
-    vi.stubEnv("HF_TOKEN", "");
-
-    // Set up mock rejection BEFORE calling compileCode
+  it("reports runtime errors from Judge0", async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockRejectedValueOnce(new Error("No token"));
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        stdout: null,
+        stderr: "ZeroDivisionError: division by zero",
+        compile_output: null,
+        message: null,
+        status: { id: 11, description: "Runtime Error (NZEC)" },
+        time: "0.001",
+        memory: 0,
+      }),
+    } as any);
 
     const result = await compileCode({
-      code: "print('test')",
+      code: "1/0",
       language: "python",
     });
 
-    expect(mockFetch).toHaveBeenCalled();
     expect(result.error).not.toBeNull();
+    expect(result.error).toContain("Runtime Error");
     expect(result.passed).toBe(false);
+  });
+
+  it("reports time limit exceeded from Judge0", async () => {
+    const mockFetch = vi.mocked(fetch);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        stdout: null,
+        stderr: null,
+        compile_output: null,
+        message: null,
+        status: { id: 5, description: "Time Limit Exceeded" },
+        time: "5.000",
+        memory: 1024,
+      }),
+    } as any);
+
+    const result = await compileCode({
+      code: "while True: pass",
+      language: "python",
+    });
+
+    expect(result.error).not.toBeNull();
+    expect(result.error).toContain("Time Limit Exceeded");
+    expect(result.passed).toBe(false);
+  });
+
+  it("executes code in other Judge0-supported languages", async () => {
+    const mockFetch = vi.mocked(fetch);
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        stdout: "Hello from C!",
+        stderr: null,
+        compile_output: null,
+        message: null,
+        status: { id: 3, description: "Accepted" },
+        time: "0.002",
+        memory: 512,
+      }),
+    } as any);
+
+    const result = await compileCode({
+      code: '#include <stdio.h>\nint main() { printf("Hello from C!"); return 0; }',
+      language: "c",
+    });
+
+    expect(result.error).toBeNull();
+    expect(result.output).toBe("Hello from C!");
+    expect(result.passed).toBe(true);
   });
 });
 

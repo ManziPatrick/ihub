@@ -11,6 +11,14 @@ import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { html } from "@codemirror/lang-html";
 import { css } from "@codemirror/lang-css";
+import { cpp } from "@codemirror/lang-cpp";
+import { java } from "@codemirror/lang-java";
+import { php } from "@codemirror/lang-php";
+import { rust } from "@codemirror/lang-rust";
+import { sql } from "@codemirror/lang-sql";
+import { xml } from "@codemirror/lang-xml";
+import { json } from "@codemirror/lang-json";
+import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
 import {
@@ -26,6 +34,7 @@ import {
   Terminal,
   Bug,
 } from "lucide-react";
+import { LANGUAGE_NAMES, LANGUAGE_COLORS } from "@shared/languageConfig";
 
 interface TestResult {
   name: string;
@@ -54,21 +63,7 @@ interface CodeExerciseProps {
   compact?: boolean;
 }
 
-const LANGUAGE_NAMES: Record<string, string> = {
-  javascript: "JavaScript",
-  typescript: "TypeScript",
-  python: "Python",
-  html: "HTML/CSS",
-  css: "CSS",
-};
 
-const LANGUAGE_COLORS: Record<string, string> = {
-  javascript: "text-yellow-400 bg-yellow-400/10 border-yellow-400/30",
-  typescript: "text-blue-400 bg-blue-400/10 border-blue-400/30",
-  python: "text-green-400 bg-green-400/10 border-green-400/30",
-  html: "text-orange-400 bg-orange-400/10 border-orange-400/30",
-  css: "text-sky-400 bg-sky-400/10 border-sky-400/30",
-};
 
 // CodeMirror-based editor with syntax highlighting
 function SimpleCodeEditor({
@@ -100,7 +95,34 @@ function SimpleCodeEditor({
       case "css":
         ext.push(css());
         break;
+      case "c":
+      case "cpp":
+        ext.push(cpp());
+        break;
+      case "java":
+        ext.push(java());
+        break;
+      case "php":
+        ext.push(php());
+        break;
+      case "rust":
+        ext.push(rust());
+        break;
+      case "sql":
+        ext.push(sql());
+        break;
+      case "json":
+        ext.push(json());
+        break;
+      case "xml":
+        ext.push(xml());
+        break;
+      case "markdown":
+        ext.push(markdown());
+        break;
       default:
+        // For languages without a dedicated CodeMirror extension (go, ruby, swift, kotlin, dart, csharp, bash, r, scala, perl, haskell, lua, assembly, pascal, fortran, cobol),
+        // use JavaScript highlighting as a reasonable fallback for syntax
         ext.push(javascript());
     }
 

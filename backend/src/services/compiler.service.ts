@@ -23,6 +23,139 @@ interface CompileResult {
   error: string | null;
 }
 
+// Judge0 is an open-source online code execution system.
+const JUDGE0_API_URL = (process.env.JUDGE0_API_URL || 'https://ce.judge0.com').replace(/\/+$/, '');
+
+// Import shared language configuration
+import { JUDGE0_LANGUAGE_IDS as JUDGE0_IDS } from '../config/languageConfig';
+export { LANGUAGE_NAMES, LANGUAGE_COLORS, DEFAULT_INITIAL_CODE } from '../config/languageConfig';
+const JUDGE0_LANGUAGE_IDS = JUDGE0_IDS;
+
+// ─── Judge0 API Execution ──────────────────────────────────────────────────
+
+interface Judge0Response {
+  stdout: string | null;
+  stderr: string | null;
+  compile_output: string | null;
+  message: string | null;
+  exit_code: number | null;
+  exit_signal: number | null;
+  status: {
+    id: number;
+    description: string;
+  };
+  time: string | null;
+  memory: number | null;
+}
+
+/**
+ * Execute code using the Judge0 API.
+ * Uses synchronous mode (wait=true) for simplicity.
+ */
+async function executeWithJudge0(code: string, languageId: number, stdin: string = ''): Promise<{ stdout: string; error: string | null }> {
+  const url = `${JUDGE0_API_URL}/submissions?base64_encoded=false&wait=true`;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  // No API key required — the public Judge0 CE instance is open source and free.
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        source_code: code,
+        language_id: languageId,
+        stdin,
+        cpu_time_limit: 5,
+        memory_limit: 128000,
+      }),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      if (response.status === 429) {
+        throw new Error(`Rate limit exceeded (429). Please wait a moment and try again.`);
+      }
+      if (response.status >= 500) {
+        throw new Error(`Judge0 service error (${response.status}). The remote code runner is temporarily unavailable. Please try again later.`);
+      }
+      throw new Error(`Judge0 API error (${response.status}): ${errorText}`);
+    }
+
+    const data = await response.json() as Judge0Response;
+
+    const statusId = data.status?.id;
+    const stdout = data.stdout || '';
+    const stderr = data.stderr || '';
+    const compileOutput = data.compile_output || '';
+    const statusDescription = data.status?.description || 'Unknown';
+
+    // 3 = Accepted (success)
+    if (statusId === 3) {
+      return { stdout: stdout.trim(), error: null };
+    }
+
+    // 6 = Compilation Error
+    if (statusId === 6) {
+      const errorMsg = compileOutput || stderr || statusDescription;
+      return { stdout: stdout?.trim() || '', error: `Compilation Error:\n${errorMsg}` };
+    }
+
+    // 7-12 = Runtime Errors
+    if (statusId >= 7 && statusId <= 12) {
+      const errorMsg = stderr || compileOutput || statusDescription;
+      return { stdout: stdout?.trim() || '', error: `Runtime Error (${statusDescription}):\n${errorMsg}` };
+    }
+
+    // Other errors (time limit, internal error, etc.)
+    if (statusId === 5) {
+      return { stdout: stdout?.trim() || '', error: 'Time Limit Exceeded. Your code took too long to execute.' };
+    }
+
+    if (statusId === 13) {
+      return { stdout: stdout?.trim() || '', error: `Internal Error: ${data.message || statusDescription}` };
+    }
+
+    // Fallback: include stderr/compile_output if present
+    const combinedError = [stderr, compileOutput, statusDescription].filter(Boolean).join('\n');
+    return { stdout: stdout?.trim() || '', error: combinedError || statusDescription };
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      return {
+        stdout: '',
+        error: '⏱ Code execution timed out. Your code took too long to execute (30s limit).\n\nSuggestions:\n• Check for infinite loops or long-running operations\n• Simplify complex computations\n• Try running smaller code snippets'
+      };
+    }
+
+    // Network-level failures (DNS resolution, connection refused, etc.)
+    if (err.message?.includes('fetch') || err.message?.includes('ENOTFOUND') || err.message?.includes('ECONNREFUSED') || err.message?.includes('Network')) {
+      return {
+        stdout: '',
+        error: '🔌 Code execution service is not reachable.\n\nThe remote code runner (Judge0) could not be reached from this server.\n\nSuggestions:\n• Check your internet connection\n• Set JUDGE0_API_URL to a self-hosted Judge0 instance\n• Try again later\n\nNote: JavaScript, TypeScript, HTML, and CSS exercises still work without this service.'
+      };
+    }
+
+    // Rate limiting / service unavailable
+    if (err.message?.includes('429') || err.message?.includes('Rate limit') || err.message?.includes('503')) {
+      return {
+        stdout: '',
+        error: '⏳ Code execution service is temporarily unavailable.\n\nThe remote code runner is experiencing high demand or is temporarily down.\n\nSuggestions:\n• Wait a moment and try again\n• If the problem persists, contact the platform administrator'
+      };
+    }
+
+    // Generic API error with helpful fallback message
+    return {
+      stdout: '',
+      error: `❌ Code execution service error.\n\nThe remote code runner returned an error:\n${err.message}\n\nSuggestions:\n• Try running your code again in a few seconds\n• If the problem persists, contact the platform administrator\n\nNote: JavaScript, TypeScript, HTML, and CSS exercises still work without this service.`
+    };
+  }
+}
+
+// ─── JavaScript Execution (VM sandbox) ─────────────────────────────────────
+
 /**
  * Execute JavaScript code safely using Node.js vm module
  */
@@ -43,9 +176,7 @@ function executeJavaScript(code: string, setupCode?: string): { stdout: string; 
       },
     },
     setTimeout: (fn: (...args: any[]) => void, ms: number) => {
-      // For sandbox safety, execute immediately for zero delay, otherwise ignore
       if (ms === 0) fn();
-      // Non-zero timers are ignored for sandbox safety
     },
     Math,
     JSON,
@@ -87,7 +218,6 @@ function executeJavaScript(code: string, setupCode?: string): { stdout: string; 
     return { stdout, error: null };
   } catch (err: any) {
     const errorMsg = err.message || String(err);
-    // If there was partial output before error, include it
     if (consoleLogs.length > 0) {
       return { stdout: consoleLogs.join('\n'), error: errorMsg };
     }
@@ -95,84 +225,27 @@ function executeJavaScript(code: string, setupCode?: string): { stdout: string; 
   }
 }
 
-/**
- * Execute Python code using the AI service (HuggingFace Qwen3 Coder)
- * Falls back to a simple evaluation if AI is unavailable
- */
-async function executePython(code: string, setupCode?: string): Promise<{ stdout: string; error: string | null }> {
-  const HF_TOKEN = process.env.HF_TOKEN || '';
+// ─── HTML Execution ────────────────────────────────────────────────────────
 
-  const fullCode = setupCode ? `${setupCode}\n${code}` : code;
-
-  try {
-    // Try using the AI model to evaluate Python code
-    const response = await fetch(
-      'https://router.huggingface.co/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${HF_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: "Qwen/Qwen3-Coder-Next:novita",
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a Python code executor. Run the following Python code and return ONLY the exact output that would be printed to stdout. If there is an error, return the error message only. Do NOT add any explanations or formatting.'
-            },
-            {
-              role: 'user',
-              content: `Execute this Python code and return ONLY the output:\n\n\`\`\`python\n${fullCode}\n\`\`\``
-            }
-          ],
-          stream: false,
-          max_tokens: 1000,
-        }),
-        signal: AbortSignal.timeout(15000),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
-    }
-
-    const data = await response.json() as any;
-    const aiContent = data.choices?.[0]?.message?.content || '';
-    // Clean up markdown code blocks if AI wraps output
-    const cleaned = aiContent.replace(/```[\w]*\n?/g, '').trim();
-    return { stdout: cleaned, error: null };
-  } catch (err: any) {
-    return {
-      stdout: '',
-      error: `Python execution unavailable: ${err.message}. Please ensure HF_TOKEN is configured.`
-    };
-  }
-}
-
-/**
- * Execute HTML/CSS code - returns the HTML that can be rendered in an iframe
- */
 function executeHtml(code: string): { stdout: string; error: string | null } {
-  // For HTML, we return the code itself to be rendered in an iframe on the client
   return { stdout: code, error: null };
 }
 
-/**
- * Run test cases against the user's code
- * Uses a single context so user-defined functions are available in tests.
- */
+// ─── CSS Execution ─────────────────────────────────────────────────────────
+
+function executeCss(code: string): { stdout: string; error: string | null } {
+  return { stdout: code, error: null };
+}
+
+// ─── JavaScript Test Runner ────────────────────────────────────────────────
+
 function runTests(code: string, testCode: string, language: string, setupCode?: string): TestResult[] {
   const testResults: TestResult[] = [];
 
-  // Build the test context with all needed globals AND test utilities upfront.
-  // This single context is used for setup code, user code, AND test code
-  // so user-defined functions/variables are available to tests.
   const testContext = vm.createContext({
     console: {
       log: (...args: any[]) => {
         const msg = args.join(' ');
-        // Parse test result format: TEST_RESULT:name|passed|expected|actual
         if (msg.startsWith('TEST_RESULT:')) {
           const parts = msg.replace('TEST_RESULT:', '').split('|');
           testResults.push({
@@ -185,8 +258,6 @@ function runTests(code: string, testCode: string, language: string, setupCode?: 
       },
       error: (...args: any[]) => {},
     },
-    // Test assertion helpers — push directly to testResults (not via console.log)
-    // because inside vm sandbox, console.log resolves to the global, not the sandbox one.
     assert: {
       equals: (actual: any, expected: any, name?: string) => {
         const passed = actual === expected;
@@ -209,7 +280,6 @@ function runTests(code: string, testCode: string, language: string, setupCode?: 
         testResults.push({ name: name || 'Unnamed Test', passed, expected: JSON.stringify(expected), actual: JSON.stringify(actual) });
       },
     },
-    // Test framework
     describe: (name: string, fn: Function) => {
       try { fn(); } catch (e: any) {
         testResults.push({ name: `Test Suite: ${name}`, passed: false, expected: 'No errors', actual: e.message, error: e.message });
@@ -220,23 +290,19 @@ function runTests(code: string, testCode: string, language: string, setupCode?: 
         testResults.push({ name, passed: false, expected: 'No errors', actual: e.message, error: e.message });
       }
     },
-    // Standard JS globals
     Math, JSON, Array, Object, String, Number, Boolean, Date, RegExp, Map, Set, Promise,
     parseInt, parseFloat, isNaN, isFinite, Error, TypeError, RangeError, ReferenceError, SyntaxError,
   });
 
   try {
-    // First, run setup code if provided to define helpers/functions
     if (setupCode) {
       const setupScript = new vm.Script(setupCode, { filename: 'setup-code.js' });
       setupScript.runInContext(testContext, { timeout: 3000 });
     }
 
-    // Then run the user's code to define functions/variables
     const userScript = new vm.Script(code, { filename: 'user-code.js' });
     userScript.runInContext(testContext, { timeout: 3000 });
 
-    // Then run the test code
     const testScript = new vm.Script(testCode, { filename: 'test-code.js' });
     testScript.runInContext(testContext, { timeout: 5000 });
   } catch (err: any) {
@@ -252,8 +318,14 @@ function runTests(code: string, testCode: string, language: string, setupCode?: 
   return testResults;
 }
 
+// ─── Main Compile Function ─────────────────────────────────────────────────
+
 /**
- * Main compile function
+ * Main compile function.
+ * - JavaScript/TypeScript: Uses Node.js vm module (sandboxed, supports tests)
+ * - HTML: Returns code for iframe rendering
+ * - CSS: Returns code for styling
+ * - All other languages: Uses Judge0 API for remote execution
  */
 export async function compileCode(request: CompileRequest): Promise<CompileResult> {
   const { code, language, testCode, exerciseType, setupCode } = request;
@@ -268,15 +340,14 @@ export async function compileCode(request: CompileRequest): Promise<CompileResul
   let passed = true;
 
   try {
-    // Execute the code based on language
     switch (language) {
+      // ── JavaScript/TypeScript: Use VM sandbox (supports tests) ──
       case 'javascript':
       case 'typescript': {
         const jsResult = executeJavaScript(code, setupCode);
         output = jsResult.stdout;
         error = jsResult.error;
 
-        // Run tests if provided
         if (testCode) {
           testResults = runTests(code, testCode, language, setupCode);
           passed = testResults.length === 0 || testResults.every(t => t.passed);
@@ -286,14 +357,7 @@ export async function compileCode(request: CompileRequest): Promise<CompileResul
         break;
       }
 
-      case 'python': {
-        const pyResult = await executePython(code, setupCode);
-        output = pyResult.stdout;
-        error = pyResult.error;
-        passed = error === null;
-        break;
-      }
-
+      // ── HTML: Return as-is for iframe rendering ──
       case 'html': {
         const htmlResult = executeHtml(code);
         output = htmlResult.stdout;
@@ -302,9 +366,35 @@ export async function compileCode(request: CompileRequest): Promise<CompileResul
         break;
       }
 
+      // ── CSS: Return as-is for styling ──
+      case 'css': {
+        const cssResult = executeCss(code);
+        output = cssResult.stdout;
+        error = cssResult.error;
+        passed = error === null;
+        break;
+      }
+
+      // ── All other languages: Use Judge0 API ──
       default: {
-        error = `Unsupported language: ${language}`;
-        passed = false;
+        const judge0Id = JUDGE0_LANGUAGE_IDS[language];
+        if (!judge0Id) {
+          error = `Unsupported language: ${language}. Supported languages are: ${Object.keys(JUDGE0_LANGUAGE_IDS).join(', ')}, javascript, typescript, html, css`;
+          passed = false;
+          break;
+        }
+
+        let fullCode = code;
+        if (setupCode) {
+          // For most languages, prepend setup code (works for Python, Ruby, Bash, etc.)
+          fullCode = `${setupCode}\n${code}`;
+        }
+
+        const judge0Result = await executeWithJudge0(fullCode, judge0Id);
+        output = judge0Result.stdout;
+        error = judge0Result.error;
+        passed = error === null;
+        break;
       }
     }
   } catch (err: any) {

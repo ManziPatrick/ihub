@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { LANGUAGE_NAMES, LANGUAGE_COLORS, DEFAULT_INITIAL_CODE } from "@shared/languageConfig";
 
 interface CodeExercise {
   id?: string;
@@ -45,12 +46,7 @@ interface ManageCodeExercisesDialogProps {
   onSave: (exercises: CodeExercise[]) => void;
 }
 
-const LANGUAGES = [
-  { value: "javascript", label: "JavaScript" },
-  { value: "python", label: "Python" },
-  { value: "html", label: "HTML/CSS" },
-  { value: "css", label: "CSS" },
-];
+const LANGUAGES = Object.entries(LANGUAGE_NAMES).map(([value, label]) => ({ value, label }));
 
 const EXERCISE_TYPES = [
   { value: "write", label: "Write from Scratch", desc: "Student writes code from an empty editor" },
@@ -59,25 +55,11 @@ const EXERCISE_TYPES = [
   { value: "test", label: "Test Driven", desc: "Student writes code that passes predefined tests" },
 ];
 
-const LANGUAGE_COLORS: Record<string, string> = {
-  javascript: "text-yellow-400 bg-yellow-400/10 border-yellow-400/30",
-  python: "text-green-400 bg-green-400/10 border-green-400/30",
-  html: "text-orange-400 bg-orange-400/10 border-orange-400/30",
-  css: "text-sky-400 bg-sky-400/10 border-sky-400/30",
-};
-
 const TYPE_BADGES: Record<string, string> = {
   "fill-in": "text-purple-400 bg-purple-400/10 border-purple-400/30",
   write: "text-blue-400 bg-blue-400/10 border-blue-400/30",
   fix: "text-amber-400 bg-amber-400/10 border-amber-400/30",
   test: "text-emerald-400 bg-emerald-400/10 border-emerald-400/30",
-};
-
-const DEFAULT_INITIAL_CODE: Record<string, string> = {
-  javascript: "// Write your code here\n",
-  python: "# Write your code here\n",
-  html: "<!DOCTYPE html>\n<html>\n<head>\n  <title>Page</title>\n</head>\n<body>\n  <h1>Hello, World!</h1>\n</body>\n</html>\n",
-  css: "/* Write your CSS here */\n",
 };
 
 export function ManageCodeExercisesDialog({
@@ -344,7 +326,7 @@ export function ManageCodeExercisesDialog({
                 {/* Language Selection */}
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Programming Language</label>
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="flex flex-wrap gap-2">
                     {LANGUAGES.map((lang) => (
                       <button
                         key={lang.value}
@@ -356,16 +338,13 @@ export function ManageCodeExercisesDialog({
                           });
                         }}
                         className={cn(
-                          "p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center gap-2",
+                          "relative px-3 py-2 rounded-xl border cursor-pointer transition-all text-[10px] font-bold uppercase tracking-widest",
                           formData.language === lang.value
-                            ? "border-accent bg-accent/5"
-                            : "border-border/20 bg-muted/20 hover:border-border/40"
+                            ? "border-accent bg-accent/10 text-accent shadow-sm shadow-accent/10"
+                            : "border-border/20 bg-muted/20 text-muted-foreground/60 hover:border-border/40 hover:text-foreground/60"
                         )}
                       >
-                        <Code className={cn("w-5 h-5", formData.language === lang.value ? "text-accent" : "text-muted-foreground/40")} />
-                        <span className={cn("text-[10px] font-black uppercase tracking-widest", formData.language === lang.value ? "text-foreground" : "text-muted-foreground/40")}>
-                          {lang.label}
-                        </span>
+                        {lang.label}
                       </button>
                     ))}
                   </div>
