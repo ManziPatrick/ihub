@@ -1,0 +1,29 @@
+name: Check Language Config Sync
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/src/shared/languageConfig.ts'
+      - 'backend/src/config/languageConfig.ts'
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/src/shared/languageConfig.ts'
+      - 'backend/src/config/languageConfig.ts'
+
+jobs:
+  check-sync:
+    name: Check frontend & backend configs are in sync
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run config sync check
+        run: node scripts/check-language-config-sync.js

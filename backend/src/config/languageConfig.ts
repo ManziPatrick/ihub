@@ -1,6 +1,12 @@
 // ─── Language Configurations ───────────────────────────────────────────────
-// SINGLE SOURCE OF TRUTH: This file is imported by both backend and frontend.
-// When adding a new language, update ALL maps below.
+// ⚠️  IMPORTANT: When adding, removing, or renaming a language you MUST
+//     update BOTH this file AND frontend/src/shared/languageConfig.ts
+//     with the exact same keys in LANGUAGE_NAMES, LANGUAGE_COLORS, and
+//     DEFAULT_INITIAL_CODE.
+//
+//     Run `node scripts/check-language-config-sync.js` to verify.
+//
+//     When adding a new language, update ALL maps below.
 
 // Judge0 Language IDs for remote execution (non-JS/TS languages)
 export const JUDGE0_LANGUAGE_IDS: Record<string, number> = {

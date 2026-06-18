@@ -1,6 +1,11 @@
 // ─── Frontend Language Configurations ───────────────────────────────────────
-// This file is self-contained for the frontend build.
-// When adding a new language, update both this file and backend/src/config/languageConfig.ts
+// ⚠️  IMPORTANT: This file is self-contained for the frontend build.
+//     When adding, removing, or renaming a language you MUST update
+//     BOTH this file AND backend/src/config/languageConfig.ts with
+//     the exact same keys in LANGUAGE_NAMES, LANGUAGE_COLORS, and
+//     DEFAULT_INITIAL_CODE.
+//
+//     Run `node scripts/check-language-config-sync.js` to verify.
 
 // Human-readable language names
 export const LANGUAGE_NAMES: Record<string, string> = {
