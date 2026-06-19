@@ -27,16 +27,8 @@ import {
   XCircle,
   FolderOpen,
 } from "lucide-react";
-import { useQuery } from "@apollo/client/react";
-import {
-  GET_ME,
-  GET_MY_BOOKINGS,
-  GET_CONVERSATIONS,
-  GET_MY_PAYMENTS,
-  GET_MY_PROJECTS,
-  MY_COURSE_APPLICATIONS,
-  GET_MY_INTERNSHIP_APPLICATIONS
-} from "@/lib/graphql/queries";
+import { useQuery } from "@apollo/client/react";import { GET_ME, GET_MY_BOOKINGS, GET_CONVERSATIONS, GET_MY_PAYMENTS, GET_MY_PROJECTS, MY_COURSE_APPLICATIONS, GET_MY_INTERNSHIP_APPLICATIONS } from "@/lib/graphql/queries";
+import { GET_MY_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 import { ApplyCourseDialog, ApplyInternshipDialog } from "@/components/portal/dialogs";
 import { useState } from "react";
 
@@ -49,6 +41,7 @@ export default function StudentDashboard() {
   const { data: conversationsData } = useQuery(GET_CONVERSATIONS);
   const { data: paymentsData } = useQuery(GET_MY_PAYMENTS);
   const { data: projectsData, loading: projectsLoading } = useQuery(GET_MY_PROJECTS);
+  const { data: myTasksData } = useQuery(GET_MY_PROJECT_TASKS);
   const { data: appData, refetch: refetchApps } = useQuery(MY_COURSE_APPLICATIONS);
   const { data: internAppData, refetch: refetchInternApps } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS);
 
@@ -516,9 +509,9 @@ export default function StudentDashboard() {
               </CardContent>
             </Card>
 
-            {projects.length > 0 && (() => {
-              const currentProject = projects.find((p: any) => p.status !== 'completed') || projects[0];
-              const projectTasks = currentProject?.tasks || [];
+            {/* Assigned Project Tasks from ProjectTask collection */}
+            {(myTasksData as any)?.myProjectTasks?.length > 0 && (() => {
+              const myTasks = (myTasksData as any).myProjectTasks || [];
 
               return (
                 <Card className="border-border/50">
@@ -526,51 +519,48 @@ export default function StudentDashboard() {
                     <div>
                       <CardTitle className="text-lg font-heading">Assigned Project Tasks</CardTitle>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {currentProject.title}
+                        Tasks assigned to you across your projects
                       </p>
                     </div>
-                    <Link to={`/portal/student/projects/${currentProject.id}`}>
+                    <Link to="/portal/student/my-tasks">
                       <Button variant="ghost" size="sm" className="text-accent">
                         Open Board <ArrowRight className="w-4 h-4 ml-1" />
                       </Button>
                     </Link>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {projectTasks.length === 0 ? (
-                      <div className="text-center py-8 border border-dashed rounded-lg">
-                        <p className="text-xs text-muted-foreground">No tasks have been assigned for this project yet.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {projectTasks.slice(0, 5).map((task: any) => (
-                          <div key={task.id} className="flex items-center justify-between gap-2 p-3 bg-background/50 rounded-lg border border-border/50">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className={`w-4 h-4 ${task.completed ? 'text-accent' : 'text-card-foreground/30'}`} />
-                              <div>
-                                <p className={`text-sm ${task.completed ? 'text-muted-foreground line-through' : 'text-card-foreground'}`}>
-                                  {task.title}
-                                </p>
-                                {task.feedback && !task.completed && (
-                                  <p className="text-[10px] text-amber-500">Feedback available</p>
-                                )}
-                              </div>
+                    <div className="space-y-2">
+                      {myTasks.slice(0, 5).map((task: any) => (
+                        <div key={task.id} className="flex items-center justify-between gap-2 p-3 bg-background/50 rounded-lg border border-border/50">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className={`w-4 h-4 ${task.status === 'done' ? 'text-accent' : 'text-card-foreground/30'}`} />
+                            <div>
+                              <p className={`text-sm ${task.status === 'done' ? 'text-muted-foreground line-through' : 'text-card-foreground'}`}>
+                                {task.title}
+                              </p>
+                              {task.project && (
+                                <p className="text-[10px] text-muted-foreground">{task.project.title}</p>
+                              )}
                             </div>
-                            {task.completed ? (
-                              <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-500 border-green-500/20">
-                                Done
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-[10px] bg-accent/10 text-accent border-accent/20">
-                                Pending
-                              </Badge>
-                            )}
                           </div>
-                        ))}
-                        {projectTasks.length > 5 && (
-                          <p className="text-[10px] text-muted-foreground">Showing first 5 tasks. View the board for the full task list.</p>
-                        )}
-                      </div>
-                    )}
+                          <Badge variant="outline" className={`text-[10px] ${
+                            task.status === 'done' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                            task.status === 'in_progress' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                            task.status === 'in_review' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
+                            'bg-accent/10 text-accent border-accent/20'
+                          }`}>
+                            {task.status === 'done' ? 'Done' :
+                             task.status === 'in_progress' ? 'In Progress' :
+                             task.status === 'in_review' ? 'In Review' :
+                             task.status === 'blocked' ? 'Blocked' :
+                             'To Do'}
+                          </Badge>
+                        </div>
+                      ))}
+                      {myTasks.length > 5 && (
+                        <p className="text-[10px] text-muted-foreground">Showing first 5 tasks. Visit My Tasks for the full list.</p>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );

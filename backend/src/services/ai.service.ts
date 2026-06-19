@@ -1,10 +1,62 @@
-import axios from 'axios';
+import { InferenceClient } from "@huggingface/inference";
 import { Course } from '../models/Course';
 import { Booking } from '../models/Booking';
 import { User } from '../models/User';
 import { InternshipProgram } from '../models/internship/InternshipProgram';
 
 const HF_TOKEN = process.env.HF_TOKEN || "";
+const inferenceClient = new InferenceClient(HF_TOKEN);
+
+/** Ordered fallback chain of models to try in case one fails */
+const MODEL_FALLBACK_CHAIN = [
+  "deepseek-ai/DeepSeek-V4-Pro:novita",
+  "zai-org/GLM-5.2",
+  "deepseek-ai/DeepSeek-V4-Flash",
+  "Qwen/Qwen2.5-Coder-7B-Instruct",
+];
+
+/** Kinyarwanda-specific common word patterns for language detection */
+const KINYARWANDA_PATTERNS = /\b(?:ni|na|no|mu|ku|bi|ba|ri|ya|zo|bo|yo|we|tu|bya|cya|gwa|kwa|mwe|nta|nka|mbi|rwa|shy|nyu|bye|bose|ari|aba|urya|ubu|irya|izi|kunda|igihe|umuntu|ikintu|amazi|inzu|ifoto|ubwoba|rwanda|kinyarwanda|ikinyarwanda|ibintu|abantu|ubuzima|amakuru|uburezi|ubuhanga|iterambere|ubukungu|ibidukikije|ubumenyi|ikoranabuhanga)\b/iu;
+
+/**
+ * Detects if text is likely Kinyarwanda based on common patterns
+ */
+const isKinyarwanda = (text: string): boolean => {
+  if (!text || text.length < 3) return false;
+  const cleaned = text.replace(/[\s.,!?;:()"'\-]+/g, ' ').trim();
+  if (cleaned.length < 5) return false;
+  const matches = cleaned.match(KINYARWANDA_PATTERNS);
+  if (!matches) return false;
+  // If enough characters/patterns match, consider it Kinyarwanda
+  const words = cleaned.split(/\s+/).filter(w => w.length > 0);
+  const matchRatio = matches.length / words.length;
+  // Require at least 25% word match OR at least one long Kinyarwanda word (>4 chars)
+  const hasLongMatch = matches.some(m => m.length > 4);
+  return matchRatio >= 0.25 || (matchRatio >= 0.15 && hasLongMatch);
+};
+
+/**
+ * Attempts inference across the model fallback chain.
+ * Returns the first successful response, or throws if all models fail.
+ */
+const tryInference = async (messages: { role: string; content: string }[], maxTokens: number = 1024) => {
+  let lastError: any;
+  for (const model of MODEL_FALLBACK_CHAIN) {
+    try {
+      const chatCompletion = await inferenceClient.chatCompletion({
+        model,
+        messages,
+        max_tokens: maxTokens,
+      });
+      return chatCompletion;
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`Model ${model} failed:`, error?.message || error);
+      // Continue to next model in chain
+    }
+  }
+  throw lastError || new Error('All models in fallback chain failed');
+};
 
 /**
  * Fetches all published courses once and extracts:
@@ -360,28 +412,22 @@ ${commonNav}
   - IMPORTANT: Always answer as "Bootskills".
   `;
 
-    try {
-        // Use Hugging Face Router API (OpenAI compatible)
-        const response = await axios.post(
-            'https://router.huggingface.co/v1/chat/completions',
-            {
-                model: "Qwen/Qwen3-Coder-Next:novita",
-                messages: [
-                    { role: 'system', content: userContext },
-                    { role: 'user', content: userMessage }
-                ],
-                stream: false // Using non-streaming for simplicity with axios here
-            },
-            {
-                headers: {
-                    'Authorization': `Bearer ${HF_TOKEN}`,
-                    'Content-Type': 'application/json',
-                }
-            }
-        );
+    // Detect if the user is writing in Kinyarwanda
+    const userIsKinyarwanda = isKinyarwanda(userMessage);
+    const languageInstruction = userIsKinyarwanda
+      ? `\n\nIMPORTANT LANGUAGE INSTRUCTION: The user is writing in **Kinyarwanda** (Rwandan language). You MUST respond in Kinyarwanda. Use proper Kinyarwanda grammar and vocabulary. If you need to use technical terms that don't exist in Kinyarwanda, keep them in English but explain in Kinyarwanda.`
+      : '';
 
-        let aiContent = response.data.choices[0].message.content;
-        return parseAIResponse(aiContent, contextUser);
+    const systemPrompt = userContext + languageInstruction;
+
+    try {
+        const chatCompletion = await tryInference([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage }
+        ], 2048);
+
+        const aiContent = chatCompletion.choices[0].message.content;
+        return parseAIResponse(aiContent || '', contextUser);
     } catch (error: any) {
         return handleAIError(error);
     }
@@ -404,16 +450,8 @@ export const explainTaskService = async (taskTitle: string, description: string)
     Goal: Make the student feel confident and clear on how to approach the task independently.`;
 
     try {
-        const response = await axios.post(
-            'https://router.huggingface.co/v1/chat/completions',
-            {
-                model: "Qwen/Qwen3-Coder-Next:novita",
-                messages: [{ role: 'user', content: prompt }],
-                stream: false
-            },
-            { headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' } }
-        );
-        return { content: response.data.choices[0].message.content, role: 'assistant' };
+        const chatCompletion = await tryInference([{ role: 'user', content: prompt }], 1024);
+        return { content: chatCompletion.choices[0].message.content || '', role: 'assistant' };
     } catch (error: any) {
         return handleAIError(error);
     }
@@ -436,16 +474,8 @@ export const reviewSubmissionService = async (taskTitle: string, submissionConte
     [SCORE: XX] (Include this at the end)`;
 
     try {
-        const response = await axios.post(
-            'https://router.huggingface.co/v1/chat/completions',
-            {
-                model: "Qwen/Qwen3-Coder-Next:novita",
-                messages: [{ role: 'user', content: prompt }],
-                stream: false
-            },
-            { headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' } }
-        );
-        let content = response.data.choices[0].message.content;
+        const chatCompletion = await tryInference([{ role: 'user', content: prompt }], 1024);
+        let content = chatCompletion.choices[0].message.content || '';
         let score = 0;
         const scoreMatch = content.match(/\[SCORE:\s*(\d+)\]/);
         if (scoreMatch) {
@@ -484,17 +514,9 @@ export const generateAIQuizService = async (courseTitle: string, lessonTitle: st
     Goal: Test the core concept while keeping the student engaged in their primary learning language.`;
 
     try {
-        const response = await axios.post(
-            'https://router.huggingface.co/v1/chat/completions',
-            {
-                model: "Qwen/Qwen3-Coder-Next:novita",
-                messages: [{ role: 'user', content: prompt }],
-                stream: false
-            },
-            { headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' } }
-        );
+        const chatCompletion = await tryInference([{ role: 'user', content: prompt }], 2048);
 
-        const aiContent = response.data.choices[0].message.content;
+        const aiContent = chatCompletion.choices[0].message.content || '';
         // Extract JSON if AI wrapped it in markdown
         const jsonMatch = aiContent.match(/\[\s*\{.*\}\s*\]/s);
         if (jsonMatch) {
@@ -528,17 +550,8 @@ STRICT INSTRUCTIONS:
 Your hint:`;
 
     try {
-        const response = await axios.post(
-            'https://router.huggingface.co/v1/chat/completions',
-            {
-                model: "Qwen/Qwen3-Coder-Next:novita",
-                messages: [{ role: 'user', content: prompt }],
-                stream: false,
-                max_tokens: 150
-            },
-            { headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' } }
-        );
-        return response.data.choices[0].message.content.trim();
+        const chatCompletion = await tryInference([{ role: 'user', content: prompt }], 150);
+        return (chatCompletion.choices[0].message.content || '').trim();
     } catch (error: any) {
         console.error('Hint Generation Error:', error);
         return "Think about the core concept this question is testing. Review the key terms in the question and consider what each option implies.";
@@ -563,17 +576,8 @@ export const generateQuestionExplanationService = async (questionText: string, o
     Explanation:`;
 
     try {
-        const response = await axios.post(
-            'https://router.huggingface.co/v1/chat/completions',
-            {
-                model: "Qwen/Qwen3-Coder-Next:novita",
-                messages: [{ role: 'user', content: prompt }],
-                stream: false,
-                max_tokens: 200
-            },
-            { headers: { 'Authorization': `Bearer ${HF_TOKEN}`, 'Content-Type': 'application/json' } }
-        );
-        return response.data.choices[0].message.content.trim();
+        const chatCompletion = await tryInference([{ role: 'user', content: prompt }], 200);
+        return (chatCompletion.choices[0].message.content || '').trim();
     } catch (error: any) {
         console.error('Explanation Generation Error:', error);
         return "The selected option is correct based on the principles discussed in the lesson content.";
@@ -615,7 +619,7 @@ const parseAIResponse = async (aiContent: string, contextUser: any) => {
 };
 
 const handleAIError = (error: any) => {
-    console.error('AI Service Error:', error?.response?.data || error.message);
+    console.error('AI Service Error:', error?.message || error);
     return {
         content: "I'm having a bit of a brain fog right now. I couldn't reach the Bootskills Model. Please try again!",
         role: 'assistant',

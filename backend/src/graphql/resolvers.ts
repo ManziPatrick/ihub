@@ -299,15 +299,64 @@ export const resolvers = {
       if (!context.user) throw new Error('Not authenticated');
       // Admins and super_admins see all projects; others see only their own.
       const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
-      const filter: any = isAdmin ? {} : {
+      
+      if (isAdmin) {
+        const filter: any = {};
+        if (status) filter.status = status;
+        return await Project.find(filter).populate(['userId', 'mentors', 'team.userId']).sort({ updatedAt: -1 });
+      }
+
+      // Find projects where user is owner, mentor, or team member
+      const directFilter: any = {
         $or: [
           { userId: context.user.id },
           { mentors: context.user.id },
           { 'team.userId': context.user.id }
         ]
       };
-      if (status) filter.status = status;
-      return await Project.find(filter).populate(['userId', 'mentors', 'team.userId']).sort({ updatedAt: -1 });
+      if (status) directFilter.status = status;
+      const directProjects = await Project.find(directFilter).populate(['userId', 'mentors', 'team.userId']).lean();
+
+      // Also find projects where user has tasks assigned via ProjectTask
+      const assignedTaskProjectIds = await ProjectTask.distinct('projectId', {
+        assigneeId: context.user.id,
+        isDeleted: false
+      });
+
+      if (assignedTaskProjectIds.length === 0) {
+        return await Project.find(directFilter).populate(['userId', 'mentors', 'team.userId']).sort({ updatedAt: -1 });
+      }
+
+      const directProjectIds = new Set(directProjects.map((p: any) => p._id.toString()));
+      const additionalProjectIds = assignedTaskProjectIds.filter(
+        (id: any) => !directProjectIds.has(id.toString())
+      );
+
+      if (additionalProjectIds.length === 0) {
+        return await Project.find(directFilter).populate(['userId', 'mentors', 'team.userId']).sort({ updatedAt: -1 });
+      }
+
+      const taskFilter: any = {
+        _id: { $in: additionalProjectIds }
+      };
+      if (status) taskFilter.status = status;
+      const taskAssignedProjects = await Project.find(taskFilter).populate(['userId', 'mentors', 'team.userId']).lean();
+
+      // Merge and deduplicate, preserving order: direct first, then task-assigned
+      const allProjectMap = new Map<string, any>();
+      for (const p of directProjects) {
+        allProjectMap.set(p._id.toString(), p);
+      }
+      for (const p of taskAssignedProjects) {
+        const key = p._id.toString();
+        if (!allProjectMap.has(key)) {
+          allProjectMap.set(key, p);
+        }
+      }
+
+      return Array.from(allProjectMap.values()).sort(
+        (a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
     },
 
     myInternships: async (_: any, { status }: { status?: string }, context: any) => {
