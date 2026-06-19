@@ -99,7 +99,7 @@ export function Header() {
             )}
           </Link>
 
-          {/* ── Desktop Nav — Home + Applications (matching reference) ── */}
+          {/* ── Desktop Nav ── */}
           <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
             {navLinks.map((link) => {
               const isActive =
@@ -259,7 +259,7 @@ export function Header() {
                 );
               })}
 
-              <div className="pt-3 border-t border-border/40 mt-2 flex flex-col gap-2">
+              <div className="flex flex-col gap-2">
                 {isAuthenticated ? (
                   <>
                     <Link to={portalHref}>

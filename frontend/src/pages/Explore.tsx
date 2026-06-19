@@ -236,11 +236,11 @@ const Explore = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Explore Courses | Bootskills - Tech & Business Training in Kigali, Rwanda</title>
-        <meta name="description" content="Browse industry-ready tech and business training programs from top providers. Explore courses in software development, AI, data science, cybersecurity, and more in Kigali, Rwanda." />
+        <title>Explore Courses | Bootskills — Your All-in-One Learning Hub</title>
+        <meta name="description" content="Browse hundreds of courses across every field — tech, business, healthcare, finance, education, AI, and more. Find your path with real projects and industry internships." />
         <link rel="canonical" href="https://bootskills.com/explore" />
-        <meta property="og:title" content="Explore Courses | Bootskills - Tech & Business Training Kigali" />
-        <meta property="og:description" content="Browse industry-ready training programs in software development, AI, data science, and more. Based in Kigali, Rwanda." />
+        <meta property="og:title" content="Explore Courses | Bootskills — Your All-in-One Learning Hub" />
+        <meta property="og:description" content="Browse hundreds of courses across every field — real projects, industry internships, and career support." />
         <meta property="og:url" content="https://bootskills.com/explore" />
         <meta property="og:type" content="website" />
         <meta name="geo.region" content="RW-01" />

@@ -19,6 +19,8 @@ const Partners = lazy(() => import("@/pages/Partners"));
 const Blog = lazy(() => import("@/pages/Blog"));
 const BlogDetail = lazy(() => import("@/pages/BlogDetail"));
 const Team = lazy(() => import("@/pages/Team"));
+const CompanyProfile = lazy(() => import("@/pages/CompanyProfile"));
+const CompanyProfileFR = lazy(() => import("@/pages/CompanyProfileFR"));
 const Contact = lazy(() => import("@/pages/Contact"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Auth = lazy(() => import("@/pages/Auth"));
@@ -138,6 +140,8 @@ export function AnimatedRoutes() {
           <Route path="/projects" element={<PageTransition><Projects /></PageTransition>} />
           <Route path="/partners" element={<PageTransition><Partners /></PageTransition>} />
           <Route path="/team" element={<PageTransition><Team /></PageTransition>} />
+          <Route path="/company-profile" element={<PageTransition><CompanyProfile /></PageTransition>} />
+          <Route path="/profil-entreprise" element={<PageTransition><CompanyProfileFR /></PageTransition>} />
           <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
           <Route path="/blog/:slug" element={<PageTransition><BlogDetail /></PageTransition>} />
           <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />

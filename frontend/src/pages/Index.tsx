@@ -8,15 +8,15 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Bootskills | #1 Tech & Business Training in Kigali, Rwanda — Practical Skills. Real Projects.</title>
-        <meta name="description" content="Bootskills is Rwanda's leading practical training platform in Kigali — offering tech, business & financial literacy courses, AI development, and real-world internships. Learn skills that land jobs." />
+        <title>Bootskills | Your All-in-One Learning Hub — Courses Across Every Field. Projects. Internships.</title>
+        <meta name="description" content="Bootskills is your all-in-one learning hub — offering courses across every field: tech, business, healthcare, finance, education, AI, project management, and more. Learn with real projects and industry internships." />
         <link rel="canonical" href="https://bootskills.com" />
-        <meta property="og:title" content="Bootskills | #1 Tech & Business Training in Kigali, Rwanda" />
-        <meta property="og:description" content="Rwanda's leading practical training platform. Learn tech, business & financial literacy with real-world projects and internships in Kigali." />
+        <meta property="og:title" content="Bootskills | Your All-in-One Learning Hub — Courses Across Every Field" />
+        <meta property="og:description" content="Your all-in-one learning hub. Courses across every field — real projects, industry internships, and career support." />
         <meta property="og:url" content="https://bootskills.com" />
         <meta property="og:type" content="website" />
-        <meta name="twitter:title" content="Bootskills | #1 Tech & Business Training in Kigali, Rwanda" />
-        <meta name="twitter:description" content="Learn practical tech & business skills with real-world projects. Based in Kigali, Rwanda." />
+        <meta name="twitter:title" content="Bootskills | Your All-in-One Learning Hub — Courses Across Every Field" />
+        <meta name="twitter:description" content="Courses across every field with real projects and industry internships." />
         <meta name="geo.region" content="RW-01" />
         <meta name="geo.placename" content="Kigali" />
         <meta name="geo.position" content="-1.9441;30.0619" />

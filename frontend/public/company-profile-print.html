@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bootskills — AI-Powered Company Profile 2025</title>
+  <meta name="description" content="Bootskills is your AI-powered all-in-one learning hub. Courses across every field. Online internships. Client project management. Serving Africa from Kigali, Rwanda." />
+  <style>
+    /* ── Reset & Base ────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 11pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: #1a1a2e;
+      background: #ffffff;
+      line-height: 1.6;
+    }
+
+    /* ── Page Setup ──────────────────────────────────────────────── */
+    @page {
+      size: A4;
+      margin: 1.8cm 2cm 1.8cm 2cm;
+    }
+
+    /* ── Typography ──────────────────────────────────────────────── */
+    h1, h2, h3, h4 { font-family: "Georgia", "Times New Roman", serif; line-height: 1.3; }
+    h1 { font-size: 28pt; margin-bottom: 0.3em; }
+    h2 { font-size: 16pt; color: #b8860b; margin-bottom: 0.5em; padding-bottom: 0.3em; border-bottom: 2px solid #b8860b; }
+    h3 { font-size: 13pt; color: #1a1a2e; margin-bottom: 0.3em; }
+    h4 { font-size: 11pt; color: #b8860b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3em; }
+    p { margin-bottom: 0.6em; color: #333; }
+    strong { color: #1a1a2e; }
+
+    /* ── Layout ──────────────────────────────────────────────────── */
+    .page { max-width: 100%; padding: 0; }
+    .section { margin-bottom: 1.8em; page-break-inside: avoid; page-break-after: auto; }
+    .grid-2 { display: flex; gap: 1.5em; flex-wrap: wrap; }
+    .grid-2 > * { flex: 1 1 calc(50% - 0.75em); min-width: 250px; }
+    .grid-3 { display: flex; gap: 1em; flex-wrap: wrap; }
+    .grid-3 > * { flex: 1 1 calc(33.333% - 0.67em); min-width: 200px; }
+    .grid-4 { display: flex; gap: 1em; flex-wrap: wrap; }
+    .grid-4 > * { flex: 1 1 calc(25% - 0.75em); min-width: 160px; }
+    .grid-6 { display: flex; gap: 0.8em; flex-wrap: wrap; }
+    .grid-6 > * { flex: 1 1 calc(16.666% - 0.67em); min-width: 120px; }
+
+    /* ── Cards ───────────────────────────────────────────────────── */
+    .card {
+      background: #fafaf8;
+      border: 1px solid #e0d5c7;
+      border-radius: 6px;
+      padding: 1em;
+      page-break-inside: avoid;
+    }
+    .card-gold {
+      background: #fdf8f0;
+      border: 1px solid #d4a853;
+      border-left: 4px solid #b8860b;
+      border-radius: 4px;
+      padding: 1em;
+      page-break-inside: avoid;
+    }
+
+    /* ── Hero ────────────────────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 2.5em 1em 2em;
+      margin-bottom: 1.5em;
+      border-bottom: 3px solid #b8860b;
+      page-break-after: avoid;
+    }
+    .hero .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      background: #fdf8f0;
+      border: 1px solid #d4a853;
+      border-radius: 20px;
+      padding: 0.3em 1em;
+      font-size: 8pt;
+      font-weight: 700;
+      color: #b8860b;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 1em;
+    }
+    .hero h1 {
+      font-size: 30pt;
+      color: #1a1a2e;
+      letter-spacing: -0.02em;
+    }
+    .hero .gold { color: #b8860b; }
+    .hero .tagline {
+      font-size: 14pt;
+      color: #555;
+      max-width: 600px;
+      margin: 0.5em auto;
+      font-style: italic;
+    }
+    .hero .subtitle {
+      font-size: 11pt;
+      color: #777;
+      max-width: 550px;
+      margin: 0.8em auto 0;
+    }
+    .hero .trust-row {
+      margin-top: 1.2em;
+      display: flex;
+      justify-content: center;
+      gap: 2em;
+      font-size: 9pt;
+      color: #888;
+    }
+    .hero .trust-row span { display: inline-flex; align-items: center; gap: 0.4em; }
+
+    /* ── Pillar bar ──────────────────────────────────────────────── */
+    .pillar-bar {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 1.8em;
+      border-radius: 4px;
+      overflow: hidden;
+      page-break-inside: avoid;
+      background: #fff;
+    }
+    .pillar-item {
+      flex: 1;
+      text-align: center;
+      padding: 0.8em 0.5em;
+      color: #fff;
+      font-size: 8.5pt;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    .pillar-1 { background: #4a7fb5; }
+    .pillar-2 { background: #2d8a6e; }
+    .pillar-3 { background: #7c5e9e; }
+    .pillar-4 { background: #c4883c; }
+
+    /* ── Stats row ───────────────────────────────────────────────── */
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 2em;
+      flex-wrap: wrap;
+      padding: 1.2em 0;
+      margin-bottom: 1.8em;
+      border-top: 1px solid #e0d5c7;
+      border-bottom: 1px solid #e0d5c7;
+      page-break-inside: avoid;
+    }
+    .stat {
+      text-align: center;
+      min-width: 100px;
+    }
+    .stat .number { font-size: 20pt; font-weight: 700; color: #b8860b; font-family: Georgia, serif; }
+    .stat .label { font-size: 8pt; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* ── Mission/Vision ──────────────────────────────────────────── */
+    .mv-grid { display: flex; gap: 1.5em; margin-bottom: 1.8em; }
+    .mv-grid > * { flex: 1; }
+    .mv-box {
+      background: #fdf8f0;
+      border: 1px solid #d4a853;
+      border-radius: 6px;
+      padding: 1.2em;
+    }
+    .mv-box h3 { color: #b8860b; font-size: 14pt; margin-bottom: 0.5em; }
+
+    /* ── Lists ───────────────────────────────────────────────────── */
+    ul.features { list-style: none; padding: 0; }
+    ul.features li {
+      padding: 0.2em 0 0.2em 1.2em;
+      position: relative;
+      font-size: 9pt;
+      color: #444;
+    }
+    ul.features li::before {
+      content: "◆";
+      color: #b8860b;
+      position: absolute;
+      left: 0;
+      font-size: 7pt;
+    }
+    ul.checklist { list-style: none; padding: 0; columns: 2; column-gap: 1em; }
+    ul.checklist li {
+      padding: 0.15em 0 0.15em 1.2em;
+      position: relative;
+      font-size: 9pt;
+      color: #444;
+      break-inside: avoid;
+    }
+    ul.checklist li::before {
+      content: "✓";
+      color: #b8860b;
+      position: absolute;
+      left: 0;
+      font-weight: 700;
+    }
+
+    /* ── Values ──────────────────────────────────────────────────── */
+    .value-item { text-align: center; }
+    .value-item h4 { color: #1a1a2e; font-size: 10pt; text-transform: none; letter-spacing: normal; margin-bottom: 0.2em; }
+    .value-item p { font-size: 8.5pt; color: #666; }
+
+    /* ── Team ────────────────────────────────────────────────────── */
+    .team-grid { display: flex; gap: 1.5em; justify-content: center; }
+    .team-grid > * { flex: 0 1 300px; }
+    .team-card { text-align: center; }
+    .team-card .avatar {
+      width: 50px; height: 50px;
+      border-radius: 50%;
+      background: #b8860b;
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 0.6em;
+      font-size: 18pt; font-weight: 700; font-family: Georgia, serif;
+    }
+    .team-card h3 { font-size: 12pt; margin-bottom: 0.1em; }
+    .team-card .role { font-size: 9pt; color: #b8860b; font-weight: 600; margin-bottom: 0.5em; }
+    .team-card p { font-size: 9pt; color: #555; }
+
+    /* ── Testimonials ────────────────────────────────────────────── */
+    .testimonial {
+      text-align: center;
+      max-width: 550px;
+      margin: 0 auto;
+      padding: 0.5em 0;
+      page-break-inside: avoid;
+    }
+    .testimonial .quote-mark { font-size: 28pt; color: #b8860b; font-family: Georgia, serif; line-height: 0.6; }
+    .testimonial .quote { font-style: italic; font-size: 9.5pt; color: #444; margin: 0.2em 0 0.5em; }
+    .testimonial .author { font-size: 9pt; font-weight: 600; color: #1a1a2e; }
+    .testimonial .company { font-size: 8pt; color: #888; }
+
+    /* ── Contact bar ─────────────────────────────────────────────── */
+    .contact-bar {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 1.2em 1.5em;
+      border-radius: 6px;
+      display: flex;
+      justify-content: center;
+      gap: 2.5em;
+      flex-wrap: wrap;
+      font-size: 9pt;
+      margin-top: 1.5em;
+      page-break-inside: avoid;
+    }
+    .contact-bar a { color: #f0d080; text-decoration: none; }
+    .contact-bar strong { color: #fff; }
+
+    /* ── Footer ──────────────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      font-size: 8pt;
+      color: #aaa;
+      border-top: 1px solid #e0d5c7;
+      padding-top: 1em;
+      margin-top: 1.5em;
+    }
+
+    /* ── Utility ─────────────────────────────────────────────────── */
+    .text-center { text-align: center; }
+    .mb-1 { margin-bottom: 0.8em; }
+    .mt-1 { margin-top: 0.8em; }
+    .break-after { page-break-after: always; }
+
+    /* ── Print override ──────────────────────────────────────────── */
+    @media print {
+      body { font-size: 10pt; }
+      .hero { padding: 1.5em 0.5em 1.2em; }
+      .hero h1 { font-size: 26pt; }
+      h2 { font-size: 14pt; }
+      .section { margin-bottom: 1.2em; }
+      .card, .card-gold, .mv-box { padding: 0.7em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- HERO -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="hero">
+      <div class="ai-badge">⚡ AI-Powered Platform</div>
+      <h1>Your All-in-One<br /><span class="gold">AI-Powered Learning Hub</span></h1>
+      <p class="tagline">AI-Driven Courses Across Every Field &bull; Projects &bull; Internships</p>
+      <p class="subtitle">
+        Serving learners in villages, rural areas, and cities — wherever there's internet.
+        Based in <strong>Kigali, Rwanda</strong> &mdash; serving all of Africa.
+      </p>
+      <div class="trust-row">
+        <span>✦ Registered in Rwanda</span>
+        <span>✦ Serving All of Africa</span>
+        <span>✦ 100% Practical Focus</span>
+        <span>✦ AI-Powered Platform</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- QUICK STATS -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="stats">
+      <div class="stat"><div class="number">250+</div><div class="label">Successful Interns</div></div>
+      <div class="stat"><div class="number">15+</div><div class="label">Real Projects</div></div>
+      <div class="stat"><div class="number">10+</div><div class="label">AI Solutions Built</div></div>
+      <div class="stat"><div class="number">100%</div><div class="label">Practical Focus</div></div>
+      <div class="stat"><div class="number">1,000+</div><div class="label">Learners Trained</div></div>
+      <div class="stat"><div class="number">20+</div><div class="label">Course Categories</div></div>
+      <div class="stat"><div class="number">5,000+</div><div class="label">Cyber Safety Certified</div></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- OUR STORY -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="section">
+      <h2>Our Story</h2>
+      <p>
+        <strong>Bootskills</strong> was founded by <strong>Manzi Alain Patrick Munyeshuri</strong>,
+        a Rwandan technologist driven by a pressing challenge: the gap between education and employability.
+        He envisioned a platform where learning is directly connected to real projects, mentorship, and
+        career opportunities — accessible to anyone with an internet connection, whether in Kigali or a remote village.
+      </p>
+      <p>
+        He was later joined by <strong>KALISA Jonathan</strong>, Co-Founder, who brought operational and
+        technical leadership to scale training programs, internships, and software delivery across East Africa.
+      </p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- MISSION & VISION -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="mv-grid section">
+      <div class="mv-box">
+        <h3>Our Mission</h3>
+        <p>
+          To empower individuals and organizations — whether in villages, rural areas, or urban centers —
+          with real skills, real experience, and intelligent digital solutions. We remove the barrier of
+          location so that anyone with internet access can learn, grow, and access career opportunities.
+        </p>
+      </div>
+      <div class="mv-box">
+        <h3>Our Vision</h3>
+        <p>
+          To become Africa's leading practical learning and professional growth platform, starting from
+          Rwanda and expanding globally. A future where every African — regardless of location — has
+          access to world-class education, real projects, and meaningful career pathways.
+        </p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- CORE VALUES -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="section">
+      <h2>Our Core Values</h2>
+      <div class="grid-3">
+        <div class="card value-item">
+          <h4>✦ Excellence</h4>
+          <p>Delivering the highest quality in all our training programs and technology solutions.</p>
+        </div>
+        <div class="card value-item">
+          <h4>✦ Integrity</h4>
+          <p>Honest and transparent in all interactions with students, partners, and clients.</p>
+        </div>
+        <div class="card value-item">
+          <h4>✦ AI-Powered Innovation</h4>
+          <p>AI-first approach across our entire platform — from smart course recommendations to intelligent learning assistance.</p>
+        </div>
+        <div class="card value-item">
+          <h4>✦ Practical Learning</h4>
+          <p>Hands-on, industry-focused training that prepares you for real-world challenges.</p>
+        </div>
+        <div class="card value-item">
+          <h4>✦ Community Impact</h4>
+          <p>Creating lasting positive change in communities across Africa.</p>
+        </div>
+        <div class="card value-item">
+          <h4>✦ Global Standards</h4>
+          <p>International curriculum aligned with global industry requirements.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- CYBER LITERACY & KIDS HIGHLIGHT -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="card-gold" style="margin-bottom:1.5em;">
+      <h3>🛡️ Cyber Literacy &amp; Digital Safety for All</h3>
+      <p style="font-size:9pt;">Comprehensive cyber literacy training — online safety, threat awareness, data protection, and safe digital habits for individuals, families, and communities. Every learner is trained in digital safety.</p>
+    </div>
+    <div class="card-gold" style="margin-bottom:1.5em;">
+      <h3>⭐ Kids &amp; Junior Programs</h3>
+      <p style="font-size:9pt;">Age-appropriate courses introducing children and teens to coding, digital literacy, online safety, and creative tech. Building future-ready skills from an early age with parent-guided learning tracks.</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- PILLAR OVERVIEW -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="section">
+      <h2>What We Do — Our Four Pillars</h2>
+
+      <div class="pillar-bar">
+        <div class="pillar-item pillar-1">Training &amp; Courses</div>
+        <div class="pillar-item pillar-2">Internships &amp; Careers</div>
+        <div class="pillar-item pillar-3">Tech &amp; AI Solutions</div>
+        <div class="pillar-item pillar-4">Project &amp; Contract Mgmt</div>
+      </div>
+
+      <p style="font-size:9.5pt; color:#555; margin-bottom:0.5em;">
+        We operate across four key areas to serve both <strong>individuals</strong> and <strong>organizations</strong>.
+      </p>
+
+      <div class="grid-4" style="margin-top:0.8em;">
+        <div class="card">
+          <h4 style="color:#4a7fb5;">Training &amp; Courses</h4>
+          <p style="font-size:9pt;">Practical, market-driven courses across every field — tech, business, healthcare, creative arts, and more. Online, hybrid, and in-person.</p>
+        </div>
+        <div class="card">
+          <h4 style="color:#2d8a6e;">Internships &amp; Careers</h4>
+          <p style="font-size:9pt;">Structured online and in-person internships with real projects, mentorship, career coaching, and job placement assistance.</p>
+        </div>
+        <div class="card">
+          <h4 style="color:#7c5e9e;">Tech &amp; AI Solutions</h4>
+          <p style="font-size:9pt;">Custom software, AI, IoT, and automation solutions for startups, enterprises, and government organizations.</p>
+        </div>
+        <div class="card">
+          <h4 style="color:#c4883c;">Project &amp; Contract Mgmt</h4>
+          <p style="font-size:9pt;">End-to-end project lifecycle with digital contract scanning, secure document storage, and real-time client dashboards.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- FOR INDIVIDUALS -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="section">
+      <h2>For Individuals — Training &amp; Internships</h2>
+      <p style="font-size:9.5pt; margin-bottom:1em;">
+        Learn from anywhere — village, town, or city. All you need is an internet connection.
+        All programs available online. Cyber literacy &amp; digital safety for all.
+        Dedicated kids &amp; junior programs. Financial literacy for every stage of life.
+      </p>
+
+      <div class="grid-3">
+        <div class="card-gold">
+          <h3>Software Development</h3>
+          <p style="font-size:9pt;">Web and mobile apps, frontend to backend. React, Node.js, Python, and more through hands-on projects.</p>
+          <ul class="features">
+            <li>HTML/CSS, JavaScript, React, Vue.js</li>
+            <li>Node.js, Python, PHP, Java</li>
+            <li>Mobile: React Native, Flutter</li>
+            <li>Git &amp; GitHub, DevOps basics</li>
+          </ul>
+        </div>
+        <div class="card-gold">
+          <h3>Data Science &amp; AI</h3>
+          <p style="font-size:9pt;">Master data analysis, machine learning, and AI. Build real models that solve real problems.</p>
+          <ul class="features">
+            <li>Python for Data Science</li>
+            <li>Machine Learning &amp; Deep Learning</li>
+            <li>NLP &amp; Computer Vision</li>
+            <li>Big Data: Spark, Hadoop</li>
+          </ul>
+        </div>
+        <div class="card-gold">
+          <h3>IoT &amp; Smart Systems</h3>
+          <p style="font-size:9pt;">Build connected devices and automation solutions for agriculture, industry, and homes.</p>
+          <ul class="features">
+            <li>Arduino &amp; Raspberry Pi</li>
+            <li>Sensor integration</li>
+            <li>MQTT &amp; IoT protocols</li>
+            <li>Cloud IoT platforms</li>
+          </ul>
+        </div>
+        <div class="card-gold">
+          <h3>Digital Skills &amp; Literacy</h3>
+          <p style="font-size:9pt;">Essential digital competencies for the modern workplace.</p>
+          <ul class="features">
+            <li>Microsoft Office Suite</li>
+            <li>Google Workspace</li>
+            <li>Digital marketing</li>          <li>Cybersecurity awareness</li>
+        </ul>
+      </div>
+      <div class="card-gold">
+          <h3>🛡️ Cyber Literacy &amp; Digital Safety</h3>
+          <p style="font-size:9pt;">Comprehensive online safety, threat awareness, data protection, and safe digital habits for individuals, families, and communities.</p>
+          <ul class="features">
+            <li>Online safety &amp; threat awareness</li>
+            <li>Phishing &amp; scam detection</li>
+            <li>Data privacy &amp; protection</li>
+            <li>Safe browsing &amp; social media</li>
+            <li>Incident response basics</li>
+            <li>Parental digital safety controls</li>
+          </ul>
+        </div>
+        <div class="card-gold">
+          <h3>⭐ Kids &amp; Junior Programs</h3>
+          <p style="font-size:9pt;">Age-appropriate courses introducing children and teens to coding, digital literacy, online safety, and creative tech.</p>
+          <ul class="features">
+            <li>Coding fundamentals ages 8-16</li>
+            <li>Safe internet &amp; digital citizenship</li>
+            <li>Creative tech: animation, game design</li>
+            <li>Junior cyber literacy &amp; awareness</li>
+            <li>Parent-guided learning tracks</li>
+            <li>Fun STEM projects &amp; challenges</li>
+          </ul>
+        </div>
+        <div class="card-gold">
+          <h3>Internships &amp; Career Pathways</h3>
+          <p style="font-size:9pt;">Structured online internships with real projects under professional mentorship.</p>
+          <ul class="features">
+            <li>Industry internship matching</li>
+            <li>Project-based learning</li>
+            <li>Mentor-led career coaching</li>
+            <li>Portfolio &amp; resume prep</li>
+          </ul>
+        </div>
+        <div class="card-gold">
+          <h3>Business &amp; Finance</h3>
+          <p style="font-size:9pt;">Practical business skills, financial literacy, and entrepreneurship training.</p>
+          <ul class="features">
+            <li>Business management</li>
+            <li>Financial literacy</li>
+            <li>Entrepreneurship</li>
+            <li>Project management</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- FOR ORGANIZATIONS -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="section">
+      <h2>For Organizations — Tech Solutions &amp; Project Management</h2>
+      <p style="font-size:9.5pt; margin-bottom:1em;">
+        From software development to contract scanning — we help organizations manage projects end-to-end.
+        Submit proposals, track progress, sign contracts digitally, and manage deliverables — all in one place.
+      </p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Software &amp; AI Development</h3>
+          <p style="font-size:9pt;">Custom web, mobile, and AI-powered solutions for startups and enterprises.</p>
+          <ul class="checklist">
+            <li>Web &amp; mobile app development</li>
+            <li>AI chatbots &amp; virtual assistants</li>
+            <li>Predictive analytics</li>
+            <li>API development &amp; integration</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>IoT &amp; Automation</h3>
+          <p style="font-size:9pt;">Smart connected systems for industry, agriculture, and smart buildings.</p>
+          <ul class="checklist">
+            <li>Smart farming solutions</li>
+            <li>Industrial automation</li>
+            <li>Asset tracking &amp; monitoring</li>
+            <li>Smart building solutions</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Project Management &amp; Contract Oversight</h3>
+          <p style="font-size:9pt;">Full project lifecycle with digital contract creation, scanning, and secure storage.</p>
+          <ul class="checklist">
+            <li>Project lifecycle management</li>
+            <li>Digital contract creation &amp; scanning</li>
+            <li>Secure document archive</li>
+            <li>Client progress dashboards</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>IT Consultancy &amp; Training</h3>
+          <p style="font-size:9pt;">Strategic advisory and corporate training for teams and organizations.</p>
+          <ul class="checklist">
+            <li>Digital transformation strategy</li>
+            <li>Corporate training programs</li>
+            <li>Technology stack assessment</li>
+            <li>Cloud migration services</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card-gold" style="margin-top:1em;">
+        <h3>Full Project Lifecycle — From Proposal to Delivery</h3>
+        <p style="font-size:9pt;">
+          Clients can submit project proposals, track progress through a dedicated dashboard,
+          sign and scan contracts digitally, and manage deliverables — all in one place.
+          Our platform handles contract creation, secure document storage, milestone tracking,
+          and transparent communication between your team and ours.
+        </p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- WHO WE SERVE -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="section">
+      <h2>Who We Serve</h2>
+      <div class="grid-6">
+        <div class="card text-center">
+          <h4 style="text-transform:none;letter-spacing:normal;font-size:9pt;">Students &amp; Graduates</h4>
+          <p style="font-size:8pt;">Building foundational skills for career launch</p>
+        </div>
+        <div class="card text-center">
+          <h4 style="text-transform:none;letter-spacing:normal;font-size:9pt;">Working Professionals</h4>
+          <p style="font-size:8pt;">Upskilling for career advancement</p>
+        </div>
+        <div class="card text-center">
+          <h4 style="text-transform:none;letter-spacing:normal;font-size:9pt;">Institutions &amp; Schools</h4>
+          <p style="font-size:8pt;">Partnership programs for students</p>
+        </div>
+        <div class="card text-center">
+          <h4 style="text-transform:none;letter-spacing:normal;font-size:9pt;">NGOs &amp; Organizations</h4>
+          <p style="font-size:8pt;">Development &amp; training initiatives</p>
+        </div>
+        <div class="card text-center">
+          <h4 style="text-transform:none;letter-spacing:normal;font-size:9pt;">Startups &amp; Businesses</h4>
+          <p style="font-size:8pt;">Tech solutions &amp; team training</p>
+        </div>
+        <div class="card text-center">
+          <h4 style="text-transform:none;letter-spacing:normal;font-size:9pt;">Rural &amp; Remote Learners</h4>
+          <p style="font-size:8pt;">Accessible online education anywhere</p>
+        </div>
+        <div class="card text-center">
+          <h4 style="text-transform:none;letter-spacing:normal;font-size:9pt;">Families &amp; Parents</h4>
+          <p style="font-size:8pt;">Digital safety &amp; kids education</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- WHY CHOOSE US -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="section">
+      <h2>Why Choose Bootskills</h2>
+      <div class="grid-3">
+        <div class="card text-center" style="border-left: 3px solid #b8860b;">
+          <h4>AI-Powered Platform</h4>
+          <p style="font-size:8.5pt;">Smart course matching, AI tutor, automated grading, and intelligent career guidance.</p>
+        </div>
+        <div class="card text-center">
+          <h4>Industry-Aligned Curriculum</h4>
+          <p style="font-size:8.5pt;">Programs shaped by employers and local market needs.</p>
+        </div>
+        <div class="card text-center">
+          <h4>Expert Instructors</h4>
+          <p style="font-size:8.5pt;">Learn from professionals with real-world experience.</p>
+        </div>
+        <div class="card text-center">
+          <h4>Practical Projects</h4>
+          <p style="font-size:8.5pt;">Build a portfolio with hands-on, real-world projects.</p>
+        </div>
+        <div class="card text-center">
+          <h4>Accessible Anywhere</h4>
+          <p style="font-size:8.5pt;">Online delivery reaches rural villages and urban centers.</p>
+        </div>
+        <div class="card text-center">
+          <h4>AI-Enhanced Learning</h4>
+          <p style="font-size:8.5pt;">Smart recommendations, AI tutor, automated code review, personalized learning paths.</p>
+        </div>
+        <div class="card text-center">
+          <h4>Career Support</h4>
+          <p style="font-size:8.5pt;">Job placement assistance for all graduates.</p>
+        </div>
+        <div class="card text-center">
+          <h4>Certified Programs</h4>
+          <p style="font-size:8.5pt;">Industry-recognized certificates of completion.</p>
+        </div>
+        <div class="card text-center">
+          <h4>Cyber Safe Guarantee</h4>
+          <p style="font-size:8.5pt;">Every learner trained in digital safety, threat awareness, and data protection.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- TESTIMONIALS -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="section">
+      <h2>Success Stories</h2>
+      <div class="testimonial">
+        <div class="quote-mark">&ldquo;</div>
+        <p class="quote">Bootskills helped me transition from learning to real-world development. The mentorship prepared me for industry work.</p>
+        <p class="author">Emmanuel R. &mdash; Software Developer, TechCorp Rwanda</p>
+      </div>
+      <div class="testimonial">
+        <div class="quote-mark">&ldquo;</div>
+        <p class="quote">The Data Science program gave me practical skills I use every day. Online classes were flexible with world-class instructors.</p>
+        <p class="author">Marie Claire M. &mdash; Data Analyst, FinanceHub Ltd</p>
+      </div>
+      <div class="testimonial">
+        <div class="quote-mark">&ldquo;</div>
+        <p class="quote">From training to internship to full-time employment — Bootskills opened doors I never knew existed.</p>
+        <p class="author">Jean Paul N. &mdash; IoT Engineer, SmartFarm Solutions</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- CONTACT -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="section">
+      <h2>Get in Touch</h2>
+      <p class="text-center" style="font-size:10pt; max-width:500px; margin:0 auto 1em;">
+        Ready to build the future? Whether you're a learner, an organization, or a partner —
+        let's work together.
+      </p>
+
+      <div class="contact-bar">
+        <span><strong>Visit:</strong> Kigali, Rwanda</span>
+        <span><strong>Email:</strong> <a href="mailto:info@bootskills.com">info@bootskills.com</a></span>
+        <span><strong>Phone:</strong> +250 790 706 170</span>
+        <span><strong>Web:</strong> <a href="https://bootskills.com">bootskills.com</a></span>
+        <span><strong>Hours:</strong> Mon&ndash;Fri 8:00 AM &ndash; 5:00 PM</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- FOOTER -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="footer">
+      Bootskills &bull; Kigali, Rwanda &bull; Serving All of Africa<br />
+      &copy; 2025 Bootskills. All rights reserved.
+    </div>
+
+  </div>
+</body>
+</html>

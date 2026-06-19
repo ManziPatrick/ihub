@@ -15,7 +15,12 @@ const checkProjectAuthorization = async (projectId: string, context: any) => {
   const isOwner = project.userId?.toString() === context.user.id;
   const isTeamMember = project.team?.some(member => member.userId?.toString() === context.user.id);
 
-  if (!isOwner && !isTeamMember) {
+  // Also allow if the user has tasks assigned in this project
+  const hasAssignedTasks = (!isOwner && !isTeamMember) ?
+    await ProjectTask.exists({ projectId, assigneeId: context.user.id, isDeleted: false }) :
+    false;
+
+  if (!isOwner && !isTeamMember && !hasAssignedTasks) {
     throw new Error('Not authorized');
   }
   return true;

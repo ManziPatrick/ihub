@@ -1793,9 +1793,15 @@ export const resolvers = {
 
       const isTeamMember = project.team?.some(member => member.userId?.toString() === context.user.id);
 
-      // Check if user owns the project, is a team member, or is admin/trainer
+      // Also check if the user has any tasks assigned in this project
+      const hasAssignedTasks = !isTeamMember && (project.userId?.toString() !== context.user.id) ?
+        await ProjectTask.exists({ projectId: id, assigneeId: context.user.id, isDeleted: false }) :
+        false;
+
+      // Check if user owns the project, is a team member, is assigned tasks, or is staff
       if (project.userId.toString() !== context.user.id &&
         !isTeamMember &&
+        !hasAssignedTasks &&
         context.user.role !== 'super_admin' &&
         context.user.role !== 'admin' &&
         context.user.role !== 'trainer') {
@@ -6284,7 +6290,12 @@ export const resolvers = {
 
       const isTeamMember = project.team?.some(member => member.userId?.toString() === context.user.id);
 
-      if (project.userId.toString() !== context.user.id && !isTeamMember &&
+      // Also allow students who have ProjectTask items assigned to them in this project
+      const hasAssignedTasks = (!project.userId || project.userId.toString() !== context.user.id) && !isTeamMember ?
+        await ProjectTask.exists({ projectId, assigneeId: context.user.id, isDeleted: false }) :
+        false;
+
+      if (project.userId.toString() !== context.user.id && !isTeamMember && !hasAssignedTasks &&
         context.user.role !== 'super_admin' &&
         context.user.role !== 'admin' &&
         context.user.role !== 'trainer') {
