@@ -182,12 +182,19 @@ const getAdminStudentIds = async (adminId: string) => {
 
 import { applicationPhaseResolvers } from './application-phase-resolvers';
 import { projectTaskResolvers } from './project-task-resolvers';
+import { locationResolvers } from './location-resolvers';
+import { commissionResolvers } from './commission-resolvers';
+import { broadcastResolvers } from './broadcast-resolvers';
+import { uploadLogResolvers } from './upload-log-resolvers';
+import { scheduledBroadcastResolvers } from './scheduled-broadcast-resolvers';
+import { userReportResolvers } from './user-report-resolvers';
 
 export const resolvers = {
   Upload: GraphQLUpload,
   Query: {
     ...applicationPhaseResolvers.Query,
-    ...projectTaskResolvers.Query,
+    ...projectTaskResolvers.Query,    ...locationResolvers.Query,
+    ...commissionResolvers.Query,    ...userReportResolvers.Query,
     // Ensure non-nullability: schema defines [ProjectApplication!]! but missing resolvers can return null.
     // This resolver returns an empty array when the user has no applications.
     myProjectApplications: async (_: any, __: any, context: any) => {
@@ -643,6 +650,9 @@ export const resolvers = {
         } else {
           query.$or = orConditions;
         }
+      } else if (context.user.role === 'super_admin') {
+        // Super admin sees all users regardless of createdBy filter
+        if (role) query.role = role;
       } else if (createdBy) {
         query.createdBy = createdBy;
         if (role) query.role = role;
@@ -653,7 +663,7 @@ export const resolvers = {
       const skip = (page - 1) * limit;
 
       const [items, totalCount] = await Promise.all([
-        User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+        User.find(query).populate('createdBy', 'username email fullName').sort({ createdAt: -1 }).skip(skip).limit(limit),
         User.countDocuments(query)
       ]);
 
@@ -1156,8 +1166,17 @@ export const resolvers = {
       if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) {
         throw new Error('Not authorized');
       }
-      // Fetch activities from all users (admins, trainers, students) for global audit
-      const users = await User.find({}).limit(200);
+
+      let userQuery: any = {};
+
+      if (context.user.role === 'admin') {
+        // Admin only sees activities from their own students
+        const studentIds = await getAdminStudentIds(context.user.id);
+        userQuery._id = { $in: studentIds };
+      }
+      // Super admin sees all users — no filter needed
+
+      const users = await User.find(userQuery).limit(200);
       let activities: any[] = [];
 
       users.forEach(user => {
@@ -4182,9 +4201,17 @@ export const resolvers = {
       });
       await user.save();
 
-      // Trigger Emails
+      // Generate password reset token so user can set their own password
+      const crypto = require('crypto');
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+      (user as any).resetPasswordToken = hashedToken;
+      (user as any).resetPasswordExpires = Date.now() + 3600000; // 1 hour
+      await user.save();
+
+      // Trigger Emails — include reset token so user can set their own password
       try {
-        await sendWelcomeEmail(user.email, user.username, user.role);
+        await sendWelcomeEmail(user.email, user.username, user.role, resetToken);
         if (context.user && context.user.email) {
           await sendAdminNewUserNotification(context.user.email, user.username, user.email, user.role);
         }
@@ -7748,7 +7775,7 @@ export const resolvers = {
       };
     },
     ...applicationPhaseResolvers.Mutation,
-    ...projectTaskResolvers.Mutation,
+    ...projectTaskResolvers.Mutation,    ...commissionResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,
 
     assignDeveloperToProject: async (_: any, { projectId, developerId, role, checklistTasks }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {

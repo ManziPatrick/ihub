@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -31,26 +32,14 @@ import {
 } from 'recharts';
 import { useQuery } from "@apollo/client/react";
 import { GET_ANALYTICS } from "@/lib/graphql/queries";
-import { downloadAsCSV } from "@/lib/utils/exportUtils";
-import { toast } from "sonner";
+import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 
 const COLORS = ['#D4AF37', '#3B82F6', '#10B981', '#F59E0B', '#6366F1', '#EC4899'];
 
 export default function PerformanceReport() {
   const { data, loading } = useQuery(GET_ANALYTICS);
   const analytics = (data as any)?.analytics;
-
-  const handleExport = () => {
-    if (!analytics) return;
-    const exportData = [
-      { Metric: "Total Internships", Value: analytics.internshipStats.total },
-      { Metric: "Internship Graduation Rate", Value: `${((analytics.internshipStats.graduated / analytics.internshipStats.total) * 100).toFixed(1)}%` },
-      { Metric: "Project Completion Rate", Value: `${((analytics.projectStats.completed / analytics.projectStats.total) * 100).toFixed(1)}%` },
-      { Metric: "Pending Reviews", Value: analytics.projectStats.pendingReview },
-    ];
-    downloadAsCSV(exportData, "Performance_Report");
-    toast.success("Performance report exported");
-  };
+  const [showExportDialog, setShowExportDialog] = useState(false);
 
   if (loading) {
     return (
@@ -93,9 +82,9 @@ export default function PerformanceReport() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExport}>
+            <Button variant="outline" onClick={() => setShowExportDialog(true)}>
               <Download className="w-4 h-4 mr-2" />
-              Export Performance Data
+              Export
             </Button>
           </div>
         </motion.div>
@@ -265,6 +254,11 @@ export default function PerformanceReport() {
           </CardContent>
         </Card>
       </div>
+
+      <ExportDataDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+      />
     </PortalLayout>
   );
 }

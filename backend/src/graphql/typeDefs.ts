@@ -101,6 +101,10 @@ export const typeDefs = `#graphql
     avatar: String
     phone: String
     location: String
+    latitude: Float
+    longitude: Float
+    locationUpdatedAt: String
+    locationShared: Boolean
     title: String
     studentProfile: StudentProfile
     notes: String
@@ -120,6 +124,7 @@ export const typeDefs = `#graphql
     isExternal: Boolean
     isFirst: Boolean
     certificates: [Certificate]
+    createdBy: User
   }
 
   type PaginationInfo {
@@ -680,13 +685,6 @@ export const typeDefs = `#graphql
     date: String!
   }
 
-  type InternshipTask {
-    id: ID!
-    title: String!
-    status: String!
-    priority: String!
-  }
-
   type Meeting {
     title: String!
     time: String!
@@ -1026,13 +1024,6 @@ export const typeDefs = `#graphql
     mode: String
   }
 
-  input QuizConfigInput {
-    disableRightClick: Boolean
-    timeLimit: Int
-    quizType: String
-    questionsPerPage: Int
-  }
-
   input AssignmentAnswerInput {
     questionId: String!
     answerText: String!
@@ -1070,11 +1061,6 @@ export const typeDefs = `#graphql
     ppts: [String]
     links: [ProjectLinkInput]
     inPersonNotes: String
-  }
-
-  input DefaultTicketInput {
-    title: String!
-    description: String
   }
 
   input RequirementInput {
@@ -1231,6 +1217,7 @@ export const typeDefs = `#graphql
     deleteCourse(id: ID!): Boolean
     createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String): User
     updateUser(id: ID!, username: String, email: String, password: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String): User
+    updateUserLocation(latitude: Float!, longitude: Float!): User
     deleteUser(id: ID!): Boolean
     
     # Progress Tracking
@@ -1739,24 +1726,28 @@ export const typeDefs = `#graphql
   }
 
   type TaskAttachment {
-    name: String!
-    url: String!
-    type: String!
+    name: String
+    url: String
+    type: String
+    fileName: String
+    fileUrl: String
   }
 
   input TaskAttachmentInput {
-    name: String!
-    url: String!
-    type: String!
+    name: String
+    url: String
+    type: String
+    fileName: String
+    fileUrl: String
   }
 
   type InternshipTask {
     id: ID!
     sprintId: ID
     sprint: InternshipSprint
-    projectId: ID!
+    projectId: ID
     project: InternshipProject
-    teamId: ID!
+    teamId: ID
     team: InternshipTeam
     title: String!
     description: String
@@ -2250,10 +2241,7 @@ export const typeDefs = `#graphql
     updatedAt: String!
   }
 
-  type TaskAttachment {
-    fileName: String!
-    fileUrl: String!
-  }
+
 
   type ChecklistItem {
     item: String!
@@ -2539,10 +2527,6 @@ export const typeDefs = `#graphql
     color: String!
   }
 
-  input TaskAttachmentInput {
-    fileName: String!
-    fileUrl: String!
-  }
 
   input ChecklistItemInput {
     item: String!
@@ -2682,6 +2666,8 @@ export const typeDefs = `#graphql
     projectByApplicationId(applicationId: ID!): Project
     getClients: [User!]!
     getClientWithDetails(clientId: ID!): ClientDetails
+    usersWithLocation(role: String): [User!]!
+    getUserFullReport(userId: ID!): UserFullReport!
     getRegisteredCompanies: [String!]!
     getCourseEnrolledStudents(courseId: ID!): [User!]!
     getAvailableAdmins: [User!]!
@@ -2725,6 +2711,177 @@ export const typeDefs = `#graphql
 
   extend type Query {
     projectDeveloperTaskSummary(projectId: ID!): [DeveloperTaskSummary!]!
+  }
+
+  # ─── Full User Report Types ───────────────────────────────────────────────
+  type UserReportUser {
+    id: ID!
+    username: String!
+    email: String!
+    role: String!
+    fullName: String
+    avatar: String
+    phone: String
+    location: String
+    title: String
+    bio: String
+    school: String
+    level: Int
+    xp: Int
+    streak: Int
+    createdAt: String
+  }
+
+  type UserReportStats {
+    totalCourses: Int!
+    totalCoursesCompleted: Int!
+    courseCompletionRate: Int!
+    totalLessonsCompleted: Int!
+    averageGrade: Int
+    totalGrades: Int!
+    totalProjects: Int!
+    completedProjects: Int!
+    projectCompletionRate: Int!
+    totalInternships: Int!
+    activeInternships: Int!
+    totalSubmissions: Int!
+    passedSubmissions: Int!
+  }
+
+  type ReportCourseProgress {
+    courseId: ID!
+    courseTitle: String!
+    courseThumbnail: String
+    courseLevel: String
+    courseCategory: String
+    overallProgress: Int!
+    status: String!
+    totalTimeSpent: Int!
+    lastAccessed: String
+    completedLessons: Int!
+    totalLessons: Int!
+    averageGrade: Int
+    gradesCount: Int!
+    submissionsCount: Int!
+    submissions: [ReportSubmission!]!
+  }
+
+  type ReportSubmission {
+    submissionId: ID!
+    lessonId: String!
+    status: String!
+    grade: Int
+    totalScore: Int
+    feedback: String
+    submittedAt: String
+  }
+
+  type ReportGrade {
+    courseId: ID
+    lessonId: ID
+    lessonTitle: String
+    score: Int
+    feedback: String
+    gradedAt: String
+  }
+
+  type ReportProject {
+    id: ID!
+    title: String!
+    course: String
+    type: String!
+    status: String!
+    progress: Int!
+    grade: String
+    feedback: String
+    deadline: String
+    submittedAt: String
+    createdAt: String
+    tasks: [ReportTask!]!
+  }
+
+  type ReportTask {
+    title: String!
+    completed: Boolean!
+    approved: Boolean
+  }
+
+  type ReportInternship {
+    id: ID!
+    title: String!
+    organization: String
+    cohort: String
+    status: String!
+    stage: String
+    currentStage: Int
+    progress: Int!
+    startDate: String
+    endDate: String
+    mentor: ReportMentor
+    sprintReviews: [SprintReviewEntry!]!
+    milestones: [MilestoneEntry!]!
+    tasks: [InternshipTaskEntry!]!
+    meetings: [MeetingEntry!]!
+  }
+
+  type ReportMentor {
+    id: ID!
+    username: String!
+    fullName: String
+  }
+
+  type SprintReviewEntry {
+    week: Int
+    grade: Int
+    feedback: String
+    date: String
+  }
+
+  type MilestoneEntry {
+    title: String!
+    completed: Boolean!
+    date: String
+  }
+
+  type InternshipTaskEntry {
+    title: String!
+    status: String
+    priority: String
+  }
+
+  type MeetingEntry {
+    title: String!
+    time: String
+    type: String
+  }
+
+  type UserFullReport {
+    user: UserReportUser!
+    stats: UserReportStats!
+    courses: [ReportCourseProgress!]!
+    submissions: [ReportSubmission!]!
+    grades: [ReportGrade!]!
+    projects: [ReportProject!]!
+    internships: [ReportInternship!]!
+    certificates: [ReportCertificate!]!
+  }
+
+  type ReportCertificate {
+    id: ID!
+    courseTitle: String!
+    status: String!
+    grade: Int
+    progress: Int
+    issueDate: String
+    credentialId: String
+    requirements: [RequirementEntry!]!
+  }
+
+  type RequirementEntry {
+    title: String!
+    completed: Boolean!
+    current: Int
+    total: Int
   }
 
   type StudentProjectSummary {
@@ -2801,6 +2958,10 @@ export const typeDefs = `#graphql
     assignProjectTask(id: ID!, assigneeId: ID!): ProjectTask!
     sendTaskFeedback(taskId: ID!, message: String!, resources: [ResourceItemInput!]): ProjectTask!
 
+    # Cache Invalidation
+    invalidateReportCache(userId: ID!): Boolean
+    clearReportCache: Boolean
+
     # Client-facing mutations
     submitProjectApplication(
       title: String!
@@ -2856,6 +3017,189 @@ export const typeDefs = `#graphql
       projectId: ID!
       order: Int!
     ): Project!
+  }
+
+  # ─── Admin Commission Types ────────────────────────────────────────────────
+  type CommissionConfig {
+    id: ID!
+    adminId: User!
+    scope: String! # 'global' | 'course' | 'internship'
+    scopeId: ID
+    scopeTitle: String
+    percentage: Float!
+    description: String
+    active: Boolean!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type CommissionEntry {
+    paymentId: ID!
+    itemTitle: String!
+    type: String!
+    amount: Float!
+    commissionPercentage: Float!
+    commissionAmount: Float!
+    scope: String!
+    scopeTitle: String
+    createdAt: String!
+  }
+
+  type CommissionReport {
+    adminId: ID!
+    configs: [CommissionConfig!]!
+    totalCommission: Float!
+    totalPayments: Int!
+    commissionEntries: [CommissionEntry!]!
+  }
+
+  type AdminCommissionSummary {
+    adminId: ID!
+    adminName: String!
+    adminEmail: String!
+    totalCommission: Float!
+    totalPayments: Int!
+    activeConfigsCount: Int!
+    recentEntries: [CommissionEntry!]!
+  }
+
+  type AllCommissionReports {
+    totalAdmins: Int!
+    grandTotalCommission: Float!
+    grandTotalPayments: Int!
+    adminReports: [AdminCommissionSummary!]!
+  }
+
+  extend type Query {
+    commissionConfigs: [CommissionConfig!]!
+    getAdminCommissionConfigs(adminId: ID!): [CommissionConfig!]!
+    getAdminCommissionReport(adminId: ID!): CommissionReport!
+    getAllCommissionReports: AllCommissionReports!
+    getAllCompletedPayments: [PaymentTransaction!]!
+    getCommissionAdmins: [User!]!
+  }
+
+  extend type Mutation {
+    setCommission(adminId: ID!, scope: String!, scopeId: ID, scopeTitle: String, percentage: Float!, description: String): CommissionConfig!
+    toggleCommission(id: ID!): CommissionConfig!
+    deleteCommission(id: ID!): Boolean!
+  }
+
+  # ─── Bulk Notification Types ────────────────────────────────────────────────
+  type BulkNotificationResult {
+    success: Boolean!
+    totalRecipients: Int!
+    notificationsSent: Int!
+    emailsSent: Int!
+    errors: [String]
+  }
+
+  extend type Mutation {
+    sendBulkNotification(
+      title: String!
+      message: String!
+      link: String
+      targetRole: String
+      userIds: [ID!]
+      teamIds: [ID!]
+      sendEmail: Boolean!
+      sendNotification: Boolean!
+    ): BulkNotificationResult!
+  }
+
+  # ─── Upload Log Types ────────────────────────────────────────────────────────
+  type UploadLog {
+    id: ID!
+    adminId: User!
+    adminUsername: String!
+    fileName: String!
+    fileSize: Int!
+    mimeType: String!
+    url: String!
+    publicId: String
+    type: String!
+    action: String!
+    createdAt: String!
+  }
+
+  type UploadLogResponse {
+    items: [UploadLog!]!
+    pagination: PaginationInfo!
+  }
+
+  extend type Query {
+    uploadLogs(page: Int, limit: Int, type: String): UploadLogResponse!
+  }
+
+  extend type Mutation {
+    deleteUploadLog(id: ID!): Boolean!
+    clearAllUploadLogs: Boolean!
+  }
+
+  # ─── Scheduled Broadcast Types ───────────────────────────────────────────
+  type ScheduledBroadcast {
+    id: ID!
+    title: String!
+    message: String!
+    link: String
+    targetRole: String
+    userIds: [String]
+    teamIds: [String]
+    sendEmail: Boolean!
+    sendNotification: Boolean!
+    scheduledAt: String!
+    status: String!
+    sentAt: String
+    createdBy: User!
+    result: BroadcastResult
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type BroadcastResult {
+    totalRecipients: Int
+    notificationsSent: Int
+    emailsSent: Int
+    errors: [String]
+  }
+
+  type ScheduledBroadcastResponse {
+    items: [ScheduledBroadcast!]!
+    pagination: PaginationInfo!
+  }
+
+  extend type Query {
+    scheduledBroadcasts(page: Int, limit: Int, status: String): ScheduledBroadcastResponse!
+  }
+
+  extend type Mutation {
+    scheduleBroadcast(
+      title: String!
+      message: String!
+      link: String
+      targetRole: String
+      userIds: [ID!]
+      teamIds: [ID!]
+      sendEmail: Boolean!
+      sendNotification: Boolean!
+      scheduledAt: String!
+    ): ScheduledBroadcast!
+
+    updateScheduledBroadcast(
+      id: ID!
+      title: String
+      message: String
+      link: String
+      targetRole: String
+      userIds: [ID!]
+      teamIds: [ID!]
+      sendEmail: Boolean
+      sendNotification: Boolean
+      scheduledAt: String
+    ): ScheduledBroadcast!
+
+    cancelScheduledBroadcast(id: ID!): ScheduledBroadcast!
+    deleteScheduledBroadcast(id: ID!): Boolean!
   }
 
   # ─── Client Details Type ────────────────────────────────────────────────────

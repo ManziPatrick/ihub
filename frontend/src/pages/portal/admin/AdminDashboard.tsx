@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,23 +9,22 @@ import {
   Users,
   BookOpen,
   Briefcase,
-  CreditCard,
   TrendingUp,
   ArrowRight,
-  ArrowUpRight,
-  ArrowDownRight,
-  BarChart3,
   Activity,
   DollarSign,
   GraduationCap,
-  MessageSquare
+  MessageSquare,
+  Download,
 } from "lucide-react";
 
 import { useQuery } from "@apollo/client/react";
 import { GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY, GET_CONVERSATIONS } from "@/lib/graphql/queries";
+import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const { data, loading } = useQuery(GET_ADMIN_DASHBOARD_DATA);
   const { data: activityData, loading: recentActivityLoading } = useQuery(GET_RECENT_ACTIVITY, {
     pollInterval: 10000
@@ -67,9 +67,9 @@ export default function AdminDashboard() {
             </p>
             </div>
             <div className="flex gap-2">
-            <Button variant="outline">
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Export Report
+            <Button variant="outline" onClick={() => setShowExportDialog(true)}>
+                <Download className="w-4 h-4 mr-2" />
+                Export
             </Button>
             <Link to="/portal/admin/users">
                 <Button variant="gold">

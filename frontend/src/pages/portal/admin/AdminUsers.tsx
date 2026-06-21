@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { BadgeAwardDialog } from "@/components/portal/BadgeAwardDialog";
+import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 import {
   AddUserDialog,
   EditUserDialog,
@@ -41,6 +43,7 @@ import {
 } from "@/components/portal/dialogs";
 import { toast } from "sonner";
 import { useQuery, useMutation, useApolloClient } from "@apollo/client/react";
+import { FileSpreadsheet } from "lucide-react";
 import { GET_USERS, GET_TOP_STUDENTS, GET_ANALYTICS_EXPORT } from "@/lib/graphql/queries";
 import { CREATE_USER, UPDATE_USER, DELETE_USER, RESTORE_USER } from "@/lib/graphql/mutations";
 import { useAuth } from "@/contexts/AuthContext";
@@ -68,6 +71,7 @@ const getRoleBadge = (role: string) => {    const styles: Record<string, string>
 };
 
 export default function AdminUsers() {
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("all");
@@ -75,6 +79,7 @@ export default function AdminUsers() {
   const pageSize = 10;
 
   // Dialog states
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [viewUser, setViewUser] = useState<any | null>(null);
   const [editUser, setEditUser] = useState<any | null>(null);
@@ -237,10 +242,16 @@ export default function AdminUsers() {
               Manage platform users, roles, and permissions
             </p>
           </div>
-          <Button variant="gold" onClick={() => setIsAddOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add User
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowExportDialog(true)}>
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+            <Button variant="gold" onClick={() => setIsAddOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add User
+            </Button>
+          </div>
         </motion.div>
 
         {/* Analytics & Export Top Bar */}
@@ -404,6 +415,9 @@ export default function AdminUsers() {
                               <DropdownMenuItem onClick={() => setAwardUser(user)}>
                                 <Award className="w-4 h-4 mr-2" /> Award Badge
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/portal/admin/user-report/${user.id}`)}>
+                                <FileSpreadsheet className="w-4 h-4 mr-2" /> Full Report
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setViewUser(user)}>
                                 <Eye className="w-4 h-4 mr-2" /> View Profile
                               </DropdownMenuItem>
@@ -522,6 +536,11 @@ export default function AdminUsers() {
         onConfirm={handleDeleteUser}
         title="Delete User"
         description={`Are you sure you want to delete ${deleteUser?.username}? This action cannot be undone.`}
+      />
+
+      <ExportDataDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
       />
 
     </PortalLayout>

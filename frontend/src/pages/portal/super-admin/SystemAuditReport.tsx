@@ -44,13 +44,13 @@ import {
 } from 'recharts';
 import { Input } from "@/components/ui/input";
 import { format, subDays, isSameDay, startOfDay, isValid } from "date-fns";
-import { toast } from "sonner";
-import { downloadAsCSV } from "@/lib/utils/exportUtils";
+import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 
 const COLORS = ['#D4AF37', '#3B82F6', '#10B981', '#F59E0B', '#6366F1', '#EC4899'];
 
 export default function SystemAuditReport() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showExportDialog, setShowExportDialog] = useState(false);
   
   // Queries
   const { data: activityData, loading: activityLoading } = useQuery(GET_RECENT_ACTIVITY, {
@@ -116,24 +116,6 @@ export default function SystemAuditReport() {
 
 
 
-  const exportReport = () => {
-    const reportData = allUsers.map(u => {
-      const userActions = activities.filter((a: any) => a.username === u.username);
-      const userHours = (timeLogs.filter((t: any) => t.user?.id === u.id).reduce((acc: number, t: any) => acc + t.minutes, 0) / 60).toFixed(1);
-      return {
-        Username: u.username,
-        Email: u.email,
-        Role: u.role,
-        TotalActions: userActions.length,
-        TotalHoursSpent: userHours,
-        JoinedAt: format(parseSafeDate(u.createdAt), 'yyyy-MM-dd')
-      };
-    });
-    
-    downloadAsCSV(reportData, "System_Audit_Report");
-    toast.success("System report exported successfully");
-  };
-
   if (analyticsLoading || usersLoading) {
     return (
       <PortalLayout>
@@ -168,9 +150,9 @@ export default function SystemAuditReport() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={exportReport} className="rounded-xl border-border/50 hover:bg-gold/5">
+            <Button variant="outline" onClick={() => setShowExportDialog(true)} className="rounded-xl border-border/50 hover:bg-gold/5">
               <Download className="w-4 h-4 mr-2" />
-              Export Full Report
+              Export
             </Button>
           </div>
         </motion.div>
@@ -480,6 +462,11 @@ export default function SystemAuditReport() {
           </div>
         </div>
       </div>
+
+      <ExportDataDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+      />
     </PortalLayout>
   );
 }

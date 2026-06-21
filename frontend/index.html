@@ -48,18 +48,30 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
   <!-- ─── DNS Prefetch & Preconnect ────────────────────────────────────── -->
-  <link rel="dns-prefetch" href="https://bootskills.com" />
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-  <link rel="dns-prefetch" href="https://googletagmanager.com" />
-  <link rel="dns-prefetch" href="https://analytics.ahrefs.com" />
-
+  <!-- Critical origins: prioritized preconnect with credentials -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://bootskills.com" />
 
+  <!-- Early font loading with swap for minimal layout shift -->
   <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
-    rel="stylesheet" />
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </noscript>
+
+  <!-- Deferred origins: dns-prefetch (no connection overhead until needed) -->
+  <link rel="dns-prefetch" href="https://googletagmanager.com" />
+  <link rel="dns-prefetch" href="https://analytics.ahrefs.com" />
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+  <link rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
 
   <!-- ─── Google Tag Manager ───────────────────────────────────────────── -->
   <script>(function (w, d, s, l, i) {

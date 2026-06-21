@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,7 @@ import {
   ShieldCheck,
   Trophy,
   Book,
+  Download,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -42,9 +44,11 @@ const COLORS = ['#D4AF37', '#3B82F6', '#10B981', '#F59E0B', '#6366F1', '#EC4899'
 
 import { useQuery, useLazyQuery } from "@apollo/client/react";
 import { GET_ANALYTICS, GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY, GET_TOP_STUDENTS, GET_USERS, GET_COURSES_LITE_SUMMARY, GET_COURSE_ENROLLED_STUDENTS } from "@/lib/graphql/queries";
+import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 
 
 export default function SuperAdminAnalytics() {
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const { data: analyticsData, loading: analyticsLoading } = useQuery(GET_ANALYTICS);
   const { data: dashboardData } = useQuery(GET_ADMIN_DASHBOARD_DATA);
   const { data: activityData } = useQuery(GET_RECENT_ACTIVITY, { pollInterval: 15000 });
@@ -113,6 +117,10 @@ export default function SuperAdminAnalytics() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)}>
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
             <Button variant="outline" size="sm">
               <Calendar className="w-4 h-4 mr-2" />
               Live Feed
@@ -407,6 +415,11 @@ export default function SuperAdminAnalytics() {
           </Card>
         </motion.div>
       </div>
+
+      <ExportDataDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+      />
     </PortalLayout>
   );
 }

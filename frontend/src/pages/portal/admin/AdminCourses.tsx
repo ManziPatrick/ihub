@@ -22,6 +22,7 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
+  Download,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ViewCourseDialog, EditCourseDialog, DeleteConfirmDialog } from "@/components/portal/dialogs";
 import { QuestionManagerDialog } from "@/components/portal/QuestionManagerDialog";
+import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 import { toast } from "sonner";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
 import { GET_COURSES_LITE_SUMMARY, GET_STATS, GET_USERS, GET_COURSE, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
@@ -45,6 +47,7 @@ export default function AdminCourses() {
   const pageSize = 10;
 
   // Dialog states
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const [viewCourse, setViewCourse] = useState<any | null>(null);
   const [editCourse, setEditCourse] = useState<any | null>(null);
   const [deleteCourse, setDeleteCourse] = useState<any | null>(null);
@@ -225,10 +228,16 @@ export default function AdminCourses() {
               Create, manage, and configure courses — students enroll directly
             </p>
           </div>
-          <Button variant="gold" onClick={() => navigate("/portal/admin/courses/create")}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Course
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowExportDialog(true)}>
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+            <Button variant="gold" onClick={() => navigate("/portal/admin/courses/create")}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Course
+            </Button>
+          </div>
         </motion.div>
 
         {/* Stats */}
@@ -547,6 +556,11 @@ export default function AdminCourses() {
         isOpen={!!manageQuestionsCourse}
         onClose={() => setManageQuestionsCourse(null)}
         course={manageQuestionsCourse}
+      />
+
+      <ExportDataDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
       />
     </PortalLayout>
   );

@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { FileUpload } from "@/components/FileUpload";
 import { TextEditor } from "@/components/ui/text-editor";
 import { ManageQuestionsDialog, ManageCodeExercisesDialog } from "@/components/portal/dialogs";
+import { CourseDocumentUpload } from "@/components/portal/CourseDocumentUpload";
 import { 
   ChevronRight, 
   ChevronDown,
@@ -44,6 +45,7 @@ import {
   Circle,
   CheckCircle2,
   ChevronUp,
+  Upload,
 } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_USERS, GET_COURSES_SUMMARY, GET_ADMIN_DASHBOARD_DATA, GET_CATEGORIES } from "@/lib/graphql/queries";
@@ -472,6 +474,8 @@ export default function CreateCourse() {
   const [questionLesson, setQuestionLesson] = useState<{ id: string, title: string, content?: string } | null>(null);
   const [codeExerciseLesson, setCodeExerciseLesson] = useState<{ id: string, title: string } | null>(null);
 
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -489,6 +493,40 @@ export default function CreateCourse() {
     enrollmentMode: "direct",
     modules: [] as any[]
   });
+
+  // Handle parsed document data — populate form with uploaded document content
+  const handleParsedCourseData = (data: any) => {
+    setFormData(prev => ({
+      ...prev,
+      title: data.title || prev.title,
+      description: data.description || prev.description,
+      category: data.category || prev.category,
+      level: data.level || prev.level,
+      modules: data.modules?.length > 0
+        ? data.modules.map((m: any) => ({
+            title: m.title || "New Module",
+            description: m.description || "",
+            lessons: m.lessons?.map((l: any) => ({
+              title: l.title || "",
+              duration: l.duration || 10,
+              type: l.type || "video",
+              content: l.content || "",
+              videoUrl: l.videoUrl || "",
+              fileUrl: l.fileUrl || "",
+            })) || []
+          }))
+        : prev.modules
+    }));
+    // Expand all modules that were imported
+    if (data.modules?.length > 0) {
+      const expanded: Record<number, boolean> = {};
+      data.modules.forEach((_: any, i: number) => {
+        expanded[i] = true;
+      });
+      setExpandedModules(expanded);
+    }
+    toast.success(`Course structure imported: ${data.modules?.length || 0} modules loaded!`);
+  };
 
   const { data: usersData } = useQuery(GET_USERS, { variables: { limit: 100 } });
   const trainers = (usersData as any)?.users?.items?.filter((u: any) => u.role === 'trainer' || u.role === 'admin' || u.role === 'super_admin') || [];
@@ -654,6 +692,30 @@ export default function CreateCourse() {
                         {/* STEP 1: IDENTITY */}
                         {currentStep === 1 && (
                             <div className="grid gap-8">
+                                {/* Document Upload Action Card */}
+                                <div className="p-6 rounded-[2.5rem] bg-gradient-to-br from-accent/5 to-transparent border border-accent/20 flex items-center justify-between">
+                                    <div className="space-y-1">
+                                        <h3 className="font-heading font-bold text-lg flex items-center gap-2">
+                                            <Upload className="w-5 h-5 text-accent" />
+                                            Import from Document
+                                        </h3>
+                                        <p className="text-xs text-muted-foreground max-w-md">
+                                            Upload a PDF, DOCX, or TXT file with your course structure. 
+                                            We'll parse it and auto-fill the form — no manual entry needed!
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-2 shrink-0">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setShowDocumentUpload(true)}
+                                            className="h-12 rounded-2xl gap-2 border-accent/30 text-accent hover:bg-accent/10 font-black uppercase text-[10px] tracking-widest"
+                                        >
+                                            <Upload className="w-4 h-4" />
+                                            Upload & Parse
+                                        </Button>
+                                    </div>
+                                </div>
+
                                 <div className="space-y-3">
                                     <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Course Title</label>
                                     <Input 
@@ -1266,6 +1328,12 @@ export default function CreateCourse() {
             }))
           }));
         }}
+      />
+      {/* Course Document Upload Dialog */}
+      <CourseDocumentUpload
+        open={showDocumentUpload}
+        onOpenChange={setShowDocumentUpload}
+        onApply={handleParsedCourseData}
       />
     </PortalLayout>
   );

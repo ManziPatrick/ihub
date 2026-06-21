@@ -96,6 +96,10 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String },
   phone: { type: String },
   location: { type: String },
+  latitude: { type: Number },
+  longitude: { type: Number },
+  locationUpdatedAt: { type: Date },
+  locationShared: { type: Boolean, default: false },
   title: { type: String },
 
   // Theme Preferences
@@ -117,5 +121,12 @@ const userSchema = new mongoose.Schema({
   isFirst: { type: Boolean, default: true },
   assignedAdmin: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
+
+// Indexes for efficient user queries
+userSchema.index({ role: 1, status: 1 });
+userSchema.index({ status: 1, isDeleted: 1 });
+userSchema.index({ lastActive: -1 });
+userSchema.index({ assignedAdmin: 1 });
+userSchema.index({ isOnline: 1, lastActive: -1 });
 
 export const User = mongoose.model('User', userSchema);

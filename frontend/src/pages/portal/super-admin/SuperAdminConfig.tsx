@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -24,14 +24,18 @@ import {
   Cloud,
   Zap,
   Loader2,
+  FileDown,
+  Download,
 } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_CONFIGS, GET_BRANDING } from "@/lib/graphql/queries";
 import { UPDATE_CONFIG, SEND_TEST_EMAIL } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
+import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 
 export default function SuperAdminConfig() {
   const [activeTab, setActiveTab] = useState("general");
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const { data, loading, refetch } = useQuery(GET_CONFIGS);
   const [updateConfigMutation] = useMutation(UPDATE_CONFIG, {
     refetchQueries: [{ query: GET_CONFIGS }, { query: GET_BRANDING }]
@@ -47,7 +51,7 @@ export default function SuperAdminConfig() {
     }
   };
 
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<Record<string, any>>({
     siteName: "Bootskills Academy",
     siteDescription: "Leading tech education in Rwanda.",
     contactEmail: "contact@bootskills.com",
@@ -77,6 +81,22 @@ export default function SuperAdminConfig() {
       setSettings(newSettings);
     }
   }, [data]);
+
+  const handleExportConfig = useCallback(() => {
+    const configBlob = new Blob(
+      [JSON.stringify(settings, null, 2)],
+      { type: "application/json" }
+    );
+    const url = URL.createObjectURL(configBlob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `platform_config_${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Config exported as JSON");
+  }, [settings]);
 
   const handleSaveAll = async () => {
     toast.promise(
@@ -110,10 +130,20 @@ export default function SuperAdminConfig() {
               Manage global settings, security, and appearance
             </p>
           </div>
-          <Button variant="gold" className="shadow-lg shadow-gold/20" onClick={handleSaveAll}>
-            <Save className="w-4 h-4 mr-2" />
-            Save All Changes
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="border-border/50" onClick={handleExportConfig}>
+              <FileDown className="w-4 h-4 mr-2" />
+              Export Config JSON
+            </Button>
+            <Button variant="outline" className="border-border/50" onClick={() => setShowExportDialog(true)}>
+              <Download className="w-4 h-4 mr-2" />
+              Export Reports
+            </Button>
+            <Button variant="gold" className="shadow-lg shadow-gold/20" onClick={handleSaveAll}>
+              <Save className="w-4 h-4 mr-2" />
+              Save All Changes
+            </Button>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -301,6 +331,9 @@ export default function SuperAdminConfig() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Export Dialog */}
+      <ExportDataDialog open={showExportDialog} onOpenChange={setShowExportDialog} />
     </PortalLayout>
   );
 }

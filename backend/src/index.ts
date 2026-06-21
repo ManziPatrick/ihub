@@ -30,10 +30,12 @@ import paymentRoutes from './routes/PaymentRoutes';
 import certificateRoutes from './routes/CertificateRoutes';
 import ttsRoutes from './routes/TTSRoutes';
 import diagnosticsRoutes from './routes/DiagnosticsRoutes';
+import exportRoutes from './routes/ExportRoutes';
 import { Course } from './models/Course';
 import { authMiddleware } from './middleware/auth';
 import { maintenanceMiddleware } from './middleware/maintenance';
 import { compileCode } from './services/compiler.service';
+import { generateCourseTemplate } from './services/course-parser.service';
 
 dotenv.config();
 
@@ -302,6 +304,17 @@ const startServer = async () => {
     app.use('/api/blogs', blogRoutes);
     app.use('/api/blog-categories', blogCategoryRoutes);
     app.use('/api/upload', uploadRoutes);
+    app.use('/api/export', exportRoutes);
+
+    // =============================
+    // COURSE DOCUMENT TEMPLATE DOWNLOAD
+    // =============================
+    app.get('/api/course-template', (_req, res) => {
+        const template = generateCourseTemplate();
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="course-template.txt"');
+        res.send(template);
+    });
     // =============================
     // STATIC FILES — serve uploaded PDFs (NDAs, certificates, invoices)
     // =============================

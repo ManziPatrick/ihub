@@ -97,9 +97,14 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
 export const sendWelcomeEmail = async (
   email: string,
   username: string,
-  role: string
+  role: string,
+  resetToken?: string
 ): Promise<boolean> => {
   const config = await getEmailConfig();
+  const setPasswordUrl = resetToken
+    ? `${process.env.CLIENT_ORIGIN}/reset-password?token=${resetToken}`
+    : null;
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -111,19 +116,35 @@ export const sendWelcomeEmail = async (
         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
         .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
         .btn { display: inline-block; background: #D4AF37; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: bold; }
+        .btn-setpw { display: inline-block; background: #2563eb; color: white; padding: 14px 36px; text-decoration: none; border-radius: 8px; margin-top: 20px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3); }
+        .warning-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 6px; margin: 20px 0; font-size: 14px; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1>Welcome to Bootskills Academy!</h1>
+          <h1>🎉 Welcome to Bootskills Academy!</h1>
         </div>
         <div class="content">
           <h2>Hi ${username},</h2>
           <p>We're thrilled to have you join our community of innovators and builders!</p>
           <p>Your account has been successfully created as a <strong>${role.charAt(0).toUpperCase() + role.slice(1)}</strong>.</p>
-          <p>At Bootskills Academy, we focus on real-world engineering skills that matter. You can now access your dashboard to start your learning journey.</p>
-          <a href="${process.env.CLIENT_ORIGIN}/login" class="btn">Access My Dashboard</a>
+          <p>At Bootskills Academy, we focus on real-world engineering skills that matter.</p>
+          ${setPasswordUrl ? `
+            <div class="warning-box">
+              <strong>🔑 Set Your Password</strong>
+              <p style="margin: 8px 0 0;">Your account was created by an administrator. Please click the button below to set your own password and activate your account. This link expires in 1 hour.</p>
+            </div>
+            <div style="text-align: center;">
+              <a href="${setPasswordUrl}" class="btn-setpw">🔐 Set My Password</a>
+            </div>
+            <p style="margin-top: 16px; font-size: 13px; color: #666; text-align: center;">
+              Or copy this link: <a href="${setPasswordUrl}" style="color: #2563eb; word-break: break-all;">${setPasswordUrl}</a>
+            </p>
+          ` : `
+            <p>You can now access your dashboard to start your learning journey.</p>
+            <a href="${process.env.CLIENT_ORIGIN}/login" class="btn">Access My Dashboard</a>
+          `}
         </div>
         <div class="footer">
           <p>© 2026 ${config.siteName}. Building Africa's Tech Talent.</p>
@@ -746,6 +767,115 @@ export const sendLoginOTPEmail = async (email: string, code: string): Promise<bo
 };
 
 /**
+ * Send broadcast/announcement email — used for bulk notifications and scheduled broadcasts
+ */
+export const sendBroadcastAnnouncement = async (
+  email: string,
+  recipientName: string,
+  title: string,
+  message: string,
+  link?: string | null
+): Promise<boolean> => {
+  const config = await getEmailConfig();
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f5; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px 10px; }
+        .card { background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+        .header { 
+          background: linear-gradient(135deg, #D4AF37 0%, #B8860B 50%, #B08D2A 100%); 
+          padding: 40px 30px; 
+          text-align: center; 
+        }
+        .header h1 { margin: 0; color: #ffffff; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+        .header .logo-text { color: rgba(255,255,255,0.85); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; font-weight: 400; }
+        .content { padding: 35px 30px; }
+        .content h2 { margin: 0 0 16px; font-size: 20px; color: #1a1a1a; font-weight: 600; }
+        .message-box { 
+          background: #fafaf9; 
+          padding: 24px; 
+          border-radius: 12px; 
+          margin: 20px 0; 
+          border-left: 4px solid #D4AF37;
+          font-size: 15px;
+          color: #444;
+          line-height: 1.7;
+        }
+        .btn-wrapper { text-align: center; margin: 28px 0 8px; }
+        .btn {
+          display: inline-block;
+          background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+          color: #ffffff !important;
+          padding: 14px 36px;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 15px;
+          letter-spacing: 0.3px;
+          box-shadow: 0 4px 14px rgba(212, 175, 55, 0.3);
+        }
+        .btn:hover { box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); }
+        .divider { height: 1px; background: #e5e5e5; margin: 24px 0; }
+        .footer-text { font-size: 13px; color: #888; text-align: center; line-height: 1.5; margin-top: 20px; }
+        .footer-text a { color: #D4AF37; text-decoration: none; }
+        @media only screen and (max-width: 480px) {
+          .header { padding: 30px 20px; }
+          .header h1 { font-size: 22px; }
+          .content { padding: 25px 20px; }
+          .btn { display: block; text-align: center; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="card">
+          <div class="header">
+            <h1>📢 ${title}</h1>
+            <div class="logo-text">${config.siteName}</div>
+          </div>
+          <div class="content">
+            <h2>Hi ${recipientName},</h2>
+            <div class="message-box">
+              ${message.replace(/\n/g, '<br>')}
+            </div>
+            ${link ? `
+              <div class="btn-wrapper">
+                <a href="${link}" class="btn">View Details</a>
+              </div>
+            ` : ''}
+            <div class="divider"></div>
+            <p style="margin: 0; font-size: 14px; color: #666;">
+              This is an official announcement from the <strong>${config.siteName}</strong> Admin Team.
+              ${link ? `If the button above doesn't work, copy this link into your browser:<br><a href="${link}" style="color:#D4AF37;word-break:break-all;">${link}</a>` : ''}
+            </p>
+          </div>
+        </div>
+        <div class="footer-text">
+          <p>© 2026 ${config.siteName}. All rights reserved.</p>
+          <p>Building Africa's Tech Talent.</p>
+          <p style="margin-top: 12px; font-size: 12px; color: #aaa;">
+            You received this email because you are registered with ${config.siteName}.
+            If you have questions, please contact our support team.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `📢 ${title}`,
+    html
+  });
+};
+
+/**
  * Send email when developer submits task feedback / resources
  */
 export const sendTaskFeedbackEmail = async (
@@ -826,5 +956,6 @@ export default {
   sendAdminNewUserNotification,
   sendMeetingInvitation,
   sendCourseEnrollmentConfirmation,
-  sendTaskFeedbackEmail
+  sendTaskFeedbackEmail,
+  sendBroadcastAnnouncement
 };

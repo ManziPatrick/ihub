@@ -84,6 +84,12 @@ const SuperAdminPerformance = lazy(() => import("@/pages/portal/super-admin/Perf
 const SuperAdminUndoMetrics = lazy(() => import("@/pages/portal/super-admin/AdminUndoMetrics"));
 const SuperAdminBranding = lazy(() => import("@/pages/portal/admin/AdminBranding"));
 const SuperAdminTools = lazy(() => import("@/pages/portal/admin/AdminTools"));
+const SuperAdminMap = lazy(() => import("@/pages/portal/super-admin/SuperAdminMap"));
+const UserReportPage = lazy(() => import("@/pages/portal/super-admin/UserReportPage"));
+const SuperAdminCommissionConfig = lazy(() => import("@/pages/portal/super-admin/SuperAdminCommissionConfig"));
+const AdminCommissionDashboard = lazy(() => import("@/pages/portal/super-admin/AdminCommissionDashboard"));
+const SuperAdminBroadcast = lazy(() => import("@/pages/portal/super-admin/SuperAdminBroadcast"));
+const SuperAdminUploadLogs = lazy(() => import("@/pages/portal/super-admin/SuperAdminUploadLogs"));
 const Maintenance = lazy(() => import("@/pages/Maintenance"));
 
 
@@ -197,6 +203,7 @@ export function AnimatedRoutes() {
           <Route path="/portal/admin/payments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPayments /></ProtectedRoute>} />
           <Route path="/portal/admin/badges" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBadges /></ProtectedRoute>} />
           <Route path="/portal/admin/analytics" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnalytics /></ProtectedRoute>} />
+          <Route path="/portal/admin/user-report/:userId" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><UserReportPage /></ProtectedRoute>} />
 
           <Route path="/portal/admin/course-preview" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><CoursePreview /></ProtectedRoute>} />
           <Route path="/portal/admin/course-preview/:courseId" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><CoursePreview /></ProtectedRoute>} />
@@ -218,6 +225,13 @@ export function AnimatedRoutes() {
           <Route path="/portal/super-admin/undo-metrics" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminUndoMetrics /></ProtectedRoute>} />
           <Route path="/portal/super-admin/branding" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminBranding /></ProtectedRoute>} />
           <Route path="/portal/super-admin/tools" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminTools /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/user-map" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminMap /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/user-report/:userId" element={<ProtectedRoute allowedRoles={["super_admin"]}><UserReportPage /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/commissions" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminCommissionConfig /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/my-commissions" element={<ProtectedRoute allowedRoles={["super_admin"]}><AdminCommissionDashboard /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/broadcast" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminBroadcast /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/upload-logs" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminUploadLogs /></ProtectedRoute>} />
+          <Route path="/portal/admin/commissions" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommissionDashboard /></ProtectedRoute>} />
 
           {/* Shared Portal Routes */}
           <Route path="/portal/settings" element={<ProtectedRoute allowedRoles={["student", "trainer", "admin", "super_admin"]}><PortalSettings /></ProtectedRoute>} />

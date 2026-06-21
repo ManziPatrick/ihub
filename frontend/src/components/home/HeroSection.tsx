@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, SlidersHorizontal } from "lucide-react";
-import topImage from "@/assets/top.jpg";
+import topImage from "@/assets/top-hero.webp";
 
 export function HeroSection() {
   const [searchQuery, setSearchQuery] = useState("");

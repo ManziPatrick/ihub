@@ -22,13 +22,16 @@ import {
   GraduationCap,
   Award,
   Eye,
+  Download,
 } from "lucide-react";
 import { GradeStudentDialog, StudentDetailDialog } from "@/components/portal/dialogs";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { toast } from "sonner";
 import { gql } from "@apollo/client";
 import { BadgeAwardDialog } from "@/components/portal/BadgeAwardDialog";
+import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 import { GET_TRAINER_STUDENTS } from "@/lib/graphql/queries";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CREATE_BADGE = gql`
   mutation CreateBadge($title: String!, $description: String!, $icon: String, $category: String) {
@@ -139,6 +142,8 @@ const getStatusBadge = (status: string) => {
 
 
 export default function TrainerStudents() {
+  const { user: currentUser } = useAuth();
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCourse, setFilterCourse] = useState("all");
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
@@ -255,6 +260,10 @@ export default function TrainerStudents() {
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm">
+            <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)}>
+              <Download className="w-4 h-4 mr-1.5" />
+              Export
+            </Button>
             <div className="px-3 py-1.5 bg-accent/20 rounded-full">
               <span className="text-foreground font-medium">{processedStudents.length} Students</span>
             </div>
@@ -464,6 +473,14 @@ export default function TrainerStudents() {
         isOpen={awardBadgeDialogOpen}
         onClose={() => setAwardBadgeDialogOpen(false)}
         user={selectedStudent}
+      />
+
+      <ExportDataDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+        isTrainer={true}
+        userId={currentUser?.id}
+        userRole={currentUser?.role}
       />
     </PortalLayout>
   );

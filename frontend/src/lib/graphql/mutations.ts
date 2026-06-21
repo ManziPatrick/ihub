@@ -1720,6 +1720,18 @@ export const GO_OFFLINE = gql`
   }
 `;
 
+export const UPDATE_USER_LOCATION = gql`
+  mutation UpdateUserLocation($latitude: Float!, $longitude: Float!) {
+    updateUserLocation(latitude: $latitude, longitude: $longitude) {
+      id
+      latitude
+      longitude
+      locationUpdatedAt
+      locationShared
+    }
+  }
+`;
+
 export const ASSIGN_PROJECT_TO_USERS = gql`
   mutation AssignProjectToUsers($projectId: ID!, $userIds: [ID!]!, $type: String!, $deadline: String) {
     assignProjectToUsers(projectId: $projectId, userIds: $userIds, type: $type, deadline: $deadline) {

@@ -13,6 +13,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { useMutation } from "@apollo/client/react";
 import { GOOGLE_LOGIN, VERIFY_2FA, SETUP_2FA, REQUEST_EMAIL_OTP, VERIFY_EMAIL_OTP } from "@/lib/graphql/mutations";
 import { ProfileCompletionWizard } from "@/components/portal/ProfileCompletionGuard";
+import { LocationSetupDialog } from "@/components/auth/LocationSetupDialog";
 
 type AuthMode = "login" | "signup";
 
@@ -33,6 +34,10 @@ export default function Auth() {
   const [resetSent, setResetSent] = useState(false);
   const [onboardingToken, setOnboardingToken] = useState<string | null>(null);
   const [onboardingUser, setOnboardingUser] = useState<any>(null);
+
+  // Location setup state
+  const [needsLocation, setNeedsLocation] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
 
   const { login, signup, user, loginWithToken } = useAuth();
   const navigate = useNavigate();
@@ -59,6 +64,16 @@ export default function Auth() {
       const { token: backendToken, user: userData } = (data as any).googleLogin;
       
       loginWithToken(backendToken, userData);
+
+      // Check if user needs to set their location
+      if (!userData?.location || userData.location === "" || userData.location === "null") {
+        const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";
+        setPendingRedirect(from);
+        setNeedsLocation(true);
+        setIsLoading(false);
+        return;
+      }
+
       toast.success("Successfully signed in with Google!");
       const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";
       navigate(from, { replace: true });
@@ -110,6 +125,15 @@ export default function Auth() {
           const { data } = await setup2FAMutation();
           if ((data as any)?.setup2FA) setTwoFactorData((data as any).setup2FA);
           toast.info("Administrator 2FA Setup Required");
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if user needs to set their location
+        if (response?.token && (!response.user?.location || response.user.location === "" || response.user.location === "null")) {
+          const redirectTo = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";
+          setPendingRedirect(redirectTo);
+          setNeedsLocation(true);
           setIsLoading(false);
           return;
         }
@@ -173,6 +197,18 @@ export default function Auth() {
       setIsSendingOTP(false);
     }
   };
+
+  // Show location setup dialog after login
+  if (needsLocation) {
+    return (
+      <LocationSetupDialog
+        onComplete={() => {
+          setNeedsLocation(false);
+          navigate(pendingRedirect || "/portal/student", { replace: true });
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">

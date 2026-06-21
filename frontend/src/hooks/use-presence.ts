@@ -2,11 +2,15 @@ import { useEffect } from 'react';
 import { useMutation } from '@apollo/client/react';
 import { UPDATE_PRESENCE, GO_OFFLINE } from '@/lib/graphql/mutations';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGeolocation } from './useGeolocation';
 
 export function usePresence() {
     const { user } = useAuth();
     const [updatePresence] = useMutation(UPDATE_PRESENCE);
     const [goOffline] = useMutation(GO_OFFLINE);
+    
+    // Track user location on login
+    useGeolocation();
 
     useEffect(() => {
         if (!user) return;

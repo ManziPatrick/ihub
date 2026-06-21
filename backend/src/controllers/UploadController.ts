@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
+import UploadLog from '../models/UploadLog';
 
 dotenv.config();
 
@@ -9,6 +10,28 @@ cloudinary.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// Helper: log an upload action
+async function logUpload(req: Request, result: any, type: 'image' | 'file' | 'document') {
+  try {
+    if (!req.user) return;
+    const user = (req as any).user;
+    await UploadLog.create({
+      adminId: user.id,
+      adminUsername: user.username || 'unknown',
+      fileName: req.file?.originalname || 'unknown',
+      fileSize: req.file?.size || 0,
+      mimeType: req.file?.mimetype || 'unknown',
+      url: result.secure_url,
+      publicId: result.public_id,
+      type,
+      action: 'upload',
+      ipAddress: req.ip,
+    });
+  } catch (err) {
+    console.error('Failed to log upload:', err);
+  }
+}
 
 export const uploadImage = async (req: Request, res: Response) => {
     try {
@@ -44,6 +67,9 @@ export const uploadImage = async (req: Request, res: Response) => {
             uploadStream.end(req.file?.buffer);
         });
 
+        // Log the upload
+        await logUpload(req, result, 'image');
+
         res.json({
             url: (result as any).secure_url,
             publicId: (result as any).public_id,
@@ -74,6 +100,9 @@ export const uploadFile = async (req: Request, res: Response) => {
             );
             uploadStream.end(req.file?.buffer);
         });
+
+        // Log the upload
+        await logUpload(req, result, 'file');
 
         res.json({
             url: (result as any).secure_url,

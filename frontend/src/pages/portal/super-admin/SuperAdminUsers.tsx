@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 import {
   Users,
   Search,
@@ -38,6 +39,7 @@ import {
   User,
   Pencil,
   Lock,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -53,14 +55,21 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_USERS, GET_ANALYTICS } from "@/lib/graphql/queries";
+import { GET_USERS, GET_ANALYTICS, GET_AVAILABLE_ADMINS } from "@/lib/graphql/queries";
+
+const navigate = (to: string) => {
+  window.location.href = to;
+};
 import { DELETE_USER, UPDATE_USER } from "@/lib/graphql/mutations";
+import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 import { toast } from "sonner";
 
 export default function SuperAdminUsers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
+  const [adminFilter, setAdminFilter] = useState("all");
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
@@ -85,11 +94,19 @@ export default function SuperAdminUsers() {
   if (roleFilter !== "all") {
     queryVariables.role = roleFilter;
   }
+  if (adminFilter !== "all") {
+    queryVariables.createdBy = adminFilter;
+  }
 
   const { data, loading, refetch } = useQuery(GET_USERS, {
     variables: queryVariables,
+    fetchPolicy: "cache-and-network",
   });
   const { data: analyticsData } = useQuery(GET_ANALYTICS);
+  const { data: availableAdminsData } = useQuery(GET_AVAILABLE_ADMINS);
+
+  // Get all admin/super_admin users for the admin filter dropdown
+  const adminOptions = (availableAdminsData as any)?.getAvailableAdmins || [];
   const [deleteUserMutation] = useMutation(DELETE_USER);
   const [updateUserMutation, { loading: updating }] = useMutation(UPDATE_USER);
 
@@ -240,9 +257,9 @@ export default function SuperAdminUsers() {
               View and manage all platform users
             </p>
           </div>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setShowExportDialog(true)}>
             <Download className="w-4 h-4 mr-2" />
-            Export Users
+            Export
           </Button>
         </motion.div>
 
@@ -311,6 +328,25 @@ export default function SuperAdminUsers() {
               <SelectItem value="super_admin">Super Admins</SelectItem>
             </SelectContent>
           </Select>
+          <Select
+            value={adminFilter}
+            onValueChange={(val) => {
+              setAdminFilter(val);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Filter by creator" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Creators</SelectItem>
+              {adminOptions.map((admin: any) => (
+                <SelectItem key={admin.id} value={admin.id}>
+                  {admin.fullName || admin.username}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </motion.div>
 
         {/* Users Table */}
@@ -346,6 +382,9 @@ export default function SuperAdminUsers() {
                         </th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
                           Status
+                        </th>
+                        <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
+                          Created By
                         </th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
                           Joined
@@ -404,6 +443,15 @@ export default function SuperAdminUsers() {
                               {user.isDeleted ? "deleted" : "active"}
                             </Badge>
                           </td>
+                          <td className="p-4 text-center text-sm">
+                            {user.createdBy ? (
+                              <span className="text-card-foreground/80 font-medium">
+                                {user.createdBy.fullName || user.createdBy.username}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground/50 italic">—</span>
+                            )}
+                          </td>
                           <td className="p-4 text-center text-sm text-card-foreground/70">
                             {user.createdAt
                               ? new Date(
@@ -426,6 +474,14 @@ export default function SuperAdminUsers() {
                                   }}
                                 >
                                   <Eye className="w-4 h-4 mr-2" /> View Profile
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/portal/super-admin/user-report/${user.id}`);
+                                  }}
+                                >
+                                  <FileSpreadsheet className="w-4 h-4 mr-2" /> Full Report
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={(e) => {
@@ -540,6 +596,11 @@ export default function SuperAdminUsers() {
           </Card>
         </motion.div>
       </div>
+
+      <ExportDataDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
+      />
 
       {/* ── VIEW PROFILE SHEET ── */}
       <Sheet

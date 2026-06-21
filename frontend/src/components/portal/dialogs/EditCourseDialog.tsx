@@ -33,15 +33,18 @@ import {
   Terminal,
   ListOrdered,
   Settings2,
-  FileText as FileTextIcon
+  FileText as FileTextIcon,
+  FileUp
 } from "lucide-react";
 import { ManageQuestionsDialog } from "./ManageQuestionsDialog";
 import { ResourceBankDialog } from "./ResourceBankDialog";
+import { CourseDocumentUpload } from "@/components/portal/CourseDocumentUpload";
 import { ManageAssignmentQuestionsDialog } from "./ManageAssignmentQuestionsDialog";
 import { ManageCodeExercisesDialog } from "./ManageCodeExercisesDialog";
 import { AssignmentConfigDialog } from "./AssignmentConfigDialog";
 import { ExamConfigDialog } from "../ExamConfigDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import { FileUpload } from "@/components/FileUpload";
 
 interface EditCourseDialogProps {
@@ -517,6 +520,7 @@ export function EditCourseDialog({
   const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({ 0: true });
   const [showResourceBank, setShowResourceBank] = useState(false);
   const [resourceBankTarget, setResourceBankTarget] = useState<{ mIdx: number, lIdx: number } | null>(null);
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
 
   // Reset initialization when dialog closes or the course ID changes
   useEffect(() => {
@@ -868,6 +872,12 @@ export function EditCourseDialog({
               >
                 <BookOpen className="w-4 h-4" /> Curriculum
                 {isLoading && <Loader2 className="w-3 h-3 animate-spin text-accent" />}
+              </TabsTrigger>
+              <TabsTrigger
+                value="import"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-accent rounded-none shadow-none text-xs font-bold gap-2 px-1"
+              >
+                <FileUp className="w-4 h-4" /> Import
               </TabsTrigger>
             </TabsList>
           </div>
@@ -1348,6 +1358,42 @@ export function EditCourseDialog({
                   </div>
                 </TabsContent>
 
+                <TabsContent value="import" className="m-0 space-y-6 animate-in fade-in slide-in-from-right-2 duration-400 p-6">
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 border-b border-accent/10 pb-2">
+                      <FileUp className="w-5 h-5 text-accent" />
+                      <h3 className="font-bold text-sm uppercase tracking-tight">Import Course from Document</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Upload a PDF, DOCX, or TXT file, or paste a Google Doc URL to bulk-import course structure.
+                      The system will extract modules, lessons, and metadata and populate the fields below.
+                    </p>
+                    <div className="p-8 text-center rounded-2xl border-2 border-dashed border-border/40 hover:border-accent/30 hover:bg-accent/5 transition-all cursor-pointer" onClick={() => setShowDocumentUpload(true)}>
+                      <div className="w-16 h-16 rounded-2xl bg-accent/10 mx-auto flex items-center justify-center mb-4">
+                        <FileUp className="w-8 h-8 text-accent" />
+                      </div>
+                      <p className="text-sm font-bold mb-1">Import Course Structure</p>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Upload a PDF, DOCX, TXT, or image with course content
+                      </p>
+                      <Button variant="gold" className="gap-2">
+                        <FileUp className="w-4 h-4" />
+                        Open Document Importer
+                      </Button>
+                    </div>
+                    {formData.modules.length > 0 && (
+                      <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/20 flex items-center gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                        <p className="text-sm text-green-700 dark:text-green-300">
+                          Course currently has <strong>{formData.modules.length} modules</strong> and{' '}
+                          <strong>{formData.modules.reduce((sum: number, m: any) => sum + (m.lessons?.length || 0), 0)} lessons</strong>.
+                          Importing a document will replace the existing course structure.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
                 <TabsContent value="curriculum" className="m-0 space-y-6 animate-in fade-in slide-in-from-right-2 duration-400">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1607,6 +1653,34 @@ export function EditCourseDialog({
             newModules[codeExerciseLesson.mIdx] = { ...newModules[codeExerciseLesson.mIdx], lessons: newLessons };
             setFormData({ ...formData, modules: newModules });
           }
+        }}
+      />
+      <CourseDocumentUpload
+        open={showDocumentUpload}
+        onOpenChange={setShowDocumentUpload}
+        onApply={(parsedData) => {
+          const newFormData: any = { ...formData };
+          if (parsedData.title) newFormData.title = parsedData.title;
+          if (parsedData.description) newFormData.description = parsedData.description;
+          if (parsedData.category) newFormData.category = parsedData.category;
+          if (parsedData.level) newFormData.level = parsedData.level;
+          if (parsedData.modules.length > 0) {
+            newFormData.modules = parsedData.modules.map((m) => ({
+              title: m.title,
+              description: m.description,
+              lessons: m.lessons.map((l) => ({
+                title: l.title,
+                duration: l.duration,
+                type: l.type,
+                content: l.content,
+                videoUrl: l.videoUrl,
+                fileUrl: l.fileUrl,
+              })),
+            }));
+          }
+          setFormData(newFormData);
+          setShowDocumentUpload(false);
+          toast.success('Course structure imported from document! Review the Curriculum tab.');
         }}
       />
     </Dialog >

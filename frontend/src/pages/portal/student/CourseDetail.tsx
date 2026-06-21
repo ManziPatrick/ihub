@@ -1,4 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
+
+// Lazy-load heavy sub-components that aren't needed on initial page load
+const LessonQuiz = lazy(() => import("@/components/portal/LessonQuiz").then(m => ({ default: m.LessonQuiz })));
+const AssignmentExamView = lazy(() => import("@/components/portal/AssignmentExamView").then(m => ({ default: m.AssignmentExamView })));
+const CodeExercise = lazy(() => import("@/components/portal/CodeExercise").then(m => ({ default: m.CodeExercise })));
+const PPTViewer = lazy(() => import("@/components/portal/PPTViewer").then(m => ({ default: m.PPTViewer })));
+
+const LazyLoader = () => (
+  <div className="flex items-center justify-center min-h-[200px]">
+    <svg className="w-6 h-6 animate-spin text-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+  </div>
+);
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
@@ -55,10 +67,7 @@ import {
   PanelRightOpen,
 } from "lucide-react";
 import { RequestHelpDialog, BookCallDialog } from "@/components/portal/dialogs";
-import { LessonQuiz } from "@/components/portal/LessonQuiz";
-import { AssignmentExamView } from "@/components/portal/AssignmentExamView";
-import { CodeExercise } from "@/components/portal/CodeExercise";
-import { PPTViewer } from "@/components/portal/PPTViewer";
+
 import { toast } from "sonner";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_COURSE, GET_ME, GET_ASSIGNMENT_SUBMISSIONS } from "@/lib/graphql/queries";
@@ -634,13 +643,15 @@ export default function CourseDetail() {
               if (hasQuiz) {
                 return (
                   <Card className="border-border/50 p-8 shadow-2xl">
-                    <LessonQuiz
+                    <Suspense fallback={<LazyLoader />}>
+                      <LessonQuiz
                       courseId={courseId!}
                       lessonId={(currentLesson.id || currentLesson._id)}
                       onComplete={handleMarkComplete}
                       quizQuestions={currentLesson.quizQuestions || []}
                       config={currentLesson.quizConfig}
                     />
+                    </Suspense>
                   </Card>
                 );
               }
@@ -648,13 +659,15 @@ export default function CourseDetail() {
               if (hasAssignment) {
                 return (
                   <Card className="border-border/50 p-8 shadow-2xl">
-                    <AssignmentExamView
+                    <Suspense fallback={<LazyLoader />}>
+                      <AssignmentExamView
                       courseId={courseId!}
                       lessonId={(currentLesson.id || currentLesson._id)}
                       questions={currentLesson.assignmentQuestions}
                       config={currentLesson.assignmentConfig}
                       onComplete={handleMarkComplete}
                     />
+                    </Suspense>
                   </Card>
                 );
               }
@@ -664,7 +677,9 @@ export default function CourseDetail() {
                   <Card className="border-border/50 overflow-hidden shadow-2xl">
                     <div className="aspect-video bg-black relative">
                       {currentLesson?.type === 'ppt' || (currentLesson?.fileUrl && (currentLesson.fileUrl.endsWith('.ppt') || currentLesson.fileUrl.endsWith('.pptx'))) ? (
-                        <PPTViewer url={currentLesson.fileUrl} title={currentLesson.title} startSlide={1} />
+                        <Suspense fallback={<LazyLoader />}>
+                          <PPTViewer url={currentLesson.fileUrl} title={currentLesson.title} startSlide={1} />
+                        </Suspense>
                       ) : currentLesson?.videoUrl ? (
                         <iframe 
                           src={(() => {
@@ -703,7 +718,8 @@ export default function CourseDetail() {
                       {hasCodeExercises && (
                         <div className="space-y-6 mb-8">
                           {currentLesson.codeExercises.map((ex: any, idx: number) => (
-                            <CodeExercise
+                            <Suspense fallback={<LazyLoader />}>
+                              <CodeExercise
                               key={ex.id || idx}
                               exercise={{
                                 id: ex.id,
@@ -725,6 +741,7 @@ export default function CourseDetail() {
                                 }
                               }}
                             />
+                            </Suspense>
                           ))}
                         </div>
                       )}

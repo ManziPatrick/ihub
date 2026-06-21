@@ -54,7 +54,12 @@ import {
   Globe,
   Building2,
   RotateCcw,
-  Eye
+  Eye,
+  MapPin,
+  Percent,
+  Send,
+  Upload,
+  DollarSign
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePusher } from "@/hooks/use-pusher";
@@ -155,6 +160,7 @@ const adminNavItems: NavItem[] = [
     children: [
       { label: "Team", href: "/portal/admin/team", icon: UserCog },
       { label: "Payments", href: "/portal/admin/payments", icon: CreditCard },
+      { label: "Commissions", href: "/portal/admin/commissions", icon: Percent },
       { label: "Branding", href: "/portal/admin/branding", icon: Palette },
       { label: "Analytics", href: "/portal/admin/analytics", icon: BarChart3 },
       { label: "Toolbox", href: "/portal/admin/tools", icon: Table },
@@ -173,7 +179,11 @@ const superAdminNavItems: NavItem[] = [
       { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },
       { label: "All Users", href: "/portal/super-admin/users", icon: Users },
       { label: "Configuration", href: "/portal/super-admin/config", icon: Cog },
+      { label: "Commissions Config", href: "/portal/super-admin/commissions", icon: Percent },
+      { label: "My Commissions", href: "/portal/super-admin/my-commissions", icon: DollarSign },
+      { label: "Broadcast", href: "/portal/super-admin/broadcast", icon: Send },
       { label: "Undo Metrics", href: "/portal/super-admin/undo-metrics", icon: RotateCcw },
+      { label: "Upload Logs", href: "/portal/super-admin/upload-logs", icon: Upload },
     ]
   },
   { 
@@ -185,6 +195,7 @@ const superAdminNavItems: NavItem[] = [
     ]
   },
   { label: "Analytics", href: "/portal/super-admin/analytics", icon: BarChart3 },
+  { label: "User Map", href: "/portal/super-admin/user-map", icon: MapPin },
   { label: "Schedule", href: "/portal/admin/schedule", icon: Calendar },
   { label: "Messages", href: "/chat", icon: MessageSquare },
 ];

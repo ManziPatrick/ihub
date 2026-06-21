@@ -108,6 +108,11 @@ export const GET_USERS = gql`
           details
           timestamp
         }
+        createdBy {
+          id
+          username
+          fullName
+        }
         studentProfile {
           id
           school
@@ -683,6 +688,20 @@ export const GET_ME = gql`
         id
         isComplete
         school
+        educationLevel
+        academicYear
+        fieldOfStudy
+        city
+        sector
+        cell
+        village
+        skills
+        availability
+        bio
+        linkedinUrl
+        githubUrl
+        portfolioUrl
+        completionPercentage
       }
     }
   }
@@ -2488,6 +2507,180 @@ export const GET_INTERNSHIP_ACTIVITY_LOGS = gql`
   }
   ${PAGINATION_FRAGMENT}
 `;
+export const GET_USERS_WITH_LOCATION = gql`
+  query GetUsersWithLocation($role: String) {
+    usersWithLocation(role: $role) {
+      id
+      username
+      email
+      role
+      fullName
+      avatar
+      phone
+      location
+      latitude
+      longitude
+      locationUpdatedAt
+      locationShared
+      title
+    }
+  }
+`;
+
+export const GET_USER_FULL_REPORT = gql`
+  query GetUserFullReport($userId: ID!) {
+    getUserFullReport(userId: $userId) {
+      user {
+        id
+        username
+        email
+        role
+        fullName
+        avatar
+        phone
+        location
+        title
+        bio
+        school
+        level
+        xp
+        streak
+        createdAt
+      }
+      stats {
+        totalCourses
+        totalCoursesCompleted
+        courseCompletionRate
+        totalLessonsCompleted
+        averageGrade
+        totalGrades
+        totalProjects
+        completedProjects
+        projectCompletionRate
+        totalInternships
+        activeInternships
+        totalSubmissions
+        passedSubmissions
+      }
+      courses {
+        courseId
+        courseTitle
+        courseThumbnail
+        courseLevel
+        courseCategory
+        overallProgress
+        status
+        totalTimeSpent
+        lastAccessed
+        completedLessons
+        totalLessons
+        averageGrade
+        gradesCount
+        submissionsCount
+        submissions {
+          submissionId
+          lessonId
+          status
+          grade
+          totalScore
+          feedback
+          submittedAt
+        }
+      }
+      submissions {
+        submissionId
+        courseId
+        courseTitle
+        lessonId
+        status
+        grade
+        totalScore
+        feedback
+        submittedAt
+      }
+      grades {
+        courseId
+        lessonId
+        lessonTitle
+        score
+        feedback
+        gradedAt
+      }
+      projects {
+        id
+        title
+        course
+        type
+        status
+        progress
+        grade
+        feedback
+        deadline
+        submittedAt
+        createdAt
+        tasks {
+          title
+          completed
+          approved
+        }
+      }
+      internships {
+        id
+        title
+        organization
+        cohort
+        status
+        stage
+        currentStage
+        progress
+        startDate
+        endDate
+        mentor {
+          id
+          username
+          fullName
+        }
+        sprintReviews {
+          week
+          grade
+          feedback
+          date
+        }
+        milestones {
+          title
+          completed
+          date
+        }
+        tasks {
+          title
+          status
+          priority
+        }
+        meetings {
+          title
+          time
+          type
+        }
+      }
+      certificates {
+        id
+        courseTitle
+        status
+        grade
+        progress
+        issueDate
+        credentialId
+        requirements {
+          title
+          completed
+          current
+          total
+        }
+      }
+    }
+  }
+`;
+
 export const GET_COURSE_ENROLLED_STUDENTS = gql`
   query GetCourseEnrolledStudents($courseId: ID!) {
     getCourseEnrolledStudents(courseId: $courseId) {
@@ -2597,6 +2790,133 @@ export const GET_APPLICATION_PHASES = gql`
       enableApproval
       isInterviewPhase
       allowMeetingScheduling
+    }
+  }
+`;
+
+// ========== COMMISSION QUERIES ==========
+export const GET_COMMISSION_CONFIGS = gql`
+  query GetCommissionConfigs {
+    commissionConfigs {
+      id
+      adminId {
+        id
+        username
+        fullName
+        email
+      }
+      scope
+      scopeId
+      scopeTitle
+      percentage
+      description
+      active
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const GET_ADMIN_COMMISSION_CONFIGS = gql`
+  query GetAdminCommissionConfigs($adminId: ID!) {
+    getAdminCommissionConfigs(adminId: $adminId) {
+      id
+      scope
+      scopeId
+      scopeTitle
+      percentage
+      description
+      active
+      createdAt
+    }
+  }
+`;
+
+export const GET_ADMIN_COMMISSION_REPORT = gql`
+  query GetAdminCommissionReport($adminId: ID!) {
+    getAdminCommissionReport(adminId: $adminId) {
+      adminId
+      totalCommission
+      totalPayments
+      commissionEntries {
+        paymentId
+        itemTitle
+        type
+        amount
+        commissionPercentage
+        commissionAmount
+        scope
+        scopeTitle
+        createdAt
+      }
+    }
+  }
+`;
+
+export const GET_ALL_COMPLETED_PAYMENTS = gql`
+  query GetAllCompletedPayments {
+    getAllCompletedPayments {
+      id
+      studentName
+      type
+      itemTitle
+      amount
+      currency
+      date
+      status
+      method
+    }
+  }
+`;
+
+export const GET_COMMISSION_ADMINS = gql`
+  query GetCommissionAdmins {
+    getCommissionAdmins {
+      id
+      username
+      fullName
+      email
+    }
+  }
+`;
+
+export const GET_ALL_COMMISSION_REPORTS = gql`
+  query GetAllCommissionReports {
+    getAllCommissionReports {
+      totalAdmins
+      grandTotalCommission
+      grandTotalPayments
+      adminReports {
+        adminId
+        adminName
+        adminEmail
+        totalCommission
+        totalPayments
+        activeConfigsCount
+        recentEntries {
+          paymentId
+          itemTitle
+          type
+          amount
+          commissionPercentage
+          commissionAmount
+          scope
+          scopeTitle
+          createdAt
+        }
+      }
+    }
+  }
+`;
+
+export const GET_AVAILABLE_ADMINS = gql`
+  query GetAvailableAdmins {
+    getAvailableAdmins {
+      id
+      username
+      fullName
+      email
+      role
     }
   }
 `;

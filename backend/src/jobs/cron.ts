@@ -11,6 +11,8 @@ import { ProjectOnboarding } from '../models/ProjectOnboarding';
 import { ProjectApplication } from '../models/ProjectApplication';
 import { sendNotification } from '../services/notification.service';
 import { User } from '../models/User';
+import ScheduledBroadcast from '../models/ScheduledBroadcast';
+import { executeBroadcast } from '../graphql/scheduled-broadcast-resolvers';
 
 export const initKronos = () => {
     console.log('⏳ Initializing Cron Jobs...');
@@ -261,4 +263,49 @@ export const initKronos = () => {
             console.error('Error in Weekly Cleanup Job:', e);
         }
     });
+
+  // 8. Process Scheduled Broadcasts (Every minute)
+  cron.schedule('* * * * *', async () => {
+    try {
+      const dueBroadcasts = await ScheduledBroadcast.find({
+        status: 'pending',
+        scheduledAt: { $lte: new Date() },
+      });
+
+      for (const broadcast of dueBroadcasts) {
+        broadcast.status = 'processing';
+        await broadcast.save();
+
+        try {
+          const result = await executeBroadcast(broadcast);
+          broadcast.status = 'sent';
+          broadcast.sentAt = new Date();
+          broadcast.result = {
+            totalRecipients: result.totalRecipients,
+            notificationsSent: result.notificationsSent,
+            emailsSent: result.emailsSent,
+            errors: result.errors,
+          };
+          await broadcast.save();
+          console.log(`[ScheduledBroadcast] Sent "${broadcast.title}" to ${result.totalRecipients} recipients`);
+        } catch (err: any) {
+          broadcast.status = 'failed';
+          broadcast.result = {
+            totalRecipients: 0,
+            notificationsSent: 0,
+            emailsSent: 0,
+            errors: [err.message],
+          };
+          await broadcast.save();
+          console.error(`[ScheduledBroadcast] Failed: ${broadcast.title}`, err.message);
+        }
+      }
+
+      if (dueBroadcasts.length > 0) {
+        console.log(`[ScheduledBroadcast] Processed ${dueBroadcasts.length} due broadcast(s)`);
+      }
+    } catch (e) {
+      console.error('Error in Scheduled Broadcast Job:', e);
+    }
+  });
 };

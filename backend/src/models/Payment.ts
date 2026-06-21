@@ -46,4 +46,10 @@ const PaymentSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+// Indexes for efficient payment queries
+PaymentSchema.index({ userId: 1, createdAt: -1 });
+PaymentSchema.index({ status: 1, createdAt: -1 });
+PaymentSchema.index({ courseId: 1 });
+PaymentSchema.index({ internshipId: 1 });
+
 export const Payment = mongoose.model<IPayment>('Payment', PaymentSchema);

@@ -46,7 +46,7 @@ import {
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
-import topImage from "@/assets/top.jpg";
+import topImage from "@/assets/top.webp";
 import { 
   GET_COURSES_SUMMARY, 
   GET_INTERNSHIP_PROGRAMS, 

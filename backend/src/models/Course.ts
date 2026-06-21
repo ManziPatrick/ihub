@@ -141,4 +141,11 @@ const courseSchema = new mongoose.Schema({
   isFeatured: { type: Boolean, default: false },
 }, { timestamps: true });
 
+// Indexes for efficient course queries
+courseSchema.index({ status: 1, isDeleted: 1 });
+courseSchema.index({ category: 1, status: 1 });
+courseSchema.index({ instructor: 1 });
+courseSchema.index({ isFeatured: 1, status: 1 });
+courseSchema.index({ school: 1 });
+
 export const Course = mongoose.model('Course', courseSchema);
