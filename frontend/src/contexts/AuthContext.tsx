@@ -290,6 +290,8 @@ export function AuthProvider({
           userData.themePreference,
 
         avatar: userData.avatar,
+        phone: userData.phone,
+        location: userData.location,
 
         xp: userData.xp || 0,
         level: userData.level || 1,

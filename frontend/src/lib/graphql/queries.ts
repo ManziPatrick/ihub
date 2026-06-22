@@ -2507,6 +2507,17 @@ export const GET_INTERNSHIP_ACTIVITY_LOGS = gql`
   }
   ${PAGINATION_FRAGMENT}
 `;
+export const GET_MY_IP_GEOLOCATION = gql`
+  query GetMyIpGeolocation {
+    getMyIpGeolocation {
+      latitude
+      longitude
+      city
+      country
+    }
+  }
+`;
+
 export const GET_USERS_WITH_LOCATION = gql`
   query GetUsersWithLocation($role: String) {
     usersWithLocation(role: $role) {

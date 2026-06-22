@@ -1,8 +1,11 @@
 # TODO
 
-## Frontend build fixes (tsc + vite)
-- [ ] Fix shared languageConfig import resolution by adding `frontend/src/shared` with re-exports from `backend/src/config/languageConfig.ts`.
-- [ ] Ensure existing `@shared/*` imports (LANGUAGE_NAMES, LANGUAGE_COLORS, DEFAULT_INITIAL_CODE, etc.) resolve.
-- [ ] Fix TS2322: `unknown` not assignable to `ReactNode` in `ManageCodeExercisesDialog.tsx`.
-- [ ] Re-run `frontend` build (tsc -b && vite build) to confirm Docker build passes.
+## Offline/Online switch (small devices)
+- [x] Inspect existing offline mode implementation (useOfflineSync).
+- [x] Inspect portal UI for offline toggle (PortalLayout).
+- [x] Ensure offline/online switch is visible and usable on small devices (mobile/tablet).
+- [x] If needed, move/simplify the offline toggle + queue indicator into the mobile header area.
+
+- [ ] Verify manual offline mode works the same as auto offline detection.
+- [ ] Run frontend typecheck/build to confirm no UI regressions.
 

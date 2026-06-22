@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +20,15 @@ import {
   Mail,
   Phone,
   Map as MapIcon,
+  Navigation,
+  Loader2,
+  AlertTriangle,
+  Crosshair,
+  Check,
 } from "lucide-react";
+import { useMutation } from "@apollo/client/react";
+import { ADMIN_UPDATE_USER_LOCATION } from "@/lib/graphql/mutations";
+import { toast } from "sonner";
 
 type RoleKey = "all" | "student" | "trainer" | "admin" | "super_admin";
 
@@ -47,6 +55,110 @@ function timeAgo(dateStr?: string): string {
   return `${days}d ago`;
 }
 
+/* ─── Reverse-Geocode Row Component ─── */
+function ReverseGeocodeRow({ user }: { user: UserLocation }) {
+  const { address, loading, error } = useReverseGeocode(user.latitude, user.longitude);
+
+  const locationMismatch = user.location && address &&
+    !address.toLowerCase().includes(user.location.toLowerCase().split(",")[0].trim()) &&
+    !user.location.toLowerCase().includes(address.toLowerCase().split(",")[0].trim());
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-start gap-3">
+        <MapIcon className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+            Coordinates
+          </p>
+          <p className="text-foreground font-mono text-xs">
+            {user.latitude.toFixed(4)}, {user.longitude.toFixed(4)}
+          </p>
+
+          {/* Reverse-geocoded address */}
+          {loading && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground italic">Looking up address...</span>
+            </div>
+          )}
+          {!loading && address && (
+            <div className="flex items-start gap-1.5 mt-1.5">
+              <Navigation className="w-3 h-3 text-muted-foreground/60 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <span className="text-[10px] text-muted-foreground italic block truncate" title={address}>
+                  {address}
+                </span>
+              </div>
+            </div>
+          )}
+          {!loading && error && (
+            <p className="text-[10px] text-muted-foreground italic mt-1">
+              Address lookup unavailable
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Mismatch warning */}
+      {locationMismatch && (
+        <div className="flex items-start gap-2 ml-7 pl-0.5">
+          <AlertTriangle className="w-3 h-3 text-amber-500 mt-0.5 shrink-0" />
+          <p className="text-[10px] text-amber-600 dark:text-amber-400 leading-relaxed">
+            The stored location text "{user.location}" differs from the coordinates&apos; actual mapped address.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Reverse geocode helper ─── */
+function useReverseGeocode(lat: number | null, lon: number | null) {
+  const [address, setAddress] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (lat == null || lon == null) {
+      setAddress(null);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&accept-language=en`,
+      { headers: { "User-Agent": "BootskillsApp/1.0" } }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        const addr = data?.address || {};
+        const parts: string[] = [];
+        if (addr.road) parts.push(addr.road);
+        if (addr.city || addr.town || addr.village) parts.push(addr.city || addr.town || addr.village);
+        if (addr.state) parts.push(addr.state);
+        if (addr.country) parts.push(addr.country);
+        setAddress(parts.length > 0 ? parts.join(", ") : data?.display_name?.split(",")[0] || "Unknown location");
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError("Failed to look up address");
+        console.debug("Reverse geocode error:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [lat, lon]);
+
+  return { address, loading, error };
+}
+
 /* ─── Page ─── */
 export default function SuperAdminMap() {
   const [activeRole, setActiveRole] = useState<RoleKey>("all");
@@ -54,7 +166,14 @@ export default function SuperAdminMap() {
   const [selectedUser, setSelectedUser] = useState<UserLocation | null>(null);
   const [mapKey, setMapKey] = useState(0);
 
-  const { data, loading } = useQuery(GET_USERS_WITH_LOCATION);
+  // Edit mode state
+  const [editMode, setEditMode] = useState(false);
+  const [pendingCoords, setPendingCoords] = useState<[number, number] | null>(null);
+  const [pendingAddress, setPendingAddress] = useState<string | null>(null);
+  const [savingLocation, setSavingLocation] = useState(false);
+
+  const { data, loading, refetch } = useQuery(GET_USERS_WITH_LOCATION);
+  const [adminUpdateLocation] = useMutation(ADMIN_UPDATE_USER_LOCATION);
 
   const allUsers: UserLocation[] = useMemo(
     () => (data as any)?.usersWithLocation || [],
@@ -79,6 +198,77 @@ export default function SuperAdminMap() {
   const refreshMap = () => {
     setMapKey((k) => k + 1);
     setSelectedUser(null);
+    setEditMode(false);
+    setPendingCoords(null);
+    setPendingAddress(null);
+  };
+
+  /* ── Handle map click in edit mode ── */
+  const handleMapClick = useCallback(async (lat: number, lng: number) => {
+    if (!editMode || !selectedUser) return;
+    setPendingCoords([lat, lng]);
+    setPendingAddress(null);
+
+    // Reverse geocode the clicked location
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=en`,
+        { headers: { "User-Agent": "BootskillsApp/1.0" } }
+      );
+      const data = await res.json();
+      const addr = data?.address || {};
+      const parts: string[] = [];
+      if (addr.road) parts.push(addr.road);
+      if (addr.city || addr.town || addr.village) parts.push(addr.city || addr.town || addr.village);
+      if (addr.state) parts.push(addr.state);
+      if (addr.country) parts.push(addr.country);
+      setPendingAddress(parts.length > 0 ? parts.join(", ") : data?.display_name?.split(",")[0] || "");
+    } catch {
+      setPendingAddress(null);
+    }
+  }, [editMode, selectedUser]);
+
+  /* ── Save new location ── */
+  const handleSaveLocation = async () => {
+    if (!pendingCoords || !selectedUser) return;
+    setSavingLocation(true);
+    try {
+      await adminUpdateLocation({
+        variables: {
+          userId: selectedUser.id,
+          latitude: pendingCoords[0],
+          longitude: pendingCoords[1],
+        },
+      });
+      toast.success("Location updated successfully!");
+      setEditMode(false);
+      setPendingCoords(null);
+      setPendingAddress(null);
+      // Refresh the map
+      refetch();
+      // Update local state so sidebar reflects new coords immediately
+      setSelectedUser((prev) =>
+        prev ? { ...prev, latitude: pendingCoords[0], longitude: pendingCoords[1], locationUpdatedAt: new Date().toISOString(), locationShared: true } : null
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update location");
+    } finally {
+      setSavingLocation(false);
+    }
+  };
+
+  /* ── Cancel edit mode ── */
+  const handleCancelEdit = () => {
+    setEditMode(false);
+    setPendingCoords(null);
+    setPendingAddress(null);
+  };
+
+  /* ── Enter edit mode ── */
+  const handleStartFix = () => {
+    setEditMode(true);
+    setPendingCoords(null);
+    setPendingAddress(null);
   };
 
   /* ── Render ── */
@@ -242,8 +432,11 @@ export default function SuperAdminMap() {
               role={roleValue}
               search={searchQuery}
               height="580px"
-              onSelectUser={setSelectedUser}
+              onSelectUser={editMode ? undefined : setSelectedUser}
               selectedUserId={selectedUser?.id || null}
+              editMode={editMode}
+              onMapClick={handleMapClick}
+              pendingMarker={pendingCoords}
             />
           </motion.div>
 
@@ -351,12 +544,99 @@ export default function SuperAdminMap() {
                           </div>
                         )}
 
+                        <ReverseGeocodeRow user={selectedUser} />
+
+                        {/* Fix Location button */}
+                        <div className="pt-1">
+                          {editMode ? (
+                            <div className="space-y-2 bg-accent/5 border border-accent/20 rounded-lg p-3">
+                              <p className="text-[10px] font-semibold uppercase tracking-widest text-accent">
+                                <Crosshair className="w-3 h-3 inline mr-1" />
+                                Click on the map to set new location
+                              </p>
+                              {pendingCoords && (
+                                <div className="space-y-1">
+                                  <p className="text-[10px] text-muted-foreground font-mono">
+                                    {pendingCoords[0].toFixed(4)}, {pendingCoords[1].toFixed(4)}
+                                  </p>
+                                  {pendingAddress && (
+                                    <p className="text-[10px] text-muted-foreground italic truncate">
+                                      {pendingAddress}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                              <div className="flex gap-2 pt-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1 h-8 text-xs"
+                                  onClick={handleCancelEdit}
+                                  disabled={savingLocation}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  variant="gold"
+                                  size="sm"
+                                  className="flex-1 h-8 text-xs gap-1"
+                                  onClick={handleSaveLocation}
+                                  disabled={!pendingCoords || savingLocation}
+                                >
+                                  {savingLocation ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Check className="w-3 h-3" />
+                                  )}
+                                  Save
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={handleStartFix}
+                              className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold
+                                bg-accent/5 hover:bg-accent/10 border border-accent/20 hover:border-accent/40
+                                text-accent hover:text-accent-foreground transition-all duration-200"
+                            >
+                              <Crosshair className="w-3.5 h-3.5" />
+                              Fix Location
+                            </button>
+                          )}
+                        </div>
+
+                        <Separator className="my-3" />
+
                         <div className="flex items-start gap-3">
-                          <MapIcon className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                          <div className="w-4 h-4 shrink-0 mt-0.5 flex items-center justify-center">
+                            {selectedUser.locationShared ? (
+                              <span
+                                className="w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                                style={{ background: "#22c55e" }}
+                              >
+                                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              </span>
+                            ) : (
+                              <span
+                                className="w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                                style={{ background: "#f59e0b" }}
+                              >
+                                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="12" cy="12" r="10" />
+                                  <line x1="12" y1="8" x2="12" y2="12" />
+                                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                                </svg>
+                              </span>
+                            )}
+                          </div>
                           <div>
-                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Coordinates</p>
-                            <p className="text-foreground font-mono text-xs">
-                              {selectedUser.latitude.toFixed(4)}, {selectedUser.longitude.toFixed(4)}
+                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Location Source</p>
+                            <p className="text-foreground" style={{
+                              color: selectedUser.locationShared ? "#22c55e" : "#f59e0b",
+                            }}>
+                              {selectedUser.locationShared ? "Verified" : "Estimated"}
                             </p>
                           </div>
                         </div>
@@ -402,9 +682,17 @@ export default function SuperAdminMap() {
                     {item.label}
                   </span>
                 ))}
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-background" />
+                  Verified
+                </span>
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-background" />
+                  Estimated
+                </span>
               </div>
               <p className="text-[11px] text-muted-foreground/60">
-                Click any marker to view user details &middot; Color-coded by role
+                Click any marker to view user details &middot; Color-coded by role &middot; Dots cluster by density
               </p>
             </CardContent>
           </Card>

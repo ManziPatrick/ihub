@@ -44,6 +44,9 @@ const startServer = async () => {
 
     const app = express();
 
+    // Trust the first proxy (nginx, Coolify reverse proxy) for correct req.ip
+    app.set('trust proxy', 1);
+
     // Redirect www.bootskills.com to bootskills.com
     app.use((req, res, next) => {
         if (req.headers.host === 'www.bootskills.com') {

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_QUESTIONS } from "@/lib/graphql/queries";
 import { REWARD_STUDENT, GENERATE_AI_QUIZ, HINT_FOR_QUESTION, CHAT_WITH_AI } from "@/lib/graphql/mutations";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { CheckCircle2, ChevronRight, RefreshCcw, Loader2, HelpCircle, Star, Flame, Trophy, Lightbulb, Send, MessageSquare, Volume2, VolumeX, Pause, Play, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -111,6 +112,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
   });
 
   const [rewardStudent] = useMutation(REWARD_STUDENT);
+  const { isOffline, enqueueAction } = useOfflineSync();
   const [generateAIQuiz, { loading: generatingQuiz }] = useMutation(GENERATE_AI_QUIZ, {
     refetchQueries: [{ query: GET_QUESTIONS, variables: { courseId, lessonId } }]
   });
@@ -317,15 +319,29 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
         spread: 100,
         origin: { y: 0.6 }
       });
-      rewardStudent({
-        variables: {
-          xp: xp,
-          streak: streak,
-          courseId: courseId,
-          lessonId: lessonId,
-          score: Math.round((score / questions.length) * 100)
-        }
-      }).catch(err => console.error("Reward Error:", err));
+      if (isOffline) {
+        enqueueAction({
+          type: 'REWARD_QUIZ',
+          variables: {
+            xp: xp,
+            streak: streak,
+            courseId: courseId,
+            lessonId: lessonId,
+            score: Math.round((score / questions.length) * 100)
+          },
+          description: `Quiz reward: ${score}/${questions.length} correct`,
+        });
+      } else {
+        rewardStudent({
+          variables: {
+            xp: xp,
+            streak: streak,
+            courseId: courseId,
+            lessonId: lessonId,
+            score: Math.round((score / questions.length) * 100)
+          }
+        }).catch(err => console.error("Reward Error:", err));
+      }
     }
   };
 

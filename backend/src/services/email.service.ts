@@ -876,6 +876,140 @@ export const sendBroadcastAnnouncement = async (
 };
 
 /**
+ * Send suspicious login alert email — triggered when a user logs in
+ * from a location significantly different from their last known location.
+ */
+export const sendSuspiciousLoginAlert = async (
+  email: string,
+  userName: string,
+  loginTime: string,
+  newLocation: string,
+  previousLocation: string,
+  distanceKm: number,
+  loginMethod: string,
+  ipAddress: string
+): Promise<boolean> => {
+  const config = await getEmailConfig();
+  const formattedDistance = distanceKm >= 1000
+    ? `${(distanceKm / 1000).toFixed(1)}k km`
+    : `${Math.round(distanceKm)} km`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f5; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px 10px; }
+        .card { background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+        .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%); padding: 40px 30px; text-align: center; }
+        .header h1 { margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+        .header .logo-text { color: rgba(255,255,255,0.85); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; font-weight: 400; }
+        .content { padding: 35px 30px; }
+        .content h2 { margin: 0 0 16px; font-size: 20px; color: #1a1a1a; font-weight: 600; }
+        .alert-box { 
+          background: #fef2f2; 
+          padding: 24px; 
+          border-radius: 12px; 
+          margin: 20px 0; 
+          border-left: 4px solid #dc2626;
+        }
+        .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { color: #888; font-weight: 500; }
+        .detail-value { color: #1a1a1a; font-weight: 600; text-align: right; }
+        .distance-badge {
+          display: inline-block;
+          background: #dc2626;
+          color: #ffffff;
+          padding: 4px 14px;
+          border-radius: 20px;
+          font-weight: 700;
+          font-size: 13px;
+        }
+        .footer-text { font-size: 13px; color: #888; text-align: center; line-height: 1.5; margin-top: 20px; }
+        .btn { display: inline-block; background: #dc2626; color: #ffffff; padding: 14px 36px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; }
+        .btn-wrapper { text-align: center; margin: 28px 0 8px; }
+        @media only screen and (max-width: 480px) {
+          .header { padding: 30px 20px; }
+          .header h1 { font-size: 20px; }
+          .content { padding: 25px 20px; }
+          .detail-row { flex-direction: column; gap: 4px; }
+          .detail-value { text-align: left; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="card">
+          <div class="header">
+            <h1>⚠️ Suspicious Login Detected</h1>
+            <div class="logo-text">${config.siteName}</div>
+          </div>
+          <div class="content">
+            <h2>Hi ${userName},</h2>
+            <p>We noticed a login to your account from a location <strong>significantly different</strong> from where you usually log in.</p>
+            
+            <div class="alert-box">
+              <p style="margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #991b1b; text-transform: uppercase; letter-spacing: 0.5px;">Login Details</p>
+              
+              <div class="detail-row">
+                <span class="detail-label">Time</span>
+                <span class="detail-value">${loginTime}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Method</span>
+                <span class="detail-value" style="text-transform: capitalize;">${loginMethod}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">New Location</span>
+                <span class="detail-value">${newLocation}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">IP Address</span>
+                <span class="detail-value" style="font-family: monospace; font-size: 13px;">${ipAddress || 'Unknown'}</span>
+              </div>
+              <div class="detail-row" style="border-bottom: none;">
+                <span class="detail-label">Distance from usual</span>
+                <span class="detail-value"><span class="distance-badge">${formattedDistance} away</span></span>
+              </div>
+            </div>
+            
+            <p style="background: #f9f9f9; padding: 14px; border-radius: 8px; font-size: 13px; color: #666;">
+              <strong>Your usual location:</strong> ${previousLocation}
+            </p>
+            
+            <p style="font-size: 14px; color: #444;">
+              If this was you, you can ignore this email. If you don't recognize this login, please <strong>change your password immediately</strong> and contact our support team.
+            </p>
+            
+            <div class="btn-wrapper">
+              <a href="${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/reset-password" class="btn">Reset Password</a>
+            </div>
+          </div>
+        </div>
+        <div class="footer-text">
+          <p>© 2026 ${config.siteName}. All rights reserved.</p>
+          <p>Building Africa's Tech Talent.</p>
+          <p style="margin-top: 12px; font-size: 12px; color: #aaa;">
+            This is an automated security alert. If you have questions, please contact our support team.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `⚠️ Suspicious Login — ${newLocation}`,
+    html
+  });
+};
+
+/**
  * Send email when developer submits task feedback / resources
  */
 export const sendTaskFeedbackEmail = async (
@@ -957,5 +1091,6 @@ export default {
   sendMeetingInvitation,
   sendCourseEnrollmentConfirmation,
   sendTaskFeedbackEmail,
-  sendBroadcastAnnouncement
+  sendBroadcastAnnouncement,
+  sendSuspiciousLoginAlert
 };

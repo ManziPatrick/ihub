@@ -72,6 +72,7 @@ import { toast } from "sonner";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_COURSE, GET_ME, GET_ASSIGNMENT_SUBMISSIONS } from "@/lib/graphql/queries";
 import { COMPLETE_LESSON, SUBMIT_ASSIGNMENT, UPDATE_COURSE_PROGRESS } from "@/lib/graphql/mutations";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { triggerFileDownload } from "@/lib/download";
 
 interface AssignmentSubmission {
@@ -112,6 +113,8 @@ export default function CourseDetail() {
   const course = (data as any)?.course;
   const me = (userData as any)?.me;
   const completedLessons = me?.completedLessons || [];
+
+  const { isOffline, enqueueAction } = useOfflineSync();
 
   const [completeLessonMutation] = useMutation(COMPLETE_LESSON);
   const [submitAssignmentMutation] = useMutation(SUBMIT_ASSIGNMENT);
@@ -412,6 +415,20 @@ export default function CourseDetail() {
 
   const handleMarkComplete = async () => {
     if (!activeLessonId) return;
+
+    // Offline mode: queue the action and proceed locally
+    if (isOffline) {
+      enqueueAction({
+        type: 'COMPLETE_LESSON',
+        variables: { courseId, lessonId: activeLessonId },
+        description: `Complete lesson: ${currentLesson?.title || activeLessonId}`,
+      });
+      // Advance locally so the student can keep learning
+      refetchUser();
+      handleNext();
+      return;
+    }
+
     try {
       await completeLessonMutation({
         variables: {
@@ -434,6 +451,18 @@ export default function CourseDetail() {
   const handleSubmitAssignment = async () => {
     if (!submissionContent.trim()) {
       toast.error("Please provide your submission content (URL or text)");
+      return;
+    }
+
+    // Offline mode: queue the action
+    if (isOffline) {
+      enqueueAction({
+        type: 'SUBMIT_ASSIGNMENT',
+        variables: { courseId, lessonId: activeLessonId, content: submissionContent },
+        description: `Submit assignment: ${currentLesson?.title || activeLessonId}`,
+      });
+      refetchSubmissions();
+      handleMarkComplete();
       return;
     }
 

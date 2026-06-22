@@ -242,6 +242,8 @@ import { GET_NOTIFICATIONS, GET_ME } from "@/lib/graphql/queries";
 import { MARK_NOTIFICATION_READ, MARK_ALL_NOTIFICATIONS_READ } from "@/lib/graphql/mutations";
 import { formatDistanceToNow } from "date-fns";
 import { usePresence } from "@/hooks/use-presence";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
+import { Switch } from "@/components/ui/switch";
 import { 
   Collapsible, 
   CollapsibleContent, 
@@ -260,6 +262,9 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
   // Start presence tracking
   usePresence();
+
+  // Offline sync
+  const { isOffline, isManualOffline, isSyncing, queue, queueCount, toggleOffline, syncQueue } = useOfflineSync();
 
   const [trackActivity] = useMutation(TRACK_ACTIVITY);
   const { branding } = useBranding();
@@ -711,6 +716,129 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
           {/* Right Actions */}
           <div className="flex items-center gap-1 sm:gap-3">
+            {/* Offline/Online Toggle with Queue Popover */}
+            <div className="flex sm:flex items-center gap-0.5 h-8 border border-border/40 rounded-xl bg-background/50">
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 pl-2 pr-1 h-full rounded-l-xl hover:bg-background/80 transition-colors">
+                    <div className={`w-2 h-2 rounded-full ${isOffline ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {isOffline ? 'Offline' : 'Online'}
+                    </span>
+                    {queueCount > 0 && (
+                      <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-amber-500/15 text-amber-500 text-[10px] font-black rounded-full px-1.5 leading-none">
+                        {queueCount}
+                      </span>
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72 p-0" sideOffset={8}>
+                <div className="px-4 py-3 border-b border-border/50">
+                  <div className="flex items-center justify-between">
+                    <DropdownMenuLabel className="p-0 text-sm font-semibold">
+                      Offline Queue
+                    </DropdownMenuLabel>
+                    <div className="flex items-center gap-2">
+                      {isSyncing && (
+                        <span className="text-[10px] text-muted-foreground animate-pulse">Syncing…</span>
+                      )}
+                      {queue.length > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            syncQueue();
+                          }}
+                          disabled={isSyncing}
+                          className="text-[11px] font-semibold text-accent hover:text-accent/80 disabled:opacity-50 transition-colors"
+                        >
+                          Sync now
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className={`w-1.5 h-1.5 rounded-full ${isOffline ? 'bg-amber-500' : queue.length > 0 ? 'bg-amber-500' : 'bg-green-500'}`} />
+                    <span className="text-[11px] text-muted-foreground">
+                      {isOffline
+                        ? 'Offline — actions queued locally'
+                        : queue.length > 0
+                          ? `Online — ${queue.length} action${queue.length > 1 ? 's' : ''} waiting to sync`
+                          : 'Online — all synced'}
+                    </span>
+                  </div>
+                </div>
+
+                {queue.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground">
+                    <div className="flex justify-center mb-2">
+                      <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                        <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium text-card-foreground">All caught up</p>
+                    <p className="text-xs text-muted-foreground/70 mt-0.5">No pending offline actions</p>
+                  </div>
+                ) : (
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {queue.map((action) => (
+                      <div
+                        key={action.id}
+                        className="flex items-start gap-3 px-4 py-3 border-b border-border/30 last:border-0 hover:bg-accent/5 transition-colors"
+                      >
+                        <div className="mt-0.5 p-1.5 rounded-full bg-amber-500/10 text-amber-500 shrink-0">
+                          {action.type === 'COMPLETE_LESSON' || action.type === 'UPDATE_COURSE_PROGRESS' ? (
+                            <BookOpen className="w-3.5 h-3.5" />
+                          ) : action.type === 'SUBMIT_ASSIGNMENT' ? (
+                            <FileText className="w-3.5 h-3.5" />
+                          ) : action.type === 'SUBMIT_EXAM' ? (
+                            <ClipboardList className="w-3.5 h-3.5" />
+                          ) : action.type === 'REWARD_QUIZ' ? (
+                            <Star className="w-3.5 h-3.5" />
+                          ) : (
+                            <Clock className="w-3.5 h-3.5" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-card-foreground truncate">
+                            {action.description}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground/60 mt-0.5 flex items-center gap-1">
+                            <Clock className="w-2.5 h-2.5" />
+                            {formatDistanceToNow(action.createdAt, { addSuffix: true })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {queue.length > 0 && !isOffline && (
+                  <div className="px-4 py-2.5 border-t border-border/50 bg-muted/30">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        syncQueue();
+                      }}
+                      disabled={isSyncing}
+                      className="w-full py-1.5 rounded-lg bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/90 disabled:opacity-50 transition-colors"
+                    >
+                      {isSyncing ? 'Syncing…' : `Sync ${queue.length} action${queue.length > 1 ? 's' : ''}`}
+                    </button>
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Switch
+              checked={isManualOffline}
+              onCheckedChange={toggleOffline}
+              className="scale-75 mr-1"
+              aria-label="Toggle offline mode"
+            />
+          </div>
+
             {/* Theme Toggle */}
             <div className="hidden sm:block">
               <ThemeToggle />

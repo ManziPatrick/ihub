@@ -141,7 +141,7 @@ export default function Auth() {
         toast.success("Welcome back!");
       } else {
         if (!formData.fullName.trim()) throw new Error("Please enter your full name");
-        await signup({ 
+        const response = await signup({ 
           email: formData.email, 
           password: formData.password, 
           fullName: formData.fullName, 
@@ -149,6 +149,15 @@ export default function Auth() {
         });
         
         toast.success("Account created successfully!");
+
+        // Check if user needs to set their location (new users won't have one)
+        if (response?.token && (!response.user?.location || response.user.location === "" || response.user.location === "null")) {
+          const redirectTo = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";
+          setPendingRedirect(redirectTo);
+          setNeedsLocation(true);
+          setIsLoading(false);
+          return;
+        }
       }
       const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";
       navigate(from, { replace: true });

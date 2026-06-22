@@ -851,7 +851,16 @@ export const typeDefs = `#graphql
     resourceType: String
   }
 
+  type IpGeolocationResult {
+    latitude: Float
+    longitude: Float
+    city: String
+    country: String
+  }
+
   type Query {
+    getMyIpGeolocation: IpGeolocationResult!
+
     # Resources
     getResources(linkedTo: ID, onModel: String): [Resource!]!
     getResource(id: ID!): Resource!
@@ -859,7 +868,7 @@ export const typeDefs = `#graphql
     users(page: Int, limit: Int, createdBy: ID, role: String): UserResponse
     conversations: [Conversation]
     messages(conversationId: ID!): [Message]
-    courses(page: Int, limit: Int, sortBy: String, featured: Boolean, search: String, category: String, price: String, level: String, school: String): CourseResponse
+    courses(page: Int, limit: Int, sortBy: String, featured: Boolean, search: String, category: String, price: String, level: String, school: String, location: String): CourseResponse
     course(id: ID!, lite: Boolean): Course
     lessonContent(courseId: ID!, lessonId: ID!): Lesson
     stats: Stats
@@ -1217,7 +1226,8 @@ export const typeDefs = `#graphql
     deleteCourse(id: ID!): Boolean
     createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String): User
     updateUser(id: ID!, username: String, email: String, password: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String): User
-    updateUserLocation(latitude: Float!, longitude: Float!): User
+        updateUserLocation(latitude: Float!, longitude: Float!): User
+    adminUpdateUserLocation(userId: ID!, latitude: Float!, longitude: Float!): User
     deleteUser(id: ID!): Boolean
     
     # Progress Tracking

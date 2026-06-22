@@ -1732,6 +1732,18 @@ export const UPDATE_USER_LOCATION = gql`
   }
 `;
 
+export const ADMIN_UPDATE_USER_LOCATION = gql`
+  mutation AdminUpdateUserLocation($userId: ID!, $latitude: Float!, $longitude: Float!) {
+    adminUpdateUserLocation(userId: $userId, latitude: $latitude, longitude: $longitude) {
+      id
+      latitude
+      longitude
+      locationUpdatedAt
+      locationShared
+    }
+  }
+`;
+
 export const ASSIGN_PROJECT_TO_USERS = gql`
   mutation AssignProjectToUsers($projectId: ID!, $userIds: [ID!]!, $type: String!, $deadline: String) {
     assignProjectToUsers(projectId: $projectId, userIds: $userIds, type: $type, deadline: $deadline) {

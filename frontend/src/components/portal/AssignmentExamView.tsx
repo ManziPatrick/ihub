@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { useMutation } from "@apollo/client/react";
 import { SUBMIT_ASSIGNMENT_EXAM } from "@/lib/graphql/mutations";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
 import {
   CheckCircle2,
   ChevronRight,
@@ -176,6 +177,7 @@ export function AssignmentExamView({
   const MAX_VIOLATIONS = 3;
 
   const [submitExam] = useMutation(SUBMIT_ASSIGNMENT_EXAM);
+  const { isOffline, enqueueAction } = useOfflineSync();
 
   /* ── Timer ── */
   useEffect(() => {
@@ -215,6 +217,29 @@ export function AssignmentExamView({
       if (document.fullscreenElement) await document.exitFullscreen();
     } catch (_) { }
 
+    // Offline mode: queue the exam submission for later sync
+    if (isOffline) {
+      enqueueAction({
+        type: 'SUBMIT_EXAM',
+        variables: { courseId, lessonId, answers: formattedAnswers, timeTaken },
+        description: `Submit exam answers for lesson ${lessonId}`,
+      });
+      // Show a mock pending state so the student can continue
+      setGradeResult({
+        grade: 0,
+        totalScore: 100,
+        status: 'pending',
+        answers: formattedAnswers.map(a => ({
+          questionId: a.questionId,
+          score: 0,
+          aiFeedback: 'Will be graded when back online.'
+        }))
+      });
+      setIsSubmitted(true);
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const { data } = await submitExam({ variables: { courseId, lessonId, answers: formattedAnswers, timeTaken } });
       const result = (data as any)?.submitAssignmentExam;
@@ -233,7 +258,7 @@ export function AssignmentExamView({
     } finally {
       setSubmitting(false);
     }
-  }, [courseId, lessonId, submitExam]);
+  }, [courseId, lessonId, submitExam, isOffline, enqueueAction]);
 
   /* ── Anti-cheat: visibility / blur detection ── */
   useEffect(() => {

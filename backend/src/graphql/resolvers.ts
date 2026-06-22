@@ -33,7 +33,8 @@ if (!admin.apps.length) {
 }
 import { Message } from '../models/Message';
 import { Conversation } from '../models/Conversation';
-import { sendEmail, sendLoginOTPEmail } from '../services/email.service';
+import { sendEmail, sendLoginOTPEmail, sendSuspiciousLoginAlert } from '../services/email.service';
+import { haversineDistance, SUSPICIOUS_LOGIN_THRESHOLD_KM, checkSuspiciousLogin } from '../services/login-security.service';
 import { Course } from '../models/Course';
 import { ProjectApplication } from '../models/ProjectApplication';
 import AICourse from '../models/AICourse';
@@ -98,6 +99,9 @@ import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { chatWithAIService, explainTaskService, reviewSubmissionService, generateAIQuizService, hintForQuestionService, generateQuestionExplanationService, getChatGreeting } from '../services/ai.service';
 import { compileCode } from '../services/compiler.service';
+import { lookupRequestGeoLocation } from "../services/geoip.service";
+
+
 
 
 const DEFAULT_WORKFLOW = [
@@ -717,7 +721,7 @@ export const resolvers = {
         .sort({ createdAt: 1 }); // Oldest first for chat history usually, but depends on UI
     },
 
-    courses: async (_: any, { page = 1, limit = 10, sortBy = 'latest', featured, search, category, price, level, school }: any, context: any) => {
+    courses: async (_: any, { page = 1, limit = 10, sortBy = 'latest', featured, search, category, price, level, school, location }: any, context: any) => {
       const query: any = { isDeleted: { $ne: true } };
 
       // Filter for students/guests: Only published courses
@@ -819,6 +823,39 @@ export const resolvers = {
           query.$and = [{ $or: existingOr }, schoolCondition];
         } else {
           query.school = schoolCondition.school;
+        }
+      }
+
+      // Server-side location filter — search for courses relevant to a city/region
+      // Matches against school name, title, category, and descriptionSnippet
+      if (location && location !== 'all') {
+        const escaped = location.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Split by common separators to match individual location parts
+        // e.g. "Kigali, Rwanda" will match courses that mention "Kigali" or "Rwanda"
+        const terms = escaped.split(/[,;\s]+/).filter(Boolean);
+        if (terms.length > 0) {
+          const locationConditions = terms.map((term: string) => ({
+            $or: [
+              { school: new RegExp(term, 'i') },
+              { title: new RegExp(term, 'i') },
+              { category: new RegExp(term, 'i') },
+              { descriptionSnippet: new RegExp(term, 'i') },
+            ]
+          }));
+
+          const locationFilter = terms.length === 1
+            ? locationConditions[0]
+            : { $and: locationConditions };
+
+          if (query.$and) {
+            query.$and.push(locationFilter);
+          } else if (query.$or) {
+            const existingOr = query.$or;
+            delete query.$or;
+            query.$and = [{ $or: existingOr }, locationFilter];
+          } else {
+            Object.assign(query, locationFilter);
+          }
         }
       }
 
@@ -4393,7 +4430,7 @@ export const resolvers = {
 
       return { token, user };
     },
-    login: async (_: any, { email, password }: any) => {
+    login: async (_: any, { email, password }: any, context: any) => {
       console.log(`[Login] Attempt for email: ${email}`);
       // Case-insensitive lookup
       const user = await User.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } });
@@ -4428,7 +4465,39 @@ export const resolvers = {
       (user as any).isOnline = true;
       (user as any).lastActive = new Date();
       (user as any).status = 'active'; // Ensure active on login
-      console.log(`[Login] Current isFirst for ${user.username}: ${user.isFirst}`);
+
+      // ── IP Geolocation (no browser permission needed) ──
+      try {
+        const ipLocation = await lookupRequestGeoLocation(context?.req);
+        if (ipLocation.latitude != null && ipLocation.longitude != null) {
+          const ip =
+            context?.req?.headers?.['x-forwarded-for']?.split(',')[0]?.trim() ||
+            context?.req?.ip || '';
+
+          // Check for suspicious login BEFORE overwriting old coordinates
+          await checkSuspiciousLogin(
+            user,
+            ipLocation.latitude,
+            ipLocation.longitude,
+            ip,
+            'email',
+            ipLocation.city,
+            ipLocation.country,
+            sendSuspiciousLoginAlert
+          );
+
+          // Only overwrite if not locationShared
+          if (!(user as any).locationShared) {
+            (user as any).latitude = ipLocation.latitude;
+            (user as any).longitude = ipLocation.longitude;
+            (user as any).locationUpdatedAt = new Date();
+            (user as any).locationShared = false; // IP-based, not user-confirmed
+          }
+        }
+      } catch (err) {
+        console.debug('[Login] IP Geolocation error (non-blocking):', err);
+      }
+
       await user.save();
       console.log(`[Login] Saved isFirst for ${user.username}: ${user.isFirst}`);
 
@@ -4449,7 +4518,7 @@ export const resolvers = {
 
       return { token, user };
     },
-    googleLogin: async (_: any, { token }: { token: string }) => {
+    googleLogin: async (_: any, { token }: { token: string }, context?: any) => {
       try {
         const ticket = await googleClient.verifyIdToken({
           idToken: token,
@@ -4498,6 +4567,25 @@ export const resolvers = {
         // Update Presence
         (dbUser as any).isOnline = true;
         (dbUser as any).lastActive = new Date();
+
+        // ── IP Geolocation (no browser permission needed) ──
+        try {
+          const ipLocation = await lookupRequestGeoLocation(context?.req);
+          if (ipLocation.latitude != null && ipLocation.longitude != null) {
+            const ip = context?.req?.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || context?.req?.ip || '';
+            // Check for suspicious login BEFORE overwriting old coordinates
+            await checkSuspiciousLogin(dbUser, ipLocation.latitude, ipLocation.longitude, ip, 'Google', ipLocation.city, ipLocation.country, sendSuspiciousLoginAlert);
+            // Only overwrite coordinates from IP if user hasn't confirmed their location
+            if (!(dbUser as any).locationShared) {
+              (dbUser as any).latitude = ipLocation.latitude;
+              (dbUser as any).longitude = ipLocation.longitude;
+              (dbUser as any).locationUpdatedAt = new Date();
+              (dbUser as any).locationShared = false; // IP-based, not user-confirmed
+            }
+          }
+        } catch (err) {
+          console.debug('[GoogleLogin] IP Geolocation error (non-blocking):', err);
+        }
 
         // Log Login Activity
         const now = new Date().toISOString();
@@ -7775,7 +7863,7 @@ export const resolvers = {
       };
     },
     ...applicationPhaseResolvers.Mutation,
-    ...projectTaskResolvers.Mutation,    ...commissionResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,
+    ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,
 
     assignDeveloperToProject: async (_: any, { projectId, developerId, role, checklistTasks }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {

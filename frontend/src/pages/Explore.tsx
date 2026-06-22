@@ -16,7 +16,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Shield, Building2, Stethoscope, GraduationCap, Landmark, ShoppingBag, Factory, TrendingUp, ChevronRight, User, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye, XCircle, Filter, Search, LayoutGrid, Star } from "lucide-react";
+import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Shield, Building2, Stethoscope, GraduationCap, Landmark, ShoppingBag, Factory, TrendingUp, ChevronRight, User, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye, XCircle, Filter, Search, LayoutGrid, Star, MapPin, Navigation } from "lucide-react";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import aboutImage from "@/assets/about-training.webp";
@@ -99,10 +99,11 @@ const Explore = () => {
   const [applyCourse, setApplyCourse] = useState<any>(null);
   const [sortBy, setSortBy] = useState<string>('latest');
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
+  const [locationFilter, setLocationFilter] = useState<string>("");
   const COURSES_PAGE_SIZE = 9;
 
   const { data, loading: apolloLoading, fetchMore } = useQuery(GET_COURSES_SUMMARY, {
-    variables: { page: 1, limit: COURSES_PAGE_SIZE, sortBy, featured: showFeaturedOnly || undefined },
+    variables: { page: 1, limit: COURSES_PAGE_SIZE, sortBy, featured: showFeaturedOnly || undefined, location: locationFilter || undefined },
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "cache-first",
   });
@@ -493,6 +494,35 @@ const Explore = () => {
                   >
                     <Star className={`w-3.5 h-3.5 ${showFeaturedOnly ? 'fill-white' : ''}`} />
                     Featured
+                  </button>
+                  {/* Near Me — filter by user's location */}
+                  <button
+                    onClick={() => {
+                      if (locationFilter) {
+                        setLocationFilter("");
+                      } else {
+                        const userLocation = me?.location || user?.location || "";
+                        if (userLocation) {
+                          setLocationFilter(userLocation);
+                        } else {
+                          toast({
+                            title: "Location not set",
+                            description: "Set your location in your profile to use this filter.",
+                          });
+                        }
+                      }
+                      setCurrentPage(1);
+                    }}
+                    disabled={!isAuthenticated}
+                    title={!isAuthenticated ? "Log in to filter by location" : "Show courses near your location"}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
+                      locationFilter
+                        ? "bg-emerald-500 text-white border-emerald-400 shadow-sm"
+                        : "bg-muted/40 text-muted-foreground border-border/50 hover:text-foreground hover:border-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                    }`}
+                  >
+                    <MapPin className={`w-3.5 h-3.5 ${locationFilter ? 'fill-white' : ''}`} />
+                    {locationFilter ? "Near Me" : "Near Me"}
                   </button>
                 </div>
                 <span className="text-xs text-muted-foreground shrink-0">
