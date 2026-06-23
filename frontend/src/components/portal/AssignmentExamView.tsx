@@ -831,7 +831,7 @@ export function AssignmentExamView({
                     }
                     .exam-editor .ql-editor {
                       padding: 20px 24px;
-                      color: rgba(255, 255, 255, 0.85);
+                      color: rgba(255, 255, 255, 0.92) !important;
                       line-height: 1.7;
                       min-height: 260px;
                     }
@@ -840,33 +840,58 @@ export function AssignmentExamView({
                       font-style: normal;
                       left: 24px;
                     }
+                    /* ─── Toolbar icons (bold, italic, list, etc.) ─── */
                     .exam-editor .ql-snow .ql-stroke {
-                      stroke: rgba(255, 255, 255, 0.5);
+                      stroke: rgba(255, 255, 255, 0.8) !important;
+                      stroke-width: 1.5px;
                     }
                     .exam-editor .ql-snow .ql-fill {
-                      fill: rgba(255, 255, 255, 0.5);
+                      fill: rgba(255, 255, 255, 0.8) !important;
                     }
+                    /* ─── Toolbar picker labels (font, size, color) ─── */
                     .exam-editor .ql-snow .ql-picker {
-                      color: rgba(255, 255, 255, 0.5);
+                      color: rgba(255, 255, 255, 0.8) !important;
                     }
+                    .exam-editor .ql-snow .ql-picker-label {
+                      color: rgba(255, 255, 255, 0.8) !important;
+                      border-color: rgba(255, 255, 255, 0.15) !important;
+                    }
+                    .exam-editor .ql-snow .ql-picker-label svg .ql-stroke {
+                      stroke: rgba(255, 255, 255, 0.8) !important;
+                    }
+                    /* ─── Picker dropdown options ─── */
                     .exam-editor .ql-snow .ql-picker-options {
                       background: #1e2040;
-                      border: 1px solid rgba(255,255,255,0.1);
+                      border: 1px solid rgba(255,255,255,0.15);
+                      color: rgba(255, 255, 255, 0.85);
+                    }
+                    .exam-editor .ql-snow .ql-picker-item {
+                      color: rgba(255, 255, 255, 0.85);
+                    }
+                    .exam-editor .ql-snow .ql-picker-item:hover {
+                      color: #a5b4fc;
+                    }
+                    /* ─── Toolbar buttons (hover + active states) ─── */
+                    .exam-editor .ql-snow.ql-toolbar button {
+                      color: rgba(255, 255, 255, 0.8) !important;
                     }
                     .exam-editor .ql-snow.ql-toolbar button:hover .ql-stroke,
-                    .exam-editor .ql-snow.ql-toolbar button:hover .ql-fill,
+                    .exam-editor .ql-snow.ql-toolbar button:hover .ql-fill {
+                      stroke: #a5b4fc !important;
+                      fill: #a5b4fc !important;
+                    }
                     .exam-editor .ql-snow.ql-toolbar button.ql-active .ql-stroke,
                     .exam-editor .ql-snow.ql-toolbar button.ql-active .ql-fill {
-                      stroke: #818cf8;
-                      fill: #818cf8;
+                      stroke: #818cf8 !important;
+                      fill: #818cf8 !important;
                     }
                     .exam-editor .ql-snow.ql-toolbar button:hover,
                     .exam-editor .ql-snow.ql-toolbar button.ql-active {
-                      color: #818cf8;
+                      color: #818cf8 !important;
                     }
                     .exam-editor .ql-snow .ql-picker:hover .ql-picker-label,
                     .exam-editor .ql-snow .ql-picker.ql-expanded .ql-picker-label {
-                      color: #818cf8;
+                      color: #818cf8 !important;
                     }
                     .exam-editor .ql-snow a {
                       color: #818cf8;
@@ -894,6 +919,16 @@ export function AssignmentExamView({
                     .exam-editor .ql-snow .ql-editor ul,
                     .exam-editor .ql-snow .ql-editor ol {
                       padding-left: 20px;
+                    }
+                    /* ─── Color picker & background picker ─── */
+                    .exam-editor .ql-snow .ql-color-picker .ql-picker-label,
+                    .exam-editor .ql-snow .ql-background-picker .ql-picker-label {
+                      border-color: rgba(255, 255, 255, 0.15) !important;
+                    }
+                    .exam-editor .ql-snow .ql-color-picker .ql-picker-options,
+                    .exam-editor .ql-snow .ql-background-picker .ql-picker-options {
+                      background: #1e2040;
+                      border-color: rgba(255, 255, 255, 0.15);
                     }
                   `}</style>
                   <div className="exam-editor">
