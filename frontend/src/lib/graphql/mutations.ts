@@ -1647,12 +1647,35 @@ export const SUBMIT_ASSIGNMENT_EXAM = gql`
 `;
 
 export const GRADE_ASSIGNMENT = gql`
-  mutation GradeAssignment($submissionId: ID!, $grade: Int!, $feedback: String) {
-    gradeAssignment(submissionId: $submissionId, grade: $grade, feedback: $feedback) {
+  mutation GradeAssignment($submissionId: ID!, $grade: Int!, $feedback: String, $questionScores: [QuestionScoreInput]) {
+    gradeAssignment(submissionId: $submissionId, grade: $grade, feedback: $feedback, questionScores: $questionScores) {
       id
       status
       grade
       feedback
+      answers {
+        questionId
+        answerText
+        score
+        aiFeedback
+      }
+    }
+  }
+`;
+
+export const GRADE_ASSIGNMENT_QUESTIONS = gql`
+  mutation GradeAssignmentQuestions($submissionId: ID!, $questionScores: [QuestionScoreInput!]!) {
+    gradeAssignment(submissionId: $submissionId, grade: 0, feedback: "", questionScores: $questionScores) {
+      id
+      status
+      grade
+      feedback
+      answers {
+        questionId
+        answerText
+        score
+        aiFeedback
+      }
     }
   }
 `;

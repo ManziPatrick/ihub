@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 import {
   Download,
   ExternalLink,
@@ -22,7 +24,11 @@ import {
   Star,
   MessageSquare,
   Brain,
+  Save,
+  Edit3,
 } from "lucide-react";
+import { useMutation } from "@apollo/client/react";
+import { GRADE_ASSIGNMENT } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 import { triggerFileDownload, openInNewTab } from "@/lib/download";
 
@@ -57,12 +63,16 @@ interface Submission {
   totalScore?: number;
   timeTaken?: number;
   lessonQuestions?: AssignmentQuestion[];
+  // Grading
+  grade?: number;
+  feedback?: string;
 }
 
 interface ViewSubmissionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   submission: Submission | null;
+  onScoresSaved?: () => void;
 }
 
 const formatTime = (seconds?: number) => {
@@ -76,6 +86,7 @@ export function ViewSubmissionDialog({
   open,
   onOpenChange,
   submission,
+  onScoresSaved,
 }: ViewSubmissionDialogProps) {
   if (!submission) return null;
 
@@ -124,20 +135,110 @@ export function ViewSubmissionDialog({
     }
   };
 
+  // Per-question editing state
+  const [editingScores, setEditingScores] = useState(false);
+  const [questionScores, setQuestionScores] = useState<Record<string, number>>({});
+  const [gradeAssignmentQuestions] = useMutation(GRADE_ASSIGNMENT);
+
   // Build a question map for fast lookup
   const questionMap: Record<string, AssignmentQuestion> = {};
   (submission.lessonQuestions || []).forEach((q) => {
     questionMap[q.id] = q;
   });
 
+  // Initialize question scores from existing answers
+  const initScores = () => {
+    const scores: Record<string, number> = {};
+    submission.answers?.forEach(a => {
+      if (a.questionId) {
+        scores[a.questionId] = a.score ?? 0;
+      }
+    });
+    setQuestionScores(scores);
+    setEditingScores(true);
+  };
+
+  const handleSaveScores = async () => {
+    const qs = Object.entries(questionScores).map(([questionId, score]) => ({
+      questionId,
+      score: Math.max(0, Math.min(100, score)),
+    }));
+    try {
+      await gradeAssignmentQuestions({
+        variables: {
+          submissionId: submission.id,
+          grade: submission.grade || 0,
+          feedback: submission.feedback || '',
+          questionScores: qs,
+        },
+      });
+      toast.success('Per-question scores saved!');
+      setEditingScores(false);
+      if (onScoresSaved) onScoresSaved();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save scores');
+    }
+  };
+
+  // Check if answer is correct for checkbox type (multiple correct)
+  const isCheckboxCorrect = (question: AssignmentQuestion, answerText: string): boolean => {
+    if (!question.correctOptionIndexes || question.correctOptionIndexes.length === 0) return false;
+    if (!answerText) return false;
+    const selectedIndices = answerText.split(',').map(Number).filter(n => !isNaN(n));
+    const correctSet = new Set(question.correctOptionIndexes);
+    const selectedSet = new Set(selectedIndices);
+    if (selectedSet.size !== correctSet.size) return false;
+    for (const idx of selectedSet) {
+      if (!correctSet.has(idx)) return false;
+    }
+    return true;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 border-border/50">
         <DialogHeader className="px-6 py-4 bg-muted/20 border-b border-border/50 flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-base font-bold">
-            <FileText className="w-5 h-5 text-accent" />
-            Submission Review
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-base font-bold">
+              <FileText className="w-5 h-5 text-accent" />
+              Submission Review
+            </DialogTitle>
+            {isExamSubmission && (
+              <div className="flex items-center gap-2">
+                {editingScores ? (
+                  <>
+                    <Button
+                      variant="gold"
+                      size="sm"
+                      onClick={handleSaveScores}
+                      className="h-8 text-xs"
+                    >
+                      <Save className="w-3.5 h-3.5 mr-1" />
+                      Save Scores
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingScores(false)}
+                      className="h-8 text-xs"
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={initScores}
+                    className="h-8 text-xs"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 mr-1" />
+                    Edit Scores
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </DialogHeader>
 
         <ScrollArea className="flex-1 overflow-y-auto">
@@ -211,11 +312,17 @@ export function ViewSubmissionDialog({
                 {submission.answers?.map((answer, idx) => {
                   const question = questionMap[answer.questionId];
                   const hasQuestion = !!question;
-                  const isMcq = question?.type === "mcq";
-                  const isCorrect =
-                    isMcq &&
-                    question?.correctOptionIndex != null &&
-                    answer.answerText === question.correctOptionIndex.toString();
+                  const questionType = question?.type || 'open';
+                  const isMcq = questionType === 'mcq';
+                  const isCheckbox = questionType === 'checkbox';
+                  const isMcqOrCheckbox = isMcq || isCheckbox;
+                  
+                  let isCorrect = false;
+                  if (isMcq) {
+                    isCorrect = question?.correctOptionIndex != null && answer.answerText === question.correctOptionIndex.toString();
+                  } else if (isCheckbox) {
+                    isCorrect = isCheckboxCorrect(question!, answer.answerText);
+                  }
 
                   return (
                     <div
@@ -234,7 +341,7 @@ export function ViewSubmissionDialog({
                             </p>
                             <div className="flex items-center gap-2 mt-1">
                               <Badge variant="secondary" className="text-[10px] capitalize">
-                                {question?.type || "open"}
+                                {questionType === 'checkbox' ? 'Multiple Select' : questionType}
                               </Badge>
                               {question?.points && (
                                 <span className="text-[10px] text-muted-foreground">
@@ -244,7 +351,7 @@ export function ViewSubmissionDialog({
                             </div>
                           </div>
                         </div>
-                        {isMcq && (
+                        {isMcqOrCheckbox && (
                           isCorrect ? (
                             <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                           ) : (
@@ -260,12 +367,16 @@ export function ViewSubmissionDialog({
                         )}
                       </div>
 
-                      {/* MCQ options */}
-                      {isMcq && question?.options && (
+                      {/* MCQ/Checkbox options */}
+                      {isMcqOrCheckbox && question?.options && (
                         <div className="px-5 py-3 bg-background/30 flex flex-wrap gap-2">
                           {question.options.map((opt, oi) => {
-                            const isStudentAnswer = answer.answerText === oi.toString();
-                            const isCorrectOption = question.correctOptionIndex === oi;
+                            const isStudentAnswer = isMcq
+                              ? answer.answerText === oi.toString()
+                              : (answer.answerText || '').split(',').includes(oi.toString());
+                            const isCorrectOption = isMcq
+                              ? question.correctOptionIndex === oi
+                              : question.correctOptionIndexes?.includes(oi);
                             return (
                               <span
                                 key={oi}
@@ -288,7 +399,7 @@ export function ViewSubmissionDialog({
                       )}
 
                       {/* Open answer (or fallback when question not found) */}
-                      {(!isMcq) && (
+                      {(!isMcqOrCheckbox) && (
                         <div className="px-5 py-4 bg-background/20">
                           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
                             Student's Answer
@@ -317,15 +428,32 @@ export function ViewSubmissionDialog({
                         </div>
                       )}
 
-                      {/* Score */}
-                      {answer.score != null && (
-                        <div className="px-5 py-2 bg-muted/10 border-t border-border/30 flex items-center justify-between">
-                          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Score</span>
-                          <span className={`text-sm font-black ${answer.score > 0 ? 'text-amber-400' : 'text-red-400'}`}>
-                            {answer.score} / {question?.points || "?"} pts
-                          </span>
-                        </div>
-                      )}
+                      {/* Score - editable when editing */}
+                      <div className="px-5 py-2 bg-muted/10 border-t border-border/30 flex items-center justify-between">
+                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Score</span>
+                        {editingScores ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min="0"
+                              max={question?.points || 100}
+                              value={questionScores[answer.questionId] ?? answer.score ?? 0}
+                              onChange={(e) => setQuestionScores(prev => ({
+                                ...prev,
+                                [answer.questionId]: parseInt(e.target.value) || 0
+                              }))}
+                              className="w-20 h-7 text-xs text-center"
+                            />
+                            <span className="text-xs text-muted-foreground">/ {question?.points || '?'} pts</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-black ${(answer.score || 0) > 0 ? 'text-amber-400' : 'text-red-400'}`}>
+                              {answer.score || 0} / {question?.points || "?"} pts
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

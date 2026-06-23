@@ -489,6 +489,94 @@ export const reviewSubmissionService = async (taskTitle: string, submissionConte
     }
 };
 
+/**
+ * Batch reviews multiple open-ended answers in a single AI request.
+ * Accepts an array of { questionText, answerText, maxScore } and returns
+ * an array of { questionText, answerText, score, feedback }.
+ * This is more efficient than calling the AI once per question.
+ */
+export const batchReviewOpenQuestionsService = async (
+  questions: Array<{ questionText: string; answerText: string; maxScore: number }>
+): Promise<Array<{ questionText: string; answerText: string; score: number; feedback: string }>> => {
+  if (questions.length === 0) return [];
+
+  const questionsBlock = questions.map((q, i) => {
+    return `Question ${i + 1}: ${q.questionText}
+Student Answer ${i + 1}: ${q.answerText}
+Max Points: ${q.maxScore}`;
+  }).join('\n\n---\n\n');
+
+  const prompt = `You are an expert mentor at Bootskills Academy. Review ALL of the following open-ended student answers in one go.
+
+For each answer, provide:
+1. A score out of the max points
+2. Brief constructive feedback (1-2 sentences)
+
+${questionsBlock}
+
+Return ONLY a valid JSON array with one object per question. No markdown, no extra text.
+Format:
+[
+  {
+    "questionIndex": 0,
+    "score": 8,
+    "feedback": "Good analysis but missing key detail about X."
+  },
+  ...
+]`;
+
+  try {
+    const chatCompletion = await tryInference([{ role: 'user', content: prompt }], 2048);
+    const aiContent = chatCompletion.choices[0].message.content || '';
+    // Extract JSON array from the response
+    const jsonMatch = aiContent.match(/\[\s*\{[\s\S]*?\}\s*\]/);
+    if (!jsonMatch) {
+      // Fallback: score each individually
+      console.warn('Batch AI grading: Could not parse JSON response, falling back to individual scoring');
+      return await Promise.all(questions.map(async (q) => {
+        const result = await reviewSubmissionService(q.questionText, q.answerText);
+        return {
+          questionText: q.questionText,
+          answerText: q.answerText,
+          score: Math.round((result.score / 100) * q.maxScore),
+          feedback: result.content
+        };
+      }));
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    return questions.map((q, i) => {
+      const aiResult = parsed.find((r: any) => r.questionIndex === i);
+      if (aiResult) {
+        return {
+          questionText: q.questionText,
+          answerText: q.answerText,
+          score: Math.min(aiResult.score, q.maxScore),
+          feedback: aiResult.feedback || 'Reviewed by AI.'
+        };
+      }
+      return {
+        questionText: q.questionText,
+        answerText: q.answerText,
+        score: 0,
+        feedback: 'AI grading unavailable for this question.'
+      };
+    });
+  } catch (error: any) {
+    console.error('Batch AI Grading Error:', error);
+    // Fallback: score each individually
+    return await Promise.all(questions.map(async (q) => {
+      const result = await reviewSubmissionService(q.questionText, q.answerText);
+      return {
+        questionText: q.questionText,
+        answerText: q.answerText,
+        score: Math.round((result.score / 100) * q.maxScore),
+        feedback: result.content
+      };
+    }));
+  }
+};
+
 export const generateAIQuizService = async (courseTitle: string, lessonTitle: string, content: string, questionCount: number = 3, userPrompt: string = "") => {
     const prompt = `You are an educator at Bootskills Academy, specialized in making learning effective for students.
     Generate a ${questionCount}-question quiz for the following lesson.

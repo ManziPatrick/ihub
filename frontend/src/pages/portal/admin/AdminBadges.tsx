@@ -39,8 +39,10 @@ import { GET_BADGES } from "@/lib/graphql/queries";
 import { CREATE_BADGE, UPDATE_BADGE, DELETE_BADGE, RESTORE_BADGE } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/portal/dialogs/ConfirmDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AdminBadges() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBadge, setEditingBadge] = useState<any>(null);
@@ -54,10 +56,10 @@ export default function AdminBadges() {
   });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 12; // 3x4 grid or similar
+  const [pageSize, setPageSize] = useState(12);
 
   const { data, loading: queryLoading, refetch } = useQuery<{ badges: { items: any[], pagination: any } }>(GET_BADGES, {
-    variables: { page: currentPage, limit: pageSize }
+    variables: { page: currentPage, limit: pageSize, createdBy: user?.id }
   });
   const badges = data?.badges?.items || [];
   const pagination = data?.badges?.pagination;
@@ -301,10 +303,29 @@ export default function AdminBadges() {
 
         {/* Pagination UI */}
         {pagination && pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between px-2 py-6 border-t border-border/50 mt-8">
-                <p className="text-sm text-muted-foreground font-medium">
-                    Page <span className="text-foreground font-bold">{pagination.currentPage}</span> of {pagination.totalPages} ({pagination.totalCount} badges)
-                </p>
+            <div className="flex flex-col sm:flex-row items-center justify-between px-2 py-6 border-t border-border/50 mt-8 gap-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Show</span>
+                    <select
+                        value={pageSize}
+                        onChange={(e) => {
+                            setPageSize(Number(e.target.value));
+                            setCurrentPage(1);
+                        }}
+                        className="bg-background border border-border/50 rounded-md px-2 py-1 text-sm"
+                    >
+                        <option value={12}>12</option>
+                        <option value={24}>24</option>
+                        <option value={48}>48</option>
+                        <option value={96}>96</option>
+                    </select>
+                    <span>
+                        Showing <span className="font-semibold text-foreground">{((currentPage - 1) * pageSize) + 1}</span>
+                        -
+                        <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, pagination.totalCount)}</span>
+                        of <span className="font-semibold text-foreground">{pagination.totalCount}</span>
+                    </span>
+                </div>
                 <div className="flex gap-2">
                     <Button
                         variant="outline"

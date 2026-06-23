@@ -25,7 +25,9 @@ import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const { data, loading } = useQuery(GET_ADMIN_DASHBOARD_DATA);
+  const { data, loading } = useQuery(GET_ADMIN_DASHBOARD_DATA, {
+    variables: { createdBy: user?.id },
+  });
   const { data: activityData, loading: recentActivityLoading } = useQuery(GET_RECENT_ACTIVITY, {
     pollInterval: 10000
   });

@@ -16,6 +16,7 @@ export interface IPayment extends Document {
   selectedDeliveryMode?: string;
   proofOfPaymentUrl?: string;
   adminNotes?: string;
+  createdBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +43,7 @@ const PaymentSchema: Schema = new Schema(
     selectedDeliveryMode: { type: String, enum: ['online', 'physical', 'hybrid'] },
     proofOfPaymentUrl: { type: String },
     adminNotes: { type: String },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
 );

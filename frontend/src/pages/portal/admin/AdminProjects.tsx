@@ -49,6 +49,7 @@ import { ConfirmDialog } from "@/components/portal/dialogs/ConfirmDialog";
 import { format } from "date-fns";
 import { TeamChatDialog, ManageProjectTasksDialog, ProjectDetailsDialog, CreateAgileProjectDialog, CreateProjectDialog, GradeProjectDialog, BookCallDialog, ViewSubmissionDialog, ProjectTaskDialog } from "@/components/portal/dialogs";
 import { Textarea } from "@/components/ui/textarea";
+import { TextEditor } from "@/components/ui/text-editor";
 import { KanbanBoard } from "@/components/portal/KanbanBoard";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -115,7 +116,7 @@ export default function AdminProjects() {
   const [gradeOpen, setGradeOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [courseFilter, setCourseFilter] = useState("all");
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   // Assignment states
   const [selectedSubmission, setSelectedSubmission] = useState<AssignmentSubmission | null>(null);
@@ -123,9 +124,14 @@ export default function AdminProjects() {
   const [feedbackValue, setFeedbackValue] = useState("");
   const [bookingOpen, setBookingOpen] = useState(false);
   const [viewSubmission, setViewSubmission] = useState<AssignmentSubmission | null>(null);
+  // Re-grading states
+  const [regradingSubmissionId, setRegradingSubmissionId] = useState<string | null>(null);
+  const [regradeGradeValue, setRegradeGradeValue] = useState("");
+  const [regradeFeedbackValue, setRegradeFeedbackValue] = useState("");
 
   const [assignPage, setAssignPage] = useState(1);
-  const assignPageSize = 10;
+  const [assignPageSize, setAssignPageSize] = useState(10);
+  const [gradedFilter, setGradedFilter] = useState<string>("all");
 
   // Kanban Board state
   const [boardProjectId, setBoardProjectId] = useState<string | null>(null);
@@ -138,11 +144,13 @@ export default function AdminProjects() {
       variables: { page: assignPage, limit: assignPageSize }
   });
   const [gradeAssignmentMutation, { loading: grading }] = useMutation(GRADE_ASSIGNMENT);
+  const [regradeAssignmentMutation, { loading: regrading }] = useMutation(GRADE_ASSIGNMENT);
 
   const submissions = assignmentsData?.getAssignmentSubmissions?.items || [];
   const assignPagination = assignmentsData?.getAssignmentSubmissions?.pagination;
   const pendingSubmissions = submissions.filter((s: AssignmentSubmission) => s.status === "pending");
   const gradedSubmissions = submissions.filter((s: AssignmentSubmission) => s.status === "reviewed" || s.status === "graded" || s.status === "revision_requested");
+  const failedSubmissions = submissions.filter((s: AssignmentSubmission) => s.status === "failed");
 
   const handleGrade = async () => {
     if (!selectedSubmission || !gradeValue) {
@@ -167,6 +175,28 @@ export default function AdminProjects() {
       setFeedbackValue("");
     } catch (err: any) {
       toast.error(err.message || "Failed to grade assignment");
+    }
+  };
+
+  const handleRegrade = async (submission: AssignmentSubmission) => {
+    const grade = parseInt(regradeGradeValue);
+    if (isNaN(grade) || grade < 0 || grade > 100) {
+      toast.error("Grade must be between 0 and 100");
+      return;
+    }
+    try {
+      await regradeAssignmentMutation({
+        variables: { submissionId: submission.id, grade, feedback: regradeFeedbackValue },
+        refetchQueries: [{ query: GET_ASSIGNMENT_SUBMISSIONS }],
+        awaitRefetchQueries: true
+      });
+      toast.success("Assignment re-graded successfully!");
+      await refetchAssignments();
+      setRegradingSubmissionId(null);
+      setRegradeGradeValue("");
+      setRegradeFeedbackValue("");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to re-grade assignment");
     }
   };
 
@@ -568,10 +598,29 @@ export default function AdminProjects() {
 
             {/* Pagination UI */}
             {pagination && pagination.totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <p className="text-sm text-muted-foreground">
-                  Showing page <span className="font-semibold">{pagination.currentPage}</span> of <span className="font-semibold">{pagination.totalPages}</span> ({pagination.totalCount} total)
-                </p>
+              <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Show</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="bg-background border border-border/50 rounded-md px-2 py-1 text-sm"
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <span>
+                    Showing <span className="font-semibold text-foreground">{((currentPage - 1) * pageSize) + 1}</span>
+                    -
+                    <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, pagination.totalCount)}</span>
+                    of <span className="font-semibold text-foreground">{pagination.totalCount}</span>
+                  </span>
+                </div>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -845,6 +894,7 @@ export default function AdminProjects() {
             <Tabs defaultValue="pending" className="space-y-6">
               <TabsList className="bg-muted/20 p-1 rounded-xl h-10 border border-border/30 w-fit">
                 <TabsTrigger value="pending" className="rounded-lg text-sm">Pending ({pendingSubmissions.length})</TabsTrigger>
+                <TabsTrigger value="failed" className="rounded-lg text-sm">Failed ({failedSubmissions.length})</TabsTrigger>
                 <TabsTrigger value="graded" className="rounded-lg text-sm">Graded ({gradedSubmissions.length})</TabsTrigger>
               </TabsList>
 
@@ -982,12 +1032,13 @@ export default function AdminProjects() {
                             </div>
                             <div className="space-y-2">
                               <label className="text-sm font-bold">Feedback (Optional)</label>
-                              <Textarea
-                                placeholder="Provide constructive feedback..."
-                                value={feedbackValue}
-                                onChange={(e) => setFeedbackValue(e.target.value)}
-                                rows={4}
-                              />
+                              <div className="min-h-[120px]">
+                                <TextEditor
+                                  value={feedbackValue}
+                                  onChange={(content) => setFeedbackValue(content)}
+                                  placeholder="Provide constructive feedback..."
+                                />
+                              </div>
                             </div>
                             <div className="flex gap-2 pt-2">
                               <Button
@@ -1020,16 +1071,208 @@ export default function AdminProjects() {
                 )}
               </TabsContent>
 
-              <TabsContent value="graded" className="space-y-4">
-                {gradedSubmissions.length === 0 ? (
+              <TabsContent value="failed" className="space-y-4">
+                {failedSubmissions.length === 0 ? (
                   <Card className="border-border/50">
                     <CardContent className="p-12 text-center">
-                      <p className="text-muted-foreground">No graded submissions yet.</p>
+                      <AlertCircle className="w-12 h-12 mx-auto text-amber-500 mb-4" />
+                      <p className="text-muted-foreground">No failed submissions.</p>
                     </CardContent>
                   </Card>
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {gradedSubmissions.map((submission: AssignmentSubmission) => (
+                    {failedSubmissions.map((submission: AssignmentSubmission) => (
+                      <Card key={submission.id} className="border-red-500/20 bg-red-500/5">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+                                <User className="w-5 h-5 text-red-500" />
+                              </div>
+                              <div>
+                                <CardTitle className="text-base">{submission.user?.fullName || submission.user?.username}</CardTitle>
+                                <p className="text-xs text-muted-foreground">Lesson: {submission.lessonId}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20 cursor-pointer hover:bg-red-500/20 transition-colors" onClick={() => setViewSubmission(submission)}>
+                                {submission.grade}/100
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`h-7 text-[10px] ${regradingSubmissionId === submission.id ? 'text-accent bg-accent/10' : 'text-red-500/50 hover:text-red-500'}`}
+                                onClick={() => {
+                                  if (regradingSubmissionId === submission.id) {
+                                    setRegradingSubmissionId(null);
+                                  } else {
+                                    setRegradingSubmissionId(submission.id);
+                                    setRegradeGradeValue(String(submission.grade || ''));
+                                    setRegradeFeedbackValue(submission.feedback || '');
+                                  }
+                                }}
+                              >
+                                <Stars className="w-3 h-3 mr-1" />
+                                Re-grade
+                              </Button>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {submission.feedback && (
+                            <div className="p-3 bg-red-500/5 rounded-lg border border-red-500/20">
+                              <p className="text-xs font-bold text-red-500 mb-1">Feedback</p>
+                              <p className="text-sm italic text-muted-foreground">{`"${submission.feedback}"`}</p>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(parseInt(submission.createdAt)).toLocaleDateString()}
+                          </div>
+                          {regradingSubmissionId === submission.id && (
+                            <div className="pt-3 border-t border-red-500/20 space-y-3 mt-3">
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-bold">New Grade (0-100)</label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  placeholder="Enter grade..."
+                                  value={regradeGradeValue}
+                                  onChange={(e) => setRegradeGradeValue(e.target.value)}
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-bold">Feedback (Optional)</label>
+                                <Textarea
+                                  placeholder="Provide constructive feedback..."
+                                  value={regradeFeedbackValue}
+                                  onChange={(e) => setRegradeFeedbackValue(e.target.value)}
+                                  rows={2}
+                                  className="text-sm"
+                                />
+                              </div>
+                              <div className="flex gap-2 pt-1">
+                                <Button
+                                  variant="gold"
+                                  size="sm"
+                                  className="flex-1 h-8 text-xs"
+                                  onClick={() => handleRegrade(submission)}
+                                  disabled={regrading || !regradeGradeValue}
+                                >
+                                  {regrading ? "Submitting..." : "Submit Re-grade"}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 text-xs"
+                                  onClick={() => setRegradingSubmissionId(null)}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+                
+                {failedSubmissions.length === 0 && (
+                  <div className="text-center py-20 border-2 border-dashed rounded-[32px] opacity-50">
+                    <FileText className="w-12 h-12 mx-auto mb-4" />
+                    <p className="font-bold">No submissions found</p>
+                  </div>
+                )}
+
+                {/* Assignment Pagination UI */}
+                {assignPagination && assignPagination.totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between px-2 py-4 gap-4">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>Show</span>
+                            <select
+                                value={assignPageSize}
+                                onChange={(e) => {
+                                    setAssignPageSize(Number(e.target.value));
+                                    setAssignPage(1);
+                                }}
+                                className="bg-background border border-border/50 rounded-md px-2 py-1 text-sm"
+                            >
+                                <option value={5}>5</option>
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                            </select>
+                            <span>
+                                Page <span className="font-bold text-foreground">{assignPagination.currentPage}</span> of {assignPagination.totalPages}
+                                ({assignPagination.totalCount} total)
+                            </span>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setAssignPage(prev => Math.max(1, prev - 1))}
+                                disabled={!assignPagination.hasPreviousPage}
+                                className="rounded-xl h-8 px-3"
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setAssignPage(prev => Math.min(assignPagination.totalPages, prev + 1))}
+                                disabled={!assignPagination.hasNextPage}
+                                className="rounded-xl h-8 px-3"
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="graded" className="space-y-4">
+                {/* Pass/Fail Filter Toggle */}
+                {gradedSubmissions.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Filter:</span>
+                    <div className="flex bg-muted/20 rounded-lg p-0.5 border border-border/30">
+                      <button
+                        onClick={() => setGradedFilter("all")}
+                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${gradedFilter === "all" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        All ({gradedSubmissions.length})
+                      </button>
+                      <button
+                        onClick={() => setGradedFilter("passed")}
+                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${gradedFilter === "passed" ? "bg-background shadow-sm text-green-600" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        Passed ({gradedSubmissions.filter(s => (s.grade || 0) >= 70).length})
+                      </button>
+                      <button
+                        onClick={() => setGradedFilter("failed")}
+                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${gradedFilter === "failed" ? "bg-background shadow-sm text-red-600" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        Failed ({gradedSubmissions.filter(s => (s.grade || 0) < 70).length})
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {(() => {
+                  const displayGraded = gradedFilter === "all" ? gradedSubmissions : gradedSubmissions.filter(s => gradedFilter === "passed" ? (s.grade || 0) >= 70 : (s.grade || 0) < 70);
+                  return displayGraded.length === 0 ? (
+                    <Card className="border-border/50">
+                      <CardContent className="p-12 text-center">
+                        <p className="text-muted-foreground">No graded submissions match this filter.</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {displayGraded.map((submission: AssignmentSubmission) => (
                       <Card key={submission.id} className="border-border/50">
                         <CardHeader>
                           <div className="flex items-start justify-between">
@@ -1042,41 +1285,116 @@ export default function AdminProjects() {
                                 <p className="text-xs text-muted-foreground">Lesson: {submission.lessonId}</p>
                               </div>
                             </div>
-                            <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
-                              {submission.grade}/100
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className={`${(submission.grade || 0) >= 70 ? 'bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/20'} cursor-pointer transition-colors`} onClick={() => setViewSubmission(submission)}>
+                                {submission.grade}/100
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`h-7 text-[10px] ${regradingSubmissionId === submission.id ? 'text-accent bg-accent/10' : 'text-muted-foreground/50 hover:text-accent'}`}
+                                onClick={() => {
+                                  if (regradingSubmissionId === submission.id) {
+                                    setRegradingSubmissionId(null);
+                                  } else {
+                                    setRegradingSubmissionId(submission.id);
+                                    setRegradeGradeValue(String(submission.grade || ''));
+                                    setRegradeFeedbackValue(submission.feedback || '');
+                                  }
+                                }}
+                              >
+                                <Stars className="w-3 h-3 mr-1" />
+                                Re-grade
+                              </Button>
+                            </div>
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-2">
                           {submission.feedback && (
                             <div className="p-3 bg-muted/20 rounded-lg border border-border/30">
                               <p className="text-xs font-bold text-accent mb-1">Feedback</p>
-                              <p className="text-sm italic text-muted-foreground">{`"${submission.feedback}"`}</p>
+                              <div className="text-sm italic text-muted-foreground prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: submission.feedback }} />
                             </div>
                           )}
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Calendar className="w-3 h-3" />
                             {new Date(parseInt(submission.createdAt)).toLocaleDateString()}
                           </div>
+                          {regradingSubmissionId === submission.id && (
+                            <div className="pt-3 border-t border-border/30 space-y-3 mt-3">
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-bold">New Grade (0-100)</label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  placeholder="Enter grade..."
+                                  value={regradeGradeValue}
+                                  onChange={(e) => setRegradeGradeValue(e.target.value)}
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-bold">Feedback (Optional)</label>
+                                <div className="min-h-[120px]">
+                                  <TextEditor
+                                    value={regradeFeedbackValue}
+                                    onChange={(content) => setRegradeFeedbackValue(content)}
+                                    placeholder="Provide constructive feedback..."
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex gap-2 pt-1">
+                                <Button
+                                  variant="gold"
+                                  size="sm"
+                                  className="flex-1 h-8 text-xs"
+                                  onClick={() => handleRegrade(submission)}
+                                  disabled={regrading || !regradeGradeValue}
+                                >
+                                  {regrading ? "Submitting..." : "Submit Re-grade"}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 text-xs"
+                                  onClick={() => setRegradingSubmissionId(null)}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     ))}
                   </div>
-                )}
-                
-                {gradedSubmissions.length === 0 && (
-                  <div className="text-center py-20 border-2 border-dashed rounded-[32px] opacity-50">
-                    <FileText className="w-12 h-12 mx-auto mb-4" />
-                    <p className="font-bold">No submissions found</p>
-                  </div>
-                )}
+                );
+                })()}
 
                 {/* Assignment Pagination UI */}
                 {assignPagination && assignPagination.totalPages > 1 && (
-                    <div className="flex items-center justify-between px-2 py-4">
-                        <p className="text-sm text-muted-foreground">
-                            Page <span className="font-bold text-foreground">{assignPagination.currentPage}</span> of {assignPagination.totalPages} ({assignPagination.totalCount} total)
-                        </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-between px-2 py-4 gap-4">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>Show</span>
+                            <select
+                                value={assignPageSize}
+                                onChange={(e) => {
+                                    setAssignPageSize(Number(e.target.value));
+                                    setAssignPage(1);
+                                }}
+                                className="bg-background border border-border/50 rounded-md px-2 py-1 text-sm"
+                            >
+                                <option value={5}>5</option>
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                            </select>
+                            <span>
+                                Page <span className="font-bold text-foreground">{assignPagination.currentPage}</span> of {assignPagination.totalPages}
+                                ({assignPagination.totalCount} total)
+                            </span>
+                        </div>
                         <div className="flex gap-2">
                             <Button
                                 variant="outline"
@@ -1149,6 +1467,7 @@ export default function AdminProjects() {
       <ViewSubmissionDialog
         open={!!viewSubmission}
         onOpenChange={(open) => !open && setViewSubmission(null)}
+        onScoresSaved={() => refetchAssignments()}
         submission={viewSubmission ? {
           id: viewSubmission.id,
           student: viewSubmission.user?.fullName || viewSubmission.user?.username || 'Unknown',

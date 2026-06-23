@@ -20,6 +20,7 @@ import {
   Trophy,
   Book,
   Download,
+  UserCog,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -43,7 +44,7 @@ import { format, isValid } from "date-fns";
 const COLORS = ['#D4AF37', '#3B82F6', '#10B981', '#F59E0B', '#6366F1', '#EC4899'];
 
 import { useQuery, useLazyQuery } from "@apollo/client/react";
-import { GET_ANALYTICS, GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY, GET_TOP_STUDENTS, GET_USERS, GET_COURSES_LITE_SUMMARY, GET_COURSE_ENROLLED_STUDENTS } from "@/lib/graphql/queries";
+import { GET_ANALYTICS, GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY, GET_TOP_STUDENTS, GET_USERS, GET_COURSES_LITE_SUMMARY, GET_COURSE_ENROLLED_STUDENTS, GET_STATS, GET_ALL_TRAINERS } from "@/lib/graphql/queries";
 import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 
 
@@ -62,8 +63,14 @@ export default function SuperAdminAnalytics() {
     fetchPolicy: "cache-and-network",
   });
 
+  const { data: statsData } = useQuery(GET_STATS);
+  const { data: trainersData } = useQuery(GET_ALL_TRAINERS);
   const analytics = (analyticsData as any)?.analytics;
-  const liveStats = (dashboardData as any)?.adminDashboardData?.stats || { totalRevenue: 0, totalUsers: 0, totalCourses: 0 };
+  const statsFromBackend = (statsData as any)?.stats;
+  const dashboardStats = (dashboardData as any)?.adminDashboardData?.stats || { totalRevenue: 0, totalUsers: 0, totalCourses: 0 };
+  // Use GET_STATS for accurate global counts, fallback to adminDashboardData
+  const liveStats = statsFromBackend || dashboardStats;
+  const allTrainers = (trainersData as any)?.getAllTrainers || [];
   const recentActivityLogs = (activityData as any)?.recentActivity || [];
   const topStudents = (topStudentsData as any)?.getTopStudents || [];
   
@@ -90,6 +97,7 @@ export default function SuperAdminAnalytics() {
     { label: "Total Revenue", value: liveStats.totalRevenue.toLocaleString() + " RWF", icon: DollarSign },
     { label: "Total Users", value: liveStats.totalUsers.toString(), icon: Users },
     { label: "Active Courses", value: liveStats.totalCourses.toString(), icon: BookOpen },
+    { label: "Trainers", value: allTrainers.length.toString(), icon: UserCog },
     { label: "Platform Health", value: "99.9%", icon: Activity },
   ];
 
@@ -133,7 +141,7 @@ export default function SuperAdminAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4"
         >
           {globalStats.map((stat) => (
             <Card key={stat.label} className="border-border/50">

@@ -39,7 +39,7 @@ export function ProjectTaskDialog({ open, onOpenChange, projectId, task, refetch
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("medium");
   const [status, setStatus] = useState("backlog");
-  const [assigneeId, setAssigneeId] = useState("");
+  const [assigneeId, setAssigneeId] = useState("unassigned");
   const [storyPoints, setStoryPoints] = useState<number>(0);
   const [dueDate, setDueDate] = useState("");
   const [labels, setLabels] = useState<string[]>([]);
@@ -56,7 +56,7 @@ export function ProjectTaskDialog({ open, onOpenChange, projectId, task, refetch
       setDescription(task.description || "");
       setPriority(task.priority || "medium");
       setStatus(task.status || "backlog");
-      setAssigneeId(task.assigneeId || "");
+      setAssigneeId(task.assigneeId || "unassigned");
       setStoryPoints(task.storyPoints || 0);
       setDueDate(task.dueDate?.split("T")[0] || "");
       setLabels(task.labels || []);
@@ -65,7 +65,7 @@ export function ProjectTaskDialog({ open, onOpenChange, projectId, task, refetch
       setDescription("");
       setPriority("medium");
       setStatus("backlog");
-      setAssigneeId("");
+      setAssigneeId("unassigned");
       setStoryPoints(0);
       setDueDate("");
       setLabels([]);
@@ -115,7 +115,7 @@ export function ProjectTaskDialog({ open, onOpenChange, projectId, task, refetch
       title: title.trim(),
       description: description.trim() || undefined,
       priority,
-      assigneeId: assigneeId || undefined,
+      assigneeId: assigneeId === "unassigned" ? undefined : assigneeId,
       storyPoints: storyPoints > 0 ? storyPoints : undefined,
       dueDate: dueDate || undefined,
       labels: labels.length > 0 ? labels : undefined,
@@ -212,7 +212,7 @@ export function ProjectTaskDialog({ open, onOpenChange, projectId, task, refetch
                   <SelectValue placeholder="Unassigned" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   {students.map((s: any) => (
                     <SelectItem key={s.id} value={s.id}>
                       {s.fullName || s.username}

@@ -55,7 +55,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_USERS, GET_ANALYTICS, GET_AVAILABLE_ADMINS } from "@/lib/graphql/queries";
+import { GET_USERS, GET_ANALYTICS, GET_AVAILABLE_ADMINS, GET_ALL_TRAINERS, GET_ALL_STUDENTS } from "@/lib/graphql/queries";
 
 const navigate = (to: string) => {
   window.location.href = to;
@@ -75,7 +75,7 @@ export default function SuperAdminUsers() {
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   // Edit form state
   const [editForm, setEditForm] = useState({
@@ -104,6 +104,11 @@ export default function SuperAdminUsers() {
   });
   const { data: analyticsData } = useQuery(GET_ANALYTICS);
   const { data: availableAdminsData } = useQuery(GET_AVAILABLE_ADMINS);
+  const { data: allTrainersData } = useQuery(GET_ALL_TRAINERS);
+  const { data: allStudentsData } = useQuery(GET_ALL_STUDENTS);
+  const { data: clientUsersData } = useQuery(GET_USERS, {
+    variables: { page: 1, limit: 1, role: "client" },
+  });
 
   // Get all admin/super_admin users for the admin filter dropdown
   const adminOptions = (availableAdminsData as any)?.getAvailableAdmins || [];
@@ -211,19 +216,17 @@ export default function SuperAdminUsers() {
 
   // Accurate counts from backend, not paginated
   const totalUsers = pagination?.totalCount ?? allUsers.length;
-  const getRoleCount = (roleName: string) => {
-    const entry = roleDistribution.find(
-      (r: any) => r.name.toLowerCase() === roleName.toLowerCase()
-    );
-    return entry?.value ?? 0;
-  };
-  const studentCount = getRoleCount("student");
-  const trainerCount = getRoleCount("trainer");
-  const adminCount =
-    getRoleCount("admin") + getRoleCount("Super_admin");
+  // Use dedicated API calls for accurate role counts (bypasses analytics.roleDistribution bugs)
+  const allTrainers = (allTrainersData as any)?.getAllTrainers || [];
+  const allStudents = (allStudentsData as any)?.getAllStudents || [];
+  const clientCount = (clientUsersData as any)?.users?.pagination?.totalCount ?? 0;
+  const studentCount = allStudents.length || 0;
+  const trainerCount = allTrainers.length || 0;
+  const adminCount = adminOptions.length || 0;
 
   const userStats = [
     { label: "Total Users", value: totalUsers.toString(), icon: Users },
+    { label: "Clients", value: clientCount.toString(), icon: UserCheck },
     {
       label: "Students",
       value: studentCount.toString(),
@@ -234,6 +237,7 @@ export default function SuperAdminUsers() {
   ];
 
   const roleColors: Record<string, string> = {
+    client: "bg-emerald-500/20 text-emerald-400",
     student: "bg-blue-500/20 text-blue-400",
     trainer: "bg-purple-500/20 text-purple-400",
     admin: "bg-accent/20 text-accent",
@@ -268,7 +272,7 @@ export default function SuperAdminUsers() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4"
         >
           {userStats.map((stat) => (
             <Card
@@ -322,6 +326,7 @@ export default function SuperAdminUsers() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="client">Clients</SelectItem>
               <SelectItem value="student">Students</SelectItem>
               <SelectItem value="trainer">Trainers</SelectItem>
               <SelectItem value="admin">Admins</SelectItem>
@@ -513,17 +518,28 @@ export default function SuperAdminUsers() {
               {/* Pagination UI */}
               {pagination && pagination.totalPages > 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-border/50 gap-4">
-                  <p className="text-sm text-muted-foreground order-2 sm:order-1">
-                    Showing page{" "}
-                    <span className="font-semibold text-foreground">
-                      {pagination.currentPage}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-semibold text-foreground">
-                      {pagination.totalPages}
-                    </span>{" "}
-                    ({pagination.totalCount} users)
-                  </p>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground order-2 sm:order-1">
+                    <span>Show</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => {
+                        setPageSize(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="bg-background border border-border/50 rounded-md px-2 py-1 text-sm"
+                    >
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                    <span>
+                      Showing <span className="font-semibold text-foreground">{((currentPage - 1) * pageSize) + 1}</span>
+                      -
+                      <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, pagination.totalCount)}</span>
+                      of <span className="font-semibold text-foreground">{pagination.totalCount}</span>
+                    </span>
+                  </div>
                   <div className="flex items-center gap-2 order-1 sm:order-2">
                     <Button
                       variant="outline"

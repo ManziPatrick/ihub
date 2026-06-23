@@ -32,13 +32,17 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@apollo/client/react";
 import { GET_ANALYTICS } from "@/lib/graphql/queries";
 
 const COLORS = ['#D4AF37', '#9CA3AF', '#F59E0B', '#10B981', '#3B82F6'];
 
 export default function AdminAnalytics() {
-  const { data, loading } = useQuery(GET_ANALYTICS);
+  const { user } = useAuth();
+  const { data, loading } = useQuery(GET_ANALYTICS, {
+    variables: { createdBy: user?.id },
+  });
 
   if (loading) {
     return (

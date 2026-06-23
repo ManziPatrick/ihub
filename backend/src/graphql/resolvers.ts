@@ -97,7 +97,7 @@ import { generateCertificatePDF, generateInvoicePDF } from '../services/pdf.serv
 import { autoGenerateCertificate } from '../controllers/CertificateController';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { chatWithAIService, explainTaskService, reviewSubmissionService, generateAIQuizService, hintForQuestionService, generateQuestionExplanationService, getChatGreeting } from '../services/ai.service';
+import { chatWithAIService, explainTaskService, reviewSubmissionService, batchReviewOpenQuestionsService, generateAIQuizService, hintForQuestionService, generateQuestionExplanationService, getChatGreeting } from '../services/ai.service';
 import { compileCode } from '../services/compiler.service';
 import { lookupRequestGeoLocation } from "../services/geoip.service";
 
@@ -295,6 +295,244 @@ export const resolvers = {
       const totalPages = Math.ceil(totalCount / limit);
       return {
         items,
+        pagination: {
+          totalCount,
+          totalPages,
+          currentPage: page,
+          pageSize: limit,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1
+        }
+      };
+    },
+
+    completedUsers: async (_: any, { page = 1, limit = 10, createdBy, courseId, dateFrom, dateTo }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+
+      // Parse date filters
+      let dateFromObj: Date | null = null;
+      let dateToObj: Date | null = null;
+      if (dateFrom) {
+        dateFromObj = new Date(dateFrom);
+        if (isNaN(dateFromObj.getTime())) dateFromObj = null;
+      }
+      if (dateTo) {
+        dateToObj = new Date(dateTo);
+        if (isNaN(dateToObj.getTime())) dateToObj = null;
+        // Set to end of day
+        if (dateToObj) dateToObj.setHours(23, 59, 59, 999);
+      }
+
+      // Build the query for certificates
+      const certFilter: any = {};
+      if (courseId) certFilter.courseId = courseId;
+      if (dateFromObj || dateToObj) {
+        certFilter.createdAt = {};
+        if (dateFromObj) certFilter.createdAt.$gte = dateFromObj;
+        if (dateToObj) certFilter.createdAt.$lte = dateToObj;
+      }
+
+      // Find all certificates (completed users have certificates)
+      const certificates = await Certificate.find(certFilter)
+        .populate('userId')
+        .populate('courseId')
+        .sort({ createdAt: -1 });
+
+      // Also find users who completed courses (100% progress) but may not have certificates yet
+      const completedProgress = await CourseProgress.find({
+        status: 'completed',
+        ...(courseId ? { courseId } : {})
+      }).populate('userId').populate('courseId').sort({ completionDate: -1 });
+
+      // Also find users who submitted assignment submissions (final exams)
+      const submissionFilter: any = {
+        'answers.0': { $exists: true }  // Only submissions with at least one answer
+      };
+      if (courseId) submissionFilter.courseId = courseId;
+      if (dateFromObj || dateToObj) {
+        submissionFilter.createdAt = {};
+        if (dateFromObj) submissionFilter.createdAt.$gte = dateFromObj;
+        if (dateToObj) submissionFilter.createdAt.$lte = dateToObj;
+      }
+      const assignmentSubmissions = await AssignmentSubmission.find(submissionFilter)
+        .populate('userId')
+        .populate('courseId')
+        .sort({ createdAt: -1 });
+
+      // Build a map of user -> completed courses/certificates
+      const userMap = new Map<string, any>();
+
+      // Process certificates
+      for (const cert of certificates) {
+        const user: any = (cert as any).userId;
+        if (!user) continue;
+        const userId = user._id.toString();
+        const course: any = (cert as any).courseId;
+
+        if (!userMap.has(userId)) {
+          userMap.set(userId, {
+            id: userId,
+            user,
+            completedCourseIds: [],
+            completedCourses: [],
+            hasCertificate: false,
+            certificate: null,
+            completedLessonsCount: 0,
+            overallProgress: 100,
+            completedAt: cert.issueDate || cert.createdAt?.toISOString(),
+            status: 'Passed'
+          });
+        }
+
+        const entry = userMap.get(userId)!;
+        entry.hasCertificate = true;
+        entry.certificate = entry.certificate || cert;
+        if (course) {
+          if (!entry.completedCourseIds.includes(course._id.toString())) {
+            entry.completedCourseIds.push(course._id.toString());
+            entry.completedCourses.push(course);
+          }
+        }
+      }
+
+      // Process completed course progress and assignment submissions — batch-fetch all courses to avoid N+1
+      const missingCourseIds = new Set<string>();
+      for (const progress of completedProgress) {
+        const progressCourse: any = (progress as any).courseId;
+        const courseIdStr = progressCourse?._id?.toString() || progressCourse?.toString();
+        if (courseIdStr) missingCourseIds.add(courseIdStr);
+      }
+      for (const sub of assignmentSubmissions) {
+        const subCourse: any = (sub as any).courseId;
+        const subCourseId = subCourse?._id?.toString() || subCourse?.toString();
+        if (subCourseId) missingCourseIds.add(subCourseId);
+      }
+
+      const coursesMap = new Map<string, any>();
+      if (missingCourseIds.size > 0) {
+        const objectIds = Array.from(missingCourseIds)
+          .filter((id: string) => mongoose.Types.ObjectId.isValid(id))
+          .map((id: string) => new mongoose.Types.ObjectId(id));
+        const foundCourses = await Course.find({ _id: { $in: objectIds } }).lean();
+        for (const c of foundCourses) {
+          coursesMap.set(c._id.toString(), c);
+        }
+      }
+
+      for (const progress of completedProgress) {
+        const user: any = (progress as any).userId;
+        if (!user) continue;
+        const userId = user._id.toString();
+        const progressCourse: any = (progress as any).courseId;
+        const courseIdStr = progressCourse?._id?.toString() || progressCourse?.toString();
+
+        if (!userMap.has(userId)) {
+          userMap.set(userId, {
+            id: userId,
+            user,
+            completedCourseIds: [],
+            completedCourses: [],
+            hasCertificate: false,
+            certificate: null,
+            completedLessonsCount: 0,
+            overallProgress: 100,
+            completedAt: (progress as any).completionDate?.toISOString(),
+            status: 'Completed'
+          });
+        }
+
+        const entry = userMap.get(userId)!;
+        if (courseIdStr && !entry.completedCourseIds.includes(courseIdStr)) {
+          entry.completedCourseIds.push(courseIdStr);
+          const course = coursesMap.get(courseIdStr);
+          if (course) entry.completedCourses.push(course);
+        }
+
+        const lessonProgress = (progress as any).lessons || [];
+        const completedCount = lessonProgress.filter((l: any) => l.completed).length;
+        entry.completedLessonsCount = Math.max(entry.completedLessonsCount, completedCount);
+      }
+
+      // Process assignment submissions
+      for (const sub of assignmentSubmissions) {
+        const user: any = (sub as any).userId;
+        if (!user) continue;
+        const userId = user._id.toString();
+        const subCourse: any = (sub as any).courseId;
+        const subCourseId = subCourse?._id?.toString() || subCourse?.toString();
+
+        if (!userMap.has(userId)) {
+          userMap.set(userId, {
+            id: userId,
+            user,
+            completedCourseIds: [],
+            completedCourses: [],
+            hasCertificate: false,
+            certificate: null,
+            completedLessonsCount: 0,
+            overallProgress: 100,
+            completedAt: sub.createdAt?.toISOString(),
+            status: (sub as any).status === 'failed' ? 'Failed' : 'Pending Review',
+            examScore: (sub as any).grade || (sub as any).totalScore || null
+          });
+        }
+
+        const entry = userMap.get(userId)!;
+        // Update examScore if this submission has a higher/better score
+        if ((sub as any).grade || (sub as any).totalScore) {
+          const subScore = (sub as any).grade || (sub as any).totalScore;
+          if (!entry.examScore || subScore > entry.examScore) {
+            entry.examScore = subScore;
+          }
+        }
+        // Update status if this submission indicates failure
+        if ((sub as any).status === 'failed' && entry.status !== 'Passed') {
+          entry.status = 'Failed';
+        } else if (!entry.status) {
+          entry.status = 'Pending Review';
+        }
+        if (subCourseId && !entry.completedCourseIds.includes(subCourseId)) {
+          entry.completedCourseIds.push(subCourseId);
+          const course = coursesMap.get(subCourseId);
+          if (course) entry.completedCourses.push(course);
+        }
+
+        // Set completedAt to the earliest submission date if not already set
+        if (!entry.completedAt || (sub.createdAt && new Date(sub.createdAt).getTime() < new Date(entry.completedAt).getTime())) {
+          entry.completedAt = sub.createdAt?.toISOString();
+        }
+
+        // Count answers as completed lessons
+        const answerCount = (sub as any).answers?.length || 0;
+        if (answerCount > entry.completedLessonsCount) {
+          entry.completedLessonsCount = answerCount;
+        }
+      }
+
+      let items = Array.from(userMap.values());
+
+      // Filter by createdBy if specified
+      if (createdBy) {
+        // Get courses created by this user
+        const adminCourses = await Course.find({ createdBy }).distinct('_id');
+        const adminCourseIds = adminCourses.map(id => id.toString());
+        items = items.filter(item =>
+          item.completedCourseIds.some((cid: string) => adminCourseIds.includes(cid))
+        );
+      }
+
+      // Sort by completedAt descending
+      items.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+
+      const totalCount = items.length;
+      const totalPages = Math.ceil(totalCount / limit);
+      const skip = (page - 1) * limit;
+      const paginatedItems = items.slice(skip, skip + limit);
+
+      return {
+        items: paginatedItems,
         pagination: {
           totalCount,
           totalPages,
@@ -1199,14 +1437,17 @@ export const resolvers = {
 
       return Array.from(studentsMap.values());
     },
-    recentActivity: async (_: any, __: any, context: any) => {
+    recentActivity: async (_: any, { createdBy }: any, context: any) => {
       if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) {
         throw new Error('Not authorized');
       }
 
       let userQuery: any = {};
 
-      if (context.user.role === 'admin') {
+      if (createdBy) {
+        // Filter by specific user if createdBy is provided
+        userQuery._id = createdBy;
+      } else if (context.user.role === 'admin') {
         // Admin only sees activities from their own students
         const studentIds = await getAdminStudentIds(context.user.id);
         userQuery._id = { $in: studentIds };
@@ -1319,7 +1560,7 @@ export const resolvers = {
     },
 
 
-    payments: async (_: any, { page = 1, limit = 10 }: any, context: any) => {
+    payments: async (_: any, { page = 1, limit = 10, createdBy }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
@@ -1333,12 +1574,18 @@ export const resolvers = {
         adminCourseIds = adminCourses.map(c => c._id);
       }
 
-      const filter: any = isSuperAdmin ? {} : {
-        $or: [
-          { courseIds: { $in: adminCourseIds } },
-          { internshipIds: { $in: adminCourseIds } }
-        ]
-      };
+      let filter: any = {};
+      if (!isSuperAdmin) {
+        filter = {
+          $or: [
+            { courseIds: { $in: adminCourseIds } },
+            { internshipIds: { $in: adminCourseIds } }
+          ]
+        };
+      }
+      if (createdBy) {
+        filter.createdBy = createdBy;
+      }
 
       const skip = (page - 1) * limit;
 
@@ -1540,11 +1787,13 @@ export const resolvers = {
       return await Config.find();
     },
 
-    badges: async (_: any, { page = 1, limit = 10 }: any) => {
+    badges: async (_: any, { page = 1, limit = 10, createdBy }: any) => {
       const skip = (page - 1) * limit;
+      const filter: any = {};
+      if (createdBy) filter.createdBy = createdBy;
       const [items, totalCount] = await Promise.all([
-        Badge.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
-        Badge.countDocuments()
+        Badge.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+        Badge.countDocuments(filter)
       ]);
 
       const totalPages = Math.ceil(totalCount / limit);
@@ -3146,8 +3395,42 @@ export const resolvers = {
       });
       if (!targetLesson) throw new Error('Lesson not found');
 
+      // ── Batch-grade open questions in a single AI call ──
+      const openQuestions = answers.filter((ans: any) => {
+        const q = targetLesson.assignmentQuestions.find((q: any) => q._id?.toString() === ans.questionId || q.id === ans.questionId);
+        return q && q.type === 'open';
+      });
+
+      let batchResults: Array<{ questionId: string; score: number; feedback: string }> = [];
+      if (openQuestions.length > 0) {
+        const batchInput = openQuestions.map((ans: any) => {
+          const q = targetLesson.assignmentQuestions.find((q: any) => q._id?.toString() === ans.questionId || q.id === ans.questionId);
+          return {
+            questionText: q.questionText,
+            answerText: ans.answerText,
+            maxScore: q.points || 10
+          };
+        });
+
+        try {
+          const batchScoreResults = await batchReviewOpenQuestionsService(batchInput);
+          batchResults = openQuestions.map((ans: any, i: number) => ({
+            questionId: ans.questionId,
+            score: batchScoreResults[i]?.score || 0,
+            feedback: batchScoreResults[i]?.feedback || 'AI grading completed.'
+          }));
+        } catch (err) {
+          console.error('Batch AI grading failed:', err);
+          batchResults = openQuestions.map((ans: any) => ({
+            questionId: ans.questionId,
+            score: 0,
+            feedback: 'AI grading unavailable.'
+          }));
+        }
+      }
+
       let totalScore = 0;
-      const gradedAnswers = await Promise.all(answers.map(async (ans: any) => {
+      const gradedAnswers = answers.map((ans: any) => {
         const question = targetLesson.assignmentQuestions.find((q: any) => q._id?.toString() === ans.questionId || q.id === ans.questionId);
         if (!question) return { ...ans, score: 0 };
 
@@ -3161,21 +3444,17 @@ export const resolvers = {
             aiFeedback: isCorrect ? 'Correct' : `Incorrect. The correct answer was: ${question.options[question.correctOptionIndex]}`
           };
         } else if (question.type === 'open') {
-          try {
-            const aiResult = await reviewSubmissionService(question.questionText, ans.answerText);
-            const score = Math.round((aiResult.score / 100) * (question.points || 10));
-            totalScore += score;
-            return {
-              ...ans,
-              score,
-              aiFeedback: aiResult.content
-            };
-          } catch (err) {
-            return { ...ans, score: 0, aiFeedback: 'AI grading unavailable.' };
-          }
+          const batchResult = batchResults.find((r: any) => r.questionId === ans.questionId);
+          const score = batchResult?.score || 0;
+          totalScore += score;
+          return {
+            ...ans,
+            score,
+            aiFeedback: batchResult?.feedback || 'AI grading completed.'
+          };
         }
         return ans;
-      }));
+      });
 
       // Calculate max possible score
       const maxScore = targetLesson.assignmentQuestions.reduce((sum: number, q: any) => sum + (q.points || 10), 0);
@@ -3375,34 +3654,106 @@ export const resolvers = {
 
       if (!targetLesson) throw new Error('Lesson not found');
 
-      let totalScore = submission.totalScore || 0;
-      const updatedAnswers = await Promise.all(submission.answers.map(async (ans: any) => {
-        if (ans.score > 0 || ans.aiFeedback) return ans;
+      // ── Batch-grade all unanswered open questions in a single AI call ──
+      const ungradedOpen = submission.answers.filter((ans: any) => {
+        if (ans.score > 0 || ans.aiFeedback) return false;
+        const q = targetLesson.assignmentQuestions.find((q: any) => q._id?.toString() === ans.questionId);
+        return q && q.type === 'open';
+      });
 
-        const question = targetLesson.assignmentQuestions.find((q: any) => q._id?.toString() === ans.questionId);
-        if (question && question.type === 'open') {
-          const aiResult = await reviewSubmissionService(question.questionText, ans.answerText);
-          const score = Math.round((aiResult.score / 100) * (question.points || 10));
-          totalScore += score;
-          return { ...ans, score, aiFeedback: aiResult.content };
+      if (ungradedOpen.length > 0) {
+        const batchInput = ungradedOpen.map((ans: any) => {
+          const q = targetLesson.assignmentQuestions.find((q: any) => q._id?.toString() === ans.questionId);
+          return {
+            questionText: q.questionText,
+            answerText: ans.answerText,
+            maxScore: q.points || 10
+          };
+        });
+
+        try {
+          const batchResults = await batchReviewOpenQuestionsService(batchInput);
+          const batchMap = new Map<string, { score: number; feedback: string }>();
+          ungradedOpen.forEach((ans: any, i: number) => {
+            if (batchResults[i]) {
+              batchMap.set(ans.questionId, {
+                score: batchResults[i].score,
+                feedback: batchResults[i].feedback
+              });
+            }
+          });
+
+          let totalScore = submission.totalScore || 0;
+          const updatedAnswers = submission.answers.map((ans: any) => {
+            const batchResult = batchMap.get(ans.questionId);
+            if (batchResult) {
+              totalScore += batchResult.score;
+              return { ...ans, score: batchResult.score, aiFeedback: batchResult.feedback };
+            }
+            return ans;
+          });
+
+          submission.answers = updatedAnswers;
+          submission.totalScore = totalScore;
+        } catch (err) {
+          console.error('Batch AI grading failed in aiGradeOpenAnswers:', err);
         }
-        return ans;
-      }));
+      }
 
-      submission.answers = updatedAnswers;
-      submission.totalScore = totalScore;
       submission.status = 'reviewed';
       await submission.save();
       return submission;
     },
 
-    gradeAssignment: async (_: any, { submissionId, grade, feedback }: any, context: any) => {
+    gradeAssignment: async (_: any, { submissionId, grade, feedback, questionScores }: any, context: any) => {
       if (!context.user || !['trainer', 'mentor', 'admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
 
       const submission = await AssignmentSubmission.findById(submissionId);
       if (!submission) throw new Error('Submission not found');
+
+      // Update per-question scores if provided
+      if (questionScores && questionScores.length > 0 && submission.answers && submission.answers.length > 0) {
+        for (const qs of questionScores) {
+          const answer = submission.answers.find((a: any) => a.questionId === qs.questionId);
+          if (answer) {
+            (answer as any).score = qs.score;
+          }
+        }
+        // Look up the lesson to get max points per question
+        if (submission.courseId && submission.lessonId) {
+          try {
+            const Course_model = mongoose.model('Course');
+            const course = await Course_model.findById(submission.courseId);
+            if (course && course.modules) {
+              let targetLesson: any = null;
+              for (const mod of course.modules) {
+                const found = mod.lessons.find((l: any) => l.id === submission.lessonId || l._id?.toString() === submission.lessonId);
+                if (found) { targetLesson = found; break; }
+              }
+              if (targetLesson && targetLesson.assignmentQuestions) {
+                const qPoints = new Map<string, number>();
+                for (const q of targetLesson.assignmentQuestions) {
+                  qPoints.set(q._id?.toString() || q.id, q.points || 10);
+                }
+                let totalPossible = 0;
+                let earnedPoints = 0;
+                for (const a of submission.answers) {
+                  const maxPts = qPoints.get(a.questionId) || 10;
+                  totalPossible += maxPts;
+                  earnedPoints += Math.min((a as any).score || 0, maxPts);
+                }
+                if (totalPossible > 0) {
+                  grade = Math.round((earnedPoints / totalPossible) * 100);
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Error recalculating grade from question scores:', err);
+          }
+        }
+      }
 
       submission.grade = grade;
       submission.feedback = feedback;
@@ -4785,7 +5136,7 @@ export const resolvers = {
 
     createBadge: async (_: any, args: any, context: any) => {
       if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) throw new Error('Not authorized');
-      const badge = new Badge(args);
+      const badge = new Badge({ ...args, createdBy: context.user.id });
       await badge.save();
       return badge;
     },

@@ -19,13 +19,14 @@ import {
   BookOpen,
   DollarSign,
   GraduationCap,
+  UserCog,
   ClipboardList,
   Award
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { useQuery } from "@apollo/client/react";
-import { GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY, GET_USERS, GET_ANALYTICS } from "@/lib/graphql/queries";
+import { GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY, GET_USERS, GET_ANALYTICS, GET_STATS, GET_ALL_TRAINERS } from "@/lib/graphql/queries";
 import { format, isValid } from "date-fns";
 
 export default function SuperAdminDashboard() {
@@ -38,14 +39,20 @@ export default function SuperAdminDashboard() {
   });
 
   const { data: analyticsData } = useQuery(GET_ANALYTICS);
+  const { data: statsData } = useQuery(GET_STATS);
+  const { data: trainersData } = useQuery(GET_ALL_TRAINERS);
   const analytics = (analyticsData as any)?.analytics;
 
+  // Use GET_STATS for accurate global counts (bypasses adminDashboardData bugs)
+  const globalStats = (statsData as any)?.stats;
   const dashboardData = (data as any)?.adminDashboardData || { 
       stats: { totalUsers: 0, totalCourses: 0, totalStudents: 0, totalRevenue: 0 },
       recentEnrollments: [],
       coursePerformance: []
   };
-  const liveStats = dashboardData.stats;
+  // Fallback to adminDashboardData if GET_STATS is not implemented on the backend
+  const liveStats = globalStats || dashboardData.stats;
+  const allTrainers = (trainersData as any)?.getAllTrainers || [];
   
   const allAdmins = ((usersData as any)?.users?.items || []).filter((u: any) => u.role === "admin" || u.role === "super_admin");
   const recentActivity = (activityData as any)?.recentActivity || [];
@@ -60,6 +67,7 @@ export default function SuperAdminDashboard() {
     { label: "Total Users", value: liveStats.totalUsers.toString(), icon: Users },
     { label: "Active Courses", value: liveStats.totalCourses.toString(), icon: BookOpen },
     { label: "Total Students", value: liveStats.totalStudents.toString(), icon: GraduationCap },
+    { label: "Trainers", value: allTrainers.length.toString(), icon: UserCog },
     { label: "Total Revenue (RWF)", value: liveStats.totalRevenue.toLocaleString(), icon: DollarSign },
   ];
 
@@ -98,7 +106,7 @@ export default function SuperAdminDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4"
         >
           {systemStats.map((stat) => (
             <Card key={stat.label} className="border-border/50">

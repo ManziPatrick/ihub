@@ -103,7 +103,6 @@ services:
 
     networks:
       - ihub_network
-
   # ─────────────────────────────────────────
   #  FRONTEND  (React + Vite — static preview)
   # ─────────────────────────────────────────

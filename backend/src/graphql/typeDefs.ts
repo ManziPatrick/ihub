@@ -63,6 +63,7 @@ export const typeDefs = `#graphql
     description: String!
     icon: String
     category: String
+    createdBy: User
   }
 
   type ThemePreference {
@@ -201,6 +202,26 @@ export const typeDefs = `#graphql
     pagination: PaginationInfo
   }
 
+  type CompletedUser {
+    id: ID!
+    user: User
+    completedCourseIds: [ID]
+    completedCourses: [Course]
+    hasCertificate: Boolean!
+    certificate: Certificate
+    completedLessonsCount: Int!
+    overallProgress: Int
+    completedAt: String
+    status: String
+    examScore: Int
+  }
+
+  type CompletedUserResponse {
+    items: [CompletedUser]
+    pagination: PaginationInfo
+  }
+
+
   type Message {
     id: ID!
     content: String!
@@ -308,6 +329,7 @@ export const typeDefs = `#graphql
     type: String!
     options: [String]
     correctOptionIndex: Int
+    correctOptionIndexes: [Int]
     matchingPairs: [MatchingPair]
     explanation: String
     points: Int
@@ -670,6 +692,7 @@ export const typeDefs = `#graphql
     isPaidProgram: Boolean
     installmentsAllowed: Boolean
     deliveryMode: String
+    createdBy: User
   }
 
   type ApplicationDetails {
@@ -876,16 +899,16 @@ export const typeDefs = `#graphql
     categories: [String]
     schools: [String]
     trainerStudents: [User]
-    recentActivity: [ActivityLogEntry]
+    recentActivity(createdBy: ID): [ActivityLogEntry]
     questions(courseId: ID!, lessonId: ID, moduleNumber: String, lessonNumber: String): [Question]
     bookings(page: Int, limit: Int): BookingResponse
-    payments(page: Int, limit: Int): PaymentResponse
+    payments(page: Int, limit: Int, createdBy: ID): PaymentResponse
     analytics(createdBy: ID): AnalyticsData
     branding: BrandingConfig
     configs: [Config]
     myPayments: [PaymentTransaction]
     myCourseProgress(courseId: ID!): CourseProgress
-    badges(page: Int, limit: Int): BadgeResponse
+    badges(page: Int, limit: Int, createdBy: ID): BadgeResponse
     chatBotGreeting: ChatResponse
     
     trainerStats: TrainerStats
@@ -931,6 +954,9 @@ export const typeDefs = `#graphql
     
     # Assignments
     getAssignmentSubmissions(courseId: ID, lessonId: String, page: Int, limit: Int): AssignmentSubmissionResponse
+    
+    # Completed Users
+    completedUsers(page: Int, limit: Int, createdBy: ID, courseId: ID, dateFrom: String, dateTo: String): CompletedUserResponse
     
     # Course Applications
     courseApplications(courseId: ID, status: String, page: Int, limit: Int): CourseApplicationResponse
@@ -1022,6 +1048,7 @@ export const typeDefs = `#graphql
     type: String!
     options: [String]
     correctOptionIndex: Int
+    correctOptionIndexes: [Int]
     explanation: String
     points: Int
   }
@@ -1036,6 +1063,11 @@ export const typeDefs = `#graphql
   input AssignmentAnswerInput {
     questionId: String!
     answerText: String!
+  }
+
+  input QuestionScoreInput {
+    questionId: String!
+    score: Int!
   }
 
   input ModuleInput {
@@ -2050,7 +2082,7 @@ export const typeDefs = `#graphql
     # Assignments
     submitAssignment(courseId: ID!, lessonId: String!, content: String!): AssignmentSubmission
     submitAssignmentExam(courseId: ID!, lessonId: String!, answers: [AssignmentAnswerInput!]!, timeTaken: Int): AssignmentSubmission
-    gradeAssignment(submissionId: ID!, grade: Int!, feedback: String): AssignmentSubmission
+    gradeAssignment(submissionId: ID!, grade: Int!, feedback: String, questionScores: [QuestionScoreInput]): AssignmentSubmission
     updateExamConfig(courseId: ID!, lessonId: String!, config: AssignmentConfigInput!): Course
     updateQuizConfig(courseId: ID!, lessonId: ID!, quizConfig: QuizConfigInput!): Course
     aiGradeOpenAnswers(submissionId: ID!): AssignmentSubmission

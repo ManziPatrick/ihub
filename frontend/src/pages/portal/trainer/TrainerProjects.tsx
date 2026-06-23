@@ -155,6 +155,9 @@ export default function TrainerProjects() {
         tasks: [{ title: "", completed: false }] as { title: string; completed: boolean }[]
     });
     const [viewSubmission, setViewSubmission] = useState<AssignmentSubmission | null>(null);
+    const [regradingSubmissionId, setRegradingSubmissionId] = useState<string | null>(null);
+    const [regradeGradeValue, setRegradeGradeValue] = useState("");
+    const [regradeFeedbackValue, setRegradeFeedbackValue] = useState("");
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
     // Kanban Board state
@@ -163,7 +166,8 @@ export default function TrainerProjects() {
     const [editingTask, setEditingTask] = useState<any | null>(null);
 
     const [assignPage, setAssignPage] = useState(1);
-    const assignPageSize = 10;
+    const [assignPageSize, setAssignPageSize] = useState(10);
+    const [gradedFilter, setGradedFilter] = useState<string>("all");
 
     const { data: assignmentsData, loading: assignmentsLoading, refetch: refetchAssignments } = useQuery<GetAssignmentSubmissionsData>(GET_ASSIGNMENT_SUBMISSIONS, {
         variables: { page: assignPage, limit: assignPageSize }
@@ -181,6 +185,7 @@ export default function TrainerProjects() {
     const boardTasks = (tasksData as any)?.projectTasks || [];
 
     const [gradeAssignmentMutation, { loading: grading }] = useMutation(GRADE_ASSIGNMENT);
+    const [regradeAssignmentMutation, { loading: regrading }] = useMutation(GRADE_ASSIGNMENT);
     const [createProject, { loading: creatingProject }] = useMutation(CREATE_PROJECT);
     const [pingInstructor] = useMutation(PING_INSTRUCTOR);
 
@@ -203,6 +208,7 @@ export default function TrainerProjects() {
     const assignPagination = assignmentsData?.getAssignmentSubmissions?.pagination;
     const pendingSubmissions = submissions.filter((s: AssignmentSubmission) => s.status === "pending");
     const gradedSubmissions = submissions.filter((s: AssignmentSubmission) => s.status === "reviewed" || s.status === "graded" || s.status === "revision_requested");
+    const failedSubmissions = submissions.filter((s: AssignmentSubmission) => s.status === "failed");
 
     const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("all");
     const [projectCourseFilter, setProjectCourseFilter] = useState<string>("all");
@@ -217,6 +223,12 @@ export default function TrainerProjects() {
     });
 
     const filteredGraded = gradedSubmissions.filter((s: any) => {
+        if (selectedCourseFilter === "all") return true;
+        const cTitle = s.course?.title || (s.courseId && typeof s.courseId === 'object' ? s.courseId.title : null);
+        return cTitle === selectedCourseFilter;
+    });
+
+    const filteredFailed = failedSubmissions.filter((s: any) => {
         if (selectedCourseFilter === "all") return true;
         const cTitle = s.course?.title || (s.courseId && typeof s.courseId === 'object' ? s.courseId.title : null);
         return cTitle === selectedCourseFilter;
@@ -282,6 +294,28 @@ export default function TrainerProjects() {
         } catch (err: any) {
             console.error("Grading error:", err);
             toast.error(err.message || "Failed to grade assignment");
+        }
+    };
+
+    const handleRegrade = async (submission: AssignmentSubmission) => {
+        const grade = parseInt(regradeGradeValue);
+        if (isNaN(grade) || grade < 0 || grade > 100) {
+            toast.error("Grade must be between 0 and 100");
+            return;
+        }
+        try {
+            await regradeAssignmentMutation({
+                variables: { submissionId: submission.id, grade, feedback: regradeFeedbackValue },
+                refetchQueries: [{ query: GET_ASSIGNMENT_SUBMISSIONS }],
+                awaitRefetchQueries: true
+            });
+            toast.success("Assignment re-graded successfully!");
+            await refetchAssignments();
+            setRegradingSubmissionId(null);
+            setRegradeGradeValue("");
+            setRegradeFeedbackValue("");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to re-grade assignment");
         }
     };
 
@@ -414,6 +448,7 @@ export default function TrainerProjects() {
                         <Tabs defaultValue="pending" className="space-y-6">
                             <TabsList className="bg-muted/20 p-1 rounded-xl h-10 border border-border/30 w-fit">
                                 <TabsTrigger value="pending" className="rounded-lg text-sm">Pending ({filteredPending.length})</TabsTrigger>
+                                <TabsTrigger value="failed" className="rounded-lg text-sm">Failed ({filteredFailed.length})</TabsTrigger>
                                 <TabsTrigger value="graded" className="rounded-lg text-sm">Graded ({filteredGraded.length})</TabsTrigger>
                             </TabsList>
 
@@ -637,12 +672,13 @@ export default function TrainerProjects() {
                                                         </div>
                                                         <div className="space-y-2">
                                                             <label className="text-sm font-bold">Feedback (Optional)</label>
-                                                            <Textarea
-                                                                placeholder="Provide constructive feedback..."
-                                                                value={feedbackValue}
-                                                                onChange={(e) => setFeedbackValue(e.target.value)}
-                                                                rows={4}
-                                                            />
+                                                            <div className="min-h-[120px]">
+                                                                <TextEditor
+                                                                    value={feedbackValue}
+                                                                    onChange={(content) => setFeedbackValue(content)}
+                                                                    placeholder="Provide constructive feedback..."
+                                                                />
+                                                            </div>
                                                         </div>
                                                         <div className="flex gap-4 pt-2">
                                                             <Button
@@ -684,10 +720,26 @@ export default function TrainerProjects() {
                                 
                                 {/* Pagination Controls for Pending */}
                                 {assignPagination && assignPagination.totalPages > 1 && (
-                                    <div className="flex items-center justify-between px-2 py-4 bg-muted/10 rounded-xl mt-4">
-                                        <p className="text-[10px] font-black uppercase text-muted-foreground pl-2">
-                                            Page {assignPagination.currentPage} of {assignPagination.totalPages}
-                                        </p>
+                                    <div className="flex flex-col sm:flex-row items-center justify-between px-2 py-4 bg-muted/10 rounded-xl mt-4 gap-4">
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <span>Show</span>
+                                            <select
+                                                value={assignPageSize}
+                                                onChange={(e) => {
+                                                    setAssignPageSize(Number(e.target.value));
+                                                    setAssignPage(1);
+                                                }}
+                                                className="bg-background border border-border/50 rounded-md px-2 py-1 text-sm"
+                                            >
+                                                <option value={5}>5</option>
+                                                <option value={10}>10</option>
+                                                <option value={25}>25</option>
+                                                <option value={50}>50</option>
+                                            </select>
+                                            <span>
+                                                Page <span className="font-bold text-foreground">{assignPagination.currentPage}</span> of {assignPagination.totalPages}
+                                            </span>
+                                        </div>
                                         <div className="flex gap-2">
                                             <Button
                                                 variant="outline"
@@ -713,14 +765,165 @@ export default function TrainerProjects() {
                             </TabsContent>
 
                     <TabsContent value="graded" className="space-y-4">
-                        {filteredGraded.length === 0 ? (
+                        {/* Pass/Fail Filter Toggle */}
+                        {filteredGraded.length > 0 && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Filter:</span>
+                                <div className="flex bg-muted/20 rounded-lg p-0.5 border border-border/30">
+                                    <button
+                                        onClick={() => setGradedFilter("all")}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${gradedFilter === "all" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                                    >
+                                        All ({filteredGraded.length})
+                                    </button>
+                                    <button
+                                        onClick={() => setGradedFilter("passed")}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${gradedFilter === "passed" ? "bg-background shadow-sm text-green-600" : "text-muted-foreground hover:text-foreground"}`}
+                                    >
+                                        Passed ({filteredGraded.filter(s => (s.grade || 0) >= 70).length})
+                                    </button>
+                                    <button
+                                        onClick={() => setGradedFilter("failed")}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${gradedFilter === "failed" ? "bg-background shadow-sm text-red-600" : "text-muted-foreground hover:text-foreground"}`}
+                                    >
+                                        Failed ({filteredGraded.filter(s => (s.grade || 0) < 70).length})
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {(gradedFilter === "all" ? filteredGraded : filteredGraded.filter(s => gradedFilter === "passed" ? (s.grade || 0) >= 70 : (s.grade || 0) < 70)).length === 0 ? (
                             <Card className="border-border/50">
                                 <CardContent className="p-12 text-center">
-                                    <p className="text-muted-foreground">No graded submissions for this filter.</p>
+                                    <p className="text-muted-foreground">No graded submissions match this filter.</p>
                                 </CardContent>
                             </Card>
                         ) : (
                             <div className="rounded-md border border-border/50">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Student</TableHead>
+                                        <TableHead>Course</TableHead>
+                                        <TableHead>Lesson</TableHead>
+                                        <TableHead>Grade</TableHead>
+                                        <TableHead>Feedback</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredGraded.map((submission: AssignmentSubmission) => [
+                                        <TableRow key={`row-${submission.id}`}>
+                                            <TableCell className="font-medium text-sm">{submission.user?.fullName || submission.user?.username}</TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">{submission.course?.title || (typeof submission.courseId === 'string' ? submission.courseId : "Unknown")}</TableCell>
+                                            <TableCell className="text-xs">{submission.lesson?.title || submission.lessonId}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className={`${(submission.grade || 0) >= 70 ? 'bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/20'} text-xs cursor-pointer transition-colors`} onClick={() => setViewSubmission(submission)}>
+                                                    {submission.grade}/100
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="max-w-[200px]">
+                                                {submission.feedback ? (
+                                                    <div className="text-xs text-muted-foreground truncate prose prose-sm max-w-none dark:prose-invert" title={submission.feedback.replace(/<[^>]*>/g, '')} dangerouslySetInnerHTML={{ __html: submission.feedback }} />
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground/50">-</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-xs">{new Date(parseInt(submission.createdAt)).toLocaleDateString()}</TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm" 
+                                                        className="h-8 w-8 p-0"
+                                                        onClick={() => setViewSubmission(submission)}
+                                                    >
+                                                        <Eye className="w-4 h-4 text-muted-foreground" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className={`h-7 text-[10px] px-2 ${regradingSubmissionId === submission.id ? 'text-accent bg-accent/10' : 'text-muted-foreground/50 hover:text-accent'}`}
+                                                        onClick={() => {
+                                                            if (regradingSubmissionId === submission.id) {
+                                                                setRegradingSubmissionId(null);
+                                                            } else {
+                                                                setRegradingSubmissionId(submission.id);
+                                                                setRegradeGradeValue(String(submission.grade || ''));
+                                                                setRegradeFeedbackValue(submission.feedback || '');
+                                                            }
+                                                        }}
+                                                    >
+                                                        Re-grade
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>,
+                                        regradingSubmissionId === submission.id && (
+                                            <TableRow key={`regrade-${submission.id}`}>
+                                                <TableCell colSpan={7} className="bg-muted/10 p-4">
+                                                    <div className="flex items-end gap-3">
+                                                        <div className="flex-1 space-y-1">
+                                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">New Grade (0-100)</label>
+                                                            <Input
+                                                                type="number"
+                                                                min="0"
+                                                                max="100"
+                                                                placeholder="Enter grade..."
+                                                                value={regradeGradeValue}
+                                                                onChange={(e) => setRegradeGradeValue(e.target.value)}
+                                                                className="h-8 text-sm"
+                                                            />
+                                                        </div>
+                                                        <div className="flex-[2] space-y-1">
+                                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Feedback</label>
+                                                            <div className="min-h-[100px]">
+                                                                <TextEditor
+                                                                    value={regradeFeedbackValue}
+                                                                    onChange={(content) => setRegradeFeedbackValue(content)}
+                                                                    placeholder="Provide constructive feedback..."
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <Button
+                                                            variant="gold"
+                                                            size="sm"
+                                                            className="h-8 text-xs shrink-0"
+                                                            onClick={() => handleRegrade(submission)}
+                                                            disabled={regrading || !regradeGradeValue}
+                                                        >
+                                                            {regrading ? "..." : "Submit"}
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-8 text-xs shrink-0"
+                                                            onClick={() => setRegradingSubmissionId(null)}
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    ])}
+                                </TableBody>
+                            </Table>
+                        </div>
+                        )}
+                    </TabsContent>
+
+                    <TabsContent value="failed" className="space-y-4">
+                        {filteredFailed.length === 0 ? (
+                            <Card className="border-border/50">
+                                <CardContent className="p-12 text-center">
+                                    <CheckCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
+                                    <p className="text-muted-foreground">No failed submissions for this filter.</p>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <div className="rounded-md border border-red-500/20">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -734,38 +937,101 @@ export default function TrainerProjects() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {filteredGraded.map((submission: AssignmentSubmission) => (
-                                            <TableRow key={submission.id}>
+                                        {filteredFailed.map((submission: AssignmentSubmission) => [
+                                            <TableRow key={`row-${submission.id}`} className="bg-red-500/5">
                                                 <TableCell className="font-medium text-sm">{submission.user?.fullName || submission.user?.username}</TableCell>
                                                 <TableCell className="text-xs text-muted-foreground">{submission.course?.title || (typeof submission.courseId === 'string' ? submission.courseId : "Unknown")}</TableCell>
                                                 <TableCell className="text-xs">{submission.lesson?.title || submission.lessonId}</TableCell>
                                                 <TableCell>
-                                                    <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
+                                                    <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20 text-xs cursor-pointer hover:bg-red-500/20 transition-colors" onClick={() => setViewSubmission(submission)}>
                                                         {submission.grade}/100
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="max-w-[200px]">
                                                     {submission.feedback ? (
-                                                        <p className="text-xs text-muted-foreground truncate" title={submission.feedback}>
-                                                            {submission.feedback}
-                                                        </p>
+                                                        <div className="text-xs text-muted-foreground truncate prose prose-sm max-w-none dark:prose-invert" title={submission.feedback.replace(/<[^>]*>/g, '')} dangerouslySetInnerHTML={{ __html: submission.feedback }} />
                                                     ) : (
                                                         <span className="text-xs text-muted-foreground/50">-</span>
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-xs">{new Date(parseInt(submission.createdAt)).toLocaleDateString()}</TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button 
-                                                        variant="ghost" 
-                                                        size="sm" 
-                                                        className="h-8 w-8 p-0"
-                                                        onClick={() => setViewSubmission(submission)}
-                                                    >
-                                                        <Eye className="w-4 h-4 text-muted-foreground" />
-                                                    </Button>
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm" 
+                                                            className="h-8 w-8 p-0"
+                                                            onClick={() => setViewSubmission(submission)}
+                                                        >
+                                                            <Eye className="w-4 h-4 text-muted-foreground" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className={`h-7 text-[10px] px-2 ${regradingSubmissionId === submission.id ? 'text-accent bg-accent/10' : 'text-red-500/50 hover:text-red-500'}`}
+                                                            onClick={() => {
+                                                                if (regradingSubmissionId === submission.id) {
+                                                                    setRegradingSubmissionId(null);
+                                                                } else {
+                                                                    setRegradingSubmissionId(submission.id);
+                                                                    setRegradeGradeValue(String(submission.grade || ''));
+                                                                    setRegradeFeedbackValue(submission.feedback || '');
+                                                                }
+                                                            }}
+                                                        >
+                                                            Re-grade
+                                                        </Button>
+                                                    </div>
                                                 </TableCell>
-                                            </TableRow>
-                                        ))}
+                                            </TableRow>,
+                                            regradingSubmissionId === submission.id && (
+                                                <TableRow key={`regrade-${submission.id}`}>
+                                                    <TableCell colSpan={7} className="bg-red-500/10 p-4">
+                                                        <div className="flex items-end gap-3">
+                                                            <div className="flex-1 space-y-1">
+                                                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">New Grade (0-100)</label>
+                                                                <Input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    max="100"
+                                                                    placeholder="Enter grade..."
+                                                                    value={regradeGradeValue}
+                                                                    onChange={(e) => setRegradeGradeValue(e.target.value)}
+                                                                    className="h-8 text-sm"
+                                                                />
+                                                            </div>
+                                                            <div className="flex-[2] space-y-1">
+                                                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Feedback</label>
+                                                                <div className="min-h-[100px]">
+                                                                    <TextEditor
+                                                                        value={regradeFeedbackValue}
+                                                                        onChange={(content) => setRegradeFeedbackValue(content)}
+                                                                        placeholder="Provide constructive feedback..."
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <Button
+                                                                variant="gold"
+                                                                size="sm"
+                                                                className="h-8 text-xs shrink-0"
+                                                                onClick={() => handleRegrade(submission)}
+                                                                disabled={regrading || !regradeGradeValue}
+                                                            >
+                                                                {regrading ? "..." : "Submit"}
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="h-8 text-xs shrink-0"
+                                                                onClick={() => setRegradingSubmissionId(null)}
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        ])}
                                     </TableBody>
                                 </Table>
                             </div>
@@ -1228,6 +1494,7 @@ export default function TrainerProjects() {
             <ViewSubmissionDialog 
                 open={!!viewSubmission} 
                 onOpenChange={(open) => !open && setViewSubmission(null)}
+                onScoresSaved={() => refetchAssignments()}
                 submission={viewSubmission ? {
                     id: viewSubmission.id,
                     student: viewSubmission.user?.fullName || viewSubmission.user?.username || 'Unknown',

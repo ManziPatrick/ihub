@@ -40,8 +40,9 @@ interface AssignmentQuestion {
   _id?: string;
   id?: string;
   questionText: string;
-  type: "mcq" | "open";
+  type: "mcq" | "open" | "checkbox";
   options?: string[];
+  correctOptionIndexes?: number[];
   points: number;
 }
 
@@ -737,11 +738,48 @@ export function AssignmentExamView({
                 </div>
               </div>
 
-              {currentQuestion?.type === "mcq" ? (
+              {currentQuestion?.type === "mcq" || currentQuestion?.type === "checkbox" ? (
                 <div className="grid gap-3 sm:gap-4">
                   {currentQuestion.options?.map((option, i) => {
                     const qId = currentQuestion._id || currentQuestion.id || "";
-                    const isSelected = answers[qId] === i.toString();
+                    const currentAnswer = answers[qId] || "";
+                    const selectedIndices = currentAnswer ? currentAnswer.split(',').map(Number) : [];
+                    
+                    if (currentQuestion.type === "checkbox") {
+                      const isChecked = selectedIndices.includes(i);
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            let newIndices: number[];
+                            if (isChecked) {
+                              newIndices = selectedIndices.filter(idx => idx !== i);
+                            } else {
+                              newIndices = [...selectedIndices, i];
+                            }
+                            handleAnswerChange(qId, newIndices.sort((a, b) => a - b).join(','));
+                          }}
+                          className={`w-full text-left p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 transition-all flex items-center gap-3 sm:gap-5 font-semibold text-sm sm:text-base ${isChecked
+                            ? "bg-indigo-500/15 border-indigo-500 text-white shadow-lg shadow-indigo-500/10"
+                            : "bg-white/3 border-white/10 text-white/70 hover:border-indigo-500/40 hover:bg-white/5"
+                            }`}
+                        >
+                          <div
+                            className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center border-2 font-black text-xs sm:text-sm transition-all flex-shrink-0 ${isChecked
+                              ? "bg-indigo-500 border-indigo-500 text-white"
+                              : "border-white/20 text-white/40"
+                              }`}
+                          >
+                            {isChecked ? '✓' : String.fromCharCode(65 + i)}
+                          </div>
+                          <span className="flex-1">{option}</span>
+                          {isChecked && <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400 flex-shrink-0" />}
+                        </button>
+                      );
+                    }
+                    
+                    // MCQ (single choice)
+                    const isSelected = currentAnswer === i.toString();
                     return (
                       <button
                         key={i}

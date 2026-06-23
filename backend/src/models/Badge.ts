@@ -6,6 +6,7 @@ const badgeSchema = new mongoose.Schema({
   icon: { type: String }, // Lucide icon name or URL
   category: { type: String, enum: ['academic', 'participation', 'skill', 'milestone', 'Achievement', 'Performance', 'Speed', 'Skill'], default: 'skill' },
   isDeleted: { type: Boolean, default: false },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 
 export const Badge = mongoose.model('Badge', badgeSchema);

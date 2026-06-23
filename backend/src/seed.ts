@@ -82,77 +82,102 @@ const seedData = async () => {
       InternshipMentorFeedback, InternshipActivityLog, InternshipCertificate, InternshipInvoice
     ];
 
-    for (const model of models) {
-      await (model as any).deleteMany({});
-    }
+    // SKIP DELETE - preserve existing data
+    // for (const model of models) {
+    //   await (model as any).deleteMany({});
+    // }
 
     console.log('👤 Creating Users...');
     const hashedPassword = await bcrypt.hash('password123', 10);
 
-    const superAdmin = await new User({
-      username: 'super_admin',
-      email: 'superadmin@bootskills.com',
-      password: hashedPassword,
-      role: 'super_admin',
-      fullName: 'System Super Admin',
-      title: 'Chief Operations',
-      avatar: 'https://i.pravatar.cc/150?u=superadmin'
-    }).save();
+    const superAdmin = await User.findOneAndUpdate(
+      { $or: [{ email: 'superadmin@bootskills.com' }, { username: 'super_admin' }] },
+      { $set: {
+        username: 'super_admin',
+        email: 'superadmin@bootskills.com',
+        password: hashedPassword,
+        role: 'super_admin',
+        fullName: 'System Super Admin',
+        title: 'Chief Operations',
+        avatar: 'https://i.pravatar.cc/150?u=superadmin'
+      } },
+      { upsert: true, new: true }
+    );
 
-    const admin = await new User({
-      username: 'admin',
-      email: 'admin@bootskills.com',
-      password: hashedPassword,
-      role: 'admin',
-      fullName: 'System Administrator',
-      title: 'Head of Academy',
-      avatar: 'https://i.pravatar.cc/150?u=admin'
-    }).save();
+    const admin = await User.findOneAndUpdate(
+      { $or: [{ email: 'admin@bootskills.com' }, { username: 'admin' }] },
+      { $set: {
+        username: 'admin',
+        email: 'admin@bootskills.com',
+        password: hashedPassword,
+        role: 'admin',
+        fullName: 'System Administrator',
+        title: 'Head of Academy',
+        avatar: 'https://i.pravatar.cc/150?u=admin'
+      } },
+      { upsert: true, new: true }
+    );
 
-    const trainer1 = await new User({
-      username: 'innovator_john',
-      email: 'john@ihub.com',
-      password: hashedPassword,
-      role: 'trainer',
-      fullName: 'John Innovator',
-      title: 'Senior Full Stack Engineer',
-      bio: 'Ex-Google engineer with 10 years of experience in React and Node.js. Passionate about teaching the next generation of African tech leaders.',
-      skills: ['React', 'Node.js', 'System Design', 'Cloud Architecture'],
-      avatar: 'https://i.pravatar.cc/150?u=john'
-    }).save();
+    const trainer1 = await User.findOneAndUpdate(
+      { $or: [{ email: 'john@ihub.com' }, { username: 'innovator_john' }] },
+      { $set: {
+        username: 'innovator_john',
+        email: 'john@ihub.com',
+        password: hashedPassword,
+        role: 'trainer',
+        fullName: 'John Innovator',
+        title: 'Senior Full Stack Engineer',
+        bio: 'Ex-Google engineer with 10 years of experience in React and Node.js. Passionate about teaching the next generation of African tech leaders.',
+        skills: ['React', 'Node.js', 'System Design', 'Cloud Architecture'],
+        avatar: 'https://i.pravatar.cc/150?u=john'
+      } },
+      { upsert: true, new: true }
+    );
 
-    const trainer2 = await new User({
-      username: 'sarah_ai',
-      email: 'sarah@ihub.com',
-      password: hashedPassword,
-      role: 'trainer',
-      fullName: 'Sarah Data',
-      title: 'Lead Data Scientist',
-      bio: 'PhD in Machine Learning. Expert in Python, TensorFlow, and extracting insights from complex datasets.',
-      skills: ['Python', 'Machine Learning', 'Data Visualization', 'SQL'],
-      avatar: 'https://i.pravatar.cc/150?u=sarah'
-    }).save();
+    const trainer2 = await User.findOneAndUpdate(
+      { $or: [{ email: 'sarah@ihub.com' }, { username: 'sarah_ai' }] },
+      { $set: {
+        username: 'sarah_ai',
+        email: 'sarah@ihub.com',
+        password: hashedPassword,
+        role: 'trainer',
+        fullName: 'Sarah Data',
+        title: 'Lead Data Scientist',
+        bio: 'PhD in Machine Learning. Expert in Python, TensorFlow, and extracting insights from complex datasets.',
+        skills: ['Python', 'Machine Learning', 'Data Visualization', 'SQL'],
+        avatar: 'https://i.pravatar.cc/150?u=sarah'
+      } },
+      { upsert: true, new: true }
+    );
 
     // Students
-    const student1 = await new User({
-      username: 'student_alice',
-      email: 'alice@student.com',
-      password: hashedPassword,
-      role: 'student',
-      fullName: 'Alice Keza',
-      title: 'Aspiring Frontend Developer',
-      avatar: 'https://i.pravatar.cc/150?u=alice'
-    }).save();
+    const student1 = await User.findOneAndUpdate(
+      { $or: [{ email: 'alice@student.com' }, { username: 'student_alice' }] },
+      { $set: {
+        username: 'student_alice',
+        email: 'alice@student.com',
+        password: hashedPassword,
+        role: 'student',
+        fullName: 'Alice Keza',
+        title: 'Aspiring Frontend Developer',
+        avatar: 'https://i.pravatar.cc/150?u=alice'
+      } },
+      { upsert: true, new: true }
+    );
 
-    const student2 = await new User({
-      username: 'student_bob',
-      email: 'bob@student.com',
-      password: hashedPassword,
-      role: 'student',
-      fullName: 'Bob Manzi',
-      title: 'Backend Enthusiast',
-      avatar: 'https://i.pravatar.cc/150?u=bob'
-    }).save();
+    const student2 = await User.findOneAndUpdate(
+      { $or: [{ email: 'bob@student.com' }, { username: 'student_bob' }] },
+      { $set: {
+        username: 'student_bob',
+        email: 'bob@student.com',
+        password: hashedPassword,
+        role: 'student',
+        fullName: 'Bob Manzi',
+        title: 'Backend Enthusiast',
+        avatar: 'https://i.pravatar.cc/150?u=bob'
+      } },
+      { upsert: true, new: true }
+    );
 
     console.log('📚 Creating Courses...');
     const hotelCourse = await new Course({
@@ -488,32 +513,40 @@ const seedData = async () => {
 
     console.log('🎓 Creating Student Profiles...');
     // Create rich profiles for students
-    await new StudentProfile({
-      userId: student1._id,
-      school: 'University of Rwanda',
-      educationLevel: 'undergraduate',
-      fieldOfStudy: 'Computer Engineering',
-      skills: ['HTML', 'CSS', 'JavaScript', 'React'],
-      availability: 'full_time',
-      bio: 'Third year student looking for industrial attachment. Passionate about UI/UX.',
-      githubUrl: 'https://github.com/alice',
-      linkedinUrl: 'https://linkedin.com/in/alice',
-      portfolioUrl: 'https://alice.dev',
-      phoneNumber: '+250780000001'
-    }).save();
+    await StudentProfile.findOneAndUpdate(
+      { userId: student1._id },
+      { $set: {
+        userId: student1._id,
+        school: 'University of Rwanda',
+        educationLevel: 'undergraduate',
+        fieldOfStudy: 'Computer Engineering',
+        skills: ['HTML', 'CSS', 'JavaScript', 'React'],
+        availability: 'full_time',
+        bio: 'Third year student looking for industrial attachment. Passionate about UI/UX.',
+        githubUrl: 'https://github.com/alice',
+        linkedinUrl: 'https://linkedin.com/in/alice',
+        portfolioUrl: 'https://alice.dev',
+        phoneNumber: '+250780000001'
+      } },
+      { upsert: true, new: true }
+    );
 
-    await new StudentProfile({
-      userId: student2._id,
-      school: 'Carnegie Mellon University Africa',
-      educationLevel: 'graduate',
-      fieldOfStudy: 'Electrical and Computer Engineering',
-      skills: ['Python', 'Django', 'PostgreSQL', 'Docker'],
-      availability: 'part_time',
-      bio: 'Graduate student specializing in backend systems and distributed computing.',
-      githubUrl: 'https://github.com/bob',
-      linkedinUrl: 'https://linkedin.com/in/bob',
-      phoneNumber: '+250780000002'
-    }).save();
+    await StudentProfile.findOneAndUpdate(
+      { userId: student2._id },
+      { $set: {
+        userId: student2._id,
+        school: 'Carnegie Mellon University Africa',
+        educationLevel: 'graduate',
+        fieldOfStudy: 'Electrical and Computer Engineering',
+        skills: ['Python', 'Django', 'PostgreSQL', 'Docker'],
+        availability: 'part_time',
+        bio: 'Graduate student specializing in backend systems and distributed computing.',
+        githubUrl: 'https://github.com/bob',
+        linkedinUrl: 'https://linkedin.com/in/bob',
+        phoneNumber: '+250780000002'
+      } },
+      { upsert: true, new: true }
+    );
 
     console.log('🚀 Creating Internship Programs...');
     const program1 = await new InternshipProgram({
@@ -609,27 +642,35 @@ const seedData = async () => {
 
     console.log('💳 Creating Payments...');
     // Alice pays
-    await new InternshipPayment({
-      userId: student1._id,
-      internshipProgramId: program1._id,
-      amount: 100000,
-      currency: 'RWF',
-      status: 'paid',
-      paymentMethod: 'card',
-      transactionId: 'pi_test_12345ABCDE',
-      paidAt: new Date()
-    }).save();
+    await InternshipPayment.findOneAndUpdate(
+      { transactionId: 'pi_test_12345ABCDE' },
+      { $set: {
+        userId: student1._id,
+        internshipProgramId: program1._id,
+        amount: 100000,
+        currency: 'RWF',
+        status: 'paid',
+        paymentMethod: 'card',
+        transactionId: 'pi_test_12345ABCDE',
+        paidAt: new Date()
+      } },
+      { upsert: true, new: true }
+    );
 
     // Bob is waived
-    await new InternshipPayment({
-      userId: student2._id,
-      internshipProgramId: program1._id,
-      amount: 100000,
-      currency: 'RWF',
-      status: 'waived',
-      waivedReason: 'Merit Scholarship',
-      waivedBy: admin._id
-    }).save();
+    await InternshipPayment.findOneAndUpdate(
+      { userId: student2._id, internshipProgramId: program1._id },
+      { $set: {
+        userId: student2._id,
+        internshipProgramId: program1._id,
+        amount: 100000,
+        currency: 'RWF',
+        status: 'waived',
+        waivedReason: 'Merit Scholarship',
+        waivedBy: admin._id
+      } },
+      { upsert: true, new: true }
+    );
 
     console.log('👥 Creating Teams...');
     // Create Team for Project 1

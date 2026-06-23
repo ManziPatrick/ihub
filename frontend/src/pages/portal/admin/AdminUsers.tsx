@@ -76,7 +76,7 @@ export default function AdminUsers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   // Dialog states
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -89,8 +89,12 @@ export default function AdminUsers() {
 
   // Queries & Mutations
   const client = useApolloClient();
+  const queryVariables: any = { page: currentPage, limit: pageSize };
+  if (currentUser?.role !== "super_admin") {
+    queryVariables.createdBy = currentUser?.id;
+  }
   const { data, loading, refetch } = useQuery(GET_USERS, {
-    variables: { page: currentPage, limit: pageSize },
+    variables: queryVariables,
     pollInterval: 30000 // auto-refresh every 30 seconds
   });
   
@@ -451,10 +455,29 @@ export default function AdminUsers() {
 
           {/* Pagination */}
           {pagination && pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <p className="text-sm text-muted-foreground">
-                Showing page <span className="font-semibold">{pagination.currentPage}</span> of <span className="font-semibold">{pagination.totalPages}</span> ({pagination.totalCount} total)
-              </p>
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Show</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="bg-background border border-border/50 rounded-md px-2 py-1 text-sm"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span>
+                  Showing <span className="font-semibold text-foreground">{((currentPage - 1) * pageSize) + 1}</span>
+                  -
+                  <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, pagination.totalCount)}</span>
+                  of <span className="font-semibold text-foreground">{pagination.totalCount}</span>
+                </span>
+              </div>
               <div className="flex gap-2">
                 <Button
                   variant="outline"

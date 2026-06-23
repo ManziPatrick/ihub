@@ -794,8 +794,8 @@ export const GET_TRAINER_STUDENTS = gql`
   }
 `;
 export const GET_RECENT_ACTIVITY = gql`
-  query GetRecentActivity {
-    recentActivity {
+  query GetRecentActivity($createdBy: ID) {
+    recentActivity(createdBy: $createdBy) {
       username
       action
       details
@@ -909,14 +909,18 @@ export const GET_ALL_BOOKINGS = gql`
 `;
 
 export const GET_BADGES = gql`
-  query GetBadges($page: Int, $limit: Int) {
-    badges(page: $page, limit: $limit) {
+  query GetBadges($page: Int, $limit: Int, $createdBy: ID) {
+    badges(page: $page, limit: $limit, createdBy: $createdBy) {
       items {
         id
         title
         description
         icon
         category
+        createdBy {
+          id
+          username
+        }
       }
       pagination {
         ...PaginationFragment
@@ -1181,6 +1185,54 @@ export const GET_CERTIFICATE = gql`
       }
       createdAt
       updatedAt
+    }
+  }
+`;
+
+export const GET_COMPLETED_USERS = gql`
+  query GetCompletedUsers($page: Int, $limit: Int, $createdBy: ID, $courseId: ID) {
+    completedUsers(page: $page, limit: $limit, createdBy: $createdBy, courseId: $courseId) {
+      items {
+        id
+        user {
+          id
+          username
+          email
+          fullName
+          avatar
+          role
+        }
+        completedCourseIds
+        completedCourses {
+          id
+          title
+          category
+          level
+        }
+        hasCertificate
+        certificate {
+          id
+          courseTitle
+          issueDate
+          credentialId
+          status
+          grade
+          progress
+        }
+        completedLessonsCount
+        overallProgress
+        completedAt
+        status
+        examScore
+      }
+      pagination {
+        totalCount
+        totalPages
+        currentPage
+        pageSize
+        hasNextPage
+        hasPreviousPage
+      }
     }
   }
 `;
@@ -1521,8 +1573,8 @@ export const GET_ADMIN_DASHBOARD_DATA = gql`
 `;
 
 export const GET_PAYMENTS = gql`
-  query GetPayments($page: Int, $limit: Int) {
-    payments(page: $page, limit: $limit) {
+  query GetPayments($page: Int, $limit: Int, $createdBy: ID) {
+    payments(page: $page, limit: $limit, createdBy: $createdBy) {
       items {
         id
         studentName
@@ -1535,6 +1587,10 @@ export const GET_PAYMENTS = gql`
         method
         proofOfPaymentUrl
         adminNotes
+        createdBy {
+          id
+          username
+        }
       }
       pagination {
         ...PaginationFragment
@@ -1929,8 +1985,8 @@ export const GET_INTERNSHIP_SUBMISSIONS = gql`
 
 
 export const GET_ANALYTICS = gql`
-  query GetAnalytics {
-    analytics {
+  query GetAnalytics($createdBy: ID) {
+    analytics(createdBy: $createdBy) {
       userGrowth {
         label
         value

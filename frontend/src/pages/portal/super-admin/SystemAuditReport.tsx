@@ -53,9 +53,7 @@ export default function SystemAuditReport() {
   const [showExportDialog, setShowExportDialog] = useState(false);
   
   // Queries
-  const { data: activityData, loading: activityLoading } = useQuery(GET_RECENT_ACTIVITY, {
-    variables: { limit: 200 } // Fetch more for reporting
-  });
+  const { data: activityData, loading: activityLoading } = useQuery(GET_RECENT_ACTIVITY);
   const { data: timeData, loading: timeLoading } = useQuery(GET_INTERNSHIP_TIME_LOGS);
   const { data: analyticsData, loading: analyticsLoading } = useQuery(GET_ANALYTICS);
   const { data: usersData, loading: usersLoading } = useQuery(GET_USERS, {

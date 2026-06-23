@@ -130,6 +130,7 @@ const adminNavItems: NavItem[] = [
     icon: Cog,
     children: [
       { label: "Users", href: "/portal/admin/users", icon: Users },
+      { label: "Completed Users", href: "/portal/admin/completed-users", icon: GraduationCap },
       { label: "Courses", href: "/portal/admin/courses", icon: BookOpen },
       { label: "Course Preview", href: "/portal/admin/course-preview", icon: Eye },
       { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
@@ -178,6 +179,7 @@ const superAdminNavItems: NavItem[] = [
     children: [
       { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },
       { label: "All Users", href: "/portal/super-admin/users", icon: Users },
+      { label: "Completed Users", href: "/portal/super-admin/completed-users", icon: GraduationCap },
       { label: "Configuration", href: "/portal/super-admin/config", icon: Cog },
       { label: "Commissions Config", href: "/portal/super-admin/commissions", icon: Percent },
       { label: "My Commissions", href: "/portal/super-admin/my-commissions", icon: DollarSign },
