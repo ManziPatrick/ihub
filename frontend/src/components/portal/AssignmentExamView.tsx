@@ -24,7 +24,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Textarea } from "@/components/ui/textarea";
+import { TextEditor } from "@/components/ui/text-editor";
+import DOMPurify from "dompurify";
 import {
   Sheet,
   SheetContent,
@@ -393,7 +394,7 @@ export function AssignmentExamView({
         
         {/* Graded Answers Summary */}
         {gradeResult?.answers && gradeResult.answers.length > 0 && (
-          <div className="max-w-xl mx-auto w-full space-y-4 pt-4 border-t border-white/5">
+          <div className="max-w-xl mx-auto w-full space-y-4 pt-4 border-t border-border">
             <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-4">
               Detailed Assessment Breakdown
             </h4>
@@ -408,8 +409,8 @@ export function AssignmentExamView({
                     isCorrect ? 'bg-green-500/5 border-green-500/10' : 'bg-red-500/5 border-red-500/10'
                   }`}>
                     <div className="flex items-start justify-between gap-3 mb-2">
-                      <p className="text-xs font-bold text-white leading-relaxed flex-1">
-                        <span className="text-white/40 mr-2">Q{i+1}:</span>
+                      <p className="text-xs font-bold text-foreground leading-relaxed flex-1">
+                        <span className="text-muted-foreground/60 mr-2">Q{i+1}:</span>
                         {q.questionText}
                       </p>
                       {isCorrect ? (
@@ -421,10 +422,10 @@ export function AssignmentExamView({
                     
                     <div className="space-y-1">
                       <p className={`text-[10px] font-bold ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-                        Your Answer: {q.type === 'mcq' ? q.options?.[parseInt(userAns?.answerText)] || userAns?.answerText : userAns?.answerText || "No answer"}
+                        Your Answer: {q.type === 'mcq' ? q.options?.[parseInt(userAns?.answerText)] || userAns?.answerText : userAns?.answerText ? <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userAns.answerText) }} /> : "No answer"}
                       </p>
                       {!isCorrect && userAns?.aiFeedback && (
-                        <p className="text-[10px] text-white/50 bg-white/5 p-2 rounded-lg italic">
+                        <p className="text-[10px] text-muted-foreground bg-muted/50 p-2 rounded-lg italic">
                           💡 {userAns.aiFeedback}
                         </p>
                       )}
@@ -805,18 +806,109 @@ export function AssignmentExamView({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <Textarea
-                    placeholder="Type your detailed answer here…"
-                    className="min-h-[280px] p-6 text-base bg-white/5 focus:bg-white/7 border-2 border-white/10 focus:border-indigo-500/60 rounded-2xl transition-all text-white placeholder:text-white/30 resize-none"
-                    value={answers[currentQuestion._id || currentQuestion.id || ""] || ""}
-                    onChange={(e) =>
-                      handleAnswerChange(currentQuestion._id || currentQuestion.id || "", e.target.value)
+                  <style>{`
+                    .exam-editor .quill {
+                      background: rgba(255, 255, 255, 0.03);
+                      border-radius: 16px;
+                      border: 2px solid rgba(255, 255, 255, 0.08);
+                      transition: border-color 0.2s;
                     }
-                  />
+                    .exam-editor .quill:focus-within {
+                      border-color: rgba(99, 102, 241, 0.6);
+                    }
+                    .exam-editor .ql-toolbar.ql-snow {
+                      border: none;
+                      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                      background: rgba(255, 255, 255, 0.04);
+                      border-radius: 14px 14px 0 0;
+                      padding: 10px 14px;
+                    }
+                    .exam-editor .ql-container.ql-snow {
+                      border: none;
+                      font-family: inherit;
+                      font-size: 1rem;
+                      min-height: 260px;
+                    }
+                    .exam-editor .ql-editor {
+                      padding: 20px 24px;
+                      color: rgba(255, 255, 255, 0.85);
+                      line-height: 1.7;
+                      min-height: 260px;
+                    }
+                    .exam-editor .ql-editor.ql-blank::before {
+                      color: rgba(255, 255, 255, 0.25);
+                      font-style: normal;
+                      left: 24px;
+                    }
+                    .exam-editor .ql-snow .ql-stroke {
+                      stroke: rgba(255, 255, 255, 0.5);
+                    }
+                    .exam-editor .ql-snow .ql-fill {
+                      fill: rgba(255, 255, 255, 0.5);
+                    }
+                    .exam-editor .ql-snow .ql-picker {
+                      color: rgba(255, 255, 255, 0.5);
+                    }
+                    .exam-editor .ql-snow .ql-picker-options {
+                      background: #1e2040;
+                      border: 1px solid rgba(255,255,255,0.1);
+                    }
+                    .exam-editor .ql-snow.ql-toolbar button:hover .ql-stroke,
+                    .exam-editor .ql-snow.ql-toolbar button:hover .ql-fill,
+                    .exam-editor .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+                    .exam-editor .ql-snow.ql-toolbar button.ql-active .ql-fill {
+                      stroke: #818cf8;
+                      fill: #818cf8;
+                    }
+                    .exam-editor .ql-snow.ql-toolbar button:hover,
+                    .exam-editor .ql-snow.ql-toolbar button.ql-active {
+                      color: #818cf8;
+                    }
+                    .exam-editor .ql-snow .ql-picker:hover .ql-picker-label,
+                    .exam-editor .ql-snow .ql-picker.ql-expanded .ql-picker-label {
+                      color: #818cf8;
+                    }
+                    .exam-editor .ql-snow a {
+                      color: #818cf8;
+                    }
+                    .exam-editor .ql-snow .ql-editor pre.ql-syntax {
+                      background: #0d0f1a;
+                      color: #e2e8f0;
+                      border-radius: 8px;
+                      padding: 14px 18px;
+                      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+                      font-size: 0.85rem;
+                      border: 1px solid rgba(255,255,255,0.08);
+                      overflow-x: auto;
+                    }
+                    .exam-editor .ql-snow .ql-editor blockquote {
+                      border-left-color: #818cf8;
+                      color: rgba(255,255,255,0.6);
+                      padding-left: 16px;
+                    }
+                    .exam-editor .ql-snow .ql-editor h1,
+                    .exam-editor .ql-snow .ql-editor h2,
+                    .exam-editor .ql-snow .ql-editor h3 {
+                      color: rgba(255,255,255,0.9);
+                    }
+                    .exam-editor .ql-snow .ql-editor ul,
+                    .exam-editor .ql-snow .ql-editor ol {
+                      padding-left: 20px;
+                    }
+                  `}</style>
+                  <div className="exam-editor">
+                    <TextEditor
+                      value={answers[currentQuestion._id || currentQuestion.id || ""] || ""}
+                      onChange={(content) =>
+                        handleAnswerChange(currentQuestion._id || currentQuestion.id || "", content)
+                      }
+                      placeholder="Type your detailed answer here — use the toolbar to format lists, code, and more…"
+                    />
+                  </div>
                   <div className="flex items-center gap-2 text-white/30">
                     <AlertCircle className="w-3.5 h-3.5" />
                     <p className="text-[10px] font-bold uppercase tracking-widest">
-                      AI Assisted Grading Active
+                      Rich text supported — AI Assisted Grading Active
                     </p>
                   </div>
                 </div>

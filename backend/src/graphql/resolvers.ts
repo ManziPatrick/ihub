@@ -252,7 +252,39 @@ export const resolvers = {
       if (!context.user) throw new Error('Unauthorized');
 
       const filter: any = {};
-      if (courseId) filter.courseId = courseId;
+
+      // Admin (non-super) scope: only see submissions from courses they created or instruct
+      if (context.user.role === 'admin') {
+        const adminCourses = await Course.find({
+          $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
+        }).distinct('_id');
+        const adminCourseIds = adminCourses.map((id: any) => id.toString());
+
+        if (courseId) {
+          // If a specific courseId is passed, ensure it belongs to this admin
+          if (!adminCourseIds.includes(courseId.toString())) {
+            // Return empty — admin has no access to this course's submissions
+            const totalPages = Math.ceil(0 / limit);
+            return {
+              items: [],
+              pagination: {
+                totalCount: 0,
+                totalPages,
+                currentPage: page,
+                pageSize: limit,
+                hasNextPage: false,
+                hasPreviousPage: false
+              }
+            };
+          }
+          filter.courseId = courseId;
+        } else {
+          filter.courseId = { $in: adminCourseIds };
+        }
+      } else if (courseId) {
+        filter.courseId = courseId;
+      }
+
       if (lessonId) filter.lessonId = lessonId;
 
       if (context.user.role === 'student') {

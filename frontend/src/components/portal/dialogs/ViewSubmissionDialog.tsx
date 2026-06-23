@@ -31,6 +31,7 @@ import { useMutation } from "@apollo/client/react";
 import { GRADE_ASSIGNMENT } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 import { triggerFileDownload, openInNewTab } from "@/lib/download";
+import DOMPurify from "dompurify";
 
 interface AssignmentAnswer {
   questionId: string;
@@ -405,9 +406,9 @@ export function ViewSubmissionDialog({
                             Student's Answer
                           </p>
                           {answer.answerText?.trim() ? (
-                            <p className="text-sm leading-relaxed bg-muted/30 rounded-xl p-4 border border-border/50">
-                              {answer.answerText}
-                            </p>
+                            <div className="text-sm leading-relaxed bg-muted/30 rounded-xl p-4 border border-border/50 prose prose-sm dark:prose-invert max-w-none" 
+                                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(answer.answerText) }} 
+                            />
                           ) : (
                             <p className="text-sm text-muted-foreground italic flex items-center gap-2">
                               <HelpCircle className="w-3.5 h-3.5" /> No answer provided

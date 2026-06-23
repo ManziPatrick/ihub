@@ -53,6 +53,7 @@ import { TextEditor } from "@/components/ui/text-editor";
 import { KanbanBoard } from "@/components/portal/KanbanBoard";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import DOMPurify from "dompurify";
 
 interface AssignmentSubmission {
   id: string;
@@ -1002,12 +1003,17 @@ export default function AdminProjects() {
                                           <p className="font-semibold text-foreground mb-1">
                                             Q{idx + 1}: {question?.questionText || `Question ${idx + 1}`}
                                           </p>
-                                          <p className="text-muted-foreground bg-background/50 p-2 rounded-lg">
-                                            {question?.type === 'mcq' && question.options
-                                              ? (question.options[parseInt(answer.answerText)] || answer.answerText)
-                                              : (answer.answerText || <em>No answer</em>)
-                                            }
-                                          </p>
+                                          {question?.type === 'mcq' && question.options ? (
+                                            <p className="text-muted-foreground bg-background/50 p-2 rounded-lg">
+                                              {question.options[parseInt(answer.answerText)] || answer.answerText}
+                                            </p>
+                                          ) : answer.answerText?.trim() ? (
+                                            <div className="text-muted-foreground bg-background/50 p-2 rounded-lg prose prose-sm dark:prose-invert max-w-none" 
+                                                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(answer.answerText) }} 
+                                            />
+                                          ) : (
+                                            <p className="text-muted-foreground bg-background/50 p-2 rounded-lg italic">No answer</p>
+                                          )}
                                         </div>
                                       );
                                     })}

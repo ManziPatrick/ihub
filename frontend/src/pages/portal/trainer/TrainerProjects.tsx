@@ -33,8 +33,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";import { motion, AnimatePresence } from "framer-motion";
+import DOMPurify from "dompurify";
 import { TextEditor } from "@/components/ui/text-editor";
 import { BookCallDialog, ViewSubmissionDialog, ProjectTaskDialog } from "@/components/portal/dialogs";
 import { KanbanBoard } from "@/components/portal/KanbanBoard";
@@ -627,13 +627,17 @@ export default function TrainerProjects() {
                                                                                     
                                                                                     <div className="space-y-2">
                                                                                         <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Student Answer:</div>
-                                                                                        <div className={`p-2 rounded text-xs ${isCorrect ? 'bg-green-500/10 text-green-700' : 'bg-red-500/10 text-red-700'}`}>
-                                                                                            {q.type === 'mcq' ? (
-                                                                                                q.options[parseInt(answer?.answerText || "-1")] || answer?.answerText || "No answer"
-                                                                                            ) : (
-                                                                                                answer?.answerText || "No answer"
-                                                                                            )}
-                                                                                        </div>
+                                                                                        {q.type === 'mcq' ? (
+                                                                                            <p className={`p-2 rounded text-xs ${isCorrect ? 'bg-green-500/10 text-green-700' : 'bg-red-500/10 text-red-700'}`}>
+                                                                                                {q.options[parseInt(answer?.answerText || "-1")] || answer?.answerText || "No answer"}
+                                                                                            </p>
+                                                                                        ) : answer?.answerText?.trim() ? (
+                                                                                            <div className={`p-2 rounded text-xs prose prose-sm max-w-none ${isCorrect ? 'bg-green-500/10 text-green-700 dark:prose-invert' : 'bg-red-500/10 text-red-700 dark:prose-invert'}`}
+                                                                                                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(answer.answerText) }} 
+                                                                                            />
+                                                                                        ) : (
+                                                                                            <p className={`p-2 rounded text-xs italic ${isCorrect ? 'bg-green-500/10 text-green-700' : 'bg-red-500/10 text-red-700'}`}>No answer</p>
+                                                                                        )}
                                                                                         
                                                                                         {!isCorrect && q.type === 'mcq' && (
                                                                                             <>
