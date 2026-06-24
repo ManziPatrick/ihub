@@ -12,10 +12,10 @@ WORKDIR /app
 # Install wget for healthcheck (not included by default in node:alpine)
 RUN apk add --no-cache wget
 
-COPY package.json package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install --legacy-peer-deps --no-audit --no-fund
 
-COPY . ./
+COPY frontend/ ./
 RUN npm run build
 
 # Inject runtime VITE_* env vars into dist/env-config.js at startup

@@ -53,7 +53,7 @@ const tryOllamaInference = async (
     throw new Error(`Ollama (${OLLAMA_MODEL}): ${response.status} ${errorText}`);
   }
 
-  const data = await response.json();
+  const data = await response.json() as { message?: { content?: string } };
 
   if (!data.message?.content) {
     throw new Error('Ollama returned an empty response');

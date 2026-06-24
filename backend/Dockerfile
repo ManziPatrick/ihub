@@ -12,10 +12,10 @@ WORKDIR /app
 # Install wget for healthcheck (not included by default in node:alpine)
 RUN apk add --no-cache wget
 
-COPY package.json package-lock.json ./
+COPY backend/package.json backend/package-lock.json ./
 RUN npm install --legacy-peer-deps --no-audit --no-fund
 
-COPY . ./
+COPY backend/ ./
 RUN npm run build
 
 RUN mkdir -p /app/uploads
