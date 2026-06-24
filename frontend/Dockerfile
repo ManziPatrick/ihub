@@ -23,11 +23,11 @@ RUN apk add --no-cache nodejs
 
 WORKDIR /app
 
-# Remove default nginx config
-RUN rm /etc/nginx/conf.d/default.conf
+# Remove default nginx config files — we replace the main config entirely
+RUN rm -f /etc/nginx/conf.d/default.conf /etc/nginx/nginx.conf
 
-# Copy nginx config with brotli/gzip pre-compressed asset support
-COPY frontend/nginx.conf /etc/nginx/templates/default.conf.template
+# Copy nginx config template (full config with worker_processes, events, http)
+COPY frontend/nginx.conf /etc/nginx/templates/nginx.conf.template
 
 # Copy built SPA from builder stage
 COPY --from=builder /app/dist ./dist
@@ -44,8 +44,12 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
   CMD wget --quiet --tries=1 --spider http://localhost:${PORT} || exit 1
 
 # 1. Inject runtime VITE_* env vars into dist/env-config.js
-# 2. Substitute ${PORT} in nginx template (nginx's envsubst)
+# 2. Substitute ${PORT} in nginx template and write to main nginx.conf
+#    (Writing to /etc/nginx/nginx.conf is required because the template
+#     has top-level directives like worker_processes that
+#     are NOT allowed inside http {} blocks — writing to
+#     conf.d/ would nest them incorrectly.)
 # 3. Start nginx in foreground
 CMD node generate-env-config.js && \
-    envsubst '\${PORT}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && \
+    envsubst '\${PORT}' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf && \
     nginx -g 'daemon off;'
