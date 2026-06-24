@@ -42,6 +42,13 @@ services:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       HF_TOKEN: ${HF_TOKEN}
 
+      # Ollama (local LLM)
+      OLLAMA_ENABLED: "true"
+      OLLAMA_ONLY: "true"
+      OLLAMA_BASE_URL: "http://ollama:11434"
+      OLLAMA_MODEL: "qwen2.5-coder:7b"
+
+
       # Stripe
       STRIPE_PUBLIC_KEY: ${STRIPE_PUBLIC_KEY}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
@@ -103,6 +110,22 @@ services:
 
     networks:
       - ihub_network
+  # ─────────────────────────────────────────
+  #  OLLAMA (Local LLM service)
+  # ─────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ihub_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - ihub_network
+
   # ─────────────────────────────────────────
   #  FRONTEND  (React + Vite — static preview)
   # ─────────────────────────────────────────

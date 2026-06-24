@@ -14,7 +14,12 @@ const inferenceClient = new InferenceClient(HF_TOKEN);
  * Set OLLAMA_ENABLED=false to disable Ollama entirely.
  */
 const OLLAMA_ENABLED = process.env.OLLAMA_ENABLED !== 'false';
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+
+// If Ollama fails, do NOT automatically fall back to paid cloud providers.
+// This is useful when deploying on a server where you only want local inference.
+// Set OLLAMA_ONLY=true to disable the cloud fallback chain.
+const OLLAMA_ONLY = (process.env.OLLAMA_ONLY || '').toLowerCase() === 'true';
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || process.env.OLLAMA_URL || 'http://ollama:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
 
 /** Ordered fallback chain of models to try in case one fails */
@@ -94,6 +99,16 @@ const isKinyarwanda = (text: string): boolean => {
  * Returns the first successful response, or throws if all providers fail.
  */
 const tryInference = async (messages: { role: string; content: string }[], maxTokens: number = 1024) => {
+  // Only allow cloud inference if explicitly enabled.
+  // OLLAMA_ONLY=true is used to force local Ollama usage on servers.
+  if (OLLAMA_ONLY) {
+    // If Ollama is enabled, try it and return/throw its error.
+    if (OLLAMA_ENABLED) {
+      return await tryOllamaInference(messages, maxTokens);
+    }
+    throw new Error('OLLAMA_ONLY=true but OLLAMA_ENABLED is false.');
+  }
+
   // ── Try Ollama first (cheap, local, no API key needed) ──────────
   if (OLLAMA_ENABLED) {
     try {
