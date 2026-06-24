@@ -117,8 +117,9 @@ services:
     image: ollama/ollama:latest
     container_name: ihub_ollama
     restart: unless-stopped
-    ports:
-      - "11434:11434"
+    # No public exposure; accessible only from other containers on ihub_network
+    expose:
+      - "11434"
     volumes:
       - ollama_data:/root/.ollama
     environment:
