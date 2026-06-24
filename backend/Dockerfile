@@ -17,9 +17,7 @@ RUN npm install --legacy-peer-deps --no-audit --no-fund
 
 COPY . ./
 
-# Ensure optional Dokploy helper Dockerfile is available (harmless for normal builds)
-# This makes the image build logs/tools more transparent across Dokploy environments.
-COPY ../docker-compose.Dockerfile.backend ./docker-compose.Dockerfile.backend
+
 
 
 RUN npm run build
