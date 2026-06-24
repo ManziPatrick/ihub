@@ -21,6 +21,8 @@ import {
   X,
   Lock,
   RefreshCcw,
+  Sparkles,
+  Save,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -121,6 +123,55 @@ function ViolationWarning({
         )}
       </div>
     </motion.div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Auto-save indicator                                                  */
+/* ------------------------------------------------------------------ */
+function AutoSaveIndicator({ answer, questionId }: { answer: string; questionId: string }) {
+  const [status, setStatus] = useState<"saved" | "saving" | "idle">("idle");
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const prevAnswerRef = useRef(answer);
+
+  useEffect(() => {
+    if (answer === prevAnswerRef.current) return;
+    prevAnswerRef.current = answer;
+
+    setStatus("saving");
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setStatus("saved");
+      // Auto-hide the "saved" status after a moment
+      setTimeout(() => {
+        setStatus("idle");
+      }, 2000);
+    }, 600);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [answer]);
+
+  if (status === "idle") return null;
+
+  return (
+    <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${
+      status === "saving" ? "text-amber-400/60" : "text-green-400/70"
+    }`}>
+      {status === "saving" ? (
+        <>
+          <Loader2 className="w-2.5 h-2.5 animate-spin" />
+          Saving…
+        </>
+      ) : (
+        <>
+          <Save className="w-2.5 h-2.5" />
+          Saved ✓
+        </>
+      )}
+    </div>
   );
 }
 
@@ -420,12 +471,30 @@ export function AssignmentExamView({
                       )}
                     </div>
                     
-                    <div className="space-y-1">
-                      <p className={`text-[10px] font-bold ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-                        Your Answer: {q.type === 'mcq' ? q.options?.[parseInt(userAns?.answerText)] || userAns?.answerText : userAns?.answerText ? <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userAns.answerText) }} /> : "No answer"}
+                    <div className="space-y-2">
+                      <p className={`text-xs font-bold ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                        Your Answer:
                       </p>
+                      {q.type === 'mcq' ? (
+                        <p className={`text-sm ${isCorrect ? 'text-green-300' : 'text-red-300'}`}>
+                          {q.options?.[parseInt(userAns?.answerText)] || userAns?.answerText || "No answer"}
+                        </p>
+                      ) : (
+                        <div 
+                          className={`text-sm prose prose-sm dark:prose-invert max-w-none p-3 rounded-xl border ${
+                            isCorrect 
+                              ? 'bg-green-500/10 border-green-500/20' 
+                              : 'bg-red-500/10 border-red-500/20'
+                          }`}
+                          dangerouslySetInnerHTML={{ 
+                            __html: userAns?.answerText 
+                              ? DOMPurify.sanitize(userAns.answerText) 
+                              : "<em>No answer provided</em>" 
+                          }} 
+                        />
+                      )}
                       {!isCorrect && userAns?.aiFeedback && (
-                        <p className="text-[10px] text-muted-foreground bg-muted/50 p-2 rounded-lg italic">
+                        <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded-lg italic leading-relaxed">
                           💡 {userAns.aiFeedback}
                         </p>
                       )}
@@ -807,19 +876,24 @@ export function AssignmentExamView({
               ) : (
                 <div className="space-y-3">
                   <style>{`
+                    .exam-editor {
+                      --text-editor-color: #e2e8f0;
+                      --text-editor-toolbar-opacity: 1;
+                      --text-editor-accent: #818cf8;
+                    }
                     .exam-editor .quill {
-                      background: rgba(255, 255, 255, 0.03);
+                      background: rgba(0, 0, 0, 0.35);
                       border-radius: 16px;
-                      border: 2px solid rgba(255, 255, 255, 0.08);
+                      border: 2px solid rgba(129, 140, 248, 0.15);
                       transition: border-color 0.2s;
                     }
                     .exam-editor .quill:focus-within {
-                      border-color: rgba(99, 102, 241, 0.6);
+                      border-color: rgba(129, 140, 248, 0.6);
                     }
                     .exam-editor .ql-toolbar.ql-snow {
                       border: none;
-                      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                      background: rgba(255, 255, 255, 0.04);
+                      border-bottom: 1px solid rgba(129, 140, 248, 0.12);
+                      background: rgba(129, 140, 248, 0.06);
                       border-radius: 14px 14px 0 0;
                       padding: 10px 14px;
                     }
@@ -831,67 +905,71 @@ export function AssignmentExamView({
                     }
                     .exam-editor .ql-editor {
                       padding: 20px 24px;
-                      color: rgba(255, 255, 255, 0.92) !important;
+                      color: #e2e8f0 !important;
                       line-height: 1.7;
                       min-height: 260px;
                     }
                     .exam-editor .ql-editor.ql-blank::before {
-                      color: rgba(255, 255, 255, 0.25);
+                      color: rgba(226, 232, 240, 0.25);
                       font-style: normal;
                       left: 24px;
                     }
                     /* ─── Toolbar icons (bold, italic, list, etc.) ─── */
                     .exam-editor .ql-snow .ql-stroke {
-                      stroke: rgba(255, 255, 255, 0.8) !important;
-                      stroke-width: 1.5px;
+                      stroke: #818cf8 !important;
+                      stroke-width: 1.8px;
+                      opacity: 1 !important;
                     }
                     .exam-editor .ql-snow .ql-fill {
-                      fill: rgba(255, 255, 255, 0.8) !important;
+                      fill: #818cf8 !important;
+                      opacity: 1 !important;
                     }
                     /* ─── Toolbar picker labels (font, size, color) ─── */
                     .exam-editor .ql-snow .ql-picker {
-                      color: rgba(255, 255, 255, 0.8) !important;
+                      color: #a5b4fc !important;
+                      opacity: 1 !important;
                     }
                     .exam-editor .ql-snow .ql-picker-label {
-                      color: rgba(255, 255, 255, 0.8) !important;
-                      border-color: rgba(255, 255, 255, 0.15) !important;
+                      color: #a5b4fc !important;
+                      border-color: rgba(129, 140, 248, 0.25) !important;
                     }
                     .exam-editor .ql-snow .ql-picker-label svg .ql-stroke {
-                      stroke: rgba(255, 255, 255, 0.8) !important;
+                      stroke: #818cf8 !important;
+                      opacity: 1 !important;
                     }
                     /* ─── Picker dropdown options ─── */
                     .exam-editor .ql-snow .ql-picker-options {
                       background: #1e2040;
-                      border: 1px solid rgba(255,255,255,0.15);
-                      color: rgba(255, 255, 255, 0.85);
+                      border: 1px solid rgba(129, 140, 248, 0.25);
+                      color: #e2e8f0;
                     }
                     .exam-editor .ql-snow .ql-picker-item {
-                      color: rgba(255, 255, 255, 0.85);
+                      color: #cbd5e1;
                     }
                     .exam-editor .ql-snow .ql-picker-item:hover {
                       color: #a5b4fc;
                     }
                     /* ─── Toolbar buttons (hover + active states) ─── */
                     .exam-editor .ql-snow.ql-toolbar button {
-                      color: rgba(255, 255, 255, 0.8) !important;
+                      color: #a5b4fc !important;
                     }
                     .exam-editor .ql-snow.ql-toolbar button:hover .ql-stroke,
                     .exam-editor .ql-snow.ql-toolbar button:hover .ql-fill {
-                      stroke: #a5b4fc !important;
-                      fill: #a5b4fc !important;
+                      stroke: #ffffff !important;
+                      fill: #ffffff !important;
                     }
                     .exam-editor .ql-snow.ql-toolbar button.ql-active .ql-stroke,
                     .exam-editor .ql-snow.ql-toolbar button.ql-active .ql-fill {
-                      stroke: #818cf8 !important;
-                      fill: #818cf8 !important;
+                      stroke: #ffffff !important;
+                      fill: #ffffff !important;
                     }
                     .exam-editor .ql-snow.ql-toolbar button:hover,
                     .exam-editor .ql-snow.ql-toolbar button.ql-active {
-                      color: #818cf8 !important;
+                      color: #ffffff !important;
                     }
                     .exam-editor .ql-snow .ql-picker:hover .ql-picker-label,
                     .exam-editor .ql-snow .ql-picker.ql-expanded .ql-picker-label {
-                      color: #818cf8 !important;
+                      color: #ffffff !important;
                     }
                     .exam-editor .ql-snow a {
                       color: #818cf8;
@@ -903,18 +981,18 @@ export function AssignmentExamView({
                       padding: 14px 18px;
                       font-family: 'JetBrains Mono', 'Fira Code', monospace;
                       font-size: 0.85rem;
-                      border: 1px solid rgba(255,255,255,0.08);
+                      border: 1px solid rgba(129, 140, 248, 0.15);
                       overflow-x: auto;
                     }
                     .exam-editor .ql-snow .ql-editor blockquote {
                       border-left-color: #818cf8;
-                      color: rgba(255,255,255,0.6);
+                      color: rgba(226, 232, 240, 0.6);
                       padding-left: 16px;
                     }
                     .exam-editor .ql-snow .ql-editor h1,
                     .exam-editor .ql-snow .ql-editor h2,
                     .exam-editor .ql-snow .ql-editor h3 {
-                      color: rgba(255,255,255,0.9);
+                      color: rgba(226, 232, 240, 0.95);
                     }
                     .exam-editor .ql-snow .ql-editor ul,
                     .exam-editor .ql-snow .ql-editor ol {
@@ -923,28 +1001,34 @@ export function AssignmentExamView({
                     /* ─── Color picker & background picker ─── */
                     .exam-editor .ql-snow .ql-color-picker .ql-picker-label,
                     .exam-editor .ql-snow .ql-background-picker .ql-picker-label {
-                      border-color: rgba(255, 255, 255, 0.15) !important;
+                      border-color: rgba(129, 140, 248, 0.25) !important;
                     }
                     .exam-editor .ql-snow .ql-color-picker .ql-picker-options,
                     .exam-editor .ql-snow .ql-background-picker .ql-picker-options {
                       background: #1e2040;
-                      border-color: rgba(255, 255, 255, 0.15);
+                      border-color: rgba(129, 140, 248, 0.15);
                     }
-                  `}</style>
+                  `}                  </style>
                   <div className="exam-editor">
                     <TextEditor
                       value={answers[currentQuestion._id || currentQuestion.id || ""] || ""}
-                      onChange={(content) =>
-                        handleAnswerChange(currentQuestion._id || currentQuestion.id || "", content)
-                      }
+                      onChange={(content) => {
+                        handleAnswerChange(currentQuestion._id || currentQuestion.id || "", content);
+                      }}
                       placeholder="Type your detailed answer here — use the toolbar to format lists, code, and more…"
                     />
                   </div>
-                  <div className="flex items-center gap-2 text-white/30">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    <p className="text-[10px] font-bold uppercase tracking-widest">
-                      Rich text supported — AI Assisted Grading Active
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-indigo-400/60">
+                      <Sparkles className="w-3 h-3" />
+                      <p className="text-[10px] font-bold uppercase tracking-widest">
+                        Rich text supported — AI Assisted Grading
+                      </p>
+                    </div>
+                    <AutoSaveIndicator
+                      answer={answers[currentQuestion._id || currentQuestion.id || ""] || ""}
+                      questionId={currentQuestion._id || currentQuestion.id || ""}
+                    />
                   </div>
                 </div>
               )}

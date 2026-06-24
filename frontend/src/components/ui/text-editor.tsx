@@ -91,7 +91,7 @@ export function TextEditor({ value, onChange, placeholder }: TextEditorProps) {
           padding: 24px;
           flex: 1;
           overflow-y: auto;
-          color: inherit;
+          color: var(--text-editor-color, inherit);
           line-height: 1.6;
         }
         /* Word-like layout when maximized */
@@ -110,23 +110,23 @@ export function TextEditor({ value, onChange, placeholder }: TextEditorProps) {
           left: 24px;
         }
         .ql-snow .ql-stroke {
-          stroke: currentColor;
-          opacity: 0.7;
+          stroke: var(--text-editor-color, currentColor);
+          opacity: var(--text-editor-toolbar-opacity, 0.75);
         }
         .ql-snow .ql-fill {
-          fill: currentColor;
-          opacity: 0.7;
+          fill: var(--text-editor-color, currentColor);
+          opacity: var(--text-editor-toolbar-opacity, 0.75);
         }
         .ql-snow .ql-picker {
-          color: currentColor;
-          opacity: 0.7;
+          color: var(--text-editor-color, currentColor);
+          opacity: var(--text-editor-toolbar-opacity, 0.75);
         }
         .ql-snow.ql-toolbar button:hover .ql-stroke,
         .ql-snow.ql-toolbar button:hover .ql-fill,
         .ql-snow.ql-toolbar button.ql-active .ql-stroke,
         .ql-snow.ql-toolbar button.ql-active .ql-fill {
-          stroke: #B8860B;
-          fill: #B8860B;
+          stroke: var(--text-editor-accent, #818cf8);
+          fill: var(--text-editor-accent, #818cf8);
           opacity: 1;
         }
       `}</style>

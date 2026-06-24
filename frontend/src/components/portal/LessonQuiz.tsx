@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_QUESTIONS } from "@/lib/graphql/queries";
 import { REWARD_STUDENT, GENERATE_AI_QUIZ, HINT_FOR_QUESTION, CHAT_WITH_AI } from "@/lib/graphql/mutations";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
-import { CheckCircle2, ChevronRight, RefreshCcw, Loader2, HelpCircle, Star, Flame, Trophy, Lightbulb, Send, MessageSquare, Volume2, VolumeX, Pause, Play, RotateCcw } from "lucide-react";
+import { CheckCircle2, ChevronRight, RefreshCcw, Loader2, HelpCircle, Star, Flame, Trophy, Lightbulb, Send, MessageSquare, Volume2, VolumeX, Pause, Play, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
@@ -220,6 +220,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
 
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
   const [loadingAiExplanation, setLoadingAiExplanation] = useState(false);
+  const [showGetExplanationBtn, setShowGetExplanationBtn] = useState(false);
 
   const handleSubmitAnswer = async () => {
     // For matching type, skip option selection check
@@ -262,36 +263,45 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
     // If question already has a stored explanation, use it directly — no AI call needed
     if (currentQuestion.explanation) {
       setAiExplanation(null); // will fallback to currentQuestion.explanation in render
+      setShowGetExplanationBtn(false);
     } else if (!isMatching) {
-      // No stored explanation — use AI to generate one (skip for matching)
-      setLoadingAiExplanation(true);
-      try {
-        const correctAnswer = currentQuestion.options?.[currentQuestion.correctOptionIndex] || '';
-        const prompt = `Explain why "${correctAnswer}" is correct for: "${currentQuestion.questionText}".
-      
-      Keep it ultra-concise:
-      ### 🎯 Key Insight
-      [One definitive sentence explaining the core fact.]
-
-      ### ⚡ Quick Dive
-      [Max 2 sentences explaining the logic. No fluff. Keep under 50 words.]`;
-      
-        const { data } = await chatWithAI({
-          variables: { message: prompt }
-        });
-      
-        if (data?.chatWithAI?.content) {
-          setAiExplanation(data.chatWithAI.content);
-        }
-      } catch (err) {
-        console.error("AI Explanation Error:", err);
-        setAiExplanation("Great job! Keep going to the next challenge.");
-      } finally {
-        setLoadingAiExplanation(false);
-      }
+      // No stored explanation — show a button so student can request AI explanation on demand
+      setShowGetExplanationBtn(true);
+      setAiExplanation(null);
+    } else {
+      setShowGetExplanationBtn(false);
     }
 
     setShowExplanation(true);
+  };
+
+  const handleGetAiExplanation = async () => {
+    setShowGetExplanationBtn(false);
+    setLoadingAiExplanation(true);
+    try {
+      const correctAnswer = currentQuestion.options?.[currentQuestion.correctOptionIndex] || '';
+      const prompt = `Explain why "${correctAnswer}" is correct for: "${currentQuestion.questionText}".
+    
+    Keep it ultra-concise:
+    ### 🎯 Key Insight
+    [One definitive sentence explaining the core fact.]
+
+    ### ⚡ Quick Dive
+    [Max 2 sentences explaining the logic. No fluff. Keep under 50 words.]`;
+    
+      const { data } = await chatWithAI({
+        variables: { message: prompt }
+      });
+    
+      if (data?.chatWithAI?.content) {
+        setAiExplanation(data.chatWithAI.content);
+      }
+    } catch (err) {
+      console.error("AI Explanation Error:", err);
+      setAiExplanation("Great job! Keep going to the next challenge.");
+    } finally {
+      setLoadingAiExplanation(false);
+    }
   };
 
   const handleNext = () => {
@@ -302,7 +312,8 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
       setSelectedOption(null);
       setIsAnswered(false);
       setShowExplanation(false);
-      setAiExplanation(null); // Reset for next question
+      setAiExplanation(null);
+      setShowGetExplanationBtn(false); // Reset for next question
       setShowHint(false);
       setHint(null);
       setHintChatMessages([]);
@@ -359,6 +370,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
     setExpression('normal');
     setShowExplanation(false);
     setAiExplanation(null);
+    setShowGetExplanationBtn(false);
     setShowHint(false);
     setHint(null);
     setHintChatMessages([]);
@@ -761,7 +773,21 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
                   />
                 )}
 
-                {loadingAiExplanation ? (
+                {showGetExplanationBtn ? (
+                  <div className="flex flex-col items-center gap-3 py-4">
+                    <p className="text-xs text-muted-foreground text-center max-w-sm">
+                      No explanation is stored for this question. Click below to get an AI-generated explanation on demand.
+                    </p>
+                    <Button
+                      onClick={handleGetAiExplanation}
+                      variant="outline"
+                      className="h-10 px-5 rounded-xl font-bold text-xs gap-2 border-accent/30 text-accent hover:bg-accent/10"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Get AI Explanation
+                    </Button>
+                  </div>
+                ) : loadingAiExplanation ? (
                   <div className="flex items-center gap-3 text-sm text-muted-foreground py-4">
                     <Loader2 className="w-5 h-5 animate-spin text-accent" />
                     <span>AI is crafting a detailed breakdown for you...</span>
