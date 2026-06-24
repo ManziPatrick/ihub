@@ -182,17 +182,22 @@ export function ViewSubmissionDialog({
   };
 
   // Check if answer is correct for checkbox type (multiple correct)
-  const isCheckboxCorrect = (question: AssignmentQuestion, answerText: string): boolean => {
-    if (!question.correctOptionIndexes || question.correctOptionIndexes.length === 0) return false;
+const isCheckboxCorrect = (question: AssignmentQuestion, answerText: string): boolean => {
+    // Current data model supports single correct index; checkbox is stored as comma-separated indices in answer.
+    // Treat correctOptionIndex as the only acceptable selection.
+    if (question.correctOptionIndex == null) return false;
     if (!answerText) return false;
-    const selectedIndices = answerText.split(',').map(Number).filter(n => !isNaN(n));
-    const correctSet = new Set(question.correctOptionIndexes);
-    const selectedSet = new Set(selectedIndices);
-    if (selectedSet.size !== correctSet.size) return false;
-    for (const idx of selectedSet) {
-      if (!correctSet.has(idx)) return false;
-    }
-    return true;
+
+    const selectedIndices = answerText
+      .split(',')
+      .map(Number)
+      .filter((n) => !isNaN(n));
+
+    // Student must select exactly the correct index (no extra selections).
+    return (
+      selectedIndices.length === 1 &&
+      selectedIndices[0] === question.correctOptionIndex
+    );
   };
 
   return (
@@ -375,9 +380,9 @@ export function ViewSubmissionDialog({
                             const isStudentAnswer = isMcq
                               ? answer.answerText === oi.toString()
                               : (answer.answerText || '').split(',').includes(oi.toString());
-                            const isCorrectOption = isMcq
+const isCorrectOption = isMcq
                               ? question.correctOptionIndex === oi
-                              : question.correctOptionIndexes?.includes(oi);
+                              : question.correctOptionIndex === oi;
                             return (
                               <span
                                 key={oi}
