@@ -60,17 +60,21 @@ export default defineConfig(({ mode }) => ({
     }),
     // Pre-compress assets with gzip & brotli for faster downloads
     // Brotli typically yields 20-30% better compression than gzip
+    // sw.js is excluded — nginx serves it raw (no gzip) so the browser
+    // can verify its integrity and detect updates reliably.
     viteCompression({
       algorithm: "brotliCompress",
       ext: ".br",
       threshold: 1024, // only compress files > 1KB
       deleteOriginFile: false,
+      filter: (file) => !file.endsWith("sw.js"),
     }),
     viteCompression({
       algorithm: "gzip",
       ext: ".gz",
       threshold: 1024,
       deleteOriginFile: false,
+      filter: (file) => !file.endsWith("sw.js"),
     }),
     // Service worker with offline caching for the app shell and course content
     // Enables students to continue learning even with intermittent connectivity.
