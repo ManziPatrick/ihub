@@ -46,6 +46,7 @@ interface AssignmentQuestion {
   type: string;
   options?: string[];
   correctOptionIndex?: number;
+  correctOptionIndexes?: number[];
   points?: number;
 }
 

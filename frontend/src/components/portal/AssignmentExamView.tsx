@@ -634,7 +634,7 @@ export function AssignmentExamView({
                 : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
                 }`}
             >
-              <Clock className="w-3.5 h-3.5 sm:w-4 h-4" />
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="text-sm sm:text-lg tabular-nums">{formatTime(timeRemaining)}</span>
             </div>
           )}
