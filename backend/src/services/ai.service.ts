@@ -7,6 +7,16 @@ import { InternshipProgram } from '../models/internship/InternshipProgram';
 const HF_TOKEN = process.env.HF_TOKEN || "";
 const inferenceClient = new InferenceClient(HF_TOKEN);
 
+/**
+ * Ollama configuration — tries local inference first, falls back to cloud models.
+ * Set OLLAMA_BASE_URL to your Ollama server (default: http://localhost:11434).
+ * Set OLLAMA_MODEL to your preferred local model (default: qwen2.5-coder:7b).
+ * Set OLLAMA_ENABLED=false to disable Ollama entirely.
+ */
+const OLLAMA_ENABLED = process.env.OLLAMA_ENABLED !== 'false';
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
+
 /** Ordered fallback chain of models to try in case one fails */
 const MODEL_FALLBACK_CHAIN = [
   "deepseek-ai/DeepSeek-V4-Pro:novita",
@@ -14,6 +24,49 @@ const MODEL_FALLBACK_CHAIN = [
   "deepseek-ai/DeepSeek-V4-Flash",
   "Qwen/Qwen2.5-Coder-7B-Instruct",
 ];
+
+/**
+ * Calls a local Ollama model using its HTTP API.
+ * Wraps the response to match the expected format used by the rest of the service.
+ */
+const tryOllamaInference = async (
+  messages: { role: string; content: string }[],
+  maxTokens: number = 1024
+): Promise<{ choices: { message: { content: string } }[] }> => {
+  const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(60000), // 60s timeout for local LLM
+    body: JSON.stringify({
+      model: OLLAMA_MODEL,
+      messages: messages.map(m => ({ role: m.role, content: m.content })),
+      stream: false,
+      options: {
+        num_predict: maxTokens,
+        temperature: 0.7,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => 'unknown error');
+    throw new Error(`Ollama (${OLLAMA_MODEL}): ${response.status} ${errorText}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.message?.content) {
+    throw new Error('Ollama returned an empty response');
+  }
+
+  return {
+    choices: [{
+      message: {
+        content: data.message.content,
+      },
+    }],
+  };
+};
 
 /** Kinyarwanda-specific common word patterns for language detection */
 const KINYARWANDA_PATTERNS = /\b(?:ni|na|no|mu|ku|bi|ba|ri|ya|zo|bo|yo|we|tu|bya|cya|gwa|kwa|mwe|nta|nka|mbi|rwa|shy|nyu|bye|bose|ari|aba|urya|ubu|irya|izi|kunda|igihe|umuntu|ikintu|amazi|inzu|ifoto|ubwoba|rwanda|kinyarwanda|ikinyarwanda|ibintu|abantu|ubuzima|amakuru|uburezi|ubuhanga|iterambere|ubukungu|ibidukikije|ubumenyi|ikoranabuhanga)\b/iu;
@@ -36,10 +89,24 @@ const isKinyarwanda = (text: string): boolean => {
 };
 
 /**
- * Attempts inference across the model fallback chain.
- * Returns the first successful response, or throws if all models fail.
+ * Attempts inference with Ollama first (if enabled), then falls back through
+ * the Hugging Face / OpenRouter model chain.
+ * Returns the first successful response, or throws if all providers fail.
  */
 const tryInference = async (messages: { role: string; content: string }[], maxTokens: number = 1024) => {
+  // ── Try Ollama first (cheap, local, no API key needed) ──────────
+  if (OLLAMA_ENABLED) {
+    try {
+      const result = await tryOllamaInference(messages, maxTokens);
+      console.log(`✅ Ollama (${OLLAMA_MODEL}) responded successfully`);
+      return result;
+    } catch (error: any) {
+      console.warn(`Ollama (${OLLAMA_MODEL}) at ${OLLAMA_BASE_URL} failed, falling back to cloud models:`, error?.message || error);
+      // Fall through to cloud models
+    }
+  }
+
+  // ── Fall back to Hugging Face / OpenRouter models ──────────────
   let lastError: any;
   for (const model of MODEL_FALLBACK_CHAIN) {
     try {

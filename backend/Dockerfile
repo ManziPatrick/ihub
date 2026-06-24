@@ -1,37 +1,29 @@
-# ─── Stage 1: Builder ───────────────────────────────────────────
-FROM node:22-alpine AS builder
+# ─── Single-stage Node.js API server ─────────────────────────────
+# Builds TypeScript and runs the compiled server directly.
+# Like running `npm run build && npm start` locally.
+# ──────────────────────────────────────────────────────────────────
+
+FROM node:22-alpine
 
 ARG CACHE_BUST=1
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# Install wget for healthcheck (not included by default in node:alpine)
+RUN apk add --no-cache wget
 
-# Force NODE_ENV=development so npm installs devDependencies (typescript/tsc)
-# even when deployment injects NODE_ENV=production as a build ARG
+COPY package.json package-lock.json ./
 RUN npm install --legacy-peer-deps --no-audit --no-fund
 
-# Copy source & build
-COPY . .
+COPY . ./
 RUN npm run build
 
-# ─── Stage 2: Production ────────────────────────────────────────
-FROM node:22-alpine AS production
-
-WORKDIR /app
-
-COPY package.json package-lock.json ./
-
-# Production deps only (no tsc needed at runtime)
-RUN npm install --legacy-peer-deps --omit=dev --no-audit --no-fund
-
-# Copy compiled output from builder
-COPY --from=builder /app/dist ./dist
-
-# Persistent directory for uploaded files
 RUN mkdir -p /app/uploads
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=5 \
-  CMD wget --quiet --tries=1 --spider http://localhost:4000/health || exit 1
+ENV PORT=4000
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=5 \
+  CMD wget --quiet --tries=1 --spider http://localhost:${PORT}/health || exit 1
+
+EXPOSE ${PORT}
 CMD ["node", "dist/index.js"]
