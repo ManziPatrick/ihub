@@ -1,14 +1,16 @@
 # ─── Stage 1: Builder ───────────────────────────────────────────
 FROM node:22-alpine AS builder
 
+ARG CACHE_BUST=1
+
 WORKDIR /app
 
 # Force NODE_ENV=development so npm installs devDependencies (typescript/vite/etc.)
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm install --legacy-peer-deps
+COPY package.json package-lock.json ./
+RUN npm install --legacy-peer-deps --no-audit --no-fund
 
 # Copy source & build
-COPY frontend/ ./
+COPY . ./
 RUN npm run build
 
 # ─── Stage 2: Production (nginx) ────────────────────────────────
@@ -24,14 +26,14 @@ WORKDIR /app
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy nginx config with brotli/gzip pre-compressed asset support
-COPY frontend/nginx.conf /etc/nginx/templates/default.conf.template
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 # Copy built SPA from builder stage
 COPY --from=builder /app/dist ./dist
 
 # Copy runtime env injector
-COPY frontend/generate-env-config.js ./
-COPY frontend/package.json ./
+COPY generate-env-config.js ./
+COPY package.json ./
 
 # Runtime environment variables for nginx template substitution
 ENV PORT=8080

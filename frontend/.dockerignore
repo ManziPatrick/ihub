@@ -50,14 +50,6 @@ lerna-debug.log*
 Thumbs.db
 .DS_Store
 
-# Backend specific
-backend/uploads/
-backend/logs/
-
-# Frontend specific
-frontend/.vite/
-frontend/dist/
-frontend/build/
 
 # Database
 *.sqlite
