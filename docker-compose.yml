@@ -5,9 +5,7 @@ services:
   #  BACKEND  (Node/Express + GraphQL)
   # ─────────────────────────────────────────
   backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
+    build: .
     container_name: ihub_backend
     restart: unless-stopped
     ports:
