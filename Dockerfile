@@ -13,11 +13,11 @@ WORKDIR /app
 RUN apk add --no-cache wget
 
 # Copy backend package files and install dependencies
-COPY backend/package.json backend/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm install --legacy-peer-deps --no-audit --no-fund
 
 # Copy backend source code
-COPY backend/ ./
+COPY . ./
 
 RUN npm run build
 
