@@ -10,7 +10,7 @@ const inferenceClient = new InferenceClient(HF_TOKEN);
 /**
  * Ollama configuration — tries local inference first, falls back to cloud models.
  * Set OLLAMA_BASE_URL to your Ollama server (default: http://localhost:11434).
- * Set OLLAMA_MODEL to your preferred local model (default: qwen2.5-coder:7b).
+ * Set OLLAMA_MODEL to your preferred local model (default: qwen2.5:3b).
  * Set OLLAMA_ENABLED=false to disable Ollama entirely.
  */
 const OLLAMA_ENABLED = process.env.OLLAMA_ENABLED !== 'false';
@@ -20,7 +20,7 @@ const OLLAMA_ENABLED = process.env.OLLAMA_ENABLED !== 'false';
 // Set OLLAMA_ONLY=true to disable the cloud fallback chain.
 const OLLAMA_ONLY = (process.env.OLLAMA_ONLY || '').toLowerCase() === 'true';
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || process.env.OLLAMA_URL || 'http://ollama:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:3b';
 
 /** Ordered fallback chain of models to try in case one fails */
 const MODEL_FALLBACK_CHAIN = [
@@ -41,7 +41,7 @@ const tryOllamaInference = async (
   const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    signal: AbortSignal.timeout(60000), // 60s timeout for local LLM
+    signal: AbortSignal.timeout(120000), // 120s timeout for local LLM (cold start can be slow)
     body: JSON.stringify({
       model: OLLAMA_MODEL,
       messages: messages.map(m => ({ role: m.role, content: m.content })),

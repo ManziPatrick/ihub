@@ -46,7 +46,7 @@ services:
       OLLAMA_ENABLED: "true"
       OLLAMA_ONLY: "true"
       OLLAMA_BASE_URL: "http://ollama:11434"
-      OLLAMA_MODEL: "qwen2.5-coder:7b"
+      OLLAMA_MODEL: "qwen2.5:3b"
 
 
       # Stripe
