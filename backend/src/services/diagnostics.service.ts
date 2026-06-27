@@ -3,6 +3,7 @@ import net from 'net';
 import dns from 'dns';
 import fs from 'fs';
 import { InferenceClient } from "@huggingface/inference";
+import { getProviderStatus } from './ai-router.service';
 
 const HF_TOKEN = process.env.HF_TOKEN || "";
 const inferenceClient = new InferenceClient(HF_TOKEN);
@@ -452,6 +453,38 @@ export const dnsLookup = async (hostname: string) => {
 };
 
 export type DnsLookupResult = Awaited<ReturnType<typeof dnsLookup>>;
+
+// ──────────────────────────────────────────
+// AI PROVIDER STATUS — from the multi-provider router
+// ──────────────────────────────────────────
+
+/**
+ * Returns real-time health and performance metrics for all configured
+ * AI providers (Gemini, Cloudflare, Groq, Cerebras).
+ * This is a lightweight, non-blocking read of in-memory metrics —
+ * no API calls are made.
+ */
+export const getAIProviderHealth = () => {
+  const status = getProviderStatus();
+
+  // Count healthy vs degraded providers
+  const providers = Object.values(status);
+  const healthy = providers.filter(p => p.enabled && !p.rateLimited && p.successRate >= 50);
+  const degraded = providers.filter(p => p.enabled && (p.rateLimited || p.successRate < 50));
+  const disabled = providers.filter(p => !p.enabled);
+
+  return {
+    timestamp: new Date().toISOString(),
+    summary: {
+      totalConfigured: providers.length,
+      healthy: healthy.length,
+      degraded: degraded.length,
+      disabled: disabled.length,
+      allHealthy: degraded.length === 0 && disabled.length < providers.length,
+    },
+    providers: status,
+  };
+};
 
 // ──────────────────────────────────────────
 // MAIN DIAGNOSTIC RUNNER

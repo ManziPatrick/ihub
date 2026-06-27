@@ -38,9 +38,31 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN}
       BACKEND_URL: ${BACKEND_URL}
 
-      # AI Services
+      # AI Services (Legacy)
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       HF_TOKEN: ${HF_TOKEN}
+
+      # AI Router — Multi-Provider (PRIMARY)
+      # Auto-selects fastest provider: Gemini → Cloudflare → Groq → Cerebras
+      AI_ROUTER_ENABLED: "true"
+      AI_ROUTER_COOLDOWN_MS: "60000"
+
+      # Google Gemini
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
+
+      # Cloudflare Workers AI
+      CF_API_TOKEN: ${CF_API_TOKEN}
+      CF_ACCOUNT_ID: ${CF_ACCOUNT_ID}
+      CF_MODEL: ${CF_MODEL:-@cf/meta/llama-3.1-8b-instruct}
+
+      # Groq
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+
+      # Cerebras
+      CEREBRAS_API_KEY: ${CEREBRAS_API_KEY}
+      CEREBRAS_MODEL: ${CEREBRAS_MODEL:-gpt-oss-120b}
 
       # Ollama (local LLM)
       OLLAMA_ENABLED: "true"

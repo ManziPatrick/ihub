@@ -36,6 +36,7 @@ import { authMiddleware } from './middleware/auth';
 import { maintenanceMiddleware } from './middleware/maintenance';
 import { compileCode } from './services/compiler.service';
 import { generateCourseTemplate } from './services/course-parser.service';
+import { getAIProviderHealth } from './services/diagnostics.service';
 
 dotenv.config();
 
@@ -65,7 +66,7 @@ const startServer = async () => {
 
     const allowedOrigins = (
         process.env.ALLOWED_ORIGINS ||
-        'http://localhost:8080,http://localhost:5173,http://localhost:8081,http://localhost:8082,https://www.bootskills.com,https://bootskills.com,https://*.bootskills.com'
+        'http://localhost:8080,http://localhost:5173,http://localhost:8081,http://localhost:8082,https://www.bootskills.com,https://bootskills.com,https://dev.bootskills.com,https://*.bootskills.com'
     )
         .split(',')
         .map(o => o.trim())
@@ -230,7 +231,30 @@ const startServer = async () => {
     // =============================
 
     app.get('/health', (_req, res) => {
-        res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+        let aiProviderSummary: Record<string, any> | null = null;
+        try {
+            const health = getAIProviderHealth();
+            aiProviderSummary = {
+                configured: health.summary.totalConfigured,
+                healthy: health.summary.healthy,
+                degraded: health.summary.degraded,
+                allHealthy: health.summary.allHealthy,
+                providers: Object.fromEntries(
+                    Object.entries(health.providers).map(([key, p]: [string, any]) => [
+                        key,
+                        { enabled: p.enabled, rateLimited: p.rateLimited, avgLatencyMs: p.avgLatencyMs }
+                    ])
+                ),
+            };
+        } catch {
+            aiProviderSummary = { error: 'Provider status unavailable' };
+        }
+
+        res.status(200).json({
+            status: 'ok',
+            timestamp: new Date().toISOString(),
+            ai: aiProviderSummary,
+        });
     });
 
     // =============================

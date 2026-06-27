@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { runDiagnostics, dnsLookup } from '../services/diagnostics.service';
+import { runDiagnostics, dnsLookup, getAIProviderHealth } from '../services/diagnostics.service';
 
 /**
  * GET /api/health/diagnostics
@@ -18,6 +18,24 @@ export const getDiagnostics = async (_req: Request, res: Response) => {
     res.status(500).json({
       timestamp: new Date().toISOString(),
       error: 'Diagnostics runner itself failed',
+      message: error?.message || 'Unknown error',
+    });
+  }
+};
+
+/**
+ * GET /api/health/ai-providers
+ * Returns real-time health metrics for all configured AI providers.
+ */
+export const getAIProviders = async (_req: Request, res: Response) => {
+  try {
+    const result = getAIProviderHealth();
+    res.status(200).json(result);
+  } catch (error: any) {
+    console.error('❌ AI Provider Health Error:', error?.message || error);
+    res.status(500).json({
+      timestamp: new Date().toISOString(),
+      error: 'Failed to read AI provider status',
       message: error?.message || 'Unknown error',
     });
   }

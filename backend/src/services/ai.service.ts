@@ -1,14 +1,11 @@
-import { InferenceClient } from "@huggingface/inference";
 import { Course } from '../models/Course';
 import { Booking } from '../models/Booking';
 import { User } from '../models/User';
 import { InternshipProgram } from '../models/internship/InternshipProgram';
-
-const HF_TOKEN = process.env.HF_TOKEN || "";
-const inferenceClient = new InferenceClient(HF_TOKEN);
+import { tryAIRouterInference } from './ai-router.service';
 
 /**
- * Ollama configuration — tries local inference first, falls back to cloud models.
+ * Ollama configuration — tries local inference first (if enabled).
  * Set OLLAMA_BASE_URL to your Ollama server (default: http://localhost:11434).
  * Set OLLAMA_MODEL to your preferred local model (default: qwen2.5:3b).
  * Set OLLAMA_ENABLED=false to disable Ollama entirely.
@@ -16,19 +13,10 @@ const inferenceClient = new InferenceClient(HF_TOKEN);
 const OLLAMA_ENABLED = process.env.OLLAMA_ENABLED !== 'false';
 
 // If Ollama fails, do NOT automatically fall back to paid cloud providers.
-// This is useful when deploying on a server where you only want local inference.
-// Set OLLAMA_ONLY=true to disable the cloud fallback chain.
+// Set OLLAMA_ONLY=true to use ONLY Ollama (no cloud providers).
 const OLLAMA_ONLY = (process.env.OLLAMA_ONLY || '').toLowerCase() === 'true';
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || process.env.OLLAMA_URL || 'http://ollama:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:3b';
-
-/** Ordered fallback chain of models to try in case one fails */
-const MODEL_FALLBACK_CHAIN = [
-  "deepseek-ai/DeepSeek-V4-Pro:novita",
-  "zai-org/GLM-5.2",
-  "deepseek-ai/DeepSeek-V4-Flash",
-  "Qwen/Qwen2.5-Coder-7B-Instruct",
-];
 
 /**
  * Calls a local Ollama model using its HTTP API.
@@ -95,14 +83,12 @@ const isKinyarwanda = (text: string): boolean => {
 
 /**
  * Attempts inference with Ollama first (if enabled), then falls back through
- * the Hugging Face / OpenRouter model chain.
+ * the AI Router (Gemini → Cloudflare → Groq → Cerebras).
  * Returns the first successful response, or throws if all providers fail.
  */
 const tryInference = async (messages: { role: string; content: string }[], maxTokens: number = 1024) => {
-  // Only allow cloud inference if explicitly enabled.
-  // OLLAMA_ONLY=true is used to force local Ollama usage on servers.
+  // ── OLLAMA_ONLY mode ──
   if (OLLAMA_ONLY) {
-    // If Ollama is enabled, try it and return/throw its error.
     if (OLLAMA_ENABLED) {
       return await tryOllamaInference(messages, maxTokens);
     }
@@ -116,28 +102,20 @@ const tryInference = async (messages: { role: string; content: string }[], maxTo
       console.log(`✅ Ollama (${OLLAMA_MODEL}) responded successfully`);
       return result;
     } catch (error: any) {
-      console.warn(`Ollama (${OLLAMA_MODEL}) at ${OLLAMA_BASE_URL} failed, falling back to cloud models:`, error?.message || error);
-      // Fall through to cloud models
+      console.warn(`Ollama (${OLLAMA_MODEL}) at ${OLLAMA_BASE_URL} failed, falling back to cloud router:`, error?.message || error);
+      // Fall through to the AI Router
     }
   }
 
-  // ── Fall back to Hugging Face / OpenRouter models ──────────────
-  let lastError: any;
-  for (const model of MODEL_FALLBACK_CHAIN) {
-    try {
-      const chatCompletion = await inferenceClient.chatCompletion({
-        model,
-        messages,
-        max_tokens: maxTokens,
-      });
-      return chatCompletion;
-    } catch (error: any) {
-      lastError = error;
-      console.warn(`Model ${model} failed:`, error?.message || error);
-      // Continue to next model in chain
-    }
+  // ── AI Router: Gemini → Cloudflare → Groq → Cerebras ───────────
+  try {
+    const result = await tryAIRouterInference(messages, maxTokens);
+    console.log(`✅ AI Router (${result.provider}) responded in ${result.latencyMs}ms`);
+    return result;
+  } catch (error: any) {
+    console.error('AI Router all providers failed:', error?.message || error);
+    throw error;
   }
-  throw lastError || new Error('All models in fallback chain failed');
 };
 
 /**
