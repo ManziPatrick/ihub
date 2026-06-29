@@ -795,6 +795,7 @@ async function seedFlows() {
       { student: remainingStudents[7], programIdx: 2, status: 'approved' as const, availability: 'Part-time' },
     ];
 
+    let paymentsCreated = 0;
     for (const ac of applicationConfigs) {
       const program = programs[ac.programIdx];
       const appQuestions = program.applicationQuestions || [];
