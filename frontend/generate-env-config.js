@@ -50,6 +50,10 @@ const envConfig = {
   // Cloudinary
   VITE_CLOUDINARY_CLOUD_NAME: process.env.VITE_CLOUDINARY_CLOUD_NAME,
 
+  // Image search APIs
+  VITE_PEXELS_API_KEY: process.env.VITE_PEXELS_API_KEY,
+  VITE_FREEPIK_API_KEY: process.env.VITE_FREEPIK_API_KEY,
+
   // Feature flags
   VITE_ENABLE_ANALYTICS: process.env.VITE_ENABLE_ANALYTICS,
   VITE_ENABLE_STRIPE: process.env.VITE_ENABLE_STRIPE,
