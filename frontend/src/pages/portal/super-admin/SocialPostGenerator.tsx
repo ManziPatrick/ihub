@@ -519,7 +519,7 @@ export default function SocialPostGenerator() {
 
   const templateRef = useRef<HTMLDivElement>(null);
 
-  const { data: coursesData, loading: coursesLoading } = useQuery(GET_COURSES, {
+  const { data: coursesData, loading: coursesLoading } = useQuery<{ courses: { items: Course[] } }>(GET_COURSES, {
     variables: { page: 1, limit: 100 },
   });
 

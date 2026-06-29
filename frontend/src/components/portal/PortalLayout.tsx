@@ -23,6 +23,7 @@ import {
   Award,
   Briefcase,
   Calendar,
+  Camera,
   MessageSquare,
   Settings,
   LogOut,
