@@ -29,6 +29,18 @@ router.post(
 );
 
 /**
+ * GET /api/payments/countries
+ * Get supported countries and payment providers (public)
+ */
+router.get(
+  '/countries',
+  (_req, res) => {
+    const countries = paymentController.paypackService.getSupportedCountries();
+    res.json({ countries });
+  }
+);
+
+/**
  * GET /api/payments/:transactionId
  * Get payment transaction status (requires authentication)
  */
@@ -59,6 +71,22 @@ router.post(
 router.get(
   '/pesapal/callback',
   paymentController.handlePesapalCallback.bind(paymentController)
+);
+
+/**
+ * Intouch Webhook
+ */
+router.post(
+  '/intouch/callback',
+  paymentController.handleIntouchCallback.bind(paymentController)
+);
+
+/**
+ * Paypack Webhook (PawaPay)
+ */
+router.post(
+  '/paypack/callback',
+  paymentController.handlePaypackCallback.bind(paymentController)
 );
 
 /**

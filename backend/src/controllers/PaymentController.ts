@@ -8,6 +8,8 @@ import { Request, Response } from 'express';
 import { PaymentTransaction } from '../models/PaymentTransaction';
 import { createPesapalService } from '../services/pesapal.service';
 import { createFDIService } from '../services/fdi.service';
+import { createPaypackService } from '../services/paypack.service';
+import { createIntouchService } from '../services/intouch.service';
 import { User } from '../models/User';
 import { Course } from '../models/Course';
 import { Internship } from '../models/Internship';
@@ -43,6 +45,8 @@ interface PaymentInitiateBody {
 class PaymentController {
   private pesapalService = createPesapalService();
   private fdiService = createFDIService();
+  public paypackService = createPaypackService();
+  private intouchService = createIntouchService();
 
   /**
    * Initiate a payment (CASHIN) from user
@@ -78,6 +82,69 @@ class PaymentController {
         if (progsList.length > 0) {
           smartTitle = progsList.map((p: any) => p.title).join(", ");
         }
+      }
+
+      // ─── INTOUCH INTEGRATION (FOR MTN, AIRTEL MONEY) ───
+      if (paymentMethod === 'intouch' || paymentMethod === 'intouch_mtn' || paymentMethod === 'intouch_airtel') {
+        const trxRef = this.intouchService.generateRequestTransactionId();
+
+        if (!phoneNumber) {
+          return res.status(400).json({ error: 'Phone number is required for mobile money payment' });
+        }
+
+        const callbackUrl = `${process.env.BACKEND_URL || 'https://api.codemande.com'}/api/payments/intouch/callback`;
+
+        const response = await this.intouchService.requestPayment({
+          amount,
+          phoneNumber,
+          requestTransactionId: trxRef,
+          callbackUrl,
+        });
+
+        if (!response.success) {
+          return res.status(502).json({
+            error: 'Payment provider request failed',
+            message: response.message,
+          });
+        }
+
+        const transaction = new PaymentTransaction({
+          userId,
+          type: 'CASHIN',
+          amount,
+          status: 'pending',
+          intouchRef: trxRef,
+          intouchTransactionId: response.transactionId,
+          paymentMethod: 'intouch',
+          phoneNumber,
+          description: smartTitle,
+          courseId: courseId || null,
+          courseIds: courseIds || [],
+          internshipProgramId: internshipProgramId || null,
+          internshipIds: internshipIds || [],
+        });
+        await transaction.save();
+
+        const pendingPayment = new Payment({
+          userId,
+          amount,
+          currency: 'RWF',
+          status: 'pending',
+          paymentMethod: 'Intouch',
+          transactionId: trxRef,
+          type: allCourseIds.length > 0 ? 'Course Enrollment' : 'Internship/Subscription',
+          itemTitle: smartTitle,
+          courseIds: allCourseIds,
+          internshipIds: allInternshipIds,
+        });
+        await pendingPayment.save();
+
+        return res.status(202).json({
+          message: 'Mobile Money payment initiated via Intouch',
+          data: response.raw,
+          status: 'processing',
+          transactionId: transaction._id,
+        });
       }
 
       // ─── FDI INTEGRATION (FOR MTN, AIRTEL) ───
@@ -134,6 +201,99 @@ class PaymentController {
           data: response.data,
           status: 'processing',
           transactionId: transaction._id
+        });
+      }
+
+      // ─── PESAPAL INTEGRATION (FOR CARD OR EXPLICIT PESAPAL) ───
+      // ─── PAWAPAY INTEGRATION (MULTI-COUNTRY MOBILE MONEY) ───
+      if (paymentMethod === 'pawapay' || paymentMethod === 'paypack') {
+        if (!phoneNumber) {
+          return res.status(400).json({ error: 'Phone number is required for PawaPay payment' });
+        }
+
+        // Resolve provider + currency — use explicit provider from frontend if provided
+        const explicitProvider = req.body.providerId as string | undefined;
+        let resolved: { provider: string; country: string; currency: string };
+
+        if (explicitProvider) {
+          // Frontend selected a specific provider; find its country & currency
+          const countryInfo = this.paypackService.getSupportedCountries().find(c =>
+            c.providers.some(p => p.providerId === explicitProvider)
+          );
+          resolved = {
+            provider: explicitProvider,
+            country: countryInfo?.countryCode || 'RWA',
+            currency: countryInfo?.currency || 'RWF',
+          };
+          console.log(`📍 Explicit provider selected: ${explicitProvider} (${resolved.country}, ${resolved.currency})`);
+        } else {
+          // Auto-detect from phone number
+          resolved = await this.paypackService.resolveProvider(phoneNumber);
+        }
+
+        const depositId = this.paypackService.generateDepositId();
+        const result = await this.paypackService.initiateDeposit({
+          amount,
+          currency: resolved.currency,
+          phoneNumber,
+          provider: resolved.provider,
+          depositId,
+          clientReferenceId: `INV-${Date.now()}`,
+          customerMessage: smartTitle.substring(0, 22),
+        });
+
+        const transaction = new PaymentTransaction({
+          userId,
+          type: 'CASHIN',
+          amount,
+          status: 'pending',
+          paypackRef: depositId,
+          provider: resolved.provider,
+          paymentMethod: 'pawapay',
+          phoneNumber,
+          description: smartTitle,
+          courseId: courseId || null,
+          courseIds: courseIds || [],
+          internshipProgramId: internshipProgramId || null,
+          internshipIds: internshipIds || [],
+          metadata: {
+            country: resolved.country,
+            provider: resolved.provider,
+            currency: resolved.currency,
+          },
+        });
+        await transaction.save();
+
+        const pendingPayment = new Payment({
+          userId,
+          amount,
+          currency: resolved.currency,
+          status: 'pending',
+          paymentMethod: `PawaPay (${resolved.country})`,
+          transactionId: depositId,
+          type: allCourseIds.length > 0 ? 'Course Enrollment' : 'Internship/Subscription',
+          itemTitle: smartTitle,
+          courseIds: allCourseIds,
+          internshipIds: allInternshipIds,
+        });
+        await pendingPayment.save();
+
+        if (!result.success) {
+          return res.status(502).json({
+            error: 'PawaPay payment rejected',
+            message: result.reason || 'Payment provider declined the request',
+            transactionId: transaction._id,
+          });
+        }
+
+        return res.status(202).json({
+          message: `PawaPay payment initiated via ${resolved.provider} (${resolved.country})`,
+          depositId,
+          provider: resolved.provider,
+          country: resolved.country,
+          currency: resolved.currency,
+          status: 'processing',
+          transactionId: transaction._id,
         });
       }
 
@@ -401,7 +561,7 @@ class PaymentController {
       // 1. Update the Payment record (for accounting/history)
       try {
         // Find existing pending payment first (created during initiation)
-        const ref = transaction.pesapalTrackingId || transaction.fdiRef || transaction.paypackRef || transaction._id;
+        const ref = transaction.pesapalTrackingId || transaction.fdiRef || transaction.paypackRef || transaction.intouchRef || transaction._id;
         let paymentRecord = await Payment.findOne({ transactionId: ref });
         
         if (paymentRecord) {
@@ -413,10 +573,13 @@ class PaymentController {
           let friendlyMethod = 'Pesapal';
           if (transaction.paymentMethod === 'fdi') {
             friendlyMethod = transaction.description?.toLowerCase().includes('airtel') ? 'Airtel Money' : 'MTN Mobile Money';
-          } else if (transaction.paymentMethod === 'paypack') {
-            friendlyMethod = 'Paypack';
+          } else if (transaction.paymentMethod === 'paypack' || transaction.paymentMethod === 'pawapay') {
+            const country = transaction.metadata?.country || 'RWA';
+            friendlyMethod = `PawaPay (${country})`;
           } else if (transaction.paymentMethod === 'manual') {
             friendlyMethod = 'Manual Transfer';
+          } else if (transaction.paymentMethod === 'intouch') {
+            friendlyMethod = 'Intouch';
           }
 
           paymentRecord = new Payment({
@@ -722,6 +885,115 @@ class PaymentController {
       return res.redirect(`${process.env.CLIENT_URL}/payment/status?error=server_error`);
     }
   }
+  /**
+   * Handle Intouch Callback
+   * Receives webhooks for payment status updates from IntouchPay
+   */
+  async handleIntouchCallback(req: Request, res: Response) {
+    try {
+      const payload = req.body;
+      console.log('🔔 Intouch Callback Received:', JSON.stringify(payload).substring(0, 600));
+
+      // Parse the Intouch webhook payload
+      const parsed = this.intouchService.parseCallbackPayload(payload);
+
+      // Find the transaction by Intouch reference
+      const transaction = await PaymentTransaction.findOne({
+        $or: [
+          { intouchRef: parsed.requestTransactionId },
+          { intouchTransactionId: parsed.transactionId },
+        ]
+      });
+
+      if (!transaction) {
+        console.warn(`❌ Intouch Callback: Transaction not found for ref ${parsed.requestTransactionId}`);
+        return res.status(200).json({ message: 'success', success: true });
+      }
+
+      // Update status if changed
+      const normalizedStatus = parsed.status;
+      if (normalizedStatus !== transaction.status) {
+        const prevStatus = transaction.status;
+        transaction.status = normalizedStatus as any;
+
+        if (normalizedStatus === 'successful' && prevStatus !== 'successful') {
+          await this.handleSuccessfulPayment(transaction);
+        }
+
+        transaction.intouchTransactionId = parsed.transactionId;
+        await transaction.save();
+        console.log(`✅ Intouch transaction ${parsed.requestTransactionId} updated: ${prevStatus} → ${normalizedStatus}`);
+      }
+
+      // Acknowledge with Intouch's expected response format
+      return res.status(200).json({
+        message: 'success',
+        success: true,
+        request_id: parsed.requestTransactionId,
+      });
+    } catch (error) {
+      console.error('❌ Intouch Callback Error:', error);
+      return res.status(200).json({ message: 'success', success: true });
+    }
+  }
+
+  /**
+   * Handle Paypack Callback (PawaPay)
+   * Receives webhooks for deposits (CASHIN), payouts (CASHOUT), and refunds
+   */
+  async handlePaypackCallback(req: Request, res: Response) {
+    try {
+      const payload = req.body;
+      const signature = req.headers['x-paypack-signature'] as string;
+
+      console.log('🔔 Paypack Callback Received:', JSON.stringify(payload).substring(0, 500));
+
+      // Verify webhook signature if present
+      if (signature) {
+        const rawBody = typeof req.rawBody === 'string' ? req.rawBody : JSON.stringify(payload);
+        const isValid = this.paypackService.verifyWebhookSignature(rawBody, signature);
+        if (!isValid) {
+          console.warn('⚠️ Invalid Paypack webhook signature — processing anyway');
+        }
+      }
+
+      // Parse the webhook payload
+      const parsed = this.paypackService.parseWebhookPayload(payload);
+
+      // Find the transaction by Paypack ref
+      const transaction = await PaymentTransaction.findOne({
+        $or: [
+          { paypackRef: parsed.transactionRef },
+          { 'metadata.paypackRef': parsed.transactionRef }
+        ]
+      });
+
+      if (!transaction) {
+        console.warn(`❌ Paypack Callback: Transaction not found for ref ${parsed.transactionRef}`);
+        return res.status(200).json({ status: 'ok' });
+      }
+
+      // Update status if changed
+      const normalizedStatus = parsed.status;
+      if (normalizedStatus !== transaction.status) {
+        const prevStatus = transaction.status;
+        transaction.status = normalizedStatus as any;
+
+        if (normalizedStatus === 'successful' && prevStatus !== 'successful') {
+          await this.handleSuccessfulPayment(transaction);
+        }
+
+        await transaction.save();
+        console.log(`✅ Paypack transaction ${parsed.transactionRef} updated: ${prevStatus} → ${normalizedStatus}`);
+      }
+
+      return res.status(200).json({ status: 'ok' });
+    } catch (error) {
+      console.error('❌ Paypack Callback Error:', error);
+      return res.status(200).json({ status: 'ok' });
+    }
+  }
+
   /**
    * Handle FDI Callback
    */

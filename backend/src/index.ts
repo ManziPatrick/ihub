@@ -142,7 +142,7 @@ const startServer = async () => {
         limit: '100mb',
         verify: (req: any, _res, buf) => {
             const url = req.originalUrl || '';
-            if (url.includes('/payments/webhook')) {
+            if (url.includes('/payments/webhook') || url.includes('/paypack/callback') || url.includes('/intouch/callback')) {
                 req.rawBody = buf.toString();
                 console.log('--- Webhook Raw Body Captured ---');
             }

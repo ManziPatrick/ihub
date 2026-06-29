@@ -11,6 +11,8 @@ export interface IPaymentTransaction extends Document {
   paypackRef?: string; // Reference from Paypack API
   pesapalTrackingId?: string; // Reference from Pesapal API
   fdiRef?: string; // Reference from FDI Payments API
+  intouchRef?: string; // Reference from IntouchPay API
+  intouchTransactionId?: string; // Transaction ID from IntouchPay
   paymentMethod?: string; // momo, card, etc
   description?: string; // What the payment is for (course, subscription, etc)
   courseId?: mongoose.Types.ObjectId | null;
@@ -74,6 +76,18 @@ const PaymentTransactionSchema = new Schema<IPaymentTransaction>(
       index: true,
     },
     fdiRef: {
+      type: String,
+      required: false,
+      sparse: true,
+      index: true,
+    },
+    intouchRef: {
+      type: String,
+      required: false,
+      sparse: true,
+      index: true,
+    },
+    intouchTransactionId: {
       type: String,
       required: false,
       sparse: true,
