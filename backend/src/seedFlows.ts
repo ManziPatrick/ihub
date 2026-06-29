@@ -28,7 +28,6 @@ import { Booking } from './models/Booking';
 // ──────────────────────────────────────────────
 // Constants
 // ──────────────────────────────────────────────
-const ADMIN_ID = '69ec7f859567cd270a48cf49';
 
 const DEFAULT_WORKFLOW = [
   { id: 'todo', label: 'To Do', color: 'slate', order: 0, type: 'todo' as const },
@@ -105,9 +104,9 @@ async function seedFlows() {
 
     // ====== STEP 0: Load admin user ======
     console.log('👤 Loading admin user...');
-    const admin = await User.findById(ADMIN_ID);
+    const admin = await User.findOne({ email: 'superadmin@bootskills.com', role: 'super_admin' });
     if (!admin) {
-      console.error(`❌ Admin user with ID ${ADMIN_ID} not found!`);
+      console.error('❌ Admin user with email superadmin@bootskills.com not found!');
       console.error('   Please ensure this admin exists in the database first.');
       process.exit(1);
     }
@@ -827,8 +826,12 @@ async function seedFlows() {
         });
 
         // Generate invoice
+        const year = new Date().getFullYear();
+        const month = String(new Date().getMonth() + 1).padStart(2, '0');
+        const invSeq = (paymentsCreated || 0) + 1;
         await InternshipInvoice.create({
           paymentId: payment._id,
+          invoiceNumber: `INV-${year}${month}-${String(invSeq).padStart(4, '0')}`,
           userId: ac.student._id,
           internshipProgramId: program._id,
           amount: payment.amount,
@@ -838,6 +841,7 @@ async function seedFlows() {
           status: 'paid' as const,
           items: [{ description: `${program.title} - Internship Fee`, quantity: 1, unitPrice: payment.amount, total: payment.amount }],
         });
+        paymentsCreated = (paymentsCreated || 0) + 1;
       }
     }
     console.log(`   ✅ ${applicationConfigs.length} applications with payments & invoices`);
