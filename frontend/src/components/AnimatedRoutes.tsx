@@ -91,6 +91,7 @@ const SuperAdminCommissionConfig = lazy(() => import("@/pages/portal/super-admin
 const AdminCommissionDashboard = lazy(() => import("@/pages/portal/super-admin/AdminCommissionDashboard"));
 const SuperAdminBroadcast = lazy(() => import("@/pages/portal/super-admin/SuperAdminBroadcast"));
 const SuperAdminUploadLogs = lazy(() => import("@/pages/portal/super-admin/SuperAdminUploadLogs"));
+const SocialPostGenerator = lazy(() => import("@/pages/portal/super-admin/SocialPostGenerator"));
 const Maintenance = lazy(() => import("@/pages/Maintenance"));
 
 
@@ -234,6 +235,7 @@ export function AnimatedRoutes() {
           <Route path="/portal/super-admin/completed-users" element={<ProtectedRoute allowedRoles={["super_admin"]}><AdminCompletedUsers /></ProtectedRoute>} />
           <Route path="/portal/super-admin/broadcast" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminBroadcast /></ProtectedRoute>} />
           <Route path="/portal/super-admin/upload-logs" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminUploadLogs /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/social-posts" element={<ProtectedRoute allowedRoles={["super_admin", "admin"]}><SocialPostGenerator /></ProtectedRoute>} />
           <Route path="/portal/admin/commissions" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommissionDashboard /></ProtectedRoute>} />
 
           {/* Shared Portal Routes */}
