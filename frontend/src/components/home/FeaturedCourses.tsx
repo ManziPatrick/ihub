@@ -57,7 +57,7 @@ import {
   GET_CATEGORIES, 
   GET_SCHOOLS 
 } from "@/lib/graphql/queries";
-import { ApplyInternshipDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
+import { ApplyCourseDialog } from "@/components/portal/dialogs";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
 import { useMutation } from "@apollo/client/react";
@@ -249,7 +249,6 @@ export function FeaturedCourses() {
   const suggestionRef = useRef<HTMLDivElement>(null);
 
   const [isInterestsOpen, setIsInterestsOpen] = useState(false);
-  const [selectedInternshipId, setSelectedInternshipId] = useState<string | null>(null);
   const [applyCourse, setApplyCourse] = useState<any | null>(null);
   const [sortBy, setSortBy] = useState<string>('latest');
   
@@ -373,7 +372,7 @@ export function FeaturedCourses() {
   });
 
   // User internship applications
-  const { data: internAppData, refetch: refetchInternApps } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS, {
+  const { data: internAppData } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS, {
     skip: !isAuthenticated,
   });
 
@@ -533,13 +532,9 @@ export function FeaturedCourses() {
     if (item.type === 'course') {
       navigate(`/courses/${item.id}`);
     } else if (item.type === 'internship') {
-      if (!isAuthenticated) {
-        navigate("/auth", { state: { from: { pathname: "/" } } });
-      } else {
-        setSelectedInternshipId(item.id);
-      }
+      navigate(`/internship/${item.id}`);
     }
-  }, [navigate, isAuthenticated]);
+  }, [navigate]);
 
   const handleSearchKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (!showSuggestions || suggestions.length === 0) return;
@@ -1519,13 +1514,7 @@ export function FeaturedCourses() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: Math.min(idx * 0.03, 0.3) }}
                             onClick={() => {
-                              if (isOpen) {
-                                if (!isAuthenticated) {
-                                  navigate("/auth", { state: { from: { pathname: "/" } } });
-                                } else {
-                                  setSelectedInternshipId(intern.id);
-                                }
-                              }
+                              navigate(`/internship/${intern.id}`);
                             }}
                             className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 group hover:shadow-xl transition-all h-full flex flex-col cursor-pointer"
                           >
@@ -1621,7 +1610,7 @@ export function FeaturedCourses() {
                                     );
                                   }
                                   return (
-                                    <Button variant="gold" size="sm" className={`w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20 ${!isOpen ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isOpen} onClick={(e) => { e.stopPropagation(); if (isOpen) { if (!isAuthenticated) { navigate("/auth", { state: { from: { pathname: "/" } } }); } else { setSelectedInternshipId(intern.id); } } }}>
+                                    <Button variant="gold" size="sm" className={`w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20 ${!isOpen ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isOpen} onClick={(e) => { e.stopPropagation(); if (isOpen) { navigate(`/internship/${intern.id}`); } }}>
                                       {isOpen ? "Apply Now" : "Closed"} <ArrowRight className="w-3 h-3 ml-1.5" />
                                     </Button>
                                   );
@@ -1699,12 +1688,7 @@ export function FeaturedCourses() {
         course={applyCourse}
         onSuccess={refetchApps}
       />
-      <ApplyInternshipDialog
-        open={!!selectedInternshipId}
-        onOpenChange={(open) => !open && setSelectedInternshipId(null)}
-        internshipProgramId={selectedInternshipId || ""}
-        onSuccess={refetchInternApps}
-      />
+
     </>
   );
 }

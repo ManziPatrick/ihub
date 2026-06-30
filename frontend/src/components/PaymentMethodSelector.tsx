@@ -96,6 +96,32 @@ const COUNTRY_FLAGS: Record<string, { flag: string; name: string }> = {
   SOM: { flag: '🇸🇴', name: 'Somalia' },
 };
 
+const COUNTRY_DIAL_CODES: Record<string, string> = {
+  RWA: '+250',
+  KEN: '+254',
+  UGA: '+256',
+  TZA: '+255',
+  GHA: '+233',
+  NGA: '+234',
+  ZMB: '+260',
+  CMR: '+237',
+  CIV: '+225',
+  SEN: '+221',
+  COD: '+243',
+  MWI: '+265',
+  BEN: '+229',
+  BFA: '+226',
+  ETH: '+251',
+  GAB: '+241',
+  LSO: '+266',
+  MOZ: '+258',
+  SLE: '+232',
+  SOM: '+252',
+};
+
+// ─── Provider Logo SVG Component ───
+
+
 // ─── Provider Logo SVG Component ───
 
 function ProviderLogo({ providerId, size = 40 }: { providerId: string; size?: number }) {

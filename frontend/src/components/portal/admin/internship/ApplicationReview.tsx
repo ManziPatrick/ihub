@@ -20,10 +20,28 @@ import {
   Briefcase,
   GraduationCap,
   MapPin,
-  Calendar
+  Calendar,
+  Download,
+  FileText,
+  Filter,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from "framer-motion";
+import { downloadAsCSV } from '@/lib/utils/exportUtils';
+import { getApiBaseUrl } from '@/lib/env';
+
+function isUrl(str: string): boolean {
+  try {
+    const url = new URL(str);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+}
 
 export default function ApplicationReview() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,6 +89,49 @@ export default function ApplicationReview() {
   const applications = (data as any)?.internshipApplications?.items || [];
   const pagination = (data as any)?.internshipApplications?.pagination;
 
+  const handleExportCSV = () => {
+    const rows = applications.map((app: any) => {
+      const answers: Record<string, string> = {};
+      (app.applicationAnswers || []).forEach((ans: any) => {
+        answers[ans.questionLabel] = stripHtml(ans.answer || '');
+      });
+      return {
+        'Applicant Name': app.user?.fullName || app.user?.username || '',
+        'Email': app.user?.email || '',
+        'Phone': app.user?.phone || '',
+        'Skills': (app.skills || []).join('; '),
+        'Availability': app.availability || '',
+        'Status': app.status || '',
+        'Applied Date': app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '',
+        ...answers,
+      };
+    });
+    downloadAsCSV(rows, `internship_applications_${filter}`);
+  };
+
+  const handleExportFullCSV = async () => {
+    try {
+      const token = localStorage.getItem('ihub_token');
+      const baseUrl = getApiBaseUrl();
+      const response = await fetch(`${baseUrl}/api/export/applications/csv`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Export failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `all_applications_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Applications exported!');
+    } catch (err: any) {
+      toast.error(err.message || 'Export failed');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -78,18 +139,40 @@ export default function ApplicationReview() {
           <h2 className="text-xl font-black text-foreground">Application Management</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Review and respond to internship candidates</p>
         </div>
-        <div className="flex gap-1 bg-muted/50 p-1 rounded-xl border border-border/50">
-          {['pending', 'approved', 'waitlisted', 'rejected'].map((s) => (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-1 bg-muted/50 p-1 rounded-xl border border-border/50">
+            {['pending', 'approved', 'waitlisted', 'rejected'].map((s) => (
+              <Button
+                key={s}
+                size="sm"
+                variant={filter === s ? 'gold' : 'ghost'}
+                onClick={() => { setFilter(s); setExpandedId(null); }}
+                className="capitalize text-[11px] font-black tracking-wider h-8 rounded-lg"
+              >
+                {s}
+              </Button>
+            ))}
+          </div>
+          <div className="flex gap-1">
             <Button
-              key={s}
               size="sm"
-              variant={filter === s ? 'gold' : 'ghost'}
-              onClick={() => { setFilter(s); setExpandedId(null); }}
-              className="capitalize text-[11px] font-black tracking-wider h-8 rounded-lg"
+              variant="outline"
+              className="h-8 rounded-lg text-[10px] font-black uppercase tracking-wider gap-1"
+              onClick={handleExportCSV}
             >
-              {s}
+              <Download className="w-3 h-3" />
+              Export Visible
             </Button>
-          ))}
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 rounded-lg text-[10px] font-black uppercase tracking-wider gap-1"
+              onClick={handleExportFullCSV}
+            >
+              <Download className="w-3 h-3" />
+              Export All
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -263,9 +346,24 @@ export default function ApplicationReview() {
                               {app.applicationAnswers?.map((ans: any, idx: number) => (
                                 <div key={idx} className="space-y-1.5">
                                   <p className="text-xs font-black text-foreground/80 leading-tight">{ans.questionLabel}</p>
-                                  <div className="p-3 bg-background/50 rounded-2xl border border-border/30 text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                                    {ans.answer}
-                                  </div>
+                                  {isUrl(ans.answer) ? (
+                                    <div className="flex items-center gap-2 p-3 bg-background/50 rounded-2xl border border-border/30">
+                                      <FileText className="w-4 h-4 text-accent shrink-0" />
+                                      <a 
+                                        href={ans.answer} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-accent hover:underline flex items-center gap-1 truncate"
+                                      >
+                                        View uploaded file
+                                        <ExternalLink className="w-3 h-3 shrink-0" />
+                                      </a>
+                                    </div>
+                                  ) : (
+                                    <div className="p-3 bg-background/50 rounded-2xl border border-border/30 text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                                      {ans.answer || <span className="italic text-muted-foreground/50">No answer provided</span>}
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                               {(!app.applicationAnswers || app.applicationAnswers.length === 0) && (

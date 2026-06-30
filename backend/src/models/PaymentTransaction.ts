@@ -54,8 +54,10 @@ const PaymentTransactionSchema = new Schema<IPaymentTransaction>(
     },
     provider: {
       type: String,
-      enum: ['mtn', 'airtel', 'unknown', null],
-      default: null,
+      required: false,
+      // PawaPay provider IDs can be values like MTN_MOMO_RWA, AIRTELTIGO_GHA, etc.
+      // Keep this field permissive to avoid validation errors.
+      index: true,
     },
     status: {
       type: String,

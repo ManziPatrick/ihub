@@ -5,6 +5,7 @@ import {
   generateUsersCSV,
   generateCoursesCSV,
   generateProgramsCSV,
+  generateApplicationsCSV,
   generateInternsCSV,
   generateEnrollmentsCSV,
 } from '../services/course-export.service';
@@ -130,6 +131,25 @@ router.get('/enrollments/csv', requireAuth, async (req: Request, res: Response) 
     res.send(csv);
   } catch (error: any) {
     console.error('Enrollments CSV export error:', error);
+    res.status(500).json({ error: error.message || 'Export failed' });
+  }
+});
+
+/**
+ * GET /api/export/applications/csv
+ * Export internship applications as CSV (clean data, no HTML tags)
+ */
+router.get('/applications/csv', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const csv = await generateApplicationsCSV({
+      programId: String(req.query.programId || ''),
+      status: String(req.query.status || ''),
+    });
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="applications_report_${Date.now()}.csv"`);
+    res.send(csv);
+  } catch (error: any) {
+    console.error('Applications CSV export error:', error);
     res.status(500).json({ error: error.message || 'Export failed' });
   }
 });

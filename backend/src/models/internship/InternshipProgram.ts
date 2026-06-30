@@ -7,7 +7,7 @@ export interface IInternshipProgram extends Document {
   startDate: Date;
   endDate: Date;
   applicationDeadline: Date;
-  eligibility: string[];
+  eligibility: string;
   rules: string;
   price: number;
   currency: string;
@@ -21,9 +21,11 @@ export interface IInternshipProgram extends Document {
   allowedDeliveryModes: ('online' | 'physical' | 'hybrid')[];
   applicationQuestions: {
     label: string;
-    type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox';
+    type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'file' | 'number';
     required: boolean;
     options?: string[];
+    maxFileSize?: number;
+    acceptedFileTypes?: string[];
   }[];
   // Phase-based application management
   enablePhaseBasedApproval: boolean;
@@ -48,7 +50,7 @@ const InternshipProgramSchema: Schema = new Schema(
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     applicationDeadline: { type: Date, required: true },
-    eligibility: [{ type: String }],
+    eligibility: { type: String },
     rules: { type: String },
     price: { type: Number, default: 0 },
     currency: { type: String, default: 'RWF' },
@@ -65,9 +67,11 @@ const InternshipProgramSchema: Schema = new Schema(
     applicationQuestions: [
       {
         label: { type: String, required: true },
-        type: { type: String, enum: ['text', 'textarea', 'select', 'radio', 'checkbox'], default: 'text' },
+        type: { type: String, enum: ['text', 'textarea', 'select', 'radio', 'checkbox', 'file', 'number'], default: 'text' },
         required: { type: Boolean, default: false },
-        options: [{ type: String }]
+        options: [{ type: String }],
+        maxFileSize: { type: Number },
+        acceptedFileTypes: [{ type: String }]
       }
     ],
     status: { type: String, enum: ['active', 'inactive', 'closed', 'upcoming'], default: 'active', index: true },

@@ -993,11 +993,17 @@ export const SEND_MESSAGE_TO_PROJECT = gql`
 // --- New Internship Module Mutations ---
 
 export const CREATE_INTERNSHIP_PROGRAM = gql`
-  mutation CreateInternshipProgram($title: String!, $description: String!, $duration: String!, $startDate: String!, $endDate: String!, $applicationDeadline: String!, $eligibility: [String], $rules: String, $price: Float, $currency: String, $image: String, $applicationQuestions: [ApplicationQuestionInput]) {
-    createInternshipProgram(title: $title, description: $description, duration: $duration, startDate: $startDate, endDate: $endDate, applicationDeadline: $applicationDeadline, eligibility: $eligibility, rules: $rules, price: $price, currency: $currency, image: $image, applicationQuestions: $applicationQuestions) {
+  mutation CreateInternshipProgram($title: String!, $description: String!, $duration: String!, $startDate: String!, $endDate: String!, $applicationDeadline: String!, $eligibility: [String], $rules: String, $price: Float, $currency: String, $image: String, $applicationQuestions: [ApplicationQuestionInput], $signerName: String, $signerSignature: String, $maxSpots: Int, $discount: Float) {
+    createInternshipProgram(title: $title, description: $description, duration: $duration, startDate: $startDate, endDate: $endDate, applicationDeadline: $applicationDeadline, eligibility: $eligibility, rules: $rules, price: $price, currency: $currency, image: $image, applicationQuestions: $applicationQuestions, signerName: $signerName, signerSignature: $signerSignature, maxSpots: $maxSpots, discount: $discount) {
       id
       title
       image
+      signerName
+      signerSignature
+      maxSpots
+      discount
+      eligibility
+      rules
       applicationQuestions {
         label
         type

@@ -5,7 +5,8 @@
 
 import { Router } from 'express';
 import { paymentController } from '../controllers/PaymentController';
-import { requireAuth } from '../middleware/auth';
+
+import { requireAuth, requireAdmin } from '../middleware/auth';
 
 // Extend Express Request to include rawBody
 declare global {
@@ -31,13 +32,46 @@ router.post(
 /**
  * GET /api/payments/countries
  * Get supported countries and payment providers (public)
+ * Now simplified — returns IntouchPay-supported countries (Rwanda MTN/Airtel)
  */
 router.get(
   '/countries',
   (_req, res) => {
-    const countries = paymentController.paypackService.getSupportedCountries();
+    const countries = [
+      {
+        countryCode: 'RWA',
+        currency: 'RWF',
+        providers: [
+          { providerId: 'intouch_mtn', name: 'MTN Mobile Money' },
+          { providerId: 'intouch_airtel', name: 'Airtel Money' },
+        ],
+      },
+    ];
     res.json({ countries });
   }
+);
+
+/**
+ * GET /api/payments/intouch/balance
+ * Get IntouchPay account balance (requires admin)
+ * ⚠️ Must be defined BEFORE the /:transactionId catch-all to avoid route collision
+ */
+router.get(
+  '/intouch/balance',
+  requireAuth,
+  requireAdmin,
+  paymentController.getIntouchBalance.bind(paymentController)
+);
+
+/**
+ * POST /api/payments/disburse
+ * Disburse (CASHOUT) — send money to a mobile money subscriber via Intouch (requires admin)
+ */
+router.post(
+  '/disburse',
+  requireAuth,
+  requireAdmin,
+  paymentController.disbursePayment.bind(paymentController)
 );
 
 /**
@@ -81,20 +115,6 @@ router.post(
   paymentController.handleIntouchCallback.bind(paymentController)
 );
 
-/**
- * Paypack Webhook (PawaPay)
- */
-router.post(
-  '/paypack/callback',
-  paymentController.handlePaypackCallback.bind(paymentController)
-);
-
-/**
- * FDI Webhooks
- */
-router.post(
-  '/fdi/callback',
-  paymentController.handleFDICallback.bind(paymentController)
-);
+// FDI callback removed — all mobile money via Intouch
 
 export default router;

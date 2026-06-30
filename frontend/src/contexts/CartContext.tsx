@@ -64,7 +64,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const cartTotal = cartItems.reduce((total, item) => {
-    return total + (item.discountPrice ?? item.price ?? 0);
+    const effectivePrice =
+      item.discountPrice != null && item.discountPrice > 0
+        ? item.discountPrice
+        : item.price ?? 0;
+    return total + effectivePrice;
   }, 0);
 
   return (

@@ -510,7 +510,13 @@ export class PawaPayService {
     reason?: string;
   }> {
     const token = await this.getAccessToken();
-    const depositId = request.depositId || this.generateDepositId();
+
+    // Guarantee we always have a non-empty depositId.
+    // This prevents persisting `paypackRef: null` downstream.
+    const depositId = (request.depositId && request.depositId.trim())
+      ? request.depositId.trim()
+      : this.generateDepositId();
+
     const idempotencyKey = this.generateIdempotencyKey();
 
     const cleanPhone = request.phoneNumber.replace(/[^0-9]/g, '').replace(/^0+/, '');

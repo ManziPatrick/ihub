@@ -27,6 +27,7 @@ import teamRoutes from './routes/TeamRoutes';
 import aiCourseRoutes from './routes/AICourseRoutes';
 import moduleAccessRoutes from './routes/ModuleAccessRoutes';
 import paymentRoutes from './routes/PaymentRoutes';
+
 import certificateRoutes from './routes/CertificateRoutes';
 import ttsRoutes from './routes/TTSRoutes';
 import diagnosticsRoutes from './routes/DiagnosticsRoutes';
