@@ -11,21 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PaymentMethodSelector } from '@/components/PaymentMethodSelector';
 import { toast } from 'sonner';
-import { Loader2, Phone, CheckCircle, Smartphone, History, ShieldCheck, Mail, Ticket, X, Globe } from 'lucide-react';
+import { Loader2, Phone, CheckCircle, Smartphone, History, ShieldCheck, Mail, Ticket, X } from 'lucide-react';
 import { getApiBaseUrl } from '@/lib/env';
 import { useMutation } from '@apollo/client/react';
 import { SUBMIT_PAYMENT_PROOF } from '@/lib/graphql/mutations';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface PawaPaySelection {
-  providerId: string;
-  providerName: string;
-  countryCode: string;
-  currency: string;
-  countryName: string;
-}
 
 interface PaymentFormProps {
   amount: number;
@@ -37,7 +28,7 @@ interface PaymentFormProps {
   internshipIds?: string[];
   selectedDeliveryMode?: string;
   onSuccess?: () => void;
-  onMethodChange?: (method: 'mtn' | 'airtel' | 'card' | 'manual' | 'pawapay') => void;
+  onMethodChange?: (method: 'card' | 'manual' | 'intouch') => void;
 }
 
 export function PaymentForm({
@@ -59,8 +50,7 @@ export function PaymentForm({
   const [email, setEmail] = useState(user?.email || '');
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'checking' | null>(null);
-  const [method, setMethod] = useState<'mtn' | 'airtel' | 'card' | 'manual' | 'pawapay'>('mtn');
-  const [pawaPaySelection, setPawaPaySelection] = useState<PawaPaySelection | null>(null);
+  const [method, setMethod] = useState<'card' | 'manual' | 'intouch'>('intouch');
   const [discountCode, setDiscountCode] = useState('');
   const [isDiscountApplied, setIsDiscountApplied] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -92,7 +82,7 @@ export function PaymentForm({
       return;
     }
 
-    if (method === 'mtn' || method === 'airtel' || method === 'pawapay') {
+    if (method === 'intouch') {
       if (!phoneNumber) {
         toast.error('Please enter your phone number');
         return;
@@ -101,11 +91,6 @@ export function PaymentForm({
         toast.error('Invalid phone number format.');
         return;
       }
-    }
-
-    if (method === 'pawapay' && !pawaPaySelection) {
-      toast.error('Please select a payment method and country');
-      return;
     }
 
     if (!email) {
@@ -135,11 +120,8 @@ export function PaymentForm({
         selectedDeliveryMode: selectedDeliveryMode || undefined,
       };
 
-      if (method === 'mtn' || method === 'airtel') {
+      if (method === 'intouch') {
         body.phoneNumber = fullPhoneNumber;
-      } else if (method === 'pawapay') {
-        body.phoneNumber = fullPhoneNumber;
-        body.providerId = pawaPaySelection?.providerId;
       }
 
       const response = await fetch(`${baseUrl}/api/payments/initiate`, {
@@ -267,31 +249,15 @@ export function PaymentForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="rounded-2xl border-border/50 bg-popover shadow-2xl">
-            <SelectItem value="pawapay" className="py-3 rounded-xl focus:bg-accent/10">
+            <SelectItem value="intouch" className="py-3 rounded-xl focus:bg-accent/10">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm">
-                  <Globe className="w-4 h-4 text-white" />
+                  <Smartphone className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <span className="font-semibold">Mobile Money</span>
-                  <p className="text-[10px] text-muted-foreground font-normal">All countries</p>
+                  <p className="text-[10px] text-muted-foreground font-normal">MTN / Airtel Rwanda</p>
                 </div>
-              </div>
-            </SelectItem>
-            <SelectItem value="mtn" className="py-3 rounded-xl focus:bg-accent/10">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[#ffcc00] rounded-lg flex items-center justify-center p-1.5 shadow-sm">
-                  <img src="https://momo.mtn.com/wp-content/uploads/sites/15/2022/07/Group-360.png" alt="MTN" className="w-full h-full object-contain" />
-                </div>
-                <span className="font-semibold">MTN Mobile Money</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="airtel" className="py-3 rounded-xl focus:bg-accent/10">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[#ed1c24] rounded-lg flex items-center justify-center p-1.5 shadow-sm">
-                   <img src="https://airtel.rw/assets/images/airtel-money-logo.png" alt="Airtel" className="w-full h-full object-contain brightness-0 invert" />
-                </div>
-                <span className="font-semibold">Airtel Money</span>
               </div>
             </SelectItem>
             <SelectItem value="card" className="py-3 rounded-xl focus:bg-accent/10">
@@ -339,59 +305,8 @@ export function PaymentForm({
           <p className="text-[10px] text-muted-foreground pl-1">We will send your invoice to this address</p>
         </div>
 
-        {/* PawaPay Country & Provider Selector */}
-        {method === 'pawapay' && (
-          <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
-            <PaymentMethodSelector
-              onSelect={(selection) => setPawaPaySelection(selection)}
-              selectedProviderId={pawaPaySelection?.providerId}
-            />
-            
-            {pawaPaySelection && (
-              <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
-                <Label className="text-xs font-bold text-foreground pl-1">
-                  Your Phone Number ({pawaPaySelection.countryName})
-                </Label>
-                <div className="flex gap-2">
-                  <div className="w-[120px]">
-                    <Select value={countryCode} onValueChange={setCountryCode}>
-                      <SelectTrigger className="h-14 bg-muted/20 border-border/50 rounded-2xl focus:ring-accent/20">
-                        <SelectValue placeholder="Code" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-2xl border-border/50">
-                        <SelectItem value="+250" className="rounded-xl">🇷🇼 +250</SelectItem>
-                        <SelectItem value="+254" className="rounded-xl">🇰🇪 +254</SelectItem>
-                        <SelectItem value="+256" className="rounded-xl">🇺🇬 +256</SelectItem>
-                        <SelectItem value="+255" className="rounded-xl">🇹🇿 +255</SelectItem>
-                        <SelectItem value="+257" className="rounded-xl">🇧🇮 +257</SelectItem>
-                        <SelectItem value="+243" className="rounded-xl">🇨🇩 +243</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="relative group flex-1">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                      <Phone className="w-4 h-4 text-muted-foreground/40 group-focus-within:text-accent transition-colors" />
-                    </div>
-                    <Input
-                      type="tel"
-                      placeholder="788 000 000"
-                      value={phoneNumber}
-                      onChange={handlePhoneChange}
-                      className="h-14 pl-11 bg-muted/20 border-border/50 rounded-2xl focus-visible:ring-accent/20 transition-all text-sm font-medium"
-                    />
-                    <span className="absolute -top-2 left-4 px-2 bg-background text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Phone number</span>
-                  </div>
-                </div>
-                <p className="text-[10px] text-muted-foreground pl-1">
-                  Enter your phone number for the USSD prompt received via {pawaPaySelection.providerName}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Phone Input (if MoMo via FDI) */}
-        {(method === 'mtn' || method === 'airtel') && (
+        {/* Phone Input (for Mobile Money / Intouch / MTN / Airtel) */}
+        {(method === 'intouch') && (
           <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
             <div className="flex gap-2">
               <div className="w-[120px]">
@@ -401,11 +316,6 @@ export function PaymentForm({
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-border/50">
                     <SelectItem value="+250" className="rounded-xl">🇷🇼 +250</SelectItem>
-                    <SelectItem value="+254" className="rounded-xl">🇰🇪 +254</SelectItem>
-                    <SelectItem value="+256" className="rounded-xl">🇺🇬 +256</SelectItem>
-                    <SelectItem value="+255" className="rounded-xl">🇹🇿 +255</SelectItem>
-                    <SelectItem value="+257" className="rounded-xl">🇧🇮 +257</SelectItem>
-                    <SelectItem value="+243" className="rounded-xl">🇨🇩 +243</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

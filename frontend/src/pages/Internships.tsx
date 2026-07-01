@@ -292,14 +292,14 @@ const Internships = () => {
                           }
 
                           return (
-                            <AuthAwareLink 
-                              variant="gold" 
-                              size="sm" 
-                              className="w-full" 
-                              to="/portal/student/internship"
+                            <Button
+                              variant="gold"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => navigate(`/internship/${intern.id || intern._id}`)}
                             >
                               Apply Now <ArrowRightIcon className="w-4 h-4 ml-2" />
-                            </AuthAwareLink>
+                            </Button>
                           );
                         })()}
                       </div>

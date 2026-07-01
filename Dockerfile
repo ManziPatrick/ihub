@@ -19,7 +19,7 @@ RUN npm install --legacy-peer-deps --no-audit --no-fund
 # Copy backend source code
 COPY . ./
 
-RUN npm run build
+RUN echo "build: $CACHE_BUST" && npm run build
 
 RUN mkdir -p /app/uploads
 

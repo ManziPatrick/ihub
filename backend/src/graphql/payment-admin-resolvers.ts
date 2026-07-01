@@ -582,9 +582,6 @@ export const paymentAdminResolvers = {
       }
 
       const validMethods = [
-        'pawapay',
-        'mtn',
-        'airtel',
         'card',
         'manual',
         'intouch',

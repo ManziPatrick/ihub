@@ -491,6 +491,7 @@ export default function CreateCourse() {
     signerName: "",
     signerSignature: "",
     enrollmentMode: "direct",
+    applicationQuestions: [] as { label: string; type: string; required: boolean; options?: string[]; maxFileSize?: number; acceptedFileTypes?: string[] }[],
     modules: [] as any[]
   });
 

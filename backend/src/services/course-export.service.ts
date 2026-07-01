@@ -5,6 +5,7 @@ import { Course } from '../models/Course';
 import { User } from '../models/User';
 import { Internship } from '../models/Internship';
 import { InternshipProgram } from '../models/internship/InternshipProgram';
+import { InternshipApplication } from '../models/internship/InternshipApplication';
 
 /**
  * Generate a PDF export of a full course — title, description, all modules & lessons
@@ -323,6 +324,70 @@ export async function generateProgramsCSV(createdBy?: string): Promise<string> {
     p.applicationDeadline ? new Date(p.applicationDeadline).toLocaleDateString() : '',
     p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '',
   ]);
+
+  return [headers.join(','), ...rows.map(r => r.map(v => `"${(v || '').toString().replace(/"/g, '""')}"`).join(','))].join('\n');
+}
+
+/**
+ * Generate a CSV of internship applications with clean data (no HTML tags/descriptions)
+ */
+export async function generateApplicationsCSV(
+  filter?: { programId?: string; status?: string }
+): Promise<string> {
+  const query: any = { isDeleted: false };
+  if (filter?.programId) query.internshipProgramId = filter.programId;
+  if (filter?.status) query.status = filter.status;
+
+  const applications = await InternshipApplication.find(query)
+    .populate('userId', 'username email fullName phone')
+    .populate('internshipProgramId', 'title')
+    .lean();
+
+  // Collect all unique question labels for headers
+  const allQuestionLabels = new Set<string>();
+  applications.forEach((app: any) => {
+    (app.applicationAnswers || []).forEach((a: any) => {
+      if (a.questionLabel) allQuestionLabels.add(a.questionLabel);
+    });
+  });
+  const questionLabels = Array.from(allQuestionLabels);
+
+  const headers = [
+    'Applicant Name', 'Email', 'Phone', 'Program',
+    'Status', 'Skills', 'Availability', 'Applied Date',
+    ...questionLabels,
+  ];
+
+  const stripHtml = (html: string): string => {
+    return html
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .trim();
+  };
+
+  const rows = applications.map((app: any) => {
+    const answerMap: Record<string, string> = {};
+    (app.applicationAnswers || []).forEach((a: any) => {
+      answerMap[a.questionLabel] = stripHtml(a.answer || '');
+    });
+
+    return [
+      app.userId?.fullName || app.userId?.username || '',
+      app.userId?.email || '',
+      app.userId?.phone || '',
+      app.internshipProgramId?.title || '',
+      app.status || '',
+      (app.skills || []).join('; '),
+      app.availability || '',
+      app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '',
+      ...questionLabels.map(label => answerMap[label] || ''),
+    ];
+  });
 
   return [headers.join(','), ...rows.map(r => r.map(v => `"${(v || '').toString().replace(/"/g, '""')}"`).join(','))].join('\n');
 }

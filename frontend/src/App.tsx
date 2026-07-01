@@ -15,10 +15,16 @@ import { CartProvider } from "@/contexts/CartContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 
 import { HelmetProvider } from "react-helmet-async";
+import { useVersionCheck } from "@/hooks/useVersionCheck";
+import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  useVersionCheck();
+  useServiceWorkerUpdate();
+
+  return (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -42,6 +48,7 @@ const App = () => (
       </AuthProvider>
     </QueryClientProvider>
   </HelmetProvider>
-);
+  );
+};
 
 export default App;

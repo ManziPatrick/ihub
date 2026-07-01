@@ -5,12 +5,12 @@ import { UPDATE_INTERNSHIP_PROGRAM_NEW, DELETE_INTERNSHIP_PROGRAM_NEW } from '@/
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 import {
   Plus, Edit2, Trash2, Save, X, Tag, Users, Calendar,
   ChevronRight, Clock, CheckCircle, AlertCircle, Lock, Percent
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { CreateInternshipProgramDialog } from '@/components/portal/dialogs';
 
 // Robust date formatter that handles both ISO strings and timestamps
 const formatDate = (raw: any) => {
@@ -56,7 +56,7 @@ interface EditState {
 }
 
 export default function ProgramList() {
-  const [createOpen, setCreateOpen] = useState(false);
+  const navigate = useNavigate();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editState, setEditState] = useState<EditState>({ price: '', discount: '', maxSpots: '' });
   const [currentPage, setCurrentPage] = useState(1);
@@ -130,13 +130,13 @@ export default function ProgramList() {
           <h2 className="text-xl font-black text-foreground">Internship Programs</h2>
           <p className="text-sm text-muted-foreground mt-0.5">{programs.length} program{programs.length !== 1 ? 's' : ''} total</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
-          <Plus className="w-4 h-4" />
-          New Program
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate('/portal/admin/internships/create')} className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
+            <Plus className="w-4 h-4" />
+            New Program
+          </Button>
+        </div>
       </div>
-
-      <CreateInternshipProgramDialog open={createOpen} onOpenChange={setCreateOpen} />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {programs.map((program: any) => {
@@ -402,8 +402,7 @@ export default function ProgramList() {
         <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border/50 rounded-3xl">
           <AlertCircle className="w-12 h-12 text-muted-foreground/30 mb-4" />
           <p className="text-lg font-bold text-muted-foreground">No programs yet</p>
-          <p className="text-sm text-muted-foreground/60 mt-1">Create your first internship program to get started.</p>
-          <Button className="mt-6 gap-2 bg-accent text-accent-foreground" onClick={() => setCreateOpen(true)}>
+          <p className="text-sm text-muted-foreground/60 mt-1">Create your first internship program to get started.</p>            <Button className="mt-6 gap-2 bg-accent text-accent-foreground" onClick={() => navigate('/portal/admin/internships/create')}>
             <Plus className="w-4 h-4" />
             Create Program
           </Button>

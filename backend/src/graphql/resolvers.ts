@@ -2423,10 +2423,10 @@ export const resolvers = {
         }
       }
 
-      // Server-side level filter (searches eligibility array as proxy)
+      // Server-side level filter (searches eligibility string as proxy)
       if (level && level !== 'all') {
         const escaped = level.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const levelCondition = { eligibility: { $regex: new RegExp('^' + escaped + '$', 'i') } };
+        const levelCondition = { eligibility: { $regex: new RegExp(escaped, 'i') } };
         if (query.$and) {
           query.$and.push(levelCondition);
         } else if (query.$or) {
@@ -8077,7 +8077,7 @@ export const resolvers = {
           milestonesCompleted: submissions.length,
           totalMilestones: milestones.length,
           finalGrade: (feedback as any)?.score ? `${(feedback as any).score}% ` : 'N/A',
-          skills: program.eligibility || []
+          skills: Array.isArray(program.eligibility) ? program.eligibility : (program.eligibility ? [program.eligibility] : [])
         }
       });
       await certificate.save();

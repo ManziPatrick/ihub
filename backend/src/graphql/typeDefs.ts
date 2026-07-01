@@ -1437,8 +1437,8 @@ export const typeDefs = `#graphql
 
 
     # New Internship Module Mutations
-    createInternshipProgram(title: String!, description: String!, duration: String!, startDate: String!, endDate: String!, applicationDeadline: String!, eligibility: [String], rules: String, price: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
-    updateInternshipProgram(id: ID!, title: String, description: String, duration: String, startDate: String, endDate: String, applicationDeadline: String, status: String, eligibility: [String], rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
+    createInternshipProgram(title: String!, description: String!, duration: String!, startDate: String!, endDate: String!, applicationDeadline: String!, eligibility: String, rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
+    updateInternshipProgram(id: ID!, title: String, description: String, duration: String, startDate: String, endDate: String, applicationDeadline: String, status: String, eligibility: String, rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
     deleteInternshipProgram(id: ID!): Boolean
 
     applyToInternshipProgram(internshipProgramId: ID!, skills: [String]!, portfolioUrl: String, resumeUrl: String, availability: String!, applicationAnswers: [ApplicationAnswerInput]): InternshipApplication
@@ -1473,6 +1473,8 @@ export const typeDefs = `#graphql
     type: String!
     required: Boolean!
     options: [String]
+    maxFileSize: Int
+    acceptedFileTypes: [String]
   }
 
   input ApplicationQuestionInput {
@@ -1480,6 +1482,8 @@ export const typeDefs = `#graphql
     type: String!
     required: Boolean!
     options: [String]
+    maxFileSize: Int
+    acceptedFileTypes: [String]
   }
 
   type ApplicationAnswer {
@@ -1508,7 +1512,7 @@ export const typeDefs = `#graphql
     startDate: String!
     endDate: String!
     applicationDeadline: String!
-    eligibility: [String]
+    eligibility: String
     rules: String
     price: Float
     discount: Float

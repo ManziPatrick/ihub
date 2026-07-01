@@ -15,6 +15,8 @@ declare global {
       VITE_PUSHER_KEY?: string;
       VITE_PUSHER_CLUSTER?: string;
       VITE_GOOGLE_CLIENT_ID?: string;
+      VITE_PEXELS_API_KEY?: string;
+      VITE_FREEPIK_API_KEY?: string;
     };
   }
 }
@@ -42,6 +44,8 @@ export const env = {
   PUSHER_KEY: getEnv('VITE_PUSHER_KEY'),
   PUSHER_CLUSTER: getEnv('VITE_PUSHER_CLUSTER'),
   GOOGLE_CLIENT_ID: getEnv('VITE_GOOGLE_CLIENT_ID'),
+  PEXELS_API_KEY: getEnv('VITE_PEXELS_API_KEY'),
+  FREEPIK_API_KEY: getEnv('VITE_FREEPIK_API_KEY'),
 };
 
 /**

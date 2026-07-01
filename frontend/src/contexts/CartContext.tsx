@@ -43,6 +43,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Normalize prices to numbers — API can return strings, null, or undefined
+    const normalized = {
+      ...item,
+      price: Number(item.price) || 0,
+      discountPrice: item.discountPrice != null ? Number(item.discountPrice) || 0 : undefined,
+    };
+
     setCartItems((prev) => {
       if (prev.some((i) => i.id === item.id)) {
         toast.info("Item is already in the cart.");
@@ -51,7 +58,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       toast.success(`${item.title} added to cart!`);
       setIsCartOpen(true);
-      return [...prev, item];
+      return [...prev, normalized];
     });
   };
 
@@ -64,7 +71,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const cartTotal = cartItems.reduce((total, item) => {
-    return total + (item.discountPrice ?? item.price ?? 0);
+    const effectivePrice =
+      item.discountPrice != null && Number(item.discountPrice) > 0
+        ? Number(item.discountPrice)
+        : Number(item.price) || 0;
+    return total + effectivePrice;
   }, 0);
 
   return (

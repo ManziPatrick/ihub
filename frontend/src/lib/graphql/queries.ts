@@ -1642,14 +1642,22 @@ export const GET_INTERNSHIP_PROGRAM = gql`
       applicationDeadline
       status
       price
+      discount
       currency
+      image
+      maxSpots
       eligibility
       rules
+      allowedDeliveryModes
+      signerName
+      signerSignature
       applicationQuestions {
         label
         type
         required
         options
+        maxFileSize
+        acceptedFileTypes
       }
     }
   }
@@ -2481,6 +2489,8 @@ export const GET_INTERNSHIP_PROGRAM_FOR_APPLY = gql`
         type
         required
         options
+        maxFileSize
+        acceptedFileTypes
       }
     }
     myInternshipApplications {

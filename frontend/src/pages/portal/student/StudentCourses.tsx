@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { PortalLayout } from "@/components/portal/PortalLayout";
@@ -33,8 +33,19 @@ import {
   Link as LinkIcon,
   Sparkles,
   XCircle,
-  Building2
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   EnrollCourseDialog, 
   FilterCoursesDialog,
@@ -61,11 +72,39 @@ export default function StudentCourses() {
   
   // Queries
   const { data: meData, loading: meLoading } = useQuery(GET_ME);
+  const [availPage, setAvailPage] = useState(1);
+  const [availPerPage, setAvailPerPage] = useState(12);
   const { data: coursesData, loading: coursesLoading } = useQuery(GET_COURSES_LITE_SUMMARY, {
-    fetchPolicy: "cache-first",
+    variables: { page: availPage, limit: availPerPage },
   });
   const { data: projectsData, loading: projectsLoading } = useQuery(GET_MY_PROJECTS);
   const { data: appsData, loading: appsLoading } = useQuery(MY_COURSE_APPLICATIONS);
+
+  // Enrolled courses pagination (client-side, data already loaded)
+  const [enrolledPage, setEnrolledPage] = useState(1);
+  const [enrolledPerPage, setEnrolledPerPage] = useState(12);
+
+  const handleEnrolledPageChange = useCallback((newPage: number) => {
+    if (newPage >= 1) setEnrolledPage(newPage);
+  }, []);
+
+  const handleEnrolledPerPageChange = useCallback((value: string) => {
+    setEnrolledPerPage(parseInt(value));
+    setEnrolledPage(1);
+  }, []);
+
+  // Available courses pagination callbacks (before early return - React Rules of Hooks)
+  const coursesPagination = (coursesData as any)?.courses?.pagination || {};
+  const handleAvailPageChange = useCallback((newPage: number) => {
+    if (newPage >= 1 && newPage <= ((coursesData as any)?.courses?.pagination?.totalPages || 1)) {
+      setAvailPage(newPage);
+    }
+  }, [coursesData]);
+
+  const handleAvailPerPageChange = useCallback((value: string) => {
+    setAvailPerPage(parseInt(value));
+    setAvailPage(1);
+  }, []);
 
   // Dialog states
   const [enrollCourse, setEnrollCourse] = useState<any | null>(null);
@@ -149,7 +188,12 @@ export default function StudentCourses() {
   const me = (meData as any)?.me;
   const enrolledCoursesRaw = me?.enrolledCourses || [];
   // LIFO: Reverse the array to show latest first
-  const enrolledCourses = [...enrolledCoursesRaw].reverse();
+  const enrolledCoursesAll = [...enrolledCoursesRaw].reverse();
+  const totalEnrolled = enrolledCoursesAll.length;
+  const totalEnrolledPages = Math.ceil(totalEnrolled / enrolledPerPage) || 1;
+  const enrolledStart = (enrolledPage - 1) * enrolledPerPage;
+  const enrolledEnd = Math.min(enrolledStart + enrolledPerPage, totalEnrolled);
+  const enrolledCourses = enrolledCoursesAll.slice(enrolledStart, enrolledEnd);
   
   const completedLessons = me?.completedLessons || [];
   const myApplications = (appsData as any)?.myCourseApplications || [];
@@ -166,7 +210,7 @@ export default function StudentCourses() {
     return Math.round((completed / totalLessons) * 100);
   };
 
-  const latestCourse = enrolledCourses[0];
+  const latestCourse = enrolledCoursesAll[0];
   const latestCourseId = latestCourse?.id || latestCourse?._id;
   const lastLessonId = latestCourseId ? localStorage.getItem(`last_lesson_${latestCourseId}`) : null;
   
@@ -299,7 +343,7 @@ export default function StudentCourses() {
         {/* Tabs */}
         <Tabs defaultValue="enrolled" className="space-y-6">
           <TabsList className="w-full justify-start overflow-x-auto no-scrollbar bg-background/50 border border-border/50 p-1 rounded-xl h-auto snap-x snap-mandatory">
-            <TabsTrigger value="enrolled" className="px-4 py-2 text-xs sm:text-sm whitespace-nowrap">Enrolled ({enrolledCourses.length})</TabsTrigger>
+            <TabsTrigger value="enrolled" className="px-4 py-2 text-xs sm:text-sm whitespace-nowrap">Enrolled ({totalEnrolled})</TabsTrigger>
             <TabsTrigger value="available" className="px-4 py-2 text-xs sm:text-sm whitespace-nowrap">Available Courses</TabsTrigger>
             <TabsTrigger value="projects" className="px-4 py-2 text-xs sm:text-sm whitespace-nowrap">My Projects ({(projectsData as any)?.myProjects?.length || 0})</TabsTrigger>
             <TabsTrigger value="completed" className="px-4 py-2 text-xs sm:text-sm whitespace-nowrap">Completed</TabsTrigger>
@@ -307,7 +351,7 @@ export default function StudentCourses() {
 
           {/* Enrolled Courses */}
           <TabsContent value="enrolled" className="space-y-4">
-            {enrolledCourses.length === 0 ? (
+            {enrolledCoursesAll.length === 0 ? (
               <Card className="border-border/50">
                 <CardContent className="py-12 text-center">
                   <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -323,95 +367,182 @@ export default function StudentCourses() {
                 </CardContent>
               </Card>
             ) : (
-              <div className={`grid gap-4 ${viewMode === "grid" ? "md:grid-cols-2" : "grid-cols-1"}`}>
-                {enrolledCourses.map((course: any, index: number) => {
-                  const courseId = course.id || course._id;
-                  const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
-                  const progress = getCourseProgress(courseId, totalLessons);
-                  const completedCount = completedLessons.filter((l: any) => l.courseId === courseId).length;
+              <>
+                <div className={`grid gap-4 ${viewMode === "grid" ? "md:grid-cols-2" : "grid-cols-1"}`}>
+                  {enrolledCourses.map((course: any, index: number) => {
+                    const courseId = course.id || course._id;
+                    const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
+                    const progress = getCourseProgress(courseId, totalLessons);
+                    const completedCount = completedLessons.filter((l: any) => l.courseId === courseId).length;
 
-                  return (
-                    <motion.div
-                      key={courseId || index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <Card className="border-border/50 hover:shadow-card-hover transition-all overflow-hidden">
-                        <div className={`flex ${viewMode === "list" ? "flex-row" : "flex-col"}`}>
-                          {/* Image */}
-                          <div className={`bg-gradient-to-br from-accent/20 to-primary/10 ${viewMode === "list" ? "w-48 h-auto" : "h-40"}`}>
-                            <div className="w-full h-full flex items-center justify-center">
-                              <img
-                                src={course.thumbnail || FALLBACK_IMG}
-                                onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
-                                alt={course.title}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          </div>
-                          
-                          {/* Content */}
-                          <CardContent className="p-4 flex-1">
-                            <div className="flex items-start justify-between mb-2">
-                              <h3 className="font-heading font-semibold text-card-foreground">
-                                {course.title}
-                              </h3>
-                              {me?.completedCourses?.some((id: any) => id.toString() === courseId.toString()) ? (
-                                <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-400/30">
-                                  Completed
-                                </Badge>
-                              ) : (
-                                <span className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full">
-                                  {progress}%
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-sm text-card-foreground/60 mb-3 line-clamp-2" dangerouslySetInnerHTML={{ __html: course.description }} />
-                            <Progress value={progress} className="h-2 mb-3" />
-                            <div className="flex items-center justify-between text-xs text-card-foreground/60 mb-4">
-                              <span className="flex items-center gap-1">
-                                <BookOpen className="w-3.5 h-3.5" />
-                                {completedCount}/{totalLessons} lessons
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5" />
-                                {course.level}
-                              </span>
-                              {course.school && (
-                                <span className="flex items-center gap-1.5 font-bold text-accent bg-accent/10 px-2.5 py-1 rounded-full border border-accent/20">
-                                  <Building2 className="w-3 h-3" />
-                                  {course.school}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-card-foreground/70">by {course.instructor?.username || 'Trainer'}</span>
+                    return (
+                      <motion.div
+                        key={courseId || index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Card className="border-border/50 hover:shadow-card-hover transition-all overflow-hidden">
+                          <div className={`flex ${viewMode === "list" ? "flex-row" : "flex-col"}`}>
+                            {/* Image */}
+                            <div className={`bg-gradient-to-br from-accent/20 to-primary/10 ${viewMode === "list" ? "w-48 h-auto" : "h-40"}`}>
+                              <div className="w-full h-full flex items-center justify-center">
+                                <img
+                                  src={course.thumbnail || FALLBACK_IMG}
+                                  onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
+                                  alt={course.title}
+                                  className="w-full h-full object-cover"
+                                />
                               </div>
-                              <div className="flex gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => setViewCourse(course)}
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                                <Link to={`/portal/student/courses/${course.id || course._id}`}>
-                                  <Button variant="gold" size="sm">
-                                    <PlayCircle className="w-4 h-4 mr-1" />
-                                    Continue
+                            </div>
+                            
+                            {/* Content */}
+                            <CardContent className="p-4 flex-1">
+                              <div className="flex items-start justify-between mb-2">
+                                <h3 className="font-heading font-semibold text-card-foreground">
+                                  {course.title}
+                                </h3>
+                                {me?.completedCourses?.some((id: any) => id.toString() === courseId.toString()) ? (
+                                  <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-400/30">
+                                    Completed
+                                  </Badge>
+                                ) : (
+                                  <span className="text-xs bg-accent/20 text-accent px-2 py-1 rounded-full">
+                                    {progress}%
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-card-foreground/60 mb-3 line-clamp-2" dangerouslySetInnerHTML={{ __html: course.description }} />
+                              <Progress value={progress} className="h-2 mb-3" />
+                              <div className="flex items-center justify-between text-xs text-card-foreground/60 mb-4">
+                                <span className="flex items-center gap-1">
+                                  <BookOpen className="w-3.5 h-3.5" />
+                                  {completedCount}/{totalLessons} lessons
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  {course.level}
+                                </span>
+                                {course.school && (
+                                  <span className="flex items-center gap-1.5 font-bold text-accent bg-accent/10 px-2.5 py-1 rounded-full border border-accent/20">
+                                    <Building2 className="w-3 h-3" />
+                                    {course.school}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-card-foreground/70">by {course.instructor?.username || 'Trainer'}</span>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setViewCourse(course)}
+                                  >
+                                    <Eye className="w-4 h-4" />
                                   </Button>
-                                </Link>
+                                  <Link to={`/portal/student/courses/${course.id || course._id}`}>
+                                    <Button variant="gold" size="sm">
+                                      <PlayCircle className="w-4 h-4 mr-1" />
+                                      Continue
+                                    </Button>
+                                  </Link>
+                                </div>
                               </div>
-                            </div>
-                          </CardContent>
-                        </div>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
-              </div>
+                            </CardContent>
+                          </div>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Pagination */}
+                {totalEnrolledPages > 1 && (
+                  <div className="flex items-center justify-between pt-3 border-t border-border/30">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>Rows per page:</span>
+                      <Select value={String(enrolledPerPage)} onValueChange={handleEnrolledPerPageChange}>
+                        <SelectTrigger className="w-16 h-8 text-xs rounded-lg">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[6, 9, 12, 18].map(n => (
+                            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="ml-2">
+                        {enrolledStart + 1}–{enrolledEnd} of {totalEnrolled}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleEnrolledPageChange(1)}
+                        disabled={enrolledPage === 1}
+                        className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                      >
+                        <ChevronsLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEnrolledPageChange(enrolledPage - 1)}
+                        disabled={enrolledPage === 1}
+                        className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <div className="flex items-center gap-1 mx-2">
+                        {(() => {
+                          const current = enrolledPage;
+                          const total = totalEnrolledPages;
+                          const pages: (number | string)[] = [];
+                          if (total <= 7) {
+                            for (let i = 1; i <= total; i++) pages.push(i);
+                          } else {
+                            pages.push(1);
+                            if (current > 3) pages.push('...');
+                            for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+                            if (current < total - 2) pages.push('...');
+                            pages.push(total);
+                          }
+                          return pages.map((p, i) =>
+                            p === '...' ? (
+                              <span key={`eellipsis-${i}`} className="px-1 text-xs text-muted-foreground">...</span>
+                            ) : (
+                              <button
+                                key={p}
+                                onClick={() => handleEnrolledPageChange(p as number)}
+                                className={`min-w-[28px] h-7 text-xs font-semibold rounded-lg transition ${
+                                  p === current
+                                    ? 'bg-accent text-accent-foreground shadow-sm'
+                                    : 'hover:bg-accent/10 text-muted-foreground'
+                                }`}
+                              >
+                                {p}
+                              </button>
+                            )
+                          );
+                        })()}
+                      </div>
+                      <button
+                        onClick={() => handleEnrolledPageChange(enrolledPage + 1)}
+                        disabled={enrolledPage === totalEnrolledPages}
+                        className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEnrolledPageChange(totalEnrolledPages)}
+                        disabled={enrolledPage === totalEnrolledPages}
+                        className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                      >
+                        <ChevronsRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
 
@@ -535,6 +666,91 @@ export default function StudentCourses() {
                 );
               })}
             </div>
+
+            {/* Pagination */}
+            {coursesPagination.totalPages > 1 && (
+              <div className="flex items-center justify-between pt-3 border-t border-border/30">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>Rows per page:</span>
+                  <Select value={String(availPerPage)} onValueChange={handleAvailPerPageChange}>
+                    <SelectTrigger className="w-16 h-8 text-xs rounded-lg">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[6, 9, 12, 18].map(n => (
+                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="ml-2">
+                    {((availPage - 1) * availPerPage) + 1}–{Math.min(availPage * availPerPage, coursesPagination.totalCount)} of {coursesPagination.totalCount}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleAvailPageChange(1)}
+                    disabled={!coursesPagination.hasPreviousPage}
+                    className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  >
+                    <ChevronsLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleAvailPageChange(availPage - 1)}
+                    disabled={!coursesPagination.hasPreviousPage}
+                    className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <div className="flex items-center gap-1 mx-2">
+                    {(() => {
+                      const current = availPage;
+                      const total = coursesPagination.totalPages;
+                      const pages: (number | string)[] = [];
+                      if (total <= 7) {
+                        for (let i = 1; i <= total; i++) pages.push(i);
+                      } else {
+                        pages.push(1);
+                        if (current > 3) pages.push('...');
+                        for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+                        if (current < total - 2) pages.push('...');
+                        pages.push(total);
+                      }
+                      return pages.map((p, i) =>
+                        p === '...' ? (
+                          <span key={`celipsis-${i}`} className="px-1 text-xs text-muted-foreground">...</span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => handleAvailPageChange(p as number)}
+                            className={`min-w-[28px] h-7 text-xs font-semibold rounded-lg transition ${
+                              p === current
+                                ? 'bg-accent text-accent-foreground shadow-sm'
+                                : 'hover:bg-accent/10 text-muted-foreground'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                      );
+                    })()}
+                  </div>
+                  <button
+                    onClick={() => handleAvailPageChange(availPage + 1)}
+                    disabled={!coursesPagination.hasNextPage}
+                    className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleAvailPageChange(coursesPagination.totalPages)}
+                    disabled={!coursesPagination.hasNextPage}
+                    className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  >
+                    <ChevronsRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           {/* Projects Tab */}

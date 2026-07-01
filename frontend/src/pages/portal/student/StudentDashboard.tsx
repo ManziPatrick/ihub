@@ -27,10 +27,18 @@ import {
   XCircle,
   FolderOpen,
 } from "lucide-react";
-import { useQuery } from "@apollo/client/react";import { GET_ME, GET_MY_BOOKINGS, GET_CONVERSATIONS, GET_MY_PAYMENTS, GET_MY_PROJECTS, MY_COURSE_APPLICATIONS, GET_MY_INTERNSHIP_APPLICATIONS } from "@/lib/graphql/queries";
+import { useQuery } from "@apollo/client/react";import { GET_ME, GET_MY_BOOKINGS, GET_CONVERSATIONS, GET_MY_PAYMENTS, GET_MY_PROJECTS, MY_COURSE_APPLICATIONS, GET_MY_INTERNSHIP_APPLICATIONS, GET_COURSES_LITE_SUMMARY, GET_INTERNSHIP_PROGRAMS } from "@/lib/graphql/queries";
 import { GET_MY_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 import { ApplyCourseDialog, ApplyInternshipDialog } from "@/components/portal/dialogs";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // No static achievements needed
 
@@ -44,9 +52,44 @@ export default function StudentDashboard() {
   const { data: myTasksData } = useQuery(GET_MY_PROJECT_TASKS);
   const { data: appData, refetch: refetchApps } = useQuery(MY_COURSE_APPLICATIONS);
   const { data: internAppData, refetch: refetchInternApps } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS);
+  const [coursePage, setCoursePage] = useState(1);
+  const [coursePerPage, setCoursePerPage] = useState(12);
+  const { data: allCoursesData, loading: allCoursesLoading } = useQuery(GET_COURSES_LITE_SUMMARY, {
+    variables: { page: coursePage, limit: coursePerPage },
+  });
+  const [internshipPage, setInternshipPage] = useState(1);
+  const [internshipPerPage, setInternshipPerPage] = useState(6);
+  const { data: allInternshipsData, loading: allInternshipsLoading } = useQuery(GET_INTERNSHIP_PROGRAMS, {
+    variables: { page: internshipPage, limit: internshipPerPage },
+  });
 
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [selectedInternshipId, setSelectedInternshipId] = useState<string | null>(null);
+
+  // Must define hooks before any early return (React Rules of Hooks)
+  const allCoursesPagination = (allCoursesData as any)?.courses?.pagination || {}
+  const allInternshipsPagination = (allInternshipsData as any)?.internshipPrograms?.pagination || {}
+  const handleCoursePageChange = useCallback((newPage: number) => {
+    if (newPage >= 1 && newPage <= ((allCoursesData as any)?.courses?.pagination?.totalPages || 1)) {
+      setCoursePage(newPage);
+    }
+  }, [allCoursesData]);
+
+  const handleCoursePerPageChange = useCallback((value: string) => {
+    setCoursePerPage(parseInt(value));
+    setCoursePage(1);
+  }, []);
+
+  const handleInternshipPageChange = useCallback((newPage: number) => {
+    if (newPage >= 1 && newPage <= ((allInternshipsData as any)?.internshipPrograms?.pagination?.totalPages || 1)) {
+      setInternshipPage(newPage);
+    }
+  }, [allInternshipsData]);
+
+  const handleInternshipPerPageChange = useCallback((value: string) => {
+    setInternshipPerPage(parseInt(value));
+    setInternshipPage(1);
+  }, []);
 
   if (meLoading || bookingsLoading || projectsLoading) {
     return (
@@ -95,6 +138,8 @@ export default function StudentDashboard() {
   const totalCompleted = completedLessons.length;
   const myApplications = (appData as any)?.myCourseApplications || [];
   const myInternApplications = (internAppData as any)?.myInternshipApplications || [];
+  const allCourses = (allCoursesData as any)?.courses?.items || [];
+  const allInternships = (allInternshipsData as any)?.internshipPrograms?.items || [];
 
   // Find latest interacted course (for now just take the first enrolled)
   const latestCourse = enrolledCourses[0];
@@ -364,6 +409,346 @@ export default function StudentDashboard() {
                   <p className="text-xs text-card-foreground/60">Achievements</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Available Courses (All Admins) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <Card className="border-border/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg font-heading flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-accent" />
+                Available Courses
+              </CardTitle>
+              <Link to="/explore">
+                <Button variant="ghost" size="sm" className="text-accent hover:bg-accent/5">
+                  View All <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {allCoursesLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-24 bg-muted rounded-xl animate-pulse"></div>
+                  ))}
+                </div>
+              ) : allCourses.length === 0 ? (
+                <div className="text-center py-6 border border-dashed rounded-lg">
+                  <p className="text-xs text-muted-foreground">No courses available yet</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {allCourses.map((course: any) => {
+                      const isEnrolled = enrolledCourses.some(
+                        (e: any) => (e.id || e._id) === (course.id || course._id)
+                      );
+                      return (
+                        <Link
+                          key={course.id || course._id}
+                          to={
+                            isEnrolled
+                              ? `/portal/student/courses/${course.id || course._id}`
+                              : course.enrollmentMode === 'application'
+                                ? '#'
+                                : `/courses/${course.id || course._id}`
+                          }
+                          onClick={(e) => {
+                            if (course.enrollmentMode === 'application' && !isEnrolled) {
+                              e.preventDefault();
+                              setSelectedCourse(course);
+                            }
+                          }}
+                          className="group block p-3 bg-background/50 rounded-xl border border-border/30 hover:border-accent/30 hover:bg-accent/5 transition-all"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                              <BookOpen className="w-5 h-5 text-accent" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-foreground line-clamp-1 group-hover:text-accent transition-colors">
+                                {course.title}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                {course.price > 0 ? (
+                                  <span className="text-[10px] font-bold text-accent">
+                                    {course.price?.toLocaleString()} {course.currency || 'RWF'}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold text-green-500">Free</span>
+                                )}
+                                {isEnrolled && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-500 font-bold">
+                                    Enrolled
+                                  </span>
+                                )}
+                                <span className="text-[10px] text-muted-foreground capitalize">{course.level}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  {/* Pagination Controls */}
+                  {allCoursesPagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>Rows per page:</span>
+                        <Select value={String(coursePerPage)} onValueChange={handleCoursePerPageChange}>
+                          <SelectTrigger className="w-16 h-8 text-xs rounded-lg">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[6, 9, 12, 18].map(n => (
+                              <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="ml-2">
+                          {((coursePage - 1) * coursePerPage) + 1}–{Math.min(coursePage * coursePerPage, allCoursesPagination.totalCount)} of {allCoursesPagination.totalCount}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleCoursePageChange(1)}
+                          disabled={!allCoursesPagination.hasPreviousPage}
+                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                        >
+                          <ChevronsLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleCoursePageChange(coursePage - 1)}
+                          disabled={!allCoursesPagination.hasPreviousPage}
+                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <div className="flex items-center gap-1 mx-2">
+                          {(() => {
+                            const current = coursePage;
+                            const total = allCoursesPagination.totalPages;
+                            const pages: (number | string)[] = [];
+                            if (total <= 7) {
+                              for (let i = 1; i <= total; i++) pages.push(i);
+                            } else {
+                              pages.push(1);
+                              if (current > 3) pages.push('...');
+                              for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+                              if (current < total - 2) pages.push('...');
+                              pages.push(total);
+                            }
+                            return pages.map((p, i) =>
+                              p === '...' ? (
+                                <span key={`ellipsis-${i}`} className="px-1 text-xs text-muted-foreground">...</span>
+                              ) : (
+                                <button
+                                  key={p}
+                                  onClick={() => handleCoursePageChange(p as number)}
+                                  className={`min-w-[28px] h-7 text-xs font-semibold rounded-lg transition ${
+                                    p === current
+                                      ? 'bg-accent text-accent-foreground shadow-sm'
+                                      : 'hover:bg-accent/10 text-muted-foreground'
+                                  }`}
+                                >
+                                  {p}
+                                </button>
+                              )
+                            );
+                          })()}
+                        </div>
+                        <button
+                          onClick={() => handleCoursePageChange(coursePage + 1)}
+                          disabled={!allCoursesPagination.hasNextPage}
+                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleCoursePageChange(allCoursesPagination.totalPages)}
+                          disabled={!allCoursesPagination.hasNextPage}
+                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                        >
+                          <ChevronsRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Available Internships (All Admins) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }}
+        >
+          <Card className="border-border/50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg font-heading flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-accent" />
+                Available Internships
+              </CardTitle>
+              <Link to="/internships">
+                <Button variant="ghost" size="sm" className="text-accent hover:bg-accent/5">
+                  View All <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {allInternshipsLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-24 bg-muted rounded-xl animate-pulse"></div>
+                  ))}
+                </div>
+              ) : allInternships.length === 0 ? (
+                <div className="text-center py-6 border border-dashed rounded-lg">
+                  <p className="text-xs text-muted-foreground">No internships available yet</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {allInternships.map((intern: any) => {
+                      const alreadyApplied = myInternApplications.some(
+                        (app: any) => app.internshipProgram?.id === (intern.id || intern._id)
+                      );
+                      return (
+                        <div
+                          key={intern.id || intern._id}
+                          className="group block p-3 bg-background/50 rounded-xl border border-border/30 hover:border-accent/30 hover:bg-accent/5 transition-all cursor-pointer"
+                          onClick={() =>
+                            alreadyApplied
+                              ? null
+                              : setSelectedInternshipId(intern.id || intern._id)
+                          }
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                              <Briefcase className="w-5 h-5 text-accent" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-foreground line-clamp-1 group-hover:text-accent transition-colors">
+                                {intern.title}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] text-muted-foreground">{intern.duration}</span>
+                                {intern.price > 0 ? (
+                                  <span className="text-[10px] font-bold text-accent">
+                                    {intern.price?.toLocaleString()} {intern.currency || 'RWF'}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold text-green-500">Free</span>
+                                )}
+                                {alreadyApplied && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-bold">
+                                    Applied
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Pagination Controls */}
+                  {allInternshipsPagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>Rows per page:</span>
+                        <Select value={String(internshipPerPage)} onValueChange={handleInternshipPerPageChange}>
+                          <SelectTrigger className="w-16 h-8 text-xs rounded-lg">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[6, 9, 12, 18].map(n => (
+                              <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="ml-2">
+                          {((internshipPage - 1) * internshipPerPage) + 1}–{Math.min(internshipPage * internshipPerPage, allInternshipsPagination.totalCount)} of {allInternshipsPagination.totalCount}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleInternshipPageChange(1)}
+                          disabled={!allInternshipsPagination.hasPreviousPage}
+                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                        >
+                          <ChevronsLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleInternshipPageChange(internshipPage - 1)}
+                          disabled={!allInternshipsPagination.hasPreviousPage}
+                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <div className="flex items-center gap-1 mx-2">
+                          {(() => {
+                            const current = internshipPage;
+                            const total = allInternshipsPagination.totalPages;
+                            const pages: (number | string)[] = [];
+                            if (total <= 7) {
+                              for (let i = 1; i <= total; i++) pages.push(i);
+                            } else {
+                              pages.push(1);
+                              if (current > 3) pages.push('...');
+                              for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+                              if (current < total - 2) pages.push('...');
+                              pages.push(total);
+                            }
+                            return pages.map((p, i) =>
+                              p === '...' ? (
+                                <span key={`iellipsis-${i}`} className="px-1 text-xs text-muted-foreground">...</span>
+                              ) : (
+                                <button
+                                  key={p}
+                                  onClick={() => handleInternshipPageChange(p as number)}
+                                  className={`min-w-[28px] h-7 text-xs font-semibold rounded-lg transition ${
+                                    p === current
+                                      ? 'bg-accent text-accent-foreground shadow-sm'
+                                      : 'hover:bg-accent/10 text-muted-foreground'
+                                  }`}
+                                >
+                                  {p}
+                                </button>
+                              )
+                            );
+                          })()}
+                        </div>
+                        <button
+                          onClick={() => handleInternshipPageChange(internshipPage + 1)}
+                          disabled={!allInternshipsPagination.hasNextPage}
+                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleInternshipPageChange(allInternshipsPagination.totalPages)}
+                          disabled={!allInternshipsPagination.hasNextPage}
+                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                        >
+                          <ChevronsRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </motion.div>

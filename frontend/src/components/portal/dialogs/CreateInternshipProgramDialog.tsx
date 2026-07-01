@@ -29,7 +29,7 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
     signerName: '',
     signerSignature: '',
     allowedDeliveryModes: ['online'],
-    applicationQuestions: [] as { label: string, type: string, required: boolean }[]
+    applicationQuestions: [] as { label: string, type: string, required: boolean, options?: string[], maxFileSize?: number, acceptedFileTypes?: string[] }[]
   });
 
   const [createProgram, { loading }] = useMutation(CREATE_INTERNSHIP_PROGRAM, {
@@ -242,7 +242,7 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
                 size="sm"
                 onClick={() => setFormData({
                   ...formData,
-                  applicationQuestions: [...formData.applicationQuestions, { label: '', type: 'text', required: true }]
+                  applicationQuestions: [...formData.applicationQuestions, { label: '', type: 'text', required: true, options: [], maxFileSize: 10, acceptedFileTypes: ['.pdf', '.doc', '.docx', '.jpg', '.png'] }]
                 })}
               >
                 Add Question
@@ -285,6 +285,10 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
                           <option value="text">Short Text</option>
                           <option value="textarea">Long Text</option>
                           <option value="select">Select</option>
+                          <option value="radio">Radio</option>
+                          <option value="checkbox">Checkbox</option>
+                          <option value="file">File Upload</option>
+                          <option value="number">Number</option>
                         </select>
                       </div>
                     </div>
@@ -318,6 +322,74 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
                         Remove
                       </Button>
                     </div>
+
+                    {/* Options editor for select/radio/checkbox */}
+                    {(q.type === 'select' || q.type === 'radio' || q.type === 'checkbox') && (
+                      <div className="space-y-2 pl-2 border-l-2 border-accent/30">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Options</Label>
+                        {(q.options || []).map((opt, oi) => (
+                          <div key={oi} className="flex items-center gap-1.5">
+                            <Input
+                              value={opt}
+                              onChange={(e) => {
+                                const newQs = [...formData.applicationQuestions];
+                                if (!newQs[idx].options) newQs[idx].options = [];
+                                newQs[idx].options![oi] = e.target.value;
+                                setFormData({ ...formData, applicationQuestions: newQs });
+                              }}
+                              placeholder={`Option ${oi + 1}`}
+                              className="h-7 text-xs flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                              onClick={() => {
+                                const newQs = [...formData.applicationQuestions];
+                                newQs[idx].options = (newQs[idx].options || []).filter((_, i) => i !== oi);
+                                setFormData({ ...formData, applicationQuestions: newQs });
+                              }}
+                            >
+                              ×
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[10px]"
+                          onClick={() => {
+                            const newQs = [...formData.applicationQuestions];
+                            if (!newQs[idx].options) newQs[idx].options = [];
+                            newQs[idx].options!.push('');
+                            setFormData({ ...formData, applicationQuestions: newQs });
+                          }}
+                        >
+                          + Add Option
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* File type configuration */}
+                    {q.type === 'file' && (
+                      <div className="space-y-2 pl-2 border-l-2 border-accent/30">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Max File Size (MB)</Label>
+                        <Input
+                          type="number"
+                          value={q.maxFileSize || 10}
+                          onChange={(e) => {
+                            const newQs = [...formData.applicationQuestions];
+                            newQs[idx].maxFileSize = parseInt(e.target.value) || 10;
+                            setFormData({ ...formData, applicationQuestions: newQs });
+                          }}
+                          className="h-7 text-xs w-24"
+                          min={1}
+                          max={50}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

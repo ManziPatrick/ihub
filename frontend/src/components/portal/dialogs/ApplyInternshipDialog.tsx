@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FileUpload } from "@/components/FileUpload";
 import { 
   Briefcase, 
   CheckCircle, 
@@ -34,6 +35,9 @@ import {
   Sparkles,
   Info,
   ChevronRight,
+  FileText,
+  ExternalLink,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
@@ -386,6 +390,42 @@ export function ApplyInternshipDialog({
                                                     <Label htmlFor={`${q.label}-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
                                                 </div>
                                             ))}
+                                        </div>
+                                    ) : q.type === 'file' ? (
+                                        <div className="space-y-2">
+                                            {answers[q.label] ? (
+                                                <div className="flex items-center gap-3 p-3 bg-background/50 rounded-2xl border border-border/30">
+                                                    <FileText className="w-5 h-5 text-accent" />
+                                                    <span className="text-xs text-muted-foreground flex-1 truncate">
+                                                        File uploaded
+                                                    </span>
+                                                    <a 
+                                                        href={answers[q.label]} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="text-xs text-accent hover:underline flex items-center gap-1"
+                                                    >
+                                                        View <ExternalLink className="w-3 h-3" />
+                                                    </a>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                                        onClick={() => handleAnswerChange(q.label, '')}
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <FileUpload
+                                                    folder="internship-applications"
+                                                    accept={q.acceptedFileTypes?.join(',') || '.pdf,.doc,.docx,.jpg,.png'}
+                                                    maxSizeMB={q.maxFileSize || 10}
+                                                    label={q.required ? 'Upload Required Document' : 'Upload File (Optional)'}
+                                                    onUploadComplete={(url) => handleAnswerChange(q.label, url)}
+                                                />
+                                            )}
                                         </div>
                                     ) : (
                                         <Input

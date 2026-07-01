@@ -16,7 +16,7 @@ COPY package.json package-lock.json ./
 RUN npm install --legacy-peer-deps --no-audit --no-fund
 
 COPY . ./
-RUN npm run build
+RUN echo "build: $CACHE_BUST" && npm run build
 
 # Inject runtime VITE_* env vars into dist/env-config.js at startup
 ENV PORT=8080

@@ -7,8 +7,6 @@ import mongoose from 'mongoose';
 import { Request, Response } from 'express';
 import { PaymentTransaction } from '../models/PaymentTransaction';
 import { createPesapalService } from '../services/pesapal.service';
-import { createFDIService } from '../services/fdi.service';
-import { createPaypackService } from '../services/paypack.service';
 import { createIntouchService } from '../services/intouch.service';
 import { User } from '../models/User';
 import { Course } from '../models/Course';
@@ -44,8 +42,6 @@ interface PaymentInitiateBody {
 
 class PaymentController {
   private pesapalService = createPesapalService();
-  private fdiService = createFDIService();
-  public paypackService = createPaypackService();
   private intouchService = createIntouchService();
 
   /**
@@ -142,156 +138,6 @@ class PaymentController {
         return res.status(202).json({
           message: 'Mobile Money payment initiated via Intouch',
           data: response.raw,
-          status: 'processing',
-          transactionId: transaction._id,
-        });
-      }
-
-      // ─── FDI INTEGRATION (FOR MTN, AIRTEL) ───
-      if (paymentMethod === 'mtn' || paymentMethod === 'airtel') {
-        const trxRef = `TRX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-        const channelId = paymentMethod === 'mtn' ? 'momo-mtn-rw' : 'momo-airtel-rw';
-        
-        if (!phoneNumber) {
-          return res.status(400).json({ error: 'Phone number is required for mobile money payment' });
-        }
-
-        const callbackUrl = `${process.env.BACKEND_URL || 'https://api.codemande.com'}/api/payments/fdi/callback`;
-
-        const response = await this.fdiService.pullFunds({
-          trxRef,
-          channelId,
-          msisdn: phoneNumber,
-          amount,
-          callback: callbackUrl,
-        });
-
-        const transaction = new PaymentTransaction({
-          userId,
-          type: 'CASHIN',
-          amount,
-          status: 'pending',
-          fdiRef: response.data?.gwRef || response.data?.trxRef,
-          paymentMethod: paymentMethod === 'mtn' ? 'mtn' : 'airtel',
-          phoneNumber,
-          description: smartTitle,
-          courseId: courseId || null,
-          courseIds: courseIds || [],
-          internshipProgramId: internshipProgramId || null,
-          internshipIds: internshipIds || [],
-        });
-        await transaction.save();
-
-        const pendingPayment = new Payment({
-          userId,
-          amount,
-          currency: 'RWF',
-          status: 'pending',
-          paymentMethod: paymentMethod === 'mtn' ? 'MTN Mobile Money' : 'Airtel Money',
-          transactionId: response.data?.gwRef || response.data?.trxRef || trxRef,
-          type: allCourseIds.length > 0 ? 'Course Enrollment' : 'Internship/Subscription',
-          itemTitle: smartTitle,
-          courseIds: allCourseIds,
-          internshipIds: allInternshipIds
-        });
-        await pendingPayment.save();
-
-        return res.status(202).json({
-          message: 'Mobile Money payment initiated',
-          data: response.data,
-          status: 'processing',
-          transactionId: transaction._id
-        });
-      }
-
-      // ─── PESAPAL INTEGRATION (FOR CARD OR EXPLICIT PESAPAL) ───
-      // ─── PAWAPAY INTEGRATION (MULTI-COUNTRY MOBILE MONEY) ───
-      if (paymentMethod === 'pawapay' || paymentMethod === 'paypack') {
-        if (!phoneNumber) {
-          return res.status(400).json({ error: 'Phone number is required for PawaPay payment' });
-        }
-
-        // Resolve provider + currency — use explicit provider from frontend if provided
-        const explicitProvider = req.body.providerId as string | undefined;
-        let resolved: { provider: string; country: string; currency: string };
-
-        if (explicitProvider) {
-          // Frontend selected a specific provider; find its country & currency
-          const countryInfo = this.paypackService.getSupportedCountries().find(c =>
-            c.providers.some(p => p.providerId === explicitProvider)
-          );
-          resolved = {
-            provider: explicitProvider,
-            country: countryInfo?.countryCode || 'RWA',
-            currency: countryInfo?.currency || 'RWF',
-          };
-          console.log(`📍 Explicit provider selected: ${explicitProvider} (${resolved.country}, ${resolved.currency})`);
-        } else {
-          // Auto-detect from phone number
-          resolved = await this.paypackService.resolveProvider(phoneNumber);
-        }
-
-        const depositId = this.paypackService.generateDepositId();
-        const result = await this.paypackService.initiateDeposit({
-          amount,
-          currency: resolved.currency,
-          phoneNumber,
-          provider: resolved.provider,
-          depositId,
-          clientReferenceId: `INV-${Date.now()}`,
-          customerMessage: smartTitle.substring(0, 22),
-        });
-
-        const transaction = new PaymentTransaction({
-          userId,
-          type: 'CASHIN',
-          amount,
-          status: 'pending',
-          paypackRef: depositId,
-          provider: resolved.provider,
-          paymentMethod: 'pawapay',
-          phoneNumber,
-          description: smartTitle,
-          courseId: courseId || null,
-          courseIds: courseIds || [],
-          internshipProgramId: internshipProgramId || null,
-          internshipIds: internshipIds || [],
-          metadata: {
-            country: resolved.country,
-            provider: resolved.provider,
-            currency: resolved.currency,
-          },
-        });
-        await transaction.save();
-
-        const pendingPayment = new Payment({
-          userId,
-          amount,
-          currency: resolved.currency,
-          status: 'pending',
-          paymentMethod: `PawaPay (${resolved.country})`,
-          transactionId: depositId,
-          type: allCourseIds.length > 0 ? 'Course Enrollment' : 'Internship/Subscription',
-          itemTitle: smartTitle,
-          courseIds: allCourseIds,
-          internshipIds: allInternshipIds,
-        });
-        await pendingPayment.save();
-
-        if (!result.success) {
-          return res.status(502).json({
-            error: 'PawaPay payment rejected',
-            message: result.reason || 'Payment provider declined the request',
-            transactionId: transaction._id,
-          });
-        }
-
-        return res.status(202).json({
-          message: `PawaPay payment initiated via ${resolved.provider} (${resolved.country})`,
-          depositId,
-          provider: resolved.provider,
-          country: resolved.country,
-          currency: resolved.currency,
           status: 'processing',
           transactionId: transaction._id,
         });
@@ -448,33 +294,43 @@ class PaymentController {
         return res.json(this.formatTransactionResponse(transaction));
       }
 
-      // ─── FDI MOBILE MONEY STATUS CHECK ───
-      if (transaction.paymentMethod === 'fdi') {
-        try {
-          console.log(`Checking status for FDI Ref: ${transaction.fdiRef}`);
-          const fdiStatus = await this.fdiService.getTransactionInfo(transaction.fdiRef || '');
-          
-          if (fdiStatus && fdiStatus.status === 'success' && fdiStatus.data) {
-            const state = fdiStatus.data.trxStatus || fdiStatus.data.state;
-            const normalizedStatus = state === 'successful' ? 'successful' : (state === 'failed' ? 'failed' : 'pending');
+      // ─── Provider-specific real-time status checks ───
+      // PaymentTransaction.status only supports: pending | successful | failed.
+      // We branch based on how the transaction was initiated.
 
-            if (normalizedStatus !== transaction.status) {
-              transaction.status = normalizedStatus as any;
-              
-              if (normalizedStatus === 'successful') {
-                await this.handleSuccessfulPayment(transaction);
-              }
-              
-              if (terminalStatuses.includes(normalizedStatus)) {
-                transaction.processedAt = new Date();
-              }
-              
-              await transaction.save();
-            }
+      const updateIfChanged = async (nextStatus: 'pending' | 'successful' | 'failed') => {
+        if (nextStatus !== transaction.status) {
+          const prevStatus = transaction.status;
+          transaction.status = nextStatus as any;
+
+          if (nextStatus === 'successful' && prevStatus !== 'successful') {
+            await this.handleSuccessfulPayment(transaction);
           }
+
+          if (terminalStatuses.includes(nextStatus)) {
+            transaction.processedAt = new Date();
+          }
+
+          await transaction.save();
+        }
+      };
+
+      // 1) Intouch
+      if (transaction.paymentMethod === 'intouch' || transaction.provider === 'intouch') {
+        try {
+          console.log(`Checking status for Intouch Ref: ${transaction.intouchRef}`);
+          const intouchStatus = await this.intouchService.getTransactionStatus(
+            transaction.intouchRef || '',
+            transaction.intouchTransactionId
+          );
+
+          if (intouchStatus && intouchStatus.success && intouchStatus.status) {
+            await updateIfChanged(intouchStatus.status as any);
+          }
+
           return res.json(this.formatTransactionResponse(transaction));
         } catch (error: any) {
-          console.error('Error fetching status from FDI:', error.message);
+          console.error('Error fetching status from Intouch:', error.message);
           return res.json({
             ...this.formatTransactionResponse(transaction),
             note: 'Real-time check currently unavailable (local cache used)',
@@ -482,46 +338,37 @@ class PaymentController {
         }
       }
 
-      try {
-        console.log(`Checking status for Pesapal TrackingId: ${transaction.pesapalTrackingId}`);
-        const pesapalStatus = await this.pesapalService.getTransactionStatus(
-          transaction.pesapalTrackingId
-        );
-        
-        if (!pesapalStatus || !pesapalStatus.payment_status_code) {
-          console.error('Incomplete status response from Pesapal');
+      // 3) Pesapal (card or momo)
+      if (transaction.paymentMethod === 'card' || transaction.paymentMethod === 'momo' || transaction.pesapalTrackingId) {
+        try {
+          console.log(`Checking status for Pesapal TrackingId: ${transaction.pesapalTrackingId}`);
+
+          if (!transaction.pesapalTrackingId) {
+            return res.json(this.formatTransactionResponse(transaction));
+          }
+
+          const pesapalStatus = await this.pesapalService.getTransactionStatus(transaction.pesapalTrackingId);
+
+          if (!pesapalStatus || !pesapalStatus.payment_status_code) {
+            console.error('Incomplete status response from Pesapal');
+            return res.json(this.formatTransactionResponse(transaction));
+          }
+
+          const normalizedStatus = this.pesapalService.normalizeStatus(pesapalStatus.payment_status_code as any);
+          await updateIfChanged(normalizedStatus as any);
+
           return res.json(this.formatTransactionResponse(transaction));
+        } catch (error: any) {
+          console.error('Error fetching status from Pesapal:', error.message);
+          return res.json({
+            ...this.formatTransactionResponse(transaction),
+            note: 'Real-time check currently unavailable (local cache used)',
+          });
         }
-        
-        const normalizedStatus = this.pesapalService.normalizeStatus(
-          pesapalStatus.payment_status_code as any
-        );
-
-        console.log(`Pesapal API status for ${transaction.pesapalTrackingId}: ${pesapalStatus.payment_status_code} -> ${normalizedStatus}`);
-
-        if (normalizedStatus !== transaction.status) {
-          transaction.status = normalizedStatus as any;
-          
-          if (normalizedStatus === 'successful') {
-            await this.handleSuccessfulPayment(transaction);
-          }
-          
-          if (terminalStatuses.includes(normalizedStatus)) {
-            transaction.processedAt = new Date();
-          }
-          
-          await transaction.save();
-        }
-
-        return res.json(this.formatTransactionResponse(transaction));
-      } catch (error: any) {
-        console.error('Error fetching status from Pesapal:', error.message);
-        // Fallback to current database status if API call fails
-        return res.json({
-          ...this.formatTransactionResponse(transaction),
-          note: 'Real-time check currently unavailable (local cache used)',
-        });
       }
+
+      // 5) Fallback: return DB status
+      return res.json(this.formatTransactionResponse(transaction));
     } catch (error) {
       console.error('Error in getPaymentStatus:', error);
       return res.status(500).json({ error: 'Internal server error' });
@@ -539,6 +386,109 @@ class PaymentController {
       processedAt: transaction.processedAt,
       description: transaction.description,
     };
+  }
+
+  /**
+   * Initiate a disbursement (CASHOUT) via Intouch
+   * Sends money to a user's mobile money account
+   * POST /api/payments/disburse
+   */
+  async disbursePayment(req: Request, res: Response) {
+    try {
+      const userId = req.user?.id || req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { amount, phoneNumber, reason } = req.body as {
+        amount: number;
+        phoneNumber: string;
+        reason?: string;
+      };
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: 'Invalid amount' });
+      }
+
+      if (!phoneNumber) {
+        return res.status(400).json({ error: 'Phone number is required for disbursement' });
+      }
+
+      const trxRef = this.intouchService.generateRequestTransactionId();
+
+      const response = await this.intouchService.requestDeposit({
+        amount,
+        phoneNumber,
+        requestTransactionId: trxRef,
+        reason: reason || 'Payment disbursement from iHub',
+        withdrawCharge: 0,
+        serviceId: 1,
+      });
+
+      // Save the transaction regardless of success/failure
+      const transaction = new PaymentTransaction({
+        userId,
+        type: 'CASHOUT',
+        amount,
+        status: response.success ? 'successful' : 'failed',
+        intouchRef: trxRef,
+        intouchTransactionId: response.transactionId,
+        paymentMethod: 'intouch',
+        phoneNumber,
+        description: reason || 'Disbursement',
+      });
+      await transaction.save();
+
+      if (!response.success) {
+        return res.status(502).json({
+          error: 'Disbursement failed',
+          message: response.message,
+          transactionId: transaction._id,
+        });
+      }
+
+      return res.status(200).json({
+        message: 'Disbursement successful',
+        transactionId: transaction._id,
+        providerRef: response.referenceId,
+        intouchTransactionId: response.transactionId,
+      });
+    } catch (error) {
+      console.error('Disbursement error:', error);
+      return res.status(500).json({
+        error: 'Failed to process disbursement',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  /**
+   * Get IntouchPay account balance
+   * GET /api/payments/intouch/balance
+   */
+  async getIntouchBalance(_req: Request, res: Response) {
+    try {
+      const result = await this.intouchService.getBalance();
+
+      if (!result.success) {
+        return res.status(502).json({
+          error: 'Failed to fetch balance',
+          message: result.message || 'Intouch balance check failed',
+        });
+      }
+
+      return res.json({
+        balance: result.balance,
+        currency: 'RWF',
+        provider: 'IntouchPay',
+      });
+    } catch (error) {
+      console.error('Get Intouch balance error:', error);
+      return res.status(500).json({
+        error: 'Failed to get balance',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   }
 
   /**
@@ -561,7 +511,7 @@ class PaymentController {
       // 1. Update the Payment record (for accounting/history)
       try {
         // Find existing pending payment first (created during initiation)
-        const ref = transaction.pesapalTrackingId || transaction.fdiRef || transaction.paypackRef || transaction.intouchRef || transaction._id;
+        const ref = transaction.pesapalTrackingId || transaction.intouchRef || transaction._id;
         let paymentRecord = await Payment.findOne({ transactionId: ref });
         
         if (paymentRecord) {
@@ -571,12 +521,7 @@ class PaymentController {
         } else {
           // Fallback: create if it doesn't exist for some reason
           let friendlyMethod = 'Pesapal';
-          if (transaction.paymentMethod === 'fdi') {
-            friendlyMethod = transaction.description?.toLowerCase().includes('airtel') ? 'Airtel Money' : 'MTN Mobile Money';
-          } else if (transaction.paymentMethod === 'paypack' || transaction.paymentMethod === 'pawapay') {
-            const country = transaction.metadata?.country || 'RWA';
-            friendlyMethod = `PawaPay (${country})`;
-          } else if (transaction.paymentMethod === 'manual') {
+          if (transaction.paymentMethod === 'manual') {
             friendlyMethod = 'Manual Transfer';
           } else if (transaction.paymentMethod === 'intouch') {
             friendlyMethod = 'Intouch';
@@ -937,113 +882,6 @@ class PaymentController {
     }
   }
 
-  /**
-   * Handle Paypack Callback (PawaPay)
-   * Receives webhooks for deposits (CASHIN), payouts (CASHOUT), and refunds
-   */
-  async handlePaypackCallback(req: Request, res: Response) {
-    try {
-      const payload = req.body;
-      const signature = req.headers['x-paypack-signature'] as string;
-
-      console.log('🔔 Paypack Callback Received:', JSON.stringify(payload).substring(0, 500));
-
-      // Verify webhook signature if present
-      if (signature) {
-        const rawBody = typeof req.rawBody === 'string' ? req.rawBody : JSON.stringify(payload);
-        const isValid = this.paypackService.verifyWebhookSignature(rawBody, signature);
-        if (!isValid) {
-          console.warn('⚠️ Invalid Paypack webhook signature — processing anyway');
-        }
-      }
-
-      // Parse the webhook payload
-      const parsed = this.paypackService.parseWebhookPayload(payload);
-
-      // Find the transaction by Paypack ref
-      const transaction = await PaymentTransaction.findOne({
-        $or: [
-          { paypackRef: parsed.transactionRef },
-          { 'metadata.paypackRef': parsed.transactionRef }
-        ]
-      });
-
-      if (!transaction) {
-        console.warn(`❌ Paypack Callback: Transaction not found for ref ${parsed.transactionRef}`);
-        return res.status(200).json({ status: 'ok' });
-      }
-
-      // Update status if changed
-      const normalizedStatus = parsed.status;
-      if (normalizedStatus !== transaction.status) {
-        const prevStatus = transaction.status;
-        transaction.status = normalizedStatus as any;
-
-        if (normalizedStatus === 'successful' && prevStatus !== 'successful') {
-          await this.handleSuccessfulPayment(transaction);
-        }
-
-        await transaction.save();
-        console.log(`✅ Paypack transaction ${parsed.transactionRef} updated: ${prevStatus} → ${normalizedStatus}`);
-      }
-
-      return res.status(200).json({ status: 'ok' });
-    } catch (error) {
-      console.error('❌ Paypack Callback Error:', error);
-      return res.status(200).json({ status: 'ok' });
-    }
-  }
-
-  /**
-   * Handle FDI Callback
-   */
-  async handleFDICallback(req: Request, res: Response) {
-    try {
-      const payload = req.body;
-      console.log('FDI Callback Received:', payload);
-
-      if (payload.status === 'success' && payload.data) {
-        const { state, gwRef, trxRef } = payload.data;
-        
-        // Find by gwRef (which is what we saved as fdiRef) or trxRef (which might be saved as transactionId in Payment)
-        const transaction = await PaymentTransaction.findOne({ 
-          $or: [{ fdiRef: gwRef }, { fdiRef: trxRef }] 
-        });
-
-        if (!transaction) {
-          console.warn(`FDI Callback: Transaction not found for ref ${gwRef} or ${trxRef}`);
-          return res.status(200).json({ status: 'ok' }); // Acknowledge receipt
-        }
-
-        const normalizedStatus = state === 'successful' ? 'successful' : (state === 'failed' ? 'failed' : 'pending');
-
-        if (normalizedStatus !== transaction.status) {
-          const prevStatus = transaction.status;
-          transaction.status = normalizedStatus;
-          if (normalizedStatus === 'successful' && prevStatus !== 'successful') {
-            await this.handleSuccessfulPayment(transaction);
-          }
-          await transaction.save();
-        }
-      } else if (payload.status === 'fail' && payload.data) {
-        // Handle explicit failure
-        const { gwRef, trxRef } = payload.data;
-        const transaction = await PaymentTransaction.findOne({ 
-          $or: [{ fdiRef: gwRef }, { fdiRef: trxRef }] 
-        });
-
-        if (transaction && transaction.status !== 'failed') {
-          transaction.status = 'failed';
-          await transaction.save();
-        }
-      }
-
-      return res.status(200).json({ status: 'ok' });
-    } catch (error) {
-      console.error('FDI Callback Error:', error);
-      return res.status(500).json({ status: 'error' });
-    }
-  }
 }
 
 export const paymentController = new PaymentController();
