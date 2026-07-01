@@ -671,30 +671,29 @@ class PaymentController {
         });
       }
 
-      // 5. Send email confirmations
-      try {
-        // Get user info for emails
-        const user = await User.findById(userId).select('email username fullName');
-        if (user) {
+      // 5. Send email confirmations (fire-and-forget — never block payment response)
+      setImmediate(async () => {
+        try {
+          const user = await User.findById(userId).select('email username fullName');
+          if (!user?.email) return;
+
           const studentName = user.fullName || user.username || 'Student';
           const userEmail = user.email;
 
-          // Send payment receipt for any payment
-          if (userEmail) {
-            const invoiceNumber = `INV-${Date.now()}`;
-            await sendPaymentConfirmation(
-              userEmail,
-              studentName,
-              description || 'Course Enrollment',
-              amount || 0,
-              'RWF',
-              invoiceNumber
-            );
-          }
+          // Send payment receipt
+          const invoiceNumber = `INV-${Date.now()}`;
+          await sendPaymentConfirmation(
+            userEmail,
+            studentName,
+            description || 'Course Enrollment',
+            amount || 0,
+            'RWF',
+            invoiceNumber
+          );
 
-          // Send course enrollment confirmation if courses were purchased
+          // Send course enrollment confirmation for each course
           const allCourseIds = [...(courseIds || []), ...(courseId ? [courseId] : [])];
-          if (allCourseIds.length > 0 && userEmail) {
+          if (allCourseIds.length > 0) {
             const courses = await Course.find({ _id: { $in: allCourseIds } }).select('title').lean();
             for (const course of courses) {
               await sendCourseEnrollmentConfirmation(
@@ -704,10 +703,10 @@ class PaymentController {
               );
             }
           }
+        } catch (emailErr) {
+          console.error('Failed to send payment confirmation email:', emailErr);
         }
-      } catch (emailErr) {
-        console.error('Failed to send payment confirmation email:', emailErr);
-      }
+      });
 
       transaction.processedAt = new Date();
       await transaction.save();
