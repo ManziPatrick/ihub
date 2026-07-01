@@ -6,7 +6,7 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/generate-version.js",
+    "build": "rm -rf dist && tsc -b && vite build && node scripts/generate-version.js",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",

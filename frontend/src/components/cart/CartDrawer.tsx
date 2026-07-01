@@ -21,7 +21,7 @@ export function CartDrawer() {
     if (!isAuthenticated) {
       setIsCartOpen(false);
       navigate("/auth");
-    } else if (cartTotal === 0) {
+    } else if (Number(cartTotal) <= 0) {
       handleFreeEnrollment();
     } else {
       setIsCheckingOut(true);
@@ -144,11 +144,11 @@ export function CartDrawer() {
                         {item.title}
                       </h4>
                       <p className="text-xs font-bold text-accent">
-                        {item.discountPrice
-                          ? `${item.discountPrice.toLocaleString()} RWF`
-                          : item.price === 0
+                        {Number(item.discountPrice) > 0
+                          ? `${Number(item.discountPrice).toLocaleString()} RWF`
+                          : Number(item.price) <= 0
                           ? "Free"
-                          : `${item.price.toLocaleString()} RWF`}
+                          : `${Number(item.price).toLocaleString()} RWF`}
                       </p>
                     </div>
                     <button
@@ -169,7 +169,7 @@ export function CartDrawer() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground">Total</span>
                   <span className="text-lg font-bold text-foreground">
-                    {cartTotal === 0 ? "Free" : `${cartTotal.toLocaleString()} RWF`}
+                    {Number(cartTotal) <= 0 ? "Free" : `${Number(cartTotal).toLocaleString()} RWF`}
                   </span>
                 </div>
                 <Button
@@ -179,7 +179,7 @@ export function CartDrawer() {
                 >
                   {!isAuthenticated 
                     ? "Log in to Checkout" 
-                    : cartTotal === 0 
+                    : Number(cartTotal) <= 0
                       ? (enrolling ? "Enrolling..." : "Enroll Now")
                       : "Proceed to Checkout"
                   }
