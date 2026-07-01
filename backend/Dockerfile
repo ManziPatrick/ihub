@@ -20,7 +20,7 @@ COPY . ./
 
 
 
-RUN npm run build
+RUN echo "build: $CACHE_BUST" && npm run build
 
 
 RUN mkdir -p /app/uploads
