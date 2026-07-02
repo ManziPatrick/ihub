@@ -786,7 +786,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
               </Link>
               <div className="w-px h-4 bg-border/50" />
               <Link to="/portal/trainer/students" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-xs font-bold text-foreground">{trainerStats?.pendingReviews || 0}</span>
                 <span className="text-[10px] text-muted-foreground hidden xl:inline">Reviews</span>
               </Link>
