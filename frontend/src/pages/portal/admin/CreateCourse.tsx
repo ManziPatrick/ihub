@@ -538,7 +538,13 @@ export default function CreateCourse() {
   };
 
   const { data: usersData } = useQuery(GET_USERS, { variables: { limit: 100 } });
-  const trainers = (usersData as any)?.users?.items?.filter((u: any) => u.role === 'trainer' || u.role === 'admin' || u.role === 'super_admin') || [];
+  const fetchedUsers = (usersData as any)?.users?.items || [];
+  const trainerCandidates = fetchedUsers.filter((u: any) => u.role === 'trainer' || u.role === 'admin' || u.role === 'super_admin');
+  const trainers = currentUser
+    ? Array.from(
+        new Map([...trainerCandidates, currentUser].map((u: any) => [u.id, u])).values()
+      )
+    : trainerCandidates;
 
   const { data: categoryData } = useQuery(GET_CATEGORIES);
   const categories = (categoryData as any)?.categories || [];
