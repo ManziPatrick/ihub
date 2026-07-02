@@ -63,4 +63,5 @@ export { AssignmentConfigDialog } from "./AssignmentConfigDialog";
 export { ExamConfigDialog } from "../ExamConfigDialog";
 export { ProjectTaskDialog } from "./ProjectTaskDialog";
 export { TaskDetailDialog } from "./TaskDetailDialog";
+export { ScholarshipDialog } from "./ScholarshipDialog";
 

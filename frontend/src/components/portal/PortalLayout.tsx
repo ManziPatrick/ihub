@@ -184,6 +184,8 @@ const superAdminNavItems: NavItem[] = [
       { label: "Configuration", href: "/portal/super-admin/config", icon: Cog },
       { label: "Commissions Config", href: "/portal/super-admin/commissions", icon: Percent },
       { label: "My Commissions", href: "/portal/super-admin/my-commissions", icon: DollarSign },
+      { label: "Disbursements", href: "/portal/super-admin/disbursements", icon: Send },
+      { label: "IntouchPay", href: "/portal/super-admin/intouch-pay", icon: DollarSign },
       { label: "Broadcast", href: "/portal/super-admin/broadcast", icon: Send },
       { label: "Undo Metrics", href: "/portal/super-admin/undo-metrics", icon: RotateCcw },
       { label: "Upload Logs", href: "/portal/super-admin/upload-logs", icon: Upload },
@@ -242,7 +244,7 @@ interface PortalLayoutProps {
 }
 
 import { useBranding } from "@/components/BrandingProvider";
-import { GET_NOTIFICATIONS, GET_ME } from "@/lib/graphql/queries";
+import { GET_NOTIFICATIONS, GET_ME, GET_TRAINER_STATS, GET_ADMIN_DASHBOARD_DATA, GET_STATS, GET_ALL_TRAINERS } from "@/lib/graphql/queries";
 import { MARK_NOTIFICATION_READ, MARK_ALL_NOTIFICATIONS_READ } from "@/lib/graphql/mutations";
 import { formatDistanceToNow } from "date-fns";
 import { usePresence } from "@/hooks/use-presence";
@@ -281,6 +283,30 @@ export function PortalLayout({ children }: PortalLayoutProps) {
   const { data: meData } = useQuery(GET_ME, {
     skip: !user || user.role !== 'student',
   });
+
+  const { data: trainerStatsData } = useQuery(GET_TRAINER_STATS, {
+    skip: !user || (user.role !== 'trainer' && user.role !== 'mentor'),
+    pollInterval: 60000,
+  });
+
+  const { data: adminDashboardData } = useQuery(GET_ADMIN_DASHBOARD_DATA, {
+    skip: !user || user.role !== 'admin',
+    pollInterval: 60000,
+  });
+
+  const { data: globalStatsData } = useQuery(GET_STATS, {
+    skip: !user || user.role !== 'super_admin',
+    pollInterval: 60000,
+  });
+
+  const { data: allTrainersData } = useQuery(GET_ALL_TRAINERS, {
+    skip: !user || user.role !== 'super_admin',
+  });
+
+  const trainerStats = (trainerStatsData as any)?.trainerStats;
+  const adminStats = (adminDashboardData as any)?.adminDashboardData?.stats;
+  const globalStats = (globalStatsData as any)?.stats;
+  const allTrainers = (allTrainersData as any)?.getAllTrainers || [];
 
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(() => {
     return localStorage.getItem('sidebar_minimized') === 'true';
@@ -699,6 +725,73 @@ export function PortalLayout({ children }: PortalLayoutProps) {
               />
             </div>
           </div>
+
+          {/* Role-based Stats - Management */}
+          {user.role === 'super_admin' && (
+            <div className="hidden lg:flex items-center gap-3 px-3 h-10 bg-background/50 border border-border/50 rounded-xl">
+              <Link to="/portal/super-admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                <Users className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-bold text-foreground">{globalStats?.totalUsers || 0}</span>
+                <span className="text-[10px] text-muted-foreground hidden xl:inline">Users</span>
+              </Link>
+              <div className="w-px h-4 bg-border/50" />
+              <Link to="/portal/super-admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                <GraduationCap className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-xs font-bold text-foreground">{globalStats?.totalStudents || 0}</span>
+                <span className="text-[10px] text-muted-foreground hidden xl:inline">Students</span>
+              </Link>
+              <div className="w-px h-4 bg-border/50" />
+              <Link to="/portal/super-admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                <UserCog className="w-3.5 h-3.5 text-purple-400" />
+                <span className="text-xs font-bold text-foreground">{allTrainers.length || 0}</span>
+                <span className="text-[10px] text-muted-foreground hidden xl:inline">Trainers</span>
+              </Link>
+            </div>
+          )}
+
+          {user.role === 'admin' && (
+            <div className="hidden lg:flex items-center gap-3 px-3 h-10 bg-background/50 border border-border/50 rounded-xl">
+              <Link to="/portal/admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                <Users className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-bold text-foreground">{adminStats?.totalUsers || 0}</span>
+                <span className="text-[10px] text-muted-foreground hidden xl:inline">Users</span>
+              </Link>
+              <div className="w-px h-4 bg-border/50" />
+              <Link to="/portal/admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                <GraduationCap className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-xs font-bold text-foreground">{adminStats?.totalStudents || 0}</span>
+                <span className="text-[10px] text-muted-foreground hidden xl:inline">Students</span>
+              </Link>
+              <div className="w-px h-4 bg-border/50" />
+              <Link to="/portal/admin/courses" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                <BookOpen className="w-3.5 h-3.5 text-green-400" />
+                <span className="text-xs font-bold text-foreground">{adminStats?.totalCourses || 0}</span>
+                <span className="text-[10px] text-muted-foreground hidden xl:inline">Courses</span>
+              </Link>
+            </div>
+          )}
+
+          {user.role === 'trainer' && (
+            <div className="hidden lg:flex items-center gap-3 px-3 h-10 bg-background/50 border border-border/50 rounded-xl">
+              <Link to="/portal/trainer/students" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                <Users className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-bold text-foreground">{trainerStats?.totalStudents || 0}</span>
+                <span className="text-[10px] text-muted-foreground hidden xl:inline">Students</span>
+              </Link>
+              <div className="w-px h-4 bg-border/50" />
+              <Link to="/portal/trainer/courses" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                <BookOpen className="w-3.5 h-3.5 text-green-400" />
+                <span className="text-xs font-bold text-foreground">{trainerStats?.activeCourses || 0}</span>
+                <span className="text-[10px] text-muted-foreground hidden xl:inline">Courses</span>
+              </Link>
+              <div className="w-px h-4 bg-border/50" />
+              <Link to="/portal/trainer/students" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-xs font-bold text-foreground">{trainerStats?.pendingReviews || 0}</span>
+                <span className="text-[10px] text-muted-foreground hidden xl:inline">Reviews</span>
+              </Link>
+            </div>
+          )}
 
           {/* Student Stats - Live Tracking */}
           {user.role === 'student' && (

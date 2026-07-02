@@ -103,6 +103,7 @@ import { lookupRequestGeoLocation } from "../services/geoip.service";
 
 
 
+import { scholarshipResolvers } from './scholarship-resolvers';
 
 const DEFAULT_WORKFLOW = [
   { id: 'todo', label: 'To Do', color: 'slate', order: 0, type: 'todo' },
@@ -188,6 +189,7 @@ import { applicationPhaseResolvers } from './application-phase-resolvers';
 import { projectTaskResolvers } from './project-task-resolvers';
 import { locationResolvers } from './location-resolvers';
 import { commissionResolvers } from './commission-resolvers';
+import { disbursementResolvers } from './disbursement-resolvers.fixed';
 import { broadcastResolvers } from './broadcast-resolvers';
 import { uploadLogResolvers } from './upload-log-resolvers';
 import { scheduledBroadcastResolvers } from './scheduled-broadcast-resolvers';
@@ -198,7 +200,7 @@ export const resolvers = {
   Query: {
     ...applicationPhaseResolvers.Query,
     ...projectTaskResolvers.Query,    ...locationResolvers.Query,
-    ...commissionResolvers.Query,    ...userReportResolvers.Query,
+    ...commissionResolvers.Query,    ...disbursementResolvers.Query,    ...scholarshipResolvers.Query,    ...userReportResolvers.Query,
     // Ensure non-nullability: schema defines [ProjectApplication!]! but missing resolvers can return null.
     // This resolver returns an empty array when the user has no applications.
     myProjectApplications: async (_: any, __: any, context: any) => {
@@ -907,12 +909,24 @@ export const resolvers = {
 
         const schoolFilter = context.user.school ? { school: context.user.school } : {};
 
+        // Collect unique instructor IDs from all courses (trainers assigned to admin's courses)
+        const instructorIds = [...new Set(
+          courses
+            .map(c => c.instructor?.toString())
+            .filter(Boolean)
+        )];
+
         // Build role-aware $or conditions
         const orConditions: any[] = [
           { _id: { $in: enrolledStudentIds } },
           { createdBy: context.user.id, role: 'trainer' },
           { ...schoolFilter, role: 'student' }
         ];
+
+        // Also include trainers assigned as instructors on courses this admin created/instructs
+        if (instructorIds.length > 0) {
+          orConditions.push({ _id: { $in: instructorIds }, role: 'trainer' });
+        }
 
         if (role) {
           // Filter $or conditions to only include the matching role,
@@ -1396,7 +1410,7 @@ export const resolvers = {
         internshipApps,
         legacyInternships
       ] = await Promise.all([
-        isSuperAdmin ? User.countDocuments() : User.countDocuments({ _id: { $in: await getAdminStudentIds(context.user.id) } }),
+        isSuperAdmin ? User.countDocuments({ isDeleted: { $ne: true } }) : User.countDocuments({ _id: { $in: await getAdminStudentIds(context.user.id) }, isDeleted: { $ne: true } }),
         Course.countDocuments(adminFilter),
         InternshipProgram.countDocuments(adminFilter),
         Payment.find(paymentFilter),
@@ -1878,7 +1892,42 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) throw new Error('Not authorized');
 
       let targetCreatedBy = context.user.role !== 'super_admin' ? context.user.id : createdBy;
-      const userFilter = targetCreatedBy ? { _id: { $in: await getAdminStudentIds(targetCreatedBy) } } : {};
+      // Use the same user scope as the `users` resolver for consistency
+      // (enrolled students + trainers created by admin + same-school students + trainer instructors)
+      const userFilter = targetCreatedBy ? await (async () => {
+        const adminCourses = await Course.find({
+          $or: [{ instructor: targetCreatedBy }, { createdBy: targetCreatedBy }]
+        });
+        const enrolledStudentIds = adminCourses.reduce((acc: any[], course: any) => {
+          return [...acc, ...course.studentsEnrolled];
+        }, []);
+
+        // Collect unique instructor IDs from all courses (trainers assigned to admin's courses)
+        const instructorIds = [...new Set(
+          adminCourses
+            .map(c => c.instructor?.toString())
+            .filter(Boolean)
+        )];
+
+        const adminUser = await User.findById(targetCreatedBy).select('school').lean();
+        const schoolFilter = adminUser?.school ? { school: adminUser.school } : {};
+
+        const orConditions: any[] = [
+          { _id: { $in: enrolledStudentIds } },
+          { createdBy: targetCreatedBy, role: 'trainer' },
+          { ...schoolFilter, role: 'student' }
+        ];
+
+        // Also include trainers assigned as instructors on courses
+        if (instructorIds.length > 0) {
+          orConditions.push({ _id: { $in: instructorIds }, role: 'trainer' });
+        }
+
+        return {
+          $or: orConditions,
+          isDeleted: { $ne: true }
+        };
+      })() : { isDeleted: { $ne: true } };
       const courseFilter = targetCreatedBy ? { $or: [{ createdBy: targetCreatedBy }, { instructor: targetCreatedBy }], isDeleted: false } : { isDeleted: false };
       const programFilter = targetCreatedBy ? { createdBy: targetCreatedBy, isDeleted: false } : { isDeleted: false };
 
@@ -2025,7 +2074,40 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) throw new Error('Not authorized');
 
       let targetCreatedBy = context.user.role !== 'super_admin' ? context.user.id : createdBy;
-      const userFilter = targetCreatedBy ? { _id: { $in: await getAdminStudentIds(targetCreatedBy) }, isDeleted: { $ne: true } } : { isDeleted: { $ne: true } };
+      // Use the same broader user scope as the `users` resolver for consistency
+      // (enrolled students + trainers created by admin + same-school students + trainer instructors)
+      const userFilter = targetCreatedBy ? await (async () => {
+        const adminCourses = await Course.find({
+          $or: [{ instructor: targetCreatedBy }, { createdBy: targetCreatedBy }]
+        });
+        const enrolledStudentIds = adminCourses.reduce((acc: any[], course: any) => {
+          return [...acc, ...course.studentsEnrolled];
+        }, []);
+
+        const instructorIds = [...new Set(
+          adminCourses
+            .map(c => c.instructor?.toString())
+            .filter(Boolean)
+        )];
+
+        const adminUser = await User.findById(targetCreatedBy).select('school').lean();
+        const schoolFilter = adminUser?.school ? { school: adminUser.school } : {};
+
+        const orConditions: any[] = [
+          { _id: { $in: enrolledStudentIds } },
+          { createdBy: targetCreatedBy, role: 'trainer' },
+          { ...schoolFilter, role: 'student' }
+        ];
+
+        if (instructorIds.length > 0) {
+          orConditions.push({ _id: { $in: instructorIds }, role: 'trainer' });
+        }
+
+        return {
+          $or: orConditions,
+          isDeleted: { $ne: true }
+        };
+      })() : { isDeleted: { $ne: true } };
       const courseFilter = targetCreatedBy ? { $or: [{ createdBy: targetCreatedBy }, { instructor: targetCreatedBy }], isDeleted: false } : { isDeleted: false };
 
       const adminOwnedCourses = targetCreatedBy ? await Course.find(courseFilter).distinct('_id') : null;
@@ -4051,6 +4133,15 @@ export const resolvers = {
         throw new Error('Not authorized');
       }
 
+      // Phone validation: if publishing, instructor must have a valid phone number for commission payouts
+      if ((args.status || 'published') === 'published') {
+        const instructorIdToCheck = instructorId || context.user.id;
+        const instructor = await User.findById(instructorIdToCheck).select('phone').lean();
+        if (!instructor || !instructor.phone || instructor.phone.trim() === '') {
+          throw new Error('Cannot publish course: Instructor must have a valid phone number registered for commission payouts. Please set a phone number in your profile first.');
+        }
+      }
+
       const course = new Course({
         ...args,
         instructor: instructorId || context.user.id,
@@ -4075,6 +4166,15 @@ export const resolvers = {
 
       const updateData: any = { ...args };
       if (instructorId) updateData.instructor = instructorId;
+
+      // Phone validation: if publishing, instructor must have a valid phone number for commission payouts
+      if (args.status === 'published') {
+        const instructorIdToCheck = instructorId || course.instructor.toString();
+        const instructor = await User.findById(instructorIdToCheck).select('phone').lean();
+        if (!instructor || !instructor.phone || instructor.phone.trim() === '') {
+          throw new Error('Cannot publish course: Instructor must have a valid phone number registered for commission payouts. Please set a phone number in your profile first.');
+        }
+      }
 
       // Restrict financial and identity updates to admins/super_admins only
       if (updateData.modules) {
@@ -8246,7 +8346,7 @@ export const resolvers = {
       };
     },
     ...applicationPhaseResolvers.Mutation,
-    ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,
+    ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,
 
     assignDeveloperToProject: async (_: any, { projectId, developerId, role, checklistTasks }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {

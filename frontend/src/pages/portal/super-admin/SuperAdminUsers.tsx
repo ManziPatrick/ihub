@@ -40,6 +40,7 @@ import {
   Pencil,
   Lock,
   FileSpreadsheet,
+  Award,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -62,12 +63,14 @@ const navigate = (to: string) => {
 };
 import { DELETE_USER, UPDATE_USER } from "@/lib/graphql/mutations";
 import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
+import { ScholarshipDialog } from "@/components/portal/dialogs/ScholarshipDialog";
 import { toast } from "sonner";
 
 export default function SuperAdminUsers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showScholarshipDialog, setShowScholarshipDialog] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
   const [adminFilter, setAdminFilter] = useState("all");
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -261,10 +264,19 @@ export default function SuperAdminUsers() {
               View and manage all platform users
             </p>
           </div>
-          <Button variant="outline" onClick={() => setShowExportDialog(true)}>
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowExportDialog(true)}>
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+            <Button
+              variant="gold"
+              onClick={() => setShowScholarshipDialog(true)}
+            >
+              <Award className="w-4 h-4 mr-2" />
+              Grant Scholarship
+            </Button>
+          </div>
         </motion.div>
 
         {/* Stats */}
@@ -616,6 +628,11 @@ export default function SuperAdminUsers() {
       <ExportDataDialog
         open={showExportDialog}
         onOpenChange={setShowExportDialog}
+      />
+
+      <ScholarshipDialog
+        open={showScholarshipDialog}
+        onOpenChange={setShowScholarshipDialog}
       />
 
       {/* ── VIEW PROFILE SHEET ── */}

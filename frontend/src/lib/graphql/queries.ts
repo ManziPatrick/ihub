@@ -2986,6 +2986,98 @@ export const GET_ALL_COMMISSION_REPORTS = gql`
   }
 `;
 
+// ========== DISBURSEMENT QUERIES ==========
+export const GET_ALL_DISBURSEMENTS = gql`
+  query GetAllDisbursements($page: Int, $limit: Int, $status: String, $ownerId: ID) {
+    getAllDisbursements(page: $page, limit: $limit, status: $status, ownerId: $ownerId) {
+      items {
+        id
+        paymentId
+        customerId
+        ownerId
+        ownerPhone
+        itemId
+        itemType
+        grossAmount
+        platformCommission
+        commissionType
+        commissionValue
+        netAmount
+        status
+        intouchTransactionRef
+        intouchReferenceId
+        failureReason
+        retryCount
+        autoDisbursement
+        statusHistory {
+          status
+          timestamp
+          note
+        }
+        createdAt
+        updatedAt
+      }
+      pagination {
+        ...PaginationFragment
+      }
+    }
+  }
+  ${PAGINATION_FRAGMENT}
+`;
+
+export const GET_MY_DISBURSEMENTS = gql`
+  query GetMyDisbursements($page: Int, $limit: Int, $status: String) {
+    getMyDisbursements(page: $page, limit: $limit, status: $status) {
+      items {
+        id
+        paymentId
+        ownerPhone
+        itemId
+        itemType
+        grossAmount
+        platformCommission
+        netAmount
+        status
+        intouchTransactionRef
+        intouchReferenceId
+        failureReason
+        retryCount
+        createdAt
+        updatedAt
+      }
+      pagination {
+        ...PaginationFragment
+      }
+    }
+  }
+  ${PAGINATION_FRAGMENT}
+`;
+
+export const GET_DISBURSEMENT_STATS = gql`
+  query GetDisbursementStats {
+    getDisbursementStats {
+      totalDisbursements
+      pendingCount
+      processingCount
+      successfulCount
+      failedCount
+      totalDisbursed
+      totalCommission
+      pendingToDisburse
+    }
+  }
+`;
+
+export const GET_PLATFORM_COMMISSION_CONFIG = gql`
+  query GetPlatformCommissionConfig {
+    getPlatformCommissionConfig {
+      type
+      value
+      autoDisbursement
+    }
+  }
+`;
+
 export const GET_AVAILABLE_ADMINS = gql`
   query GetAvailableAdmins {
     getAvailableAdmins {
@@ -2994,6 +3086,17 @@ export const GET_AVAILABLE_ADMINS = gql`
       fullName
       email
       role
+    }
+  }
+`;
+
+export const GET_INTOUCH_BALANCE = gql`
+  query GetIntouchBalance {
+    getIntouchBalance {
+      balance
+      currency
+      success
+      message
     }
   }
 `;
@@ -3019,6 +3122,73 @@ export const GET_APPLICATION_PROGRESS = gql`
         phaseId
         completedAt
       }
+    }
+  }
+`;
+
+// ========== SCHOLARSHIP QUERIES ==========
+export const GET_ALL_SCHOLARSHIPS = gql`
+  query GetAllScholarships($page: Int, $limit: Int, $status: String, $type: String) {
+    getAllScholarships(page: $page, limit: $limit, status: $status, type: $type) {
+      items {
+        id
+        userId
+        user {
+          id
+          username
+          fullName
+          email
+        }
+        grantedBy
+        grantedByUser {
+          id
+          username
+          fullName
+        }
+        type
+        itemId
+        itemTitle
+        status
+        reason
+        revokedAt
+        revokedBy
+        revokedByUser {
+          id
+          username
+        }
+        revokedReason
+        createdAt
+        updatedAt
+      }
+      pagination {
+        ...PaginationFragment
+      }
+    }
+  }
+  ${PAGINATION_FRAGMENT}
+`;
+
+export const GET_USER_SCHOLARSHIPS = gql`
+  query GetUserScholarships($userId: ID!) {
+    getUserScholarships(userId: $userId) {
+      id
+      type
+      itemId
+      itemTitle
+      status
+      reason
+      createdAt
+    }
+  }
+`;
+
+export const GET_SCHOLARSHIP_STATS = gql`
+  query GetScholarshipStats {
+    getScholarshipStats {
+      totalScholarships
+      activeScholarships
+      courseScholarships
+      internshipScholarships
     }
   }
 `;

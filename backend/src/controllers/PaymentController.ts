@@ -15,6 +15,7 @@ import { Payment } from '../models/Payment';
 import { InternshipProgram } from '../models/internship/InternshipProgram';
 import { CourseProgress } from '../models/CourseProgress';
 import { sendPaymentConfirmation, sendCourseEnrollmentConfirmation } from '../services/email.service';
+import { disbursementService } from '../services/disbursement.service';
 
 // Extend Express Request to include user property
 declare global {
@@ -508,6 +509,9 @@ class PaymentController {
         internshipIds
       });
 
+      // Track payment record ID for disbursement (declare before try block)
+      let paymentRecordId: string = transaction._id.toString();
+
       // 1. Update the Payment record (for accounting/history)
       try {
         // Find existing pending payment first (created during initiation)
@@ -517,6 +521,7 @@ class PaymentController {
         if (paymentRecord) {
           paymentRecord.status = 'completed';
           await paymentRecord.save();
+          paymentRecordId = paymentRecord._id.toString();
           console.log(`Payment record ${paymentRecord._id} updated to completed`);
         } else {
           // Fallback: create if it doesn't exist for some reason
@@ -542,6 +547,7 @@ class PaymentController {
             internshipIds: internshipIds || [], 
           });
           await paymentRecord.save();
+          paymentRecordId = paymentRecord._id.toString();
           console.log(`New payment record created for transaction ${transaction._id}`);
         }
       } catch (err) {
@@ -671,30 +677,65 @@ class PaymentController {
         });
       }
 
-      // 5. Send email confirmations
-      try {
-        // Get user info for emails
-        const user = await User.findById(userId).select('email username fullName');
-        if (user) {
+      // 5. Auto-disbursement to owner (fire-and-forget)
+      setImmediate(async () => {
+        try {
+          const allItemIds = [
+            ...(courseIds || []),
+            ...(courseId ? [courseId] : []),
+            ...(internshipIds || []),
+            ...(internshipProgramId ? [internshipProgramId] : []),
+          ];
+
+          if (allItemIds.length > 0) {
+            for (const itemId of allItemIds) {
+              const itemType = internshipIds?.includes(itemId) || internshipProgramId === itemId
+                ? 'internship'
+                : 'course';
+
+              const result = await disbursementService.processDisbursement(
+                paymentRecordId,
+                userId.toString(),
+                itemId,
+                itemType,
+                amount
+              );
+
+              if (result.success) {
+                console.log(`✅ Auto-disbursement completed for ${itemType} ${itemId}: ${result.netAmount} RWF to owner`);
+              } else {
+                console.warn(`⚠️ Auto-disbursement note for ${itemType} ${itemId}: ${result.message}`);
+              }
+            }
+          }
+        } catch (disburseErr) {
+          console.error('Auto-disbursement error:', disburseErr);
+        }
+      });
+
+      // 6. Send email confirmations (fire-and-forget — never block payment response)
+      setImmediate(async () => {
+        try {
+          const user = await User.findById(userId).select('email username fullName');
+          if (!user?.email) return;
+
           const studentName = user.fullName || user.username || 'Student';
           const userEmail = user.email;
 
-          // Send payment receipt for any payment
-          if (userEmail) {
-            const invoiceNumber = `INV-${Date.now()}`;
-            await sendPaymentConfirmation(
-              userEmail,
-              studentName,
-              description || 'Course Enrollment',
-              amount || 0,
-              'RWF',
-              invoiceNumber
-            );
-          }
+          // Send payment receipt
+          const invoiceNumber = `INV-${Date.now()}`;
+          await sendPaymentConfirmation(
+            userEmail,
+            studentName,
+            description || 'Course Enrollment',
+            amount || 0,
+            'RWF',
+            invoiceNumber
+          );
 
-          // Send course enrollment confirmation if courses were purchased
+          // Send course enrollment confirmation for each course
           const allCourseIds = [...(courseIds || []), ...(courseId ? [courseId] : [])];
-          if (allCourseIds.length > 0 && userEmail) {
+          if (allCourseIds.length > 0) {
             const courses = await Course.find({ _id: { $in: allCourseIds } }).select('title').lean();
             for (const course of courses) {
               await sendCourseEnrollmentConfirmation(
@@ -704,10 +745,10 @@ class PaymentController {
               );
             }
           }
+        } catch (emailErr) {
+          console.error('Failed to send payment confirmation email:', emailErr);
         }
-      } catch (emailErr) {
-        console.error('Failed to send payment confirmation email:', emailErr);
-      }
+      });
 
       transaction.processedAt = new Date();
       await transaction.save();
@@ -835,8 +876,8 @@ class PaymentController {
    * Receives webhooks for payment status updates from IntouchPay
    */
   async handleIntouchCallback(req: Request, res: Response) {
+    const payload = req.body;
     try {
-      const payload = req.body;
       console.log('🔔 Intouch Callback Received:', JSON.stringify(payload).substring(0, 600));
 
       // Parse the Intouch webhook payload
@@ -852,7 +893,11 @@ class PaymentController {
 
       if (!transaction) {
         console.warn(`❌ Intouch Callback: Transaction not found for ref ${parsed.requestTransactionId}`);
-        return res.status(200).json({ message: 'success', success: true });
+        return res.status(200).json({
+          message: 'success',
+          success: true,
+          request_id: parsed.requestTransactionId || payload?.jsonpayload?.requesttransactionid || null,
+        });
       }
 
       // Update status if changed
@@ -878,7 +923,16 @@ class PaymentController {
       });
     } catch (error) {
       console.error('❌ Intouch Callback Error:', error);
-      return res.status(200).json({ message: 'success', success: true });
+      // Try to extract request_id from the incoming payload to send a valid ack
+      const reqId =
+        payload?.jsonpayload?.requesttransactionid ||
+        payload?.requesttransactionid ||
+        null;
+      return res.status(200).json({
+        message: 'success',
+        success: true,
+        request_id: reqId,
+      });
     }
   }
 
