@@ -1,5 +1,5 @@
 // CreateCourse - standalone course creation wizard (v2)
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,6 +51,7 @@ import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_USERS, GET_COURSES_SUMMARY, GET_ADMIN_DASHBOARD_DATA, GET_CATEGORIES } from "@/lib/graphql/queries";
 import { CREATE_COURSE } from "@/lib/graphql/mutations";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -468,6 +469,7 @@ const STEPS = [
 
 export default function CreateCourse() {
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({ 0: true });
@@ -482,7 +484,7 @@ export default function CreateCourse() {
     category: "Development",
     level: "Beginner",
     thumbnail: "",
-    instructorId: "",
+    instructorId: currentUser?.id || "",
     submissionRequired: true,
     status: "draft",
     price: 0,
@@ -494,6 +496,12 @@ export default function CreateCourse() {
     applicationQuestions: [] as { label: string; type: string; required: boolean; options?: string[]; maxFileSize?: number; acceptedFileTypes?: string[] }[],
     modules: [] as any[]
   });
+
+  useEffect(() => {
+    if (currentUser?.id && !formData.instructorId) {
+      setFormData(prev => ({ ...prev, instructorId: currentUser.id }));
+    }
+  }, [currentUser?.id, formData.instructorId]);
 
   // Handle parsed document data — populate form with uploaded document content
   const handleParsedCourseData = (data: any) => {

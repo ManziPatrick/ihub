@@ -4159,17 +4159,28 @@ export const resolvers = {
       const course = await Course.findById(id);
       if (!course) throw new Error('Course not found');
 
-      // Check ownership or admin role
-      if (course.instructor.toString() !== context.user.id && context.user.role !== 'super_admin' && context.user.role !== 'admin') {
+      const courseInstructorId = course.instructor ? course.instructor.toString() : null;
+      const isOwnerInstructor = courseInstructorId === context.user.id;
+      const canUpdateCourse = isOwnerInstructor || context.user.role === 'super_admin' || context.user.role === 'admin';
+      if (!canUpdateCourse) {
         throw new Error('Not authorized to update this course');
       }
 
       const updateData: any = { ...args };
-      if (instructorId) updateData.instructor = instructorId;
+      if (instructorId) {
+        if (context.user.role === 'admin' || context.user.role === 'super_admin') {
+          updateData.instructor = instructorId;
+        } else if (isOwnerInstructor) {
+          if (instructorId && instructorId !== context.user.id) {
+            throw new Error('Trainers cannot reassign courses to other instructors');
+          }
+          updateData.instructor = context.user.id;
+        }
+      }
 
       // Phone validation: if publishing, instructor must have a valid phone number for commission payouts
       if (args.status === 'published') {
-        const instructorIdToCheck = instructorId || course.instructor.toString();
+        const instructorIdToCheck = updateData.instructor || course.instructor.toString();
         const instructor = await User.findById(instructorIdToCheck).select('phone').lean();
         if (!instructor || !instructor.phone || instructor.phone.trim() === '') {
           throw new Error('Cannot publish course: Instructor must have a valid phone number registered for commission payouts. Please set a phone number in your profile first.');
