@@ -3125,10 +3125,161 @@ export const typeDefs = `#graphql
     getCommissionAdmins: [User!]!
   }
 
+  # ─── Disbursement / Commission Distribution Types ─────────────────────────
+  type CommissionDisbursement {
+    id: ID!
+    paymentId: ID!
+    customerId: ID!
+    ownerId: ID!
+    ownerPhone: String!
+    itemId: ID!
+    itemType: String!
+    grossAmount: Float!
+    platformCommission: Float!
+    commissionType: String!
+    commissionValue: Float!
+    netAmount: Float!
+    status: String!
+    intouchTransactionRef: String
+    intouchReferenceId: String
+    failureReason: String
+    retryCount: Int!
+    autoDisbursement: Boolean!
+    statusHistory: [DisbursementStatusEntry!]!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type DisbursementStatusEntry {
+    status: String!
+    timestamp: String!
+    note: String
+  }
+
+  type DisbursementResponse {
+    items: [CommissionDisbursement!]!
+    pagination: PaginationInfo!
+  }
+
+  type DisbursementStats {
+    totalDisbursements: Int!
+    pendingCount: Int!
+    processingCount: Int!
+    successfulCount: Int!
+    failedCount: Int!
+    totalDisbursed: Float!
+    totalCommission: Float!
+    pendingToDisburse: Float!
+  }
+
+  # ─── IntouchPay Types ──────────────────────────────────────────────────
+  type IntouchBalance {
+    balance: Float!
+    currency: String!
+    success: Boolean!
+    message: String
+    raw: String
+  }
+
+  type SendMoneyResult {
+    success: Boolean!
+    message: String!
+    transactionId: String
+    referenceId: String
+    amount: Float
+    phoneNumber: String
+  }
+
+  extend type Query {
+    # Disbursement queries
+    getAllDisbursements(page: Int, limit: Int, status: String, ownerId: ID): DisbursementResponse!
+    getMyDisbursements(page: Int, limit: Int, status: String): DisbursementResponse!
+    getDisbursementStats: DisbursementStats!
+    getDisbursement(id: ID!): CommissionDisbursement
+    getPlatformCommissionConfig: CommissionPlatformConfig!
+
+    # IntouchPay queries
+    getIntouchBalance: IntouchBalance!
+  }
+
+  type CommissionPlatformConfig {
+    type: String!
+    value: Float!
+    autoDisbursement: Boolean!
+  }
+
   extend type Mutation {
-    setCommission(adminId: ID!, scope: String!, scopeId: ID, scopeTitle: String, percentage: Float!, description: String): CommissionConfig!
+    # Commission config mutations
+    updatePlatformCommissionConfig(type: String!, value: Float!): CommissionPlatformConfig!
+    toggleAutoDisbursement(enabled: Boolean!): CommissionPlatformConfig!
+
+    # Disbursement mutations
+    retryDisbursement(id: ID!): CommissionDisbursement!
+    manualDisburse(paymentId: ID!, amount: Float!, phoneNumber: String!, reason: String): CommissionDisbursement!
+
+    # IntouchPay mutations — direct money sending (salary, mentor/trainer payments)
+    sendDirectMoney(amount: Float!, phoneNumber: String!, reason: String): SendMoneyResult!
+
+    # IntouchPay deposit — initiate CASHIN (admin top-up via their own phone)
+    requestIntouchPayment(amount: Float!, phoneNumber: String!, reason: String): SendMoneyResult!
+
+    # Original commission config
+    setCommission(adminId: ID!, scope: String!, scopeId: ID, scopeTitle: String, type: String, percentage: Float, fixedAmount: Float, description: String): CommissionConfig!
     toggleCommission(id: ID!): CommissionConfig!
     deleteCommission(id: ID!): Boolean!
+  }
+
+  # ─── Scholarship Types ──────────────────────────────────────────────────────
+  type Scholarship {
+    id: ID!
+    userId: ID!
+    user: User
+    grantedBy: ID!
+    grantedByUser: User
+    type: String! # 'course' | 'internship'
+    itemId: ID!
+    itemTitle: String!
+    status: String! # 'active' | 'revoked'
+    reason: String
+    revokedAt: String
+    revokedBy: ID
+    revokedByUser: User
+    revokedReason: String
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type ScholarshipResponse {
+    items: [Scholarship!]!
+    pagination: PaginationInfo!
+  }
+
+  extend type Query {
+    getAllScholarships(page: Int, limit: Int, status: String, type: String): ScholarshipResponse!
+    getUserScholarships(userId: ID!): [Scholarship!]!
+    getScholarshipStats: ScholarshipStats!
+  }
+
+  type ScholarshipStats {
+    totalScholarships: Int!
+    activeScholarships: Int!
+    courseScholarships: Int!
+    internshipScholarships: Int!
+  }
+
+  extend type Mutation {
+    grantScholarship(
+      userId: ID!
+      type: String! # 'course' | 'internship'
+      itemId: ID!
+      itemTitle: String!
+      reason: String
+    ): Scholarship!
+
+    revokeScholarship(
+      id: ID!
+      reason: String!
+    ): Scholarship!
   }
 
   # ─── Bulk Notification Types ────────────────────────────────────────────────

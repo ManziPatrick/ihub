@@ -417,10 +417,14 @@ export default function PortalSettings() {
                         <Phone className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
                         <Input
                           value={profileForm.phone}
+                          placeholder="+2507XXXXXXXX"
                           onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                           className="pl-9"
                         />
                       </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        Used for commission payouts and disbursements via IntouchPay.
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Location</label>

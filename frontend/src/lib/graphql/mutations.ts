@@ -1737,6 +1737,82 @@ export const MARK_ALL_NOTIFICATIONS_READ = gql`
   }
 `;
 
+// ========== DISBURSEMENT MUTATIONS ==========
+export const UPDATE_PLATFORM_COMMISSION_CONFIG = gql`
+  mutation UpdatePlatformCommissionConfig($type: String!, $value: Float!) {
+    updatePlatformCommissionConfig(type: $type, value: $value) {
+      type
+      value
+      autoDisbursement
+    }
+  }
+`;
+
+export const TOGGLE_AUTO_DISBURSEMENT = gql`
+  mutation ToggleAutoDisbursement($enabled: Boolean!) {
+    toggleAutoDisbursement(enabled: $enabled) {
+      type
+      value
+      autoDisbursement
+    }
+  }
+`;
+
+export const RETRY_DISBURSEMENT = gql`
+  mutation RetryDisbursement($id: ID!) {
+    retryDisbursement(id: $id) {
+      id
+      status
+      retryCount
+      intouchTransactionRef
+      intouchReferenceId
+      failureReason
+      statusHistory {
+        status
+        timestamp
+        note
+      }
+    }
+  }
+`;
+
+export const MANUAL_DISBURSE = gql`
+  mutation ManualDisburse($paymentId: ID!, $amount: Float!, $phoneNumber: String!, $reason: String) {
+    manualDisburse(paymentId: $paymentId, amount: $amount, phoneNumber: $phoneNumber, reason: $reason) {
+      id
+      status
+      netAmount
+      intouchReferenceId
+    }
+  }
+`;
+
+export const SEND_DIRECT_MONEY = gql`
+  mutation SendDirectMoney($amount: Float!, $phoneNumber: String!, $reason: String) {
+    sendDirectMoney(amount: $amount, phoneNumber: $phoneNumber, reason: $reason) {
+      success
+      message
+      transactionId
+      referenceId
+      amount
+      phoneNumber
+    }
+  }
+`;
+
+export const REQUEST_INTOUCH_PAYMENT = gql`
+  mutation RequestIntouchPayment($amount: Float!, $phoneNumber: String!, $reason: String) {
+    requestIntouchPayment(amount: $amount, phoneNumber: $phoneNumber, reason: $reason) {
+      success
+      message
+      transactionId
+      referenceId
+      amount
+      phoneNumber
+    }
+  }
+`;
+
 export const UPDATE_PRESENCE = gql`
   mutation UpdatePresence {
     updatePresence
@@ -2181,6 +2257,33 @@ export const ASSIGN_ADMIN_TO_CLIENT = gql`
         fullName
         avatar
       }
+    }
+  }
+`;
+
+// ========== SCHOLARSHIP MUTATIONS ==========
+export const GRANT_SCHOLARSHIP = gql`
+  mutation GrantScholarship($userId: ID!, $type: String!, $itemId: ID!, $itemTitle: String!, $reason: String) {
+    grantScholarship(userId: $userId, type: $type, itemId: $itemId, itemTitle: $itemTitle, reason: $reason) {
+      id
+      userId
+      type
+      itemId
+      itemTitle
+      status
+      reason
+      createdAt
+    }
+  }
+`;
+
+export const REVOKE_SCHOLARSHIP = gql`
+  mutation RevokeScholarship($id: ID!, $reason: String!) {
+    revokeScholarship(id: $id, reason: $reason) {
+      id
+      status
+      revokedAt
+      revokedReason
     }
   }
 `;

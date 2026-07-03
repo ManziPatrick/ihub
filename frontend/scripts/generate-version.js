@@ -30,10 +30,12 @@ try {
   commitHash = Date.now().toString(36);
 }
 
+const now = new Date();
 const version = {
   hash: commitHash,
-  timestamp: Date.now(),
-  buildTime: new Date().toISOString(),
+  timestamp: now.getTime(),
+  buildTime: now.toISOString(),
+  buildTimeLocal: now.toLocaleString(),
 };
 
 const distPath = path.join(__dirname, "..", "dist");
@@ -46,5 +48,5 @@ if (!fs.existsSync(distPath)) {
 const outputPath = path.join(distPath, "version.json");
 fs.writeFileSync(outputPath, JSON.stringify(version, null, 2));
 console.log(
-  `📦 Version file generated: ${version.buildTime} (${version.hash})`
+  `📦 Version file generated: ${version.buildTime} (${version.hash}) — local: ${version.buildTimeLocal}`
 );

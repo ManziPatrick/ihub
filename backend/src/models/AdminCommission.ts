@@ -8,8 +8,12 @@ export interface IAdminCommission extends Document {
   scopeId?: mongoose.Types.ObjectId;
   /** Scope title for display (e.g., course title) */
   scopeTitle?: string;
-  /** Commission percentage (0-100) */
+  /** Commission type: 'percentage' or 'fixed' */
+  type: 'percentage' | 'fixed';
+  /** Commission percentage (0-100) — used when type is 'percentage' */
   percentage: number;
+  /** Fixed amount — used when type is 'fixed' */
+  fixedAmount: number;
   /** Optional description */
   description?: string;
   /** Whether this commission is active */
@@ -40,11 +44,21 @@ const AdminCommissionSchema: Schema = new Schema(
       type: String,
       default: null,
     },
+    type: {
+      type: String,
+      enum: ['percentage', 'fixed'],
+      default: 'percentage',
+    },
     percentage: {
       type: Number,
-      required: true,
+      default: 0,
       min: 0,
       max: 100,
+    },
+    fixedAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
     description: {
       type: String,

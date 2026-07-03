@@ -90,6 +90,8 @@ const SuperAdminTools = lazy(() => import("@/pages/portal/admin/AdminTools"));
 const SuperAdminMap = lazy(() => import("@/pages/portal/super-admin/SuperAdminMap"));
 const UserReportPage = lazy(() => import("@/pages/portal/super-admin/UserReportPage"));
 const SuperAdminCommissionConfig = lazy(() => import("@/pages/portal/super-admin/SuperAdminCommissionConfig"));
+const SuperAdminDisbursements = lazy(() => import("@/pages/portal/super-admin/SuperAdminDisbursements"));
+const SuperAdminIntouchPay = lazy(() => import("@/pages/portal/super-admin/SuperAdminIntouchPay"));
 const AdminCommissionDashboard = lazy(() => import("@/pages/portal/super-admin/AdminCommissionDashboard"));
 const SuperAdminBroadcast = lazy(() => import("@/pages/portal/super-admin/SuperAdminBroadcast"));
 const SuperAdminUploadLogs = lazy(() => import("@/pages/portal/super-admin/SuperAdminUploadLogs"));
@@ -234,6 +236,8 @@ export function AnimatedRoutes() {
           <Route path="/portal/super-admin/user-map" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminMap /></ProtectedRoute>} />
           <Route path="/portal/super-admin/user-report/:userId" element={<ProtectedRoute allowedRoles={["super_admin"]}><UserReportPage /></ProtectedRoute>} />
           <Route path="/portal/super-admin/commissions" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminCommissionConfig /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/disbursements" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminDisbursements /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/intouch-pay" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminIntouchPay /></ProtectedRoute>} />
           <Route path="/portal/super-admin/my-commissions" element={<ProtectedRoute allowedRoles={["super_admin"]}><AdminCommissionDashboard /></ProtectedRoute>} />
           <Route path="/portal/super-admin/completed-users" element={<ProtectedRoute allowedRoles={["super_admin"]}><AdminCompletedUsers /></ProtectedRoute>} />
           <Route path="/portal/super-admin/broadcast" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminBroadcast /></ProtectedRoute>} />

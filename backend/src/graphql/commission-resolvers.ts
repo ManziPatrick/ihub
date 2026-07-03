@@ -259,14 +259,25 @@ export const commissionResolvers = {
         throw new Error('Not authorized');
       }
 
-      const { adminId, scope, scopeId, scopeTitle, percentage, description } = args;
+      const { adminId, scope, scopeId, scopeTitle, type, percentage, fixedAmount, description } = args;
 
-      if (!adminId || !scope || percentage == null) {
-        throw new Error('adminId, scope, and percentage are required');
+      if (!adminId || !scope) {
+        throw new Error('adminId and scope are required');
       }
 
-      if (percentage < 0 || percentage > 100) {
-        throw new Error('Percentage must be between 0 and 100');
+      const commissionType = type || 'percentage';
+
+      if (commissionType === 'percentage') {
+        if (percentage == null) {
+          throw new Error('percentage is required when type is "percentage"');
+        }
+        if (percentage < 0 || percentage > 100) {
+          throw new Error('Percentage must be between 0 and 100');
+        }
+      } else if (commissionType === 'fixed') {
+        if (fixedAmount == null || fixedAmount < 0) {
+          throw new Error('fixedAmount is required and must be >= 0 when type is "fixed"');
+        }
       }
 
       // Upsert: update existing or create new
@@ -276,12 +287,20 @@ export const commissionResolvers = {
         filter.scopeId = scopeId;
       }
 
-      const update = {
-        percentage,
+      const update: any = {
         description: description || '',
         scopeTitle: scopeTitle || '',
         active: true,
+        type: commissionType,
       };
+
+      if (commissionType === 'percentage') {
+        update.percentage = percentage;
+        update.fixedAmount = 0;
+      } else {
+        update.fixedAmount = fixedAmount;
+        update.percentage = 0;
+      }
 
       const config = await AdminCommission.findOneAndUpdate(
         filter,

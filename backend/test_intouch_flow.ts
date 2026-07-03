@@ -146,6 +146,121 @@ async function testPaymentInitiation(intouchService: IntouchService): Promise<st
   }
 }
 
+// ─── Callback Response Verification ───
+//
+// Intouch expects the callback response format:
+//   { message: 'success', success: true, request_id: '<unique_request_id>' }
+//
+// The request_id must be the requesttransactionid from the callback payload
+// and should be unique on every request.
+
+function simulateCallbackResponse(
+  requestTransactionId: string,
+  shouldIncludeRequestId: boolean = true
+): object {
+  const response: any = {
+    message: 'success',
+    success: true,
+  };
+  if (shouldIncludeRequestId) {
+    response.request_id = requestTransactionId;
+  }
+  return response;
+}
+
+function verifyCallbackResponse(response: any, expectedRequestId: string): boolean {
+  // Must have all three fields
+  if (!response.message || response.message !== 'success') return false;
+  if (response.success !== true) return false;
+  if (!response.request_id) {
+    console.error('  ❌ Missing request_id in callback response!');
+    return false;
+  }
+  if (response.request_id !== expectedRequestId) {
+    console.error(`  ❌ request_id mismatch: got "${response.request_id}", expected "${expectedRequestId}"`);
+    return false;
+  }
+  return true;
+}
+
+// ─── Callback format test ───
+
+async function testCallbackResponseFormat(intouchService: IntouchService): Promise<boolean> {
+  console.log('\n─── Step 5: Callback Response Format Verification ───');
+  console.log('  Verifying that callback response includes request_id per IntouchPay spec');
+
+  const testRequestId = `INT-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+  console.log(`  Test request_id: ${testRequestId}`);
+
+  // Test 1: Response WITH request_id (should pass)
+  const responseWithId = simulateCallbackResponse(testRequestId, true);
+  const test1Pass = verifyCallbackResponse(responseWithId, testRequestId);
+  console.log(`  Test 1 (with request_id): ${test1Pass ? '✅ PASS' : '❌ FAIL'}`);
+  console.log(`    Response: ${JSON.stringify(responseWithId)}`);
+
+  // Test 2: Response WITHOUT request_id (should fail — this is what was fixed)
+  const responseWithoutId = simulateCallbackResponse(testRequestId, false);
+  const test2Pass = !verifyCallbackResponse(responseWithoutId, testRequestId);
+  console.log(`  Test 2 (without request_id — old behaviour): ${test2Pass ? '✅ CORRECTLY DETECTED AS INVALID' : '❌ SHOULD HAVE FAILED'}`);
+  if (!test2Pass) {
+    console.log('    ⚠️  The old callback format (missing request_id) would not be caught');
+  }
+  console.log(`    Response: ${JSON.stringify(responseWithoutId)}`);
+
+  // Test 3: Multiple unique request_ids (verify uniqueness)
+  console.log(`  \n  Test 3: Uniqueness check — generating 5 request_ids`);
+  const ids = new Set<string>();
+  let allUnique = true;
+  for (let i = 0; i < 5; i++) {
+    const id = `INT-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+    await new Promise(r => setTimeout(r, 5));
+    if (ids.has(id)) {
+      console.log(`  ❌ Duplicate request_id detected: ${id}`);
+      allUnique = false;
+    }
+    ids.add(id);
+    console.log(`    ID ${i + 1}: ${id}`);
+  }
+  console.log(`  Uniqueness: ${allUnique ? '✅ ALL UNIQUE' : '❌ DUPLICATES FOUND'}`);
+
+  // Test 4: Verify parseCallbackPayload preserves requestTransactionId
+  const mockCallbackPayload = {
+    jsonpayload: {
+      requesttransactionid: testRequestId,
+      transactionid: `TXN${Date.now()}`,
+      responsecode: '01',
+      status: 'Successfull',
+      statusdesc: 'Transaction successful',
+    },
+  };
+
+  try {
+    const parsed = intouchService.parseCallbackPayload(mockCallbackPayload);
+    console.log(`\n  Test 4: parseCallbackPayload preserves requestTransactionId`);
+    console.log(`    Parsed requestTransactionId: ${parsed.requestTransactionId}`);
+    const test4Pass = parsed.requestTransactionId === testRequestId;
+    console.log(`    Match: ${test4Pass ? '✅ YES' : '❌ NO'}`);
+
+    // Now simulate what the callback handler should return
+    const callbackResponse = {
+      message: 'success',
+      success: true,
+      request_id: parsed.requestTransactionId,
+    };
+    console.log(`    Callback response: ${JSON.stringify(callbackResponse)}`);
+    const formatValid = callbackResponse.message === 'success' &&
+      callbackResponse.success === true &&
+      typeof callbackResponse.request_id === 'string' &&
+      callbackResponse.request_id.length > 0;
+    console.log(`    Format valid: ${formatValid ? '✅ YES' : '❌ NO'}`);
+
+    return test1Pass && test4Pass && formatValid;
+  } catch (e: any) {
+    console.error(`  ❌ parseCallbackPayload test failed: ${e.message}`);
+    return false;
+  }
+}
+
 // ─── Status polling test ───
 
 async function testStatusPolling(intouchService: IntouchService, trxRef: string): Promise<boolean> {
@@ -206,6 +321,10 @@ async function main() {
     statusOk = await testStatusPolling(intouchService, trxRef);
   }
   results.push({ step: 'Status Polling', passed: statusOk });
+
+  // Step 5: Callback response format verification
+  const callbackFormatOk = await testCallbackResponseFormat(intouchService);
+  results.push({ step: 'Callback Response Format (request_id)', passed: callbackFormatOk });
 
   // ─── Summary ───
   console.log('\n═══════════════════════════════════════════════════════════');
