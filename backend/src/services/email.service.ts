@@ -73,7 +73,10 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
       auth: {
         user: config.user,
         pass: config.pass
-      }
+      },
+      connectionTimeout: 10_000,  // 10s to establish TCP connection
+      socketTimeout: 20_000,      // 20s for SMTP conversation (some servers are slow between commands)
+      greetingTimeout: 10_000,    // 10s to receive SMTP greeting
     });
 
     await transporter.sendMail({
