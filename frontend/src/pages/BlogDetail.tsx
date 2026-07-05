@@ -7,7 +7,8 @@ import { User, Calendar, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, 
 import { getApiBaseUrl } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
+import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface IComment {
@@ -167,10 +168,38 @@ const BlogDetail = () => {
 
     return (
         <div className="min-h-screen bg-background text-foreground">
-            <Helmet>
-                <title>{blog?.title ? `${blog.title} | Bootskills` : "Blog | Bootskills"}</title>
-                <meta name="description" content={blog?.content?.substring(0, 160) || "Read the latest tech insights."} />
-            </Helmet>
+            <SEOHead
+                title={blog?.title || "Blog Post"}
+                description={blog?.content?.substring(0, 160) || "Read the latest tech insights."}
+                canonicalUrl={blog?.slug ? `https://bootskills.com/blog/${blog.slug}` : "https://bootskills.com/blog"}
+                ogImage={blog?.image || undefined}
+                keywords={`${blog?.category?.name || 'blog'}, ${blog?.tags?.join(', ') || 'tech insights'}, Rwanda technology, digital skills`}
+                author={blog?.authorName || "Bootskills"}
+            >
+                <script type="application/ld+json">
+                  {JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@graph": [
+                      organizationLd,
+                      {
+                        "@type": "Article",
+                        headline: blog?.title || "Blog Post",
+                        description: blog?.content?.substring(0, 160),
+                        image: blog?.image,
+                        author: { "@type": "Person", name: blog?.authorName || "Bootskills" },
+                        datePublished: blog?.createdAt,
+                        publisher: { "@type": "Organization", name: "Bootskills" },
+                        mainEntityOfPage: { "@type": "WebPage", "@id": `https://bootskills.com/blog/${blog?.slug}` },
+                      },
+                      breadcrumbListLd([
+                        { name: "Home", item: "/" },
+                        { name: "Blog", item: "/blog" },
+                        { name: blog?.title || "Post", item: `/blog/${blog?.slug}` },
+                      ]),
+                    ]
+                  })}
+                </script>
+            </SEOHead>
             <div className="fixed top-0 left-0 w-full h-1 z-50 pointer-events-none">
                 <motion.div
                     className="h-full bg-accent origin-left"

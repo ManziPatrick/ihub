@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -33,6 +34,7 @@ import { usePusher } from "@/hooks/use-pusher";
 import { useEffect, useMemo } from "react";
 
 export default function TrainerDashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [isLiveSessionOpen, setIsLiveSessionOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -236,20 +238,20 @@ export default function TrainerDashboard() {
         >
           <div>
             <h1 className="font-heading text-2xl lg:text-3xl font-medium text-foreground">
-              Welcome, {user?.fullName.split(" ")[0]}!
+              {t("portal.welcomeTrainer") || "Welcome, " + user?.fullName?.split(" ")[0] + "!"}
             </h1>
             <div className="flex items-center gap-2 mt-1">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
-              <p className="text-xs text-muted-foreground font-medium">Live Feed Active</p>
+              <p className="text-xs text-muted-foreground font-medium">{t("portal.liveFeedActive") || "Live Feed Active"}</p>
             </div>
           </div>
           <div className="flex gap-2">
             <Button variant="gold" onClick={() => setIsLiveSessionOpen(true)}>
               <Video className="w-4 h-4 mr-2" />
-              Start Live Session
+              {t("portal.startLiveSession") || "Start Live Session"}
             </Button>
           </div>
         </motion.div>

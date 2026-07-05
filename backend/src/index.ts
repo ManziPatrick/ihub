@@ -33,6 +33,7 @@ import ttsRoutes from './routes/TTSRoutes';
 import diagnosticsRoutes from './routes/DiagnosticsRoutes';
 import exportRoutes from './routes/ExportRoutes';
 import { Course } from './models/Course';
+import Blog from './models/Blog';
 import { authMiddleware } from './middleware/auth';
 import { maintenanceMiddleware } from './middleware/maintenance';
 import { compileCode } from './services/compiler.service';
@@ -295,6 +296,36 @@ const startServer = async () => {
       } catch (err) {
         console.error('❌ Failed to generate sitemap:', err);
         res.status(500).send('Sitemap generation failed');
+      }
+    });
+
+    // Dynamic blog sitemap for search engines
+    app.get('/blog-sitemap.xml', async (_req, res) => {
+      try {
+        const blogs = await Blog.find()
+          .select('title slug updatedAt createdAt')
+          .sort({ createdAt: -1 })
+          .lean();
+
+        const baseUrl = process.env.FRONTEND_URL || 'https://bootskills.com';
+        const urls = blogs.map((b: any) => `
+    <url>
+      <loc>${baseUrl}/blog/${b.slug}</loc>
+      <lastmod>${b.updatedAt ? new Date(b.updatedAt).toISOString().split('T')[0] : b.createdAt ? new Date(b.createdAt).toISOString().split('T')[0] : '2026-06-08'}</lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.7</priority>
+    </url>`).join('');
+
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  ${urls}
+</urlset>`;
+
+        res.header('Content-Type', 'application/xml');
+        res.send(xml);
+      } catch (err) {
+        console.error('❌ Failed to generate blog sitemap:', err);
+        res.status(500).send('Blog sitemap generation failed');
       }
     });
 

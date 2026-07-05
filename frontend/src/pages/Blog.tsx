@@ -7,7 +7,8 @@ import { getApiBaseUrl } from "@/lib/env";
 import heroImage from "@/assets/hero-training.webp";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
+import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 import { Button } from "@/components/ui/button";
 
 interface ICategory {
@@ -81,10 +82,27 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Helmet>
-        <title>Blog | Bootskills - Rwanda Tech & Skills Insights</title>
-        <meta name="description" content="Stay updated with the latest in Rwanda Tech, Future Technologies, and Business strategies from the experts at Bootskills." />
-      </Helmet>
+      <SEOHead
+        title="Blog"
+        description="Stay updated with the latest in Rwanda Tech, Future Technologies, and Business strategies from the experts at Bootskills."
+        canonicalUrl="https://bootskills.com/blog"
+        keywords="Rwanda tech blog, African technology news, coding tutorials, digital skills Africa, tech insights Rwanda"
+        ogImage="https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=1200&h=630"
+      >
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              organizationLd,
+              webPageLd("Blog", "Stay updated with the latest in Rwanda Tech, Future Technologies, and Business strategies from the experts at Bootskills.", "https://bootskills.com/blog"),
+              breadcrumbListLd([
+                { name: "Home", item: "/" },
+                { name: "Blog", item: "/blog" },
+              ]),
+            ]
+          })}
+        </script>
+      </SEOHead>
       <Header />
       <main className="pt-20">
         {/* Hero */}

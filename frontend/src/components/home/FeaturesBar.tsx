@@ -1,25 +1,16 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { BookOpen, Briefcase, Lightbulb } from "lucide-react";
 
-const features = [
-  {
-    icon: BookOpen,
-    title: "Expert Training",
-    description: "Learn from skilled instructors.",
-  },
-  {
-    icon: Briefcase,
-    title: "Hands-On Internships",
-    description: "Gain real-world experience.",
-  },
-  {
-    icon: Lightbulb,
-    title: "Innovative Projects",
-    description: "Work on cutting-edge solutions.",
-  },
-];
-
 export function FeaturesBar() {
+  const { t } = useTranslation();
+
+  const features = [
+    { icon: BookOpen, titleKey: "home.featureExpertTraining" as const, descKey: "home.featureExpertTrainingDesc" as const },
+    { icon: Briefcase, titleKey: "home.featureHandsOnInternships" as const, descKey: "home.featureHandsOnInternshipsDesc" as const },
+    { icon: Lightbulb, titleKey: "home.featureInnovativeProjects" as const, descKey: "home.featureInnovativeProjectsDesc" as const },
+  ];
+
   return (
     <section className="relative py-4 sm:py-6 -mt-8 sm:-mt-12 z-20">
       <div className="container mx-auto px-4 lg:px-8">
@@ -33,7 +24,7 @@ export function FeaturesBar() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
             {features.map((feature, index) => (
               <motion.div
-                key={feature.title}
+                key={feature.titleKey}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -45,10 +36,10 @@ export function FeaturesBar() {
                 </div>
                 <div>
                   <h3 className="font-heading font-semibold text-foreground text-sm sm:text-base mb-0.5 sm:mb-1">
-                    {feature.title}
+                    {t(feature.titleKey)}
                   </h3>
                   <p className="text-xs sm:text-sm text-muted-foreground leading-tight">
-                    {feature.description}
+                    {t(feature.descKey)}
                   </p>
                 </div>
               </motion.div>

@@ -1,5 +1,7 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { SEOHead } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +11,7 @@ import { Loader2, Lock, ArrowLeft, CheckCircle } from "lucide-react";
 import { getGraphqlUrl } from "@/lib/env";
 
 export default function ResetPassword() {
+    const { t } = useTranslation();
     const [searchParams] = useSearchParams();
     const token = searchParams.get("token");
     const navigate = useNavigate();
@@ -62,7 +65,7 @@ export default function ResetPassword() {
             }
 
             setIsSuccess(true);
-            toast.success("Password reset successfully!");
+            toast.success(t("auth.passwordResetSuccess", "Password reset successfully!"));
 
             // Redirect after a delay
             setTimeout(() => {
@@ -76,8 +79,15 @@ export default function ResetPassword() {
         }
     };
 
-    if (!token) {
-        return (
+    return (
+      <>
+        <SEOHead
+          title="Reset Password"
+          description="Reset your Bootskills account password securely."
+        >
+          <meta name="robots" content="noindex, nofollow" />
+        </SEOHead>
+        {!token ? (
             <div className="min-h-screen bg-background flex items-center justify-center p-4">
                 <div className="w-full max-w-md text-center">
                     <h1 className="text-2xl font-bold mb-4">Invalid Link</h1>
@@ -87,11 +97,7 @@ export default function ResetPassword() {
                     </Link>
                 </div>
             </div>
-        );
-    }
-
-    if (isSuccess) {
-        return (
+        ) : isSuccess ? (
             <div className="min-h-screen bg-background flex items-center justify-center p-4">
                 <div className="w-full max-w-md bg-card p-8 rounded-lg shadow-sm border border-border text-center">
                     <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -108,11 +114,8 @@ export default function ResetPassword() {
                     </Link>
                 </div>
             </div>
-        );
-    }
-
-    return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4 bg-muted/20">
+        ) : (
+            <div className="min-h-screen bg-background flex items-center justify-center p-4 bg-muted/20">
             <div className="w-full max-w-md bg-card p-8 rounded-lg shadow-sm border border-border">
                 <Link
                     to="/auth"
@@ -176,5 +179,7 @@ export default function ResetPassword() {
                 </form>
             </div>
         </div>
+        )}
+      </>
     );
 }

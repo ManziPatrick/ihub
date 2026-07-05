@@ -5,7 +5,6 @@
 # Allow all major search engines
 User-agent: *
 Allow: /
-Sitemap: https://bootskills.com/sitemap.xml
 
 # Major Search Engines
 User-agent: Googlebot
@@ -117,5 +116,7 @@ Disallow: /
 User-agent: Screaming Frog
 Disallow: /
 
-# Sitemaps
+# ─── Sitemaps ────────────────────────────────────────────────────
 Sitemap: https://bootskills.com/sitemap.xml
+Sitemap: https://bootskills.com/course-sitemap.xml
+Sitemap: https://bootskills.com/blog-sitemap.xml

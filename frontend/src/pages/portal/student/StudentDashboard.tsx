@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,6 +44,7 @@ import {
 // No static achievements needed
 
 export default function StudentDashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data: meData, loading: meLoading } = useQuery(GET_ME);
   const { data: bookingsData, loading: bookingsLoading } = useQuery(GET_MY_BOOKINGS);
@@ -159,7 +161,7 @@ export default function StudentDashboard() {
               Welcome back, {user?.fullName}!
             </h1>
             <p className="text-muted-foreground mt-1">
-              Continue your learning journey. You're making great progress!
+              {t("portal.dashboardDesc") || "Continue your learning journey. You're making great progress!"}
             </p>
           </div>
           <div className="flex items-center gap-3">

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -23,6 +24,7 @@ import { GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY, GET_CONVERSATIONS } from
 import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [showExportDialog, setShowExportDialog] = useState(false);
   const { data, loading } = useQuery(GET_ADMIN_DASHBOARD_DATA, {
@@ -45,10 +47,10 @@ export default function AdminDashboard() {
   const recentActivity = (activityData as any)?.recentActivity || [];
 
   const stats = [
-    { label: "Total Users", value: liveStats.totalUsers.toString(), change: "+0%", trend: "up", icon: Users },
-    { label: "Active Courses", value: liveStats.totalCourses.toString(), change: "+0%", trend: "up", icon: BookOpen },
-    { label: "Students", value: liveStats.totalStudents.toString(), change: "+0%", trend: "up", icon: GraduationCap },
-    { label: "Revenue ($)", value: liveStats.totalRevenue.toLocaleString(), change: "+0%", trend: "up", icon: DollarSign },
+    { label: t("portal.totalUsers") || "Total Users", value: liveStats.totalUsers.toString(), change: "+0%", trend: "up", icon: Users },
+    { label: t("portal.activeCourses") || "Active Courses", value: liveStats.totalCourses.toString(), change: "+0%", trend: "up", icon: BookOpen },
+    { label: t("portal.students") || "Students", value: liveStats.totalStudents.toString(), change: "+0%", trend: "up", icon: GraduationCap },
+    { label: t("portal.revenue") || "Revenue ($)", value: liveStats.totalRevenue.toLocaleString(), change: "+0%", trend: "up", icon: DollarSign },
   ];
 
   return (
@@ -62,10 +64,10 @@ export default function AdminDashboard() {
         >
             <div>
             <h1 className="font-heading text-2xl lg:text-3xl font-medium text-foreground">
-                Admin Dashboard
+                {t("portal.adminDashboard") || "Admin Dashboard"}
             </h1>
             <p className="text-muted-foreground mt-1">
-                Platform overview and management
+                {t("portal.adminDashboardDesc") || "Platform overview and management"}
             </p>
             </div>
             <div className="flex gap-2">

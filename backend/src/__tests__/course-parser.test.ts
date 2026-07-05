@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { parseCourseText } from '../services/course-parser.service';
 
 const sampleText = `
@@ -36,77 +37,89 @@ Type: assignment
 Content: Connect your app to MongoDB and perform CRUD operations.
 `;
 
-const result = parseCourseText(sampleText);
+describe('Course Parser', () => {
+  const result = parseCourseText(sampleText);
 
-let passed = 0;
-let failed = 0;
+  describe('Basic Fields', () => {
+    it('should parse the title correctly', () => {
+      expect(result.title).toBe('Master React & Node.js');
+    });
 
-function check(condition: boolean, msg: string) {
-  if (condition) {
-    console.log(`  ✅ ${msg}`);
-    passed++;
-  } else {
-    console.log(`  ❌ ${msg}`);
-    failed++;
-  }
-}
+    it('should parse the description correctly', () => {
+      expect(result.description).toContain('Learn full-stack');
+    });
 
-console.log('\n=== Course Parser Test ===\n');
+    it('should parse the category correctly', () => {
+      expect(result.category).toBe('Development');
+    });
 
-console.log('--- Basic Fields ---');
-check(result.title === 'Master React & Node.js', `Title: "${result.title}"`);
-check(result.description.startsWith('Learn full-stack'), `Description starts correctly`);
-check(result.category === 'Development', `Category: ${result.category}`);
-check(result.level === 'Intermediate', `Level: ${result.level}`);
-check(result.errors.length === 0, `No errors (got ${result.errors.length})`);
+    it('should parse the level correctly', () => {
+      expect(result.level).toBe('Intermediate');
+    });
 
-console.log('\n--- Modules ---');
-check(result.modules.length === 2, `2 modules (got ${result.modules.length})`);
+    it('should have no errors', () => {
+      expect(result.errors).toHaveLength(0);
+    });
+  });
 
-if (result.modules.length >= 1) {
-  check(result.modules[0].title === 'React Fundamentals', `Module 1 title: "${result.modules[0].title}"`);
-  check(result.modules[0].description === 'Learn the core concepts of React', `Module 1 description`);
-}
+  describe('Module Parsing', () => {
+    it('should parse 2 modules', () => {
+      expect(result.modules).toHaveLength(2);
+    });
 
-if (result.modules.length >= 2) {
-  check(result.modules[1].title === 'Node.js Backend', `Module 2 title: "${result.modules[1].title}"`);
-}
+    it('should parse Module 1 title correctly', () => {
+      expect(result.modules[0].title).toBe('React Fundamentals');
+    });
 
-console.log('\n--- Lessons in Module 1 ---');
-const mod1 = result.modules[0];
-check(mod1.lessons.length === 3, `3 lessons (got ${mod1.lessons.length})`);
+    it('should parse Module 1 description correctly', () => {
+      expect(result.modules[0].description).toBe('Learn the core concepts of React');
+    });
 
-if (mod1.lessons.length >= 3) {
-  check(mod1.lessons[0].title === 'Introduction to React', `Lesson 1.1 title`);
-  check(mod1.lessons[0].duration === 15, `Lesson 1.1 duration: ${mod1.lessons[0].duration}`);
-  check(mod1.lessons[0].type === 'video', `Lesson 1.1 type: ${mod1.lessons[0].type}`);
-  check(mod1.lessons[0].content.includes('JavaScript library'), `Lesson 1.1 has content`);
-  
-  check(mod1.lessons[1].title === 'Components & Props', `Lesson 1.2 title`);
-  
-  check(mod1.lessons[2].title === 'State Management Quiz', `Lesson 1.3 title`);
-  check(mod1.lessons[2].type === 'quiz', `Lesson 1.3 type: ${mod1.lessons[2].type}`);
-}
+    it('should parse Module 2 title correctly', () => {
+      expect(result.modules[1].title).toBe('Node.js Backend');
+    });
+  });
 
-console.log('\n--- Lessons in Module 2 ---');
-const mod2 = result.modules[1];
-check(mod2.lessons.length === 2, `2 lessons (got ${mod2.lessons.length})`);
+  describe('Lesson Parsing - Module 1', () => {
+    it('should parse 3 lessons in Module 1', () => {
+      expect(result.modules[0].lessons).toHaveLength(3);
+    });
 
-if (mod2.lessons.length >= 2) {
-  check(mod2.lessons[0].title === 'Setting Up Express', `Lesson 2.1 title`);
-  check(mod2.lessons[0].type === 'video', `Lesson 2.1 type: ${mod2.lessons[0].type}`);
-  
-  check(mod2.lessons[1].title === 'Database Integration', `Lesson 2.2 title`);
-  check(mod2.lessons[1].type === 'assignment', `Lesson 2.2 type: ${mod2.lessons[1].type}`);
-  check(mod2.lessons[1].content.includes('MongoDB'), `Lesson 2.2 has content`);
-}
+    it('should parse Lesson 1.1 correctly', () => {
+      const lesson = result.modules[0].lessons[0];
+      expect(lesson.title).toBe('Introduction to React');
+      expect(lesson.duration).toBe(15);
+      expect(lesson.type).toBe('video');
+      expect(lesson.content).toContain('JavaScript library');
+    });
 
-console.log(`\n${'='.repeat(40)}`);
-console.log(`Results: ${passed} passed, ${failed} failed out of ${passed + failed} tests`);
-if (failed === 0) {
-  console.log('✅ ALL TESTS PASSED!\n');
-  process.exit(0);
-} else {
-  console.log('❌ SOME TESTS FAILED!\n');
-  process.exit(1);
-}
+    it('should parse Lesson 1.2 title correctly', () => {
+      expect(result.modules[0].lessons[1].title).toBe('Components & Props');
+    });
+
+    it('should parse Lesson 1.3 as quiz', () => {
+      const lesson = result.modules[0].lessons[2];
+      expect(lesson.title).toBe('State Management Quiz');
+      expect(lesson.type).toBe('quiz');
+    });
+  });
+
+  describe('Lesson Parsing - Module 2', () => {
+    it('should parse 2 lessons in Module 2', () => {
+      expect(result.modules[1].lessons).toHaveLength(2);
+    });
+
+    it('should parse Lesson 2.1 correctly', () => {
+      const lesson = result.modules[1].lessons[0];
+      expect(lesson.title).toBe('Setting Up Express');
+      expect(lesson.type).toBe('video');
+    });
+
+    it('should parse Lesson 2.2 as assignment with content', () => {
+      const lesson = result.modules[1].lessons[1];
+      expect(lesson.title).toBe('Database Integration');
+      expect(lesson.type).toBe('assignment');
+      expect(lesson.content).toContain('MongoDB');
+    });
+  });
+});

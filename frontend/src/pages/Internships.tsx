@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
+import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 import testimonialEmmanuel from "@/assets/testimonial-emmanuel.webp";
 import testimonialMarie from "@/assets/testimonial-marie.webp";
 import testimonialJean from "@/assets/testimonial-jean.webp";
@@ -74,18 +75,27 @@ const Internships = () => {
   };
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Internships | Bootskills - Real-World Experience in Kigali, Rwanda</title>
-        <meta name="description" content="Gain real-world experience with Bootskills internships in Kigali, Rwanda. Work on real projects, get mentored by experts, and build a portfolio that stands out." />
-        <link rel="canonical" href="https://bootskills.com/internships" />
-        <meta property="og:title" content="Internships | Bootskills - Real-World Experience in Kigali, Rwanda" />
-        <meta property="og:description" content="Bridge the gap between learning and employment with structured internship programs. Work on real projects, get mentored by experts." />
-        <meta property="og:url" content="https://bootskills.com/internships" />
-        <meta property="og:type" content="website" />
-        <meta name="geo.region" content="RW-01" />
-        <meta name="geo.placename" content="Kigali" />
-        <meta name="geo.position" content="-1.9441;30.0619" />
-      </Helmet>
+      <SEOHead
+        title="Internships"
+        description="Gain real-world experience with Bootskills internships in Kigali, Rwanda. Work on real projects, get mentored by experts, and build a portfolio that stands out."
+        canonicalUrl="https://bootskills.com/internships"
+        keywords="internships Rwanda, tech internships Kigali, software internship Africa, data science internship, IoT internship, career development"
+        ogImage="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1200&h=630"
+      >
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              organizationLd,
+              webPageLd("Internships", "Gain real-world experience with Bootskills internships. Work on real projects, get mentored by experts, and build a portfolio that stands out.", "https://bootskills.com/internships"),
+              breadcrumbListLd([
+                { name: "Home", item: "/" },
+                { name: "Internships", item: "/internships" },
+              ]),
+            ]
+          })}
+        </script>
+      </SEOHead>
       <Header />
       <main className="pt-20">
         {/* Hero */}

@@ -8,6 +8,9 @@ import client from "./lib/apolloClient";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { env } from "./lib/env";
 
+// Initialize i18n
+import "./lib/i18n";
+
 createRoot(document.getElementById("root")!).render(
   <ApolloProvider client={client}>
     <GoogleOAuthProvider clientId={env.GOOGLE_CLIENT_ID || ""}>

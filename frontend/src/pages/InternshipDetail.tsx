@@ -7,7 +7,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
+import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 import { ApplyInternshipDialog } from "@/components/portal/dialogs";
 import { useState } from "react";
 import { stripHtml } from "@/lib/utils";
@@ -125,37 +126,28 @@ export default function InternshipDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>
-          {program.title
-            ? `${program.title} | Internship - Bootskills`
-            : "Internship Program | Bootskills"}
-        </title>
-        <meta
-          name="description"
-          content={
-            stripHtml(program.description)?.substring(0, 160) ||
-            "Apply for this internship program at Bootskills."
-          }
-        />
-        <meta name="robots" content="index, follow" />
-        <link
-          rel="canonical"
-          href={
-            program.id
-              ? `https://bootskills.com/internship/${program.id}`
-              : "https://bootskills.com/internships"
-          }
-        />
-        <meta property="og:title" content={`${program.title} | Bootskills Internship`} />
-        <meta
-          property="og:description"
-          content={stripHtml(program.description)?.substring(0, 160)}
-        />
-        {program.image && <meta property="og:image" content={program.image} />}
-        <meta property="og:url" content={`https://bootskills.com/internship/${program.id}`} />
-        <meta property="og:type" content="website" />
-      </Helmet>
+      <SEOHead
+        title={program.title || "Internship Program"}
+        description={stripHtml(program.description)?.substring(0, 160) || "Apply for this internship program at Bootskills."}
+        canonicalUrl={program.id ? `https://bootskills.com/internship/${program.id}` : "https://bootskills.com/internships"}
+        ogImage={program.image || undefined}
+        keywords={`${program.category || 'internship'}, ${program.title || 'program'}, internship Rwanda, Kigali training, practical experience, career development`}
+      >
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              organizationLd,
+              webPageLd(program.title || "Internship Program", stripHtml(program.description)?.substring(0, 160) || "Internship program at Bootskills.", `https://bootskills.com/internship/${program.id}`),
+              breadcrumbListLd([
+                { name: "Home", item: "/" },
+                { name: "Internships", item: "/internships" },
+                { name: program.title || "Program", item: `/internship/${program.id}` },
+              ]),
+            ]
+          })}
+        </script>
+      </SEOHead>
 
       <Header />
       <main className="pt-24 pb-16">

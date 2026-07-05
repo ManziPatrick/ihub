@@ -1,9 +1,12 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Target, Lightbulb } from "lucide-react";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import aboutImage from "@/assets/about-training.jpg";
 
 export function AboutSection() {
+  const { t } = useTranslation();
+
   return (
     <section className="py-16 lg:py-20 bg-background">
       <div className="container mx-auto px-4 lg:px-8">
@@ -11,7 +14,7 @@ export function AboutSection() {
         <div className="flex items-center justify-center gap-4 mb-10">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/50" />
           <h2 className="font-heading text-2xl lg:text-3xl font-medium text-foreground text-center">
-            About Bootskills
+            {t("about.whoWeAre")}
           </h2>
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/50" />
         </div>
@@ -25,13 +28,11 @@ export function AboutSection() {
             transition={{ duration: 0.6 }}
           >
             <h3 className="font-heading text-xl lg:text-3xl text-foreground mb-4 leading-tight">
-              A Center of Excellence in Professional Growth & Skills Mastery
+              {t("about.centerOfExcellence")}
             </h3>
 
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-8">
-              We combine structured learning, hands-on practice, and real project experience
-              to prepare learners for today's digital economy. Training delivered online and
-              in person with dedicated mentorship.
+              {t("about.centerOfExcellenceDesc")}
             </p>
 
             {/* Mission & Vision Cards */}
@@ -41,10 +42,10 @@ export function AboutSection() {
                   <div className="p-2 rounded-lg bg-accent/10">
                     <Target className="w-5 h-5 text-accent" strokeWidth={1.5} />
                   </div>
-                  <h4 className="font-heading font-semibold text-card-foreground">Our Mission</h4>
+                  <h4 className="font-heading font-semibold text-card-foreground">{t("about.ourMission")}</h4>
                 </div>
                 <p className="text-sm text-card-foreground/70 leading-relaxed">
-                  Empower individuals with practical, industry-ready technology skills through expert mentorship.
+                  {t("about.missionShort")}
                 </p>
               </div>
 
@@ -53,10 +54,10 @@ export function AboutSection() {
                   <div className="p-2 rounded-lg bg-accent/10">
                     <Lightbulb className="w-5 h-5 text-accent" strokeWidth={1.5} />
                   </div>
-                  <h4 className="font-heading font-semibold text-card-foreground">Our Vision</h4>
+                  <h4 className="font-heading font-semibold text-card-foreground">{t("about.ourVision")}</h4>
                 </div>
                 <p className="text-sm text-card-foreground/70 leading-relaxed">
-                  To be Africa's leading center of excellence in professional education and innovation.
+                  {t("about.visionShort")}
                 </p>
               </div>
             </div>
@@ -73,7 +74,7 @@ export function AboutSection() {
             <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-card shadow-card relative border border-border/50">
               <ImageWithSkeleton
                 src={aboutImage}
-                alt="Bootskills training center"
+                alt={t("about.bootskillsDesc")}
                 className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                 containerClassName="w-full h-full"
               />

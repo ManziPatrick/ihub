@@ -1,27 +1,37 @@
+import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { FeaturedCourses } from "@/components/home/FeaturedCourses";
 import { CTASection } from "@/components/home/CTASection";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
+import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
+
+const jsonldGraph = JSON.stringify({
+  "@context": "https://schema.org",
+  "@graph": [
+    organizationLd,
+    webPageLd(
+      "Bootskills - Learn. Build. Grow.",
+      "Bootskills is your all-in-one learning hub — offering courses across every field: tech, business, healthcare, finance, education, AI, project management, and more. Learn with real projects and industry internships.",
+      "https://bootskills.com"
+    ),
+  ],
+});
 
 const Index = () => {
+  const { t } = useTranslation();
+  const desc = "Bootskills is your all-in-one learning hub — offering courses across every field: tech, business, healthcare, finance, education, AI, project management, and more. Learn with real projects and industry internships.";
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Bootskills | Your All-in-One Learning Hub — Courses Across Every Field. Projects. Internships.</title>
-        <meta name="description" content="Bootskills is your all-in-one learning hub — offering courses across every field: tech, business, healthcare, finance, education, AI, project management, and more. Learn with real projects and industry internships." />
-        <link rel="canonical" href="https://bootskills.com" />
-        <meta property="og:title" content="Bootskills | Your All-in-One Learning Hub — Courses Across Every Field" />
-        <meta property="og:description" content="Your all-in-one learning hub. Courses across every field — real projects, industry internships, and career support." />
-        <meta property="og:url" content="https://bootskills.com" />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:title" content="Bootskills | Your All-in-One Learning Hub — Courses Across Every Field" />
-        <meta name="twitter:description" content="Courses across every field with real projects and industry internships." />
-        <meta name="geo.region" content="RW-01" />
-        <meta name="geo.placename" content="Kigali" />
-        <meta name="geo.position" content="-1.9441;30.0619" />
-        <meta name="ICBM" content="-1.9441, 30.0619" />
-      </Helmet>
+      <SEOHead
+        title={t("home.heroTitle")}
+        description={desc}
+        canonicalUrl="https://bootskills.com"
+        ogImage="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=1200&h=630"
+        keywords="bootskills, online learning, courses, tech training, internships, Kigali, Rwanda, Africa, software development, AI, data science"
+      >
+        <script type="application/ld+json">{jsonldGraph}</script>
+      </SEOHead>
       <Header />
       <main>
         <FeaturedCourses />
