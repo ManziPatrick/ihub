@@ -5,7 +5,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
 import { Code, Database, Wifi, Briefcase, BookOpen, Building2, CheckCircle, Users, Award, Zap, ArrowRight, Globe, Cpu, BarChart3 } from "lucide-react";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
+import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import internshipImage from "@/assets/internship-work.webp";
@@ -167,10 +168,26 @@ const whyChooseUs = [
 const Services = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Services | Bootskills - Courses, Internships & Projects in Rwanda</title>
-        <meta name="description" content="Bootskills provides practical courses, internships, and project-based learning across tech, business, creative and leadership fields from Kigali, Rwanda to East Africa." />
-      </Helmet>
+      <SEOHead
+        title="Services"
+        description="Bootskills provides practical courses, internships, and project-based learning across tech, business, creative and leadership fields from Kigali, Rwanda to East Africa."
+        canonicalUrl="https://bootskills.com/services"
+        keywords="bootcamp Rwanda, tech training Kigali, coding courses, data science Rwanda, IoT training, IT services East Africa"
+      >
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              organizationLd,
+              webPageLd("Services", "Bootskills provides practical courses, internships, and project-based learning across tech, business, creative and leadership fields.", "https://bootskills.com/services"),
+              breadcrumbListLd([
+                { name: "Home", item: "/" },
+                { name: "Services", item: "/services" },
+              ]),
+            ]
+          })}
+        </script>
+      </SEOHead>
       <Header />
       <main className="pt-20">
         {/* Hero */}

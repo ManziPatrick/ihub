@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
+import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 import { Code, Database, Wifi, ExternalLink, CheckCircle, Users, Calendar } from "lucide-react";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
@@ -84,18 +85,27 @@ const stats = [
 const Projects = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Projects & Portfolio | Bootskills - Real Solutions in Kigali, Rwanda</title>
-        <meta name="description" content="Explore real solutions developed by Bootskills teams across software development, data science, AI, and IoT. See our portfolio of projects delivered for clients in Rwanda and East Africa." />
-        <link rel="canonical" href="https://bootskills.com/projects" />
-        <meta property="og:title" content="Projects & Portfolio | Bootskills - Real Solutions" />
-        <meta property="og:description" content="Real solutions developed by Bootskills teams for clients across software development, data science, AI, and IoT in Rwanda and Africa." />
-        <meta property="og:url" content="https://bootskills.com/projects" />
-        <meta property="og:type" content="website" />
-        <meta name="geo.region" content="RW-01" />
-        <meta name="geo.placename" content="Kigali" />
-        <meta name="geo.position" content="-1.9441;30.0619" />
-      </Helmet>
+      <SEOHead
+        title="Projects & Portfolio"
+        description="Explore real solutions developed by Bootskills teams across software development, data science, AI, and IoT. See our portfolio of projects delivered for clients in Rwanda and East Africa."
+        canonicalUrl="https://bootskills.com/projects"
+        keywords="Bootskills projects, Rwanda software development, AI solutions Africa, IoT projects, portfolio Kigali"
+        ogImage="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1200&h=630"
+      >
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              organizationLd,
+              webPageLd("Projects & Portfolio", "Explore real solutions developed by Bootskills teams for clients across software development, data science, AI, and IoT.", "https://bootskills.com/projects"),
+              breadcrumbListLd([
+                { name: "Home", item: "/" },
+                { name: "Projects", item: "/projects" },
+              ]),
+            ]
+          })}
+        </script>
+      </SEOHead>
       <Header />
       <main className="pt-20">
         {/* Hero */}

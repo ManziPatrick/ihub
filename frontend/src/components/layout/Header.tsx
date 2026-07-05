@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useQuery } from "@apollo/client/react";
 import { GET_UNREAD_NOTIFICATIONS } from "@/lib/graphql/queries";
 import { useBranding } from "@/components/BrandingProvider";
+import { useTranslation } from "react-i18next";
 
 // Reference image nav: Home + Applications only shown in desktop
 const navLinks = [
@@ -24,6 +25,7 @@ const mobileLinks = [
 ];
 
 export function Header() {
+  const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -116,7 +118,7 @@ export function Header() {
                       : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
-                  {link.name}
+                  {link.name === "Home" ? t("nav.home") : t("nav.explore")}
                 </Link>
               );
             })}
@@ -132,7 +134,7 @@ export function Header() {
                 onKeyDown={(event) => {
                   if (event.key === "Enter") handleHeaderSearch();
                 }}
-                placeholder="Search courses"
+                placeholder={t("nav.searchCourses")}
                 className="h-9 w-48 rounded-full border-0 bg-transparent focus:ring-0"
               />
             </div>
@@ -142,7 +144,7 @@ export function Header() {
               className="hidden md:inline-flex h-9 px-3 rounded-full"
               onClick={handleHeaderSearch}
             >
-              Search
+              {t("common.search")}
             </Button>
             <ThemeToggle />
 
@@ -187,10 +189,10 @@ export function Header() {
                     >
                       <User size={14} />
                       {user?.role === "trainer"
-                        ? "Trainer"
+                        ? t("nav.trainerPortal")
                         : user?.role === "admin" || user?.role === "super_admin"
-                        ? "Admin"
-                        : "Portal"}
+                        ? t("nav.adminPortal")
+                        : t("nav.portal")}
                     </Button>
                   </Link>
                   <button
@@ -210,7 +212,7 @@ export function Header() {
                     className="h-9 px-5 rounded-lg text-sm font-medium border-border hover:border-foreground/40 gap-1.5"
                   >
                     <User size={14} />
-                    Log in
+                    {t("nav.login")}
                   </Button>
                 </Link>
               )}
@@ -254,7 +256,7 @@ export function Header() {
                         : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
                     }`}
                   >
-                    {link.name}
+                    {link.name === "Home" ? t("nav.home") : t("nav.explore")}
                   </Link>
                 );
               })}
@@ -266,10 +268,10 @@ export function Header() {
                       <Button variant="gold" size="sm" className="w-full gap-2">
                         <User size={14} />
                         {user?.role === "trainer"
-                          ? "Trainer Portal"
+                          ? t("nav.trainerPortal")
                           : user?.role === "admin" || user?.role === "super_admin"
-                          ? "Admin Portal"
-                          : "Student Portal"}
+                          ? t("nav.adminPortal")
+                          : t("nav.studentPortal")}
                       </Button>
                     </Link>
                     <Button
@@ -279,14 +281,14 @@ export function Header() {
                       onClick={handleLogout}
                     >
                       <LogOut size={14} />
-                      Logout
+                      {t("nav.logout")}
                     </Button>
                   </>
                 ) : (
                   <Link to="/auth">
                     <Button variant="outline" size="sm" className="w-full gap-2">
                       <User size={14} />
-                      Log in / Sign up
+                      {t("nav.loginSignup")}
                     </Button>
                   </Link>
                 )}

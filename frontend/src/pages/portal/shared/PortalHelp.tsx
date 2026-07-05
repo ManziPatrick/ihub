@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
@@ -56,6 +57,7 @@ const resources = [
 ];
 
 export default function PortalHelp() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [message, setMessage] = useState("");
 
@@ -73,10 +75,10 @@ export default function PortalHelp() {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="font-heading text-2xl lg:text-3xl font-medium text-foreground">
-            Help & Support
+            {t("portal.helpSupport")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Find answers to your questions or contact our support team
+            {t("portal.helpDesc")}
           </p>
         </motion.div>
 
@@ -89,7 +91,7 @@ export default function PortalHelp() {
           <div className="relative max-w-xl">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              placeholder="Search for help..."
+              placeholder={t("portal.searchHelp")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 h-12 text-base"
@@ -110,7 +112,7 @@ export default function PortalHelp() {
                 <CardHeader>
                   <CardTitle className="text-lg font-heading flex items-center gap-2">
                     <HelpCircle className="w-5 h-5 text-accent" />
-                    Frequently Asked Questions
+                    {t("portal.faq")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -140,7 +142,7 @@ export default function PortalHelp() {
                 <CardHeader>
                   <CardTitle className="text-lg font-heading flex items-center gap-2">
                     <MessageSquare className="w-5 h-5 text-accent" />
-                    Send Us a Message
+                    {t("portal.sendMessage")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -176,7 +178,7 @@ export default function PortalHelp() {
             >
               <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-lg font-heading">Contact Us</CardTitle>
+                  <CardTitle className="text-lg font-heading">                    {t("portal.contactInfo")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -218,7 +220,7 @@ export default function PortalHelp() {
             >
               <Card className="border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-lg font-heading">Helpful Resources</CardTitle>
+                  <CardTitle className="text-lg font-heading">                    {t("portal.helpfulResources")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {resources.map((resource, index) => (

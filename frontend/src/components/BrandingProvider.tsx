@@ -84,7 +84,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       document.documentElement.style.setProperty("--accent", hsl);
       document.documentElement.style.setProperty("--ring", hsl);
 
-      let metaTheme = document.querySelector('meta[name="theme-color"]');
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
       if (metaTheme) {
         metaTheme.setAttribute("content", activeColor);
       }

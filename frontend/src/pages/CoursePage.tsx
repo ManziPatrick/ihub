@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
 import { CheckCircle, Clock, BookOpen, User, PlayCircle, Lock, Award, ShoppingCart, ArrowRight, XCircle, ChevronDown, ChevronUp, FileText, Youtube, Loader2, ScrollText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
@@ -135,41 +135,16 @@ export default function CoursePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Helmet>
-        <title>{course?.title ? `${course.title} | Bootskills - Course in Kigali, Rwanda` : "Course Details | Bootskills"}</title>
-        <meta name="description" content={stripHtml(course?.description)?.substring(0, 160) || "Explore this course from Bootskills. Practical, project-based training in Kigali, Rwanda."} />
-        <meta name="keywords" content={`${course?.category || 'course'}, ${course?.title || 'training'}, ${course?.level || 'beginner'} course, online learning, Kigali, Rwanda, tech training, Bootskills`} />
-        <meta name="author" content={course?.instructor?.username || 'Bootskills'} />
-        <meta name="robots" content="index, follow, max-snippet:200, max-image-preview:large" />
-        <link rel="canonical" href={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"} />
+      <SEOHead
+        title={course?.title || "Course Details"}
+        description={stripHtml(course?.description)?.substring(0, 160) || "Explore this course from Bootskills. Practical, project-based training in Kigali, Rwanda."}
+        canonicalUrl={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"}
+        ogImage={course?.thumbnail || undefined}
+        keywords={`${course?.category || 'course'}, ${course?.title || 'training'}, ${course?.level || 'beginner'} course, online learning, Kigali, Rwanda, tech training, Bootskills`}
+        author={course?.instructor?.username || 'Bootskills'}
+      >
         <link rel="alternate" hrefLang="en" href={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"} />
-
-
-        {/* Open Graph */}
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={course?.title ? `${course.title} | Bootskills Academy` : "Course | Bootskills"} />
-        <meta property="og:description" content={stripHtml(course?.description)?.substring(0, 160) || "Explore practical training from Bootskills in Kigali, Rwanda."} />
-        <meta property="og:url" content={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"} />
-        {course?.thumbnail && <meta property="og:image" content={course.thumbnail} />}
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:site_name" content="Bootskills Academy" />
-        <meta property="og:locale" content="en_RW" />
-
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={course?.title ? `${course.title} | Bootskills` : "Course | Bootskills"} />
-        <meta name="twitter:description" content={stripHtml(course?.description)?.substring(0, 160) || "Practical training from Bootskills in Kigali, Rwanda."} />
-        {course?.thumbnail && <meta name="twitter:image" content={course.thumbnail} />}
-        <meta name="twitter:site" content="@bootskills" />
-
-
-        {/* Geo tags for local SEO */}
-        <meta name="geo.region" content="RW-01" />
-        <meta name="geo.placename" content="Kigali" />
-        <meta name="geo.position" content="-1.9441;30.0619" />
-        <meta name="ICBM" content="-1.9441, 30.0619" />
-      </Helmet>
+      </SEOHead>
 
       {/* JSON-LD structured data for search engines & AI crawlers */}
       <script

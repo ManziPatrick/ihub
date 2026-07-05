@@ -66,7 +66,7 @@ export function PaymentForm({
   });
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/[^\d+]/g, ''); // Allow digits and +
+    const value = e.target.value.replace(/[^\d+]/g, ''); // Allow digits and +
     setPhoneNumber(value);
   };
 

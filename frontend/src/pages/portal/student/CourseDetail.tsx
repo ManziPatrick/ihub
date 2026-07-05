@@ -712,7 +712,7 @@ export default function CourseDetail() {
                       ) : currentLesson?.videoUrl ? (
                         <iframe 
                           src={(() => {
-                            let url = currentLesson.videoUrl;
+                            const url = currentLesson.videoUrl;
                             if (!url) return "";
                             if (url.includes("youtube.com/watch?v=")) return url.replace("watch?v=", "embed/").split("&")[0];
                             if (url.includes("youtube.com/shorts/")) return url.replace("shorts/", "embed/").split("?")[0];

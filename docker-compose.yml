@@ -156,6 +156,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        # Pass the CACHE_BUST value from the host. When this changes,
+        # Docker invalidates the build cache from that layer onward.
+        # Use: CACHE_BUST=$(git rev-parse --short HEAD) docker-compose up --build
+        # Or with Makefile: make up or make build
+        CACHE_BUST: ${CACHE_BUST:-1}
     container_name: ihub_frontend
     restart: unless-stopped
     ports:

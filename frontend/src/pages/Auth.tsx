@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { Loader2, ArrowLeft, Mail } from "lucide-react";
 import { getGraphqlUrl } from "@/lib/env";
 import { GoogleLogin } from "@react-oauth/google";
@@ -18,6 +19,7 @@ import { LocationSetupDialog } from "@/components/auth/LocationSetupDialog";
 type AuthMode = "login" | "signup";
 
 export default function Auth() {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<AuthMode>("login");
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "", fullName: "", phone: "" });
@@ -225,7 +227,7 @@ export default function Auth() {
       <div className="absolute top-6 left-6">
         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent transition-colors font-medium">
           <ArrowLeft className="w-4 h-4" />
-          Back to Home
+          {t("nav.backToHome")}
         </Link>
       </div>
 
@@ -242,28 +244,27 @@ export default function Auth() {
         </div>
 
         {isForgotPassword ? (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Reset Password</h2>
+          <div className="space-y-6">                <div className="text-center">
+              <h2 className="text-2xl font-bold text-foreground mb-2">{t("auth.resetPassword")}</h2>
               <p className="text-sm text-muted-foreground">
-                {resetSent ? "Check your email for the reset link." : "Enter your email to receive a link."}
+                {resetSent ? t("auth.checkEmail") : t("auth.enterEmailReset")}
               </p>
             </div>
             {resetSent ? (
               <div className="space-y-4">
-                <Button variant="outline" className="w-full h-11" onClick={() => { setResetSent(false); setIsForgotPassword(false); setMode("login"); }}>Back to Sign In</Button>
+                <Button variant="outline" className="w-full h-11" onClick={() => { setResetSent(false); setIsForgotPassword(false); setMode("login"); }}>{t("auth.backToSignIn")}</Button>
               </div>
             ) : (
               <form onSubmit={handleForgotPassword} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label>Email Address</Label>
+                  <Label>{t("auth.email")}</Label>
                   <Input type="email" placeholder="you@example.com" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} required className="h-11" />
                 </div>
                 <Button type="submit" variant="gold" className="w-full h-11" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send Reset Link"}
+                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t("auth.sendResetLink")}
                 </Button>
                 <div className="text-center">
-                  <button type="button" onClick={() => setIsForgotPassword(false)} className="text-sm text-muted-foreground hover:text-foreground">Cancel</button>
+                  <button type="button" onClick={() => setIsForgotPassword(false)} className="text-sm text-muted-foreground hover:text-foreground">{t("common.cancel")}</button>
                 </div>
               </form>
             )}
@@ -271,31 +272,31 @@ export default function Auth() {
         ) : requires2FA ? (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-foreground mb-2">2-Step Verification</h2>
-              <p className="text-sm text-muted-foreground">Enter the 6-digit code from your app or email.</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">{t("auth.twoStepVerification")}</h2>
+              <p className="text-sm text-muted-foreground">{t("auth.enterCode")}</p>
             </div>
             <form onSubmit={handle2FAVerify} className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Verification Code</Label>
+                <Label>{t("auth.verificationCode")}</Label>
                 <Input type="text" maxLength={6} placeholder="000000" value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))} required className="h-12 text-center text-2xl tracking-[0.3em] font-mono" autoFocus />
               </div>
               <Button type="submit" variant="gold" className="w-full h-11" disabled={isLoading}>
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify"}
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t("auth.verify")}
               </Button>
-              <Button variant="ghost" className="w-full" onClick={() => { setRequires2FA(false); setTotpCode(""); setUseEmailOTP(false); }}>Cancel</Button>
+              <Button variant="ghost" className="w-full" onClick={() => { setRequires2FA(false); setTotpCode(""); setUseEmailOTP(false); }}>{t("common.cancel")}</Button>
             </form>
             {!useEmailOTP && (
               <Button variant="outline" className="w-full h-11" onClick={handleRequestEmailOTP} disabled={isSendingOTP}>
                 {isSendingOTP ? <Loader2 className="w-4 h-4 mr-2 animate-spin text-accent" /> : <Mail className="w-4 h-4 mr-2 text-accent" />}
-                Send Code via Email
+                {t("auth.sendCodeEmail")}
               </Button>
             )}
           </div>
         ) : requires2FASetup ? (
            <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Setup 2FA</h2>
-              <p className="text-sm text-muted-foreground">Scan this QR code with Google Authenticator.</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">{t("auth.setup2FA")}</h2>
+              <p className="text-sm text-muted-foreground">{t("auth.scanQR")}</p>
             </div>
             {twoFactorData ? (
               <div className="flex flex-col items-center gap-4 bg-muted/30 p-4 rounded-xl border border-border">
@@ -306,15 +307,15 @@ export default function Auth() {
             <form onSubmit={handle2FAVerify} className="space-y-4">
               <Input type="text" maxLength={6} placeholder="000000" value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))} required className="h-12 text-center text-xl tracking-[0.2em] font-mono" />
               <Button type="submit" variant="gold" className="w-full h-11" disabled={isLoading}>
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify & Continue"}
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t("auth.verifyContinue")}
               </Button>
             </form>
           </div>
         ) : (
           <div className="space-y-6">
             <div className="flex bg-muted/50 p-1 rounded-lg border border-border/50">
-              <button onClick={() => setMode("login")} className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${mode === "login" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>Sign In</button>
-              <button onClick={() => setMode("signup")} className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${mode === "signup" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>Sign Up</button>
+              <button onClick={() => setMode("login")} className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${mode === "login" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>{t("auth.signIn")}</button>
+              <button onClick={() => setMode("signup")} className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${mode === "signup" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>{t("auth.signUp")}</button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -325,33 +326,33 @@ export default function Auth() {
                 </div>
               )}
               <div className="space-y-1.5">
-                <Label>Email</Label>
+                <Label>{t("auth.email")}</Label>
                 <Input type="email" placeholder="you@example.com" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required className="h-11 bg-background/50" />
               </div>
               {mode === "signup" && (
                 <div className="space-y-1.5">
-                  <Label>Phone (Optional)</Label>
+                  <Label>{t("auth.phoneOptional")}</Label>
                   <Input type="tel" placeholder="+250 700 000 000" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="h-11 bg-background/50" />
                 </div>
               )}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label>Password</Label>
+                  <Label>{t("auth.password")}</Label>
                   {mode === "login" && (
-                    <button type="button" onClick={() => setIsForgotPassword(true)} className="text-xs text-accent hover:underline font-medium">Forgot?</button>
+                    <button type="button" onClick={() => setIsForgotPassword(true)} className="text-xs text-accent hover:underline font-medium">{t("auth.forgot")}</button>
                   )}
                 </div>
                 <PasswordInput placeholder="••••••••" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required minLength={6} className="h-11 bg-background/50" />
               </div>
               
               <Button type="submit" variant="gold" className="w-full h-11 mt-2 text-sm font-bold tracking-wide" disabled={isLoading}>
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : mode === "login" ? "Sign In" : "Create Account"}
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : mode === "login" ? t("auth.signIn") : t("auth.createAccount")}
               </Button>
             </form>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
-              <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground font-medium">Or</span></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground font-medium">{t("auth.orContinueWith")}</span></div>
             </div>
 
             <div className="flex justify-center w-full [&>div]:w-full [&>div]:flex [&>div]:justify-center">
@@ -359,7 +360,7 @@ export default function Auth() {
             </div>
 
             <p className="text-center text-xs text-muted-foreground leading-relaxed">
-              By continuing, you agree to our <Link to="/terms" className="text-accent hover:underline">Terms</Link> and <Link to="/privacy" className="text-accent hover:underline">Privacy Policy</Link>.
+              {t("auth.agreedToTerms")}
             </p>
           </div>
         )}

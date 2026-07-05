@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Linkedin, Mail, Github, Twitter } from "lucide-react";
@@ -5,7 +6,8 @@ import { PageTransition } from "@/components/PageTransition";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { getApiBaseUrl } from "@/lib/env";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
+import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 
 interface TeamMember {
     _id: string;
@@ -24,6 +26,7 @@ interface TeamMember {
 const API_BASE_URL = getApiBaseUrl();
 
 export default function Team() {
+    const { t } = useTranslation();
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -48,18 +51,26 @@ export default function Team() {
     return (
         <PageTransition>
             <div className="min-h-screen bg-background">
-                <Helmet>
-                    <title>Our Team | Bootskills - Meet the Innovators in Kigali, Rwanda</title>
-                    <meta name="description" content="Meet the passionate professionals building the future of tech education in Africa. Our team at Bootskills is led by founder Manzi Alain Patrick Munyeshuri and co-founder KALISA Jonathan." />
-                    <link rel="canonical" href="https://bootskills.com/team" />
-                    <meta property="og:title" content="Our Team | Bootskills - Meet the Innovators" />
-                    <meta property="og:description" content="Meet the passionate professionals building the future of tech education in Africa at Bootskills." />
-                    <meta property="og:url" content="https://bootskills.com/team" />
-                    <meta property="og:type" content="website" />
-                    <meta name="geo.region" content="RW-01" />
-                    <meta name="geo.placename" content="Kigali" />
-                    <meta name="geo.position" content="-1.9441;30.0619" />
-                </Helmet>
+                <SEOHead
+                    title="Our Team"
+                    description="Meet the passionate professionals building the future of tech education in Africa. Our team at Bootskills is led by founder Manzi Alain Patrick Munyeshuri and co-founder KALISA Jonathan."
+                    canonicalUrl="https://bootskills.com/team"
+                    keywords="Bootskills team, Rwanda tech innovators, Kigali tech team, African tech education, software developers Rwanda"
+                >
+                    <script type="application/ld+json">
+                      {JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@graph": [
+                          organizationLd,
+                          webPageLd("Our Team", "Meet the passionate professionals building the future of tech education in Africa at Bootskills.", "https://bootskills.com/team"),
+                          breadcrumbListLd([
+                            { name: "Home", item: "/" },
+                            { name: "Team", item: "/team" },
+                          ]),
+                        ]
+                      })}
+                    </script>
+                </SEOHead>
                 <Header />
                 <main className="pt-20">
                     <div className="bg-gradient-to-br from-background via-background to-accent/5">
@@ -82,15 +93,15 @@ export default function Team() {
                                         className="inline-block mb-4 px-4 py-1.5 rounded-full bg-gradient-to-r from-accent/20 to-accent/10 border border-accent/30 backdrop-blur-sm"
                                     >
                                         <span className="text-sm font-medium bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent">
-                                            Our Amazing Team
+                                            {t("team.ourAmazingTeam")}
                                         </span>
                                     </motion.div>
 
                                     <h1 className="text-4xl lg:text-5xl font-heading font-bold mb-4 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-                                        Meet the Innovators
+                                        {t("team.meetInnovators")}
                                     </h1>
                                     <p className="text-base lg:text-lg text-muted-foreground leading-relaxed">
-                                        Passionate professionals building the future of tech education in Africa
+                                        {t("team.heroDesc")}
                                     </p>
                                 </motion.div>
                             </div>
@@ -102,11 +113,11 @@ export default function Team() {
                                 {loading ? (
                                     <div className="text-center py-12">
                                         <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-accent border-r-transparent"></div>
-                                        <p className="mt-4 text-muted-foreground">Loading team members...</p>
+                                        <p className="mt-4 text-muted-foreground">{t("team.loading")}</p>
                                     </div>
                                 ) : teamMembers.length === 0 ? (
                                     <div className="text-center py-12">
-                                        <p className="text-muted-foreground">No team members found. Check back soon!</p>
+                                        <p className="text-muted-foreground">{t("team.noMembers")}</p>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

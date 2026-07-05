@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Search, SlidersHorizontal } from "lucide-react";
 import topImage from "@/assets/top-hero.webp";
 
 export function HeroSection() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
@@ -31,10 +33,10 @@ export function HeroSection() {
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
               <h1 className="text-2xl lg:text-3xl font-bold text-white mb-1">
-                Explore
+                {t("home.explore")}
               </h1>
               <h1 className="text-2xl lg:text-3xl font-bold text-white mb-6">
-                Programs for Your Future
+                {t("home.programsForFuture")}
               </h1>
 
               {/* Search bar */}
@@ -52,14 +54,14 @@ export function HeroSection() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by program, school, or location..."
+                    placeholder={t("home.searchPrograms")}
                     className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/40 transition-all"
                   />
                 </div>
                 <button
                   type="submit"
                   className="flex-shrink-0 p-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all"
-                  aria-label="Filter programs"
+                  aria-label={t("home.filterPrograms")}
                 >
                   <SlidersHorizontal className="w-4 h-4" />
                 </button>

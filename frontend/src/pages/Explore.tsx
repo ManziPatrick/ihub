@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
@@ -8,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
+import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 import {
   Sheet,
   SheetContent,
@@ -66,26 +68,10 @@ const getDepartmentIcon = (dept: string) => {
   }
 };
 
-const features = [
-  { icon: Clock, title: "Flexible Schedules", description: "Evening and weekend classes available for working professionals" },
-  { icon: Users, title: "Expert Instructors", description: "Learn from industry practitioners with real-world experience" },
-  { icon: Award, title: "Recognized Certification", description: "Earn certificates valued by employers across Africa" },
-  { icon: BookOpen, title: "Project-Based Learning", description: "Build a portfolio with real projects, not just theory" },
-  { icon: Target, title: "Career Support", description: "Resume review, interview prep, and job placement assistance" },
-  { icon: Briefcase, title: "Internship Opportunities", description: "Access to internship placements with partner companies" },
-];
-
-const faqs = [
-  { q: "Do I need prior experience?", a: "For beginner-level programs, no prior experience is needed. We start from fundamentals. Intermediate programs require basic programming knowledge." },
-  { q: "What is the class schedule?", a: "We offer flexible schedules including weekday evenings (6-9 PM) and weekend sessions. Full-time intensive options are also available." },
-  { q: "Will I get a certificate?", a: "Yes, all graduates receive an industry-recognized certificate upon successful completion of their program and capstone project." },
-  { q: "Is job placement guaranteed?", a: "While we cannot guarantee employment, we have a 95% job placement rate within 6 months of graduation and provide comprehensive career support." },
-  { q: "Are AI courses suitable for non-technical staff?", a: "Absolutely! Our department-specific AI courses are designed for professionals at all technical levels, focusing on practical applications rather than coding." },
-];
-
 const API_BASE_URL = getApiBaseUrl();
 
 const Explore = () => {
+  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
@@ -236,18 +222,26 @@ const Explore = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Explore Courses | Bootskills — Your All-in-One Learning Hub</title>
-        <meta name="description" content="Browse hundreds of courses across every field — tech, business, healthcare, finance, education, AI, and more. Find your path with real projects and industry internships." />
-        <link rel="canonical" href="https://bootskills.com/explore" />
-        <meta property="og:title" content="Explore Courses | Bootskills — Your All-in-One Learning Hub" />
-        <meta property="og:description" content="Browse hundreds of courses across every field — real projects, industry internships, and career support." />
-        <meta property="og:url" content="https://bootskills.com/explore" />
-        <meta property="og:type" content="website" />
-        <meta name="geo.region" content="RW-01" />
-        <meta name="geo.placename" content="Kigali" />
-        <meta name="geo.position" content="-1.9441;30.0619" />
-      </Helmet>
+      <SEOHead
+        title={t("explore.heroTitle")}
+        description={t("explore.heroDesc")}
+        canonicalUrl="https://bootskills.com/explore"
+        keywords="courses Rwanda, training programs Kigali, tech courses, online learning Africa, professional development, bootcamp"
+      >
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              organizationLd,
+              webPageLd(t("explore.heroTitle"), t("explore.heroDesc"), "https://bootskills.com/explore"),
+              breadcrumbListLd([
+                { name: "Home", item: "/" },
+                { name: "Explore", item: "/explore" },
+              ]),
+            ]
+          })}
+        </script>
+      </SEOHead>
       <Header />
       <main className="pt-20">
         {/* Hero */}
@@ -268,23 +262,23 @@ const Explore = () => {
               animate={{ opacity: 1, y: 0 }}
             >
               <span className="inline-block px-4 py-1 bg-accent/20 text-accent text-sm font-medium rounded-full mb-4">
-                Explore Programs & Schools
+                {t("explore.title")}
               </span>
               <h1 className="font-heading text-3xl lg:text-5xl font-medium text-card-foreground mb-6">
-                Discover Industry-Ready Programs from Top Schools
+                {t("explore.heroTitle")}
               </h1>
               <p className="text-card-foreground/80 max-w-2xl mx-auto text-lg mb-8">
-                Explore comprehensive programs designed by top schools and industry experts.
+                {t("explore.heroDesc")}
               </p>
               <div className="flex flex-wrap justify-center gap-4 text-sm text-card-foreground/70">
                 <span className="flex items-center gap-2 bg-background/50 px-4 py-2 rounded-full">
-                  <Clock className="w-4 h-4 text-accent" /> Flexible schedules
+                  <Clock className="w-4 h-4 text-accent" /> {t("home.flexibleSchedules")}
                 </span>
                 <span className="flex items-center gap-2 bg-background/50 px-4 py-2 rounded-full">
-                  <Users className="w-4 h-4 text-accent" /> Expert trainers
+                  <Users className="w-4 h-4 text-accent" /> {t("home.expertTrainers")}
                 </span>
                 <span className="flex items-center gap-2 bg-background/50 px-4 py-2 rounded-full">
-                  <Award className="w-4 h-4 text-accent" /> Certified programs
+                  <Award className="w-4 h-4 text-accent" /> {t("home.certifiedPrograms")}
                 </span>
               </div>
             </motion.div>
@@ -300,13 +294,12 @@ const Explore = () => {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <span className="text-accent text-sm font-medium uppercase tracking-wider">Our Programs</span>
+              <span className="text-accent text-sm font-medium uppercase tracking-wider">{t("explore.ourPrograms")}</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-foreground mt-2 mb-4">
-                Choose Your Learning Path
+                {t("explore.choosePath")}
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Each program includes hands-on projects, mentorship, and career support to ensure
-                you're ready for real-world challenges.
+                {t("explore.choosePathDesc")}
               </p>
             </motion.div>
 
@@ -314,12 +307,11 @@ const Explore = () => {
               {/* Side Panel Filter */}
               <div className="w-full lg:bg-card lg:p-6 lg:rounded-2xl lg:border lg:border-border/30 lg:sticky lg:top-24">
                 <div className="flex items-center justify-between mb-4 lg:mb-6">
-                  <div>
-                    <h3 className="font-heading font-bold text-foreground text-sm lg:text-base flex items-center gap-2">
+                  <div>                      <h3 className="font-heading font-bold text-foreground text-sm lg:text-base flex items-center gap-2">
                       <Building2 className="w-4 h-4 text-accent" />
-                      Schools & Providers
+                      {t("explore.schoolsProviders")}
                     </h3>
-                    <p className="text-sm text-muted-foreground mt-1">Search and filter the programs available on Explore.</p>
+                    <p className="text-sm text-muted-foreground mt-1">{t("explore.sidePanelDesc")}</p>
                   </div>
                   <div className="lg:hidden">
                     <Sheet>

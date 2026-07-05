@@ -8,7 +8,8 @@ import aboutImage from "@/assets/about-training.webp";
 import aboutImageMobile from "@/assets/about-training-mobile.webp";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
+import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 
 const values = [
   { icon: Shield, title: "Excellence", description: "We deliver the highest quality in all our training programs and technology solutions" },
@@ -63,39 +64,35 @@ const services = [
 ];
 
 const About = () => {
-  const jsonLd = {
+  const jsonldGraph = {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "Bootskills",
-    "url": "https://bootskills.com",
-    "logo": "https://bootskills.com/logo.png",
-    "founder": [
-      {
-        "@type": "Person",
-        "name": "Manzi Alain Patrick Munyeshuri"
-      },
-      {
-        "@type": "Person",
-        "name": "KALISA Jonathan"
-      }
+    "@graph": [
+      organizationLd,
+      webPageLd(
+        "About Us",
+        "Bootskills empowers learners with practical skills and real-world project training. Discover our mission, vision, and team driving Africa's digital transformation.",
+        "https://bootskills.com/about"
+      ),
+      breadcrumbListLd([
+        { name: "Home", item: "/" },
+        { name: "About", item: "/about" },
+      ]),
     ],
-    "description": "Bootskills empowers learners with practical skills and real-world project training.",
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": "Kigali",
-      "addressCountry": "RW"
-    }
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>About Us | Bootskills - Leaders in Professional Growth</title>
-        <meta name="description" content="Bootskills empowers learners with practical skills and real-world project training." />
+      <SEOHead
+        title="About Us"
+        description="Bootskills empowers learners with practical skills and real-world project training. Discover our mission, vision, and team driving Africa's digital transformation."
+        canonicalUrl="https://bootskills.com/about"
+        ogImage="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1200&h=630"
+        keywords="about Bootskills, Rwanda tech training, digital skills Africa, Kigali coding bootcamp, tech education Rwanda"
+      >
         <script type="application/ld+json">
-          {JSON.stringify(jsonLd)}
+          {JSON.stringify(jsonldGraph)}
         </script>
-      </Helmet>
+      </SEOHead>
       <Header />
       <main className="pt-20">
         {/* Hero Section */}

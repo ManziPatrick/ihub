@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
@@ -10,30 +11,11 @@ import { toast } from "sonner";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import { supabase } from "@/integrations/supabase/client";
-import { Helmet } from "react-helmet-async";
-
-const contactInfo = [
-  { icon: MapPin, label: "Address", value: "Kigali, Rwanda" },
-  { icon: Mail, label: "Email", value: "info@bootskills.com" },
-  { icon: Phone, label: "Phone", value: "+250 790 706 170" },
-  { icon: Clock, label: "Office Hours", value: "Monday - Friday: 8:00 AM - 5:00 PM" },
-];
-
-const inquiryTypes = [
-  { icon: GraduationCap, title: "Training Programs", description: "Questions about our courses, enrollment, and curriculum" },
-  { icon: Briefcase, title: "Internships", description: "Inquire about internship opportunities and applications" },
-  { icon: Users, title: "Corporate Solutions", description: "Custom training and technology services for organizations" },
-  { icon: MessageSquare, title: "General Inquiry", description: "Any other questions or feedback" },
-];
-
-const faqs = [
-  { q: "How do I enroll in a training program?", a: "You can apply online through our contact form or visit our office in Kigali. Our admissions team will guide you through the process." },
-  { q: "Do you offer online classes?", a: "Yes! Most of our programs are available in online, hybrid, and in-person formats to accommodate different preferences and locations." },
-  { q: "What payment options are available?", a: "We offer flexible payment plans, including monthly installments. We also partner with scholarship programs for qualified candidates." },
-  { q: "Can companies request custom training?", a: "Absolutely! We design tailored training programs for organizations. Contact us with your requirements for a custom proposal." },
-];
+import { SEOHead } from "@/components/SEOHead";
+import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 
 const Contact = () => {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -43,6 +25,27 @@ const Contact = () => {
     inquiryType: "",
     message: "",
   });
+
+  const contactInfo = [
+    { icon: MapPin, labelKey: "contact.address" as const, value: t("contact.kigaliRwanda") },
+    { icon: Mail, labelKey: "contact.email" as const, value: "info@bootskills.com" },
+    { icon: Phone, labelKey: "contact.phone" as const, value: "+250 790 706 170" },
+    { icon: Clock, labelKey: "contact.officeHours" as const, value: t("contact.hours") },
+  ];
+
+  const inquiryTypes = [
+    { icon: GraduationCap, titleKey: "contact.trainingPrograms" as const, descKey: "contact.trainingProgramsDesc" as const },
+    { icon: Briefcase, titleKey: "contact.internships" as const, descKey: "contact.internshipsDesc" as const },
+    { icon: Users, titleKey: "contact.corporateSolutions" as const, descKey: "contact.corporateSolutionsDesc" as const },
+    { icon: MessageSquare, titleKey: "contact.generalInquiry" as const, descKey: "contact.generalInquiryDesc" as const },
+  ];
+
+  const faqs = [
+    { qKey: "contact.faq1q" as const, aKey: "contact.faq1a" as const },
+    { qKey: "contact.faq2q" as const, aKey: "contact.faq2a" as const },
+    { qKey: "contact.faq3q" as const, aKey: "contact.faq3a" as const },
+    { qKey: "contact.faq4q" as const, aKey: "contact.faq4a" as const },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,11 +63,11 @@ const Contact = () => {
 
       if (error) throw error;
 
-      toast.success("Thank you for reaching out! We'll get back to you within 24 hours.");
+      toast.success(t("contact.thanksMessage"));
       setFormData({ name: "", email: "", phone: "", subject: "", inquiryType: "", message: "" });
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("Something went wrong. Please try again.");
+      toast.error(t("contact.errorMessage"));
     } finally {
       setIsSubmitting(false);
     }
@@ -73,11 +76,11 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Contact Us | Bootskills - Kigali, Rwanda</title>
-        <meta name="description" content="Get in touch with Bootskills in Kigali, Rwanda. Contact us for training programs, internships, corporate solutions, or general inquiries. We typically respond within 24 hours." />
+        <title>{t("contact.getInTouch")} | Bootskills - Kigali, Rwanda</title>
+        <meta name="description" content={t("contact.heroDesc")} />
         <link rel="canonical" href="https://bootskills.com/contact" />
-        <meta property="og:title" content="Contact Us | Bootskills - Kigali, Rwanda" />
-        <meta property="og:description" content="Reach out to Bootskills for tech training, internships, and corporate solutions in Kigali, Rwanda." />
+        <meta property="og:title" content={`${t("contact.getInTouch")} | Bootskills - Kigali, Rwanda`} />
+        <meta property="og:description" content={t("contact.heroDesc")} />
         <meta property="og:url" content="https://bootskills.com/contact" />
         <meta property="og:type" content="website" />
         <meta name="geo.region" content="RW-01" />
@@ -104,14 +107,13 @@ const Contact = () => {
               animate={{ opacity: 1, y: 0 }}
             >
               <span className="inline-block px-4 py-1 bg-accent/20 text-accent text-sm font-medium rounded-full mb-4">
-                Get in Touch
+                {t("contact.getInTouch")}
               </span>
               <h1 className="font-heading text-3xl lg:text-5xl font-medium text-card-foreground mb-6">
-                We'd Love to Hear From You
+                {t("contact.wedLoveToHear")}
               </h1>
               <p className="text-card-foreground/80 max-w-2xl mx-auto text-lg">
-                Whether you're interested in enrolling, partnering, or just want to learn more about
-                what we do, we're here to help. Reach out and let's start a conversation.
+                {t("contact.heroDesc")}
               </p>
             </motion.div>
           </div>
@@ -123,7 +125,7 @@ const Contact = () => {
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
               {inquiryTypes.map((type, index) => (
                 <motion.div
-                  key={type.title}
+                  key={type.titleKey}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -133,8 +135,8 @@ const Contact = () => {
                   <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-background flex items-center justify-center group-hover:bg-accent/20 transition-colors">
                     <type.icon className="w-6 h-6 text-accent" strokeWidth={1.5} />
                   </div>
-                  <h3 className="font-heading font-semibold text-card-foreground text-sm mb-1">{type.title}</h3>
-                  <p className="text-xs text-card-foreground/60">{type.description}</p>
+                  <h3 className="font-heading font-semibold text-card-foreground text-sm mb-1">{t(type.titleKey)}</h3>
+                  <p className="text-xs text-card-foreground/60">{t(type.descKey)}</p>
                 </motion.div>
               ))}
             </div>
@@ -153,20 +155,20 @@ const Contact = () => {
                 className="lg:col-span-2"
               >
                 <h2 className="font-heading text-2xl font-semibold text-foreground mb-2">
-                  Contact Information
+                  {t("contact.contactInfo")}
                 </h2>
                 <p className="text-muted-foreground mb-8">
-                  Reach out to us directly or fill out the form. We typically respond within 24 hours.
+                  {t("contact.contactInfoDesc")}
                 </p>
 
                 <div className="space-y-6 mb-8">
                   {contactInfo.map((item) => (
-                    <div key={item.label} className="flex items-start gap-4">
+                    <div key={item.labelKey} className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-full bg-card flex items-center justify-center flex-shrink-0 shadow-card">
                         <item.icon className="w-5 h-5 text-accent" strokeWidth={1.5} />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground">{item.label}</p>
+                        <p className="text-sm font-medium text-foreground">{t(item.labelKey)}</p>
                         <p className="text-sm text-muted-foreground">{item.value}</p>
                       </div>
                     </div>
@@ -178,7 +180,7 @@ const Contact = () => {
                   <div className="w-full h-full bg-gradient-to-br from-card to-accent/10 flex items-center justify-center">
                     <div className="text-center">
                       <MapPin className="w-10 h-10 text-accent mx-auto mb-2" />
-                      <p className="text-sm text-card-foreground/70">Kigali, Rwanda</p>
+                      <p className="text-sm text-card-foreground/70">{t("contact.kigaliRwanda")}</p>
                     </div>
                   </div>
                 </div>
@@ -193,32 +195,32 @@ const Contact = () => {
               >
                 <form onSubmit={handleSubmit} className="bg-card p-6 lg:p-8 rounded-xl shadow-card border border-border/30">
                   <h2 className="font-heading text-xl font-semibold text-card-foreground mb-2">
-                    Send Us a Message
+                    {t("contact.sendMessage")}
                   </h2>
                   <p className="text-sm text-card-foreground/70 mb-6">
-                    Fill out the form below and we'll get back to you as soon as possible.
+                    {t("contact.sendMessageDesc")}
                   </p>
 
                   <div className="space-y-5">
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm text-card-foreground/70 mb-1.5 block">Full Name *</label>
+                        <label className="text-sm text-card-foreground/70 mb-1.5 block">{t("contact.fullName")}</label>
                         <Input
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           required
-                          placeholder="John Doe"
+                          placeholder={t("contact.namePlaceholder")}
                           className="bg-background"
                         />
                       </div>
                       <div>
-                        <label className="text-sm text-card-foreground/70 mb-1.5 block">Email Address *</label>
+                        <label className="text-sm text-card-foreground/70 mb-1.5 block">{t("contact.emailAddress")}</label>
                         <Input
                           type="email"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           required
-                          placeholder="john@example.com"
+                          placeholder={t("contact.emailPlaceholder")}
                           className="bg-background"
                         />
                       </div>
@@ -226,51 +228,51 @@ const Contact = () => {
 
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm text-card-foreground/70 mb-1.5 block">Phone Number</label>
+                        <label className="text-sm text-card-foreground/70 mb-1.5 block">{t("contact.phoneNumber")}</label>
                         <Input
                           type="tel"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          placeholder="+250 790 706 170"
+                          placeholder={t("contact.phonePlaceholder")}
                           className="bg-background"
                         />
                       </div>
                       <div>
-                        <label className="text-sm text-card-foreground/70 mb-1.5 block">Inquiry Type</label>
+                        <label className="text-sm text-card-foreground/70 mb-1.5 block">{t("contact.inquiryType")}</label>
                         <select
                           value={formData.inquiryType}
                           onChange={(e) => setFormData({ ...formData, inquiryType: e.target.value })}
                           className="w-full px-3 py-2 rounded-md bg-background border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
                         >
-                          <option value="">Select type...</option>
-                          <option value="training">Training Programs</option>
-                          <option value="internship">Internships</option>
-                          <option value="corporate">Corporate Solutions</option>
-                          <option value="partnership">Partnership</option>
-                          <option value="general">General Inquiry</option>
+                          <option value="">{t("contact.selectType")}</option>
+                          <option value="training">{t("contact.optionTraining")}</option>
+                          <option value="internship">{t("contact.optionInternship")}</option>
+                          <option value="corporate">{t("contact.optionCorporate")}</option>
+                          <option value="partnership">{t("contact.optionPartnership")}</option>
+                          <option value="general">{t("contact.optionGeneral")}</option>
                         </select>
                       </div>
                     </div>
 
                     <div>
-                      <label className="text-sm text-card-foreground/70 mb-1.5 block">Subject *</label>
+                      <label className="text-sm text-card-foreground/70 mb-1.5 block">{t("contact.subject")}</label>
                       <Input
                         value={formData.subject}
                         onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                         required
-                        placeholder="What is your inquiry about?"
+                        placeholder={t("contact.subjectPlaceholder")}
                         className="bg-background"
                       />
                     </div>
 
                     <div>
-                      <label className="text-sm text-card-foreground/70 mb-1.5 block">Message *</label>
+                      <label className="text-sm text-card-foreground/70 mb-1.5 block">{t("contact.message")}</label>
                       <Textarea
                         value={formData.message}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         required
                         rows={5}
-                        placeholder="Tell us more about your inquiry..."
+                        placeholder={t("contact.messagePlaceholder")}
                         className="bg-background"
                       />
                     </div>
@@ -279,15 +281,15 @@ const Contact = () => {
                       {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sending...
+                          {t("contact.sending")}
                         </>
                       ) : (
-                        "Send Message"
+                        t("contact.sendMessageBtn")
                       )}
                     </Button>
 
                     <p className="text-xs text-card-foreground/50 text-center">
-                      By submitting this form, you agree to our privacy policy and terms of service.
+                      {t("contact.privacyNotice")}
                     </p>
                   </div>
                 </form>
@@ -305,9 +307,9 @@ const Contact = () => {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <span className="text-accent text-sm font-medium uppercase tracking-wider">Quick Answers</span>
+              <span className="text-accent text-sm font-medium uppercase tracking-wider">{t("contact.quickAnswers")}</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mt-2">
-                Frequently Asked Questions
+                {t("contact.faqTitle")}
               </h2>
             </motion.div>
             <div className="max-w-3xl mx-auto space-y-4">
@@ -320,8 +322,8 @@ const Contact = () => {
                   transition={{ delay: index * 0.1 }}
                   className="bg-background p-6 rounded-xl shadow-card border border-border/30"
                 >
-                  <h4 className="font-heading font-semibold text-foreground mb-2">{faq.q}</h4>
-                  <p className="text-sm text-muted-foreground">{faq.a}</p>
+                  <h4 className="font-heading font-semibold text-foreground mb-2">{t(faq.qKey)}</h4>
+                  <p className="text-sm text-muted-foreground">{t(faq.aKey)}</p>
                 </motion.div>
               ))}
             </div>
