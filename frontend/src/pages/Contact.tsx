@@ -14,6 +14,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { SEOHead } from "@/components/SEOHead";
 import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 
+import { Helmet } from "react-helmet-async";
+
+
+
 const Contact = () => {
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
