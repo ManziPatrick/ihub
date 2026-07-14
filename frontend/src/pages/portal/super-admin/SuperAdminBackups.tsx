@@ -1140,7 +1140,7 @@ export default function SuperAdminBackups() {
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               {backup.createdAt
-                                ? format(new Date(parseInt(backup.createdAt) || backup.createdAt), "MMM d, yyyy HH:mm")
+                                ? format(new Date(backup.createdAt), "MMM d, yyyy HH:mm")
                                 : ""}
                             </span>
                           </div>
@@ -1297,7 +1297,7 @@ export default function SuperAdminBackups() {
                     Backup: <span className="font-mono text-emerald-400">{restoreTarget?.backupDbName}</span>
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Created {restoreTarget?.createdAt ? formatDistanceToNow(new Date(parseInt(restoreTarget.createdAt) || restoreTarget.createdAt), { addSuffix: true }) : ""}
+                    Created {restoreTarget?.createdAt ? formatDistanceToNow(new Date(restoreTarget.createdAt), { addSuffix: true }) : ""}
                     {" "}with {restoreTarget?.collections?.length || 0} collections
                     {" "}({formatFileSize(restoreTarget?.actualSize || restoreTarget?.size)})
                   </p>
