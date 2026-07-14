@@ -405,7 +405,7 @@ export default function ClientFeedback() {
 
                 {/* Admin Reviewer Notes */}
                 {project.evaluation?.reviewerNotes && (
-                  <Card className="border-border/50 bg-amber-500/5 border-amber-500/10">
+                  <Card className="bg-amber-500/5 border-amber-500/10">
                     <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
                         <BarChart3 className="w-4 h-4 text-amber-400" /> Admin Reviewer Notes

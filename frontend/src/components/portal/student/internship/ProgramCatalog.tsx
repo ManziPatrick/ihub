@@ -177,7 +177,7 @@ export function ProgramCatalog() {
                   )}
                 </div>
 
-                {program.eligibility?.length > 0 && (
+                {Array.isArray(program.eligibility) && program.eligibility.length > 0 && (
                   <div className="space-y-3">
                     <p className="text-[10px] uppercase font-black text-muted-foreground/60 tracking-widest pl-1">Requirements</p>
                     <div className="flex flex-wrap gap-1.5">

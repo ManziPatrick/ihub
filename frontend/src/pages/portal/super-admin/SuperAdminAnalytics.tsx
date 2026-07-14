@@ -52,7 +52,7 @@ export default function SuperAdminAnalytics() {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const { data: analyticsData, loading: analyticsLoading } = useQuery(GET_ANALYTICS);
   const { data: dashboardData } = useQuery(GET_ADMIN_DASHBOARD_DATA);
-  const { data: activityData } = useQuery(GET_RECENT_ACTIVITY, { pollInterval: 15000 });
+  const { data: activityData } = useQuery(GET_RECENT_ACTIVITY, { pollInterval: 60000 });
   const { data: topStudentsData } = useQuery(GET_TOP_STUDENTS, { variables: { limit: 5 } });
   const { data: usersData } = useQuery(GET_USERS, { variables: { limit: 100 } });
   const { data: coursesData } = useQuery(GET_COURSES_LITE_SUMMARY, {
@@ -60,7 +60,7 @@ export default function SuperAdminAnalytics() {
     fetchPolicy: "cache-first",
   });
   const [fetchStudents, { data: studentsData }] = useLazyQuery(GET_COURSE_ENROLLED_STUDENTS, {
-    fetchPolicy: "cache-and-network",
+    fetchPolicy: "cache-first",
   });
 
   const { data: statsData } = useQuery(GET_STATS);

@@ -4,11 +4,23 @@ import {
   restoreBackup,
   deleteBackup,
   getBackupClusterStatus,
+  getBackupAnalytics,
+  getBackupScheduleConfig,
+  updateBackupScheduleConfig,
+  getLiveDatabaseStats,
 } from '../services/backup.service';
 
 export const backupResolvers = {
   Query: {
     /** List all backup snapshots (super_admin only) */
+    /** Get live primary database stats (super_admin only) */
+    liveDatabaseStats: async (_: any, __: any, context: any) => {
+      if (!context.user || context.user.role !== 'super_admin') {
+        throw new Error('Not authorized. Only super admins can manage backups.');
+      }
+      return getLiveDatabaseStats();
+    },
+
     backups: async (_: any, __: any, context: any) => {
       if (!context.user || context.user.role !== 'super_admin') {
         throw new Error('Not authorized. Only super admins can manage backups.');
@@ -22,6 +34,22 @@ export const backupResolvers = {
         throw new Error('Not authorized. Only super admins can manage backups.');
       }
       return getBackupClusterStatus();
+    },
+
+    /** Get backup analytics and historical performance metrics (super_admin only) */
+    backupAnalytics: async (_: any, __: any, context: any) => {
+      if (!context.user || context.user.role !== 'super_admin') {
+        throw new Error('Not authorized. Only super admins can manage backups.');
+      }
+      return getBackupAnalytics();
+    },
+
+    /** Get backup schedule configuration (super_admin only) */
+    backupScheduleConfig: async (_: any, __: any, context: any) => {
+      if (!context.user || context.user.role !== 'super_admin') {
+        throw new Error('Not authorized. Only super admins can manage backups.');
+      }
+      return getBackupScheduleConfig();
     },
   },
 
@@ -72,6 +100,19 @@ export const backupResolvers = {
 
       await deleteBackup(backupId);
       return true;
+    },
+
+    /** Update backup schedule configuration (super_admin only) */
+    updateBackupScheduleConfig: async (
+      _: any,
+      { interval, retention, enabled }: { interval?: string; retention?: number; enabled?: boolean },
+      context: any,
+    ) => {
+      if (!context.user || context.user.role !== 'super_admin') {
+        throw new Error('Not authorized. Only super admins can manage backups.');
+      }
+
+      return updateBackupScheduleConfig({ interval, retention, enabled });
     },
   },
 

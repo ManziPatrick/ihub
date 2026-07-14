@@ -40,7 +40,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { theme, resolvedTheme, setTheme } = useTheme();
   const { data, loading } = useQuery(GET_BRANDING, {
-    fetchPolicy: "cache-and-network",
+    fetchPolicy: "cache-first",
   });
 
   const branding = (data as any)?.branding || defaultBranding;

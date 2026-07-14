@@ -24,7 +24,15 @@ export interface ICommissionDisbursement extends Document {
   /** Owner's phone number for disbursement */
   ownerPhone: string;
   /** Disbursement status */
-  status: 'Pending' | 'Processing' | 'Successful' | 'Failed';
+  status: 'Pending' | 'Processing' | 'Successful' | 'Failed' | 'OnHold';
+  /** Date after which the disbursement can be released (15-day hold) */
+  releaseDate?: Date;
+  /** Who approved the release */
+  approvedBy?: mongoose.Types.ObjectId;
+  /** When it was approved */
+  approvedAt?: Date;
+  /** Note about the hold */
+  holdNote?: string;
   /** InTouch transaction reference */
   intouchTransactionRef?: string;
   /** InTouch reference ID returned on success */
@@ -104,9 +112,22 @@ const CommissionDisbursementSchema: Schema = new Schema(
     },
     status: {
       type: String,
-      enum: ['Pending', 'Processing', 'Successful', 'Failed'],
+      enum: ['Pending', 'Processing', 'Successful', 'Failed', 'OnHold'],
       default: 'Pending',
       index: true,
+    },
+    releaseDate: {
+      type: Date,
+    },
+    approvedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    approvedAt: {
+      type: Date,
+    },
+    holdNote: {
+      type: String,
     },
     intouchTransactionRef: {
       type: String,

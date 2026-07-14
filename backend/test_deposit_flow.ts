@@ -7,8 +7,13 @@
  * Usage: npx tsx test_deposit_flow.ts
  */
 
-const PAWAPAY_SANDBOX_URL = 'https://api.sandbox.pawapay.io';
-const BEARER_TOKEN = 'eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjI0MDQwIiwibWF2IjoiMSIsImV4cCI6MjA5ODM0NDI0NywiaWF0IjoxNzgyNzI1MDQ3LCJwbSI6IkRBRixQQUYiLCJqdGkiOiIyMDQxNDQyZi1lZjllLTQ4NWYtODgxMC1kNDM0NTUwN2Y0NDEifQ._KZxcUuOADk0IWwncT7o54G_WEh4kr9HrwCHD6HwNF5aptWXghvK5FMD-m3wGy4KSNLoufoLuacRpk81BVkrcg';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const PAWAPAY_SANDBOX_URL = process.env.PAYPACK_BASE_URL?.includes('sandbox')
+  ? process.env.PAYPACK_BASE_URL
+  : 'https://api.sandbox.pawapay.io';
+const BEARER_TOKEN = process.env.PAWAPAY_API_TOKEN || '';
 
 interface TestCase {
   label: string;

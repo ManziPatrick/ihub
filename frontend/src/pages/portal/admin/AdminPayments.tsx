@@ -21,10 +21,22 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Send,
+  Ban,
+  ShieldAlert,
+  RefreshCw,
 } from "lucide-react";
-import { useQuery } from "@apollo/client/react"; // Assuming Apollo Client
-import { GET_PAYMENTS } from "@/lib/graphql/queries";
+import { useQuery } from "@apollo/client/react";
+import { GET_PAYMENTS, GET_ALL_DISBURSEMENTS, GET_DISBURSEMENT_STATS } from "@/lib/graphql/queries";
 import { VerifyPaymentDialog } from "@/components/portal/dialogs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 
 
@@ -49,9 +61,25 @@ export default function AdminPayments() {
   const [pageSize, setPageSize] = useState(10);
   const { data, loading } = useQuery(GET_PAYMENTS, {
     variables: { page: currentPage, limit: pageSize },
-    pollInterval: 30000 // auto-refresh every 30 seconds
+    pollInterval: 30000
   });
 
+  // Disbursement queries — admins can now see their scoped disbursements
+  const [disbPage, setDisbPage] = useState(1);
+  const [disbStatus, setDisbStatus] = useState("");
+  const LIMIT = 20;
+  const { data: disbData, loading: disbLoading, refetch: refetchDisb } = useQuery(GET_ALL_DISBURSEMENTS, {
+    variables: { page: disbPage, limit: LIMIT, status: disbStatus || undefined },
+    pollInterval: 30000,
+  });
+
+  const { data: disbStatsData, loading: disbStatsLoading, refetch: refetchDisbStats } = useQuery(GET_DISBURSEMENT_STATS, {
+    pollInterval: 60000,
+  });
+
+  const disbursements: any[] = (disbData as any)?.getAllDisbursements?.items || [];
+  const disbPagination = (disbData as any)?.getAllDisbursements?.pagination;
+  const disbStats = (disbStatsData as any)?.getDisbursementStats;
 
   const payments = (data as any)?.payments?.items || [];
   const pagination = (data as any)?.payments?.pagination;
@@ -145,6 +173,10 @@ export default function AdminPayments() {
             <TabsList>
               <TabsTrigger value="all">All Transactions</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
+              <TabsTrigger value="disbursements">
+                <Send className="w-3.5 h-3.5 mr-1.5" />
+                Disbursements
+              </TabsTrigger>
             </TabsList>
             <div className="flex gap-2">
               <div className="relative">
@@ -317,6 +349,208 @@ export default function AdminPayments() {
                         </div>
                       </div>
                     )))}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+          {/* Disbursements Tab */}
+          <TabsContent value="disbursements">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="space-y-4"
+            >
+              {/* Disbursement Summary Cards */}
+              {disbStats && !disbStatsLoading && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Card>
+                    <CardContent className="p-3 text-center">
+                      <p className="text-2xl font-bold">{disbStats.totalDisbursements}</p>
+                      <p className="text-xs text-muted-foreground">Total</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-blue-500/5 border-blue-500/20">
+                    <CardContent className="p-3 text-center">
+                      <p className="text-2xl font-bold text-blue-500">{disbStats.onHoldCount}</p>
+                      <p className="text-xs text-muted-foreground">On Hold</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-green-500/5 border-green-500/20">
+                    <CardContent className="p-3 text-center">
+                      <p className="text-2xl font-bold text-green-500">{disbStats.successfulCount}</p>
+                      <p className="text-xs text-muted-foreground">Sent</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-amber-500/5 border-amber-500/20">
+                    <CardContent className="p-3 text-center">
+                      <p className="text-2xl font-bold text-amber-500">{disbStats.totalDisbursed?.toLocaleString()} RWF</p>
+                      <p className="text-xs text-muted-foreground">Total Sent</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Additional Stats */}
+              {disbStats && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Card className="bg-purple-500/5 border-purple-500/20">
+                    <CardContent className="p-3 text-center">
+                      <p className="text-2xl font-bold text-purple-500">{disbStats.pendingToDisburse?.toLocaleString()} RWF</p>
+                      <p className="text-xs text-muted-foreground">Pending to Disburse</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-gray-500/5 border-gray-500/20">
+                    <CardContent className="p-3 text-center">
+                      <p className="text-2xl font-bold">{disbStats.pendingCount}</p>
+                      <p className="text-xs text-muted-foreground">Processing</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-red-500/5 border-red-500/20">
+                    <CardContent className="p-3 text-center">
+                      <p className="text-2xl font-bold text-red-500">{disbStats.failedCount}</p>
+                      <p className="text-xs text-muted-foreground">Failed</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-indigo-500/5 border-indigo-500/20">
+                    <CardContent className="p-3 text-center">
+                      <p className="text-2xl font-bold text-indigo-500">{disbStats.totalCommission?.toLocaleString()} RWF</p>
+                      <p className="text-xs text-muted-foreground">Platform Commission</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Disbursements List */}
+              <Card>
+                <CardContent className="p-0">
+                  <div className="flex items-center justify-between px-4 py-3 border-b">
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={disbStatus || "__all__"}
+                        onChange={(e) => {
+                          setDisbStatus(e.target.value === "__all__" ? "" : e.target.value);
+                          setDisbPage(1);
+                        }}
+                        className="bg-background border border-border/50 rounded-md px-2 py-1.5 text-xs"
+                      >
+                        <option value="__all__">All Statuses</option>
+                        <option value="OnHold">On Hold</option>
+                        <option value="Successful">Sent</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Failed">Failed</option>
+                      </select>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => { refetchDisb(); refetchDisbStats(); }} className="text-xs">
+                      <RefreshCw className="w-3 h-3 mr-1" /> Refresh
+                    </Button>
+                  </div>
+
+                  {disbLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+                    </div>
+                  ) : disbursements.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Send className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                      <p className="font-medium">No disbursements found</p>
+                      <p className="text-xs mt-1">Disbursements for your courses will appear here</p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Item</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Gross</TableHead>
+                          <TableHead>Net</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Owner Phone</TableHead>
+                          <TableHead>Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {disbursements.map((d: any) => (
+                          <TableRow key={d.id}>
+                            <TableCell className="text-sm font-medium truncate max-w-[150px]">
+                              {d.paymentId?.slice(-8) || d.itemId?.slice(-8)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-[10px]">
+                                {d.itemType}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {d.grossAmount?.toLocaleString()} RWF
+                            </TableCell>
+                            <TableCell className="font-medium text-green-500">
+                              {d.netAmount?.toLocaleString()} RWF
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={
+                                d.status === "Successful" ? "bg-green-500/20 text-green-500" :
+                                d.status === "OnHold" ? "bg-blue-500/20 text-blue-500" :
+                                d.status === "Pending" || d.status === "Processing" ? "bg-amber-500/20 text-amber-500" :
+                                d.status === "Failed" ? "bg-red-500/20 text-red-500" :
+                                "bg-gray-500/20 text-gray-500"
+                              }>
+                                {d.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-xs">{d.ownerPhone || "—"}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {d.createdAt ? new Date(d.createdAt).toLocaleDateString() : "—"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+
+                  {/* Pagination */}
+                  {disbPagination && disbPagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t">
+                      <span className="text-xs text-muted-foreground">
+                        Page {disbPage} of {disbPagination.totalPages}
+                      </span>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDisbPage(p => Math.max(1, p - 1))}
+                          disabled={disbPage <= 1}
+                        >
+                          <ChevronLeft className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDisbPage(p => Math.min(disbPagination.totalPages, p + 1))}
+                          disabled={disbPage >= disbPagination.totalPages}
+                        >
+                          <ChevronRight className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/30">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <ShieldAlert className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p><strong>Disbursement Policy:</strong></p>
+                      <ul className="list-disc list-inside space-y-0.5">
+                        <li>Disbursements are held for 15 days (refund period) before release</li>
+                        <li>Only super admins can approve release of held funds</li>
+                        <li>On Hold = awaiting approval period. Sent = funds disbursed to owner</li>
+                        <li>Failed disbursements can be retried by super admin</li>
+                      </ul>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>

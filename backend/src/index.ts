@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import bodyParser from 'body-parser';
 import jwt from 'jsonwebtoken';
 import { WebSocketServer } from 'ws';
@@ -68,7 +69,7 @@ const startServer = async () => {
 
     const allowedOrigins = (
         process.env.ALLOWED_ORIGINS ||
-        'http://localhost:8080,http://localhost:5173,http://localhost:8081,http://localhost:8082,https://www.bootskills.com,https://bootskills.com,https://dev.bootskills.com,https://*.bootskills.com'
+            'http://localhost:8080,http://localhost:5173,http://localhost:8081,http://localhost:8082,http://localhost:4000,http://127.0.0.1:4000,https://www.bootskills.com,https://bootskills.com,https://dev.bootskills.com,https://*.bootskills.com'
     )
         .split(',')
         .map(o => o.trim())
@@ -109,6 +110,11 @@ const startServer = async () => {
         origin: (origin, callback) => {
             if (!origin) return callback(null, true); // allow server-to-server
 
+            // Always allow local dev to avoid the CORS retry loop.
+            if (origin === 'http://localhost:4000' || origin === 'http://127.0.0.1:4000') {
+                return callback(null, true);
+            }
+
             if (isAllowedOrigin(origin)) {
                 return callback(null, origin);
             }
@@ -144,7 +150,7 @@ const startServer = async () => {
         limit: '100mb',
         verify: (req: any, _res, buf) => {
             const url = req.originalUrl || '';
-            if (url.includes('/payments/webhook') || url.includes('/paypack/callback') || url.includes('/intouch/callback')) {
+            if (url.includes('/payments/webhook') || url.includes('/paypack/callback') || url.includes('/pawapay/') || url.includes('/intouch/callback')) {
                 req.rawBody = buf.toString();
                 console.log('--- Webhook Raw Body Captured ---');
             }
@@ -203,6 +209,7 @@ const startServer = async () => {
         schema,
         plugins: [
             ApolloServerPluginDrainHttpServer({ httpServer }),
+            ApolloServerPluginLandingPageLocalDefault({ footer: false }),
             {
                 async serverWillStart() {
                     return {
@@ -220,6 +227,15 @@ const startServer = async () => {
 
     app.use(
         '/graphql',
+        // Apollo Server 4's expressMiddleware checks req.body before delegating to
+        // executeHTTPGraphQLRequest (where the landing page plugin handles GET requests).
+        // bodyParser.json() doesn't set req.body for GET, so provide a default empty body.
+        (req, _res, next) => {
+            if (req.method === 'GET' && !(req as any).body) {
+                (req as any).body = {};
+            }
+            next();
+        },
         expressMiddleware(server, {
             context: async ({ req }: any) => ({
                 user: req.user,

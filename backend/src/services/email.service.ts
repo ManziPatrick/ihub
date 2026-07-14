@@ -1013,6 +1013,131 @@ export const sendSuspiciousLoginAlert = async (
 };
 
 /**
+ * Send email to the granting admin when their scholarship is revoked/rejected
+ */
+export const sendScholarshipRevokedToAdmin = async (
+  adminEmail: string,
+  adminName: string,
+  studentName: string,
+  itemTitle: string,
+  scholarshipType: string,
+  status: string,
+  reason: string
+): Promise<boolean> => {
+  const config = await getEmailConfig();
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .details-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+        .btn { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📋 Scholarship Update</h1>
+        </div>
+        <div class="content">
+          <h2>Hi ${adminName},</h2>
+          <p>The ${scholarshipType} scholarship you granted for <strong>"${itemTitle}"</strong> to student <strong>${studentName}</strong> has been <strong>${status === 'revoked' ? 'revoked' : 'rejected'}</strong>.</p>
+          
+          <div class="details-box">
+            <h3>Details</h3>
+            <p><strong>Student:</strong> ${studentName}</p>
+            <p><strong>Item:</strong> ${itemTitle}</p>
+            <p><strong>Type:</strong> ${scholarshipType}</p>
+            <p><strong>Status:</strong> ${status === 'revoked' ? 'Revoked' : 'Rejected'}</p>
+            <p><strong>Reason:</strong> ${reason || 'No specific reason provided'}</p>
+          </div>
+          
+          <p>If you believe this decision was made in error, please reach out to the reviewing admin or super admin.</p>
+          
+          <a href="${process.env.CLIENT_ORIGIN || ''}/portal/super-admin/scholarships" class="btn">View Scholarships</a>
+        </div>
+        <div class="footer">
+          <p>© 2026 ${config.siteName}. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: adminEmail,
+    subject: `Scholarship ${status === 'revoked' ? 'Revoked' : 'Rejected'} — ${itemTitle}`,
+    html
+  });
+};
+
+/**
+ * Send email to the granting admin when their scholarship is approved
+ */
+export const sendScholarshipApprovedToAdmin = async (
+  adminEmail: string,
+  adminName: string,
+  studentName: string,
+  itemTitle: string,
+  scholarshipType: string
+): Promise<boolean> => {
+  const config = await getEmailConfig();
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .details-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #22c55e; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+        .btn { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>✅ Scholarship Approved!</h1>
+        </div>
+        <div class="content">
+          <h2>Hi ${adminName},</h2>
+          <p>Great news! The ${scholarshipType} scholarship you granted for <strong>"${itemTitle}"</strong> to student <strong>${studentName}</strong> has been <strong>approved</strong> by a super admin.</p>
+          
+          <div class="details-box">
+            <h3>Details</h3>
+            <p><strong>Student:</strong> ${studentName}</p>
+            <p><strong>Item:</strong> ${itemTitle}</p>
+            <p><strong>Type:</strong> ${scholarshipType}</p>
+            <p><strong>Status:</strong> Active ✅</p>
+          </div>
+          
+          <p>The student now has full access to the ${scholarshipType === 'course' ? 'course' : 'internship program'}.</p>
+          
+          <a href="${process.env.CLIENT_ORIGIN || ''}/portal/super-admin/scholarships" class="btn">View Scholarships</a>
+        </div>
+        <div class="footer">
+          <p>© 2026 ${config.siteName}. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: adminEmail,
+    subject: `Scholarship Approved — ${itemTitle}`,
+    html
+  });
+};
+
+/**
  * Send email when developer submits task feedback / resources
  */
 export const sendTaskFeedbackEmail = async (
@@ -1095,5 +1220,7 @@ export default {
   sendCourseEnrollmentConfirmation,
   sendTaskFeedbackEmail,
   sendBroadcastAnnouncement,
-  sendSuspiciousLoginAlert
+  sendSuspiciousLoginAlert,
+  sendScholarshipRevokedToAdmin,
+  sendScholarshipApprovedToAdmin
 };

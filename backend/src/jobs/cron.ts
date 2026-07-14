@@ -13,7 +13,7 @@ import { sendNotification } from '../services/notification.service';
 import { User } from '../models/User';
 import ScheduledBroadcast from '../models/ScheduledBroadcast';
 import { executeBroadcast } from '../graphql/scheduled-broadcast-resolvers';
-import { createBackup } from '../services/backup.service';
+import { createBackup, getBackupScheduleConfig, getRetentionCount } from '../services/backup.service';
 
 export const initKronos = () => {
     console.log('⏳ Initializing Cron Jobs...');
@@ -311,10 +311,61 @@ export const initKronos = () => {
   });
 
 
-  // 10. Automatic Database Backup (Every 12 hours at 2:00 AM and 2:00 PM)
-  cron.schedule('0 2,14 * * *', async () => {
-    console.log('[Backup] Running Automatic Database Backup Job...');
+  // 10. Automatic Database Backup (Dynamic schedule from config)
+  // Default: every 12 hours at 2:00 AM and 2:00 PM ("0 2,14 * * *")
+  // Read config each tick to pick up interval/retention changes without restart
+  cron.schedule('*/5 * * * *', async () => {
     try {
+      const cfg = await getBackupScheduleConfig();
+
+      if (!cfg.enabled) {
+        return; // Auto-backup disabled
+      }
+
+      // Check if we should run based on the configured interval
+      if (!cron.validate(cfg.interval)) {
+        console.warn(`[Backup] Invalid cron expression: "${cfg.interval}". Skipping.`);
+        return;
+      }
+
+      const now = new Date();
+      const minute = now.getMinutes();
+      const hour = now.getHours();
+      const dayOfMonth = now.getDate();
+      const month = now.getMonth() + 1;
+      const dayOfWeek = now.getDay();
+
+      // Simple cron matcher (handles common patterns)
+      const matchCron = (expr: string): boolean => {
+        const parts = expr.trim().split(/\s+/);
+        if (parts.length !== 5) return false;
+        const matchField = (field: string, val: number): boolean => {
+          if (field === '*') return true;
+          if (field.includes(',')) return field.split(',').some(f => matchField(f.trim(), val));
+          if (field.includes('*/')) {
+            const step = parseInt(field.split('*/')[1]);
+            return step > 0 && val % step === 0;
+          }
+          if (field.includes('-')) {
+            const [lo, hi] = field.split('-').map(Number);
+            return val >= lo && val <= hi;
+          }
+          return parseInt(field) === val;
+        };
+        return (
+          matchField(parts[0], minute) &&
+          matchField(parts[1], hour) &&
+          matchField(parts[2], dayOfMonth) &&
+          matchField(parts[3], month) &&
+          matchField(parts[4], dayOfWeek)
+        );
+      };
+
+      if (!matchCron(cfg.interval)) {
+        return; // Not time to run yet
+      }
+
+      console.log(`[Backup] Running Automatic Database Backup Job (interval: "${cfg.interval}")...`);
       const record = await createBackup();
       console.log(`[Backup] Auto-backup completed: ${record.backupDbName}, ${record.collections.length} collections`);
     } catch (error: any) {

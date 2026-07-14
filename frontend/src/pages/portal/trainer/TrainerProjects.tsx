@@ -574,11 +574,11 @@ export default function TrainerProjects() {
                                                                         </Button>
                                                                     </div>
                                                                     <p className="text-sm font-mono whitespace-pre-wrap break-all bg-background/50 p-3 rounded border border-border/20">
-                                                                        {selectedSubmission.content}
+                                                                        {selectedSubmission.content || "No submission content provided."}
                                                                     </p>
                                                                 </div>
                                                                 
-                                                                {selectedSubmission.content.startsWith("http") && (
+                                                                {typeof selectedSubmission.content === "string" && selectedSubmission.content.startsWith("http") && (
                                                                     <div className="flex flex-wrap gap-2 mt-4 border-t border-border/30 pt-4">
                                                                         <Button variant="gold" size="sm" asChild>
                                                                             <a href={selectedSubmission.content} target="_blank" rel="noopener noreferrer">
@@ -611,53 +611,57 @@ export default function TrainerProjects() {
                                                                 </div>
                                                                 <ScrollArea className="h-[300px] pr-4">
                                                                     <div className="space-y-4">
-                                                                        {(selectedSubmission as any).lesson?.assignmentQuestions?.map((q: any, idx: number) => {
-                                                                            const answer = selectedSubmission.answers?.find(a => a.questionId === q.id);
-                                                                            const isCorrect = (answer?.score || 0) > 0;
-                                                                            
-                                                                            return (
-                                                                                <div key={q.id} className={`p-3 rounded-lg border ${isCorrect ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
-                                                                                    <div className="flex justify-between gap-2 mb-2">
-                                                                                        <p className="text-xs font-bold text-muted-foreground">Question {idx + 1}</p>
-                                                                                        <Badge variant="outline" className={isCorrect ? 'text-green-500 border-green-500/30' : 'text-red-500 border-red-500/30'}>
-                                                                                            {answer?.score || 0} / {q.points} pts
-                                                                                        </Badge>
-                                                                                    </div>
-                                                                                    <p className="text-sm font-medium mb-3">{q.questionText}</p>
-                                                                                    
-                                                                                    <div className="space-y-2">
-                                                                                        <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Student Answer:</div>
-                                                                                        {q.type === 'mcq' ? (
-                                                                                            <p className={`p-2 rounded text-xs ${isCorrect ? 'bg-green-500/10 text-green-700' : 'bg-red-500/10 text-red-700'}`}>
-                                                                                                {q.options[parseInt(answer?.answerText || "-1")] || answer?.answerText || "No answer"}
-                                                                                            </p>
-                                                                                        ) : answer?.answerText?.trim() ? (
-                                                                                            <div className={`p-2 rounded text-xs prose prose-sm max-w-none ${isCorrect ? 'bg-green-500/10 text-green-700 dark:prose-invert' : 'bg-red-500/10 text-red-700 dark:prose-invert'}`}
-                                                                                                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(answer.answerText) }} 
-                                                                                            />
-                                                                                        ) : (
-                                                                                            <p className={`p-2 rounded text-xs italic ${isCorrect ? 'bg-green-500/10 text-green-700' : 'bg-red-500/10 text-red-700'}`}>No answer</p>
-                                                                                        )}
+                                                                        {Array.isArray((selectedSubmission as any).lesson?.assignmentQuestions) && (selectedSubmission as any).lesson.assignmentQuestions.length > 0 ? (
+                                                                            (selectedSubmission as any).lesson.assignmentQuestions.map((q: any, idx: number) => {
+                                                                                const answer = selectedSubmission.answers?.find(a => a.questionId === q.id);
+                                                                                const isCorrect = (answer?.score || 0) > 0;
+                                                                                
+                                                                                return (
+                                                                                    <div key={q.id} className={`p-3 rounded-lg border ${isCorrect ? 'bg-green-500/5 border-green-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+                                                                                        <div className="flex justify-between gap-2 mb-2">
+                                                                                            <p className="text-xs font-bold text-muted-foreground">Question {idx + 1}</p>
+                                                                                            <Badge variant="outline" className={isCorrect ? 'text-green-500 border-green-500/30' : 'text-red-500 border-red-500/30'}>
+                                                                                                {answer?.score || 0} / {q.points} pts
+                                                                                            </Badge>
+                                                                                        </div>
+                                                                                        <p className="text-sm font-medium mb-3">{q.questionText}</p>
                                                                                         
-                                                                                        {!isCorrect && q.type === 'mcq' && (
-                                                                                            <>
-                                                                                                <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-black mt-2">Correct Answer:</div>
-                                                                                                <div className="p-2 rounded bg-green-500/10 text-green-700 text-xs">
-                                                                                                    {q.options[q.correctOptionIndex]}
-                                                                                                </div>
-                                                                                            </>
-                                                                                        )}
+                                                                                        <div className="space-y-2">
+                                                                                            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Student Answer:</div>
+                                                                                            {q.type === 'mcq' ? (
+                                                                                                <p className={`p-2 rounded text-xs ${isCorrect ? 'bg-green-500/10 text-green-700' : 'bg-red-500/10 text-red-700'}`}>
+                                                                                                    {q.options[parseInt(answer?.answerText || "-1")] || answer?.answerText || "No answer"}
+                                                                                                </p>
+                                                                                            ) : answer?.answerText?.trim() ? (
+                                                                                                <div className={`p-2 rounded text-xs prose prose-sm max-w-none ${isCorrect ? 'bg-green-500/10 text-green-700 dark:prose-invert' : 'bg-red-500/10 text-red-700 dark:prose-invert'}`}
+                                                                                                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(answer.answerText) }} 
+                                                                                                />
+                                                                                            ) : (
+                                                                                                <p className={`p-2 rounded text-xs italic ${isCorrect ? 'bg-green-500/10 text-green-700' : 'bg-red-500/10 text-red-700'}`}>No answer</p>
+                                                                                            )}
+                                                                                            
+                                                                                            {!isCorrect && q.type === 'mcq' && (
+                                                                                                <>
+                                                                                                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-black mt-2">Correct Answer:</div>
+                                                                                                    <div className="p-2 rounded bg-green-500/10 text-green-700 text-xs">
+                                                                                                        {q.options[q.correctOptionIndex]}
+                                                                                                    </div>
+                                                                                                </>
+                                                                                            )}
 
-                                                                                        {answer?.aiFeedback && (
-                                                                                            <div className="mt-2 p-2 bg-accent/5 rounded border border-accent/10 text-[11px] italic">
-                                                                                                <span className="font-bold not-italic">Feedback: </span>
-                                                                                                {answer.aiFeedback}
-                                                                                            </div>
-                                                                                        )}
+                                                                                            {answer?.aiFeedback && (
+                                                                                                <div className="mt-2 p-2 bg-accent/5 rounded border border-accent/10 text-[11px] italic">
+                                                                                                    <span className="font-bold not-italic">Feedback: </span>
+                                                                                                    {answer.aiFeedback}
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
                                                                                     </div>
-                                                                                </div>
-                                                                            );
-                                                                        })}
+                                                                                );
+                                                                            })
+                                                                        ) : (
+                                                                            <div className="text-sm text-muted-foreground">No exam questions available for this submission.</div>
+                                                                        )}
                                                                     </div>
                                                                 </ScrollArea>
                                                             </div>

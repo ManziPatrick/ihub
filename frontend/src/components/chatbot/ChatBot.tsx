@@ -13,6 +13,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { useMutation, useQuery } from "@apollo/client/react";
+import { useLocation } from "react-router-dom";
 import { CHAT_WITH_AI } from '@/lib/graphql/mutations';
 import { GET_CHAT_GREETING } from '@/lib/graphql/queries';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import { Input } from '@/components/ui/input';
 
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
+import { getGraphqlUrl } from '@/lib/env';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 
@@ -75,12 +77,26 @@ type GreetingQueryData = {
     };
   };
 
+  // Avoid hammering the GraphQL endpoint on routes that don't need it (e.g., homepage).
+  // If the API is not configured, skip the query entirely to prevent CORS/access-control loops.
+  const { pathname } = useLocation();
+  // Avoid multiple rapid re-renders/requests on the homepage.
+  const shouldAttemptGreeting =
+    Boolean(getGraphqlUrl()) &&
+    (
+      pathname.startsWith('/portal') ||
+      pathname.startsWith('/courses') ||
+      pathname.startsWith('/chat') ||
+      pathname.startsWith('/auth')
+    );
+
   const {
     data: greetingData,
     error: greetingError,
     loading: greetingLoading,
   } = useQuery<GreetingQueryData>(GET_CHAT_GREETING, {
     fetchPolicy: 'network-only',
+    skip: !shouldAttemptGreeting,
   });
 
   // Set greeting when query completes (only once per mount)

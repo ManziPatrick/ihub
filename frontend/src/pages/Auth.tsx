@@ -13,7 +13,6 @@ import { getGraphqlUrl } from "@/lib/env";
 import { GoogleLogin } from "@react-oauth/google";
 import { useMutation } from "@apollo/client/react";
 import { GOOGLE_LOGIN, VERIFY_2FA, SETUP_2FA, REQUEST_EMAIL_OTP, VERIFY_EMAIL_OTP } from "@/lib/graphql/mutations";
-import { ProfileCompletionWizard } from "@/components/portal/ProfileCompletionGuard";
 import { LocationSetupDialog } from "@/components/auth/LocationSetupDialog";
 
 type AuthMode = "login" | "signup";

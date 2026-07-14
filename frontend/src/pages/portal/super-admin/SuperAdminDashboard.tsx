@@ -21,13 +21,46 @@ import {
   GraduationCap,
   UserCog,
   ClipboardList,
-  Award
+  Award,
+  Wallet,
+  Banknote,
+  Percent,
+  Landmark,
+  ArrowLeftRight,
+  Send,
+  Download,
+  Loader2,
+  CircleAlert,
+  ArrowUp,
+  ArrowDown,
+  ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { useQuery } from "@apollo/client/react";
-import { GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY, GET_USERS, GET_ANALYTICS, GET_STATS, GET_ALL_TRAINERS } from "@/lib/graphql/queries";
+import { GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY, GET_USERS, GET_ANALYTICS, GET_STATS, GET_ALL_TRAINERS, GET_DISBURSEMENT_STATS, GET_INTOUCH_BALANCE, GET_PAWAPAY_STATUS, GET_PAWAPAY_BALANCE } from "@/lib/graphql/queries";
 import { format, isValid } from "date-fns";
+
+// Currency → country mapping with flags for wallet display
+const CURRENCY_MAP: Record<string, { flag: string; name: string; country: string; currency: string }> = {
+  RWF: { flag: '🇷🇼', name: 'Rwandan Franc', country: 'Rwanda', currency: 'RWF' },
+  KES: { flag: '🇰🇪', name: 'Kenyan Shilling', country: 'Kenya', currency: 'KES' },
+  UGX: { flag: '🇺🇬', name: 'Ugandan Shilling', country: 'Uganda', currency: 'UGX' },
+  TZS: { flag: '🇹🇿', name: 'Tanzanian Shilling', country: 'Tanzania', currency: 'TZS' },
+  GHS: { flag: '🇬🇭', name: 'Ghanaian Cedi', country: 'Ghana', currency: 'GHS' },
+  NGN: { flag: '🇳🇬', name: 'Nigerian Naira', country: 'Nigeria', currency: 'NGN' },
+  ZMW: { flag: '🇿🇲', name: 'Zambian Kwacha', country: 'Zambia', currency: 'ZMW' },
+  XAF: { flag: '🇨🇲', name: 'CFA Franc BEAC', country: 'Cameroon', currency: 'XAF' },
+  XOF: { flag: '🇨🇮', name: 'CFA Franc BCEAO', country: 'Côte d\'Ivoire', currency: 'XOF' },
+  CDF: { flag: '🇨🇩', name: 'Congolese Franc', country: 'DR Congo', currency: 'CDF' },
+  MWK: { flag: '🇲🇼', name: 'Malawian Kwacha', country: 'Malawi', currency: 'MWK' },
+  ETB: { flag: '🇪🇹', name: 'Ethiopian Birr', country: 'Ethiopia', currency: 'ETB' },
+  MZN: { flag: '🇲🇿', name: 'Mozambican Metical', country: 'Mozambique', currency: 'MZN' },
+  LSL: { flag: '🇱🇸', name: 'Lesotho Loti', country: 'Lesotho', currency: 'LSL' },
+  SLE: { flag: '🇸🇱', name: 'Sierra Leonean Leone', country: 'Sierra Leone', currency: 'SLE' },
+  SOS: { flag: '🇸🇴', name: 'Somali Shilling', country: 'Somalia', currency: 'SOS' },
+};
 
 export default function SuperAdminDashboard() {
   const { user } = useAuth();
@@ -41,7 +74,25 @@ export default function SuperAdminDashboard() {
   const { data: analyticsData } = useQuery(GET_ANALYTICS);
   const { data: statsData } = useQuery(GET_STATS);
   const { data: trainersData } = useQuery(GET_ALL_TRAINERS);
+  const { data: disbStatsData, loading: disbStatsLoading } = useQuery(GET_DISBURSEMENT_STATS, {
+    pollInterval: 60000,
+  });
+  const { data: balanceData, loading: balanceLoading, error: intouchBalanceError, refetch: refetchIntouchBalance } = useQuery(GET_INTOUCH_BALANCE, {
+    pollInterval: 60000,
+    fetchPolicy: "network-only",
+  });
+  const { data: pawapayData, loading: pawapayLoading, error: pawapayStatusError, refetch: refetchPawaPayStatus } = useQuery(GET_PAWAPAY_STATUS, {
+    pollInterval: 120000,
+  });
+  const { data: pawapayBalanceData, loading: pawapayBalanceLoading, error: pawapayBalanceError, refetch: refetchPawaPayBalance } = useQuery(GET_PAWAPAY_BALANCE, {
+    pollInterval: 60000,
+    fetchPolicy: "network-only",
+  });
   const analytics = (analyticsData as any)?.analytics;
+  const disbStats = (disbStatsData as any)?.getDisbursementStats;
+  const intouchBalance: any = (balanceData as any)?.getIntouchBalance;
+  const pawapayStatus: any = (pawapayData as any)?.getPawaPayStatus;
+  const pawapayBalance: any = (pawapayBalanceData as any)?.getPawaPayBalance;
 
   // Use GET_STATS for accurate global counts (bypasses adminDashboardData bugs)
   const globalStats = (statsData as any)?.stats;
@@ -124,6 +175,260 @@ export default function SuperAdminDashboard() {
             </Card>
           ))}
         </motion.div>
+
+        {/* ─── Platform Balance ─────────────────────────────────────── */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-heading font-medium text-foreground flex items-center gap-2">
+              <Landmark className="w-5 h-5 text-accent" />
+              Platform Balance
+            </h2>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/portal/super-admin/disbursements">
+                  <ArrowLeftRight className="w-4 h-4 mr-1.5" />
+                  Disbursements
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/portal/super-admin/intouch-pay">
+                  <Send className="w-4 h-4 mr-1.5" />
+                  Send Money
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-4">
+            {/* ── PawaPay Wallet Section ── */}
+            <Card className="border border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-emerald-500/[0.02]">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2.5 rounded-xl ${pawapayStatus?.connected ? 'bg-emerald-500/20 text-emerald-600' : 'bg-amber-500/20 text-amber-600'}`}>
+                      <Wallet className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">PawaPay Wallet</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {pawapayStatusError ? (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                            <span className="text-[11px] font-medium text-red-500">Error</span>
+                            <button
+                              onClick={() => refetchPawaPayStatus()}
+                              className="text-[10px] text-red-500/80 hover:text-red-500 underline ml-1"
+                            >
+                              Retry
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className={`w-1.5 h-1.5 rounded-full ${pawapayStatus?.connected ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                            <span className={`text-[11px] font-medium ${pawapayStatus?.connected ? 'text-emerald-600' : 'text-amber-600'}`}>
+                              {pawapayLoading ? '...' : pawapayStatus?.connected ? 'Connected' : 'Disconnected'}
+                            </span>
+                          </>
+                        )}
+                        {pawapayStatus?.activeConfigs > 0 && (
+                          <span className="text-[11px] text-muted-foreground ml-1">
+                            · {pawapayStatus.activeConfigs} active configs
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Wallet balances per currency */}
+                {pawapayBalanceError ? (
+                  <div className="flex items-start gap-3 py-3">
+                    <CircleAlert className="w-5 h-5 shrink-0 mt-0.5 text-red-500" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-red-600">Failed to load balances</p>
+                      <p className="text-xs text-red-500/80 mt-0.5">
+                        {pawapayBalanceError.message || 'GraphQL query error'}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => refetchPawaPayBalance()}
+                      className="shrink-0 h-8 px-3 text-xs"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                      Retry
+                    </Button>
+                  </div>
+                ) : pawapayBalanceLoading ? (
+                  <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading balances...
+                  </div>
+                ) : pawapayBalance?.success && pawapayBalance.balances?.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    {pawapayBalance.balances.map((b: any) => {
+                      const currencyInfo = CURRENCY_MAP[b.currency as keyof typeof CURRENCY_MAP] || { flag: '💳', name: b.currency, country: b.currency, currency: b.currency };
+                      return (
+                        <div key={b.currency} className="flex items-center gap-3 p-3 rounded-xl bg-background/60 border border-border/40 hover:border-emerald-500/30 transition-all">
+                          <span className="text-2xl">{currencyInfo.flag}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{currencyInfo.country}</p>
+                            <p className="text-lg font-bold text-foreground">
+                              {b.available?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              <span className="text-xs font-normal text-muted-foreground ml-1">{b.currency}</span>
+                            </p>
+                            <div className="flex gap-3 mt-0.5">
+                              {b.pending != null && b.pending > 0 && (
+                                <span className="text-[10px] text-amber-600 flex items-center gap-0.5">
+                                  <ArrowUp className="w-3 h-3" />
+                                  {b.pending?.toLocaleString()} pending
+                                </span>
+                              )}
+                              {b.reserved != null && b.reserved > 0 && (
+                                <span className="text-[10px] text-blue-600 flex items-center gap-0.5">
+                                  <ArrowDown className="w-3 h-3" />
+                                  {b.reserved?.toLocaleString()} reserved
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                            {currencyInfo.currency}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 py-4 text-sm text-amber-600">
+                    <CircleAlert className="w-4 h-4" />
+                    {pawapayBalance?.message || 'Wallet balance unavailable'}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* ── Summary Cards Row ── */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* IntouchPay Balance */}
+              <Card className={`border ${intouchBalance?.success ? 'border-blue-500/30 bg-blue-500/5' : 'border-amber-500/30 bg-amber-500/5'}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium">IntouchPay Wallet</p>
+                      <p className={`text-lg font-bold mt-1 ${intouchBalance?.success ? 'text-blue-600' : 'text-amber-600'}`}>
+                        {intouchBalanceError ? (
+                          <span className="text-red-500 text-xs font-normal flex items-center gap-1">
+                            <CircleAlert className="w-3.5 h-3.5" />
+                            Query failed
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => refetchIntouchBalance()}
+                              className="h-5 px-1.5 text-[10px] ml-1"
+                            >
+                              <RefreshCw className="w-3 h-3 mr-0.5" />
+                              Retry
+                            </Button>
+                          </span>
+                        ) : balanceLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : intouchBalance?.success ? (
+                          <>{intouchBalance.balance?.toLocaleString() || '0'} <span className="text-xs font-normal text-muted-foreground">{intouchBalance.currency || 'RWF'}</span></>
+                        ) : (
+                          'Unavailable'
+                        )}
+                      </p>
+                      <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-[11px] text-blue-600" asChild>
+                        <Link to="/portal/super-admin/intouch-pay">
+                          Manage <ExternalLink className="w-3 h-3 ml-0.5" />
+                        </Link>
+                      </Button>
+                    </div>
+                    <div className="p-2 rounded-full bg-blue-500/20 text-blue-600">
+                      <Download className="w-4 h-4" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Total Disbursed */}
+              <Card className="border border-purple-500/30 bg-purple-500/5">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium">Total Disbursed</p>
+                      <p className="text-lg font-bold text-purple-600 mt-1">
+                        {disbStatsLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>{disbStats?.totalDisbursed?.toLocaleString() || '0'} <span className="text-xs font-normal text-muted-foreground">RWF</span></>
+                        )}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {disbStats?.successfulCount || 0} successful payout{disbStats?.successfulCount !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    <div className="p-2 rounded-full bg-purple-500/20 text-purple-600">
+                      <ArrowUp className="w-4 h-4" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Commission Earned */}
+              <Card className="border border-indigo-500/30 bg-indigo-500/5">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium">Commission Earned</p>
+                      <p className="text-lg font-bold text-indigo-600 mt-1">
+                        {disbStatsLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>{disbStats?.totalCommission?.toLocaleString() || '0'} <span className="text-xs font-normal text-muted-foreground">RWF</span></>
+                        )}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {disbStats?.pendingToDisburse?.toLocaleString() || '0'} RWF pending
+                      </p>
+                    </div>
+                    <div className="p-2 rounded-full bg-indigo-500/20 text-indigo-600">
+                      <Percent className="w-4 h-4" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* On Hold */}
+              <Card className="border border-amber-500/30 bg-amber-500/5">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium">On Hold</p>
+                      <p className="text-lg font-bold text-amber-600 mt-1">
+                        {disbStatsLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>{disbStats?.onHoldCount || 0} <span className="text-xs font-normal text-muted-foreground">disbursements</span></>
+                        )}
+                      </p>
+                      <Button variant="link" size="sm" className="h-auto p-0 mt-1 text-[11px] text-amber-600" asChild>
+                        <Link to="/portal/super-admin/disbursements">
+                          Review <ExternalLink className="w-3 h-3 ml-0.5" />
+                        </Link>
+                      </Button>
+                    </div>
+                    <div className="p-2 rounded-full bg-amber-500/20 text-amber-600">
+                      <CircleAlert className="w-4 h-4" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
 
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-6">

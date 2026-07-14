@@ -107,7 +107,7 @@ export default function AdminProjectApplications() {
   const statusFilter = tab === "all" ? undefined : tab;
   const { data, loading, refetch } = useQuery(GET_PROJECT_APPLICATIONS, {
     variables: { status: statusFilter },
-    fetchPolicy: "cache-and-network",
+    fetchPolicy: "cache-first",
   });
 
   const [reviewApp, { loading: reviewing }] = useMutation(REVIEW_APPLICATION);

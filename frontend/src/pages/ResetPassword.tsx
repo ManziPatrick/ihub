@@ -115,7 +115,7 @@ export default function ResetPassword() {
                 </div>
             </div>
         ) : (
-            <div className="min-h-screen bg-background flex items-center justify-center p-4 bg-muted/20">
+            <div className="min-h-screen bg-muted/20 flex items-center justify-center p-4">
             <div className="w-full max-w-md bg-card p-8 rounded-lg shadow-sm border border-border">
                 <Link
                     to="/auth"

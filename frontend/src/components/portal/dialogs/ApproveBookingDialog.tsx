@@ -23,8 +23,7 @@ export function ApproveBookingDialog({
     const [meetingLink, setMeetingLink] = useState("");
 
     const handleApprove = () => {
-        if (!meetingLink.trim()) return;
-        onApprove(meetingLink);
+        onApprove(meetingLink.trim());
         setMeetingLink("");
         onOpenChange(false);
     };

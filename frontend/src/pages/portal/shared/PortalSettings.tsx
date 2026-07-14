@@ -230,7 +230,7 @@ export default function PortalSettings() {
   const [enableEmail2FAMutation] = useMutation(ENABLE_EMAIL_2FA, {
     onCompleted: (data: any) => {
       if (data.enableEmail2FA) {
-        updateUser({ twoFactorEnabled: true });
+        updateUser({ twoFactorEnabled: true } as any);
         toast.success("Email 2FA has been enabled!");
         setShowOTPDialog(false);
         setOtpCode("");
@@ -241,7 +241,7 @@ export default function PortalSettings() {
   const [disableEmail2FAMutation] = useMutation(DISABLE_EMAIL_2FA, {
     onCompleted: (data: any) => {
       if (data.disableEmail2FA) {
-        updateUser({ twoFactorEnabled: false });
+        updateUser({ twoFactorEnabled: false } as any);
         toast.success("Email 2FA has been disabled.");
         setShowOTPDialog(false);
         setOtpCode("");
@@ -259,7 +259,7 @@ export default function PortalSettings() {
     try {
       await requestEmailOTPMutation({ variables: { email: user.email } });
       setShowOTPDialog(true);
-      setIsEnabling(!user.twoFactorEnabled); // If currently disabled, we're enabling; if enabled, we're disabling
+      setIsEnabling(!(user as any).twoFactorEnabled); // If currently disabled, we're enabling; if enabled, we're disabling
       toast.success("OTP sent to your email");
     } catch (err: any) {
       toast.error(err.message || "Failed to send OTP");
@@ -549,7 +549,7 @@ export default function PortalSettings() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-6"
               >
-                <Card className="border-border/50 border-accent/20">
+                <Card className="border-accent/20">
                   <CardHeader className="bg-accent/5">
                     <CardTitle className="text-accent flex items-center gap-2">
                       <GradIcon className="w-5 h-5" />
@@ -641,7 +641,7 @@ export default function PortalSettings() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-6"
               >
-                <Card className="border-border/50 border-accent/20">
+                <Card className="border-accent/20">
                   <CardHeader className="bg-accent/5">
                     <CardTitle className="text-accent flex items-center gap-2">
                       <Globe className="w-5 h-5" />
@@ -740,26 +740,24 @@ export default function PortalSettings() {
                   {/* 2FA Status */}
                   <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50">
                     <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-full ${user?.twoFactorEnabled ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'}`}>
-                        {user?.twoFactorEnabled ? (
+                      <div className={`p-3 rounded-full ${(user as any)?.twoFactorEnabled ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'}`}>
+                        {(user as any)?.twoFactorEnabled ? (
                           <ShieldCheck className="w-6 h-6" />
                         ) : (
                           <Shield className="w-6 h-6" />
                         )}
                       </div>
                       <div>
-                        <h4 className="font-medium">
-                          {user?.twoFactorEnabled ? 'Email 2FA is Active' : 'Email 2FA is Disabled'}
+                        <h4 className="font-medium">                              {(user as any)?.twoFactorEnabled ? 'Email 2FA is Active' : 'Email 2FA is Disabled'}
                         </h4>
-                        <p className="text-sm text-muted-foreground">
-                          {user?.twoFactorEnabled
+                        <p className="text-sm text-muted-foreground">                              {(user as any)?.twoFactorEnabled
                             ? 'You will receive a one-time code via email each time you log in.'
                             : 'Enable 2FA to secure your account with email-based verification.'}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {user?.twoFactorEnabled ? (
+                      {(user as any)?.twoFactorEnabled ? (
                         <Button
                           variant="outline"
                           className="border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-600"
@@ -833,11 +831,11 @@ export default function PortalSettings() {
                         </div>
                         <Button
                           onClick={handleConfirmOTP}
-                          disabled={otpCode.length < 4 || enableEmail2FAMutation.loading || disableEmail2FAMutation.loading}
+                          disabled={otpCode.length < 4 || (enableEmail2FAMutation as any).loading || (disableEmail2FAMutation as any).loading}
                           className={isEnabling ? "bg-accent hover:bg-accent/90" : "border-red-500/30 text-red-500 hover:bg-red-500/10"}
                           variant={isEnabling ? "default" : "outline"}
                         >
-                          {(enableEmail2FAMutation.loading || disableEmail2FAMutation.loading) ? 'Verifying...' : 'Confirm'}
+                          {((enableEmail2FAMutation as any).loading || (disableEmail2FAMutation as any).loading) ? 'Verifying...' : 'Confirm'}
                         </Button>
                       </div>
                       <div className="flex justify-center gap-2">

@@ -7,12 +7,18 @@ import {
   GET_DISBURSEMENT_STATS,
   GET_PLATFORM_COMMISSION_CONFIG,
   GET_INTOUCH_BALANCE,
+  GET_HOLD_DAYS_CONFIG,
 } from "@/lib/graphql/queries";
 import {
   RETRY_DISBURSEMENT,
+  VOID_DISBURSEMENT,
   TOGGLE_AUTO_DISBURSEMENT,
   UPDATE_PLATFORM_COMMISSION_CONFIG,
   MANUAL_DISBURSE,
+  APPROVE_DISBURSEMENT,
+  FORCE_APPROVE_DISBURSEMENT,
+  SET_DISBURSEMENT_PRIMARY_PROVIDER,
+  SET_HOLD_DAYS_CONFIG,
 } from "@/lib/graphql/mutations";
 
 import {
@@ -83,12 +89,16 @@ import {
   RotateCcw,
   Activity,
   ShieldAlert,
+  Ban,
   ChevronDown,
   ChevronRight,
   ExternalLink,
   Filter,
   Search,
   Wallet,
+  Globe,
+  Zap,
+  CalendarDays,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -108,7 +118,11 @@ interface DisbursementItem {
   commissionType: string;
   commissionValue: number;
   netAmount: number;
-  status: "Pending" | "Processing" | "Successful" | "Failed";
+  status: "Pending" | "Processing" | "Successful" | "Failed" | "OnHold";
+  releaseDate?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  holdNote?: string;
   intouchTransactionRef?: string;
   intouchReferenceId?: string;
   failureReason?: string;
@@ -121,6 +135,7 @@ interface DisbursementItem {
 
 interface DisbursementStats {
   totalDisbursements: number;
+  onHoldCount: number;
   pendingCount: number;
   processingCount: number;
   successfulCount: number;
@@ -134,11 +149,13 @@ interface PlatformConfig {
   type: string;
   value: number;
   autoDisbursement: boolean;
+  disbursementPrimaryProvider?: string;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: any }> = {
+  OnHold: { label: "On Hold", variant: "outline", icon: ShieldAlert },
   Pending: { label: "Pending", variant: "outline", icon: Clock },
   Processing: { label: "Processing", variant: "secondary", icon: Activity },
   Successful: { label: "Successful", variant: "default", icon: CheckCircle },
@@ -184,6 +201,7 @@ export default function SuperAdminDisbursements() {
     pollInterval: 60000,
   });
   const { data: configData, loading: configLoading, refetch: refetchConfig } = useQuery(GET_PLATFORM_COMMISSION_CONFIG);
+  const { data: holdDaysData, refetch: refetchHoldDays } = useQuery(GET_HOLD_DAYS_CONFIG);
   const { data: balanceData, loading: balanceLoading, refetch: refetchBalance } = useQuery(GET_INTOUCH_BALANCE, {
     pollInterval: 60000,
     fetchPolicy: "network-only",
@@ -192,14 +210,28 @@ export default function SuperAdminDisbursements() {
   const balance: any = (balanceData as any)?.getIntouchBalance;
 
   const [retryDisbursement, { loading: retrying }] = useMutation(RETRY_DISBURSEMENT);
+  const [voidDisbursement, { loading: voiding }] = useMutation(VOID_DISBURSEMENT);
+  const [approveDisbursement, { loading: approving }] = useMutation(APPROVE_DISBURSEMENT);
+  const [forceApproveDisbursement, { loading: forceApproving }] = useMutation(FORCE_APPROVE_DISBURSEMENT);
+  const [setHoldDaysConfig, { loading: settingHoldDays }] = useMutation(SET_HOLD_DAYS_CONFIG);
   const [toggleAutoDisb, { loading: toggling }] = useMutation(TOGGLE_AUTO_DISBURSEMENT);
   const [updatePlatformConfig, { loading: updatingConfig }] = useMutation(UPDATE_PLATFORM_COMMISSION_CONFIG);
+  const [setPrimaryProvider, { loading: settingPrimary }] = useMutation(SET_DISBURSEMENT_PRIMARY_PROVIDER, {
+    onCompleted: () => {
+      toast.success("Primary disbursement provider updated");
+      refetchConfig();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update provider");
+    },
+  });
   const [manualDisburse, { loading: manualDisbursing }] = useMutation(MANUAL_DISBURSE);
 
   const disbursements: DisbursementItem[] = (disbData as any)?.getAllDisbursements?.items || [];
   const pagination = (disbData as any)?.getAllDisbursements?.pagination;
   const stats: DisbursementStats = (statsData as any)?.getDisbursementStats;
   const platformConfig: PlatformConfig = (configData as any)?.getPlatformCommissionConfig;
+  const holdDays: number = (holdDaysData as any)?.getHoldDaysConfig ?? 15;
 
   // Manual disburse dialog
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
@@ -212,14 +244,63 @@ export default function SuperAdminDisbursements() {
   const [configType, setConfigType] = useState("percentage");
   const [configValue, setConfigValue] = useState("10");
   const [autoEnabled, setAutoEnabled] = useState(true);
+  const [primaryProvider, setPrimaryProviderState] = useState("pawapay");
+  const [holdDaysInput, setHoldDaysInput] = useState("15");
 
   useEffect(() => {
     if (platformConfig) {
       setConfigType(platformConfig.type);
       setConfigValue(platformConfig.value.toString());
       setAutoEnabled(platformConfig.autoDisbursement);
+      if (platformConfig.disbursementPrimaryProvider) {
+        setPrimaryProviderState(platformConfig.disbursementPrimaryProvider);
+      }
     }
-  }, [platformConfig]);
+    if (holdDays) {
+      setHoldDaysInput(holdDays.toString());
+    }
+  }, [platformConfig, holdDays]);
+
+  const handleApprove = async (id: string) => {
+    try {
+      const res = await approveDisbursement({ variables: { id } });
+      const result = (res.data as any)?.approveDisbursement;
+      if (result.status === "Successful" || result.status === "Processing") {
+        toast.success("Disbursement approved and processing!");
+      } else {
+        toast.error(`Approval failed: ${result.failureReason || "Unknown error"}`);
+      }
+      refetchDisb();
+      refetchStats();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to approve disbursement");
+    }
+  };
+
+  const handleForceApprove = async (id: string) => {
+    try {
+      const res = await forceApproveDisbursement({ variables: { id } });
+      const result = (res.data as any)?.forceApproveDisbursement;
+      if (result.status === "Successful" || result.status === "Processing") {
+        toast.success("⚡ Disbursement force-approved and processing!");
+      } else {
+        toast.error(`Force approval failed: ${result.failureReason || "Unknown error"}`);
+      }
+      refetchDisb();
+      refetchStats();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to force-approve disbursement");
+    }
+  };
+
+  const isReleaseEligible = (releaseDate?: string) => {
+    if (!releaseDate) return false;
+    try {
+      return new Date() >= new Date(releaseDate);
+    } catch {
+      return false;
+    }
+  };
 
   const handleRetry = async (id: string) => {
     try {
@@ -478,7 +559,7 @@ export default function SuperAdminDisbursements() {
           <TabsContent value="disbursements" className="space-y-4 mt-6">
             {/* Summary Cards */}
             {stats && !statsLoading && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <Card className="bg-green-500/5 border-green-500/20">
                   <CardContent className="p-3 flex items-center gap-3">
                     <CheckCircle className="w-8 h-8 text-green-500 shrink-0" />
@@ -494,6 +575,15 @@ export default function SuperAdminDisbursements() {
                     <div>
                       <p className="text-lg font-bold text-red-500">{stats.failedCount}</p>
                       <p className="text-xs text-muted-foreground">Failed</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-purple-500/5 border-purple-500/20">
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <ShieldAlert className="w-8 h-8 text-purple-500 shrink-0" />
+                    <div>
+                      <p className="text-lg font-bold text-purple-500">{stats.onHoldCount}</p>
+                      <p className="text-xs text-muted-foreground">On Hold ({holdDays || 15}-day)</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -532,6 +622,7 @@ export default function SuperAdminDisbursements() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__all__">All Statuses</SelectItem>
+                      <SelectItem value="OnHold">On Hold</SelectItem>
                       <SelectItem value="Pending">Pending</SelectItem>
                       <SelectItem value="Processing">Processing</SelectItem>
                       <SelectItem value="Successful">Successful</SelectItem>
@@ -617,17 +708,71 @@ export default function SuperAdminDisbursements() {
                                   {formatDate(d.createdAt)}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  {d.status === "Failed" && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => { e.stopPropagation(); handleRetry(d.id); }}
-                                      disabled={retrying}
-                                      title="Retry disbursement"
-                                    >
-                                      <RotateCcw className="w-4 h-4" />
-                                    </Button>
-                                  )}
+                                  <div className="flex items-center justify-end gap-1">
+                                    {d.status === "OnHold" && (
+                                      <>
+                                        {isReleaseEligible(d.releaseDate) && (
+                                          <Button
+                                            variant="default"
+                                            size="sm"
+                                            onClick={(e) => { e.stopPropagation(); handleApprove(d.id); }}
+                                            disabled={approving}
+                                            title="Approve disbursement release (after hold period)"
+                                            className="h-7 text-xs"
+                                          >
+                                            <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                                            Approve
+                                          </Button>
+                                        )}
+                                        <Button
+                                          variant="secondary"
+                                          size="sm"
+                                          onClick={(e) => { e.stopPropagation(); handleForceApprove(d.id); }}
+                                          disabled={forceApproving}
+                                          title="Force approve — bypass hold period and disburse immediately"
+                                          className="h-7 text-xs"
+                                        >
+                                          <Zap className="w-3.5 h-3.5 mr-1" />
+                                          Force
+                                        </Button>
+                                        <Button
+                                          variant="destructive"
+                                          size="sm"
+                                          onClick={async (e) => {
+                                            e.stopPropagation();
+                                            const reason = prompt("Reason for voiding this disbursement (optional):");
+                                            if (reason !== null) {
+                                              try {
+                                                await voidDisbursement({ variables: { id: d.id, reason: reason || undefined } });
+                                                toast.success("Disbursement voided! Owner will NOT receive payment.");
+                                                refetchDisb();
+                                                refetchStats();
+                                              } catch (err: any) {
+                                                toast.error(err.message || "Failed to void disbursement");
+                                              }
+                                            }
+                                          }}
+                                          disabled={voiding}
+                                          title="Void this disbursement (cancel payout and refund customer)"
+                                          className="h-7 text-xs"
+                                        >
+                                          <Ban className="w-3.5 h-3.5 mr-1" />
+                                          Void
+                                        </Button>
+                                      </>
+                                    )}
+                                    {d.status === "Failed" && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => { e.stopPropagation(); handleRetry(d.id); }}
+                                        disabled={retrying}
+                                        title="Retry disbursement"
+                                      >
+                                        <RotateCcw className="w-4 h-4" />
+                                      </Button>
+                                    )}
+                                  </div>
                                 </TableCell>
                               </TableRow>
 
@@ -810,10 +955,14 @@ export default function SuperAdminDisbursements() {
                     <CardTitle className="text-sm">Disbursement Status Breakdown</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                       <div className="p-4 rounded-lg bg-card border text-center">
                         <p className="text-2xl font-bold">{stats.totalDisbursements}</p>
                         <p className="text-xs text-muted-foreground">Total</p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/20 text-center">
+                        <p className="text-2xl font-bold text-purple-500">{stats.onHoldCount}</p>
+                        <p className="text-xs text-muted-foreground">On Hold</p>
                       </div>
                       <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20 text-center">
                         <p className="text-2xl font-bold text-amber-500">{stats.pendingCount}</p>
@@ -865,7 +1014,7 @@ export default function SuperAdminDisbursements() {
                       Auto-Disbursement
                     </CardTitle>
                     <CardDescription>
-                      When enabled, owner commissions are automatically sent via InTouchPay after each successful payment
+                      When enabled, owner commissions are automatically sent after each successful payment
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -880,6 +1029,75 @@ export default function SuperAdminDisbursements() {
                         disabled={toggling}
                       />
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* Primary Provider Selector */}
+                <Card className="bg-gradient-to-br from-blue-500/5 to-indigo-500/5 border-blue-500/20">
+                  <CardHeader>
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-blue-500" />
+                      Primary Disbursement Provider
+                    </CardTitle>
+                    <CardDescription>
+                      Choose which provider to try first when sending disbursements. Default is <strong>PawaPay</strong>.
+                      If the primary fails, the secondary is tried automatically.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Primary Provider</Label>
+                      <Select
+                        value={primaryProvider}
+                        onValueChange={async (val) => {
+                          setPrimaryProviderState(val);
+                          try {
+                            await setPrimaryProvider({ variables: { provider: val } });
+                          } catch {}
+                        }}
+                      >
+                        <SelectTrigger className="h-12">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pawapay">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">🌍</span>
+                              <div>
+                                <span className="font-semibold">PawaPay</span>
+                                <p className="text-[10px] text-muted-foreground">20 African countries — MTN, M-Pesa, Airtel, Orange + more</p>
+                              </div>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="intouch">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">🇷🇼</span>
+                              <div>
+                                <span className="font-semibold">IntouchPay</span>
+                                <p className="text-[10px] text-muted-foreground">Rwanda only — MTN & Airtel Mobile Money</p>
+                              </div>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-500/5 border border-blue-500/20 text-xs text-muted-foreground">
+                      <Globe className="w-4 h-4 text-blue-500 shrink-0" />
+                      <span>
+                        Currently: <strong className="text-foreground">{primaryProvider === 'pawapay' ? '🌍 PawaPay' : '🇷🇼 IntouchPay'}</strong> is primary.
+                        {primaryProvider === 'pawapay' ? ' IntouchPay' : ' PawaPay'} is used as fallback if the primary fails.
+                      </span>
+                    </div>
+                    {settingPrimary && (
+                      <div className="flex items-center gap-2 text-xs text-blue-500">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Saving...
+                      </div>
+                    )}
+                    <p className="text-[10px] text-muted-foreground">
+                      IntouchPay only works for Rwandan phone numbers (MTN, Airtel).
+                      PawaPay works for Rwanda and 19 other African countries.
+                    </p>
                   </CardContent>
                 </Card>
 
@@ -935,6 +1153,60 @@ export default function SuperAdminDisbursements() {
                   </CardContent>
                 </Card>
 
+                {/* Hold Days Config */}
+                <Card className="bg-gradient-to-br from-purple-500/5 to-indigo-500/5 border-purple-500/20">
+                  <CardHeader>
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4 text-purple-500" />
+                      Disbursement Hold Period
+                    </CardTitle>
+                    <CardDescription>
+                      Number of days a disbursement stays On Hold before it can be approved for release.
+                      Set to <strong>0</strong> for no hold period (immediate availability).
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Hold Days</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          max={365}
+                          value={holdDaysInput}
+                          onChange={(e) => setHoldDaysInput(e.target.value)}
+                          className="w-24"
+                        />
+                        <span className="text-sm text-muted-foreground">days (0-365)</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Current: <strong>{holdDays || 15} day(s)</strong>. Changes apply to new disbursements.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={async () => {
+                        const days = parseInt(holdDaysInput, 10);
+                        if (isNaN(days) || days < 0 || days > 365) {
+                          toast.error("Hold days must be between 0 and 365");
+                          return;
+                        }
+                        try {
+                          await setHoldDaysConfig({ variables: { days } });
+                          toast.success(`Hold period set to ${days} day(s)`);
+                          refetchHoldDays();
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to update hold days");
+                        }
+                      }}
+                      disabled={settingHoldDays}
+                      className="w-full"
+                    >
+                      {settingHoldDays ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                      Save Hold Period
+                    </Button>
+                  </CardContent>
+                </Card>
+
                 {/* Info Card */}
                 <Card className="lg:col-span-2">
                   <CardHeader>
@@ -954,24 +1226,30 @@ export default function SuperAdminDisbursements() {
                       <strong>3.</strong> Platform commission is calculated based on the configured rate
                     </p>
                     <p>
-                      <strong>4.</strong> The owner&apos;s net share is automatically sent via InTouchPay RequestDeposit API
+                      <strong>4.</strong> The disbursement is placed <strong>On Hold</strong> for a {holdDays || 15}-day refund period
                     </p>
                     <p>
-                      <strong>5.</strong> A CommissionDisbursement record is created with full status tracking
+                      <strong>5.</strong> After the hold period, a <strong>super admin</strong> can review and approve the release
                     </p>
                     <p>
-                      <strong>6.</strong> Failed disbursements can be retried from the Disbursements tab
+                      <strong>6.</strong> Super admin can <strong>Force Approve</strong> to bypass the hold period and disburse immediately
                     </p>
-                    <div className="mt-3 p-3 bg-accent/5 rounded-lg border border-accent/20">
+                    <p>
+                      <strong>7.</strong> Once approved, the owner&apos;s net share is sent via PawaPay (primary) or IntouchPay (fallback)
+                    </p>
+                    <p>
+                      <strong>8.</strong> Failed disbursements can be retried from the Disbursements tab
+                    </p>
+                    <div className="mt-3 p-3 bg-amber-500/10 rounded-lg border border-amber-500/30">
                       <p className="font-medium text-foreground flex items-center gap-1">
-                        <AlertTriangle className="w-4 h-4 text-amber-500" />
-                        Requirements for auto-disbursement:
+                        <ShieldAlert className="w-4 h-4 text-amber-500" />
+                        {holdDays || 15}-Day Hold Policy:
                       </p>
                       <ul className="list-disc list-inside mt-1 space-y-0.5 text-xs">
-                        <li>The item owner must have a valid phone number registered</li>
-                        <li>The InTouchPay account must have sufficient balance</li>
-                        <li>Auto-disbursement must be enabled</li>
-                        <li>A commission config must exist (global or item-specific)</li>
+                        <li>All owner disbursements are held for {holdDays || 15} days after payment (configurable above)</li>
+                        <li>This allows time to process refunds if any issues occur</li>
+                        <li>Only a super admin can approve the release after the hold period</li>
+                        <li>Use <strong>Force Approve</strong> (⚡) to bypass the hold period immediately</li>
                       </ul>
                     </div>
                   </CardContent>

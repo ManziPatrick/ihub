@@ -1,11 +1,23 @@
 import { useEffect, useMemo, useCallback, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, AlertCircle, Clock, Phone, Maximize2, Minimize2, RefreshCw } from "lucide-react";
+import { Loader2, MapPin, AlertCircle, Clock, Phone, Maximize2, Minimize2, RefreshCw, ShieldCheck, ShieldX, Eye, EyeOff, Users } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 import { MapErrorBoundary } from "@/components/portal/MapErrorBoundary";
-import { useQuery } from "@apollo/client/react";
+import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_USERS_WITH_LOCATION } from "@/lib/graphql/queries";
+import { SET_USER_LOCATION_DENIED, SET_USER_LOCATION_FORCE_ALLOWED, BATCH_FORCE_ALLOW_LOCATIONS } from "@/lib/graphql/mutations";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
@@ -90,6 +102,7 @@ export interface UserLocation {
   longitude: number;
   locationUpdatedAt?: string;
   locationShared: boolean;
+  locationDenied?: boolean;
   title?: string;
 }
 
@@ -153,9 +166,43 @@ export function UserMap({
   onMapClick,
   pendingMarker,
 }: UserMapProps) {
+  const { toast } = useToast();
   const [maximized, setMaximized] = useState(false);
+  const [batchConfirmOpen, setBatchConfirmOpen] = useState(false);
   const { data, loading, error, refetch } = useQuery(GET_USERS_WITH_LOCATION, {
     variables: role ? { role } : undefined,
+  });
+
+  const [setLocationDenied] = useMutation(SET_USER_LOCATION_DENIED, {
+    onCompleted: () => {
+      toast({ title: "Location updated", description: "User location status has been updated." });
+      refetch();
+    },
+    onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const [setLocationForceAllowed] = useMutation(SET_USER_LOCATION_FORCE_ALLOWED, {
+    onCompleted: () => {
+      toast({ title: "Location overridden", description: "User location is now force-allowed." });
+      refetch();
+    },
+    onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const [batchForceAllow, { loading: batchLoading }] = useMutation(BATCH_FORCE_ALLOW_LOCATIONS, {
+    onCompleted: (data: any) => {
+      const count = data?.batchForceAllowLocations ?? 0;
+      toast({
+        title: "Batch location override complete",
+        description: `${count} user${count !== 1 ? 's' : ''} had their location force-allowed.`,
+      });
+      refetch();
+      setBatchConfirmOpen(false);
+    },
+    onError: (err) => {
+      toast({ title: "Batch operation failed", description: err.message, variant: "destructive" });
+      setBatchConfirmOpen(false);
+    },
   });
 
   // Refetch immediately on mount so newly-saved locations appear without delay
@@ -184,6 +231,13 @@ export function UserMap({
         (u.location || "").toLowerCase().includes(q)
     );
   }, [allUsers, search]);
+
+  /* Separate users with and without valid coordinates */
+  const usersWithLocation = useMemo(
+    () => users.filter(u => u.latitude != null && u.longitude != null),
+    [users]
+  );
+  const usersWithoutLocation = users.length - usersWithLocation.length;
 
   const getIconForRole = useCallback(
     (userRole: string, userId: string) => {
@@ -313,8 +367,35 @@ export function UserMap({
         <RefreshCw className={loading ? "w-4 h-4 animate-spin" : "w-4 h-4"} />
       </button>
 
+      {/* Force Allow All (batch) */}
+      <button
+        onClick={() => setBatchConfirmOpen(true)}
+        className={
+          `
+          absolute top-3 left-[4.5rem] z-[1001] px-2.5 py-1.5 rounded-lg
+          bg-green-500/15 backdrop-blur-sm border border-green-500/30
+          text-green-400 hover:text-green-300 hover:bg-green-500/25
+          transition-all duration-200 shadow-sm
+          opacity-0 group-hover:opacity-100
+          inline-flex items-center gap-1.5 text-xs font-semibold
+        `
+        }
+        title="Force allow location for all users on the map"
+      >
+        <Users className="w-3.5 h-3.5" />
+        Force Allow All
+      </button>
+
       {/* Map */}
       <div style={{ height: maximized ? "100%" : height, width: "100%", position: "relative" }}>
+        {/* Users without location overlay */}
+        {users.length > 0 && usersWithoutLocation > 0 && (
+          <div className="absolute top-14 left-3 z-[1000] flex items-center gap-2 px-3 py-1.5 rounded-lg bg-background/80 backdrop-blur-sm border border-border/40 shadow-sm text-xs text-muted-foreground">
+            <MapPin className="w-3.5 h-3.5 text-amber-500" />
+            <span><strong className="text-foreground">{usersWithoutLocation}</strong> user{usersWithoutLocation !== 1 ? 's' : ''} without location data</span>
+          </div>
+        )}
+
         {/* Empty state overlay */}
         {users.length === 0 && !loading && (
           <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-background/60 backdrop-blur-sm">
@@ -326,8 +407,8 @@ export function UserMap({
                 <p className="text-lg font-semibold text-foreground">No users found on the map</p>
                 <p className="text-sm text-muted-foreground mt-1 max-w-sm">
                   {search
-                    ? `No users matching "${search}" have shared their location.`
-                    : "Users need to grant location permission for their pins to appear here."}
+                    ? `No users matching "${search}" found.`
+                    : "No users are registered in the system yet."}
                 </p>
               </div>
               {!search && role && (
@@ -347,7 +428,7 @@ export function UserMap({
           zoomControl={true}
           worldCopyJump={true}
         >
-          <FitBounds users={users} />
+          <FitBounds users={usersWithLocation} />
           {editMode && <MapClickHandler onMapClick={onMapClick} />}
 
           <TileLayer
@@ -363,10 +444,10 @@ export function UserMap({
             showCoverageOnHover={false}
             disableClusteringAtZoom={12}
           >
-            {users.map((u) => (
+            {usersWithLocation.map((u) => (
               <Marker
                 key={u.id}
-                position={[u.latitude, u.longitude]}
+                position={[u.latitude!, u.longitude!]}
                 icon={getIconForRole(u.role, u.id)}
                 eventHandlers={{
                   click: () => { if (!editMode) onSelectUser?.(u); },
@@ -419,8 +500,20 @@ export function UserMap({
                     </div>
 
                     {/* Location source badge */}
-                    <div className="flex items-center gap-1.5 mb-3">
-                      {u.locationShared ? (
+                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                      {u.locationDenied ? (
+                        <span
+                          className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                          style={{
+                            background: "#ef444420",
+                            color: "#ef4444",
+                            border: "1px solid #ef444440",
+                          }}
+                        >
+                          <ShieldX className="w-3 h-3" />
+                          Denied
+                        </span>
+                      ) : u.locationShared ? (
                         <span
                           className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
                           style={{
@@ -429,10 +522,8 @@ export function UserMap({
                             border: "1px solid #22c55e40",
                           }}
                         >
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                          Verified
+                          <ShieldCheck className="w-3 h-3" />
+                          Shared
                         </span>
                       ) : (
                         <span
@@ -443,11 +534,7 @@ export function UserMap({
                             border: "1px solid #f59e0b40",
                           }}
                         >
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="12" y1="8" x2="12" y2="12" />
-                            <line x1="12" y1="16" x2="12.01" y2="16" />
-                          </svg>
+                          <MapPin className="w-3 h-3" />
                           Estimated
                         </span>
                       )}
@@ -466,6 +553,35 @@ export function UserMap({
                         <span>
                           Last updated: {formatDate(u.locationUpdatedAt)}
                         </span>
+                      </div>
+
+                      {/* Admin controls for location override */}
+                      <div className="flex items-center gap-1.5 pt-2 border-t border-border/20 mt-1.5">
+                        {u.locationDenied ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocationForceAllowed({ variables: { userId: u.id, forceAllowed: true } });
+                            }}
+                            className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-green-500/20 text-green-400 border border-green-500/40 hover:bg-green-500/30 transition-colors"
+                            title="Force allow location"
+                          >
+                            <Eye className="w-3 h-3" />
+                            Force Allow
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocationDenied({ variables: { userId: u.id, denied: true } });
+                            }}
+                            className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/40 hover:bg-red-500/30 transition-colors"
+                            title="Mark as location denied"
+                          >
+                            <EyeOff className="w-3 h-3" />
+                            Mark Denied
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -486,6 +602,52 @@ export function UserMap({
         </MapContainer>
         </MapErrorBoundary>
       </div>
+      {/* Batch Force Allow Confirmation Dialog */}
+      <AlertDialog open={batchConfirmOpen} onOpenChange={setBatchConfirmOpen}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-green-500" />
+              Force Allow All Locations?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-muted-foreground space-y-2">
+              <p>
+                This will override location preferences for <strong>all {usersWithLocation.length} user{usersWithLocation.length !== 1 ? 's' : ''}</strong> currently shown on the map.
+              </p>
+              <p>
+                <strong className="text-foreground">What this does:</strong> Sets <code className="text-xs bg-accent/20 px-1 py-0.5 rounded">locationShared = true</code> and clears any <code className="text-xs bg-accent/20 px-1 py-0.5 rounded">locationDenied</code> flags. All users' locations will appear on the map regardless of their individual preference.
+              </p>
+              <p className="text-amber-500 font-medium text-xs flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                This action cannot be undone per-user. Users who force-share can still update their own location later.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={batchLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={batchLoading}
+              onClick={(e) => {
+                e.preventDefault();
+                const userIds = usersWithLocation.map(u => u.id);
+                if (userIds.length === 0) {
+                  toast({ title: "No users", description: "No users found on the map to update.", variant: "destructive" });
+                  setBatchConfirmOpen(false);
+                  return;
+                }
+                batchForceAllow({ variables: { userIds } });
+              }}
+              className="bg-green-600 hover:bg-green-700 text-white gap-2"
+            >
+              {batchLoading ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+              ) : (
+                <><Eye className="w-4 h-4" /> Force Allow All ({usersWithLocation.length})</>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

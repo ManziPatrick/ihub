@@ -6,11 +6,17 @@ export interface IScholarship extends Document {
   type: 'course' | 'internship';
   itemId: mongoose.Types.ObjectId;
   itemTitle: string;
-  status: 'active' | 'revoked';
+  status: 'pending' | 'active' | 'revoked';
   reason?: string;
+  approvedAt?: Date;
+  approvedBy?: mongoose.Types.ObjectId;
   revokedAt?: Date;
   revokedBy?: mongoose.Types.ObjectId;
   revokedReason?: string;
+  grantedLatitude?: number;
+  grantedLongitude?: number;
+  grantedCity?: string;
+  grantedCountry?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,11 +28,17 @@ const ScholarshipSchema: Schema = new Schema(
     type: { type: String, enum: ['course', 'internship'], required: true, index: true },
     itemId: { type: Schema.Types.ObjectId, required: true, index: true },
     itemTitle: { type: String, required: true },
-    status: { type: String, enum: ['active', 'revoked'], default: 'active', index: true },
+    status: { type: String, enum: ['pending', 'active', 'revoked'], default: 'pending', index: true },
     reason: { type: String },
+    approvedAt: { type: Date },
+    approvedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     revokedAt: { type: Date },
     revokedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     revokedReason: { type: String },
+    grantedLatitude: { type: Number },
+    grantedLongitude: { type: Number },
+    grantedCity: { type: String },
+    grantedCountry: { type: String },
   },
   { timestamps: true }
 );

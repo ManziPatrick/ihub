@@ -5,12 +5,14 @@
  * Usage: npx tsx test_pawapay.ts
  */
 
-// PawaPay production API base URL
-const PAWAPAY_BASE_URL = 'https://api.sandbox.pawapay.io';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Token provided by user — PawaPay Bearer token (ES256 JWT)
-// Claims: sub=24040, pm=DAF,PAF, exp=~2036
-const BEARER_TOKEN = 'eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjI0MDQwIiwibWF2IjoiMSIsImV4cCI6MjA5ODM0NDI0NywiaWF0IjoxNzgyNzI1MDQ3LCJwbSI6IkRBRixQQUYiLCJqdGkiOiIyMDQxNDQyZi1lZjllLTQ4NWYtODgxMC1kNDM0NTUwN2Y0NDEifQ._KZxcUuOADk0IWwncT7o54G_WEh4kr9HrwCHD6HwNF5aptWXghvK5FMD-m3wGy4KSNLoufoLuacRpk81BVkrcg';
+// API URL — reads from env or defaults to sandbox
+const PAWAPAY_BASE_URL = process.env.PAYPACK_BASE_URL || 'https://api.sandbox.pawapay.io';
+
+// Token from env — uses PAWAPAY_API_TOKEN or falls back to old sandbox token
+const BEARER_TOKEN = process.env.PAWAPAY_API_TOKEN || '';
 
 interface TestResult {
   name: string;

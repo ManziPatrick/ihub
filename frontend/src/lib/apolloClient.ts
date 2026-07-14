@@ -54,6 +54,11 @@ const monitoringLink = createMonitoringLink({
   includeQueryBody: false,
 });
 
+// Temporary debug flag: disable automatic error capture reporting to avoid
+// recursive error-reporting loops while we debug network storms.
+const DEBUG_DISABLE_ERROR_CAPTURE = true;
+
+// Build link chain
 const link = split(
   ({ query }) => {
     const definition = getMainDefinition(query);
@@ -63,7 +68,7 @@ const link = split(
     );
   },
   wsLink,
-  from([monitoringLink, authLink.concat(httpLink)]),
+  monitoringLink.concat(authLink.concat(httpLink)),
 );
 
 const client = new ApolloClient({
@@ -88,6 +93,22 @@ const client = new ApolloClient({
       },
     },
   }),
+  // Reduce aggressive network usage by deduplicating identical in-flight queries
+  // and using cache-first as the default fetch policy for watchQuery/query.
+  queryDeduplication: true,
+  defaultOptions: {
+    watchQuery: {
+      fetchPolicy: 'cache-first',
+      errorPolicy: 'all' as any,
+    },
+    query: {
+      fetchPolicy: 'cache-first',
+      errorPolicy: 'all' as any,
+    },
+    mutate: {
+      errorPolicy: 'all' as any,
+    },
+  },
 });
 
 export default client;

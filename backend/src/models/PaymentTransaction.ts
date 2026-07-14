@@ -11,6 +11,8 @@ export interface IPaymentTransaction extends Document {
   paypackRef?: string; // Reference from Paypack API
   pesapalTrackingId?: string; // Reference from Pesapal API
   fdiRef?: string; // Reference from FDI Payments API
+  pawapayDepositId?: string; // Reference from PawaPay API (deposit ID)
+  pawapayRefundId?: string; // Reference from PawaPay API (refund ID)
   intouchRef?: string; // Reference from IntouchPay API
   intouchTransactionId?: string; // Transaction ID from IntouchPay
   paymentMethod?: string; // momo, card, etc
@@ -78,6 +80,18 @@ const PaymentTransactionSchema = new Schema<IPaymentTransaction>(
       index: true,
     },
     fdiRef: {
+      type: String,
+      required: false,
+      sparse: true,
+      index: true,
+    },
+    pawapayDepositId: {
+      type: String,
+      required: false,
+      sparse: true,
+      index: true,
+    },
+    pawapayRefundId: {
       type: String,
       required: false,
       sparse: true,
