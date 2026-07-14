@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useMutation, useQuery } from "@apollo/client/react";
-import { UPDATE_THEME, UPDATE_USER, UPDATE_BRANDING, UPDATE_STUDENT_PROFILE } from "@/lib/graphql/mutations";
+import { UPDATE_THEME, UPDATE_USER, UPDATE_BRANDING, UPDATE_STUDENT_PROFILE, REQUEST_EMAIL_OTP, ENABLE_EMAIL_2FA, DISABLE_EMAIL_2FA } from "@/lib/graphql/mutations";
 import { GET_ME, GET_BRANDING } from "@/lib/graphql/queries";
 import { toast } from "sonner";
 import { useBranding } from "@/components/BrandingProvider";
@@ -36,7 +36,9 @@ import {
   Link as LinkIcon,
   GraduationCap as GradIcon,
   BookOpen as BookIcon,
-  MapPin as MapIcon
+  MapPin as MapIcon,
+  Shield,
+  ShieldCheck
 } from "lucide-react";
 
 const colorPresets = [
@@ -218,6 +220,66 @@ export default function PortalSettings() {
     }
   };
 
+  // --- Security / 2FA State ---
+  const [showOTPDialog, setShowOTPDialog] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [isEnabling, setIsEnabling] = useState(false);
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
+
+  const [requestEmailOTPMutation] = useMutation(REQUEST_EMAIL_OTP);
+  const [enableEmail2FAMutation] = useMutation(ENABLE_EMAIL_2FA, {
+    onCompleted: (data: any) => {
+      if (data.enableEmail2FA) {
+        updateUser({ twoFactorEnabled: true });
+        toast.success("Email 2FA has been enabled!");
+        setShowOTPDialog(false);
+        setOtpCode("");
+      }
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const [disableEmail2FAMutation] = useMutation(DISABLE_EMAIL_2FA, {
+    onCompleted: (data: any) => {
+      if (data.disableEmail2FA) {
+        updateUser({ twoFactorEnabled: false });
+        toast.success("Email 2FA has been disabled.");
+        setShowOTPDialog(false);
+        setOtpCode("");
+      }
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handle2FAToggle = async () => {
+    if (!user?.email) {
+      toast.error("No email address on file.");
+      return;
+    }
+    setIsSendingOTP(true);
+    try {
+      await requestEmailOTPMutation({ variables: { email: user.email } });
+      setShowOTPDialog(true);
+      setIsEnabling(!user.twoFactorEnabled); // If currently disabled, we're enabling; if enabled, we're disabling
+      toast.success("OTP sent to your email");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send OTP");
+    } finally {
+      setIsSendingOTP(false);
+    }
+  };
+
+  const handleConfirmOTP = async () => {
+    if (!otpCode || otpCode.length < 4) {
+      toast.error("Please enter the verification code");
+      return;
+    }
+    if (isEnabling) {
+      await enableEmail2FAMutation({ variables: { code: otpCode } });
+    } else {
+      await disableEmail2FAMutation({ variables: { code: otpCode } });
+    }
+  };
+
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const handleBrandingLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -326,6 +388,10 @@ export default function PortalSettings() {
                 <Trophy className="w-4 h-4" /> My Achievements
               </TabsTrigger>
             )}
+            <TabsTrigger value="security" className="flex items-center gap-2">
+              <Shield className="w-4 h-4" /> Security
+            </TabsTrigger>
+
             {user?.role === 'super_admin' && (
               <TabsTrigger value="branding" className="flex items-center gap-2">
                 <Globe className="w-4 h-4" /> Global Branding
@@ -654,6 +720,144 @@ export default function PortalSettings() {
               </motion.div>
             </TabsContent>
           )}
+
+          {/* === SECURITY TAB === */}
+          <TabsContent value="security">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              <Card className="border-border/50">
+                <CardHeader>
+                  <CardTitle>Two-Factor Authentication (2FA)</CardTitle>
+                  <CardDescription>
+                    Add an extra layer of security to your account by requiring a one-time passcode
+                    sent to your email address when logging in.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* 2FA Status */}
+                  <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-full ${user?.twoFactorEnabled ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'}`}>
+                        {user?.twoFactorEnabled ? (
+                          <ShieldCheck className="w-6 h-6" />
+                        ) : (
+                          <Shield className="w-6 h-6" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-medium">
+                          {user?.twoFactorEnabled ? 'Email 2FA is Active' : 'Email 2FA is Disabled'}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          {user?.twoFactorEnabled
+                            ? 'You will receive a one-time code via email each time you log in.'
+                            : 'Enable 2FA to secure your account with email-based verification.'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {user?.twoFactorEnabled ? (
+                        <Button
+                          variant="outline"
+                          className="border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+                          onClick={handle2FAToggle}
+                          disabled={isSendingOTP}
+                        >
+                          {isSendingOTP ? 'Sending OTP...' : 'Disable 2FA'}
+                        </Button>
+                      ) : (
+                        <Button
+                          className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                          onClick={handle2FAToggle}
+                          disabled={isSendingOTP}
+                        >
+                          {isSendingOTP ? 'Sending OTP...' : 'Enable 2FA'}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* How it works */}
+                  <div className="bg-muted/20 rounded-lg p-4 border border-border/30">
+                    <h5 className="text-sm font-semibold mb-2">How Email 2FA Works</h5>
+                    <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
+                      <li>Click "Enable 2FA" to request a one-time passcode via email</li>
+                      <li>Check your email inbox for the 6-digit verification code</li>
+                      <li>Enter the code below to confirm and activate 2FA</li>
+                      <li>Future logins will require both your password and an email OTP</li>
+                    </ol>
+                  </div>
+
+                  {/* OTP Confirmation Dialog */}
+                  {showOTPDialog && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-6 bg-card border-2 border-accent/20 rounded-xl space-y-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold">
+                          {isEnabling ? 'Enable Email 2FA' : 'Disable Email 2FA'}
+                        </h4>
+                        <button
+                          onClick={() => {
+                            setShowOTPDialog(false);
+                            setOtpCode("");
+                          }}
+                          className="text-muted-foreground hover:text-foreground text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        A verification code has been sent to <strong>{user?.email}</strong>.
+                        Please enter it below to {isEnabling ? 'enable' : 'disable'} 2FA.
+                      </p>
+                      <div className="flex gap-3 items-end">
+                        <div className="flex-1 space-y-1.5">
+                          <label className="text-xs font-medium text-muted-foreground">Verification Code</label>
+                          <Input
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                            placeholder="Enter 6-digit code"
+                            className="font-mono text-lg text-center tracking-[0.5em] h-12"
+                            maxLength={6}
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleConfirmOTP();
+                            }}
+                          />
+                        </div>
+                        <Button
+                          onClick={handleConfirmOTP}
+                          disabled={otpCode.length < 4 || enableEmail2FAMutation.loading || disableEmail2FAMutation.loading}
+                          className={isEnabling ? "bg-accent hover:bg-accent/90" : "border-red-500/30 text-red-500 hover:bg-red-500/10"}
+                          variant={isEnabling ? "default" : "outline"}
+                        >
+                          {(enableEmail2FAMutation.loading || disableEmail2FAMutation.loading) ? 'Verifying...' : 'Confirm'}
+                        </Button>
+                      </div>
+                      <div className="flex justify-center gap-2">
+                        {[0, 1, 2, 3, 4, 5].map((i) => (
+                          <div
+                            key={i}
+                            className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                              otpCode.length > i
+                                ? 'bg-accent scale-110'
+                                : 'bg-muted-foreground/20'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
 
           {/* === ACHIEVEMENTS TAB (STUDENT ONLY) === */}
           {user?.role === 'student' && (

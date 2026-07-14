@@ -60,7 +60,9 @@ import {
   Percent,
   Send,
   Upload,
-  DollarSign
+  DollarSign,
+  AlertTriangle,
+  Database
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePusher } from "@/hooks/use-pusher";
@@ -136,6 +138,7 @@ const adminNavItems: NavItem[] = [
       { label: "Course Preview", href: "/portal/admin/course-preview", icon: Eye },
       { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
       { label: "Internships", href: "/portal/admin/internships", icon: Briefcase },
+      { label: "Scholarships", href: "/portal/admin/scholarships", icon: Award },
     ]
   },
   {
@@ -186,9 +189,14 @@ const superAdminNavItems: NavItem[] = [
       { label: "My Commissions", href: "/portal/super-admin/my-commissions", icon: DollarSign },
       { label: "Disbursements", href: "/portal/super-admin/disbursements", icon: Send },
       { label: "IntouchPay", href: "/portal/super-admin/intouch-pay", icon: DollarSign },
+      { label: "Withdraw from Wallet", href: "/portal/super-admin/pawapay", icon: Send },
       { label: "Broadcast", href: "/portal/super-admin/broadcast", icon: Send },
       { label: "Undo Metrics", href: "/portal/super-admin/undo-metrics", icon: RotateCcw },
       { label: "Upload Logs", href: "/portal/super-admin/upload-logs", icon: Upload },
+      { label: "Refunds", href: "/portal/super-admin/refunds", icon: RotateCcw },
+      { label: "Scholarships", href: "/portal/super-admin/scholarships", icon: Award },
+      { label: "Error Reports", href: "/portal/super-admin/error-reports", icon: AlertTriangle },
+      { label: "Database Backups", href: "/portal/super-admin/backups", icon: Database },
     ]
   },
   { 
@@ -245,6 +253,16 @@ interface PortalLayoutProps {
 
 import { useBranding } from "@/components/BrandingProvider";
 import { GET_NOTIFICATIONS, GET_ME, GET_TRAINER_STATS, GET_ADMIN_DASHBOARD_DATA, GET_STATS, GET_ALL_TRAINERS } from "@/lib/graphql/queries";
+import { gql } from "@apollo/client";
+
+const GET_ERROR_REPORT_STATS = gql`
+  query GetErrorReportStats {
+    getErrorReportStats {
+      open
+      critical
+    }
+  }
+`;
 import { MARK_NOTIFICATION_READ, MARK_ALL_NOTIFICATIONS_READ } from "@/lib/graphql/mutations";
 import { formatDistanceToNow } from "date-fns";
 import { usePresence } from "@/hooks/use-presence";
@@ -303,10 +321,18 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     skip: !user || user.role !== 'super_admin',
   });
 
+  const { data: errorStatsData } = useQuery(GET_ERROR_REPORT_STATS, {
+    skip: !user || user.role !== 'super_admin',
+    pollInterval: 60000,
+    fetchPolicy: "network-only",
+  });
+
   const trainerStats = (trainerStatsData as any)?.trainerStats;
   const adminStats = (adminDashboardData as any)?.adminDashboardData?.stats;
   const globalStats = (globalStatsData as any)?.stats;
   const allTrainers = (allTrainersData as any)?.getAllTrainers || [];
+  const errorStats = (errorStatsData as any)?.getErrorReportStats || {};
+  const openErrorCount = (errorStats?.open || 0) + (errorStats?.critical || 0);
 
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(() => {
     return localStorage.getItem('sidebar_minimized') === 'true';
@@ -519,6 +545,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                       <CollapsibleContent className="pl-9 pr-2 space-y-1 mt-1">
                         {item.children.map((child) => {
                           const isChildActive = location.pathname === child.href;
+                          const isErrorReports = child.label === 'Error Reports';
                           return (
                             <Link
                               key={child.href}
@@ -531,7 +558,17 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                               )}
                             >
                               {child.icon && <child.icon className="w-3.5 h-3.5" />}
-                              {child.label}
+                              <span className="flex-1">{child.label}</span>
+                              {isErrorReports && openErrorCount > 0 && (
+                                <span className={cn(
+                                  "min-w-[18px] h-[18px] flex items-center justify-center text-[9px] font-bold rounded-full px-1.5 leading-none",
+                                  (errorStats?.critical || 0) > 0
+                                    ? "bg-rose-500/20 text-rose-500"
+                                    : "bg-amber-500/15 text-amber-500"
+                                )}>
+                                  {openErrorCount > 99 ? '99+' : openErrorCount}
+                                </span>
+                              )}
                             </Link>
                           );
                         })}
@@ -638,6 +675,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                             <CollapsibleContent className="pl-9 pr-2 space-y-1 mt-1">
                               {item.children.map((child) => {
                                 const isChildActive = location.pathname === child.href;
+                                const isErrorReports = child.label === 'Error Reports';
                                 return (
                                   <Link
                                     key={child.href}
@@ -651,7 +689,17 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                                     )}
                                   >
                                     {child.icon && <child.icon className="w-3.5 h-3.5" />}
-                                    {child.label}
+                                    <span className="flex-1">{child.label}</span>
+                                    {isErrorReports && openErrorCount > 0 && (
+                                      <span className={cn(
+                                        "min-w-[18px] h-[18px] flex items-center justify-center text-[9px] font-bold rounded-full px-1.5 leading-none",
+                                        (errorStats?.critical || 0) > 0
+                                          ? "bg-rose-500/20 text-rose-500"
+                                          : "bg-amber-500/15 text-amber-500"
+                                      )}>
+                                        {openErrorCount > 99 ? '99+' : openErrorCount}
+                                      </span>
+                                    )}
                                   </Link>
                                 );
                               })}

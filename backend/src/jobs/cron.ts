@@ -13,6 +13,7 @@ import { sendNotification } from '../services/notification.service';
 import { User } from '../models/User';
 import ScheduledBroadcast from '../models/ScheduledBroadcast';
 import { executeBroadcast } from '../graphql/scheduled-broadcast-resolvers';
+import { createBackup } from '../services/backup.service';
 
 export const initKronos = () => {
     console.log('⏳ Initializing Cron Jobs...');
@@ -308,4 +309,17 @@ export const initKronos = () => {
       console.error('Error in Scheduled Broadcast Job:', e);
     }
   });
+
+
+  // 10. Automatic Database Backup (Every 12 hours at 2:00 AM and 2:00 PM)
+  cron.schedule('0 2,14 * * *', async () => {
+    console.log('[Backup] Running Automatic Database Backup Job...');
+    try {
+      const record = await createBackup();
+      console.log(`[Backup] Auto-backup completed: ${record.backupDbName}, ${record.collections.length} collections`);
+    } catch (error: any) {
+      console.error('[Backup] Auto-backup failed:', error.message);
+    }
+  });
+
 };

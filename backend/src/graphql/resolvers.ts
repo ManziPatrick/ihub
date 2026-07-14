@@ -40,6 +40,7 @@ import { ProjectApplication } from '../models/ProjectApplication';
 import AICourse from '../models/AICourse';
 import { Question } from '../models/Question';
 import { PubSub, withFilter } from 'graphql-subscriptions';
+import { GraphQLError } from 'graphql';
 
 const pubsub = new PubSub<any>();
 import { Booking } from '../models/Booking';
@@ -56,6 +57,13 @@ import { CourseApplication } from '../models/CourseApplication';
 import { Payment } from '../models/Payment';
 import { generateUploadSignature } from '../services/upload.service';
 import { v2 as cloudinary } from 'cloudinary';
+
+const generateMeetLink = (): string => {
+  const chars = "abcdefghijklmnopqrstuvwxyz";
+  const segment = (length: number) =>
+    Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  return `https://meet.google.com/${segment(3)}-${segment(4)}-${segment(3)}`;
+};
 // @ts-ignore
 import { GraphQLUpload } from 'graphql-upload';
 import { pusher } from '../lib/pusher';
@@ -194,13 +202,23 @@ import { broadcastResolvers } from './broadcast-resolvers';
 import { uploadLogResolvers } from './upload-log-resolvers';
 import { scheduledBroadcastResolvers } from './scheduled-broadcast-resolvers';
 import { userReportResolvers } from './user-report-resolvers';
+import { refundResolvers } from './refund-resolvers';
+import { meetingAttendanceResolvers } from './meeting-attendance-resolvers';
+import { errorReportResolvers } from './error-reporting-resolvers';
+import { backupResolvers } from './backup-resolvers';
 
 export const resolvers = {
   Upload: GraphQLUpload,
+  Scholarship: scholarshipResolvers.Scholarship,
+  BackupRecord: backupResolvers.BackupRecord,
+  RestoreResult: backupResolvers.RestoreResult,
   Query: {
     ...applicationPhaseResolvers.Query,
     ...projectTaskResolvers.Query,    ...locationResolvers.Query,
-    ...commissionResolvers.Query,    ...disbursementResolvers.Query,    ...scholarshipResolvers.Query,    ...userReportResolvers.Query,
+    ...commissionResolvers.Query,    ...disbursementResolvers.Query,    ...scholarshipResolvers.Query,    ...userReportResolvers.Query,    ...refundResolvers.Query,
+    ...meetingAttendanceResolvers.Query,
+    ...errorReportResolvers.Query,
+    ...backupResolvers.Query,
     // Ensure non-nullability: schema defines [ProjectApplication!]! but missing resolvers can return null.
     // This resolver returns an empty array when the user has no applications.
     myProjectApplications: async (_: any, __: any, context: any) => {
@@ -688,10 +706,11 @@ export const resolvers = {
       return await Booking.find(filter).populate('userId mentorId').sort({ createdAt: -1 });
     },
 
-    getInternshipMeetings: async (_: any, { teamId, programId, status }: any, context: any) => {
+    getInternshipMeetings: async (_: any, { teamId, programId, status, contextType }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
       const filter: any = { isDeleted: false };
       if (status) filter.status = status;
+      if (contextType) filter.contextType = contextType;
       if (teamId) filter.teamIds = teamId;
       if (programId) {
         // Find teams in this program first
@@ -702,13 +721,48 @@ export const resolvers = {
       return await InternshipMeeting.find(filter).sort({ startTime: 1 });
     },
 
+    getMeetingAttendance: async (_: any, { meetingId }: { meetingId: string }, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const meeting = await InternshipMeeting.findById(meetingId).populate('attendees.userId');
+      if (!meeting) throw new Error('Meeting not found');
+      return meeting.attendees || [];
+    },
+
     getMyInternshipMeetings: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
       const filter: any = { isDeleted: false };
 
-      // Removed role-based restrictions to allow all users to see all meetings as requested
-      // Admins and regular users now have global visibility into internship scheduled events
+      // If the user is a student, filter meetings by relevance:
+      // - meetings where the user is directly listed in userIds
+      // - meetings for courses the student is enrolled in
+      // - meetings for teams the student belongs to
+      // - meetings where the student is listed as a mentor
+      // Admins/trainers see all meetings (global visibility)
+      if (context.user.role === 'student') {
+        // Get the user's enrolled courses
+        const user = await User.findById(context.user.id).select('enrolledCourses').lean();
+        const enrolledCourseIds = (user as any)?.enrolledCourses?.map((c: any) =>
+          c?.toString?.() || c
+        ) || [];
+
+        // Get the user's internship team memberships
+        const teamMemberships = await InternshipTeamMember.find({ userId: context.user.id, isDeleted: false })
+          .select('teamId').lean();
+        const teamIds = teamMemberships.map(tm => tm.teamId);
+
+        filter.$or = [
+          { userIds: context.user.id },
+          { mentorIds: context.user.id },
+        ];
+
+        if (enrolledCourseIds.length > 0) {
+          filter.$or.push({ courseIds: { $in: enrolledCourseIds } });
+        }
+        if (teamIds.length > 0) {
+          filter.$or.push({ teamIds: { $in: teamIds } });
+        }
+      }
 
       return await InternshipMeeting.find(filter).sort({ startTime: 1 });
     },
@@ -1636,7 +1690,7 @@ export const resolvers = {
       const skip = (page - 1) * limit;
 
       const [standardPayments, internshipPayments] = await Promise.all([
-        Payment.find(filter).populate('userId').sort({ createdAt: -1 }),
+        Payment.find(filter).populate('userId').populate('createdBy', 'username fullName email').sort({ createdAt: -1 }),
         InternshipPayment.find({ ...filter, isDeleted: false }).populate('userId').populate('internshipProgramId').sort({ createdAt: -1 }),
       ]);
 
@@ -1654,7 +1708,8 @@ export const resolvers = {
           proofOfPaymentUrl: p.proofOfPaymentUrl,
           adminNotes: p.adminNotes,
           courseIds: p.courseIds,
-          internshipIds: p.internshipIds
+          internshipIds: p.internshipIds,
+          createdBy: (p as any).createdBy || null
         })),
         ...internshipPayments.map(p => ({
           id: p.id,
@@ -1667,7 +1722,8 @@ export const resolvers = {
           status: p.status === 'paid' ? 'completed' : p.status, // Normalize status for UI
           method: p.paymentMethod || 'Mobile Money',
           proofOfPaymentUrl: p.paymentProofUrl,
-          adminNotes: p.notes
+          adminNotes: p.notes,
+          createdBy: null
         }))
       ]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -4929,17 +4985,33 @@ export const resolvers = {
       // Case-insensitive lookup
       const user = await User.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } });
       if (!user) {
-        throw new Error('User not found');
+        throw new GraphQLError('User not found', {
+          extensions: { code: 'NOT_FOUND' }
+        });
       }
 
       // Check Account Status
-      if ((user as any).status === 'suspended') throw new Error('Account is suspended. Contact support.');
-      if ((user as any).status === 'deactivated') throw new Error('Account is deactivated.');
-      if ((user as any).isDeleted) throw new Error('User not found');
+      if ((user as any).status === 'suspended') {
+        throw new GraphQLError('Account is suspended. Contact support.', {
+          extensions: { code: 'FORBIDDEN' }
+        });
+      }
+      if ((user as any).status === 'deactivated') {
+        throw new GraphQLError('Account is deactivated.', {
+          extensions: { code: 'FORBIDDEN' }
+        });
+      }
+      if ((user as any).isDeleted) {
+        throw new GraphQLError('User not found', {
+          extensions: { code: 'NOT_FOUND' }
+        });
+      }
 
       const match = await bcrypt.compare(password, user.password);
       if (!match) {
-        throw new Error('Wrong credentials');
+        throw new GraphQLError('Wrong credentials', {
+          extensions: { code: 'UNAUTHENTICATED' }
+        });
       }
 
       // Check for 2FA requirement
@@ -5526,7 +5598,56 @@ export const resolvers = {
       };
     },
 
-    // Projects Mutations
+    enableEmail2FA: async (_: any, { code }: { code: string }, context: any) => {
+      if (!context.user) throw new Error('Not authorized');
+
+      const user = await User.findById(context.user.id);
+      if (!user) throw new Error('User not found');
+
+      if (!user.loginOTP || user.loginOTP !== code) {
+        throw new Error('Invalid verification code');
+      }
+
+      if (user.loginOTPExpires && user.loginOTPExpires < new Date()) {
+        throw new Error('Verification code has expired');
+      }
+
+      // Clear OTP
+      user.loginOTP = undefined;
+      user.loginOTPExpires = undefined;
+      user.twoFactorEnabled = true;
+      await user.save();
+
+      return true;
+    },
+
+    disableEmail2FA: async (_: any, { code }: { code: string }, context: any) => {
+      if (!context.user) throw new Error('Not authorized');
+
+      const user = await User.findById(context.user.id);
+      if (!user) throw new Error('User not found');
+
+      if (!user.loginOTP || user.loginOTP !== code) {
+        throw new Error('Invalid verification code');
+      }
+
+      if (user.loginOTPExpires && user.loginOTPExpires < new Date()) {
+        throw new Error('Verification code has expired');
+      }
+
+      // Clear OTP
+      user.loginOTP = undefined;
+      user.loginOTPExpires = undefined;
+      user.twoFactorEnabled = false;
+      user.twoFactorSecret = undefined;
+      await user.save();
+
+      return true;
+    },
+
+        ...backupResolvers.Mutation,
+
+// Projects Mutations
     createProject: async (_: any, { userId, mentorIds, ...args }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
@@ -5717,39 +5838,48 @@ export const resolvers = {
     createBooking: async (_: any, args: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
+      const status = (context.user.role === 'trainer' || context.user.role === 'admin' || context.user.role === 'super_admin')
+        ? 'confirmed'
+        : 'pending';
+
+      const link = args.meetingLink || ((status === 'confirmed' && ['trainer', 'admin', 'super_admin'].includes(context.user.role)) ? generateMeetLink() : undefined);
+
       const booking = new Booking({
         userId: context.user.id,
         ...args,
-        status: (context.user.role === 'trainer' || context.user.role === 'admin') ? 'confirmed' : 'pending'
+        status,
+        meetingLink: link
       });
 
       await booking.save();
 
-      // Send Email Invitations
-      try {
-        const student = await User.findById(booking.userId);
-        if (student) {
-          await sendMeetingInvitation(student.email, student.username || 'Student', 'Mentor', {
-            type: booking.type,
-            date: booking.date,
-            time: booking.time,
-            meetingLink: booking.meetingLink || undefined
-          });
-        }
-
-        if (booking.mentorId) {
-          const mentor = await User.findById(booking.mentorId);
-          if (mentor) {
-            await sendMeetingInvitation(mentor.email, mentor.username || 'Mentor', student?.username || 'Student', {
+      // Send Email Invitations for confirmed sessions
+      if (status === 'confirmed') {
+        try {
+          const student = await User.findById(booking.userId);
+          if (student) {
+            await sendMeetingInvitation(student.email, student.username || 'Student', booking.mentorId ? 'Mentor' : 'Host', {
               type: booking.type,
               date: booking.date,
               time: booking.time,
               meetingLink: booking.meetingLink || undefined
             });
           }
+
+          if (booking.mentorId) {
+            const mentor = await User.findById(booking.mentorId);
+            if (mentor) {
+              await sendMeetingInvitation(mentor.email, mentor.username || 'Mentor', student?.username || 'Student', {
+                type: booking.type,
+                date: booking.date,
+                time: booking.time,
+                meetingLink: booking.meetingLink || undefined
+              });
+            }
+          }
+        } catch (err) {
+          console.error('[CreateBooking] Email error:', err);
         }
-      } catch (err) {
-        console.error('[CreateBooking] Email error:', err);
       }
 
       return booking;
@@ -5771,10 +5901,14 @@ export const resolvers = {
       }
 
       booking.status = status;
-      if (meetingLink) booking.meetingLink = meetingLink;
+      if (meetingLink) {
+        booking.meetingLink = meetingLink;
+      } else if (status === 'confirmed' && !booking.meetingLink) {
+        booking.meetingLink = generateMeetLink();
+      }
 
-      // If a trainer confirms an unassigned booking, they become the mentor
-      if (context.user.role === 'trainer' && !booking.mentorId && status === 'confirmed') {
+      // If a trainer/admin/super_admin confirms an unassigned booking, they become the mentor/host
+      if (!booking.mentorId && status === 'confirmed' && ['trainer', 'admin', 'super_admin'].includes(context.user.role)) {
         booking.mentorId = context.user.id;
       }
 
@@ -6007,16 +6141,56 @@ export const resolvers = {
       const internship = await Internship.findById(internshipId);
       if (!internship) throw new Error('Internship not found');
 
+      // Ensure a meeting URL exists (admins/trainers can provide one or we auto-generate)
+      const meetingUrl = url || generateMeetLink();
       const meeting = {
         title,
         time,
         type,
-        url,
+        url: meetingUrl,
         attendees: attendees || []
       };
 
       internship.meetings = [...(internship.meetings || []), meeting as any];
       await internship.save();
+
+      // Notify and email attendees
+      try {
+        const participantIds = new Set<string>(attendees || []);
+        if (internship.userId) participantIds.add(internship.userId.toString());
+
+        const host = await User.findById(context.user.id);
+        const hostName = host?.username || host?.fullName || 'Host';
+
+        // Send in-app notifications
+        for (const pid of participantIds) {
+          if (!pid) continue;
+          if (pid === context.user.id) continue; // don't notify the host
+          await sendNotification(pid, {
+            type: 'meeting',
+            title: 'New Internship Meeting Scheduled',
+            message: `A new meeting "${title}" has been scheduled.",
+            link: '/portal/internship/meetings'
+          });
+        }
+
+        // Collect emails and send meeting invitation emails
+        const bookingDetails = {
+          type,
+          date: new Date(time).toISOString().split('T')[0],
+          time: new Date(time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          meetingLink: meetingUrl
+        };
+
+        for (const pid of participantIds) {
+          if (!pid || pid === context.user.id) continue;
+          const user = await User.findById(pid);
+          if (!user?.email) continue;
+          await sendMeetingInvitation(user.email, user.username || user.fullName || 'Participant', hostName, bookingDetails);
+        }
+      } catch (err) {
+        console.error('[scheduleMeeting] notify/email error:', err);
+      }
 
       return internship;
     },
@@ -7336,17 +7510,34 @@ export const resolvers = {
     createInternshipMeeting: async (_: any, args: any, context: any) => {
       if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
 
+      const meetLink = args.meetLink || generateMeetLink();
       const meeting = new InternshipMeeting({
         ...args,
+        meetLink,
         hostId: context.user.id
       });
       await meeting.save();
 
-      // Notify all members of assigned teams
+      // Notify all participants and send email invitations
       try {
         const participantIds = new Set<string>();
+        const participantEmails = new Set<string>();
 
-        // 1. Team Members
+        const host = await User.findById(context.user.id);
+        const hostName = host?.username || host?.fullName || 'Host';
+
+        // 1. Course Members — get students enrolled in selected courses
+        if (args.courseIds && args.courseIds.length > 0) {
+          const courses = await Course.find({ _id: { $in: args.courseIds } }).select('studentsEnrolled').lean();
+          for (const course of courses) {
+            (course as any).studentsEnrolled?.forEach((s: any) => {
+              const sid = s?.toString?.() || s;
+              if (sid) participantIds.add(sid);
+            });
+          }
+        }
+
+        // 2. Team Members
         if (args.teamIds && args.teamIds.length > 0) {
           for (const teamId of args.teamIds) {
             const members = await InternshipTeamMember.find({ teamId, isDeleted: false });
@@ -7354,19 +7545,26 @@ export const resolvers = {
           }
         }
 
-        // 2. Selective Users
+        // 3. Selective Users
         if (args.userIds && args.userIds.length > 0) {
           args.userIds.forEach((id: string) => participantIds.add(id));
         }
 
-        // 3. Selective Mentors
+        // 4. Selective Mentors
         if (args.mentorIds && args.mentorIds.length > 0) {
           args.mentorIds.forEach((id: string) => participantIds.add(id));
         }
 
-        // Send notifications
+        // 5. Selected client users
+        if (args.clientIds && args.clientIds.length > 0) {
+          args.clientIds.forEach((id: string) => participantIds.add(id));
+        }
+
         for (const pid of participantIds) {
-          if (pid === context.user.id) continue; // Don't notify host
+          if (pid === context.user.id) continue;
+          const user = await User.findById(pid);
+          if (!user || !user.email) continue;
+          participantEmails.add(user.email);
           await sendNotification(pid, {
             type: 'meeting',
             title: 'New Meeting Scheduled',
@@ -7374,8 +7572,19 @@ export const resolvers = {
             link: `/portal/internship/meetings`
           });
         }
+
+        const bookingDetails = {
+          type: meeting.type,
+          date: new Date(meeting.startTime).toISOString().split('T')[0],
+          time: new Date(meeting.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          meetingLink: meeting.meetLink
+        };
+
+        for (const email of participantEmails) {
+          await sendMeetingInvitation(email, email.split('@')[0], hostName, bookingDetails);
+        }
       } catch (err) {
-        console.error('Error sending meeting notifications:', err);
+        console.error('Error sending meeting notifications/emails:', err);
       }
 
       await logActivity(context.user.id, 'CREATE', 'InternshipMeeting', meeting.id, `Scheduled meeting: ${meeting.title}`);
@@ -8357,7 +8566,7 @@ export const resolvers = {
       };
     },
     ...applicationPhaseResolvers.Mutation,
-    ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,
+    ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,
 
     assignDeveloperToProject: async (_: any, { projectId, developerId, role, checklistTasks }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
@@ -8689,6 +8898,8 @@ export const resolvers = {
       await project.save();
       return project;
     },
+    ...errorReportResolvers.Mutation,
+    ...meetingAttendanceResolvers.Mutation,
   },
   User: {
     id: (parent: any) => parent.id || parent._id || parent.toString(),
