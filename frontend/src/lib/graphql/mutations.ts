@@ -1758,6 +1758,42 @@ export const TOGGLE_AUTO_DISBURSEMENT = gql`
   }
 `;
 
+export const SET_DISBURSEMENT_PRIMARY_PROVIDER = gql`
+  mutation SetDisbursementPrimaryProvider($provider: String!) {
+    setDisbursementPrimaryProvider(provider: $provider) {
+      type
+      value
+      autoDisbursement
+      disbursementPrimaryProvider
+    }
+  }
+`;
+
+export const FORCE_APPROVE_DISBURSEMENT = gql`
+  mutation ForceApproveDisbursement($id: ID!) {
+    forceApproveDisbursement(id: $id) {
+      id
+      status
+      releaseDate
+      approvedBy
+      approvedAt
+      intouchReferenceId
+      failureReason
+      statusHistory {
+        status
+        timestamp
+        note
+      }
+    }
+  }
+`;
+
+export const SET_HOLD_DAYS_CONFIG = gql`
+  mutation SetHoldDaysConfig($days: Int!) {
+    setHoldDaysConfig(days: $days)
+  }
+`;
+
 export const RETRY_DISBURSEMENT = gql`
   mutation RetryDisbursement($id: ID!) {
     retryDisbursement(id: $id) {
@@ -1776,6 +1812,40 @@ export const RETRY_DISBURSEMENT = gql`
   }
 `;
 
+export const VOID_DISBURSEMENT = gql`
+  mutation VoidDisbursement($id: ID!, $reason: String) {
+    voidDisbursement(id: $id, reason: $reason) {
+      id
+      status
+      failureReason
+      statusHistory {
+        status
+        timestamp
+        note
+      }
+    }
+  }
+`;
+
+export const APPROVE_DISBURSEMENT = gql`
+  mutation ApproveDisbursement($id: ID!) {
+    approveDisbursement(id: $id) {
+      id
+      status
+      releaseDate
+      approvedBy
+      approvedAt
+      intouchReferenceId
+      failureReason
+      statusHistory {
+        status
+        timestamp
+        note
+      }
+    }
+  }
+`;
+
 export const MANUAL_DISBURSE = gql`
   mutation ManualDisburse($paymentId: ID!, $amount: Float!, $phoneNumber: String!, $reason: String) {
     manualDisburse(paymentId: $paymentId, amount: $amount, phoneNumber: $phoneNumber, reason: $reason) {
@@ -1783,6 +1853,62 @@ export const MANUAL_DISBURSE = gql`
       status
       netAmount
       intouchReferenceId
+    }
+  }
+`;
+
+// ========== REFUND MUTATIONS ==========
+export const REQUEST_REFUND = gql`
+  mutation RequestRefund($paymentId: ID!, $reason: String!) {
+    requestRefund(paymentId: $paymentId, reason: $reason) {
+      id
+      status
+      amount
+      reason
+    }
+  }
+`;
+
+export const VERIFY_REFUND_REQUEST = gql`
+  mutation VerifyRefundRequest($id: ID!, $note: String) {
+    verifyRefundRequest(id: $id, note: $note) {
+      id
+      status
+      adminNote
+      verifiedAt
+    }
+  }
+`;
+
+export const APPROVE_REFUND = gql`
+  mutation ApproveRefund($id: ID!, $note: String) {
+    approveRefund(id: $id, note: $note) {
+      id
+      status
+      approvedAt
+      refundedAmount
+    }
+  }
+`;
+
+export const FORCE_APPROVE_REFUND = gql`
+  mutation ForceApproveRefund($id: ID!, $note: String) {
+    forceApproveRefund(id: $id, note: $note) {
+      id
+      status
+      approvedAt
+      refundedAmount
+      forceApproved
+    }
+  }
+`;
+
+export const REJECT_REFUND = gql`
+  mutation RejectRefund($id: ID!, $reason: String!) {
+    rejectRefund(id: $id, reason: $reason) {
+      id
+      status
+      adminNote
     }
   }
 `;
@@ -2057,11 +2183,13 @@ export const ASSIGN_PROJECT_TO_TEAM = gql`
 `;
 
 export const CREATE_INTERNSHIP_MEETING = gql`
-  mutation CreateInternshipMeeting($title: String!, $description: String, $startTime: String!, $endTime: String!, $meetLink: String, $type: String!, $teamIds: [ID!], $userIds: [ID!], $mentorIds: [ID!], $recurrenceDays: [Int], $recurrenceEndDate: String) {
-    createInternshipMeeting(title: $title, description: $description, startTime: $startTime, endTime: $endTime, meetLink: $meetLink, type: $type, teamIds: $teamIds, userIds: $userIds, mentorIds: $mentorIds, recurrenceDays: $recurrenceDays, recurrenceEndDate: $recurrenceEndDate) {
+  mutation CreateInternshipMeeting($title: String!, $description: String, $startTime: String!, $endTime: String!, $meetLink: String, $type: String!, $contextType: String, $contextTitle: String, $courseIds: [ID!], $teamIds: [ID!], $clientIds: [ID!], $internshipProgramIds: [ID!], $userIds: [ID!], $mentorIds: [ID!], $recurrenceDays: [Int], $recurrenceEndDate: String) {
+    createInternshipMeeting(title: $title, description: $description, startTime: $startTime, endTime: $endTime, meetLink: $meetLink, type: $type, contextType: $contextType, contextTitle: $contextTitle, courseIds: $courseIds, teamIds: $teamIds, clientIds: $clientIds, internshipProgramIds: $internshipProgramIds, userIds: $userIds, mentorIds: $mentorIds, recurrenceDays: $recurrenceDays, recurrenceEndDate: $recurrenceEndDate) {
       id
       title
       type
+      contextType
+      contextTitle
       recurrenceDays
       recurrenceEndDate
       startTime
@@ -2092,6 +2220,32 @@ export const UPDATE_INTERNSHIP_MEETING = gql`
 export const DELETE_INTERNSHIP_MEETING = gql`
   mutation DeleteInternshipMeeting($id: ID!) {
     deleteInternshipMeeting(id: $id)
+  }
+`;
+
+export const MARK_ATTENDANCE = gql`
+  mutation MarkAttendance($meetingId: ID!, $userId: ID!, $attended: Boolean!) {
+    markAttendance(meetingId: $meetingId, userId: $userId, attended: $attended) {
+      id
+      attendees {
+        userId
+        role
+        attended
+      }
+    }
+  }
+`;
+
+export const BATCH_MARK_ATTENDANCE = gql`
+  mutation BatchMarkAttendance($meetingId: ID!, $attendanceData: [AttendanceDataInput!]!) {
+    batchMarkAttendance(meetingId: $meetingId, attendanceData: $attendanceData) {
+      id
+      attendees {
+        userId
+        role
+        attended
+      }
+    }
   }
 `;
 
@@ -2145,6 +2299,18 @@ export const VERIFY_EMAIL_OTP = gql`
         fullName
       }
     }
+  }
+`;
+
+export const ENABLE_EMAIL_2FA = gql`
+  mutation EnableEmail2FA($code: String!) {
+    enableEmail2FA(code: $code)
+  }
+`;
+
+export const DISABLE_EMAIL_2FA = gql`
+  mutation DisableEmail2FA($code: String!) {
+    disableEmail2FA(code: $code)
   }
 `;
 
@@ -2273,6 +2439,27 @@ export const GRANT_SCHOLARSHIP = gql`
       status
       reason
       createdAt
+    }
+  }
+`;
+
+export const GRANT_BATCH_SCHOLARSHIPS = gql`
+  mutation GrantBatchScholarships($userIds: [ID!]!, $type: String!, $itemIds: [ID!]!, $itemTitles: [String!], $reason: String, $grantedLatitude: Float, $grantedLongitude: Float, $grantedCity: String, $grantedCountry: String) {
+    grantBatchScholarships(userIds: $userIds, type: $type, itemIds: $itemIds, itemTitles: $itemTitles, reason: $reason, grantedLatitude: $grantedLatitude, grantedLongitude: $grantedLongitude, grantedCity: $grantedCity, grantedCountry: $grantedCountry)
+  }
+`;
+
+export const APPROVE_SCHOLARSHIP = gql`
+  mutation ApproveScholarship($id: ID!) {
+    approveScholarship(id: $id) {
+      id
+      status
+      approvedAt
+      approvedBy
+      approvedByUser {
+        id
+        username
+      }
     }
   }
 `;

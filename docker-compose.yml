@@ -22,6 +22,7 @@ services:
 
       # Database
       MONGO_URI: ${MONGO_URI}
+      BACKUP_MONGO_URI: ${BACKUP_MONGO_URI}
 
       # Auth / JWT
       JWT_SECRET: ${JWT_SECRET}

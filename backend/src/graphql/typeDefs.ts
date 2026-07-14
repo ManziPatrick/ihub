@@ -1,5 +1,6 @@
 export const typeDefs = `#graphql
   scalar Upload
+  scalar JSON
 
   type AuthPayload {
     token: String
@@ -496,6 +497,7 @@ export const typeDefs = `#graphql
     internshipIds: [ID]
     courses: [PaymentLineItem]
     internships: [PaymentLineItem]
+    createdBy: User
   }
 
   type Booking {
@@ -935,8 +937,9 @@ export const typeDefs = `#graphql
     
 
     # Meetings
-    getInternshipMeetings(teamId: ID, programId: ID, status: String): [InternshipMeeting]
+    getInternshipMeetings(teamId: ID, programId: ID, status: String, contextType: String): [InternshipMeeting]
     getMyInternshipMeetings: [InternshipMeeting]
+    getMeetingAttendance(meetingId: ID!): [MeetingAttendee]
     
     # Internships
     internships(page: Int, limit: Int): InternshipResponse
@@ -1930,12 +1933,18 @@ export const typeDefs = `#graphql
     endTime: String!
     recurrenceDays: [Int]
     recurrenceEndDate: String
+    contextType: String
+    contextTitle: String
+    courseIds: [ID!]
     teamIds: [ID!]!
+    clientIds: [ID!]
+    internshipProgramIds: [ID!]
     userIds: [ID!]
     mentorIds: [ID!]
     teams: [InternshipTeam]
     hostId: ID!
     host: User
+    attendees: [MeetingAttendee]
     status: String
     createdAt: String
     updatedAt: String
@@ -2106,7 +2115,12 @@ export const typeDefs = `#graphql
       type: String!
       startTime: String!
       endTime: String!
+      contextType: String
+      contextTitle: String
+      courseIds: [ID!]
       teamIds: [ID!]
+      clientIds: [ID!]
+      internshipProgramIds: [ID!]
       userIds: [ID!]
       mentorIds: [ID!]
       meetLink: String
@@ -2121,7 +2135,12 @@ export const typeDefs = `#graphql
       type: String
       startTime: String
       endTime: String
+      contextType: String
+      contextTitle: String
+      courseIds: [ID!]
       teamIds: [ID!]
+      clientIds: [ID!]
+      internshipProgramIds: [ID!]
       userIds: [ID!]
       mentorIds: [ID!]
       meetLink: String
@@ -2130,6 +2149,17 @@ export const typeDefs = `#graphql
     ): InternshipMeeting
     
     deleteInternshipMeeting(id: ID!): Boolean
+    
+    markAttendance(
+      meetingId: ID!
+      userId: ID!
+      attended: Boolean!
+    ): InternshipMeeting
+    
+    batchMarkAttendance(
+      meetingId: ID!
+      attendanceData: [AttendanceDataInput!]!
+    ): InternshipMeeting
     
     sendTestEmail(to: String!): Boolean
 
@@ -2141,6 +2171,49 @@ export const typeDefs = `#graphql
     # Email OTP
     requestEmailOTP(email: String!): Boolean!
     verifyEmailOTP(email: String!, code: String!): AuthPayload!
+    enableEmail2FA(code: String!): Boolean!
+    disableEmail2FA(code: String!): Boolean!
+  }
+
+  # ─── Backup / Restore Types ────────────────────────────────────────────────
+  type BackupRecord {
+    id: ID!
+    backupDbName: String!
+    size: Float!
+    actualSize: Float
+    collections: [String!]!
+    status: String!
+    errorMessage: String
+    triggeredBy: User
+    metadata: JSON
+    completedAt: String
+    createdAt: String!
+  }
+
+  type RestoreResult {
+    success: Boolean!
+    message: String!
+    restoredCollections: [String!]!
+    totalDocs: Int!
+  }
+
+  type BackupClusterStatus {
+    connected: Boolean!
+    host: String
+    backupCount: Int!
+    lastBackup: String
+    totalSize: Float!
+  }
+
+  extend type Query {
+    backups: [BackupRecord!]!
+    backupClusterStatus: BackupClusterStatus!
+  }
+
+  extend type Mutation {
+    triggerBackup: BackupRecord!
+    restoreBackup(backupId: ID!, collections: [String!]): RestoreResult!
+    deleteBackup(backupId: ID!): Boolean!
   }
 
   type StripePaymentIntent {
@@ -2264,6 +2337,7 @@ export const typeDefs = `#graphql
 
   type MeetingAttendee {
     userId: ID!
+    user: User
     role: String!
     attended: Boolean
   }
@@ -2717,6 +2791,10 @@ export const typeDefs = `#graphql
     getRegisteredCompanies: [String!]!
     getCourseEnrolledStudents(courseId: ID!): [User!]!
     getAvailableAdmins: [User!]!
+    # Error Reporting
+    getErrorReports(page: Int, limit: Int, status: String, errorType: String, severity: String, componentName: String, search: String): ErrorReportResponse!
+    getErrorReport(id: ID!): ErrorReport
+    getErrorReportStats: ErrorReportStats!
   }
 
   type ProjectBoardStats {
@@ -3140,6 +3218,10 @@ export const typeDefs = `#graphql
     commissionValue: Float!
     netAmount: Float!
     status: String!
+    releaseDate: String
+    approvedBy: ID
+    approvedAt: String
+    holdNote: String
     intouchTransactionRef: String
     intouchReferenceId: String
     failureReason: String
@@ -3163,6 +3245,7 @@ export const typeDefs = `#graphql
 
   type DisbursementStats {
     totalDisbursements: Int!
+    onHoldCount: Int!
     pendingCount: Int!
     processingCount: Int!
     successfulCount: Int!
@@ -3170,6 +3253,27 @@ export const typeDefs = `#graphql
     totalDisbursed: Float!
     totalCommission: Float!
     pendingToDisburse: Float!
+  }
+
+  # ─── PawaPay Status Types ──────────────────────────────────────────────
+  type PawaPayStatus {
+    connected: Boolean!
+    activeConfigs: Int!
+    countries: [String!]!
+    message: String
+  }
+
+  type PawaPayWalletBalance {
+    currency: String!
+    available: Float!
+    pending: Float
+    reserved: Float
+  }
+
+  type PawaPayBalanceResult {
+    success: Boolean!
+    balances: [PawaPayWalletBalance!]!
+    message: String
   }
 
   # ─── IntouchPay Types ──────────────────────────────────────────────────
@@ -3195,27 +3299,35 @@ export const typeDefs = `#graphql
     getAllDisbursements(page: Int, limit: Int, status: String, ownerId: ID): DisbursementResponse!
     getMyDisbursements(page: Int, limit: Int, status: String): DisbursementResponse!
     getDisbursementStats: DisbursementStats!
-    getDisbursement(id: ID!): CommissionDisbursement
-    getPlatformCommissionConfig: CommissionPlatformConfig!
+    getDisbursement(id: ID!): CommissionDisbursement    getPlatformCommissionConfig: CommissionPlatformConfig!
+    getHoldDaysConfig: Int!
 
-    # IntouchPay queries
+  # IntouchPay queries
     getIntouchBalance: IntouchBalance!
+    getPawaPayStatus: PawaPayStatus!
+    getPawaPayBalance: PawaPayBalanceResult!
   }
 
   type CommissionPlatformConfig {
     type: String!
     value: Float!
     autoDisbursement: Boolean!
+    disbursementPrimaryProvider: String!
   }
 
   extend type Mutation {
     # Commission config mutations
     updatePlatformCommissionConfig(type: String!, value: Float!): CommissionPlatformConfig!
     toggleAutoDisbursement(enabled: Boolean!): CommissionPlatformConfig!
+    setDisbursementPrimaryProvider(provider: String!): CommissionPlatformConfig!
+    setHoldDaysConfig(days: Int!): Int!
 
     # Disbursement mutations
     retryDisbursement(id: ID!): CommissionDisbursement!
     manualDisburse(paymentId: ID!, amount: Float!, phoneNumber: String!, reason: String): CommissionDisbursement!
+    approveDisbursement(id: ID!): CommissionDisbursement!
+    forceApproveDisbursement(id: ID!): CommissionDisbursement!
+    voidDisbursement(id: ID!, reason: String): CommissionDisbursement!
 
     # IntouchPay mutations — direct money sending (salary, mentor/trainer payments)
     sendDirectMoney(amount: Float!, phoneNumber: String!, reason: String): SendMoneyResult!
@@ -3239,12 +3351,19 @@ export const typeDefs = `#graphql
     type: String! # 'course' | 'internship'
     itemId: ID!
     itemTitle: String!
-    status: String! # 'active' | 'revoked'
+    status: String! # 'pending' | 'active' | 'revoked'
     reason: String
+    approvedAt: String
+    approvedBy: ID
+    approvedByUser: User
     revokedAt: String
     revokedBy: ID
     revokedByUser: User
     revokedReason: String
+    grantedLatitude: Float
+    grantedLongitude: Float
+    grantedCity: String
+    grantedCountry: String
     createdAt: String!
     updatedAt: String!
   }
@@ -3260,11 +3379,21 @@ export const typeDefs = `#graphql
     getScholarshipStats: ScholarshipStats!
   }
 
+  type PerAdminStat {
+    adminId: ID!
+    total: Int!
+    active: Int!
+    pending: Int!
+    revoked: Int!
+  }
+
   type ScholarshipStats {
     totalScholarships: Int!
+    pendingScholarships: Int!
     activeScholarships: Int!
     courseScholarships: Int!
     internshipScholarships: Int!
+    perAdmin: [PerAdminStat!]
   }
 
   extend type Mutation {
@@ -3274,6 +3403,26 @@ export const typeDefs = `#graphql
       itemId: ID!
       itemTitle: String!
       reason: String
+      grantedLatitude: Float
+      grantedLongitude: Float
+      grantedCity: String
+      grantedCountry: String
+    ): Scholarship!
+
+    grantBatchScholarships(
+      userIds: [ID!]!
+      type: String! # 'course' | 'internship'
+      itemIds: [ID!]!
+      itemTitles: [String!]
+      reason: String
+      grantedLatitude: Float
+      grantedLongitude: Float
+      grantedCity: String
+      grantedCountry: String
+    ): Int!
+
+    approveScholarship(
+      id: ID!
     ): Scholarship!
 
     revokeScholarship(
@@ -3331,6 +3480,13 @@ export const typeDefs = `#graphql
   extend type Mutation {
     deleteUploadLog(id: ID!): Boolean!
     clearAllUploadLogs: Boolean!
+  }
+
+  extend type Mutation {
+    # Error Reporting
+    reportClientError(input: ReportClientErrorInput!): Boolean!
+    resolveErrorReport(id: ID!, resolution: String): ErrorReport!
+    deleteErrorReport(id: ID!): Boolean!
   }
 
   # ─── Scheduled Broadcast Types ───────────────────────────────────────────
@@ -3399,6 +3555,81 @@ export const typeDefs = `#graphql
     deleteScheduledBroadcast(id: ID!): Boolean!
   }
 
+  # ─── Refund Request Types ────────────────────────────────────────────────────
+  type RefundRequest {
+    id: ID!
+    paymentId: ID!
+    userId: ID!
+    user: User
+    itemIds: [ID!]!
+    itemTypes: [String!]!
+    amount: Float!
+    currency: String!
+    reason: String!
+    status: String!
+    adminNote: String
+    verifiedBy: ID
+    verifiedAt: String
+    approvedBy: ID
+    approvedAt: String
+    forceApproved: Boolean!
+    cancelledDisbursements: [ID!]
+    refundedAmount: Float!
+    refundFee: Float!
+    refundableAmountAfterFee: Float!
+    requestedBy: ID!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type RefundRequestResponse {
+    items: [RefundRequest!]!
+    pagination: PaginationInfo!
+  }
+
+  type RefundRequestStats {
+    totalRequests: Int!
+    pendingCount: Int!
+    verifiedCount: Int!
+    approvedCount: Int!
+    rejectedCount: Int!
+    totalRefunded: Float!
+    totalRefundFee: Float!
+  }
+
+  extend type Query {
+    getAllRefundRequests(page: Int, limit: Int, status: String): RefundRequestResponse!
+    getRefundRequest(id: ID!): RefundRequest
+    getRefundRequestStats: RefundRequestStats!
+  }
+
+  extend type Mutation {
+    requestRefund(
+      paymentId: ID!
+      reason: String!
+    ): RefundRequest!
+
+    verifyRefundRequest(
+      id: ID!
+      note: String
+    ): RefundRequest!
+
+    approveRefund(
+      id: ID!
+      note: String
+    ): RefundRequest!
+
+    forceApproveRefund(
+      id: ID!
+      note: String
+    ): RefundRequest!
+
+    rejectRefund(
+      id: ID!
+      reason: String!
+    ): RefundRequest!
+  }
+
   # ─── Client Details Type ────────────────────────────────────────────────────
   type ClientProjectSummary {
     id: ID!
@@ -3419,5 +3650,77 @@ export const typeDefs = `#graphql
     activeProjects: Int!
     applications: [ProjectApplication!]!
     projects: [ClientProjectSummary!]!
+  }
+
+  # ─── Error Reporting Types ──────────────────────────────────────────────────
+  type ErrorReport {
+    id: ID!
+    userId: ID
+    username: String
+    errorType: String!
+    severity: String!
+    message: String!
+    stack: String
+    componentName: String
+    operationName: String
+    statusCode: Int
+    url: String!
+    userAgent: String
+    browserInfo: ErrorReportBrowserInfo
+    context: JSON
+    status: String!
+    resolvedBy: User
+    resolvedAt: String
+    resolution: String
+    occurrenceCount: Int!
+    fingerprint: String!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type ErrorReportBrowserInfo {
+    name: String
+    version: String
+    os: String
+    mobile: Boolean
+  }
+
+  type ErrorReportStats {
+    total: Int!
+    open: Int!
+    investigating: Int!
+    resolved: Int!
+    dismissed: Int!
+    critical: Int!
+    high: Int!
+    medium: Int!
+    low: Int!
+    byType: [ErrorReportTypeCount!]!
+    byComponent: [ErrorReportComponentCount!]!
+  }
+
+  type ErrorReportTypeCount {
+    errorType: String!
+    count: Int!
+  }
+
+  type ErrorReportComponentCount {
+    componentName: String!
+    count: Int!
+  }
+
+  type ErrorReportResponse {
+    items: [ErrorReport!]!
+    pagination: PaginationInfo!
+  }
+
+  input ReportClientErrorInput {
+    errorType: String!
+    message: String!
+    stack: String
+    componentName: String
+    operationName: String
+    statusCode: Int
+    context: String
   }
 `;
