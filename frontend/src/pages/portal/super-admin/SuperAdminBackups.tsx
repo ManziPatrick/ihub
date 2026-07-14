@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -31,7 +31,29 @@ import {
   Layers,
   Wifi,
   WifiOff,
+  Activity,
+  BarChart3,
+  LineChart,
+  Server,
+  Files,
+  FileText,
+  Gauge,
+  TableProperties,
+  ArrowUp,
 } from "lucide-react";
+
+import {
+  ResponsiveContainer,
+  LineChart as RechartsLineChart,
+  Line,
+  BarChart as RechartsBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Area,
+} from "recharts";
 import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
@@ -121,6 +143,74 @@ const DELETE_BACKUP = gql`
   }
 `;
 
+const GET_BACKUP_ANALYTICS = gql`
+  query GetBackupAnalytics {
+    backupAnalytics {
+      totalBackups
+      completedBackups
+      failedBackups
+      successRate
+      averageSize
+      totalSize
+      sizeHistory {
+        date
+        size
+        collections
+        name
+        status
+      }
+      sizeByCollections {
+        collections
+        size
+        name
+      }
+    }
+    backupScheduleConfig {
+      interval
+      retention
+      enabled
+    }
+  }
+`;
+
+const GET_LIVE_DB_STATS = gql`
+  query GetLiveDatabaseStats {
+    liveDatabaseStats {
+      databaseName
+      totalCollections
+      totalDocuments
+      dataSize
+      storageSize
+      indexSize
+      avgObjectSize
+      indexes
+      collections {
+        name
+        documentCount
+        size
+        avgObjSize
+        storageSize
+        indexes
+      }
+      largestCollection {
+        name
+        documentCount
+        size
+      }
+    }
+  }
+`;
+
+const UPDATE_BACKUP_SCHEDULE = gql`
+  mutation UpdateBackupScheduleConfig($interval: String, $retention: Int, $enabled: Boolean) {
+    updateBackupScheduleConfig(interval: $interval, retention: $retention, enabled: $enabled) {
+      interval
+      retention
+      enabled
+    }
+  }
+`;
+
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
 function formatFileSize(bytes: number | null | undefined): string {
@@ -158,11 +248,51 @@ export default function SuperAdminBackups() {
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [showBackupDialog, setShowBackupDialog] = useState(false);
+  const [editSchedule, setEditSchedule] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState<{ interval: string; retention: number; enabled: boolean }>({
+    interval: '',
+    retention: 5,
+    enabled: true,
+  });
 
   const { data, loading, error, refetch } = useQuery(GET_BACKUPS, {
     pollInterval: 15000,
     fetchPolicy: "network-only",
   });
+
+  const { data: analyticsData } = useQuery(GET_BACKUP_ANALYTICS, {
+    pollInterval: 15000,
+    fetchPolicy: "network-only",
+  });
+
+  const { data: liveDbData, loading: liveDbLoading } = useQuery(GET_LIVE_DB_STATS, {
+    pollInterval: 15000,
+    fetchPolicy: "network-only",
+  });
+
+  const liveStats = (liveDbData as any)?.liveDatabaseStats || {};
+
+  const analytics = (analyticsData as any)?.backupAnalytics || {};
+  const scheduleConfig = (analyticsData as any)?.backupScheduleConfig;
+
+  // Sync form with fetched config when data loads and not editing
+  useEffect(() => {
+    if (scheduleConfig && !editSchedule) {
+      setScheduleForm({
+        interval: scheduleConfig.interval,
+        retention: scheduleConfig.retention,
+        enabled: scheduleConfig.enabled,
+      });
+    }
+  }, [scheduleConfig, editSchedule]);
+  const sizeHistory = (analytics.sizeHistory || []).map((p: any) => ({
+    ...p,
+    sizeMB: p.size ? +(p.size / (1024 * 1024)).toFixed(2) : 0,
+  }));
+  const sizeByCollections = (analytics.sizeByCollections || []).map((p: any) => ({
+    ...p,
+    sizeMB: p.size ? +(p.size / (1024 * 1024)).toFixed(2) : 0,
+  }));
 
   const [triggerBackup, { loading: backingUp }] = useMutation(TRIGGER_BACKUP, {
     onCompleted: (data: any) => {
@@ -198,6 +328,19 @@ export default function SuperAdminBackups() {
     },
     onError: (err) => {
       toast({ title: "Restore failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const [updateSchedule, { loading: savingSchedule }] = useMutation(UPDATE_BACKUP_SCHEDULE, {
+    onCompleted: () => {
+      toast({
+        title: "Schedule updated",
+        description: "Backup schedule configuration has been saved.",
+      });
+      setEditSchedule(false);
+    },
+    onError: (err) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
 
@@ -343,11 +486,560 @@ export default function SuperAdminBackups() {
           </Card>
         </motion.div>
 
+        {/* Live Database Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.07 }}
+        >
+          <Card className="border-border/50 shadow-sm overflow-hidden">
+            <CardHeader className="border-b border-border/20 py-3">
+              <CardTitle className="text-sm font-heading flex items-center gap-2">
+                <Server className="w-4 h-4 text-cyan-500" />
+                Live Primary Database
+              </CardTitle>
+              <CardDescription className="text-[10px]">
+                Current state of the primary MongoDB database — all values are real-time
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4">
+              {liveDbLoading ? (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading live database stats...
+                </div>
+              ) : liveStats.databaseName ? (
+                <div className="space-y-4">
+                  {/* Summary row */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <div className="p-2.5 rounded-lg bg-muted/20 border border-border/20">
+                      <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1">
+                        <FileText className="w-3 h-3" />
+                        Total Docs
+                      </p>
+                      <p className="text-lg font-bold text-cyan-400 mt-0.5">
+                        {(liveStats.totalDocuments || 0).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-muted/20 border border-border/20">
+                      <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1">
+                        <Layers className="w-3 h-3" />
+                        Collections
+                      </p>
+                      <p className="text-lg font-bold text-blue-400 mt-0.5">
+                        {liveStats.totalCollections || 0}
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-muted/20 border border-border/20">
+                      <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1">
+                        <HardDrive className="w-3 h-3" />
+                        Data Size
+                      </p>
+                      <p className="text-lg font-bold text-emerald-400 mt-0.5">
+                        {formatFileSize(liveStats.dataSize)}
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-muted/20 border border-border/20">
+                      <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1">
+                        <HardDrive className="w-3 h-3" />
+                        Storage Size
+                      </p>
+                      <p className="text-lg font-bold text-amber-400 mt-0.5">
+                        {formatFileSize(liveStats.storageSize)}
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-muted/20 border border-border/20">
+                      <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1">
+                        <TableProperties className="w-3 h-3" />
+                        Index Size
+                      </p>
+                      <p className="text-lg font-bold text-purple-400 mt-0.5">
+                        {formatFileSize(liveStats.indexSize)}
+                      </p>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-muted/20 border border-border/20">
+                      <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1">
+                        <Gauge className="w-3 h-3" />
+                        Avg Doc Size
+                      </p>
+                      <p className="text-lg font-bold text-rose-400 mt-0.5">
+                        {formatFileSize(liveStats.avgObjectSize)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Largest collection highlight */}
+                  {liveStats.largestCollection && (
+                    <div className="p-3 rounded-lg bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-emerald-500/5 border border-cyan-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <ArrowUp className="w-4 h-4 text-cyan-400" />
+                        <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Largest Collection</p>
+                      </div>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <Files className="w-5 h-5 text-cyan-400" />
+                          <span className="text-sm font-bold text-foreground font-mono">
+                            {liveStats.largestCollection.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <FileText className="w-3.5 h-3.5 text-blue-400" />
+                            <span className="font-bold text-blue-300">{(liveStats.largestCollection.documentCount || 0).toLocaleString()}</span> docs
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <HardDrive className="w-3.5 h-3.5 text-emerald-400" />
+                            <span className="font-bold text-emerald-300">{formatFileSize(liveStats.largestCollection.size)}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Collection list toggle */}
+                  <details className="group">
+                    <summary className="text-[11px] font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors list-none flex items-center gap-1.5">
+                      <ChevronRight className="w-3.5 h-3.5 transition-transform group-open:rotate-90" />
+                      All Collections ({liveStats.collections?.length || 0})
+                    </summary>
+                    <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
+                      {(liveStats.collections || []).map((col: any) => (
+                        <div
+                          key={col.name}
+                          className="flex items-center justify-between px-2.5 py-1.5 rounded-md hover:bg-muted/10 text-[11px]"
+                        >
+                          <span className="font-mono text-muted-foreground truncate flex-1">{col.name}</span>
+                          <span className="text-muted-foreground/60 mx-2">{col.documentCount.toLocaleString()} docs</span>
+                          <span className="text-muted-foreground/60 font-mono">{formatFileSize(col.size)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <ShieldOff className="w-4 h-4 text-red-400" />
+                  Could not fetch live database stats.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Schedule Configuration Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          <Card className="border-border/50 shadow-sm overflow-hidden">
+            <CardHeader className="border-b border-border/20 py-3">
+              <CardTitle className="text-sm font-heading flex items-center gap-2">
+                <Clock className="w-4 h-4 text-blue-500" />
+                Backup Schedule Configuration
+              </CardTitle>
+              <CardDescription className="text-[10px]">
+                Configure when automatic backups run and how many snapshots to keep
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4">
+              {scheduleConfig ? (
+                <div className="space-y-4">
+                  {/* Current config display */}
+                  {!editSchedule ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="p-3 rounded-lg bg-muted/30">
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Interval</p>
+                        <p className="text-sm font-mono text-foreground">{scheduleConfig.interval}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {scheduleConfig.interval === '0 2,14 * * *' ? 'Every 12 hours (2 AM & 2 PM)' :
+                           scheduleConfig.interval === '0 */6 * * *' ? 'Every 6 hours' :
+                           scheduleConfig.interval === '0 2 * * *' ? 'Daily at 2 AM' :
+                           scheduleConfig.interval === '0 */3 * * *' ? 'Every 3 hours' :
+                           scheduleConfig.interval === '0 * * * *' ? 'Every hour' :
+                           'Custom interval'}
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-muted/30">
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Retention</p>
+                        <p className="text-sm font-bold text-foreground">{scheduleConfig.retention} snapshots</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Oldest auto-pruned
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-muted/30">
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Status</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {scheduleConfig.enabled ? (
+                            <><CheckCircle2 className="w-4 h-4 text-green-400" /><span className="text-sm font-bold text-green-400">Enabled</span></>
+                          ) : (
+                            <><XCircle className="w-4 h-4 text-red-400" /><span className="text-sm font-bold text-red-400">Disabled</span></>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {scheduleConfig.enabled ? 'Auto-backups active' : 'Auto-backups paused'}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Edit form */
+                    <div className="space-y-4">
+                      {/* Interval preset selector */}
+                      <div>
+                        <Label className="text-xs font-medium mb-1.5 block">Backup Interval</Label>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                          {[
+                            { label: 'Every Hour', value: '0 * * * *' },
+                            { label: 'Every 3h', value: '0 */3 * * *' },
+                            { label: 'Every 6h', value: '0 */6 * * *' },
+                            { label: 'Every 12h', value: '0 2,14 * * *' },
+                            { label: 'Daily', value: '0 2 * * *' },
+                          ].map((preset) => (
+                            <button
+                              key={preset.value}
+                              type="button"
+                              onClick={() => setScheduleForm(f => ({ ...f, interval: preset.value }))}
+                              className={`px-3 py-2 rounded-lg text-[11px] font-medium border transition-all ${
+                                scheduleForm.interval === preset.value
+                                  ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
+                                  : 'bg-muted/20 border-border/30 text-muted-foreground hover:border-border/60'
+                              }`}
+                            >
+                              {preset.label}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-[10px] text-muted-foreground mb-1">Or enter custom cron expression:</p>
+                          <Input
+                            value={scheduleForm.interval}
+                            onChange={(e) => setScheduleForm(f => ({ ...f, interval: e.target.value }))}
+                            placeholder="0 2,14 * * *"
+                            className="font-mono text-xs h-8"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Retention count */}
+                      <div>
+                        <Label className="text-xs font-medium mb-1.5 block">Retention Count</Label>
+                        <div className="flex items-center gap-3">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={50}
+                            value={scheduleForm.retention}
+                            onChange={(e) => setScheduleForm(f => ({ ...f, retention: Math.max(1, parseInt(e.target.value) || 1) }))}
+                            className="font-mono text-xs h-8 w-24"
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            {scheduleForm.retention === 1 ? 'snapshot' : 'snapshots'} to retain
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Enable/disable toggle */}
+                      <div className="flex items-center gap-3">
+                        <Label className="text-xs font-medium cursor-pointer" htmlFor="scheduleEnabled">
+                          Auto-backups enabled
+                        </Label>
+                        <button
+                          id="scheduleEnabled"
+                          type="button"
+                          role="switch"
+                          aria-checked={scheduleForm.enabled}
+                          onClick={() => setScheduleForm(f => ({ ...f, enabled: !f.enabled }))}
+                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                            scheduleForm.enabled ? 'bg-green-500' : 'bg-muted-foreground/30'
+                          }`}
+                        >
+                          <span
+                            className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform ${
+                              scheduleForm.enabled ? 'translate-x-4' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-border/20">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() =>
+                            updateSchedule({
+                              variables: {
+                                interval: scheduleForm.interval,
+                                retention: scheduleForm.retention,
+                                enabled: scheduleForm.enabled,
+                              },
+                            })
+                          }
+                          disabled={savingSchedule}
+                          className="rounded-xl gap-2 bg-blue-600 hover:bg-blue-500 text-white"
+                        >
+                          {savingSchedule ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                          Save Configuration
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditSchedule(false);
+                            if (scheduleConfig) {
+                              setScheduleForm({
+                                interval: scheduleConfig.interval,
+                                retention: scheduleConfig.retention,
+                                enabled: scheduleConfig.enabled,
+                              });
+                            }
+                          }}
+                          className="rounded-xl"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Edit button when not editing */}
+                  {!editSchedule && (
+                    <div className="pt-2 border-t border-border/20">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditSchedule(true)}
+                        className="rounded-xl gap-2"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        Edit Schedule
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading configuration...
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Performance Metrics */}
+        {analytics.totalBackups > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            {/* Success Rate */}
+            <Card className="border-border/50 bg-card/30 backdrop-blur-sm shadow-sm overflow-hidden relative">
+              <div className="absolute top-0 right-0 p-3 opacity-10 text-green-500">
+                <Activity className="w-12 h-12" />
+              </div>
+              <CardContent className="p-5">
+                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest mb-1">Success Rate</p>
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  <h3 className={`text-2xl font-bold ${analytics.successRate >= 80 ? "text-green-400" : analytics.successRate >= 50 ? "text-amber-400" : "text-red-400"}`}>
+                    {analytics.successRate}%
+                  </h3>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {analytics.completedBackups} of {analytics.totalBackups} completed
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Total Backups */}
+            <Card className="border-border/50 bg-card/30 backdrop-blur-sm shadow-sm overflow-hidden relative">
+              <div className="absolute top-0 right-0 p-3 opacity-10 text-blue-500">
+                <Database className="w-12 h-12" />
+              </div>
+              <CardContent className="p-5">
+                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest mb-1">Total Attempts</p>
+                <h3 className="text-2xl font-bold text-blue-400">{analytics.totalBackups}</h3>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  <span className="text-green-400">{analytics.completedBackups} succeeded</span>
+                  {analytics.failedBackups > 0 && (
+                    <span className="text-red-400">, {analytics.failedBackups} failed</span>
+                  )}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Average Size */}
+            <Card className="border-border/50 bg-card/30 backdrop-blur-sm shadow-sm overflow-hidden relative">
+              <div className="absolute top-0 right-0 p-3 opacity-10 text-emerald-500">
+                <HardDrive className="w-12 h-12" />
+              </div>
+              <CardContent className="p-5">
+                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest mb-1">Average Size</p>
+                <h3 className="text-2xl font-bold text-emerald-400">{formatFileSize(analytics.averageSize)}</h3>
+                <p className="text-[10px] text-muted-foreground mt-1">Per completed snapshot</p>
+              </CardContent>
+            </Card>
+
+            {/* Total Data Protected */}
+            <Card className="border-border/50 bg-card/30 backdrop-blur-sm shadow-sm overflow-hidden relative">
+              <div className="absolute top-0 right-0 p-3 opacity-10 text-purple-500">
+                <ShieldCheck className="w-12 h-12" />
+              </div>
+              <CardContent className="p-5">
+                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest mb-1">Data Protected</p>
+                <h3 className="text-2xl font-bold text-purple-400">{formatFileSize(analytics.totalSize)}</h3>
+                <p className="text-[10px] text-muted-foreground mt-1">Across {analytics.completedBackups} backups</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Charts Row */}
+        {sizeHistory.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+          >
+            {/* Size History Chart */}
+            <Card className="border-border/50 shadow-sm overflow-hidden">
+              <CardHeader className="border-b border-border/20 py-3">
+                <CardTitle className="text-sm font-heading flex items-center gap-2">
+                  <LineChart className="w-4 h-4 text-emerald-500" />
+                  Backup Size History
+                </CardTitle>
+                <CardDescription className="text-[10px]">
+                  Snapshot size over time (oldest to newest)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsLineChart data={sizeHistory}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
+                        tickFormatter={(val: string) => val.replace("ihub_backup_", "")}
+                        axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                        tickLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
+                        tickFormatter={(val: number) => `${val.toFixed(1)} MB`}
+                        axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                        tickLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "rgba(0,0,0,0.85)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                        }}
+                        labelFormatter={(label: string) => label.replace("ihub_backup_", "Backup ")}
+                        formatter={(value: number, name: string) => [
+                          `${value.toFixed(2)} MB`,
+                          name === "sizeMB" ? "Size" : name,
+                        ]}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="sizeMB"
+                        fill="rgba(16, 185, 129, 0.15)"
+                        stroke="rgba(16, 185, 129, 0.6)"
+                        strokeWidth={2}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="sizeMB"
+                        stroke="rgb(16, 185, 129)"
+                        strokeWidth={2}
+                        dot={{ r: 4, fill: "rgb(16, 185, 129)", strokeWidth: 0 }}
+                        activeDot={{ r: 6, fill: "rgb(16, 185, 129)", stroke: "rgba(16, 185, 129, 0.3)", strokeWidth: 4 }}
+                      />
+                    </RechartsLineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Size by Collections Chart */}
+            <Card className="border-border/50 shadow-sm overflow-hidden">
+              <CardHeader className="border-b border-border/20 py-3">
+                <CardTitle className="text-sm font-heading flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-blue-500" />
+                  Size by Collections
+                </CardTitle>
+                <CardDescription className="text-[10px]">
+                  Snapshot size relative to collection count
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsBarChart data={sizeByCollections}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
+                        tickFormatter={(val: string) => val.replace("ihub_backup_", "")}
+                        axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                        tickLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                      />
+                      <YAxis
+                        yAxisId="left"
+                        tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
+                        tickFormatter={(val: number) => `${val.toFixed(1)} MB`}
+                        axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                        tickLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                      />
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
+                        axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                        tickLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "rgba(0,0,0,0.85)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                        }}
+                        labelFormatter={(label: string) => label.replace("ihub_backup_", "Backup ")}
+                        formatter={(value: number, name: string) => {
+                          if (name === "sizeMB") return [`${value.toFixed(2)} MB`, "Size"];
+                          if (name === "collections") return [value, "Collections"];
+                          return [value, name];
+                        }}
+                      />
+                      <Bar yAxisId="left" dataKey="sizeMB" fill="rgba(16, 185, 129, 0.7)" radius={[4, 4, 0, 0]} barSize={24} />
+                      <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="collections"
+                        stroke="rgb(96, 165, 250)"
+                        strokeWidth={2}
+                        dot={{ r: 3, fill: "rgb(96, 165, 250)" }}
+                      />
+                    </RechartsBarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Backups List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.15 }}
         >
           <Card className="border-border/50 shadow-sm overflow-hidden">
             <CardHeader className="border-b border-border/20 py-4">
@@ -505,7 +1197,7 @@ export default function SuperAdminBackups() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
+          transition={{ delay: 0.2 }}
         >
           <Card className="border-border/50 bg-card/30 backdrop-blur-sm shadow-sm">
             <CardHeader className="pb-3">
@@ -727,7 +1419,7 @@ export default function SuperAdminBackups() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </Dialog>
+      </AlertDialog>
     </PortalLayout>
   );
 }

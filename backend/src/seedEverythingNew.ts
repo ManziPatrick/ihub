@@ -87,7 +87,8 @@ const seedEverything = async () => {
       const literacyData = {
         title: literacyCourseTitle,
         description: '<p>Master computer skills from absolute beginner to confident user. Learn hardware basics, file management, typing, Microsoft Word and Excel, email, internet safety, keyboard shortcuts, and troubleshooting. No prior experience required.</p>',
-        thumbnail: 'https://res.cloudinary.com/dbgvwi4lv/image/upload/v1778491859/courses/computer_literacy_mastery.webp',
+        // thumbnail intentionally omitted to avoid missing-image errors in offline/dev environments
+        thumbnail: '',
         instructor: admin._id,
         createdBy: admin._id,
         price: 0,
@@ -979,7 +980,8 @@ const seedEverything = async () => {
         startDate: new Date('2026-06-01'),
         endDate: new Date('2026-08-31'),
         applicationDeadline: new Date('2026-05-25'),
-        eligibility: ['Basic JavaScript understanding', 'Familiarity with HTML/CSS', 'Passion for web development'],
+        // InternshipProgram schema expects eligibility as a single string (see InternshipProgram model)
+        eligibility: 'Basic JavaScript understanding, Familiarity with HTML/CSS, Passion for web development',
         rules: 'Learn, build high-performance clean JS code, and collaborate effectively.',
         price: 0,
         currency: 'RWF',
@@ -1159,7 +1161,8 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
       await new Course({
         title: 'Smartphone Secrets — 100+ Hidden Tips & Tricks for iPhone & Android',
         description: '<p>Master your phone with powerful hidden features you never knew existed. Short, actionable tips for both iPhone and Android. Save time, protect your privacy, and use your phone like a pro.</p>',
-        thumbnail: 'https://res.cloudinary.com/dbgvwi4lv/image/upload/v1778491859/courses/smartphone_secrets.webp',
+        // thumbnail intentionally omitted to avoid missing-image errors in offline/dev environments
+        thumbnail: '',
         price: 0,
         discountPrice: 0,
         level: 'Beginner',
@@ -1400,7 +1403,8 @@ The **Next-Gen JavaScript Full-Stack Suite** is designed to train developers to 
       await new Course({
         title: 'Cyber Literacy — Protect Yourself & Recover from Hacks',
         description: '<p>Learn how to avoid scams, protect your accounts, and recover if you get hacked. Simple lessons for Instagram, Facebook, WhatsApp, Email, Snapchat, and Telegram. No computer skills needed — just your phone. Includes real scam examples, screenshots, and step-by-step recovery videos.</p>',
-        thumbnail: 'https://res.cloudinary.com/dbgvwi4lv/image/upload/v1778491859/courses/cyber_literacy.webp',
+        // thumbnail intentionally omitted to avoid missing-image errors in offline/dev environments
+        thumbnail: '',
         price: 0,
         discountPrice: 0,
         level: 'Beginner',

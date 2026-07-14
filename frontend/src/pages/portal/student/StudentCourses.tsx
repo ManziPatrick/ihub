@@ -897,7 +897,7 @@ export default function StudentCourses() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
                     >
-                      <Card className="border-border/50 bg-green-500/5 hover:shadow-card-hover transition-all overflow-hidden border-green-500/20">
+                      <Card className="bg-green-500/5 hover:shadow-card-hover transition-all overflow-hidden border-green-500/20">
                         <div className={`flex ${viewMode === "list" ? "flex-row" : "flex-col"}`}>
                           <div className={`bg-green-500/10 ${viewMode === "list" ? "w-48 h-auto" : "h-40"}`}>
                             <div className="w-full h-full flex items-center justify-center">

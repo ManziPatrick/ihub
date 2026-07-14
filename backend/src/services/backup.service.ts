@@ -1,8 +1,86 @@
 import mongoose from 'mongoose';
 import { BackupRecord } from '../models/BackupRecord';
+import { Config } from '../models/Config';
 
-const MAX_BACKUPS = 5;
 const BACKUP_DB_PREFIX = 'ihub_backup_';
+
+// ─── Config key constants ─────────────────────────────────────────────────
+const CONFIG_KEYS = {
+  INTERVAL: 'backup_interval',
+  RETENTION: 'backup_retention',
+  ENABLED: 'backup_enabled',
+} as const;
+
+const DEFAULT_INTERVAL = '0 2,14 * * *';
+const DEFAULT_RETENTION = 5;
+const DEFAULT_ENABLED = true;
+
+/**
+ * Read backup schedule config from the database.
+ */
+export async function getBackupScheduleConfig(): Promise<{
+  interval: string;
+  retention: number;
+  enabled: boolean;
+}> {
+  const [intervalCfg, retentionCfg, enabledCfg] = await Promise.all([
+    Config.findOne({ key: CONFIG_KEYS.INTERVAL }),
+    Config.findOne({ key: CONFIG_KEYS.RETENTION }),
+    Config.findOne({ key: CONFIG_KEYS.ENABLED }),
+  ]);
+
+  return {
+    interval: (intervalCfg?.value as string) || DEFAULT_INTERVAL,
+    retention: typeof retentionCfg?.value === 'number' ? retentionCfg.value : DEFAULT_RETENTION,
+    enabled: enabledCfg?.value === false || enabledCfg?.value === 'false' ? false : DEFAULT_ENABLED,
+  };
+}
+
+/**
+ * Update backup schedule config in the database.
+ */
+export async function updateBackupScheduleConfig(config: {
+  interval?: string;
+  retention?: number;
+  enabled?: boolean;
+}): Promise<{
+  interval: string;
+  retention: number;
+  enabled: boolean;
+}> {
+  if (config.interval !== undefined) {
+    await Config.findOneAndUpdate(
+      { key: CONFIG_KEYS.INTERVAL },
+      { key: CONFIG_KEYS.INTERVAL, value: config.interval, description: 'Cron expression for automatic backup interval' },
+      { upsert: true, new: true },
+    );
+  }
+  if (config.retention !== undefined) {
+    await Config.findOneAndUpdate(
+      { key: CONFIG_KEYS.RETENTION },
+      { key: CONFIG_KEYS.RETENTION, value: config.retention, description: 'Maximum number of completed backup snapshots to retain' },
+      { upsert: true, new: true },
+    );
+  }
+  if (config.enabled !== undefined) {
+    await Config.findOneAndUpdate(
+      { key: CONFIG_KEYS.ENABLED },
+      { key: CONFIG_KEYS.ENABLED, value: config.enabled, description: 'Enable or disable automatic backups' },
+      { upsert: true, new: true },
+    );
+  }
+
+  return getBackupScheduleConfig();
+}
+
+/**
+ * Get the effective retention count (reads from config, falls back to default).
+ */
+export async function getRetentionCount(): Promise<number> {
+  const cfg = await Config.findOne({ key: CONFIG_KEYS.RETENTION });
+  if (typeof cfg?.value === 'number') return cfg.value;
+  return DEFAULT_RETENTION;
+}
 
 /**
  * Lazy-initialized mongoose connection to the backup MongoDB cluster.
@@ -94,7 +172,7 @@ function estimateDocSize(doc: any): number {
  * Copies all collections from the primary database
  * to a new database on the backup cluster.
  */
-export async function createBackup(userId?: string): Promise<BackupRecord> {
+export async function createBackup(userId?: string): Promise<any> {
   const primaryDb = mongoose.connection.db;
   if (!primaryDb) {
     throw new Error('Primary database not connected');
@@ -203,7 +281,7 @@ export async function createBackup(userId?: string): Promise<BackupRecord> {
  * Returns backup records sorted newest first,
  * with actual size from the backup cluster if available.
  */
-export async function listBackups(): Promise<BackupRecord[]> {
+export async function listBackups(): Promise<any[]> {
   const records = await BackupRecord.find()
     .sort({ createdAt: -1 })
     .populate('triggeredBy', 'username fullName email')
@@ -212,20 +290,16 @@ export async function listBackups(): Promise<BackupRecord[]> {
   // Try to get real sizes from the backup cluster
   try {
     const backupConn = await getBackupConnection();
-    const adminDb = backupConn.db.admin();
 
     for (const record of records) {
       try {
-        const dbInfo = await adminDb
-          // @ts-ignore - getDbStats is available on Db
-          .serverStatus()
-          .catch(() => null);
-
         // Get actual DB stats from backup cluster
         const backupDb = backupConn.useDb(record.backupDbName);
-        const stats = await backupDb.stats().catch(() => null);
-        if (stats && stats.dataSize) {
-          (record as any).actualSize = stats.dataSize;
+        if (backupDb.db) {
+          const stats = await backupDb.db.stats().catch(() => null);
+          if (stats && stats.dataSize) {
+            (record as any).actualSize = stats.dataSize;
+          }
         }
       } catch {
         // Ignore errors getting size per backup
@@ -357,16 +431,18 @@ export async function deleteBackup(backupId: string): Promise<boolean> {
  * Deletes older ones automatically.
  */
 async function enforceRetention(): Promise<void> {
+  const maxBackups = await getRetentionCount();
+
   const records = await BackupRecord.find({ status: 'completed' })
     .sort({ createdAt: -1 })
     .lean();
 
-  if (records.length <= MAX_BACKUPS) {
+  if (records.length <= maxBackups) {
     return; // Within limit, nothing to delete
   }
 
-  const toDelete = records.slice(MAX_BACKUPS);
-  console.log(`🧹 Retention: ${records.length} backups exist, keeping ${MAX_BACKUPS}, removing ${toDelete.length} old ones...`);
+  const toDelete = records.slice(maxBackups);
+  console.log(`Retention: ${records.length} backups exist, keeping ${maxBackups}, removing ${toDelete.length} old ones...`);
 
   for (const record of toDelete) {
     try {
@@ -375,20 +451,183 @@ async function enforceRetention(): Promise<void> {
       const backupDb = backupConn.useDb(record.backupDbName);
       await backupDb.dropDatabase();
     } catch (error: any) {
-      console.warn(`  ⚠️  Could not drop backup database ${record.backupDbName}: ${error.message}`);
+      console.warn(`  Could not drop backup database ${record.backupDbName}: ${error.message}`);
     }
 
     // Delete the record
     await BackupRecord.findByIdAndDelete(record._id);
-    console.log(`  🗑️  Deleted old backup: ${record.backupDbName}`);
+    console.log(`  Deleted old backup: ${record.backupDbName}`);
   }
 
-  console.log(`✅ Retention enforced: keeping ${MAX_BACKUPS} most recent backups`);
+  console.log(`Retention enforced: keeping ${maxBackups} most recent backups`);
 }
 
 /**
- * Get the status of the backup cluster connection.
+ * ─────────────────────────────────────────────────────
+ * LIVE DATABASE STATS
+ * ─────────────────────────────────────────────────────
+ * Returns current primary database statistics including
+ * total size, collection-level breakdown, and the
+ * largest collection by size.
  */
+export async function getLiveDatabaseStats(): Promise<{
+  databaseName: string;
+  totalCollections: number;
+  totalDocuments: number;
+  dataSize: number;
+  storageSize: number;
+  indexSize: number;
+  avgObjectSize: number;
+  collections: Array<{
+    name: string;
+    documentCount: number;
+    size: number;
+    avgObjSize: number;
+    storageSize: number;
+    indexes: number;
+  }>;
+  largestCollection: {
+    name: string;
+    documentCount: number;
+    size: number;
+  } | null;
+  indexes: number;
+}> {
+  const db = mongoose.connection.db;
+  if (!db) {
+    throw new Error('Primary database not connected');
+  }
+
+  // Get overall database stats
+  const dbStats = await db.stats();
+
+  // Get all collections with their stats — parallelized for performance
+  const collectionsList = await db.listCollections().toArray();
+  const filteredCollections = collectionsList
+    .map(c => c.name)
+    .filter(name => !name.startsWith('system.') && !name.startsWith('__'));
+
+  const collectionResults = await Promise.allSettled(
+    filteredCollections.map(async (name) => {
+      const coll = db.collection(name);
+      const [docCount, collStats] = await Promise.all([
+        coll.estimatedDocumentCount(),
+        coll.stats(),
+      ]);
+      return {
+        name,
+        documentCount: docCount,
+        size: collStats.size || 0,
+        avgObjSize: collStats.avgObjSize || 0,
+        storageSize: collStats.storageSize || 0,
+        indexes: collStats.nindexes || 0,
+      };
+    })
+  );
+
+  const collectionStats: Array<{
+    name: string;
+    documentCount: number;
+    size: number;
+    avgObjSize: number;
+    storageSize: number;
+    indexes: number;
+  }> = [];
+
+  for (const result of collectionResults) {
+    if (result.status === 'fulfilled') {
+      collectionStats.push(result.value);
+    } else {
+      // Extract collection name from the rejected promise — use a fallback
+      const rejectedName = filteredCollections[collectionResults.indexOf(result)] || 'unknown';
+      collectionStats.push({
+        name: rejectedName,
+        documentCount: 0,
+        size: 0,
+        avgObjSize: 0,
+        storageSize: 0,
+        indexes: 0,
+      });
+    }
+  }
+
+  // Sort by size descending to find largest
+  collectionStats.sort((a, b) => b.size - a.size);
+
+  const largestCollection = collectionStats.length > 0
+    ? {
+        name: collectionStats[0].name,
+        documentCount: collectionStats[0].documentCount,
+        size: collectionStats[0].size,
+      }
+    : null;
+
+  return {
+    databaseName: db.databaseName,
+    totalCollections: dbStats.collections || collectionStats.length,
+    totalDocuments: dbStats.objects || 0,
+    dataSize: dbStats.dataSize || 0,
+    storageSize: dbStats.storageSize || 0,
+    indexSize: dbStats.totalIndexSize || 0,
+    avgObjectSize: dbStats.avgObjSize || 0,
+    collections: collectionStats,
+    largestCollection,
+    indexes: dbStats.indexes || 0,
+  };
+}
+
+/**
+ * Get backup analytics and historical performance metrics.
+ */
+export async function getBackupAnalytics(): Promise<{
+  sizeHistory: Array<{ date: string; size: number; collections: number; name: string; status: string }>;
+  totalBackups: number;
+  completedBackups: number;
+  failedBackups: number;
+  successRate: number;
+  averageSize: number;
+  totalSize: number;
+  sizeByCollections: Array<{ collections: number; size: number; name: string }>;
+}> {
+  const records = await BackupRecord.find()
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const completed = records.filter(r => r.status === 'completed');
+  const failed = records.filter(r => r.status === 'failed');
+  const totalSize = completed.reduce((sum, r) => sum + (r.size || 0), 0);
+  const averageSize = completed.length > 0 ? totalSize / completed.length : 0;
+
+  // Size history: ordered chronologically (oldest first for charting)
+  const sizeHistory = [...records]
+    .reverse()
+    .map(r => ({
+      date: r.createdAt?.toISOString?.() || r.createdAt?.toString() || '',
+      size: r.size || 0,
+      collections: r.collections?.length || 0,
+      name: r.backupDbName || '',
+      status: r.status || '',
+    }));
+
+  // Size by collection count
+  const sizeByCollections = completed.map(r => ({
+    collections: r.collections?.length || 0,
+    size: r.size || 0,
+    name: r.backupDbName || '',
+  }));
+
+  return {
+    sizeHistory,
+    totalBackups: records.length,
+    completedBackups: completed.length,
+    failedBackups: failed.length,
+    successRate: records.length > 0 ? Math.round((completed.length / records.length) * 100) : 100,
+    averageSize,
+    totalSize,
+    sizeByCollections,
+  };
+}
+
 export async function getBackupClusterStatus(): Promise<{
   connected: boolean;
   host: string | null;

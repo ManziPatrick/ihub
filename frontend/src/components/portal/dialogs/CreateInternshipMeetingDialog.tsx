@@ -16,10 +16,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Video, Loader2, Calendar as CalendarIcon, RefreshCw, Users, ShieldCheck, User as UserIcon, Check } from "lucide-react";
+import { Search, Video, Loader2, Calendar as CalendarIcon, RefreshCw, Users, ShieldCheck, User as UserIcon, Check, BookOpen, Layout, Building2, GraduationCap, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { CREATE_INTERNSHIP_MEETING } from "@/lib/graphql/mutations";
-import { GET_INTERNSHIP_TEAMS, GET_INTERNSHIP_MEETINGS, GET_ALL_STUDENTS, GET_ALL_TRAINERS } from "@/lib/graphql/queries";
+import { GET_COURSES_LITE_SUMMARY, GET_INTERNSHIP_TEAMS, GET_INTERNSHIP_MEETINGS, GET_ALL_STUDENTS, GET_ALL_TRAINERS } from "@/lib/graphql/queries";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -55,12 +55,19 @@ const generateMeetLink = (): string => {
 
 export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }: CreateInternshipMeetingDialogProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [selectedMentors, setSelectedMentors] = useState<string[]>([]);
+  const [searchCourses, setSearchCourses] = useState("");
   const [searchStudents, setSearchStudents] = useState("");
   const [searchMentors, setSearchMentors] = useState("");
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
+  
+  const [contextType, setContextType] = useState("general");
+  const [contextTitle, setContextTitle] = useState("");
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -78,6 +85,10 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
     skip: !open,
   });
 
+  const { data: coursesData, loading: coursesLoading } = useQuery(GET_COURSES_LITE_SUMMARY, {
+    variables: { page: 1, limit: 100, sortBy: 'latest' },
+    skip: !open,
+  });
   const { data: studentsData, loading: studentsLoading } = useQuery(GET_ALL_STUDENTS, { skip: !open });
   const { data: mentorsData, loading: mentorsLoading } = useQuery(GET_ALL_TRAINERS, { skip: !open });
 
@@ -104,10 +115,16 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
       type: "ONCE",
       recurrenceEndDate: "",
     });
+    setContextType("general");
+    setContextTitle("");
+    setSelectedCourses([]);
     setSelectedTeams([]);
+    setSelectedClients([]);
+    setSelectedPrograms([]);
     setSelectedUsers([]);
     setSelectedMentors([]);
     setRecurrenceDays([]);
+    setSearchCourses("");
     setSearchStudents("");
     setSearchMentors("");
   };
@@ -127,8 +144,8 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
       toast.error("Please fill in all required fields");
       return;
     }
-    if (selectedTeams.length === 0 && selectedUsers.length === 0 && selectedMentors.length === 0) {
-      toast.error("Please select at least one team or individual attendee");
+    if (selectedCourses.length === 0 && selectedTeams.length === 0 && selectedUsers.length === 0 && selectedMentors.length === 0) {
+      toast.error("Please select at least one course, team, or individual attendee");
       return;
     }
 
@@ -140,7 +157,12 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
         ...formData,
         startTime: startISO,
         endTime: endISO,
+        contextType: contextType !== 'general' ? contextType : undefined,
+        contextTitle: contextType !== 'general' && contextTitle ? contextTitle : undefined,
+        courseIds: selectedCourses,
         teamIds: selectedTeams,
+        clientIds: selectedClients,
+        internshipProgramIds: selectedPrograms,
         userIds: selectedUsers,
         mentorIds: selectedMentors,
         recurrenceDays: formData.type !== "ONCE" ? recurrenceDays : undefined,
@@ -158,6 +180,19 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
     (s.username || "").toLowerCase().includes(searchMentors.toLowerCase()) || 
     (s.fullName || "").toLowerCase().includes(searchMentors.toLowerCase())
   );
+
+  const filteredCourses = ((coursesData as any)?.courses?.items || []).filter((c: any) => 
+    (c.title || "").toLowerCase().includes(searchCourses.toLowerCase()) ||
+    (c.category || "").toLowerCase().includes(searchCourses.toLowerCase())
+  );
+
+  const CONTEXT_TYPES = [
+    { id: 'general', label: 'General', icon: Globe },
+    { id: 'course', label: 'Course', icon: BookOpen },
+    { id: 'project', label: 'Project', icon: Layout },
+    { id: 'client', label: 'Client', icon: Building2 },
+    { id: 'internship', label: 'Internship', icon: GraduationCap },
+  ];
 
   const isRecurring = formData.type === "DAILY" || formData.type === "WEEKLY";
 
@@ -181,6 +216,46 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
             <div className="p-8 space-y-8">
               {/* Basic Info */}
               <div className="space-y-4">
+                {/* Context Type Selector */}
+                <div className="grid gap-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70">Meeting Context</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {CONTEXT_TYPES.map((ctx) => {
+                      const Icon = ctx.icon;
+                      return (
+                        <button
+                          key={ctx.id}
+                          type="button"
+                          onClick={() => setContextType(ctx.id)}
+                          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all ${
+                            contextType === ctx.id
+                              ? 'bg-accent text-accent-foreground border-accent shadow-gold'
+                              : 'bg-muted/10 border-border/50 hover:border-accent/50 text-muted-foreground'
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          {ctx.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {contextType !== 'general' && (
+                    <div className="mt-2">
+                      <Input
+                        value={contextTitle}
+                        onChange={e => setContextTitle(e.target.value)}
+                        placeholder={`e.g. ${contextType === 'course' ? 'Introduction to Web Development' : contextType === 'project' ? 'E-commerce Platform' : contextType === 'client' ? 'Acme Corp' : 'Software Engineering Bootcamp'}`}
+                        className="h-10 text-sm rounded-2xl border-accent/10"
+                      />
+                      <p className="text-[9px] text-muted-foreground mt-1">
+                        {contextType === 'course' ? 'The course this meeting is for' : 
+                         contextType === 'project' ? 'The project this meeting is related to' :
+                         contextType === 'client' ? 'The client this meeting is for' :
+                         'The internship program this meeting is for'}
+                      </p>
+                    </div>
+                  )}
+                </div>
                 <div className="grid gap-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70">Meeting Title</Label>
                   <Input 
@@ -254,6 +329,37 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
 
               {/* Assignments Selection Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                {/* Course Selection */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
+                      <BookOpen className="w-3 h-3" /> Select Courses
+                    </Label>
+                    <Badge variant="outline" className="text-[8px] font-black uppercase">{selectedCourses.length} Selected</Badge>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                      <Input placeholder="Search courses..." value={searchCourses} onChange={e => setSearchCourses(e.target.value)} className="pl-8 h-9 rounded-xl text-xs bg-muted/10 border-none" />
+                    </div>
+                    <div className="h-[200px] border border-accent/10 rounded-3xl overflow-hidden bg-muted/5 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+                      {coursesLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto mt-10" /> : 
+                        filteredCourses.map((c: any) => (
+                          <div key={c.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-accent/5 transition-colors cursor-pointer" onClick={() => toggleSelection(c.id, setSelectedCourses)}>
+                             <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedCourses.includes(c.id) ? "bg-accent border-accent text-accent-foreground" : "border-border/50")}>
+                                {selectedCourses.includes(c.id) && <Check className="w-3 h-3" />}
+                             </div>
+                             <div className="flex-1 truncate">
+                               <p className="text-[10px] font-black uppercase truncate">{c.title}</p>
+                               <p className="text-[8px] text-muted-foreground">{c.category || c.level || "Course"} · {c.studentsEnrolledCount || 0} Enrolled</p>
+                             </div>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  </div>
+                </div>
+
                 {/* Team Selection */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">

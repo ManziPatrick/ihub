@@ -215,14 +215,26 @@ function getCategoryMeta(cat: string): CategoryMeta {
 type Section = "programs" | "internships";
 
 export function FeaturedCourses() {
-  const [pageSize, setPageSize] = useState(12);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [pageSize, setPageSize] = useState(() => {
+    const val = searchParams.get("perPage");
+    return val ? parseInt(val, 10) : 12;
+  });
 
   const [section, setSection] = useState<Section>("programs");
-  const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [activeCategory, setActiveCategory] = useState<string>(() => {
+    return searchParams.get("category") || "All";
+  });
+  const [searchQuery, setSearchQuery] = useState(() => {
+    return searchParams.get("q") || "";
+  });
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(() => {
+    return searchParams.get("q") || "";
+  });
+  const [currentPage, setCurrentPage] = useState(() => {
+    const val = searchParams.get("page");
+    return val ? parseInt(val, 10) : 1;
+  });
 
   // Debounce search input: update debouncedSearchQuery 300ms after user stops typing
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -281,7 +293,8 @@ export function FeaturedCourses() {
         navigate(`/portal/student/courses/${courseId}`);
       }, 1500);
     },
-    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES_SUMMARY }, { query: MY_COURSE_APPLICATIONS }],
+    // Avoid refetching large summaries on every enroll; rely on cache updates or explicit small updates.
+    refetchQueries: [{ query: GET_ME }, { query: MY_COURSE_APPLICATIONS }],
     onError: (err) => {
       toast({
         title: "Error",
@@ -336,12 +349,16 @@ export function FeaturedCourses() {
 
   const { data: courseData, loading: courseLoading, previousData: prevCourseData } = useQuery(GET_COURSES_SUMMARY, {
     variables: queryVariables,
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
+    fetchPolicy: "cache-first",
+    nextFetchPolicy: "cache-first",
+    notifyOnNetworkStatusChange: false,
   });
 
   // Internship programs — with server-side pagination, search, and filters
-  const [internshipPage, setInternshipPage] = useState(1);
+  const [internshipPage, setInternshipPage] = useState(() => {
+    const val = searchParams.get("internPage");
+    return val ? parseInt(val, 10) : 1;
+  });
   const internshipQueryVariables = useMemo(() => ({
     page: internshipPage,
     limit: pageSize,
@@ -354,8 +371,9 @@ export function FeaturedCourses() {
 
   const { data: internData, loading: internLoading, previousData: prevInternData } = useQuery(GET_INTERNSHIP_PROGRAMS, {
     variables: internshipQueryVariables,
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: true,
+    fetchPolicy: "cache-first",
+    nextFetchPolicy: "cache-first",
+    notifyOnNetworkStatusChange: false,
   });
 
   const { data: meData } = useQuery(GET_ME, {
@@ -555,20 +573,6 @@ export function FeaturedCourses() {
 
   const currentCategories = allCategories;
 
-  // Restore search/page/perPage from URL on mount
-  useEffect(() => {
-    const q = searchParams.get("q");
-    const page = searchParams.get("page");
-    const cat = searchParams.get("category");
-    const perPage = searchParams.get("perPage");
-    const internPage = searchParams.get("internPage");
-    if (q) setSearchQuery(q);
-    if (page) setCurrentPage(parseInt(page, 10));
-    if (cat) setActiveCategory(cat);
-    if (perPage) setPageSize(parseInt(perPage, 10));
-    if (internPage) setInternshipPage(parseInt(internPage, 10));
-  }, []);
-
   // Sync search/page/perPage to URL
   useEffect(() => {
     const params = new URLSearchParams();
@@ -577,8 +581,15 @@ export function FeaturedCourses() {
     if (internshipPage > 1) params.set("internPage", String(internshipPage));
     if (activeCategory !== "All") params.set("category", activeCategory);
     if (pageSize !== 12) params.set("perPage", String(pageSize));
-    setSearchParams(params, { replace: true });
-  }, [searchQuery, currentPage, internshipPage, activeCategory, pageSize]);
+
+    // Only update if search params actually changed to prevent infinite rendering loops
+    params.sort();
+    const currentParams = new URLSearchParams(searchParams.toString());
+    currentParams.sort();
+    if (params.toString() !== currentParams.toString()) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [searchQuery, currentPage, internshipPage, activeCategory, pageSize, searchParams, setSearchParams]);
 
   const filteredCourses = useMemo(() => {
     // All filtering (search, category, price, level, school) is now server-side.

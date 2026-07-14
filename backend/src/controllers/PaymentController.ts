@@ -1,6 +1,7 @@
 /**
  * Payment Controller
  * Handles payment initiation, status checks, and webhook processing
+ * Supports: Intouch (Rwanda), Pesapal (Cards), PawaPay (Multi-country mobile money)
  */
 
 import mongoose from 'mongoose';
@@ -8,6 +9,7 @@ import { Request, Response } from 'express';
 import { PaymentTransaction } from '../models/PaymentTransaction';
 import { createPesapalService } from '../services/pesapal.service';
 import { createIntouchService } from '../services/intouch.service';
+import { createPaypackService, PawaPayService } from '../services/paypack.service';
 import { User } from '../models/User';
 import { Course } from '../models/Course';
 import { Internship } from '../models/Internship';
@@ -16,6 +18,8 @@ import { InternshipProgram } from '../models/internship/InternshipProgram';
 import { CourseProgress } from '../models/CourseProgress';
 import { sendPaymentConfirmation, sendCourseEnrollmentConfirmation } from '../services/email.service';
 import { disbursementService } from '../services/disbursement.service';
+import { lookupRequestGeoLocation } from '../services/geoip.service';
+import { convertFromRwf, getExchangeRates, formatCurrency, getSupportedCurrencies } from '../services/currency.service';
 
 // Extend Express Request to include user property
 declare global {
@@ -39,11 +43,78 @@ interface PaymentInitiateBody {
   firstName?: string;
   lastName?: string;
   email?: string;
+  /** For PawaPay: specific provider (e.g. MTN_MOMO_RWA, MPESA_KEN) */
+  providerId?: string;
+  /** For PawaPay: country code (e.g. RWA, KEN, UGA) */
+  countryCode?: string;
+  /** For PawaPay: currency (e.g. RWF, KES, UGX) */
+  currency?: string;
 }
 
 class PaymentController {
   private pesapalService = createPesapalService();
   private intouchService = createIntouchService();
+  private pawapayService!: PawaPayService;
+
+  constructor() {
+    try {
+      this.pawapayService = createPaypackService();
+    } catch (e) {
+      console.warn('⚠️ PawaPay service not configured:', (e as Error).message);
+      // Will be checked at runtime
+    }
+  }
+
+  /**
+   * Get PawaPay service (lazy init in case env vars aren't ready at construction)
+   */
+  private getPawaPayService(): PawaPayService | null {
+    if (this.pawapayService) return this.pawapayService;
+    try {
+      this.pawapayService = createPaypackService();
+      return this.pawapayService;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Normalize phone to international format with correct country code prefix.
+   * E.g. +790706170 or 0790706170 → 250790706170 (for Rwanda)
+   * E.g. +712345678 or 0712345678 → 254712345678 (for Kenya)
+   */
+  private normalizePhone(phone: string, country: string = 'RWA'): string {
+    let cleaned = phone.replace(/[^0-9]/g, '');
+    
+    // Country code prefixes for all supported countries
+    const countryCodes: Record<string, string> = {
+      'RWA': '250', 'KEN': '254', 'UGA': '256', 'TZA': '255',
+      'GHA': '233', 'NGA': '234', 'ZMB': '260', 'CMR': '237',
+      'CIV': '225', 'SEN': '221', 'COD': '243', 'MWI': '265',
+      'BEN': '229', 'BFA': '226', 'ETH': '251', 'GAB': '241',
+      'LSO': '266', 'MOZ': '258', 'SLE': '232', 'SOM': '252',
+    };
+    
+    const prefix = countryCodes[country] || '250';
+    
+    // Already has country code? Use as-is
+    if (cleaned.startsWith(prefix)) {
+      return cleaned;
+    }
+    // Local format starting with 0: remove leading 0, prepend country code
+    if (cleaned.startsWith('0')) {
+      return prefix + cleaned.slice(1);
+    }
+    // Rwandan short format (e.g. 78XXXXXX): prepend 250
+    if (country === 'RWA' && cleaned.length <= 9 && cleaned.startsWith('7')) {
+      return '250' + cleaned;
+    }
+    // Short format for other countries
+    if (cleaned.length <= 9) {
+      return prefix + cleaned;
+    }
+    return cleaned;
+  }
 
   /**
    * Initiate a payment (CASHIN) from user
@@ -56,7 +127,7 @@ class PaymentController {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const { amount, phoneNumber, description, courseId, courseIds, subscriptionId, internshipProgramId, internshipIds, paymentMethod } =
+      const { amount, phoneNumber, description, courseId, courseIds, subscriptionId, internshipProgramId, internshipIds, paymentMethod, providerId, countryCode, currency } =
         req.body as PaymentInitiateBody & { paymentMethod?: string };
 
       // Validate input
@@ -81,19 +152,209 @@ class PaymentController {
         }
       }
 
-      // ─── INTOUCH INTEGRATION (FOR MTN, AIRTEL MONEY) ───
-      if (paymentMethod === 'intouch' || paymentMethod === 'intouch_mtn' || paymentMethod === 'intouch_airtel') {
-        const trxRef = this.intouchService.generateRequestTransactionId();
+      // ─── PAWAPAY INTEGRATION (Multi-country mobile money) ───
+      if (paymentMethod === 'pawapay') {
+        const pawapay = this.getPawaPayService();
+        if (!pawapay) {
+          return res.status(500).json({ error: 'PawaPay service not configured. Set PAWAPAY_API_TOKEN env var.' });
+        }
 
         if (!phoneNumber) {
           return res.status(400).json({ error: 'Phone number is required for mobile money payment' });
         }
 
+        // Normalize phone to international format FIRST (before provider detection!)
+        const normalizedPhone = this.normalizePhone(phoneNumber, countryCode || 'RWA');
+
+        // Resolve provider from phone number or use explicit providerId
+        let resolvedProvider = providerId || '';
+        let resolvedCountry = countryCode || '';
+        let resolvedCurrency = currency || 'RWF';
+
+        if (!resolvedProvider) {
+          // Auto-detect provider and country from normalized phone number
+          const providerInfo = await pawapay.resolveProvider(normalizedPhone);
+          resolvedProvider = providerInfo.provider;
+          resolvedCountry = providerInfo.country;
+          resolvedCurrency = providerInfo.currency;
+        }
+
+        // Generate deposit ID
+        const depositId = pawapay.generateDepositId();
+
+        // Amount is in RWF — convert if a different currency was requested
+        let depositAmount = amount;
+        if (currency && currency !== 'RWF') {
+          const converted = await convertFromRwf(amount, currency);
+          depositAmount = converted.amount;
+          resolvedCurrency = currency;
+        }
+
+        // Initiate deposit via PawaPay
+        const depositResult = await pawapay.initiateDeposit({
+          amount: depositAmount,
+          currency: resolvedCurrency,
+          phoneNumber: normalizedPhone,
+          provider: resolvedProvider,
+          depositId,
+          clientReferenceId: `IHUB-${Date.now()}-${userId.toString().slice(-6)}`,
+          customerMessage: smartTitle.substring(0, 22) || 'iHub Payment',
+        });
+
+        // Save transaction record
+        const transaction = new PaymentTransaction({
+          userId,
+          type: 'CASHIN',
+          amount: depositAmount,
+          status: depositResult.status === 'ACCEPTED' ? 'pending' : 'failed',
+          pawapayDepositId: depositId,
+          paymentMethod: 'pawapay',
+          phoneNumber,
+          provider: resolvedProvider,
+          description: smartTitle,
+          courseId: courseId || null,
+          courseIds: courseIds || [],
+          internshipProgramId: internshipProgramId || null,
+          internshipIds: internshipIds || [],
+          metadata: {
+            country: resolvedCountry,
+            currency: resolvedCurrency,
+            provider: resolvedProvider,
+            depositStatus: depositResult.status,
+          },
+        });
+        await transaction.save();
+
+        // Create pending Payment record
+        const pendingPayment = new Payment({
+          userId,
+          amount: depositAmount,
+          currency: resolvedCurrency,
+          status: depositResult.status === 'ACCEPTED' ? 'pending' : 'failed',
+          paymentMethod: `PawaPay (${resolvedCountry})`,
+          transactionId: depositId,
+          type: allCourseIds.length > 0 ? 'Course Enrollment' : 'Internship/Subscription',
+          itemTitle: smartTitle,
+          courseIds: allCourseIds,
+          internshipIds: allInternshipIds,
+        });
+        await pendingPayment.save();
+
+        if (!depositResult.success) {
+          return res.status(502).json({
+            error: 'Payment provider rejected the request',
+            message: depositResult.reason || 'PawaPay rejected the deposit',
+            transactionId: transaction._id,
+            status: 'failed',
+          });
+        }
+
+        return res.status(202).json({
+          message: `Mobile Money payment initiated via PawaPay (${resolvedCountry})`,
+          transactionId: transaction._id,
+          depositId,
+          status: 'pending',
+          provider: resolvedProvider,
+          country: resolvedCountry,
+          currency: resolvedCurrency,
+        });
+      }
+
+      // ─── INTOUCH INTEGRATION (FALLBACK — tries PawaPay FIRST, then Intouch) ───
+      if (paymentMethod === 'intouch' || paymentMethod === 'intouch_mtn' || paymentMethod === 'intouch_airtel') {
+        if (!phoneNumber) {
+          return res.status(400).json({ error: 'Phone number is required for mobile money payment' });
+        }
+
+        // Try PawaPay FIRST (primary provider)
+        const pawapay = this.getPawaPayService();
+        let pawaPayAttempted = false;
+
+        if (pawapay) {
+          try {
+            pawaPayAttempted = true;
+            console.log(`💰 Payment (intouch request): trying pawapay first, then intouch as fallback`);
+
+            // Normalize phone to international format
+            const normalizedPhone = this.normalizePhone(phoneNumber, countryCode || 'RWA');
+
+            // Resolve provider from phone number (PawaPay supports Rwanda too)
+            const providerInfo = await pawapay.resolveProvider(normalizedPhone);
+            const depositId = pawapay.generateDepositId();
+
+            const depositResult = await pawapay.initiateDeposit({
+              amount,
+              currency: providerInfo.currency || 'RWF',
+              phoneNumber: normalizedPhone,
+              provider: providerInfo.provider,
+              depositId,
+              clientReferenceId: `IHUB-${Date.now()}-${userId.toString().slice(-6)}`,
+              customerMessage: smartTitle.substring(0, 22) || 'iHub Payment',
+            });
+
+            if (depositResult.success && depositResult.status === 'ACCEPTED') {
+              // PawaPay accepted — save and return
+              const transaction = new PaymentTransaction({
+                userId,
+                type: 'CASHIN',
+                amount,
+                status: 'pending',
+                pawapayDepositId: depositId,
+                paymentMethod: 'pawapay',
+                phoneNumber,
+                provider: providerInfo.provider,
+                description: smartTitle,
+                courseId: courseId || null,
+                courseIds: courseIds || [],
+                internshipProgramId: internshipProgramId || null,
+                internshipIds: internshipIds || [],
+                metadata: { country: providerInfo.country, currency: providerInfo.currency, depositStatus: depositResult.status },
+              });
+              await transaction.save();
+
+              const pendingPayment = new Payment({
+                userId,
+                amount,
+                currency: 'RWF',
+                status: 'pending',
+                paymentMethod: `PawaPay (${providerInfo.country})`,
+                transactionId: depositId,
+                type: allCourseIds.length > 0 ? 'Course Enrollment' : 'Internship/Subscription',
+                itemTitle: smartTitle,
+                courseIds: allCourseIds,
+                internshipIds: allInternshipIds,
+              });
+              await pendingPayment.save();
+
+              console.log(`✅ Payment via PawaPay instead of Intouch: ${depositId}, ${providerInfo.provider}`);
+              return res.status(202).json({
+                message: `Mobile Money payment initiated via PawaPay (${providerInfo.country})`,
+                transactionId: transaction._id,
+                depositId,
+                status: 'pending',
+                provider: providerInfo.provider,
+                country: providerInfo.country,
+              });
+            }
+
+            console.log(`⚠️ PawaPay rejected (${depositResult.status}), falling back to Intouch...`);
+          } catch (pawaError) {
+            console.warn(`⚠️ PawaPay failed for Intouch request, falling back to Intouch:`, (pawaError as Error).message);
+          }
+        }
+
+        if (!pawaPayAttempted) {
+          console.log(`💰 Intouch payment (PawaPay not available, going direct to Intouch)`);
+        }
+
+        // Intouch fallback — normalized phone
+        const trxRef = this.intouchService.generateRequestTransactionId();
         const callbackUrl = `${process.env.BACKEND_URL || 'https://api.codemande.com'}/api/payments/intouch/callback`;
+        const intouchPhone = this.normalizePhone(phoneNumber, countryCode || 'RWA');
 
         const response = await this.intouchService.requestPayment({
           amount,
-          phoneNumber,
+          phoneNumber: intouchPhone,
           requestTransactionId: trxRef,
           callbackUrl,
         });
@@ -137,7 +398,7 @@ class PaymentController {
         await pendingPayment.save();
 
         return res.status(202).json({
-          message: 'Mobile Money payment initiated via Intouch',
+          message: 'Mobile Money payment initiated via Intouch (fallback)',
           data: response.raw,
           status: 'processing',
           transactionId: transaction._id,
@@ -160,12 +421,12 @@ class PaymentController {
         const redirectUrl = `${process.env.CLIENT_URL || 'http://localhost:8080'}/payment/pesapal/callback`;
         
         // Map phone prefix to ISO country code for Pesapal
-        let countryCode = 'RW'; // Default to Rwanda
-        if (phoneNumber?.startsWith('+254')) countryCode = 'KE';
-        else if (phoneNumber?.startsWith('+256')) countryCode = 'UG';
-        else if (phoneNumber?.startsWith('+255')) countryCode = 'TZ';
-        else if (phoneNumber?.startsWith('+257')) countryCode = 'BI';
-        else if (phoneNumber?.startsWith('+243')) countryCode = 'CD';
+        let countryCodePesapal = 'RW'; // Default to Rwanda
+        if (phoneNumber?.startsWith('+254')) countryCodePesapal = 'KE';
+        else if (phoneNumber?.startsWith('+256')) countryCodePesapal = 'UG';
+        else if (phoneNumber?.startsWith('+255')) countryCodePesapal = 'TZ';
+        else if (phoneNumber?.startsWith('+257')) countryCodePesapal = 'BI';
+        else if (phoneNumber?.startsWith('+243')) countryCodePesapal = 'CD';
 
         const orderResponse = await this.pesapalService.submitOrder({
           id: `ORD-${Date.now()}`,
@@ -177,7 +438,7 @@ class PaymentController {
           billing_address: {
             email_address: userEmail,
             phone_number: phoneNumber || undefined,
-            country_code: countryCode,
+            country_code: countryCodePesapal,
             first_name: firstName || req.user?.fullName?.split(' ')[0] || 'Customer',
             last_name: lastName || req.user?.fullName?.split(' ')[1] || 'User',
           }
@@ -296,8 +557,6 @@ class PaymentController {
       }
 
       // ─── Provider-specific real-time status checks ───
-      // PaymentTransaction.status only supports: pending | successful | failed.
-      // We branch based on how the transaction was initiated.
 
       const updateIfChanged = async (nextStatus: 'pending' | 'successful' | 'failed') => {
         if (nextStatus !== transaction.status) {
@@ -316,7 +575,28 @@ class PaymentController {
         }
       };
 
-      // 1) Intouch
+      // 1) PawaPay
+      if (transaction.paymentMethod === 'pawapay' && transaction.pawapayDepositId) {
+        try {
+          const pawapay = this.getPawaPayService();
+          if (pawapay) {
+            console.log(`Checking status for PawaPay deposit: ${transaction.pawapayDepositId}`);
+            const statusResult = await pawapay.getDepositStatus(transaction.pawapayDepositId);
+            if (statusResult) {
+              await updateIfChanged(statusResult.status as any);
+            }
+          }
+          return res.json(this.formatTransactionResponse(transaction));
+        } catch (error: any) {
+          console.error('Error fetching PawaPay status:', error.message);
+          return res.json({
+            ...this.formatTransactionResponse(transaction),
+            note: 'Real-time check currently unavailable (local cache used)',
+          });
+        }
+      }
+
+      // 2) Intouch
       if (transaction.paymentMethod === 'intouch' || transaction.provider === 'intouch') {
         try {
           console.log(`Checking status for Intouch Ref: ${transaction.intouchRef}`);
@@ -383,10 +663,363 @@ class PaymentController {
       fee: transaction.fee,
       status: transaction.status,
       pesapalTrackingId: transaction.pesapalTrackingId,
+      pawapayDepositId: transaction.pawapayDepositId,
       createdAt: transaction.createdAt,
       processedAt: transaction.processedAt,
       description: transaction.description,
+      provider: transaction.provider,
+      paymentMethod: transaction.paymentMethod,
+      metadata: transaction.metadata,
     };
+  }
+
+  // ─── PawaPay Webhook / Callback Handler ───
+
+  /**
+   * Handle PawaPay callback/webhook for deposit status updates
+   * POST /api/payments/pawapay/callback
+   * 
+   * PawaPay sends callbacks when deposit status changes:
+   * { depositId, status: "COMPLETED"|"SETTLED"|"DECLINED"|"EXPIRED", ... }
+   */
+  async handlePawaPayCallback(req: Request, res: Response) {
+    const payload = req.body;
+    try {
+      console.log('🔔 PawaPay Callback Received:', JSON.stringify(payload).substring(0, 600));
+
+      const pawapay = this.getPawaPayService();
+      if (!pawapay) {
+        return res.status(200).json({ status: 'error', message: 'PawaPay not configured' });
+      }
+
+      // Verify webhook signature if signature header is present
+      const signature = req.headers['x-pawapay-signature'] as string || req.headers['x-signature'] as string || '';
+      if (signature && req.rawBody) {
+        const isValid = pawapay.verifyWebhookSignature(req.rawBody.toString(), signature);
+        if (!isValid) {
+          console.warn('⚠️ PawaPay callback: Invalid webhook signature');
+          // Still process but log warning (defense-in-depth)
+        }
+      }
+
+      // Parse the webhook payload
+      const parsed = pawapay.parseWebhookPayload(payload);
+
+      // Find the transaction by PawaPay deposit ID
+      const transaction = await PaymentTransaction.findOne({
+        pawapayDepositId: parsed.transactionRef,
+      });
+
+      if (!transaction) {
+        console.warn(`❌ PawaPay Callback: Transaction not found for deposit ${parsed.transactionRef}`);
+        return res.status(200).json({ received: true });
+      }
+
+      // Update status if changed
+      const normalizedStatus = parsed.status;
+      if (normalizedStatus !== transaction.status) {
+        const prevStatus = transaction.status;
+        transaction.status = normalizedStatus as any;
+        transaction.metadata = {
+          ...(transaction.metadata || {}),
+          settledAt: parsed.settledAt,
+          callbackStatus: parsed.status,
+          callbackProvider: parsed.provider,
+        };
+
+        if (normalizedStatus === 'successful' && prevStatus !== 'successful') {
+          await this.handleSuccessfulPayment(transaction);
+        }
+
+        await transaction.save();
+        console.log(`✅ PawaPay deposit ${parsed.transactionRef} updated: ${prevStatus} → ${normalizedStatus}`);
+      }
+
+      // Acknowledge receipt
+      return res.status(200).json({ received: true });
+    } catch (error) {
+      console.error('❌ PawaPay Callback Error:', error);
+      // Always return 200 to acknowledge receipt even on error
+      return res.status(200).json({ received: true, error: 'Processing error' });
+    }
+  }
+
+  // ─── PawaPay Refund Callback ───
+
+  /**
+   * Handle PawaPay refund callback/webhook
+   * POST /api/payments/pawapay/refund/callback
+   *
+   * PawaPay sends callbacks when a refund status changes.
+   */
+  async handlePawaPayRefundCallback(req: Request, res: Response) {
+    const payload = req.body;
+    try {
+      console.log('🔔 PawaPay Refund Callback Received:', JSON.stringify(payload).substring(0, 600));
+
+      const pawapay = this.getPawaPayService();
+      if (!pawapay) {
+        return res.status(200).json({ received: true });
+      }
+
+      // Verify webhook signature if signature header is present
+      const signature = req.headers['x-pawapay-signature'] as string || req.headers['x-signature'] as string || '';
+      if (signature && req.rawBody) {
+        const isValid = pawapay.verifyWebhookSignature(req.rawBody.toString(), signature);
+        if (!isValid) {
+          console.warn('⚠️ PawaPay refund callback: Invalid webhook signature');
+        }
+      }
+
+      // Parse the webhook payload (same format as deposit callbacks)
+      const parsed = pawapay.parseWebhookPayload(payload);
+
+      // Find the transaction by PawaPay refund ID
+      const transaction = await PaymentTransaction.findOne({
+        pawapayRefundId: parsed.transactionRef,
+      });
+
+      if (!transaction) {
+        console.warn(`❌ PawaPay Refund Callback: Transaction not found for refund ${parsed.transactionRef}`);
+        return res.status(200).json({ received: true });
+      }
+
+      // Update status based on refund outcome
+      if (parsed.status === 'successful') {
+        transaction.status = 'failed'; // Refund means the original payment is essentially voided
+        transaction.metadata = {
+          ...(transaction.metadata || {}),
+          refundSettledAt: parsed.settledAt,
+          refundStatus: parsed.status,
+        };
+        await transaction.save();
+        console.log(`✅ PawaPay refund ${parsed.transactionRef} completed`);
+      } else if (parsed.status === 'failed') {
+        console.warn(`⚠️ PawaPay refund ${parsed.transactionRef} failed`);
+      }
+
+      // Acknowledge receipt
+      return res.status(200).json({ received: true });
+    } catch (error) {
+      console.error('❌ PawaPay Refund Callback Error:', error);
+      return res.status(200).json({ received: true, error: 'Processing error' });
+    }
+  }
+
+  // ─── Country Detection ───
+
+  /**
+   * Detect user's country from IP address
+   * GET /api/payments/detect-country
+   */
+  async detectCountry(req: Request, res: Response) {
+    try {
+      // Get country from GeoIP
+      const geo = await lookupRequestGeoLocation(req);
+      
+      if (!geo.country) {
+        // Default to Rwanda
+        return res.json({
+          countryCode: 'RWA',
+          currency: 'RWF',
+          country: 'Rwanda',
+          source: 'default',
+        });
+      }
+
+      // Map country name to our country codes
+      const countryMap: Record<string, string> = {
+        'Rwanda': 'RWA',
+        'Kenya': 'KEN',
+        'Uganda': 'UGA',
+        'Tanzania': 'TZA',
+        'Ghana': 'GHA',
+        'Nigeria': 'NGA',
+        'Zambia': 'ZMB',
+        'Cameroon': 'CMR',
+        "Côte d'Ivoire": 'CIV',
+        'Senegal': 'SEN',
+        'Democratic Republic of the Congo': 'COD',
+        'Malawi': 'MWI',
+        'Benin': 'BEN',
+        'Burkina Faso': 'BFA',
+        'Ethiopia': 'ETH',
+        'Gabon': 'GAB',
+        'Lesotho': 'LSO',
+        'Mozambique': 'MOZ',
+        'Sierra Leone': 'SLE',
+        'Somalia': 'SOM',
+      };
+
+      const countryCode = countryMap[geo.country] || 'RWA';
+
+      // Get currency for the country
+      const currencies = getSupportedCurrencies();
+      const currencyInfo = currencies.find(c => c.countries.includes(countryCode));
+      const currency = currencyInfo?.code || 'RWF';
+
+      return res.json({
+        countryCode,
+        currency,
+        country: geo.country,
+        city: geo.city,
+        source: 'geoip',
+      });
+    } catch (error) {
+      console.error('Country detection error:', error);
+      return res.json({
+        countryCode: 'RWA',
+        currency: 'RWF',
+        country: 'Rwanda',
+        source: 'default',
+      });
+    }
+  }
+
+  /**
+   * Get supported countries and providers for PawaPay + Intouch
+   * GET /api/payments/countries
+   */
+  async getSupportedCountries(req: Request, res: Response) {
+    try {
+      const pawapay = this.getPawaPayService();
+      let pawapayCountries: any[] = [];
+
+      if (pawapay) {
+        pawapayCountries = pawapay.getSupportedCountries();
+      }
+
+      // Always include Rwanda — PawaPay providers only (Intouch used as hidden fallback in backend)
+      const rwandaCountries = [
+        {
+          countryCode: 'RWA',
+          country: 'Rwanda',
+          currency: 'RWF',
+          flag: '🇷🇼',
+          providers: [
+            { providerId: 'MTN_MOMO_RWA', name: 'MTN Mobile Money', paymentMethod: 'pawapay' },
+            { providerId: 'AIRTEL_RWA', name: 'Airtel Money', paymentMethod: 'pawapay' },
+          ],
+        },
+      ];
+
+      // Map PawaPay countries with flags and names
+      const countryNames: Record<string, { name: string; flag: string }> = {
+        RWA: { name: 'Rwanda', flag: '🇷🇼' },
+        KEN: { name: 'Kenya', flag: '🇰🇪' },
+        UGA: { name: 'Uganda', flag: '🇺🇬' },
+        TZA: { name: 'Tanzania', flag: '🇹🇿' },
+        GHA: { name: 'Ghana', flag: '🇬🇭' },
+        NGA: { name: 'Nigeria', flag: '🇳🇬' },
+        ZMB: { name: 'Zambia', flag: '🇿🇲' },
+        CMR: { name: 'Cameroon', flag: '🇨🇲' },
+        CIV: { name: "Côte d'Ivoire", flag: '🇨🇮' },
+        SEN: { name: 'Senegal', flag: '🇸🇳' },
+        COD: { name: 'DR Congo', flag: '🇨🇩' },
+        MWI: { name: 'Malawi', flag: '🇲🇼' },
+        BEN: { name: 'Benin', flag: '🇧🇯' },
+        BFA: { name: 'Burkina Faso', flag: '🇧🇫' },
+        ETH: { name: 'Ethiopia', flag: '🇪🇹' },
+        GAB: { name: 'Gabon', flag: '🇬🇦' },
+        LSO: { name: 'Lesotho', flag: '🇱🇸' },
+        MOZ: { name: 'Mozambique', flag: '🇲🇿' },
+        SLE: { name: 'Sierra Leone', flag: '🇸🇱' },
+        SOM: { name: 'Somalia', flag: '🇸🇴' },
+      };
+
+      // Get exchange rates
+      let rates: Record<string, number> = {};
+      try {
+        const exchangeRates = await getExchangeRates();
+        rates = exchangeRates;
+      } catch {
+        // Rates unavailable, skip
+      }
+
+      // Merge PawaPay countries (RWA included from PawaPay, but we use our own provider listing above)
+      const pawapayFormatted = pawapayCountries
+        .filter(c => c.countryCode !== 'RWA') // RWA handled via rwandaCountries above
+        .map(c => ({
+          countryCode: c.countryCode,
+          country: countryNames[c.countryCode]?.name || c.countryCode,
+          flag: countryNames[c.countryCode]?.flag || '',
+          currency: c.currency,
+          rate: rates[c.currency] || null,
+          providers: c.providers.map((p: any) => ({
+            providerId: p.providerId,
+            name: p.name,
+            paymentMethod: 'pawapay',
+          })),
+        }));
+
+      // Add RWF rate
+      const rwfRate = rates['RWF'] || 1;
+
+      const allCountries = [
+        ...rwandaCountries.map(c => ({
+          ...c,
+          rate: rwfRate,
+        })),
+        ...pawapayFormatted,
+      ];
+
+      return res.json({
+        countries: allCountries,
+        currencies: getSupportedCurrencies().map(c => ({
+          code: c.code,
+          name: c.name,
+          symbol: c.symbol,
+        })),
+        rates,
+        baseCurrency: 'RWF',
+      });
+    } catch (error) {
+      console.error('Get supported countries error:', error);
+      // Fallback to basic Rwanda (PawaPay only)
+      return res.json({
+        countries: [
+          {
+            countryCode: 'RWA',
+            country: 'Rwanda',
+            currency: 'RWF',
+            flag: '🇷🇼',
+            rate: 1,
+            providers: [
+              { providerId: 'MTN_MOMO_RWA', name: 'MTN Mobile Money', paymentMethod: 'pawapay' },
+              { providerId: 'AIRTEL_RWA', name: 'Airtel Money', paymentMethod: 'pawapay' },
+            ],
+          },
+        ],
+        rates: { RWF: 1 },
+        baseCurrency: 'RWF',
+      });
+    }
+  }
+
+  /**
+   * Convert amount from RWF to another currency
+   * GET /api/payments/convert?amount=10000&to=KES
+   */
+  async convertCurrency(req: Request, res: Response) {
+    try {
+      const amountRwf = parseFloat(req.query.amount as string) || 0;
+      const targetCurrency = (req.query.to as string) || 'RWF';
+
+      if (amountRwf <= 0) {
+        return res.status(400).json({ error: 'Invalid amount' });
+      }
+
+      const result = await convertFromRwf(amountRwf, targetCurrency);
+
+      return res.json({
+        amountRwf,
+        converted: result,
+        formatted: formatCurrency(result.amount, result.currency),
+      });
+    } catch (error) {
+      console.error('Currency conversion error:', error);
+      return res.status(500).json({ error: 'Conversion failed' });
+    }
   }
 
   /**
@@ -493,6 +1126,224 @@ class PaymentController {
   }
 
   /**
+   * Get PawaPay merchant status / active configs
+   * GET /api/payments/pawapay/status
+   */
+  async getPawaPayStatus(_req: Request, res: Response) {
+    try {
+      const pawapay = this.getPawaPayService();
+      if (!pawapay) {
+        return res.status(502).json({
+          error: 'PawaPay service not configured',
+          message: 'Set PAWAPAY_API_TOKEN env var',
+        });
+      }
+
+      const status = await pawapay.getMerchantStatus();
+
+      return res.json({
+        connected: status.connected,
+        activeConfigs: status.activeConfigs,
+        countries: status.countries,
+        supportedCountries: pawapay.getSupportedCountries().map(c => ({
+          countryCode: c.countryCode,
+          currency: c.currency,
+          providers: c.providers,
+        })),
+        message: status.message || null,
+      });
+    } catch (error) {
+      console.error('Get PawaPay status error:', error);
+      return res.status(500).json({
+        error: 'Failed to get PawaPay status',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  /**
+   * Get PawaPay wallet balance
+   * GET /api/payments/pawapay/balance
+   */
+  async getPawaPayBalance(_req: Request, res: Response) {
+    try {
+      const pawapay = this.getPawaPayService();
+      if (!pawapay) {
+        return res.status(502).json({
+          error: 'PawaPay service not configured',
+          message: 'Set PAWAPAY_API_TOKEN env var',
+        });
+      }
+
+      const result = await pawapay.getWalletBalance();
+
+      if (!result.success) {
+        return res.status(502).json({
+          success: false,
+          error: 'Failed to fetch PawaPay balance',
+          message: result.message || 'PawaPay balance check failed',
+        });
+      }
+
+      return res.json({
+        success: true,
+        balances: result.balances,
+      });
+    } catch (error) {
+      console.error('Get PawaPay balance error:', error);
+      return res.status(500).json({
+        error: 'Failed to get PawaPay balance',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  /**
+   * Send bulk payouts via PawaPay
+   * POST /api/payments/pawapay/bulk-send
+   *
+   * Body: { payouts: [{ phoneNumber, amount, currency, reason }] }
+   * Each payout is sent individually via PawaPay's payout API.
+   */
+  async sendPawaPayBulkMoney(req: Request, res: Response) {
+    try {
+      const pawapay = this.getPawaPayService();
+      if (!pawapay) {
+        return res.status(502).json({
+          error: 'PawaPay service not configured',
+          message: 'Set PAWAPAY_API_TOKEN env var',
+        });
+      }
+
+      const { payouts } = req.body as {
+        payouts: Array<{
+          phoneNumber: string;
+          amount: number;
+          currency?: string;
+          reason?: string;
+        }>;
+      };
+
+      if (!payouts || !Array.isArray(payouts) || payouts.length === 0) {
+        return res.status(400).json({ error: 'No payouts provided' });
+      }
+
+      const results: Array<{
+        phoneNumber: string;
+        amount: number;
+        currency?: string;
+        reason?: string;
+        success: boolean;
+        payoutId?: string;
+        status?: string;
+        message?: string;
+      }> = [];
+
+      for (const payout of payouts) {
+        try {
+          const result = await pawapay.initiateDisbursement({
+            amount: payout.amount,
+            phoneNumber: payout.phoneNumber,
+            currency: payout.currency,
+            reason: payout.reason,
+          });
+
+          results.push({
+            phoneNumber: payout.phoneNumber,
+            amount: payout.amount,
+            currency: payout.currency,
+            reason: payout.reason,
+            success: result.success,
+            payoutId: result.transactionId,
+            status: result.status,
+            message: result.message,
+          });
+        } catch (itemError) {
+          results.push({
+            phoneNumber: payout.phoneNumber,
+            amount: payout.amount,
+            currency: payout.currency,
+            reason: payout.reason,
+            success: false,
+            message: itemError instanceof Error ? itemError.message : 'Payout failed',
+          });
+        }
+      }
+
+      const accepted = results.filter((r) => r.success).length;
+      const rejected = results.filter((r) => !r.success).length;
+
+      return res.json({
+        success: accepted > 0,
+        results,
+        summary: `${accepted} accepted, ${rejected} rejected`,
+      });
+    } catch (error) {
+      console.error('PawaPay bulk send error:', error);
+      return res.status(500).json({
+        error: 'Failed to process bulk payouts',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  /**
+   * Send money via PawaPay (CASHOUT/disbursement)
+   * POST /api/payments/pawapay/send
+   */
+  async sendPawaPayMoney(req: Request, res: Response) {
+    try {
+      const pawapay = this.getPawaPayService();
+      if (!pawapay) {
+        return res.status(502).json({
+          error: 'PawaPay service not configured',
+          message: 'Set PAWAPAY_API_TOKEN env var',
+        });
+      }
+
+      const { amount, phoneNumber, reason } = req.body as {
+        amount: number;
+        phoneNumber: string;
+        reason?: string;
+      };
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: 'Invalid amount' });
+      }
+
+      if (!phoneNumber) {
+        return res.status(400).json({ error: 'Phone number is required' });
+      }
+
+      const result = await pawapay.initiateDisbursement({
+        amount,
+        phoneNumber,
+        reason,
+      });
+
+      if (!result.success) {
+        return res.status(502).json({
+          error: 'PawaPay send failed',
+          message: result.message || 'Failed to send money',
+        });
+      }
+
+      return res.json({
+        success: true,
+        payoutId: result.transactionId,
+        status: result.status,
+        message: `Payment sent via PawaPay. Reference: ${result.transactionId}`,
+      });
+    } catch (error) {
+      console.error('PawaPay send error:', error);
+      return res.status(500).json({
+        error: 'Failed to send via PawaPay',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  /**
    * Handle successful payment (enroll user in course, activate subscription, etc)
    */
   private async handleSuccessfulPayment(transaction: any): Promise<void> {
@@ -515,7 +1366,7 @@ class PaymentController {
       // 1. Update the Payment record (for accounting/history)
       try {
         // Find existing pending payment first (created during initiation)
-        const ref = transaction.pesapalTrackingId || transaction.intouchRef || transaction._id;
+        const ref = transaction.pesapalTrackingId || transaction.pawapayDepositId || transaction.intouchRef || transaction._id;
         let paymentRecord = await Payment.findOne({ transactionId: ref });
         
         if (paymentRecord) {
@@ -526,7 +1377,9 @@ class PaymentController {
         } else {
           // Fallback: create if it doesn't exist for some reason
           let friendlyMethod = 'Pesapal';
-          if (transaction.paymentMethod === 'manual') {
+          if (transaction.paymentMethod === 'pawapay') {
+            friendlyMethod = 'PawaPay';
+          } else if (transaction.paymentMethod === 'manual') {
             friendlyMethod = 'Manual Transfer';
           } else if (transaction.paymentMethod === 'intouch') {
             friendlyMethod = 'Intouch';
@@ -812,7 +1665,7 @@ class PaymentController {
       console.log(`Pesapal IPN Received: TrackingId=${OrderTrackingId}, Ref=${OrderMerchantReference}`);
 
       const transaction = await PaymentTransaction.findOne({ pesapalTrackingId: OrderTrackingId });
-      if (!transaction) return res.status(200).json({ status: 200 }); // Still 200
+      if (!transaction) return res.status(200).json({ status: 200 });
 
       const status = await this.pesapalService.getTransactionStatus(OrderTrackingId);
       if (!status || !status.payment_status_code) {
@@ -871,6 +1724,56 @@ class PaymentController {
       return res.redirect(`${process.env.CLIENT_URL}/payment/status?error=server_error`);
     }
   }
+
+  /**
+   * Manually re-send payment receipt email
+   * POST /api/payments/send-receipt
+   */
+  async sendReceipt(req: Request, res: Response) {
+    try {
+      const userId = req.user?.id || req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { email, transactionId, amount, description } = req.body as {
+        email: string;
+        transactionId: string;
+        amount: number;
+        description?: string;
+      };
+
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      const user = await User.findById(userId).select('username fullName');
+      const studentName = user?.fullName || user?.username || 'Student';
+
+      const invoiceNumber = `INV-${Date.now()}-${(transactionId || '').slice(-6).toUpperCase()}`;
+
+      await sendPaymentConfirmation(
+        email,
+        studentName,
+        description || 'Course Enrollment',
+        amount || 0,
+        'RWF',
+        invoiceNumber
+      );
+
+      return res.json({
+        success: true,
+        message: 'Receipt sent successfully',
+      });
+    } catch (error) {
+      console.error('Send receipt error:', error);
+      return res.status(500).json({
+        error: 'Failed to send receipt',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
   /**
    * Handle Intouch Callback
    * Receives webhooks for payment status updates from IntouchPay

@@ -107,6 +107,7 @@ export const typeDefs = `#graphql
     longitude: Float
     locationUpdatedAt: String
     locationShared: Boolean
+    locationDenied: Boolean
     title: String
     studentProfile: StudentProfile
     notes: String
@@ -883,6 +884,14 @@ export const typeDefs = `#graphql
     country: String
   }
 
+  type LocationForceResult {
+    latitude: Float
+    longitude: Float
+    locationUpdatedAt: String
+    locationShared: Boolean
+    locationDenied: Boolean
+  }
+
   type Query {
     getMyIpGeolocation: IpGeolocationResult!
 
@@ -1263,6 +1272,9 @@ export const typeDefs = `#graphql
     updateUser(id: ID!, username: String, email: String, password: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String): User
         updateUserLocation(latitude: Float!, longitude: Float!): User
     adminUpdateUserLocation(userId: ID!, latitude: Float!, longitude: Float!): User
+    setUserLocationDenied(userId: ID!, denied: Boolean!): LocationForceResult!
+    setUserLocationForceAllowed(userId: ID!, forceAllowed: Boolean!): LocationForceResult!
+    batchForceAllowLocations(userIds: [ID!]!): Int!
     deleteUser(id: ID!): Boolean
     
     # Progress Tracking
@@ -2205,15 +2217,72 @@ export const typeDefs = `#graphql
     totalSize: Float!
   }
 
+  type BackupSizeHistoryPoint {
+    date: String!
+    size: Float!
+    collections: Int!
+    name: String!
+    status: String!
+  }
+
+  type LiveCollectionStats {
+    name: String!
+    documentCount: Int!
+    size: Float!
+    avgObjSize: Float!
+    storageSize: Float!
+    indexes: Int!
+  }
+
+  type LiveDatabaseStats {
+    databaseName: String!
+    totalCollections: Int!
+    totalDocuments: Int!
+    dataSize: Float!
+    storageSize: Float!
+    indexSize: Float!
+    avgObjectSize: Float!
+    collections: [LiveCollectionStats!]!
+    largestCollection: LiveCollectionStats
+    indexes: Int!
+  }
+
+  type BackupSizeByCollection {
+    collections: Int!
+    size: Float!
+    name: String!
+  }
+
+  type BackupAnalytics {
+    sizeHistory: [BackupSizeHistoryPoint!]!
+    totalBackups: Int!
+    completedBackups: Int!
+    failedBackups: Int!
+    successRate: Float!
+    averageSize: Float!
+    totalSize: Float!
+    sizeByCollections: [BackupSizeByCollection!]!
+  }
+
+  type BackupScheduleConfig {
+    interval: String!
+    retention: Int!
+    enabled: Boolean!
+  }
+
   extend type Query {
     backups: [BackupRecord!]!
     backupClusterStatus: BackupClusterStatus!
+    backupAnalytics: BackupAnalytics!
+    backupScheduleConfig: BackupScheduleConfig!
+    liveDatabaseStats: LiveDatabaseStats!
   }
 
   extend type Mutation {
     triggerBackup: BackupRecord!
     restoreBackup(backupId: ID!, collections: [String!]): RestoreResult!
     deleteBackup(backupId: ID!): Boolean!
+    updateBackupScheduleConfig(interval: String, retention: Int, enabled: Boolean): BackupScheduleConfig!
   }
 
   type StripePaymentIntent {

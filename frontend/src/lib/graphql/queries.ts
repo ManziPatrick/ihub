@@ -2503,8 +2503,8 @@ export const GET_INTERNSHIP_PROGRAM_FOR_APPLY = gql`
 
 // ========== MEETING QUERIES ==========
 export const GET_INTERNSHIP_MEETINGS = gql`
-  query GetInternshipMeetings($teamId: ID, $programId: ID) {
-    getInternshipMeetings(teamId: $teamId, programId: $programId) {
+  query GetInternshipMeetings($teamId: ID, $programId: ID, $contextType: String) {
+    getInternshipMeetings(teamId: $teamId, programId: $programId, contextType: $contextType) {
       id
       title
       description
@@ -2512,6 +2512,8 @@ export const GET_INTERNSHIP_MEETINGS = gql`
       meetLink
       startTime
       endTime
+      contextType
+      contextTitle
       teamIds
       teams {
         id
@@ -2525,6 +2527,11 @@ export const GET_INTERNSHIP_MEETINGS = gql`
       recurrenceDays
       recurrenceEndDate
       status
+      attendees {
+        userId
+        role
+        attended
+      }
     }
   }
 `;
@@ -2539,6 +2546,9 @@ export const GET_MY_INTERNSHIP_MEETINGS = gql`
       meetLink
       startTime
       endTime
+      contextType
+      contextTitle
+      courseIds
       recurrenceDays
       recurrenceEndDate
       host {
@@ -2547,6 +2557,21 @@ export const GET_MY_INTERNSHIP_MEETINGS = gql`
         fullName
       }
       status
+      attendees {
+        userId
+        role
+        attended
+      }
+    }
+  }
+`;
+
+export const GET_MEETING_ATTENDANCE = gql`
+  query GetMeetingAttendance($meetingId: ID!) {
+    getMeetingAttendance(meetingId: $meetingId) {
+      userId
+      role
+      attended
     }
   }
 `;
@@ -2599,6 +2624,7 @@ export const GET_USERS_WITH_LOCATION = gql`
       longitude
       locationUpdatedAt
       locationShared
+      locationDenied
       title
     }
   }
@@ -3004,6 +3030,10 @@ export const GET_ALL_DISBURSEMENTS = gql`
         commissionValue
         netAmount
         status
+        releaseDate
+        approvedBy
+        approvedAt
+        holdNote
         intouchTransactionRef
         intouchReferenceId
         failureReason
@@ -3038,6 +3068,10 @@ export const GET_MY_DISBURSEMENTS = gql`
         platformCommission
         netAmount
         status
+        releaseDate
+        approvedBy
+        approvedAt
+        holdNote
         intouchTransactionRef
         intouchReferenceId
         failureReason
@@ -3057,6 +3091,7 @@ export const GET_DISBURSEMENT_STATS = gql`
   query GetDisbursementStats {
     getDisbursementStats {
       totalDisbursements
+      onHoldCount
       pendingCount
       processingCount
       successfulCount
@@ -3074,6 +3109,7 @@ export const GET_PLATFORM_COMMISSION_CONFIG = gql`
       type
       value
       autoDisbursement
+      disbursementPrimaryProvider
     }
   }
 `;
@@ -3096,6 +3132,38 @@ export const GET_INTOUCH_BALANCE = gql`
       balance
       currency
       success
+      message
+    }
+  }
+`;
+
+export const GET_HOLD_DAYS_CONFIG = gql`
+  query GetHoldDaysConfig {
+    getHoldDaysConfig
+  }
+`;
+
+export const GET_PAWAPAY_STATUS = gql`
+  query GetPawaPayStatus {
+    getPawaPayStatus {
+      connected
+      activeConfigs
+      countries
+      message
+    }
+  }
+`;
+
+export const GET_PAWAPAY_BALANCE = gql`
+  query GetPawaPayBalance {
+    getPawaPayBalance {
+      success
+      balances {
+        currency
+        available
+        pending
+        reserved
+      }
       message
     }
   }
@@ -3126,6 +3194,54 @@ export const GET_APPLICATION_PROGRESS = gql`
   }
 `;
 
+// ========== REFUND REQUEST QUERIES ==========
+export const GET_ALL_REFUND_REQUESTS = gql`
+  query GetAllRefundRequests($page: Int, $limit: Int, $status: String) {
+    getAllRefundRequests(page: $page, limit: $limit, status: $status) {
+      items {
+        id
+        paymentId
+        userId
+        user {
+          id
+          username
+          fullName
+          email
+        }
+        amount
+        currency
+        reason
+        status
+        adminNote
+        verifiedAt
+        approvedAt
+        forceApproved
+        refundedAmount
+        createdAt
+        updatedAt
+      }
+      pagination {
+        ...PaginationFragment
+      }
+    }
+  }
+  ${PAGINATION_FRAGMENT}
+`;
+
+export const GET_REFUND_REQUEST_STATS = gql`
+  query GetRefundRequestStats {
+    getRefundRequestStats {
+      totalRequests
+      pendingCount
+      verifiedCount
+      approvedCount
+      rejectedCount
+      totalRefunded
+      totalRefundFee
+    }
+  }
+`;
+
 // ========== SCHOLARSHIP QUERIES ==========
 export const GET_ALL_SCHOLARSHIPS = gql`
   query GetAllScholarships($page: Int, $limit: Int, $status: String, $type: String) {
@@ -3150,6 +3266,13 @@ export const GET_ALL_SCHOLARSHIPS = gql`
         itemTitle
         status
         reason
+        approvedAt
+        approvedBy
+        approvedByUser {
+          id
+          username
+          fullName
+        }
         revokedAt
         revokedBy
         revokedByUser {
@@ -3157,6 +3280,10 @@ export const GET_ALL_SCHOLARSHIPS = gql`
           username
         }
         revokedReason
+        grantedLatitude
+        grantedLongitude
+        grantedCity
+        grantedCountry
         createdAt
         updatedAt
       }
@@ -3189,6 +3316,18 @@ export const GET_SCHOLARSHIP_STATS = gql`
       activeScholarships
       courseScholarships
       internshipScholarships
+      totalScholarships
+      pendingScholarships
+      activeScholarships
+      courseScholarships
+      internshipScholarships
+      perAdmin {
+        adminId
+        total
+        pending
+        active
+        revoked
+      }
     }
   }
 `;

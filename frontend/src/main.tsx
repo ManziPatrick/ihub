@@ -11,6 +11,12 @@ import { env } from "./lib/env";
 // Initialize i18n
 import "./lib/i18n";
 
+// Initialize automatic error capture (GraphQL errors, runtime errors, unhandled rejections)
+import { initErrorCapture, setReportClient } from "./lib/errorCapture";
+setReportClient(client);
+initErrorCapture();
+
+
 createRoot(document.getElementById("root")!).render(
   <ApolloProvider client={client}>
     <GoogleOAuthProvider clientId={env.GOOGLE_CLIENT_ID || ""}>

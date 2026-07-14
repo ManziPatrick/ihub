@@ -28,13 +28,29 @@ import {
   ChevronRight,
   Eye,
   Loader2,
-  Plus
+  Plus,
+  CheckCircle2,
+  XCircle,
+  BookOpen,
+  Layout,
+  Building2,
+  GraduationCap,
+  Globe
 } from "lucide-react";
-import { ViewSessionDialog } from "@/components/portal/dialogs";
+import { ViewSessionDialog, CreateInternshipMeetingDialog } from "@/components/portal/dialogs";
 import { toast } from "sonner";
-import { useQuery } from "@apollo/client/react";
-import { GET_ALL_BOOKINGS, GET_INTERNSHIP_MEETINGS } from "@/lib/graphql/queries";
+import { useQuery, useMutation } from "@apollo/client/react";
+import { GET_ALL_BOOKINGS, GET_INTERNSHIP_MEETINGS, GET_MEETING_ATTENDANCE } from "@/lib/graphql/queries";
+import { BATCH_MARK_ATTENDANCE } from "@/lib/graphql/mutations";
 import { useAuth } from "@/contexts/AuthContext";
+
+const CONTEXT_FILTERS = [
+  { id: 'all', label: 'All', icon: Globe },
+  { id: 'course', label: 'Courses', icon: BookOpen },
+  { id: 'project', label: 'Projects', icon: Layout },
+  { id: 'client', label: 'Clients', icon: Building2 },
+  { id: 'internship', label: 'Internships', icon: GraduationCap },
+];
 
 export default function AdminSchedule() {
   const { user: currentUser } = useAuth();
@@ -43,16 +59,27 @@ export default function AdminSchedule() {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [viewDate, setViewDate] = useState(startOfToday());
   const [selectedDay, setSelectedDay] = useState<Date>(startOfToday());
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [contextFilter, setContextFilter] = useState('all');
+  const [attendanceOpen, setAttendanceOpen] = useState<string | null>(null);
 
   const { data: bookingsData, loading: bookingsLoading } = useQuery(GET_ALL_BOOKINGS, {
     variables: { limit: 100 }
   });
-  const { data: meetingsData, loading: meetingsLoading } = useQuery(GET_INTERNSHIP_MEETINGS);
+  const { data: meetingsData, loading: meetingsLoading } = useQuery(GET_INTERNSHIP_MEETINGS, {
+    variables: contextFilter !== 'all' ? { contextType: contextFilter } : {},
+  });
+  const { data: attendanceData, loading: attendanceLoading } = useQuery(GET_MEETING_ATTENDANCE, {
+    variables: { meetingId: attendanceOpen },
+    skip: !attendanceOpen,
+  });
+  const [batchMarkAttendance] = useMutation(BATCH_MARK_ATTENDANCE);
 
   const bookings = (bookingsData as any)?.bookings?.items || [];
   const internshipMeetings = (meetingsData as any)?.getInternshipMeetings || [];
-  
-  // Expand recurring meetings (adapted from StudentSchedule)
+  const meetingAttendees = (attendanceData as any)?.getMeetingAttendance || [];
+
+  // Expand recurring meetings
   const expandMeeting = (m: any) => {
     const instances: any[] = [];
     const startTimestamp = Number(m.startTime);
@@ -129,7 +156,9 @@ export default function AdminSchedule() {
       ...b,
       id: b.id,
       title: (b.type || 'Mentorship').replace('-', ' ') + (b.user ? ` - ${b.user.username}` : ""),
-      source: 'booking'
+      source: 'booking',
+      contextType: 'general',
+      contextTitle: 'Mentorship',
     })),
     ...expandedMeetings
   ].sort((a: any, b: any) => {
@@ -142,10 +171,6 @@ export default function AdminSchedule() {
 
   const filteredEvents = allEvents.filter((event: any) => {
     const eventDate = new Date(event.date + "T12:00:00");
-    
-    // Admins can see past events for review, but we'll focus on future/today for now
-    // if (isBefore(eventDate, today)) return false;
-
     if (timeFilter === 'all') return true;
     if (timeFilter === 'today') return isToday(eventDate);
     if (timeFilter === '3days') {
@@ -154,7 +179,6 @@ export default function AdminSchedule() {
     }
     if (timeFilter === 'week') return isSameWeek(eventDate, viewDate);
     if (timeFilter === 'month') return isSameMonth(eventDate, viewDate);
-    
     return true;
   });
 
@@ -168,6 +192,29 @@ export default function AdminSchedule() {
 
   const getEventsForDay = (d: Date) => {
     return allEvents.filter(event => isSameDay(new Date(event.date + "T12:00:00"), d));
+  };
+
+  // Handle batch attendance
+  const handleMarkAllPresent = async (meetingId: string) => {
+    const meeting = internshipMeetings.find((m: any) => m.id === meetingId);
+    if (!meeting?.attendees?.length) {
+      toast.error("No attendees to mark");
+      return;
+    }
+    try {
+      await batchMarkAttendance({
+        variables: {
+          meetingId,
+          attendanceData: meeting.attendees.map((a: any) => ({
+            userId: a.userId,
+            attended: true,
+          })),
+        },
+      });
+      toast.success("All marked present");
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   // Calendar Grid Logic
@@ -185,6 +232,15 @@ export default function AdminSchedule() {
 
   const loading = bookingsLoading || meetingsLoading;
 
+  // Context badge config
+  const contextConfig: Record<string, { label: string; color: string }> = {
+    course: { label: 'Course', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    project: { label: 'Project', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+    client: { label: 'Client', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+    internship: { label: 'Internship', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    general: { label: 'General', color: 'bg-gold/10 text-gold border-gold/20' },
+  };
+
   return (
     <PortalLayout>
       <div className="space-y-6">
@@ -198,10 +254,14 @@ export default function AdminSchedule() {
               Admin Calendar
             </h1>
             <p className="text-muted-foreground mt-1">
-              Monitor student sessions and program meetings
+              Monitor student sessions, program meetings, and attendance
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <Button variant="gold" size="sm" className="h-10 px-6 font-bold" onClick={() => setScheduleOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Schedule Meeting
+            </Button>
             <div className="flex bg-muted/30 p-1 rounded-xl border border-border/50">
               <Button 
                 variant={viewMode === 'calendar' ? 'gold' : 'ghost'} 
@@ -224,6 +284,25 @@ export default function AdminSchedule() {
             </div>
           </div>
         </motion.div>
+
+        {/* Context Filter Tabs */}
+        <div className="flex flex-wrap items-center gap-2 bg-muted/30 p-1.5 rounded-2xl border border-border/50 w-fit">
+          {CONTEXT_FILTERS.map((filter) => {
+            const Icon = filter.icon;
+            return (
+              <Button
+                key={filter.id}
+                onClick={() => setContextFilter(filter.id)}
+                variant={contextFilter === filter.id ? 'gold' : 'ghost'}
+                size="sm"
+                className="rounded-[14px] px-4 text-xs font-bold"
+              >
+                <Icon className="w-3.5 h-3.5 mr-1.5" />
+                {filter.label}
+              </Button>
+            );
+          })}
+        </div>
 
         {viewMode === 'calendar' ? (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
@@ -332,32 +411,62 @@ export default function AdminSchedule() {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {getEventsForDay(selectedDay).map((event: any) => (
-                          <div key={event.id} className="p-4 rounded-2xl bg-background/50 border border-border/30 hover:border-gold/30 transition-all group">
-                            <div className="flex justify-between items-start mb-3">
-                              <Badge variant="outline" className={`text-[8px] font-black uppercase tracking-widest h-5 ${
-                                event.source === 'internship' ? 'text-purple-400 border-purple-500/20' : 'text-gold border-gold/20'
-                              }`}>
-                                {event.source === 'internship' ? 'Program Meet' : 'Mentorship'}
-                              </Badge>
-                              <span className="text-xs font-black text-foreground/80">{event.time}</span>
-                            </div>
-                            <h4 className="font-bold text-sm text-foreground mb-1 leading-snug group-hover:text-gold transition-colors">{event.title}</h4>
-                            <p className="text-[10px] text-muted-foreground mb-3 truncate">
-                                {event.mentor?.username ? `With ${event.mentor.username}` : (event.user?.username ? `Student: ${event.user.username}` : '')}
-                            </p>
-                            <div className="flex gap-2">
-                              {event.meetingLink && (
-                                <Button variant="gold" size="sm" className="flex-1 h-8 text-[10px] font-black uppercase tracking-widest" onClick={() => handleJoinSession(event.meetingLink)}>
-                                  Join Call
-                                </Button>
+                        {getEventsForDay(selectedDay).map((event: any) => {
+                          const ctxConf = contextConfig[event.contextType] || contextConfig.general;
+                          return (
+                            <div key={event.id} className="p-4 rounded-2xl bg-background/50 border border-border/30 hover:border-gold/30 transition-all group">
+                              <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className={`text-[8px] font-black uppercase tracking-widest h-5 ${
+                                    event.source === 'internship' ? 'text-purple-400 border-purple-500/20' : 'text-gold border-gold/20'
+                                  }`}>
+                                    {event.source === 'internship' ? 'Program Meet' : 'Mentorship'}
+                                  </Badge>
+                                  {event.contextType && event.contextType !== 'general' && (
+                                    <Badge variant="outline" className={`text-[8px] font-black uppercase tracking-widest h-5 ${ctxConf.color}`}>
+                                      {ctxConf.label}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <span className="text-xs font-black text-foreground/80">{event.time}</span>
+                              </div>
+                              <h4 className="font-bold text-sm text-foreground mb-1 leading-snug group-hover:text-gold transition-colors">{event.title}</h4>
+                              {event.contextTitle && (
+                                <p className="text-[9px] text-muted-foreground mb-1 font-medium">{event.contextTitle}</p>
                               )}
-                              <Button variant="outline" size="sm" className="flex-1 h-8 text-[10px] font-black uppercase tracking-widest" onClick={() => setViewSession(event)}>
-                                Details
-                              </Button>
+                              <p className="text-[10px] text-muted-foreground mb-3 truncate">
+                                {event.mentor?.username ? `With ${event.mentor.username}` : (event.user?.username ? `Student: ${event.user.username}` : '')}
+                              </p>
+                              <div className="flex gap-2">
+                                {event.meetingLink && (
+                                  <Button variant="gold" size="sm" className="flex-1 h-8 text-[10px] font-black uppercase tracking-widest" onClick={() => handleJoinSession(event.meetingLink)}>
+                                    Join Call
+                                  </Button>
+                                )}
+                                <Button variant="outline" size="sm" className="flex-1 h-8 text-[10px] font-black uppercase tracking-widest" onClick={() => {
+                                  setViewSession(event);
+                                  setAttendanceOpen(event.source === 'internship' ? event.id?.split('-')[0] : null);
+                                }}>
+                                  Details
+                                </Button>
+                              </div>
+                              {/* Attendance indicator for internship meetings */}
+                              {event.source === 'internship' && event.attendees && event.attendees.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-border/10 flex items-center gap-2">
+                                  <Users className="w-3 h-3 text-muted-foreground" />
+                                  <span className="text-[10px] font-medium text-muted-foreground">
+                                    {event.attendees.filter((a: any) => a.attended).length}/{event.attendees.length} attended
+                                  </span>
+                                  {event.attendees.filter((a: any) => !a.attended).length > 0 && (
+                                    <Badge variant="outline" className="text-[8px] font-black uppercase text-amber-400 border-amber-500/20">
+                                      {event.attendees.filter((a: any) => !a.attended).length} absent
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </CardContent>
@@ -391,32 +500,66 @@ export default function AdminSchedule() {
               <div className="flex justify-center py-20"><Loader2 className="w-12 h-12 animate-spin text-gold" /></div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredEvents.map((booking: any) => (
-                  <Card key={booking.id} className="border-border/50 bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden hover:border-gold/30 transition-colors">
-                    <CardContent className="p-5">
-                       <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
-                                    <Video className="w-4 h-4 text-gold" />
-                                </div>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-gold">{booking.source === 'internship' ? 'Meeting' : 'Call'}</span>
+                {filteredEvents.map((booking: any) => {
+                  const ctxConf = contextConfig[booking.contextType] || contextConfig.general;
+                  return (
+                    <Card key={booking.id} className="border-border/50 bg-card/40 backdrop-blur-sm rounded-2xl overflow-hidden hover:border-gold/30 transition-colors">
+                      <CardContent className="p-5">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
+                              <Video className="w-4 h-4 text-gold" />
                             </div>
-                            <span className="text-xs font-bold text-card-foreground/60">{booking.time}</span>
-                       </div>
-                       
-                       <h3 className="font-bold text-base text-foreground mb-1 line-clamp-1">{booking.title}</h3>
-                       <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-4">
-                            <Clock className="w-3 h-3" />
-                            {format(new Date(booking.date + "T12:00:00"), "EEEE, MMM d")}
-                       </div>
+                            <div>
+                              <span className="text-[10px] font-black uppercase tracking-widest text-gold">{booking.source === 'internship' ? 'Meeting' : 'Call'}</span>
+                              {booking.contextType && booking.contextType !== 'general' && (
+                                <Badge variant="outline" className={`ml-2 text-[7px] font-black uppercase tracking-widest h-4 ${ctxConf.color}`}>
+                                  {ctxConf.label}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-xs font-bold text-card-foreground/60">{booking.time}</span>
+                        </div>
+                        
+                        <h3 className="font-bold text-base text-foreground mb-1 line-clamp-1">{booking.title}</h3>
+                        {booking.contextTitle && (
+                          <p className="text-[10px] text-muted-foreground mb-1 font-medium">{booking.contextTitle}</p>
+                        )}
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-4">
+                          <Clock className="w-3 h-3" />
+                          {format(new Date(booking.date + "T12:00:00"), "EEEE, MMM d")}
+                        </div>
 
-                       <div className="flex gap-2">
-                            <Button variant="gold" size="sm" className="flex-1 text-[10px] font-black" onClick={() => handleJoinSession(booking.meetingLink)}>Join</Button>
-                            <Button variant="outline" size="sm" className="flex-1 text-[10px] font-black" onClick={() => setViewSession(booking)}>Details</Button>
-                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        {/* Attendance quick actions for internship meetings */}
+                        {booking.source === 'internship' && (
+                          <div className="mb-3 flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <Users className="w-3 h-3 text-muted-foreground" />
+                              <span className="text-[10px] text-muted-foreground">
+                                {booking.attendees?.filter((a: any) => a.attended).length || 0}/{booking.attendees?.length || 0}
+                              </span>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-6 text-[9px] font-black uppercase tracking-widest text-gold"
+                              onClick={() => handleMarkAllPresent(booking.id?.split('-')[0])}
+                            >
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              Mark All Present
+                            </Button>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          <Button variant="gold" size="sm" className="flex-1 text-[10px] font-black" onClick={() => handleJoinSession(booking.meetingLink)}>Join</Button>
+                          <Button variant="outline" size="sm" className="flex-1 text-[10px] font-black" onClick={() => setViewSession(booking)}>Details</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -436,6 +579,11 @@ export default function AdminSchedule() {
           link: viewSession?.meetingLink
         }}
         onJoin={() => handleJoinSession(viewSession?.meetingLink)}
+      />
+
+      <CreateInternshipMeetingDialog
+        open={scheduleOpen}
+        onOpenChange={setScheduleOpen}
       />
     </PortalLayout>
   );

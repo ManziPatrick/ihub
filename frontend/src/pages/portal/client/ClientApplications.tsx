@@ -157,7 +157,7 @@ export default function ClientApplications() {
   const [agreed, setAgreed] = useState(false);
 
   // Tokens from server
-  const { data: limitData } = useQuery(NDA_DAILY_LIMIT_STATUS, { fetchPolicy: "cache-and-network" });
+  const { data: limitData } = useQuery(NDA_DAILY_LIMIT_STATUS, { fetchPolicy: "cache-first" });
   const limitStatus = (limitData as any)?.ndaDailyLimitStatus;
   const tokens = limitStatus?.remaining ?? 0;
 

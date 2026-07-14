@@ -1975,6 +1975,36 @@ export const ADMIN_UPDATE_USER_LOCATION = gql`
   }
 `;
 
+export const SET_USER_LOCATION_DENIED = gql`
+  mutation SetUserLocationDenied($userId: ID!, $denied: Boolean!) {
+    setUserLocationDenied(userId: $userId, denied: $denied) {
+      latitude
+      longitude
+      locationUpdatedAt
+      locationShared
+      locationDenied
+    }
+  }
+`;
+
+export const SET_USER_LOCATION_FORCE_ALLOWED = gql`
+  mutation SetUserLocationForceAllowed($userId: ID!, $forceAllowed: Boolean!) {
+    setUserLocationForceAllowed(userId: $userId, forceAllowed: $forceAllowed) {
+      latitude
+      longitude
+      locationUpdatedAt
+      locationShared
+      locationDenied
+    }
+  }
+`;
+
+export const BATCH_FORCE_ALLOW_LOCATIONS = gql`
+  mutation BatchForceAllowLocations($userIds: [ID!]!) {
+    batchForceAllowLocations(userIds: $userIds)
+  }
+`;
+
 export const ASSIGN_PROJECT_TO_USERS = gql`
   mutation AssignProjectToUsers($projectId: ID!, $userIds: [ID!]!, $type: String!, $deadline: String) {
     assignProjectToUsers(projectId: $projectId, userIds: $userIds, type: $type, deadline: $deadline) {

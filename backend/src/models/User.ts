@@ -100,6 +100,7 @@ const userSchema = new mongoose.Schema({
   longitude: { type: Number },
   locationUpdatedAt: { type: Date },
   locationShared: { type: Boolean, default: false },
+  locationDenied: { type: Boolean, default: false },
   title: { type: String },
 
   // Theme Preferences
