@@ -6169,7 +6169,7 @@ export const resolvers = {
           await sendNotification(pid, {
             type: 'meeting',
             title: 'New Internship Meeting Scheduled',
-            message: `A new meeting "${title}" has been scheduled.",
+            message: `A new meeting "${title}" has been scheduled.`,
             link: '/portal/internship/meetings'
           });
         }
