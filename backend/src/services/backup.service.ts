@@ -507,24 +507,7 @@ export async function getLiveDatabaseStats(): Promise<{
     .map(c => c.name)
     .filter(name => !name.startsWith('system.') && !name.startsWith('__'));
 
-  const collectionResults = await Promise.allSettled(
-    filteredCollections.map(async (name) => {
-      const coll = db.collection(name);
-      const [docCount, collStats] = await Promise.all([
-        coll.estimatedDocumentCount(),
-        coll.stats(),
-      ]);
-      return {
-        name,
-        documentCount: docCount,
-        size: collStats.size || 0,
-        avgObjSize: collStats.avgObjSize || 0,
-        storageSize: collStats.storageSize || 0,
-        indexes: collStats.nindexes || 0,
-      };
-    })
-  );
-
+  // Parallel collection stats — each callback handles its own errors so every promise fulfills
   const collectionStats: Array<{
     name: string;
     documentCount: number;
@@ -532,34 +515,41 @@ export async function getLiveDatabaseStats(): Promise<{
     avgObjSize: number;
     storageSize: number;
     indexes: number;
-  }> = [];
-
-  for (const result of collectionResults) {
-    if (result.status === 'fulfilled') {
-      collectionStats.push(result.value);
-    } else {
-      // Extract collection name from the rejected promise — use a fallback
-      const rejectedName = filteredCollections[collectionResults.indexOf(result)] || 'unknown';
-      collectionStats.push({
-        name: rejectedName,
-        documentCount: 0,
-        size: 0,
-        avgObjSize: 0,
-        storageSize: 0,
-        indexes: 0,
-      });
-    }
-  }
+  }> = await Promise.all(
+    filteredCollections.map(async (name) => {
+      try {
+        const coll = db.collection(name);
+        const [docCount, collStats] = await Promise.all([
+          coll.estimatedDocumentCount(),
+          (coll as any).stats(),
+        ]);
+        return {
+          name,
+          documentCount: docCount,
+          size: collStats.size || 0,
+          avgObjSize: collStats.avgObjSize || 0,
+          storageSize: collStats.storageSize || 0,
+          indexes: collStats.nindexes || 0,
+        };
+      } catch {
+        return {
+          name,
+          documentCount: 0,
+          size: 0,
+          avgObjSize: 0,
+          storageSize: 0,
+          indexes: 0,
+        };
+      }
+    })
+  );
 
   // Sort by size descending to find largest
   collectionStats.sort((a, b) => b.size - a.size);
 
+  // Spread the full object so GraphQL non-null fields are satisfied
   const largestCollection = collectionStats.length > 0
-    ? {
-        name: collectionStats[0].name,
-        documentCount: collectionStats[0].documentCount,
-        size: collectionStats[0].size,
-      }
+    ? { ...collectionStats[0] }
     : null;
 
   return {
