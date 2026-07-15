@@ -2376,6 +2376,34 @@ export const GET_STUDENT_PROJECT_PROGRESS = gql`
   }
 `;
 
+export const GET_CODE_EXERCISE_ANSWERS = gql`
+  query GetCodeExerciseAnswers($courseId: ID!, $lessonId: String, $courseTitle: String) {
+    getCodeExerciseAnswers(courseId: $courseId, lessonId: $lessonId, courseTitle: $courseTitle) {
+      userId
+      username
+      email
+      courseId
+      courseTitle
+      lessonId
+      lessonTitle
+      exerciseId
+      exerciseTitle
+      code
+      submittedAt
+    }
+  }
+`;
+
+export const MY_CODE_EXERCISE_ANSWERS = gql`
+  query MyCodeExerciseAnswers($courseId: ID!, $lessonId: ID!) {
+    myCodeExerciseAnswers(courseId: $courseId, lessonId: $lessonId) {
+      exerciseId
+      code
+      updatedAt
+    }
+  }
+`;
+
 export const GET_ASSIGNMENT_SUBMISSIONS = gql`
   query GetAssignmentSubmissions($courseId: ID, $lessonId: String, $page: Int, $limit: Int) {
     getAssignmentSubmissions(courseId: $courseId, lessonId: $lessonId, page: $page, limit: $limit) {

@@ -62,6 +62,7 @@ import {
   Upload,
   DollarSign,
   AlertTriangle,
+  Code,
   Database
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -196,6 +197,7 @@ const superAdminNavItems: NavItem[] = [
       { label: "Refunds", href: "/portal/super-admin/refunds", icon: RotateCcw },
       { label: "Scholarships", href: "/portal/super-admin/scholarships", icon: Award },
       { label: "Error Reports", href: "/portal/super-admin/error-reports", icon: AlertTriangle },
+      { label: "Code Answers", href: "/portal/super-admin/code-answers", icon: Code },
       { label: "Database Backups", href: "/portal/super-admin/backups", icon: Database },
     ]
   },

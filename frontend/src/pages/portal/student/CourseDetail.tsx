@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from "react";
+import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
 
 // Lazy-load heavy sub-components that aren't needed on initial page load
 const LessonQuiz = lazy(() => import("@/components/portal/LessonQuiz").then(m => ({ default: m.LessonQuiz })));
@@ -70,7 +70,7 @@ import { RequestHelpDialog, BookCallDialog } from "@/components/portal/dialogs";
 
 import { toast } from "sonner";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_COURSE, GET_ME, GET_ASSIGNMENT_SUBMISSIONS } from "@/lib/graphql/queries";
+import { GET_COURSE, GET_ME, GET_ASSIGNMENT_SUBMISSIONS, MY_CODE_EXERCISE_ANSWERS } from "@/lib/graphql/queries";
 import { COMPLETE_LESSON, SUBMIT_ASSIGNMENT, UPDATE_COURSE_PROGRESS } from "@/lib/graphql/mutations";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { triggerFileDownload } from "@/lib/download";
@@ -109,6 +109,24 @@ export default function CourseDetail() {
   const { data, loading, error } = useQuery(GET_COURSE, {
     variables: { id: courseId }
   });
+
+  // Fetch saved code exercise answers for the current lesson
+  const { data: savedCodeData } = useQuery(MY_CODE_EXERCISE_ANSWERS, {
+    variables: { courseId: courseId || '', lessonId: activeLessonId || '' },
+    skip: !courseId || !activeLessonId,
+    fetchPolicy: 'cache-first',
+  });
+
+  // Build a map of exerciseId -> savedCode for quick lookup
+  const savedCodeAnswers = useMemo(() => {
+    const answers = (savedCodeData as any)?.myCodeExerciseAnswers;
+    if (!answers) return {};
+    const map: Record<string, string> = {};
+    answers.forEach((a: any) => {
+      if (a.code) map[a.exerciseId] = a.code;
+    });
+    return map;
+  }, [savedCodeData]);
 
   const course = (data as any)?.course;
   const me = (userData as any)?.me;
@@ -762,7 +780,10 @@ export default function CourseDetail() {
                                 setupCode: ex.setupCode,
                                 expectedOutput: ex.expectedOutput,
                               }}
-                              onComplete={() => {
+                              courseId={courseId}
+                              lessonId={currentLesson?.id || currentLesson?._id}
+                              savedCode={savedCodeAnswers[ex.id]}
+                              onComplete={(code) => {
                                 if (ex.id) {
                                   setCompletedCodeExerciseIds((prev) =>
                                     prev.includes(ex.id) ? prev : [...prev, ex.id]

@@ -52,7 +52,7 @@ const seedDataStructuresCourse = async () => {
         '<p>The most comprehensive data structures course for absolute beginners. Covers everything from pseudocode basics to advanced data structures. No programming experience needed. Includes interactive games, video links, and free resources.</p>',
       thumbnail: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?auto=format&fit=crop&q=80&w=800',
       instructor: instructor._id,
-      price: 0,
+      price: 1000,
       discountPrice: 0,
       level: 'Beginner',
       category: 'Programming',

@@ -347,8 +347,8 @@ export const GENERATE_QUESTION_EXPLANATION = gql`
 `;
 
 export const RUN_CODE = gql`
-  mutation RunCode($code: String!, $language: String!, $testCode: String, $exerciseType: String, $setupCode: String) {
-    runCode(code: $code, language: $language, testCode: $testCode, exerciseType: $exerciseType, setupCode: $setupCode) {
+  mutation RunCode($code: String!, $language: String!, $testCode: String, $exerciseType: String, $setupCode: String, $exerciseTitle: String, $exerciseDescription: String, $expectedOutput: String, $exerciseId: String, $courseId: String) {
+    runCode(code: $code, language: $language, testCode: $testCode, exerciseType: $exerciseType, setupCode: $setupCode, exerciseTitle: $exerciseTitle, exerciseDescription: $exerciseDescription, expectedOutput: $expectedOutput, exerciseId: $exerciseId, courseId: $courseId) {
       output
       passed
       testResults {
@@ -359,7 +359,23 @@ export const RUN_CODE = gql`
         error
       }
       error
+      generatedTestCode
     }
+  }
+`
+
+export const GENERATE_EXERCISE_TESTS = gql`
+  mutation GenerateExerciseTests($exerciseId: String!, $courseId: String, $title: String!, $description: String, $language: String!, $initialCode: String!, $setupCode: String, $expectedOutput: String) {
+    generateExerciseTests(exerciseId: $exerciseId, courseId: $courseId, title: $title, description: $description, language: $language, initialCode: $initialCode, setupCode: $setupCode, expectedOutput: $expectedOutput) {
+      testCode
+      saved
+    }
+  }
+`;
+
+export const SAVE_CODE_EXERCISE_ANSWER = gql`
+  mutation SaveCodeExerciseAnswer($courseId: ID!, $lessonId: ID!, $exerciseId: ID!, $code: String!) {
+    saveCodeExerciseAnswer(courseId: $courseId, lessonId: $lessonId, exerciseId: $exerciseId, code: $code)
   }
 `;
 

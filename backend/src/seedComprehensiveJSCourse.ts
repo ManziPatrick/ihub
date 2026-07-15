@@ -33,7 +33,7 @@ const seedComprehensiveJSCourse = async () => {
 <p>Topics: variables, data types, operators, control flow, loops, functions, arrays, objects, ES6+, scope, closures, callbacks, promises, async/await, error handling, DOM manipulation.</p>`,
       thumbnail: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?auto=format&fit=crop&q=80&w=800',
       instructor: instructorId,
-      price: 0,
+      price: 1000,
       discountPrice: 0,
       level: 'Beginner',
       category: 'Programming',

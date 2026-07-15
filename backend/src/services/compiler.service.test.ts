@@ -299,6 +299,31 @@ describe("Test runner", () => {
     expect(result.passed).toBe(true);
   });
 
+  it("waits for async tests and reports each failure clearly", async () => {
+    const result = await compileCode({
+      code: `
+        async function add(a, b) { return a + b; }
+      `,
+      language: "javascript",
+      testCode: `
+        describe("add", () => {
+          it("adds two numbers", async () => {
+            assert.equals(await add(2, 3), 5);
+          });
+          it("fails on a bad expectation", async () => {
+            assert.equals(await add(2, 3), 10);
+          });
+        });
+      `,
+    });
+
+    expect(result.testResults).toHaveLength(2);
+    expect(result.testResults[0].passed).toBe(true);
+    expect(result.testResults[1].passed).toBe(false);
+    expect(result.testResults[1].error).toContain("Expected");
+    expect(result.passed).toBe(false);
+  });
+
   it("supports assert.deepEquals for arrays and objects", async () => {
     const result = await compileCode({
       code: `

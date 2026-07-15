@@ -21,10 +21,14 @@ import {
   FileCode,
   ChevronDown,
   ChevronUp,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { LANGUAGE_NAMES, LANGUAGE_COLORS, DEFAULT_INITIAL_CODE } from "@shared/languageConfig";
+import { useMutation } from "@apollo/client/react";
+import { GENERATE_EXERCISE_TESTS } from "@/lib/graphql/mutations";
 
 interface CodeExercise {
   id?: string;
@@ -72,6 +76,9 @@ export function ManageCodeExercisesDialog({
   const [localExercises, setLocalExercises] = useState<CodeExercise[]>(exercises || []);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [expandedPreview, setExpandedPreview] = useState<number | null>(null);
+  const [testCodeSectionOpen, setTestCodeSectionOpen] = useState(false);
+
+  const [generateTestsMutation, { loading: generating }] = useMutation<{ generateExerciseTests: { testCode: string; saved: boolean } }>(GENERATE_EXERCISE_TESTS);
 
   const [formData, setFormData] = useState<CodeExercise>({
     title: "",
@@ -84,6 +91,39 @@ export function ManageCodeExercisesDialog({
     setupCode: "",
     expectedOutput: "",
   });
+
+  const handleGenerateTests = async () => {
+    if (!formData.title.trim()) {
+      toast.error("Please set an exercise title first");
+      return;
+    }
+    if (!formData.initialCode.trim()) {
+      toast.error("Please set the starter code first");
+      return;
+    }
+
+    try {
+      const { data } = await generateTestsMutation({
+        variables: {
+          exerciseId: formData.id || "",
+          courseId: "",
+          title: formData.title,
+          description: formData.description || null,
+          language: formData.language,
+          initialCode: formData.initialCode,
+          setupCode: formData.setupCode || null,
+          expectedOutput: formData.expectedOutput || null,
+        },
+      });
+
+      if (data?.generateExerciseTests?.testCode) {
+        setFormData({ ...formData, testCode: data.generateExerciseTests.testCode });
+        toast.success("AI-generated test code added!");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate tests");
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -215,7 +255,12 @@ export function ManageCodeExercisesDialog({
           {mode === "list" ? (
             <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-6">
               <div className="space-y-4 max-w-4xl mx-auto">
-                {localExercises.map((ex, idx) => (
+                {localExercises.map((ex, idx) => {
+                  const testCount = ex.testCode
+                    ? (ex.testCode.match(/\bit\s*\(/g) || []).length
+                    : 0;
+                  const hasTests = testCount > 0;
+                  return (
                   <div
                     key={ex.id || idx}
                     className="p-5 rounded-2xl border border-border/40 bg-muted/30 group hover:border-accent/30 hover:bg-muted/50 transition-all shadow-sm"
@@ -237,6 +282,22 @@ export function ManageCodeExercisesDialog({
                             className={cn("text-[9px] font-bold uppercase tracking-widest px-2 py-0.5", TYPE_BADGES[ex.type] || "")}
                           >
                             {ex.type === "fill-in" ? "Fill In" : ex.type === "fix" ? "Fix Code" : ex.type === "test" ? "Test" : "Write"}
+                          </Badge>
+                          {/* Test status badge */}
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[9px] font-bold uppercase tracking-widest px-2 py-0.5",
+                              hasTests
+                                ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/30"
+                                : "text-muted-foreground/40 bg-muted/20 border-border/30"
+                            )}
+                          >
+                            {hasTests ? (
+                              <><CheckCircle2 className="w-2.5 h-2.5 mr-1" /> {testCount} Test{testCount !== 1 ? 's' : ''}</>
+                            ) : (
+                              <><AlertCircle className="w-2.5 h-2.5 mr-1" /> No Tests</>
+                            )}
                           </Badge>
                         </div>
                         <h4 className="font-bold text-base leading-snug text-foreground/90 mb-1">
@@ -276,9 +337,31 @@ export function ManageCodeExercisesDialog({
                             )}
                           </div>
                         )}
-                      </div>
-
-                      <div className="flex flex-col gap-2 shrink-0">
+                      </div>                        <div className="flex flex-col gap-2 shrink-0">
+                        <Button
+                          variant="ghost"
+                          className="h-9 px-3 rounded-xl hover:bg-indigo-500/10 text-indigo-400/70 hover:text-indigo-400 text-[9px] font-bold uppercase tracking-widest gap-1.5"
+                          onClick={() => {
+                            const ex = localExercises[idx];
+                            setFormData({
+                              title: ex.title || "",
+                              description: ex.description || "",
+                              language: ex.language || "javascript",
+                              initialCode: ex.initialCode || DEFAULT_INITIAL_CODE[ex.language] || "",
+                              solutionCode: ex.solutionCode || "",
+                              testCode: ex.testCode || "",
+                              type: ex.type || "write",
+                              setupCode: ex.setupCode || "",
+                              expectedOutput: ex.expectedOutput || "",
+                            });
+                            setEditingIndex(idx);
+                            setTestCodeSectionOpen(true);
+                            setMode("form");
+                          }}
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                          Tests
+                        </Button>
                         <Button
                           size="icon"
                           variant="ghost"
@@ -298,7 +381,7 @@ export function ManageCodeExercisesDialog({
                       </div>
                     </div>
                   </div>
-                ))}
+                );})}
 
                 {localExercises.length === 0 && (
                   <div className="text-center py-32 border-2 border-dashed border-border/20 rounded-[2.5rem] bg-muted/10">
@@ -424,11 +507,36 @@ export function ManageCodeExercisesDialog({
                 </details>
 
                 {/* Test Code (collapsible) */}
-                <details className="rounded-xl border border-border/40 overflow-hidden group">
-                  <summary className="px-4 py-3 bg-muted/20 cursor-pointer text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 hover:text-foreground transition-colors flex items-center gap-2">
+                <details className="rounded-xl border border-border/40 overflow-hidden group" open={testCodeSectionOpen}>
+                  <summary
+                    className="px-4 py-3 bg-muted/20 cursor-pointer text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 hover:text-foreground transition-colors flex items-center gap-2"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setTestCodeSectionOpen(v => !v);
+                    }}
+                  >
                     <Copy className="w-3.5 h-3.5" /> Test Code (Optional - uses describe/it/assert)
                   </summary>
-                  <div className="border-t border-border/40 p-4">
+                  <div className="border-t border-border/40 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] text-muted-foreground/40 font-mono">
+                        describe / it / assert.equals
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateTests}
+                        disabled={generating}
+                        className="h-8 text-[9px] font-black uppercase tracking-widest border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300 hover:border-indigo-500/50 gap-1.5 rounded-lg transition-all"
+                      >
+                        {generating ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-3.5 h-3.5" />
+                        )}
+                        {generating ? "Generating..." : "Generate with AI"}
+                      </Button>
+                    </div>
                     <Textarea
                       value={formData.testCode || ""}
                       onChange={(e) => setFormData({ ...formData, testCode: e.target.value })}

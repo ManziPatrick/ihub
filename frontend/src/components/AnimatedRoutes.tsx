@@ -101,6 +101,7 @@ const SuperAdminScholarships = lazy(() => import("@/pages/portal/super-admin/Sup
 const SocialPostGenerator = lazy(() => import("@/pages/portal/super-admin/SocialPostGenerator"));
 const SuperAdminErrorReports = lazy(() => import("@/pages/portal/super-admin/SuperAdminErrorReports"));
 const SuperAdminBackups = lazy(() => import("@/pages/portal/super-admin/SuperAdminBackups"));
+const AdminCodeExerciseAnswers = lazy(() => import("@/pages/portal/super-admin/AdminCodeExerciseAnswers"));
 const Maintenance = lazy(() => import("@/pages/Maintenance"));
 
 
@@ -253,6 +254,7 @@ export function AnimatedRoutes() {
           <Route path="/portal/super-admin/scholarships" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminScholarships /></ProtectedRoute>} />
           <Route path="/portal/super-admin/social-posts" element={<ProtectedRoute allowedRoles={["super_admin", "admin"]}><SocialPostGenerator /></ProtectedRoute>} />
           <Route path="/portal/super-admin/error-reports" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminErrorReports /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/code-answers" element={<ProtectedRoute allowedRoles={["super_admin"]}><AdminCodeExerciseAnswers /></ProtectedRoute>} />
           <Route path="/portal/super-admin/backups" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminBackups /></ProtectedRoute>} />
           <Route path="/portal/admin/commissions" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommissionDashboard /></ProtectedRoute>} />
 

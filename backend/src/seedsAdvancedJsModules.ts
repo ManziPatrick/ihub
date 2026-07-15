@@ -39,7 +39,7 @@ const seedAdvancedJsModules = async () => {
 <p>Each module includes exercises you can run, plus tests and expected outputs so learners can immediately see the correct answer and what the code should produce.</p>`,
     thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800',
     instructor: instructorId,
-    price: 0,
+    price: 1000,
     discountPrice: 0,
     level: 'Advanced',
     category: 'Programming',
