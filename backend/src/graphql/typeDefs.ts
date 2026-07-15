@@ -1267,7 +1267,7 @@ export const typeDefs = `#graphql
     toggleProjectTemplate(id: ID!, visibility: String): Project
     assignProjectToUsers(projectId: ID!, userIds: [ID!]!, type: String!, deadline: String): [Project]
 
-    enroll(courseId: ID!, selectedDeliveryMode: String): Course
+    enroll(courseId: ID!, selectedDeliveryMode: String, discountCode: String): Course
     createCourse(
       title: String!
       description: String!
