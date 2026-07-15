@@ -12,10 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from 'sonner';
-import { Loader2, Phone, CheckCircle, Smartphone, History, ShieldCheck, Mail, Ticket, X, Globe, MapPin, RefreshCw } from 'lucide-react';
+import { Loader2, Phone, CheckCircle, Smartphone, History, ShieldCheck, Mail, Ticket, X, Globe, MapPin, RefreshCw, Percent } from 'lucide-react';
 import { getApiBaseUrl } from '@/lib/env';
 import { useMutation } from '@apollo/client/react';
-import { SUBMIT_PAYMENT_PROOF } from '@/lib/graphql/mutations';
+import { SUBMIT_PAYMENT_PROOF, VALIDATE_DISCOUNT_CODE } from '@/lib/graphql/mutations';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Types ──────────────────────────────────────────────────────────────
@@ -465,6 +465,7 @@ export function PaymentForm({
   const [method, setMethod] = useState<PaymentMethod>('pawapay');
   const [discountCode, setDiscountCode] = useState('');
   const [isDiscountApplied, setIsDiscountApplied] = useState(false);
+  const [discountInfo, setDiscountInfo] = useState<{ finalPrice: number; originalPrice: number; discountType: string; discountValue: number; message: string } | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [phoneTouched, setPhoneTouched] = useState(false);
@@ -481,6 +482,8 @@ export function PaymentForm({
   const [localAmount, setLocalAmount] = useState<number>(amount);
   const [isDetecting, setIsDetecting] = useState(true);
   const [isDetectingCountry, setIsDetectingCountry] = useState(true);
+
+  const [validateDiscountMutation] = useMutation(VALIDATE_DISCOUNT_CODE);
 
   const [submitProof] = useMutation(SUBMIT_PAYMENT_PROOF, {
     onCompleted: () => {
@@ -622,8 +625,13 @@ export function PaymentForm({
       // Clean phone number
       const cleanPhone = phoneNumber.replace(/[^0-9]/g, '').replace(/^0+/, '');
 
+      // Use discounted amount if code is applied
+      const payAmount = isDiscountApplied && discountInfo
+        ? Math.floor(discountInfo.finalPrice)
+        : Math.floor(amount);
+
       const body: Record<string, any> = {
-        amount: Math.floor(amount),
+        amount: payAmount,
         paymentMethod: method === 'manual' ? 'manual_transfer' : method,
         description,
         email,
@@ -633,6 +641,8 @@ export function PaymentForm({
         internshipProgramId: internshipProgramId || undefined,
         internshipIds: internshipIds || undefined,
         selectedDeliveryMode: selectedDeliveryMode || undefined,
+        // Discount code
+        discountCode: isDiscountApplied ? discountCode.toUpperCase() : undefined,
         // Multi-country fields
         countryCode: selectedCountry, // Send for ALL countries — backend normalizes phone with this
         currency: localCurrency !== 'RWF' ? localCurrency : undefined,
@@ -747,14 +757,45 @@ export function PaymentForm({
     }
   };
 
-  const applyDiscount = () => {
+  const applyDiscount = async () => {
     if (!discountCode) return;
+    if (!courseId && (!courseIds || courseIds.length === 0)) {
+      toast.error('No course selected for discount');
+      return;
+    }
+    
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      const { data } = await validateDiscountMutation({
+        variables: {
+          code: discountCode.toUpperCase(),
+          courseId: courseId || (courseIds || [])[0],
+        },
+      });
+      
+      const result = data?.validateDiscountCode;
+      if (!result?.valid) {
+        toast.error(result?.message || 'Invalid discount code');
+        setIsDiscountApplied(false);
+        setDiscountInfo(null);
+      } else {
+        setIsDiscountApplied(true);
+        setDiscountInfo({
+          finalPrice: result.finalPrice,
+          originalPrice: result.originalPrice,
+          discountType: result.discountType,
+          discountValue: result.discountValue,
+          message: result.message,
+        });
+        toast.success(result.message || 'Discount code applied!');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to validate discount code');
+      setIsDiscountApplied(false);
+      setDiscountInfo(null);
+    } finally {
       setIsLoading(false);
-      setIsDiscountApplied(true);
-      toast.success('Discount code applied!');
-    }, 1000);
+    }
   };
 
   // Get current country info
@@ -1211,8 +1252,21 @@ export function PaymentForm({
             <span>Processing...</span>
           </div>
         ) : (
-          <span>
-            Pay {localAmount.toLocaleString(undefined, { maximumFractionDigits: localCurrency === 'RWF' ? 0 : 2 })} {localCurrency}
+          <span className="flex flex-col items-center">
+            {isDiscountApplied && discountInfo ? (
+              <>
+                <span className="text-lg font-bold">
+                  {discountInfo.finalPrice.toLocaleString()} {localCurrency}
+                </span>
+                <span className="text-xs line-through opacity-50">
+                  {discountInfo.originalPrice.toLocaleString()} {localCurrency}
+                </span>
+              </>
+            ) : (
+              <span>
+                {localAmount.toLocaleString(undefined, { maximumFractionDigits: localCurrency === 'RWF' ? 0 : 2 })} {localCurrency}
+              </span>
+            )}
             {localCurrency !== 'RWF' && (
               <span className="text-xs opacity-75 ml-1">
                 (~{amount.toLocaleString()} RWF)

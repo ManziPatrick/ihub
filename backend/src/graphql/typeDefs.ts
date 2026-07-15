@@ -3831,4 +3831,65 @@ export const typeDefs = `#graphql
     statusCode: Int
     context: String
   }
+
+  # ─── Discount Code Types ────────────────────────────────────────────────
+  type DiscountCode {
+    id: ID!
+    code: String!
+    courseId: ID!
+    course: Course
+    discountType: String! # 'percentage' or 'fixed'
+    discountValue: Float!
+    maxUses: Int!
+    currentUses: Int!
+    isActive: Boolean!
+    expiresAt: String
+    description: String
+    createdBy: User
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type DiscountCodeResponse {
+    items: [DiscountCode!]!
+    pagination: PaginationInfo
+  }
+
+  type ValidateDiscountResult {
+    valid: Boolean!
+    discountType: String
+    discountValue: Float
+    finalPrice: Float
+    originalPrice: Float
+    message: String
+  }
+
+  extend type Query {
+    discountCodes(courseId: ID, page: Int, limit: Int): DiscountCodeResponse
+    discountCode(id: ID!): DiscountCode
+    validateDiscountCode(code: String!, courseId: ID!): ValidateDiscountResult
+  }
+
+  extend type Mutation {
+    createDiscountCode(
+      code: String!
+      courseId: ID!
+      discountType: String!
+      discountValue: Float!
+      maxUses: Int
+      expiresAt: String
+      description: String
+    ): DiscountCode
+    updateDiscountCode(
+      id: ID!
+      code: String
+      discountType: String
+      discountValue: Float
+      maxUses: Int
+      isActive: Boolean
+      expiresAt: String
+      description: String
+    ): DiscountCode
+    deleteDiscountCode(id: ID!): Boolean
+  }
 `;

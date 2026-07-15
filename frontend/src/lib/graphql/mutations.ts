@@ -2520,3 +2520,59 @@ export const REVOKE_SCHOLARSHIP = gql`
     }
   }
 `;
+
+// ========== DISCOUNT CODE MUTATIONS ==========
+export const CREATE_DISCOUNT_CODE = gql`
+  mutation CreateDiscountCode($code: String!, $courseId: ID!, $discountType: String!, $discountValue: Float!, $maxUses: Int, $expiresAt: String, $description: String) {
+    createDiscountCode(code: $code, courseId: $courseId, discountType: $discountType, discountValue: $discountValue, maxUses: $maxUses, expiresAt: $expiresAt, description: $description) {
+      id
+      code
+      courseId
+      discountType
+      discountValue
+      maxUses
+      currentUses
+      isActive
+      expiresAt
+      description
+      createdAt
+    }
+  }
+`;
+
+export const UPDATE_DISCOUNT_CODE = gql`
+  mutation UpdateDiscountCode($id: ID!, $code: String, $discountType: String, $discountValue: Float, $maxUses: Int, $isActive: Boolean, $expiresAt: String, $description: String) {
+    updateDiscountCode(id: $id, code: $code, discountType: $discountType, discountValue: $discountValue, maxUses: $maxUses, isActive: $isActive, expiresAt: $expiresAt, description: $description) {
+      id
+      code
+      courseId
+      discountType
+      discountValue
+      maxUses
+      currentUses
+      isActive
+      expiresAt
+      description
+      createdAt
+    }
+  }
+`;
+
+export const DELETE_DISCOUNT_CODE = gql`
+  mutation DeleteDiscountCode($id: ID!) {
+    deleteDiscountCode(id: $id)
+  }
+`;
+
+export const VALIDATE_DISCOUNT_CODE = gql`
+  mutation ValidateDiscountCode($code: String!, $courseId: ID!) {
+    validateDiscountCode(code: $code, courseId: $courseId) {
+      valid
+      discountType
+      discountValue
+      finalPrice
+      originalPrice
+      message
+    }
+  }
+`;

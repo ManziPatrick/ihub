@@ -32,6 +32,7 @@ if (!admin.apps.length) {
   }
 }
 import { Message } from '../models/Message';
+import { DiscountCode } from '../models/DiscountCode';
 import { Conversation } from '../models/Conversation';
 import { sendEmail, sendLoginOTPEmail, sendSuspiciousLoginAlert } from '../services/email.service';
 import { haversineDistance, SUSPICIOUS_LOGIN_THRESHOLD_KM, checkSuspiciousLogin } from '../services/login-security.service';
@@ -3208,6 +3209,86 @@ export const resolvers = {
       });
     },
 
+    // ─── Discount Code Queries ───────────────────────────────────────────
+    discountCodes: async (_: any, { courseId, page = 1, limit = 10 }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      const filter: any = {};
+      if (courseId) filter.courseId = courseId;
+      
+      const totalCount = await DiscountCode.countDocuments(filter);
+      const items = await DiscountCode.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate('courseId')
+        .populate('createdBy');
+      
+      return {
+        items,
+        pagination: {
+          totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+          currentPage: page,
+          pageSize: limit,
+          hasNextPage: page * limit < totalCount,
+          hasPreviousPage: page > 1,
+        },
+      };
+    },
+    
+    discountCode: async (_: any, { id }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      return await DiscountCode.findById(id).populate('courseId').populate('createdBy');
+    },
+    
+    validateDiscountCode: async (_: any, { code, courseId }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      
+      const discountCode = await DiscountCode.findOne({
+        code: code.toUpperCase(),
+        courseId,
+        isActive: true,
+      });
+      
+      if (!discountCode) {
+        return { valid: false, message: 'Invalid or expired discount code' };
+      }
+      
+      // Check expiry
+      if (discountCode.expiresAt && new Date(discountCode.expiresAt) < new Date()) {
+        return { valid: false, message: 'This discount code has expired' };
+      }
+      
+      // Check usage limit
+      if (discountCode.currentUses >= discountCode.maxUses) {
+        return { valid: false, message: 'This discount code has reached its maximum uses' };
+      }
+      
+      // Get course price
+      const courseDoc = await Course.findById(discountCode.courseId);
+      const coursePrice = courseDoc?.price || 0;
+      
+      let finalPrice = coursePrice;
+      if (discountCode.discountType === 'percentage') {
+        finalPrice = Math.max(0, coursePrice - (coursePrice * discountCode.discountValue / 100));
+      } else if (discountCode.discountType === 'fixed') {
+        finalPrice = Math.max(0, coursePrice - discountCode.discountValue);
+      }
+      
+      return {
+        valid: true,
+        discountType: discountCode.discountType,
+        discountValue: discountCode.discountValue,
+        finalPrice,
+        originalPrice: coursePrice,
+        message: discountCode.discountValue === 0 || finalPrice === 0
+          ? 'This code makes the course free!'
+          : `Code applied! You save ${discountCode.discountType === 'percentage' ? `${discountCode.discountValue}%` : `${discountCode.discountValue} RWF`}`,
+      };
+    },
+
     getSignedNDA: async (_: any, { applicationId }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
       const { ProjectNDA } = require('../models/ProjectNDA');
@@ -5163,6 +5244,60 @@ export const resolvers = {
 
       return message;
     },
+    // ─── Discount Code Mutations ─────────────────────────────────────────
+    createDiscountCode: async (_: any, args: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      
+      const existing = await DiscountCode.findOne({ code: args.code.toUpperCase(), courseId: args.courseId });
+      if (existing) {
+        throw new Error('A discount code with this name already exists for this course');
+      }
+      
+      const saved = await new DiscountCode({
+        code: args.code.toUpperCase(),
+        courseId: args.courseId,
+        discountType: args.discountType,
+        discountValue: args.discountValue,
+        maxUses: args.maxUses || 1,
+        expiresAt: args.expiresAt || null,
+        description: args.description || '',
+        createdBy: context.user.id,
+      }).save();
+      
+      return DiscountCode.findById(saved._id).populate('courseId').populate('createdBy');
+    },
+    
+    updateDiscountCode: async (_: any, args: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      
+      const update: any = {};
+      if (args.code !== undefined) update.code = args.code.toUpperCase();
+      if (args.discountType !== undefined) update.discountType = args.discountType;
+      if (args.discountValue !== undefined) update.discountValue = args.discountValue;
+      if (args.maxUses !== undefined) update.maxUses = args.maxUses;
+      if (args.isActive !== undefined) update.isActive = args.isActive;
+      if (args.expiresAt !== undefined) update.expiresAt = args.expiresAt;
+      if (args.description !== undefined) update.description = args.description;
+      
+      const code = await DiscountCode.findByIdAndUpdate(args.id, { $set: update }, { new: true })
+        .populate('courseId')
+        .populate('createdBy');
+      if (!code) throw new Error('Discount code not found');
+      return code;
+    },
+    
+    deleteDiscountCode: async (_: any, { id }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      await DiscountCode.findByIdAndDelete(id);
+      return true;
+    },
+
     subscribeToNewsletter: async (_: any, { email }: { email: string }) => {
       try {
         const existing = await NewsletterSubscription.findOne({ email });
