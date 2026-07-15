@@ -88,8 +88,8 @@ export default function SuperAdminDiscountCodes() {
     });
   };
 
-  const courses = coursesData?.courses?.items || [];
-  const discountCodes = codesData?.discountCodes?.items || [];
+  const courses = (coursesData as any)?.courses?.items || [];
+  const discountCodes = (codesData as any)?.discountCodes?.items || [];
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-8">

@@ -773,7 +773,16 @@ export function PaymentForm({
         },
       });
       
-      const result = data?.validateDiscountCode;
+      const result = (data as any)?.validateDiscountCode as
+        | {
+            valid?: boolean;
+            finalPrice?: number;
+            originalPrice?: number;
+            discountType?: string;
+            discountValue?: number;
+            message?: string;
+          }
+        | undefined;
       if (!result?.valid) {
         toast.error(result?.message || 'Invalid discount code');
         setIsDiscountApplied(false);
