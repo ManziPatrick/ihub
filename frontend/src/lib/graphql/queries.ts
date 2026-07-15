@@ -3359,3 +3359,55 @@ export const GET_SCHOLARSHIP_STATS = gql`
     }
   }
 `;
+
+export const GET_DISCOUNT_CODES = gql`
+  query GetDiscountCodes($courseId: ID, $page: Int, $limit: Int) {
+    discountCodes(courseId: $courseId, page: $page, limit: $limit) {
+      items {
+        id
+        code
+        courseId
+        discountType
+        discountValue
+        maxUses
+        currentUses
+        isActive
+        expiresAt
+        description
+        createdAt
+      }
+      pagination {
+        totalCount
+        totalPages
+        currentPage
+        pageSize
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+
+export const GET_DISCOUNT_CODE = gql`
+  query GetDiscountCode($id: ID!) {
+    discountCode(id: $id) {
+      id
+      code
+      courseId
+      discountType
+      discountValue
+      maxUses
+      currentUses
+      isActive
+      expiresAt
+      description
+      createdAt
+      course {
+        id
+        title
+        price
+      }
+    }
+  }
+`;
+
