@@ -189,6 +189,26 @@ export const typeDefs = `#graphql
     pagination: PaginationInfo
   }
 
+  type CodeExerciseAnswerRecord {
+    userId: ID!
+    username: String!
+    email: String!
+    courseId: ID!
+    courseTitle: String!
+    lessonId: String!
+    lessonTitle: String
+    exerciseId: ID!
+    exerciseTitle: String!
+    code: String!
+    submittedAt: String!
+  }
+
+  type SavedCodeExerciseAnswer {
+    exerciseId: ID!
+    code: String!
+    updatedAt: String
+  }
+
   type AssignmentSubmissionResponse {
     items: [AssignmentSubmission]
     pagination: PaginationInfo
@@ -277,13 +297,19 @@ export const typeDefs = `#graphql
     passed: Boolean!
     testResults: [TestResult!]
     error: String
+    generatedTestCode: String
+  }
+
+  type CodeTestGenerationResult {
+    testCode: String!
+    saved: Boolean!
   }
 
   type TestResult {
     name: String!
     passed: Boolean!
-    expected: String!
-    actual: String!
+    expected: String
+    actual: String
     error: String
   }
 
@@ -966,6 +992,8 @@ export const typeDefs = `#graphql
     
     # Assignments
     getAssignmentSubmissions(courseId: ID, lessonId: String, page: Int, limit: Int): AssignmentSubmissionResponse
+    getCodeExerciseAnswers(courseId: ID!, lessonId: String, courseTitle: String): [CodeExerciseAnswerRecord!]!
+    myCodeExerciseAnswers(courseId: ID!, lessonId: ID!): [SavedCodeExerciseAnswer!]!
     
     # Completed Users
     completedUsers(page: Int, limit: Int, createdBy: ID, courseId: ID, dateFrom: String, dateTo: String): CompletedUserResponse
@@ -1194,7 +1222,18 @@ export const typeDefs = `#graphql
     generateQuestionExplanation(questionText: String!, options: [String!]!, correctOptionIndex: Int!): String
 
     # Code Execution
-    runCode(code: String!, language: String!, testCode: String, exerciseType: String, setupCode: String): CodeExecResult!
+    runCode(code: String!, language: String!, testCode: String, exerciseType: String, setupCode: String, exerciseTitle: String, exerciseDescription: String, expectedOutput: String, exerciseId: String, courseId: String): CodeExecResult!
+    generateExerciseTests(
+      exerciseId: String!
+      courseId: String
+      title: String!
+      description: String
+      language: String!
+      initialCode: String!
+      setupCode: String
+      expectedOutput: String
+    ): CodeTestGenerationResult!
+    saveCodeExerciseAnswer(courseId: ID!, lessonId: ID!, exerciseId: ID!, code: String!): Boolean!
 
     # Uploads
     getUploadSignature(folder: String, resourceType: String): UploadSignature!

@@ -766,6 +766,67 @@ const parseAIResponse = async (aiContent: string, contextUser: any) => {
     return { content: finalContent, role: 'assistant', action, actionData };
 };
 
+/**
+ * Generates test code for a coding exercise using AI.
+ * Called when no testCode is provided by the admin.
+ */
+export const generateCodeTestsService = async (
+  exerciseTitle: string,
+  exerciseDescription: string,
+  language: string,
+  initialCode: string,
+  expectedOutput?: string
+): Promise<string> => {
+  const prompt = `You are an expert coding instructor. Generate thorough test cases for the following coding exercise.
+
+The tests MUST actually verify that the exercise requirements are fulfilled, not just that the function exists.
+
+The tests should use the following format:
+- describe("title", function() { ... })
+- it("description", function() { ... })
+- assert.equals(actual, expected)
+- assert.notEquals(actual, expected)
+- assert.isTrue(value)
+- assert.isFalse(value)
+- assert.isFunction(value)
+- assert.deepEquals(actual, expected)
+
+Exercise Title: ${exerciseTitle}
+Exercise Description: ${exerciseDescription}
+Language: ${language}
+Initial (stub) Code:
+\`\`\`
+${initialCode}
+\`\`\`
+${expectedOutput ? `Expected Output: ${expectedOutput}` : ''}
+
+CRITICAL REQUIREMENTS FOR TESTS:
+1. READ the exercise description carefully. Identify what the function should DO.
+2. Test that the function produces CORRECT OUTPUT for various inputs (not just that it exists).
+3. If the function should RETURN a value, use assert.equals() to check the return value.
+4. If the function should LOG/PRINT output (use console.log), call the function and check that it runs without errors using assert.isTrue(true). Also check edge cases like empty input.
+5. Test with MULTIPLE inputs — normal cases, edge cases (empty arrays, zero, negative numbers), and error cases.
+6. If the exercise mentions iterating through an array or list, test with arrays of different lengths including empty.
+7. CRITICALLY: The student's code may have an EMPTY function body. Your tests must FAIL in that case by calling the function with real inputs and checking the output against expected values.
+8. Generate at least 3-4 test cases.
+
+FORMAT RULES:
+- Return ONLY valid test code using describe/it/assert.
+- NO markdown, NO explanations, NO extra text — ONLY the test code.
+- DO NOT include the initial code — ONLY the test suite.
+- DO NOT wrap in code fences.
+
+Test Code:`;
+
+  try {
+    const chatCompletion = await tryInference([{ role: 'user', content: prompt }], 1536);
+    return chatCompletion.choices[0].message.content || '';
+  } catch (error: any) {
+    console.error('AI Test Generation Error:', error?.message || error);
+    return '';
+  }
+};
+
 const handleAIError = (error: any) => {
     console.error('AI Service Error:', error?.message || error);
     return {

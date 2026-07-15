@@ -105,8 +105,8 @@ import { generateCertificatePDF, generateInvoicePDF } from '../services/pdf.serv
 import { autoGenerateCertificate } from '../controllers/CertificateController';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { chatWithAIService, explainTaskService, reviewSubmissionService, batchReviewOpenQuestionsService, generateAIQuizService, hintForQuestionService, generateQuestionExplanationService, getChatGreeting } from '../services/ai.service';
-import { compileCode } from '../services/compiler.service';
+import { chatWithAIService, explainTaskService, reviewSubmissionService, batchReviewOpenQuestionsService, generateAIQuizService, hintForQuestionService, generateQuestionExplanationService, getChatGreeting, generateCodeTestsService } from '../services/ai.service';
+import { compileCode, preGenerateExerciseTests } from '../services/compiler.service';
 import { lookupRequestGeoLocation } from "../services/geoip.service";
 
 
@@ -266,6 +266,120 @@ export const resolvers = {
 
     getResource: async (_: any, { id }: any) => {
       return await Resource.findById(id).populate('createdBy');
+    },
+
+    getCodeExerciseAnswers: async (_: any, { courseId, lessonId, courseTitle }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+
+      const filter: any = { courseId };
+      if (lessonId) filter.lessonId = lessonId;
+
+      // For admin (non-super), restrict to their own courses
+      if (context.user.role === 'admin') {
+        const adminCourses = await Course.find({
+          $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
+        }).distinct('_id');
+        const adminCourseIds = adminCourses.map((id: any) => id.toString());
+        if (!adminCourseIds.includes(courseId.toString())) {
+          return [];
+        }
+      }
+
+      // Find submission records that have code exercise answers
+      const submissions = await AssignmentSubmission.find(filter)
+        .populate('userId', 'username email')
+        .populate('courseId', 'title')
+        .sort({ updatedAt: -1 });
+
+      const records: any[] = [];
+
+      for (const submission of submissions) {
+        const user: any = (submission as any).userId;
+        const course: any = (submission as any).courseId;
+
+        if (!user || !course) continue;
+
+        // Parse the JSON content which stores code answers per exercise
+        let codeAnswers: Record<string, any> = {};
+        try {
+          codeAnswers = JSON.parse(submission.content || '{}');
+        } catch {
+          continue;
+        }
+
+        // Find the actual exercise titles from the course
+        const lessonFromCourse = (course as any).modules?.flatMap((m: any) => m.lessons || [])
+          .find((l: any) => (l._id?.toString() || l.id) === submission.lessonId);
+
+        for (const [exerciseId, answer] of Object.entries(codeAnswers)) {
+          const codeData = answer as any;
+          // Find exercise title from course
+          let exerciseTitle = exerciseId;
+          if (lessonFromCourse?.codeExercises) {
+            const ex = lessonFromCourse.codeExercises.find((e: any) => 
+              (e._id?.toString() || e.id) === exerciseId
+            );
+            if (ex) exerciseTitle = ex.title || ex._id?.toString() || exerciseId;
+          }
+
+          records.push({
+            userId: user._id.toString(),
+            username: user.username || 'Unknown',
+            email: user.email || '',
+            courseId: course._id.toString(),
+            courseTitle: course.title || courseTitle || '',
+            lessonId: submission.lessonId,
+            lessonTitle: lessonFromCourse?.title || '',
+            exerciseId,
+            exerciseTitle,
+            code: codeData.code || '',
+            submittedAt: codeData.updatedAt || submission.updatedAt?.toISOString() || '',
+          });
+        }
+      }
+
+      return records;
+    },
+
+    myCodeExerciseAnswers: async (_: any, { courseId, lessonId }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+
+      try {
+        const submission = await AssignmentSubmission.findOne({
+          userId: context.user.id,
+          courseId,
+          lessonId,
+        }).sort({ updatedAt: -1 });
+
+        if (!submission || !submission.content) {
+          return [];
+        }
+
+        // Parse the JSON content which stores code answers per exercise
+        let codeAnswers: Record<string, any> = {};
+        try {
+          codeAnswers = JSON.parse(submission.content || '{}');
+        } catch {
+          return [];
+        }
+
+        const records: any[] = [];
+        for (const [exerciseId, answer] of Object.entries(codeAnswers)) {
+          const codeData = answer as any;
+          records.push({
+            exerciseId,
+            code: codeData.code || '',
+            updatedAt: codeData.updatedAt || submission.updatedAt?.toISOString() || '',
+          });
+        }
+
+        return records;
+      } catch (err: any) {
+        console.error('Failed to fetch code exercise answers:', err?.message);
+        return [];
+      }
     },
 
     getAssignmentSubmissions: async (_: any, { courseId, lessonId, page = 1, limit = 10 }: any, context: any) => {
@@ -4044,10 +4158,107 @@ export const resolvers = {
     },
 
     // Code Execution
-    runCode: async (_: any, { code, language, testCode, exerciseType, setupCode }: any) => {
-      const result = await compileCode({ code, language, testCode, exerciseType, setupCode });
+    runCode: async (_: any, { code, language, testCode, exerciseType, setupCode, exerciseTitle, exerciseDescription, expectedOutput, exerciseId, courseId }: any) => {
+      const result = await compileCode({
+        code,
+        language,
+        testCode,
+        exerciseType,
+        setupCode,
+        exerciseTitle,
+        exerciseDescription,
+        expectedOutput,
+      });
+
+      // Persist AI-generated tests to DB so they're reused (no token waste)
+      if (result.generatedTestCode && exerciseId) {
+        try {
+          const updateQuery: any = {};
+          updateQuery[`modules.$[].lessons.$[].codeExercises.$[ex].testCode`] = result.generatedTestCode;
+          await Course.updateOne(
+            { "modules.lessons.codeExercises._id": exerciseId },
+            { $set: updateQuery },
+            { arrayFilters: [{ "ex._id": exerciseId }] }
+          );
+          console.log(`💾 Saved AI-generated testCode to exercise ${exerciseId}`);
+        } catch (dbErr: any) {
+          console.warn('Failed to persist generated testCode to DB:', dbErr?.message);
+        }
+      }
+
       return result;
     },
+
+    generateExerciseTests: async (_: any, { exerciseId, courseId, title, description, language, initialCode, setupCode, expectedOutput }: any) => {
+      
+      let testCode = await generateCodeTestsService(
+        title,
+        description || '',
+        language,
+        initialCode || '',
+        expectedOutput
+      );
+      
+      if (!testCode || !testCode.trim()) {
+        throw new Error('AI test generation returned empty result');
+      }
+      
+      // Strip markdown code fences
+      testCode = testCode.replace(/```[a-zA-Z]*\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      // Save to DB if exerciseId is provided
+      let saved = false;
+      if (exerciseId) {
+        try {
+          const updateQuery: any = {};
+          updateQuery[`modules.$[].lessons.$[].codeExercises.$[ex].testCode`] = testCode;
+          await Course.updateOne(
+            { "modules.lessons.codeExercises._id": exerciseId },
+            { $set: updateQuery },
+            { arrayFilters: [{ "ex._id": exerciseId }] }
+          );
+          saved = true;
+        } catch (dbErr: any) {
+          console.warn('Failed to save generated testCode to DB:', dbErr?.message);
+        }
+      }
+      
+      return { testCode, saved };
+    },
+
+    saveCodeExerciseAnswer: async (_: any, { courseId, lessonId, exerciseId, code }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      
+      try {
+        // Upsert assignment submission with code exercise answer
+        const existing = await AssignmentSubmission.findOne({
+          userId: context.user.id,
+          courseId,
+          lessonId,
+        });
+        
+        const codeAnswers = existing?.content ? JSON.parse(existing.content) : {};
+        codeAnswers[exerciseId] = { code, updatedAt: new Date().toISOString() };
+        
+        await AssignmentSubmission.findOneAndUpdate(
+          { userId: context.user.id, courseId, lessonId },
+          { 
+            userId: context.user.id,
+            courseId,
+            lessonId,
+            content: JSON.stringify(codeAnswers),
+            status: 'completed',
+          },
+          { upsert: true, new: true }
+        );
+        
+        return true;
+      } catch (err: any) {
+        console.error('Failed to save code exercise answer:', err?.message);
+        return false;
+      }
+    },
+
     enroll: async (_: any, { courseId, selectedDeliveryMode }: { courseId: string, selectedDeliveryMode?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
@@ -4205,6 +4416,21 @@ export const resolvers = {
         school: args.school || context.user.school
       });
       await course.save();
+
+      // 🤖 Auto-generate AI tests for ALL coding exercises (always, not just on publish)
+      try {
+        const generatedCount = await Promise.race([
+          preGenerateExerciseTests(course),
+          new Promise<number>((_, reject) => setTimeout(() => reject(new Error('Test generation timed out')), 15000))
+        ]);
+        if (generatedCount > 0) {
+          console.log(`✅ AI-generated ${generatedCount} test(s) for "${course.title}"`);
+        }
+      } catch (err: any) {
+        console.warn(`⚠️ Could not auto-generate tests for "${course.title}": ${err?.message}`);
+        // Don't block the mutation — course is saved regardless
+      }
+
       return await course.populate('instructor');
     },
 
@@ -4442,6 +4668,20 @@ export const resolvers = {
         });
       });
       console.log(`[UpdateCourse] POST-SAVE VERIFICATION: Total Quiz Questions in DB: ${totalQs}`);
+
+      // 🤖 Auto-generate AI tests for ALL coding exercises (always, not just on publish)
+      try {
+        const generatedCount = await Promise.race([
+          preGenerateExerciseTests(updatedCourse),
+          new Promise<number>((_, reject) => setTimeout(() => reject(new Error('Test generation timed out')), 15000))
+        ]);
+        if (generatedCount > 0) {
+          console.log(`✅ AI-generated ${generatedCount} test(s) for "${updatedCourse.title}"`);
+        }
+      } catch (err: any) {
+        console.warn(`⚠️ Could not auto-generate tests for "${updatedCourse.title}": ${err?.message}`);
+        // Don't block the mutation — course is saved regardless
+      }
 
       return updatedCourse;
     },
