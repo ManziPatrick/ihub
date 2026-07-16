@@ -7,6 +7,9 @@ import { Internship } from '../models/Internship';
 import { Certificate } from '../models/Certificate';
 import { reportCache } from '../lib/reportCache';
 
+const notProvided = 'Not provided';
+
+
 export const userReportResolvers = {
   Query: {
     getUserFullReport: async (_: any, { userId }: { userId: string }, context: any) => {
@@ -33,20 +36,22 @@ export const userReportResolvers = {
       console.log(`[UserReport Cache] MISS for user ${userId}`);
 
       // ── Fetch user ──
+      // Important: even if populate fails (missing paths in some environments), we still want base user data.
       let user: any;
-      try {
+  try {
         user = await User.findById(userId)
-          .populate('enrolledCourses')
-          .populate('completedCourses')
+          // ensure we have course metadata for the report "Courses" section
+          .populate('enrolledCourses', 'title level category thumbnail modules')
           .populate('badges.badge');
       } catch (err: any) {
-        console.error(`[UserReport] DB error fetching user ${userId}:`, err.message);
-        throw new Error('Database error while fetching user data.');
+        console.error(`[UserReport] populate error fetching user ${userId}:`, err?.message || err);
+        user = await User.findById(userId);
       }
 
       if (!user) {
         throw new Error(`User not found with ID: ${userId}`);
       }
+
 
       // ── Fetch course progress ──
       let courseProgresses: any[] = [];
@@ -57,11 +62,11 @@ export const userReportResolvers = {
         // Non-blocking — continue with empty progress
       }
 
-      // ── Fetch submissions ──
+      // ── Fetch submissions (populate course fields used by report printing) ──
       let submissions: any[] = [];
       try {
         submissions = await AssignmentSubmission.find({ userId })
-          .populate('courseId')
+          .populate('courseId', 'title level category thumbnail modules')
           .sort({ createdAt: -1 });
       } catch (err: any) {
         console.error(`[UserReport] Error fetching submissions for ${userId}:`, err.message);
@@ -110,39 +115,82 @@ export const userReportResolvers = {
         // Non-blocking — certificate model may not exist yet
       }
 
+
       // ── Grades aggregation ──
       const allGrades: any[] = (user as any).grades || [];
 
-      // ── Course progress with details ──
-      const coursesWithProgress = ((user as any).enrolledCourses || []).map((course: any) => {
+      // ── Course progress with details (derive from submissions/course documents for reliable printing) ──
+      const uniqueCourseIds = Array.from(
+        new Set(
+          submissions
+            .map((s: any) => s.courseId?._id?.toString?.() || s.courseId?.toString?.())
+            .filter(Boolean)
+        )
+      );
+
+      // Load courses so we can compute title/level/category + totalLessons reliably.
+      let coursesById: Record<string, any> = {};
+      try {
+        const loadedCourses = uniqueCourseIds.length
+          ? await require('../models/Course').Course.find({ _id: { $in: uniqueCourseIds } })
+              .populate('modules')
+          : [];
+
+        coursesById = loadedCourses.reduce((acc: Record<string, any>, c: any) => {
+          acc[c._id.toString()] = c;
+          return acc;
+        }, {});
+      } catch (e) {
+        // Non-blocking — fallback to enrolledCourses
+        coursesById = {};
+      }
+
+      const enrolledCourses = (user as any).enrolledCourses || [];
+      const courseRefItems = enrolledCourses.length ? enrolledCourses : [];
+
+      const coursesWithProgress = courseRefItems.map((course: any) => {
+        const courseId = course?._id?.toString?.() || course?.toString?.();
         const progress = courseProgresses.find(
-          (cp: any) => cp.courseId.toString() === course._id.toString()
+          (cp: any) => cp.courseId?.toString?.() === courseId
         );
         const courseGrades = allGrades.filter(
-          (g: any) => g.courseId?.toString?.() === course._id.toString()
+          (g: any) => g.courseId?.toString?.() === courseId
         );
+
         const courseSubmissions = submissions.filter(
-          (s: any) => s.courseId?._id?.toString() === course._id.toString()
+          (s: any) => s.courseId?._id?.toString?.() === courseId
         );
+
         const isCompleted = (user as any).completedCourses?.some(
-          (c: any) => c._id.toString() === course._id.toString()
+          (c: any) => c?._id?.toString?.() === courseId
         );
+
         const avgCourseGrade = courseGrades.length > 0
-          ? Math.round(courseGrades.reduce((sum: number, g: any) => sum + (g.score || 0), 0) / courseGrades.length)
+          ? Math.round(
+              courseGrades.reduce((sum: number, g: any) => sum + (g.score || 0), 0) /
+                courseGrades.length
+            )
           : null;
 
+        const loadedCourse = coursesById[courseId];
+        const totalLessons = loadedCourse?.modules?.reduce(
+          (acc: number, m: any) => acc + (m.lessons?.length || 0),
+          0
+        ) || 0;
+
         return {
-          courseId: course._id.toString(),
-          courseTitle: course.title || 'Unknown Course',
-          courseThumbnail: course.thumbnail || null,
-          courseLevel: course.level || null,
-          courseCategory: course.category || null,
+          courseId: courseId,
+          courseTitle:
+            loadedCourse?.title || course.title || course.courseTitle || notProvided,
+          courseThumbnail: loadedCourse?.thumbnail || course.thumbnail || null,
+          courseLevel: loadedCourse?.level || course.level || null,
+          courseCategory: loadedCourse?.category || course.category || null,
           overallProgress: progress?.overallProgress || 0,
           status: isCompleted ? 'completed' : progress?.status || 'active',
           totalTimeSpent: progress?.totalTimeSpent || 0,
           lastAccessed: progress?.lastAccessed?.toISOString?.() || null,
           completedLessons: progress?.lessons?.filter((l: any) => l.completed).length || 0,
-          totalLessons: course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0,
+          totalLessons,
           averageGrade: avgCourseGrade,
           gradesCount: courseGrades.length,
           submissionsCount: courseSubmissions.length,
@@ -157,6 +205,7 @@ export const userReportResolvers = {
           })),
         };
       });
+
 
       // ── Stats summary ──
       const totalLessonsCompleted = (user as any).completedLessons?.length || 0;
@@ -210,16 +259,18 @@ export const userReportResolvers = {
         },
         courses: coursesWithProgress,
         submissions: submissions.map((s: any) => ({
+
           submissionId: s._id.toString(),
-          courseId: s.courseId?._id?.toString() || null,
-          courseTitle: s.courseId?.title || 'Unknown Course',
           lessonId: s.lessonId,
           status: s.status,
           grade: s.grade,
           totalScore: s.totalScore,
           feedback: s.feedback,
           submittedAt: s.createdAt?.toISOString?.() || null,
+          courseId: s.courseId?._id?.toString() || null,
+          courseTitle: s.courseId?.title || s.courseId?.courseTitle || 'Not provided',
         })),
+
         grades: allGrades.map((g: any) => ({
           courseId: g.courseId?.toString() || null,
           lessonId: g.lessonId?.toString() || null,

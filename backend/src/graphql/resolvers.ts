@@ -825,7 +825,6 @@ export const resolvers = {
       if (!context.user) throw new Error('Not authenticated');
       const filter: any = { isDeleted: false };
       if (status) filter.status = status;
-      if (contextType) filter.contextType = contextType;
       if (teamId) filter.teamIds = teamId;
       if (programId) {
         // Find teams in this program first
@@ -833,6 +832,39 @@ export const resolvers = {
         const teamIds = teams.map(t => t._id);
         filter.teamIds = { $in: teamIds };
       }
+
+      // Role-based access control — admins see only their own calendar
+      if (context.user.role === 'admin') {
+        // Admins see:
+        // 1. Meetings they host (created)
+        // 2. Meetings where they are listed as a mentor
+        // 3. General meetings (platform-wide, visible to all)
+        // 4. Meetings hosted by their parent (the admin/trainer who created them)
+        const userDoc = await User.findById(context.user.id).select('createdBy').lean();
+        const parentId = (userDoc as any)?.createdBy?.toString?.();
+
+        const ownershipFilter: any[] = [
+          { hostId: context.user.id },
+          { mentorIds: context.user.id },
+          { contextType: 'general' },
+        ];
+
+        if (parentId) {
+          ownershipFilter.push({ hostId: parentId });
+        }
+
+        if (contextType) {
+          filter.$and = [
+            { contextType },
+            { $or: ownershipFilter },
+          ];
+        } else {
+          filter.$or = ownershipFilter;
+        }
+      } else if (contextType) {
+        filter.contextType = contextType;
+      }
+
       return await InternshipMeeting.find(filter).sort({ startTime: 1 });
     },
 
@@ -848,20 +880,38 @@ export const resolvers = {
 
       const filter: any = { isDeleted: false };
 
-      // If the user is a student, filter meetings by relevance:
-      // - meetings where the user is directly listed in userIds
-      // - meetings for courses the student is enrolled in
-      // - meetings for teams the student belongs to
-      // - meetings where the student is listed as a mentor
-      // Admins/trainers see all meetings (global visibility)
-      if (context.user.role === 'student') {
-        // Get the user's enrolled courses
-        const user = await User.findById(context.user.id).select('enrolledCourses').lean();
-        const enrolledCourseIds = (user as any)?.enrolledCourses?.map((c: any) =>
+      // Role-based access control
+      if (context.user.role === 'admin') {
+        // Admins see:
+        // 1. Meetings they host
+        // 2. Meetings where they are a mentor
+        // 3. General meetings
+        // 4. Meetings hosted by their parent (the admin/trainer who created them)
+        const userDoc = await User.findById(context.user.id).select('createdBy').lean();
+        const parentId = (userDoc as any)?.createdBy?.toString?.();
+
+        const ownershipFilter: any[] = [
+          { hostId: context.user.id },
+          { mentorIds: context.user.id },
+          { contextType: 'general' },
+        ];
+
+        if (parentId) {
+          ownershipFilter.push({ hostId: parentId });
+        }
+
+        filter.$or = ownershipFilter;
+      } else if (context.user.role === 'student') {
+        // Students see:
+        // - meetings where the user is directly listed in userIds
+        // - meetings for courses the student is enrolled in
+        // - meetings for teams the student belongs to
+        // - meetings where the student is listed as a mentor
+        const userDoc = await User.findById(context.user.id).select('enrolledCourses').lean();
+        const enrolledCourseIds = (userDoc as any)?.enrolledCourses?.map((c: any) =>
           c?.toString?.() || c
         ) || [];
 
-        // Get the user's internship team memberships
         const teamMemberships = await InternshipTeamMember.find({ userId: context.user.id, isDeleted: false })
           .select('teamId').lean();
         const teamIds = teamMemberships.map(tm => tm.teamId);
@@ -3214,8 +3264,14 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
+
+      // Super admin sees everything; admin sees only discount codes they created
       const filter: any = {};
       if (courseId) filter.courseId = courseId;
+      if (context.user.role === 'admin') {
+        filter.createdBy = context.user.id;
+      }
+
       
       const totalCount = await DiscountCode.countDocuments(filter);
       const items = await DiscountCode.find(filter)

@@ -3006,7 +3006,10 @@ export const typeDefs = `#graphql
     totalScore: Int
     feedback: String
     submittedAt: String
+    courseId: ID
+    courseTitle: String
   }
+
 
   type ReportGrade {
     courseId: ID

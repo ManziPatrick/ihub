@@ -216,7 +216,7 @@ export function AnimatedRoutes() {
           <Route path="/portal/admin/assignment-reviews" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><TrainerProjects /></ProtectedRoute>} />
           <Route path="/portal/admin/payments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPayments /></ProtectedRoute>} />
           <Route path="/portal/admin/completed-users" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><AdminCompletedUsers /></ProtectedRoute>} />
-          <Route path="/portal/admin/badges" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBadges /></ProtectedRoute>} />
+          {/* <Route path="/portal/admin/badges" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBadges /></ProtectedRoute>} /> */}
           <Route path="/portal/admin/analytics" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnalytics /></ProtectedRoute>} />
           <Route path="/portal/admin/user-report/:userId" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><UserReportPage /></ProtectedRoute>} />
           <Route path="/portal/admin/scholarships" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><SuperAdminScholarships /></ProtectedRoute>} />
@@ -224,8 +224,8 @@ export function AnimatedRoutes() {
           <Route path="/portal/admin/course-preview" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><CoursePreview /></ProtectedRoute>} />
           <Route path="/portal/admin/course-preview/:courseId" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><CoursePreview /></ProtectedRoute>} />
 
-          <Route path="/portal/admin/blogs" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBlogManager /></ProtectedRoute>} />
-          <Route path="/portal/admin/team" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTeamManager /></ProtectedRoute>} />
+          {/* <Route path="/portal/admin/blogs" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBlogManager /></ProtectedRoute>} /> */}
+          {/* <Route path="/portal/admin/team" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTeamManager /></ProtectedRoute>} /> */}
 
 
           <Route path="/portal/admin/module-controls" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><AdminModuleControlPanel /></ProtectedRoute>} />

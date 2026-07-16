@@ -158,20 +158,20 @@ const adminNavItems: NavItem[] = [
     icon: FileText,
     children: [
       { label: "Assignments", href: "/portal/admin/assignment-reviews", icon: GraduationCap },
-      { label: "Badges", href: "/portal/admin/badges", icon: Award },
-      { label: "Blog", href: "/portal/admin/blogs", icon: FileText },
+      // { label: "Badges", href: "/portal/admin/badges", icon: Award },
+      // { label: "Blog", href: "/portal/admin/blogs", icon: FileText },
     ]
   },
   { 
     label: "Operations", 
     icon: Cog,
     children: [
-      { label: "Team", href: "/portal/admin/team", icon: UserCog },
+      // { label: "Team", href: "/portal/admin/team", icon: UserCog },
       { label: "Payments", href: "/portal/admin/payments", icon: CreditCard },
       { label: "Commissions", href: "/portal/admin/commissions", icon: Percent },
-      { label: "Branding", href: "/portal/admin/branding", icon: Palette },
+      // { label: "Branding", href: "/portal/admin/branding", icon: Palette },
       { label: "Analytics", href: "/portal/admin/analytics", icon: BarChart3 },
-      { label: "Toolbox", href: "/portal/admin/tools", icon: Table },
+      // { label: "Toolbox", href: "/portal/admin/tools", icon: Table },
     ]
   },
   { label: "Schedule", href: "/portal/admin/schedule", icon: Calendar },
@@ -210,12 +210,11 @@ const superAdminNavItems: NavItem[] = [
       { label: "Database Backups", href: "/portal/super-admin/backups", icon: Database },
     ]
   },
-  { 
-    label: "Marketing", 
+      { 
+    label: "Marketing",
     icon: Palette,
     children: [
       { label: "Social Posts", href: "/portal/super-admin/social-posts", icon: Camera },
-      { label: "Blog", href: "/portal/admin/blogs", icon: FileText },
       { label: "Branding", href: "/portal/admin/branding", icon: Palette },
     ]
   },
