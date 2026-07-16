@@ -50,7 +50,7 @@ const UserErrorReportSchema: Schema = new Schema(
     componentName: { type: String, index: true },
     operationName: { type: String, index: true },
     statusCode: { type: Number },
-    url: { type: String, required: true },
+    url: { type: String, default: 'unknown' },
     userAgent: { type: String },
     browserInfo: {
       name: { type: String },

@@ -777,8 +777,8 @@ export default function SuperAdminDisbursements() {
                               </TableRow>
 
                               {/* Expanded row — detail */}
-                              {expandedRow === d.id && (
-                                <TableRow key={`${d.id}-detail`}>
+{expandedRow === d.id && (
+                                <TableRow key={`${d.id}-detail-${d.status}`}>
                                   <TableCell colSpan={9} className="bg-accent/5 p-4">
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                       <div>

@@ -96,12 +96,12 @@ const SuperAdminIntouchPay = lazy(() => import("@/pages/portal/super-admin/Super
 const SuperAdminPawaPay = lazy(() => import("@/pages/portal/super-admin/SuperAdminPawaPay"));
 const AdminCommissionDashboard = lazy(() => import("@/pages/portal/super-admin/AdminCommissionDashboard"));
 const SuperAdminBroadcast = lazy(() => import("@/pages/portal/super-admin/SuperAdminBroadcast"));
-const SuperAdminUploadLogs = lazy(() => import("@/pages/portal/super-admin/SuperAdminUploadLogs"));
 const SuperAdminScholarships = lazy(() => import("@/pages/portal/super-admin/SuperAdminScholarships"));
 const SocialPostGenerator = lazy(() => import("@/pages/portal/super-admin/SocialPostGenerator"));
 const SuperAdminErrorReports = lazy(() => import("@/pages/portal/super-admin/SuperAdminErrorReports"));
 const SuperAdminBackups = lazy(() => import("@/pages/portal/super-admin/SuperAdminBackups"));
 const SuperAdminDiscountCodes = lazy(() => import("@/pages/portal/super-admin/SuperAdminDiscountCodes"));
+const SuperAdminDiscountStats = lazy(() => import("@/pages/portal/super-admin/SuperAdminDiscountStats"));
 const AdminCodeExerciseAnswers = lazy(() => import("@/pages/portal/super-admin/AdminCodeExerciseAnswers"));
 const Maintenance = lazy(() => import("@/pages/Maintenance"));
 
@@ -251,13 +251,14 @@ export function AnimatedRoutes() {
           <Route path="/portal/super-admin/my-commissions" element={<ProtectedRoute allowedRoles={["super_admin"]}><AdminCommissionDashboard /></ProtectedRoute>} />
           <Route path="/portal/super-admin/completed-users" element={<ProtectedRoute allowedRoles={["super_admin"]}><AdminCompletedUsers /></ProtectedRoute>} />
           <Route path="/portal/super-admin/broadcast" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminBroadcast /></ProtectedRoute>} />
-          <Route path="/portal/super-admin/upload-logs" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminUploadLogs /></ProtectedRoute>} />
+
           <Route path="/portal/super-admin/scholarships" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminScholarships /></ProtectedRoute>} />
           <Route path="/portal/super-admin/social-posts" element={<ProtectedRoute allowedRoles={["super_admin", "admin"]}><SocialPostGenerator /></ProtectedRoute>} />
           <Route path="/portal/super-admin/error-reports" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminErrorReports /></ProtectedRoute>} />
-          <Route path="/portal/super-admin/code-answers" element={<ProtectedRoute allowedRoles={["super_admin"]}><AdminCodeExerciseAnswers /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/code-answers" element={<ProtectedRoute allowedRoles={["super_admin", "admin"]}><AdminCodeExerciseAnswers /></ProtectedRoute>} />
           <Route path="/portal/super-admin/backups" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminBackups /></ProtectedRoute>} />
-          <Route path="/portal/super-admin/discount-codes" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminDiscountCodes /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/discount-codes" element={<ProtectedRoute allowedRoles={["super_admin", "admin"]}><SuperAdminDiscountCodes /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/discount-analytics" element={<ProtectedRoute allowedRoles={["super_admin", "admin"]}><SuperAdminDiscountStats /></ProtectedRoute>} />
           <Route path="/portal/admin/commissions" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommissionDashboard /></ProtectedRoute>} />
 
           {/* Shared Portal Routes */}

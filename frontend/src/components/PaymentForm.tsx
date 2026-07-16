@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { Loader2, Phone, CheckCircle, Smartphone, History, ShieldCheck, Mail, Ticket, X, Globe, MapPin, RefreshCw, Percent } from 'lucide-react';
 import { getApiBaseUrl } from '@/lib/env';
 import { useMutation } from '@apollo/client/react';
-import { SUBMIT_PAYMENT_PROOF, VALIDATE_DISCOUNT_CODE } from '@/lib/graphql/mutations';
+import { SUBMIT_PAYMENT_PROOF, VALIDATE_DISCOUNT_CODE, ENROLL_COURSE } from '@/lib/graphql/mutations';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Types ──────────────────────────────────────────────────────────────
@@ -465,7 +465,8 @@ export function PaymentForm({
   const [method, setMethod] = useState<PaymentMethod>('pawapay');
   const [discountCode, setDiscountCode] = useState('');
   const [isDiscountApplied, setIsDiscountApplied] = useState(false);
-  const [discountInfo, setDiscountInfo] = useState<{ finalPrice: number; originalPrice: number; discountType: string; discountValue: number; message: string } | null>(null);
+  const [isValidatingDiscount, setIsValidatingDiscount] = useState(false);
+  const [discountInfo, setDiscountInfo] = useState<{ finalPrice: number; originalPrice: number; discountType: string; discountValue: number; message: string; savings: number; savingsPercent: number } | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [phoneTouched, setPhoneTouched] = useState(false);
@@ -484,6 +485,15 @@ export function PaymentForm({
   const [isDetectingCountry, setIsDetectingCountry] = useState(true);
 
   const [validateDiscountMutation] = useMutation(VALIDATE_DISCOUNT_CODE);
+  const [enrollMutation, { loading: enrollingFree }] = useMutation(ENROLL_COURSE, {
+    onCompleted: () => {
+      setPaymentSuccess(true);
+      toast.success('🎉 You are now enrolled! The course is yours for free.');
+    },
+    onError: (err) => {
+      toast.error(err.message || 'Failed to enroll. Please try again.');
+    }
+  });
 
   const [submitProof] = useMutation(SUBMIT_PAYMENT_PROOF, {
     onCompleted: () => {
@@ -625,10 +635,8 @@ export function PaymentForm({
       // Clean phone number
       const cleanPhone = phoneNumber.replace(/[^0-9]/g, '').replace(/^0+/, '');
 
-      // Use discounted amount if code is applied
-      const payAmount = isDiscountApplied && discountInfo
-        ? Math.floor(discountInfo.finalPrice)
-        : Math.floor(amount);
+      // Use totalToPay (discount only applies to validated course, others at full price)
+      const payAmount = Math.floor(totalToPay);
 
       const body: Record<string, any> = {
         amount: payAmount,
@@ -759,17 +767,13 @@ export function PaymentForm({
 
   const applyDiscount = async () => {
     if (!discountCode) return;
-    if (!courseId && (!courseIds || courseIds.length === 0)) {
-      toast.error('No course selected for discount');
-      return;
-    }
     
-    setIsLoading(true);
+    setIsValidatingDiscount(true);
     try {
       const { data } = await validateDiscountMutation({
         variables: {
           code: discountCode.toUpperCase(),
-          courseId: courseId || (courseIds || [])[0],
+          courseId: courseId || (courseIds || [])[0] || null,
         },
       });
       
@@ -784,31 +788,65 @@ export function PaymentForm({
           }
         | undefined;
       if (!result?.valid) {
-        toast.error(result?.message || 'Invalid discount code');
+        const errMsg = result?.message || 'Invalid discount code';
+        toast.error(errMsg);
         setIsDiscountApplied(false);
         setDiscountInfo(null);
       } else {
+        const finalPrice = result.finalPrice ?? 0;
+        const originalPrice = result.originalPrice ?? 0;
+        const savings = originalPrice - finalPrice;
+        const savingsPercent = originalPrice > 0 ? Math.round((savings / originalPrice) * 100) : 0;
+        
         setIsDiscountApplied(true);
         setDiscountInfo({
-          finalPrice: result.finalPrice,
-          originalPrice: result.originalPrice,
-          discountType: result.discountType,
-          discountValue: result.discountValue,
-          message: result.message,
+          finalPrice,
+          originalPrice,
+          discountType: result.discountType || 'percentage',
+          discountValue: result.discountValue || 0,
+          message: result.message || 'Discount code applied!',
+          savings,
+          savingsPercent,
         });
-        toast.success(result.message || 'Discount code applied!');
+        const savingsStr = `Discount code applied! You save ${savings.toLocaleString()} ${localCurrency}`;
+        toast.success(`🎉 ${result.message || savingsStr}`);
       }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to validate discount code');
+      const errMsg = err.message || 'Failed to validate discount code';
+      toast.error(errMsg);
       setIsDiscountApplied(false);
       setDiscountInfo(null);
     } finally {
-      setIsLoading(false);
+      setIsValidatingDiscount(false);
     }
   };
 
+  const handleFreeEnroll = async () => {
+    if (!courseId && (!courseIds || courseIds.length === 0)) {
+      toast.error('No course selected for enrollment');
+      return;
+    }
+    await enrollMutation({
+      variables: {
+        courseId: courseId || (courseIds || [])[0],
+        discountCode: discountCode.toUpperCase(),
+        selectedDeliveryMode: selectedDeliveryMode || null,
+      },
+    });
+  };
+
+  // Computed: other courses total when multiple in cart (discount only applies to one, not both)
+  const otherCartTotal = isDiscountApplied && discountInfo && courseIds && courseIds.length > 1
+    ? Math.max(0, amount - (discountInfo.originalPrice || 0))
+    : 0;
+  // Total to pay: discounted course + other courses at full price
+  const totalToPay = isDiscountApplied && discountInfo
+    ? discountInfo.finalPrice + otherCartTotal
+    : amount;
+
   // Get current country info
   const currentCountry = countries.find(c => c.countryCode === selectedCountry);
+  const isFreeEnrollment = totalToPay <= 0;
 
   // Success receipt screen
   if (paymentSuccess) {
@@ -979,98 +1017,100 @@ export function PaymentForm({
         </div>
       )}
 
-      {/* PAY WITH */}
-      <div className="space-y-3">
-        <Label className="text-sm font-bold text-foreground flex items-center gap-2">
-          <Globe className="w-4 h-4 text-accent" />
-          Country & Payment Method
-        </Label>
+      {/* PAY WITH — hidden when 100% discount makes it free */}
+      {!isFreeEnrollment && (
+        <div className="space-y-3">
+          <Label className="text-sm font-bold text-foreground flex items-center gap-2">
+            <Globe className="w-4 h-4 text-accent" />
+            Country & Payment Method
+          </Label>
 
-        {/* Country Selector */}
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <Select
-              value={selectedCountry}
-              onValueChange={(val) => {
-                setSelectedCountry(val);
-                setSelectedProvider('');
-              }}
-            >
-              <SelectTrigger className="h-14 bg-muted/20 border-border/50 rounded-2xl px-4 focus:ring-accent/20">
-                <SelectValue placeholder="Select country" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/50 bg-popover shadow-2xl max-h-60">
-                {isDetecting ? (
-                  <div className="flex items-center justify-center p-4">
-                    <Loader2 className="w-5 h-5 animate-spin text-accent" />
-                  </div>
-                ) : (
-                  countries.map((c) => (
-                    <SelectItem key={c.countryCode} value={c.countryCode} className="py-2.5 rounded-xl focus:bg-accent/10">
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg">{c.flag}</span>
-                        <div>
-                          <span className="font-semibold">{c.country}</span>
-                          <p className="text-[10px] text-muted-foreground font-normal">
-                            {c.currency} {c.rate ? `· ${(amount * c.rate).toLocaleString(undefined, { maximumFractionDigits: 0 })} ${c.currency}` : ''}
-                          </p>
+          {/* Country Selector */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Select
+                value={selectedCountry}
+                onValueChange={(val) => {
+                  setSelectedCountry(val);
+                  setSelectedProvider('');
+                }}
+              >
+                <SelectTrigger className="h-14 bg-muted/20 border-border/50 rounded-2xl px-4 focus:ring-accent/20">
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-border/50 bg-popover shadow-2xl max-h-60">
+                  {isDetecting ? (
+                    <div className="flex items-center justify-center p-4">
+                      <Loader2 className="w-5 h-5 animate-spin text-accent" />
+                    </div>
+                  ) : (
+                    countries.map((c) => (
+                      <SelectItem key={c.countryCode} value={c.countryCode} className="py-2.5 rounded-xl focus:bg-accent/10">
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">{c.flag}</span>
+                          <div>
+                            <span className="font-semibold">{c.country}</span>
+                            <p className="text-[10px] text-muted-foreground font-normal">
+                              {c.currency} {c.rate ? `· ${(amount * c.rate).toLocaleString(undefined, { maximumFractionDigits: 0 })} ${c.currency}` : ''}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Provider/Network Selector with real logos */}
-        {currentCountry && currentCountry.providers.length > 0 && (
-          <div>
-            <Select value={selectedProvider} onValueChange={handleProviderChange}>
-              <SelectTrigger className="h-14 bg-muted/20 border-border/50 rounded-2xl px-4 focus:ring-accent/20">
-                <SelectValue placeholder="Select network" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/50 bg-popover shadow-2xl">
-                {currentCountry.providers.map((p) => {
-                  const logo = getProviderLogo(p.providerId, p.name);
-                  return (
-                    <SelectItem key={p.providerId} value={p.providerId} className="py-3 rounded-xl focus:bg-accent/10">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-sm shrink-0 ${logo.bgClass}`}>
-                          {logo.svg}
-                        </div>
-                        <div>
-                          <span className="font-semibold">{p.name}</span>
-                          <p className="text-[10px] text-muted-foreground font-normal flex items-center gap-1">
-                            {logo.label}
-                            <span className={`inline-block w-1.5 h-1.5 rounded-full ${logo.dotColor}`} />
-                          </p>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* Payment provider info banner */}
-        {selectedProvider && currentCountry && (
-          <div className="flex items-center gap-2 px-2 text-[11px] text-muted-foreground">
-            <div className={`w-5 h-5 rounded-md flex items-center justify-center shadow-sm ${getProviderLogo(selectedProvider, '').bgClass}`}>
-              {getProviderLogo(selectedProvider, '').miniSvg}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
-            <span>
-              Secure payment via <strong>{getProviderLogo(selectedProvider, '').label}</strong>
-              {selectedCountry !== 'RWA' && (
-                <span> · {currentCountry.flag} {currentCountry.country}</span>
-              )}
-            </span>
           </div>
-        )}
-      </div>
+
+          {/* Provider/Network Selector with real logos */}
+          {currentCountry && currentCountry.providers.length > 0 && (
+            <div>
+              <Select value={selectedProvider} onValueChange={handleProviderChange}>
+                <SelectTrigger className="h-14 bg-muted/20 border-border/50 rounded-2xl px-4 focus:ring-accent/20">
+                  <SelectValue placeholder="Select network" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-border/50 bg-popover shadow-2xl">
+                  {currentCountry.providers.map((p) => {
+                    const logo = getProviderLogo(p.providerId, p.name);
+                    return (
+                      <SelectItem key={p.providerId} value={p.providerId} className="py-3 rounded-xl focus:bg-accent/10">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-sm shrink-0 ${logo.bgClass}`}>
+                            {logo.svg}
+                          </div>
+                          <div>
+                            <span className="font-semibold">{p.name}</span>
+                            <p className="text-[10px] text-muted-foreground font-normal flex items-center gap-1">
+                              {logo.label}
+                              <span className={`inline-block w-1.5 h-1.5 rounded-full ${logo.dotColor}`} />
+                            </p>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Payment provider info banner */}
+          {selectedProvider && currentCountry && (
+            <div className="flex items-center gap-2 px-2 text-[11px] text-muted-foreground">
+              <div className={`w-5 h-5 rounded-md flex items-center justify-center shadow-sm ${getProviderLogo(selectedProvider, '').bgClass}`}>
+                {getProviderLogo(selectedProvider, '').miniSvg}
+              </div>
+              <span>
+                Secure payment via <strong>{getProviderLogo(selectedProvider, '').label}</strong>
+                {selectedCountry !== 'RWA' && (
+                  <span> · {currentCountry.flag} {currentCountry.country}</span>
+                )}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* SEND TO */}
       <div className="space-y-4">
@@ -1094,8 +1134,8 @@ export function PaymentForm({
           <p className="text-[10px] text-muted-foreground pl-1">We will send your invoice to this address</p>
         </div>
 
-        {/* Phone Input (for Mobile Money) — with country code prefix badge */}
-        {(method === 'pawapay' || method === 'intouch') && (
+        {/* Phone Input (for Mobile Money) — hidden when 100% discount makes it free */}
+        {(method === 'pawapay' || method === 'intouch') && !isFreeEnrollment && (
           <div className="space-y-1.5 animate-in slide-in-from-top-2 duration-300">
             <div className="flex gap-2">
               <div className="w-[130px]">
@@ -1196,11 +1236,15 @@ export function PaymentForm({
                 type="button"
                 size="sm"
                 variant="secondary"
-                disabled={!discountCode || isLoading}
+                disabled={!discountCode || isValidatingDiscount}
                 onClick={applyDiscount}
                 className="absolute right-2 top-2 bottom-2 h-10 rounded-xl px-4 text-xs font-bold"
               >
-                Apply
+                {isValidatingDiscount ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Apply"
+                )}
               </Button>
             </motion.div>
           ) : (
@@ -1217,6 +1261,16 @@ export function PaymentForm({
                 <div>
                   <p className="text-[10px] font-bold text-accent uppercase tracking-widest">Code Applied</p>
                   <p className="text-sm font-bold text-foreground">{discountCode.toUpperCase()}</p>
+                  {discountInfo && discountInfo.savings > 0 && (
+                    <p className="text-[11px] font-bold text-emerald-500 mt-0.5">
+                      Save {discountInfo.savings.toLocaleString()} {localCurrency}
+                      {discountInfo.savingsPercent > 0 && (
+                        <span className="ml-1 text-[10px] bg-emerald-500/15 px-1.5 py-0.5 rounded-full">
+                          -{discountInfo.savingsPercent}%
+                        </span>
+                      )}
+                    </p>
+                  )}
                 </div>
               </div>
               <Button
@@ -1227,6 +1281,7 @@ export function PaymentForm({
                 onClick={() => {
                   setIsDiscountApplied(false);
                   setDiscountCode('');
+                  setDiscountInfo(null);
                 }}
               >
                 <X className="w-4 h-4" />
@@ -1235,6 +1290,42 @@ export function PaymentForm({
           )}
         </AnimatePresence>
       </div>
+
+      {/* FREE ENROLLMENT BANNER — shown when discount makes price 0 */}
+      {isFreeEnrollment && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="p-5 bg-gradient-to-br from-emerald-500/10 to-green-500/5 border-2 border-emerald-500/30 rounded-2xl space-y-3"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-emerald-500/15 flex items-center justify-center">
+              <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-black text-emerald-500">🎉 100% Discount Applied</p>
+              <p className="text-xs text-muted-foreground">
+                This course is now <strong className="text-emerald-500">completely free</strong> for you!
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 justify-center py-2">
+            <div className="text-center">
+              <p className="text-2xl font-black text-emerald-500">{totalToPay.toLocaleString()} {localCurrency}</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">You pay</p>
+            </div>
+            <div className="h-8 w-px bg-border/50" />
+            <div className="text-center">
+              <p className="text-lg font-bold text-muted-foreground line-through">
+                {amount.toLocaleString()} {localCurrency}
+              </p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Original total</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* TERMS */}
       <div className="flex items-start gap-3 px-1 pt-2">
@@ -1249,41 +1340,67 @@ export function PaymentForm({
         </Label>
       </div>
 
-      {/* PAY BUTTON — improved padding and hover */}
-      <Button
-        type="submit"
-        disabled={isLoading || !agreedToTerms}
-        className="w-full h-14 rounded-full bg-[#f58220] hover:bg-[#e0751a] text-white text-base font-bold shadow-lg shadow-orange-500/20 transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#f58220] px-8"
-      >
-        {isLoading ? (
-          <div className="flex items-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Processing...</span>
-          </div>
-        ) : (
-          <span className="flex flex-col items-center">
-            {isDiscountApplied && discountInfo ? (
-              <>
-                <span className="text-lg font-bold">
-                  {discountInfo.finalPrice.toLocaleString()} {localCurrency}
+      {/* PAY BUTTON — shows different UI for free enrollment vs paid */}
+      {isFreeEnrollment ? (
+        <Button
+          type="button"
+          disabled={enrollingFree || !agreedToTerms}
+          onClick={handleFreeEnroll}
+          className="w-full h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-base font-bold shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed px-8"
+        >
+          {enrollingFree ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Enrolling...</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center">
+              <span className="text-lg font-bold">🎉 Enroll Now for Free</span>
+              <span className="text-xs opacity-75">No payment required — your discount covers everything</span>
+            </div>
+          )}
+        </Button>
+      ) : (
+        <Button
+          type="submit"
+          disabled={isLoading || !agreedToTerms}
+          className="w-full h-14 rounded-full bg-[#f58220] hover:bg-[#e0751a] text-white text-base font-bold shadow-lg shadow-orange-500/20 transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#f58220] px-8"
+        >
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Processing...</span>
+            </div>
+          ) : (
+            <span className="flex flex-col items-center">
+              {isDiscountApplied && discountInfo ? (
+                <>
+                  <span className="text-lg font-bold">
+                    {totalToPay.toLocaleString()} {localCurrency}
+                  </span>
+                  <span className="text-xs line-through opacity-50">
+                    {amount.toLocaleString()} {localCurrency}
+                  </span>
+                  {otherCartTotal > 0 && (
+                    <span className="text-[10px] text-emerald-500 font-semibold mt-0.5">
+                      Discount applies to 1 course · Others at full price
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span>
+                  {localAmount.toLocaleString(undefined, { maximumFractionDigits: localCurrency === 'RWF' ? 0 : 2 })} {localCurrency}
                 </span>
-                <span className="text-xs line-through opacity-50">
-                  {discountInfo.originalPrice.toLocaleString()} {localCurrency}
+              )}
+              {localCurrency !== 'RWF' && (
+                <span className="text-xs opacity-75 ml-1">
+                  (~{amount.toLocaleString()} RWF)
                 </span>
-              </>
-            ) : (
-              <span>
-                {localAmount.toLocaleString(undefined, { maximumFractionDigits: localCurrency === 'RWF' ? 0 : 2 })} {localCurrency}
-              </span>
-            )}
-            {localCurrency !== 'RWF' && (
-              <span className="text-xs opacity-75 ml-1">
-                (~{amount.toLocaleString()} RWF)
-              </span>
-            )}
-          </span>
-        )}
-      </Button>
+              )}
+            </span>
+          )}
+        </Button>
+      )}
 
       <div className="flex flex-col items-center gap-4 pt-4 border-t border-dashed border-border/50">
         <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">

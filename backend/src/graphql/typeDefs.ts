@@ -3867,13 +3867,12 @@ export const typeDefs = `#graphql
   extend type Query {
     discountCodes(courseId: ID, page: Int, limit: Int): DiscountCodeResponse
     discountCode(id: ID!): DiscountCode
-    validateDiscountCode(code: String!, courseId: ID!): ValidateDiscountResult
   }
 
   extend type Mutation {
     createDiscountCode(
       code: String!
-      courseId: ID!
+      courseId: ID
       discountType: String!
       discountValue: Float!
       maxUses: Int
@@ -3891,5 +3890,6 @@ export const typeDefs = `#graphql
       description: String
     ): DiscountCode
     deleteDiscountCode(id: ID!): Boolean
+    validateDiscountCode(code: String!, courseId: ID): ValidateDiscountResult
   }
 `;

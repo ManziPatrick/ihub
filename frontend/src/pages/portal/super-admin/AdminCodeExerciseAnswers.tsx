@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PortalLayout } from "@/components/portal/PortalLayout";
 import {
   Code,
   Search,
@@ -121,6 +122,7 @@ export default function AdminCodeExerciseAnswers() {
   );
 
   return (
+    <PortalLayout>
     <div className="space-y-6">
       {/* Header */}
       <motion.div
@@ -330,5 +332,6 @@ export default function AdminCodeExerciseAnswers() {
         </div>
       )}
     </div>
+    </PortalLayout>
   );
 }
