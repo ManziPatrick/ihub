@@ -169,6 +169,7 @@ const adminNavItems: NavItem[] = [
       // { label: "Team", href: "/portal/admin/team", icon: UserCog },
       { label: "Payments", href: "/portal/admin/payments", icon: CreditCard },
       { label: "Commissions", href: "/portal/admin/commissions", icon: Percent },
+      { label: "Refunds", href: "/portal/admin/refunds", icon: RotateCcw },
       // { label: "Branding", href: "/portal/admin/branding", icon: Palette },
       { label: "Analytics", href: "/portal/admin/analytics", icon: BarChart3 },
       // { label: "Toolbox", href: "/portal/admin/tools", icon: Table },
@@ -423,11 +424,27 @@ export function PortalLayout({ children }: PortalLayoutProps) {
       console.log("Interactive notification received:", data);
       setNotifications(prev => [data, ...prev].slice(0, 50));
 
-      if (user.role === 'trainer' || user.role === 'mentor' || user.role === 'admin') {
+      if (user.role === 'trainer' || user.role === 'mentor' || user.role === 'admin' || user.role === 'super_admin') {
         playNotificationSound();
-        if (data.message) toast.info(data.message);
+        // For admin/super_admin, show action button for notifications with links
+        if (data.message) {
+          // Any refund_* notification type gets a View action button
+          const isRefundRelated = data.type?.startsWith('refund_');
+          if (isRefundRelated) {
+            toast(data.title || "Refund Notification", {
+              description: data.message,
+              duration: 10000,
+              action: data.link ? {
+                label: "View",
+                onClick: () => navigate(data.link)
+              } : undefined
+            });
+          } else {
+            toast.info(data.message);
+          }
+        }
       } else {
-        // Students also get sound for important notifications
+        // Students get sound + toast with View action if there's a link
         playNotificationSound();
         if (data.message) toast(data.title || "New Notification", {
           description: data.message,

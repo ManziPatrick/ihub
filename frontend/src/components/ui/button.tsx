@@ -11,9 +11,9 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-white/10 bg-transparent hover:bg-white/5 hover:text-white hover:border-white/20",
+        outline: "border border-border/50 bg-transparent hover:bg-accent/10 hover:text-foreground dark:border-white/10 dark:hover:bg-white/5 dark:hover:text-white dark:hover:border-white/20",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-white/5 hover:text-white",
+        ghost: "hover:bg-accent/10 hover:text-foreground dark:hover:bg-white/5 dark:hover:text-white",
         link: "text-primary underline-offset-4 hover:underline",
         // Bootskills Primary Button - Gold background, dark text
         hero: "bg-primary text-white hover:bg-primary/90 hover:shadow-lg transition-all",
@@ -22,7 +22,7 @@ const buttonVariants = cva(
         // Gold accent button for CTAs
         gold: "bg-accent text-white border border-accent hover:bg-accent/80 hover:shadow-gold-glow rounded-md font-semibold",
         // Navigation link style
-        nav: "bg-transparent text-white/70 hover:text-white transition-colors",
+        nav: "bg-transparent text-muted-foreground hover:text-foreground dark:text-white/70 dark:hover:text-white transition-colors",
       },
       size: {
         default: "h-10 px-4 py-2 rounded-md",

@@ -3223,6 +3223,25 @@ export const GET_APPLICATION_PROGRESS = gql`
 `;
 
 // ========== REFUND REQUEST QUERIES ==========
+export const GET_MY_REFUND_REQUESTS = gql`
+  query GetMyRefundRequests {
+    getMyRefundRequests {
+      id
+      paymentId
+      amount
+      currency
+      reason
+      status
+      adminNote
+      refundedAmount
+      refundFee
+      refundableAmountAfterFee
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
 export const GET_ALL_REFUND_REQUESTS = gql`
   query GetAllRefundRequests($page: Int, $limit: Int, $status: String) {
     getAllRefundRequests(page: $page, limit: $limit, status: $status) {

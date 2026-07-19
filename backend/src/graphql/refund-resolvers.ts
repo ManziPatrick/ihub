@@ -32,8 +32,8 @@ export const refundResolvers = {
       { page = 1, limit = 20, status }: { page?: number; limit?: number; status?: string },
       context: any
     ) => {
-      if (!context.user || context.user.role !== 'super_admin') {
-        throw new Error('Not authorized - super_admin only');
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized - admin or super_admin only');
       }
 
       const filter: any = {};
@@ -131,6 +131,33 @@ export const refundResolvers = {
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
       };
+    },
+
+    getMyRefundRequests: async (_: any, __: any, context: any) => {
+      if (!context.user) {
+        throw new Error('Not authenticated');
+      }
+
+      const refunds = await RefundRequest.find({ userId: new mongoose.Types.ObjectId(context.user.id) })
+        .populate('userId', 'username fullName email')
+        .sort({ createdAt: -1 });
+
+      return refunds.map((r) => ({
+        id: (r._id as any)?.toString() || '',
+        paymentId: (r.paymentId as any)?.toString() || '',
+        userId: (r.userId as any)?.toString() || '',
+        user: r.userId as any,
+        amount: r.amount || 0,
+        currency: r.currency || 'RWF',
+        reason: r.reason || '',
+        status: r.status || 'pending',
+        adminNote: r.adminNote || null,
+        refundedAmount: r.refundedAmount || 0,
+        refundFee: r.refundFee || 0,
+        refundableAmountAfterFee: r.refundableAmountAfterFee || 0,
+        createdAt: r.createdAt?.toISOString?.() || r.createdAt?.toString() || '',
+        updatedAt: r.updatedAt?.toISOString?.() || r.updatedAt?.toString() || '',
+      }));
     },
 
     getRefundRequestStats: async (_: any, __: any, context: any) => {
@@ -376,15 +403,17 @@ export const refundResolvers = {
       { id, note }: { id: string; note?: string },
       context: any
     ) => {
-      if (!context.user || context.user.role !== 'super_admin') {
-        throw new Error('Not authorized - super_admin only');
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized - admin or super_admin only');
       }
 
       const refund = await RefundRequest.findById(id);
       if (!refund) throw new Error('Refund request not found');
 
-      if (refund.status !== 'admin_verified') {
-        throw new Error(`Cannot approve - current status is ${refund.status}. Must be admin_verified first.`);
+      // Super admin can approve from 'pending' OR 'admin_verified' status.
+      // The 'pending' → 'approved' path skips separate admin verification.
+      if (refund.status !== 'admin_verified' && refund.status !== 'pending') {
+        throw new Error(`Cannot approve - current status is ${refund.status}. Must be 'pending' or 'admin_verified'.`);
       }
 
       // Process the refund: cancel all related items
@@ -465,8 +494,8 @@ export const refundResolvers = {
       { id, note }: { id: string; note?: string },
       context: any
     ) => {
-      if (!context.user || context.user.role !== 'super_admin') {
-        throw new Error('Not authorized - super_admin only');
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized - admin or super_admin only');
       }
 
       const refund = await RefundRequest.findById(id);

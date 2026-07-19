@@ -1291,6 +1291,48 @@ export function PaymentForm({
         </AnimatePresence>
       </div>
 
+      {/* DISCOUNT APPLIED BANNER — shown when partial discount makes price > 0 */}
+      {isDiscountApplied && discountInfo && !isFreeEnrollment && discountInfo.savings > 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="p-5 bg-gradient-to-br from-accent/10 to-orange-500/5 border-2 border-accent/30 rounded-2xl space-y-3"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center">
+              <Percent className="w-5 h-5 text-accent" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-black text-accent">🎉 Discount Applied — Price Reduced</p>
+              <p className="text-xs text-muted-foreground">
+                Code <strong className="text-accent">{discountCode.toUpperCase()}</strong> applied successfully
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 justify-center py-2">
+            <div className="text-center">
+              <p className="text-3xl font-black text-foreground">{totalToPay.toLocaleString()} {localCurrency}</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">You pay (discounted)</p>
+            </div>
+            <div className="h-10 w-px bg-border/50" />
+            <div className="text-center">
+              <p className="text-lg font-bold text-muted-foreground line-through">
+                {amount.toLocaleString()} {localCurrency}
+              </p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Original price</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <span className="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full">
+              You save {discountInfo.savings.toLocaleString()} {localCurrency}
+              {discountInfo.savingsPercent > 0 && (
+                <span className="ml-1">(-{discountInfo.savingsPercent}%)</span>
+              )}
+            </span>
+          </div>
+        </motion.div>
+      )}
+
       {/* FREE ENROLLMENT BANNER — shown when discount makes price 0 */}
       {isFreeEnrollment && (
         <motion.div

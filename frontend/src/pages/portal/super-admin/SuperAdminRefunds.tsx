@@ -159,31 +159,47 @@ export default function SuperAdminRefunds() {
 
   const { data, loading, refetch } = useQuery(GET_ALL_REFUND_REQUESTS, {
     variables: { page, limit: LIMIT, status: statusFilter || undefined },
-    pollInterval: 30000,
   });
 
-  const { data: statsData, loading: statsLoading, refetch: refetchStats } = useQuery(GET_REFUND_REQUEST_STATS, {
-    pollInterval: 60000,
-  });
+  const { data: statsData, loading: statsLoading, refetch: refetchStats } = useQuery(GET_REFUND_REQUEST_STATS);
 
-  // Listen for real-time refund payout failure notifications via Pusher
+  // Listen for real-time refund events via Pusher
   useEffect(() => {
     if (!pusher || !user) return;
 
     const channel = pusher.subscribe(`user-${user.id}`);
 
     channel.bind("notification", (data: any) => {
+      if (data.type === "refund_request") {
+        // New refund request received — auto-refetch and notify
+        toast.info(data.title || "New Refund Request", {
+          description: data.message || "A student has submitted a new refund request.",
+          duration: 8000,
+          position: "top-center",
+          action: {
+            label: "View",
+            onClick: () => {
+              refetch();
+              refetchStats();
+              document.querySelector("[data-refunds-header]")?.scrollIntoView({ behavior: "smooth" });
+            },
+          },
+        });
+        // Auto-refetch — new item will appear in the list
+        refetch();
+        refetchStats();
+      }
+
       if (data.type === "refund_payout_failed") {
         // Show a persistent, prominent toast alert
         toast.error(data.title || "Refund Payout Failed", {
           description: data.message || "A refund payout has failed and requires manual intervention.",
-          duration: 15000, // Show for 15 seconds
+          duration: 15000,
           position: "top-center",
           important: true,
           action: {
             label: "View",
             onClick: () => {
-              // Auto-refetch and scroll to the refunds list
               refetch();
               refetchStats();
               document.querySelector("[data-refunds-header]")?.scrollIntoView({ behavior: "smooth" });
@@ -191,14 +207,12 @@ export default function SuperAdminRefunds() {
           },
         });
 
-        // Also set the recent failed payout state for the persistent banner
         setRecentFailedPayout({
           amount: data.amount || 0,
           paymentId: data.paymentId || "",
           message: data.message || "Refund payout failed",
         });
 
-        // Auto-refetch to show updated data
         refetch();
         refetchStats();
       }
@@ -518,6 +532,18 @@ export default function SuperAdminRefunds() {
                               <div className="flex items-center justify-end gap-1">
                                 {r.status === "pending" && (
                                   <>
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedAction({ type: "approve", id: r.id });
+                                      }}
+                                      title="Approve refund (auto-disburse)"
+                                      className="h-7 text-xs"
+                                    >
+                                      <ThumbsUp className="w-3 h-3 mr-1" /> Approve
+                                    </Button>
                                     <Button
                                       variant="ghost"
                                       size="sm"

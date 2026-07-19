@@ -260,6 +260,7 @@ export function AnimatedRoutes() {
           <Route path="/portal/super-admin/discount-codes" element={<ProtectedRoute allowedRoles={["super_admin", "admin"]}><SuperAdminDiscountCodes /></ProtectedRoute>} />
           <Route path="/portal/super-admin/discount-analytics" element={<ProtectedRoute allowedRoles={["super_admin", "admin"]}><SuperAdminDiscountStats /></ProtectedRoute>} />
           <Route path="/portal/admin/commissions" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCommissionDashboard /></ProtectedRoute>} />
+          <Route path="/portal/admin/refunds" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><SuperAdminRefunds /></ProtectedRoute>} />
 
           {/* Shared Portal Routes */}
           <Route path="/portal/settings" element={<ProtectedRoute allowedRoles={["student", "trainer", "admin", "super_admin"]}><PortalSettings /></ProtectedRoute>} />

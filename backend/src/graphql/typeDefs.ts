@@ -3715,6 +3715,7 @@ export const typeDefs = `#graphql
     getAllRefundRequests(page: Int, limit: Int, status: String): RefundRequestResponse!
     getRefundRequest(id: ID!): RefundRequest
     getRefundRequestStats: RefundRequestStats!
+    getMyRefundRequests: [RefundRequest!]!
   }
 
   extend type Mutation {
