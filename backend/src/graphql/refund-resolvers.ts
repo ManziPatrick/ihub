@@ -679,7 +679,12 @@ async function processRefundActions(
       .lean();
 
     if (!originalPayment) {
-      console.warn(`⚠️ Cannot find original payment ${refund.paymentId} for refund`);
+      console.error(`⚠️ Cannot find original payment ${refund.paymentId} for refund`);
+      // Save payout tracking and notify super admins
+      refund.payoutMethod = 'none';
+      refund.payoutReferenceId = null;
+      refund.customerPhone = null;
+      await notifyRefundPayoutFailed(refund, `Original payment record ${refund.paymentId} not found`);
       return;
     }
 
@@ -750,22 +755,8 @@ async function processRefundActions(
 
   // 4. Alert super admins if BOTH payout methods failed — manual intervention needed
   if (savedPayoutMethod === 'none') {
-    console.error(`🚨 CRITICAL: Refund ${refund._id} approved but NO payout method succeeded!`);
-    console.error(`   Payment: ${refund.paymentId}, Amount: ${refund.amount} RWF, Customer: ${refund.userId}`);
-    try {
-      const superAdmins = await User.find({ role: 'super_admin' });
-      for (const sa of superAdmins) {
-        await sendNotification(sa._id.toString(), {
-          type: 'refund_payout_failed',
-          title: '🚨 REFUND PAYOUT FAILED — Manual Intervention Needed',
-          message: `Refund of ${refund.amount} RWF for payment ${refund.paymentId.toString().slice(-8)} was approved but BOTH PawaPay refund and manual disbursement failed. Customer ${refund.userId.toString().slice(-8)} has NOT received their money. Please intervene manually.`,
-          link: `/portal/super-admin/refunds`,
-        });
-      }
-      console.log(`   📧 Emergency notification sent to ${superAdmins.length} super admin(s)`);
-    } catch (notifyErr) {
-      console.error('❌ Failed to send emergency notification:', notifyErr);
-    }
+    await notifyRefundPayoutFailed(refund,
+      'Both PawaPay refund API and manual disbursement fallback failed');
   }
 
   // 5. Log activity for the user
@@ -778,4 +769,28 @@ async function processRefundActions(
       },
     },
   });
+}
+
+/**
+ * Send an emergency notification to all super admins when a refund payout fails
+ * so they can manually intervene.
+ */
+async function notifyRefundPayoutFailed(refund: any, reason: string): Promise<void> {
+  console.error(`🚨 CRITICAL: Refund ${refund._id} approved but payout FAILED!`);
+  console.error(`   Reason: ${reason}`);
+  console.error(`   Payment: ${refund.paymentId}, Amount: ${refund.amount} RWF, Customer: ${refund.userId}`);
+  try {
+    const superAdmins = await User.find({ role: 'super_admin' });
+    for (const sa of superAdmins) {
+      await sendNotification(sa._id.toString(), {
+        type: 'refund_payout_failed',
+        title: '🚨 REFUND PAYOUT FAILED — Manual Intervention Needed',
+        message: `Refund of ${refund.amount} RWF for payment ${refund.paymentId.toString().slice(-8)} was approved but payout failed: ${reason}. Customer ${refund.userId.toString().slice(-8)} has NOT received their money. Please intervene manually.`,
+        link: `/portal/super-admin/refunds`,
+      });
+    }
+    console.log(`   📧 Emergency notification sent to ${superAdmins.length} super admin(s)`);
+  } catch (notifyErr) {
+    console.error('❌ Failed to send emergency notification:', notifyErr);
+  }
 }
