@@ -102,6 +102,9 @@ interface RefundItem {
   refundedAmount: number;
   refundFee: number;
   refundableAmountAfterFee: number;
+  payoutMethod?: string;
+  payoutReferenceId?: string;
+  customerPhone?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -196,7 +199,6 @@ export default function SuperAdminRefunds() {
           description: data.message || "A refund payout has failed and requires manual intervention.",
           duration: 15000,
           position: "top-center",
-          important: true,
           action: {
             label: "View",
             onClick: () => {
