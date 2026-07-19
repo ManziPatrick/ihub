@@ -323,7 +323,7 @@ async function main() {
     console.log(`   ❌ Cancelled disbursements: ${refund.cancelledDisbursements.length}`);
 
     // ────────────────────────────────────────────────────────────────────────
-    // STEP 11: Verify the payment was marked as refunded
+    // STEP 11: Verify payment status updated
     // ────────────────────────────────────────────────────────────────────────
     console.log('\n─── Step 11: Verify payment status updated ───');
     const updatedPayment = await db.collection('payments').findOne({ _id: paymentId! });
@@ -350,6 +350,38 @@ async function main() {
     console.log(`   Failure reason: ${cancelledDisbursement?.failureReason}`);
 
     // ────────────────────────────────────────────────────────────────────────
+    // STEP 14: Verify payout tracking — with fake test data, BOTH PawaPay
+    //          refund API and manual disbursement should fail, so
+    //          payoutMethod should be 'none' and an emergency notification
+    //          should have been sent to super admins.
+    // ────────────────────────────────────────────────────────────────────────
+    console.log('\n─── Step 14: Verify payout tracking & emergency notification ───');
+    console.log('   🔔 EXPECTED: PawaPay refund fails (fake deposit ID),');
+    console.log('      manual disbursement fails (test payment, no real txn),');
+    console.log('      so payoutMethod = "none" and emergency notification fires.\n');
+
+    // Check the refund record in the DB for payoutMethod
+    const refundRecord = await db.collection('refundrequests').findOne({
+      _id: new mongoose.Types.ObjectId(refundRequestId),
+    });
+    console.log(`   Refund record payoutMethod: ${refundRecord?.payoutMethod || 'none'}`);
+    assert(refundRecord?.payoutMethod === 'none',
+      `payoutMethod is "none" (both methods failed, got: ${refundRecord?.payoutMethod})`);
+
+    // Check that an emergency notification was sent to the super admin
+    // Must use ObjectId in the query since Notification.userId is stored as ObjectId
+    const emergencyNotify = await db.collection('notifications').findOne({
+      type: 'refund_payout_failed',
+      userId: new mongoose.Types.ObjectId(admin!._id.toString()),
+    });
+    assert(!!emergencyNotify, 'Emergency notification created for super admin (type: refund_payout_failed)');
+    if (emergencyNotify) {
+      console.log(`   📧 Emergency notification ID: ${emergencyNotify._id}`);
+      console.log(`   📧 Title: ${emergencyNotify.title}`);
+      console.log(`   📧 Message: ${emergencyNotify.message?.substring(0, 80)}...`);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
     // SUMMARY
     // ────────────────────────────────────────────────────────────────────────
     console.log('\n' + '='.repeat(80));
@@ -371,12 +403,14 @@ async function main() {
       console.log('     • Disbursement cancelled ✅');
       console.log('     • Payment marked as refunded ✅');
       console.log('     • Enrollment removed ✅');
+      console.log('     • payoutMethod = "none" (both methods failed) ✅');
+      console.log('     • Emergency notification sent to super admins ✅');
       console.log('\n  🔧 FIX VERIFICATION:');
       console.log('     When PawaPay refund API fails or is unavailable,');
       console.log('     the manual disbursement fallback now correctly');
       console.log('     sends the refund amount to the customer\'s phone.');
-      console.log('     This is the "disbursing as refund while waiting');
-      console.log('     for payouts" behavior.');
+      console.log('     If BOTH fail, an emergency notification alerts');
+      console.log('     super admins so they can manually intervene.');
     }
 
   } catch (err) {
