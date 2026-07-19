@@ -74,6 +74,9 @@ export const refundResolvers = {
           refundedAmount: r.refundedAmount || 0,
           refundFee: r.refundFee || 0,
           refundableAmountAfterFee: r.refundableAmountAfterFee || 0,
+          payoutMethod: r.payoutMethod || null,
+          payoutReferenceId: r.payoutReferenceId || null,
+          customerPhone: r.customerPhone || null,
           requestedBy: (r.requestedBy as any)?.toString() || '',
           createdAt: r.createdAt?.toISOString?.() || r.createdAt?.toString() || '',
           updatedAt: r.updatedAt?.toISOString?.() || r.updatedAt?.toString() || '',
@@ -121,6 +124,9 @@ export const refundResolvers = {
         refundedAmount: refund.refundedAmount,
         refundFee: refund.refundFee || 0,
         refundableAmountAfterFee: refund.refundableAmountAfterFee || 0,
+        payoutMethod: refund.payoutMethod || null,
+        payoutReferenceId: refund.payoutReferenceId || null,
+        customerPhone: refund.customerPhone || null,
         requestedBy: refund.requestedBy.toString(),
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
@@ -285,6 +291,9 @@ export const refundResolvers = {
         refundedAmount: 0,
         refundFee: 0,
         refundableAmountAfterFee: 0,
+        payoutMethod: null,
+        payoutReferenceId: null,
+        customerPhone: null,
         requestedBy: refund.requestedBy.toString(),
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
@@ -349,6 +358,9 @@ export const refundResolvers = {
         refundedAmount: refund.refundedAmount,
         refundFee: refund.refundFee || 0,
         refundableAmountAfterFee: refund.refundableAmountAfterFee || 0,
+        payoutMethod: refund.payoutMethod || null,
+        payoutReferenceId: refund.payoutReferenceId || null,
+        customerPhone: refund.customerPhone || null,
         requestedBy: refund.requestedBy.toString(),
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
@@ -436,6 +448,9 @@ export const refundResolvers = {
         refundedAmount: refund.refundedAmount,
         refundFee: refund.refundFee || 0,
         refundableAmountAfterFee: refund.refundableAmountAfterFee || 0,
+        payoutMethod: refund.payoutMethod || null,
+        payoutReferenceId: refund.payoutReferenceId || null,
+        customerPhone: refund.customerPhone || null,
         requestedBy: refund.requestedBy.toString(),
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
@@ -509,6 +524,9 @@ export const refundResolvers = {
         refundedAmount: refund.refundedAmount,
         refundFee: refund.refundFee || 0,
         refundableAmountAfterFee: refund.refundableAmountAfterFee || 0,
+        payoutMethod: refund.payoutMethod || null,
+        payoutReferenceId: refund.payoutReferenceId || null,
+        customerPhone: refund.customerPhone || null,
         requestedBy: refund.requestedBy.toString(),
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
@@ -565,6 +583,9 @@ export const refundResolvers = {
         refundedAmount: refund.refundedAmount,
         refundFee: refund.refundFee || 0,
         refundableAmountAfterFee: refund.refundableAmountAfterFee || 0,
+        payoutMethod: refund.payoutMethod || null,
+        payoutReferenceId: refund.payoutReferenceId || null,
+        customerPhone: refund.customerPhone || null,
         requestedBy: refund.requestedBy.toString(),
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
@@ -641,6 +662,11 @@ async function processRefundActions(
   }
 
   // 3. Actually send the refund to the customer via PawaPay Refund API
+  //    and track which payout method was used
+  let savedPayoutMethod: 'pawapay_refund' | 'manual_disbursement' | 'none' = 'none';
+  let savedPayoutRefId = '';
+  let savedCustomerPhone = '';
+
   try {
     const refundAmount = refund.refundableAmountAfterFee > 0
       ? refund.refundableAmountAfterFee
@@ -676,6 +702,8 @@ async function processRefundActions(
 
         if (refundResult.success) {
           pawaRefundSucceeded = true;
+          savedPayoutMethod = 'pawapay_refund';
+          savedPayoutRefId = refundResult.refundId || '';
           console.log(`✅ PawaPay refund initiated: ${refundResult.refundId}, ${refundAmount} RWF`);
         } else {
           console.warn(`⚠️ PawaPay refund rejected: ${refundResult.reason}, will disburse as refund instead`);
@@ -693,6 +721,7 @@ async function processRefundActions(
     if (!pawaRefundSucceeded) {
       const customer = await User.findById(refund.userId).select('phone').lean();
       if (customer?.phone) {
+        savedCustomerPhone = customer.phone;
         const payoutResult = await disbursementService.manualDisburse(
           refund.paymentId.toString(),
           refundAmount,
@@ -700,6 +729,8 @@ async function processRefundActions(
           `Refund for payment ${refund.paymentId.toString().slice(-8)} — ${refund.itemTypes.join(', ')}`
         );
         if (payoutResult.success) {
+          savedPayoutMethod = 'manual_disbursement';
+          savedPayoutRefId = payoutResult.intouchReferenceId || '';
           console.log(`✅ Refund disbursed to customer ${customer.phone}: ${refundAmount} RWF`);
         } else {
           console.warn(`⚠️ Refund disbursement failed for ${customer.phone}: ${payoutResult.message}`);
@@ -712,12 +743,17 @@ async function processRefundActions(
     console.error('❌ Refund payout error:', err);
   }
 
+  // Save payout tracking info on the refund record
+  refund.payoutMethod = savedPayoutMethod;
+  refund.payoutReferenceId = savedPayoutRefId || null;
+  refund.customerPhone = savedCustomerPhone || null;
+
   // 4. Log activity for the user
   await User.findByIdAndUpdate(refund.userId, {
     $push: {
       activityLog: {
         action: 'REFUND_PROCESSED',
-        details: `Payment of ${refund.amount} RWF refunded. ${refund.itemTypes.length} item(s) cancelled.`,
+        details: `Payment of ${refund.amount} RWF refunded. ${refund.itemTypes.length} item(s) cancelled. Payout: ${savedPayoutMethod}${savedPayoutRefId ? ` (ref: ${savedPayoutRefId})` : ''}`,
         timestamp: new Date(),
       },
     },

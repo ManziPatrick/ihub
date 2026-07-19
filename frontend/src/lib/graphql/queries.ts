@@ -3245,6 +3245,11 @@ export const GET_ALL_REFUND_REQUESTS = gql`
         approvedAt
         forceApproved
         refundedAmount
+        refundFee
+        refundableAmountAfterFee
+        payoutMethod
+        payoutReferenceId
+        customerPhone
         createdAt
         updatedAt
       }

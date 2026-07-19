@@ -3689,6 +3689,9 @@ export const typeDefs = `#graphql
     refundFee: Float!
     refundableAmountAfterFee: Float!
     requestedBy: ID!
+    payoutMethod: String
+    payoutReferenceId: String
+    customerPhone: String
     createdAt: String!
     updatedAt: String!
   }

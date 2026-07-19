@@ -512,6 +512,24 @@ export default function SuperAdminRefunds() {
                                         <p className="text-xs text-muted-foreground font-medium">Customer Gets Back</p>
                                         <p className="font-medium text-green-600">{formatCurrency(r.refundableAmountAfterFee)}</p>
                                       </div>
+                                      <div>
+                                        <p className="text-xs text-muted-foreground font-medium">Payout Method</p>
+                                        <p className={`font-medium ${r.payoutMethod === 'pawapay_refund' ? 'text-blue-600' : r.payoutMethod === 'manual_disbursement' ? 'text-purple-600' : 'text-muted-foreground'}`}>
+                                          {r.payoutMethod === 'pawapay_refund' ? '🔄 PawaPay Refund' : r.payoutMethod === 'manual_disbursement' ? '📱 Manual Disbursement' : r.payoutMethod || 'N/A'}
+                                        </p>
+                                      </div>
+                                      {r.payoutReferenceId && (
+                                        <div>
+                                          <p className="text-xs text-muted-foreground font-medium">Payout Ref ID</p>
+                                          <p className="font-mono text-xs">{r.payoutReferenceId}</p>
+                                        </div>
+                                      )}
+                                      {r.customerPhone && (
+                                        <div>
+                                          <p className="text-xs text-muted-foreground font-medium">Paid To</p>
+                                          <p className="font-medium">{r.customerPhone}</p>
+                                        </div>
+                                      )}
                                     </>
                                   )}
                                   <div>

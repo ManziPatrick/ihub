@@ -20,6 +20,12 @@ export interface IRefundRequest extends Document {
   refundedAmount: number;
   refundFee: number;
   refundableAmountAfterFee: number;
+  /** Method used to send money back to the customer: 'pawapay_refund', 'manual_disbursement', or 'none' */
+  payoutMethod?: 'pawapay_refund' | 'manual_disbursement' | 'none';
+  /** Reference ID from the payout provider (PawaPay refund ID, Intouch ref, etc.) */
+  payoutReferenceId?: string;
+  /** Customer's phone number that received the payout */
+  customerPhone?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -105,6 +111,19 @@ const RefundRequestSchema: Schema = new Schema(
     refundableAmountAfterFee: {
       type: Number,
       default: 0,
+    },
+    payoutMethod: {
+      type: String,
+      enum: ['pawapay_refund', 'manual_disbursement', 'none'],
+      default: null,
+    },
+    payoutReferenceId: {
+      type: String,
+      default: null,
+    },
+    customerPhone: {
+      type: String,
+      default: null,
     },
   },
   { timestamps: true }
