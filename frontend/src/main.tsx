@@ -16,9 +16,11 @@ import { initErrorCapture, setReportClient } from "./lib/errorCapture";
 setReportClient(client);
 initErrorCapture();
 
-// Fix zoom inconsistency on deployed environments — set zoom to 80%
-if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-  document.documentElement.style.zoom = '0.8';
+// Default 80% zoom — users can adjust via zoom controls in the portal
+if (typeof window !== 'undefined') {
+  const savedZoom = localStorage.getItem('app_zoom');
+  const defaultZoom = '0.8';
+  document.documentElement.style.zoom = savedZoom || defaultZoom;
 }
 
 createRoot(document.getElementById("root")!).render(

@@ -369,19 +369,19 @@ export default function AdminUsers() {
                     {filteredUsers.map((user: any) => (
                       <tr 
                         key={user.id} 
-                        className="group border-b border-border/50 hover:bg-accent/5 transition-all duration-300 cursor-pointer"
+                        className="group border-b border-border/50 hover:bg-accent/10 transition-all duration-300 cursor-pointer"
                         onClick={() => setViewUser(user)}
                       >
                         <td className="p-4">
                           <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9 border border-border/50 group-hover:border-white/30 transition-colors">
-                              <AvatarFallback className="bg-accent/10 text-accent group-hover:bg-white/20 group-hover:text-white transition-colors">
+                              <AvatarFallback className="bg-accent/10 text-accent group-hover:bg-accent/20 dark:group-hover:bg-white/20 group-hover:text-foreground dark:group-hover:text-white transition-colors">
                                 {user.username?.substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-bold text-card-foreground group-hover:text-white transition-colors">{user.username}</p>
-                              <p className="text-xs text-card-foreground/60 group-hover:text-white/60 transition-colors">{user.email}</p>
+                              <p className="font-bold text-card-foreground group-hover:text-foreground dark:group-hover:text-white transition-colors">{user.username}</p>
+                              <p className="text-xs text-card-foreground/60 group-hover:text-muted-foreground dark:group-hover:text-white/60 transition-colors">{user.email}</p>
                             </div>
                           </div>
                         </td>
@@ -396,11 +396,11 @@ export default function AdminUsers() {
                           </div>
                         </td>
                         <td className="p-4 text-center">
-                          <span className="text-sm font-bold text-card-foreground group-hover:text-white transition-colors">
+                          <span className="text-sm font-bold text-card-foreground group-hover:text-foreground dark:group-hover:text-white transition-colors">
                             {user.enrolledCourses?.length || 0}
                           </span>
                         </td>
-                        <td className="p-4 text-sm text-card-foreground/70 group-hover:text-white/70 transition-colors">
+                        <td className="p-4 text-sm text-card-foreground/70 group-hover:text-muted-foreground dark:group-hover:text-white/70 transition-colors">
                           {new Date(parseInt(user.createdAt || Date.now().toString())).toLocaleDateString()}
                         </td>
                         <td className="p-4 text-right">
@@ -409,7 +409,7 @@ export default function AdminUsers() {
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="group-hover:text-white transition-colors"
+                                className="group-hover:text-foreground dark:group-hover:text-white transition-colors"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreVertical className="w-4 h-4" />
