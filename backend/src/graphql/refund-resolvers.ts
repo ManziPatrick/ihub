@@ -659,7 +659,7 @@ async function processRefundActions(
 
     // Try PawaPay Refund API first (properly reverses the original deposit)
     const pawapay = getPawaPay();
-    let refundAttempted = false;
+    let pawaRefundSucceeded = false;
 
     // The Payment.transactionId stores the PawaPay deposit ID for PawaPay payments
     const depositId = originalPayment.paymentMethod?.toLowerCase().includes('pawapay')
@@ -668,26 +668,29 @@ async function processRefundActions(
 
     if (pawapay && depositId) {
       try {
-        refundAttempted = true;          const refundResult = await pawapay.initiateRefund({
-            depositId,
-            amount: refundAmount,
-            currency: refund.currency || 'RWF',
-          });
+        const refundResult = await pawapay.initiateRefund({
+          depositId,
+          amount: refundAmount,
+          currency: refund.currency || 'RWF',
+        });
 
         if (refundResult.success) {
+          pawaRefundSucceeded = true;
           console.log(`✅ PawaPay refund initiated: ${refundResult.refundId}, ${refundAmount} RWF`);
         } else {
-          console.warn(`⚠️ PawaPay refund rejected: ${refundResult.reason}, falling back to manual disbursement`);
+          console.warn(`⚠️ PawaPay refund rejected: ${refundResult.reason}, will disburse as refund instead`);
         }
       } catch (pawaErr) {
-        console.warn(`⚠️ PawaPay refund failed, falling back to manual disbursement:`, (pawaErr as Error).message);
+        console.warn(`⚠️ PawaPay refund failed, will disburse as refund instead:`, (pawaErr as Error).message);
       }
     } else {
-      console.log(`ℹ️ Payment ${refund.paymentId} was not a PawaPay payment (method: ${originalPayment.paymentMethod}), using manual disbursement for refund`);
+      console.log(`ℹ️ Payment ${refund.paymentId} was not a PawaPay payment (method: ${originalPayment.paymentMethod}), disbursing as refund`);
     }
 
-    // Fallback: manual disbursement to customer's phone
-    if (!refundAttempted) {
+    // Fallback: disburse refund to customer's phone via manual disbursement
+    // This always runs when PawaPay refund API is not available or fails
+    // Manual disbursement tries PawaPay payout first, then InTouch fallback
+    if (!pawaRefundSucceeded) {
       const customer = await User.findById(refund.userId).select('phone').lean();
       if (customer?.phone) {
         const payoutResult = await disbursementService.manualDisburse(
@@ -697,12 +700,12 @@ async function processRefundActions(
           `Refund for payment ${refund.paymentId.toString().slice(-8)} — ${refund.itemTypes.join(', ')}`
         );
         if (payoutResult.success) {
-          console.log(`✅ Refund payout sent to customer ${customer.phone}: ${refundAmount} RWF`);
+          console.log(`✅ Refund disbursed to customer ${customer.phone}: ${refundAmount} RWF`);
         } else {
-          console.warn(`⚠️ Refund payout failed for ${customer.phone}: ${payoutResult.message}`);
+          console.warn(`⚠️ Refund disbursement failed for ${customer.phone}: ${payoutResult.message}`);
         }
       } else {
-        console.warn(`⚠️ Cannot send refund payout: customer ${refund.userId} has no phone number`);
+        console.warn(`⚠️ Cannot disburse refund: customer ${refund.userId} has no phone number`);
       }
     }
   } catch (err) {
