@@ -79,9 +79,12 @@ import {
   Banknote,
   TrendingUp,
   Search,
+  BellRing,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePusher } from "@/hooks/use-pusher";
 
 interface RefundItem {
   id: string;
@@ -134,9 +137,16 @@ function formatDate(dateStr: string): string {
 }
 
 export default function SuperAdminRefunds() {
+  const { user } = useAuth();
+  const pusher = usePusher();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [recentFailedPayout, setRecentFailedPayout] = useState<{
+    amount: number;
+    paymentId: string;
+    message: string;
+  } | null>(null);
   const LIMIT = 20;
 
   const [noteInput, setNoteInput] = useState("");
@@ -155,6 +165,50 @@ export default function SuperAdminRefunds() {
   const { data: statsData, loading: statsLoading, refetch: refetchStats } = useQuery(GET_REFUND_REQUEST_STATS, {
     pollInterval: 60000,
   });
+
+  // Listen for real-time refund payout failure notifications via Pusher
+  useEffect(() => {
+    if (!pusher || !user) return;
+
+    const channel = pusher.subscribe(`user-${user.id}`);
+
+    channel.bind("notification", (data: any) => {
+      if (data.type === "refund_payout_failed") {
+        // Show a persistent, prominent toast alert
+        toast.error(data.title || "Refund Payout Failed", {
+          description: data.message || "A refund payout has failed and requires manual intervention.",
+          duration: 15000, // Show for 15 seconds
+          position: "top-center",
+          important: true,
+          action: {
+            label: "View",
+            onClick: () => {
+              // Auto-refetch and scroll to the refunds list
+              refetch();
+              refetchStats();
+              document.querySelector("[data-refunds-header]")?.scrollIntoView({ behavior: "smooth" });
+            },
+          },
+        });
+
+        // Also set the recent failed payout state for the persistent banner
+        setRecentFailedPayout({
+          amount: data.amount || 0,
+          paymentId: data.paymentId || "",
+          message: data.message || "Refund payout failed",
+        });
+
+        // Auto-refetch to show updated data
+        refetch();
+        refetchStats();
+      }
+    });
+
+    return () => {
+      channel.unbind_all();
+      pusher.unsubscribe(`user-${user.id}`);
+    };
+  }, [pusher, user, refetch, refetchStats]);
 
   const [verifyRefund, { loading: verifying }] = useMutation(VERIFY_REFUND_REQUEST);
   const [approveRefund, { loading: approving }] = useMutation(APPROVE_REFUND);
@@ -243,8 +297,59 @@ export default function SuperAdminRefunds() {
   return (
     <PortalLayout>
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Persistent Banner for Failed Payouts */}
+        {recentFailedPayout && (
+          <div className="relative overflow-hidden rounded-lg border-2 border-destructive/40 bg-destructive/5 p-4 animate-in slide-in-from-top duration-500">
+            <div className="absolute inset-0 bg-gradient-to-r from-destructive/10 via-transparent to-transparent" />
+            <div className="relative flex items-start gap-3">
+              <div className="p-2 rounded-full bg-destructive/20 shrink-0">
+                <BellRing className="w-5 h-5 text-destructive" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-destructive text-sm flex items-center gap-2">
+                  🚨 Payout Failed — Manual Intervention Required
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                  {recentFailedPayout.message}
+                </p>
+                <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                  <span className="font-medium text-destructive">
+                    Amount: {formatCurrency(recentFailedPayout.amount)}
+                  </span>
+                  <span className="text-muted-foreground/50">|</span>
+                  <span className="font-mono">
+                    Payment: {recentFailedPayout.paymentId.slice(-8)}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    refetch();
+                    refetchStats();
+                  }}
+                  className="text-xs h-8"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                  Refresh
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setRecentFailedPayout(null)}
+                  className="text-xs h-8"
+                >
+                  Dismiss
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between" data-refunds-header>
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <ShieldAlert className="w-6 h-6 text-destructive" />
