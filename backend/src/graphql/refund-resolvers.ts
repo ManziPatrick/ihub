@@ -787,6 +787,8 @@ async function notifyRefundPayoutFailed(refund: any, reason: string): Promise<vo
         title: '🚨 REFUND PAYOUT FAILED — Manual Intervention Needed',
         message: `Refund of ${refund.amount} RWF for payment ${refund.paymentId.toString().slice(-8)} was approved but payout failed: ${reason}. Customer ${refund.userId.toString().slice(-8)} has NOT received their money. Please intervene manually.`,
         link: `/portal/super-admin/refunds`,
+        amount: refund.amount,
+        paymentId: refund.paymentId.toString(),
       });
     }
     console.log(`   📧 Emergency notification sent to ${superAdmins.length} super admin(s)`);
