@@ -608,7 +608,7 @@ function PaymentRow({
   return (
     <>
       <tr 
-        className={`border-b border-border/10 transition-all group cursor-pointer ${expanded ? 'bg-accent/5' : ''}`}
+        className={`border-b border-border/10 transition-all hover:bg-accent/5 group cursor-pointer ${expanded ? 'bg-accent/10' : ''}`}
         onClick={() => setExpanded(!expanded)}
       >
         <td className="p-3">

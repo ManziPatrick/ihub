@@ -582,14 +582,14 @@ function AdminPaymentRow({ payment, setVerifyingPayment }: { payment: any, setVe
     : payment.itemTitle;
 
   return (
-    <tr className="border-b border-border/10 transition-colors group">
+    <tr className="border-b border-border/10 transition-colors hover:bg-accent/5 group">
       <td className="p-4">
         <p className="font-bold group-hover:text-foreground dark:group-hover:text-white transition-colors">
           {payment.studentName}
         </p>
       </td>
       <td className="p-4">
-        <Badge variant="outline" className="text-[10px] font-bold border-border/50 uppercase tracking-tighter group-hover:border-white/30 group-hover:text-foreground dark:group-hover:text-white transition-colors">
+        <Badge variant="outline" className="text-[10px] font-bold border-border/50 uppercase tracking-tighter group-hover:border-accent/30 dark:group-hover:border-white/30 group-hover:text-foreground dark:group-hover:text-white transition-colors">
           {payment.type}
         </Badge>
       </td>
@@ -601,7 +601,7 @@ function AdminPaymentRow({ payment, setVerifyingPayment }: { payment: any, setVe
           {hasItems && (
             <div className="mt-1 flex flex-wrap gap-1 items-center">
               {allItems.map((item: any, idx: number) => (
-                <span key={item.id || idx} className="text-[9px] px-1.5 py-0.5 bg-accent/5 text-accent group-hover:bg-white/10 group-hover:text-white group-hover:border-white/20 border border-accent/10 rounded font-medium transition-colors">
+                <span key={item.id || idx} className="text-[9px] px-1.5 py-0.5 bg-accent/5 text-accent group-hover:bg-accent/10 dark:group-hover:bg-white/10 group-hover:text-accent-foreground dark:group-hover:text-white group-hover:border-accent/30 dark:group-hover:border-white/20 border border-accent/10 rounded font-medium transition-colors">
                   {item.title}
                 </span>
               ))}
@@ -609,25 +609,23 @@ function AdminPaymentRow({ payment, setVerifyingPayment }: { payment: any, setVe
           )}
         </div>
       </td>
-      <td className="p-4 text-right">
-        <span className="font-bold text-accent group-hover:text-white transition-colors">
+      <td className="p-4 text-right">          <span className="font-bold text-accent group-hover:text-accent-foreground dark:group-hover:text-white transition-colors">
           {payment.amount.toLocaleString()} {payment.currency}
         </span>
       </td>
       <td className="p-4 text-center">
         <div className="flex flex-col items-center">
-          <span className="text-xs font-medium group-hover:text-white transition-colors">{new Date(payment.date).toLocaleDateString()}</span>
-          <span className="text-[10px] text-muted-foreground group-hover:text-foreground/60 dark:group-hover:text-white/60 transition-colors">{new Date(payment.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          <span className="text-xs font-medium group-hover:text-foreground dark:group-hover:text-white transition-colors">{new Date(payment.date).toLocaleDateString()}</span>
+          <span className="text-[10px] text-muted-foreground group-hover:text-muted-foreground dark:group-hover:text-white/60 transition-colors">{new Date(payment.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
       </td>
       <td className="p-4 text-center">
-        <Badge className={`${statusColors[payment.status] || "bg-gray-500/20 text-gray-400"} flex items-center gap-1 mx-auto w-fit px-2 group-hover:bg-foreground/20 dark:group-hover:bg-white/20 group-hover:text-white group-hover:border-foreground/30 dark:group-hover:border-white/30 transition-colors shadow-none`}>
+        <Badge className={`${statusColors[payment.status] || "bg-gray-500/20 text-gray-400"} flex items-center gap-1 mx-auto w-fit px-2 group-hover:bg-foreground/20 dark:group-hover:bg-white/20 group-hover:text-foreground dark:group-hover:text-white group-hover:border-foreground/30 dark:group-hover:border-white/30 transition-colors shadow-none`}>
           <StatusIcon className="w-3 h-3" />
           <span className="capitalize text-[10px] font-bold">{payment.status}</span>
         </Badge>
       </td>
-      <td className="p-4 text-center">
-        <span className="text-xs font-medium group-hover:text-white transition-colors">{payment.method}</span>
+      <td className="p-4 text-center">          <span className="text-xs font-medium group-hover:text-foreground dark:group-hover:text-white transition-colors">{payment.method}</span>
       </td>
       <td className="p-4 text-right">
         <div className="flex justify-end gap-2">
@@ -642,7 +640,7 @@ function AdminPaymentRow({ payment, setVerifyingPayment }: { payment: any, setVe
             </Button>
           )}
           {(payment.status === 'completed' || payment.status === 'paid' || payment.status === 'successful') && (
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-white transition-colors">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground dark:hover:text-white transition-colors">
               <Download className="w-4 h-4" />
             </Button>
           )}

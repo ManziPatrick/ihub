@@ -49,11 +49,28 @@
     --font-heading: 'Outfit', sans-serif;
     --font-body: 'Outfit', sans-serif;
 
+    /* Semantic colors — success (green), warning (amber), info (blue) */
+    --success: 142 40% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 80% 55%;
+    --warning-foreground: 240 2% 17%;
+    --info: 212 70% 55%;
+    --info-foreground: 0 0% 100%;
+
+    /* Named alias tokens for the base palette */
+    --parchment: 52 40% 98%;
+    --charcoal: 240 2% 17%;
+    --gold: 41 53% 54%;
+
     /* Sidebar stays charcoal even in light mode for professional contrast */
     --sidebar-background: 240 2% 17%;
     --sidebar-foreground: 52 26% 92%;
     --sidebar-primary: 41 53% 54%;
     --sidebar-primary-foreground: 240 2% 17%;
+    --sidebar-accent: 41 53% 54%;
+    --sidebar-accent-foreground: 240 2% 17%;
+    --sidebar-border: 240 2% 25%;
+    --sidebar-ring: 41 53% 54%;
   }
 
   .dark {
@@ -85,6 +102,16 @@
 
     --accent: 41 53% 54%;
     --accent-foreground: 240 2% 17%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 40% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 80% 55%;
+    --warning-foreground: 240 2% 17%;
+    --info: 212 70% 55%;
+    --info-foreground: 0 0% 100%;
 
     --border: 240 2% 30%;
     --input: 240 2% 30%;
