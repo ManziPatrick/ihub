@@ -125,8 +125,8 @@ export const SEND_MESSAGE = gql`
   }
 `;
 export const ENROLL_COURSE = gql`
-  mutation Enroll($courseId: ID!) {
-    enroll(courseId: $courseId) {
+  mutation Enroll($courseId: ID!, $discountCode: String, $selectedDeliveryMode: String) {
+    enroll(courseId: $courseId, discountCode: $discountCode, selectedDeliveryMode: $selectedDeliveryMode) {
       id
       studentsEnrolled {
         id
@@ -2523,7 +2523,7 @@ export const REVOKE_SCHOLARSHIP = gql`
 
 // ========== DISCOUNT CODE MUTATIONS ==========
 export const CREATE_DISCOUNT_CODE = gql`
-  mutation CreateDiscountCode($code: String!, $courseId: ID!, $discountType: String!, $discountValue: Float!, $maxUses: Int, $expiresAt: String, $description: String) {
+  mutation CreateDiscountCode($code: String!, $courseId: ID, $discountType: String!, $discountValue: Float!, $maxUses: Int, $expiresAt: String, $description: String) {
     createDiscountCode(code: $code, courseId: $courseId, discountType: $discountType, discountValue: $discountValue, maxUses: $maxUses, expiresAt: $expiresAt, description: $description) {
       id
       code
@@ -2565,7 +2565,7 @@ export const DELETE_DISCOUNT_CODE = gql`
 `;
 
 export const VALIDATE_DISCOUNT_CODE = gql`
-  mutation ValidateDiscountCode($code: String!, $courseId: ID!) {
+  mutation ValidateDiscountCode($code: String!, $courseId: ID) {
     validateDiscountCode(code: $code, courseId: $courseId) {
       valid
       discountType

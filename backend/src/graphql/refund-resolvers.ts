@@ -32,8 +32,8 @@ export const refundResolvers = {
       { page = 1, limit = 20, status }: { page?: number; limit?: number; status?: string },
       context: any
     ) => {
-      if (!context.user || context.user.role !== 'super_admin') {
-        throw new Error('Not authorized - super_admin only');
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized - admin or super_admin only');
       }
 
       const filter: any = {};
@@ -74,6 +74,9 @@ export const refundResolvers = {
           refundedAmount: r.refundedAmount || 0,
           refundFee: r.refundFee || 0,
           refundableAmountAfterFee: r.refundableAmountAfterFee || 0,
+          payoutMethod: r.payoutMethod || null,
+          payoutReferenceId: r.payoutReferenceId || null,
+          customerPhone: r.customerPhone || null,
           requestedBy: (r.requestedBy as any)?.toString() || '',
           createdAt: r.createdAt?.toISOString?.() || r.createdAt?.toString() || '',
           updatedAt: r.updatedAt?.toISOString?.() || r.updatedAt?.toString() || '',
@@ -121,10 +124,40 @@ export const refundResolvers = {
         refundedAmount: refund.refundedAmount,
         refundFee: refund.refundFee || 0,
         refundableAmountAfterFee: refund.refundableAmountAfterFee || 0,
+        payoutMethod: refund.payoutMethod || null,
+        payoutReferenceId: refund.payoutReferenceId || null,
+        customerPhone: refund.customerPhone || null,
         requestedBy: refund.requestedBy.toString(),
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
       };
+    },
+
+    getMyRefundRequests: async (_: any, __: any, context: any) => {
+      if (!context.user) {
+        throw new Error('Not authenticated');
+      }
+
+      const refunds = await RefundRequest.find({ userId: new mongoose.Types.ObjectId(context.user.id) })
+        .populate('userId', 'username fullName email')
+        .sort({ createdAt: -1 });
+
+      return refunds.map((r) => ({
+        id: (r._id as any)?.toString() || '',
+        paymentId: (r.paymentId as any)?.toString() || '',
+        userId: (r.userId as any)?.toString() || '',
+        user: r.userId as any,
+        amount: r.amount || 0,
+        currency: r.currency || 'RWF',
+        reason: r.reason || '',
+        status: r.status || 'pending',
+        adminNote: r.adminNote || null,
+        refundedAmount: r.refundedAmount || 0,
+        refundFee: r.refundFee || 0,
+        refundableAmountAfterFee: r.refundableAmountAfterFee || 0,
+        createdAt: r.createdAt?.toISOString?.() || r.createdAt?.toString() || '',
+        updatedAt: r.updatedAt?.toISOString?.() || r.updatedAt?.toString() || '',
+      }));
     },
 
     getRefundRequestStats: async (_: any, __: any, context: any) => {
@@ -285,6 +318,9 @@ export const refundResolvers = {
         refundedAmount: 0,
         refundFee: 0,
         refundableAmountAfterFee: 0,
+        payoutMethod: null,
+        payoutReferenceId: null,
+        customerPhone: null,
         requestedBy: refund.requestedBy.toString(),
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
@@ -349,6 +385,9 @@ export const refundResolvers = {
         refundedAmount: refund.refundedAmount,
         refundFee: refund.refundFee || 0,
         refundableAmountAfterFee: refund.refundableAmountAfterFee || 0,
+        payoutMethod: refund.payoutMethod || null,
+        payoutReferenceId: refund.payoutReferenceId || null,
+        customerPhone: refund.customerPhone || null,
         requestedBy: refund.requestedBy.toString(),
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
@@ -364,15 +403,17 @@ export const refundResolvers = {
       { id, note }: { id: string; note?: string },
       context: any
     ) => {
-      if (!context.user || context.user.role !== 'super_admin') {
-        throw new Error('Not authorized - super_admin only');
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized - admin or super_admin only');
       }
 
       const refund = await RefundRequest.findById(id);
       if (!refund) throw new Error('Refund request not found');
 
-      if (refund.status !== 'admin_verified') {
-        throw new Error(`Cannot approve - current status is ${refund.status}. Must be admin_verified first.`);
+      // Super admin can approve from 'pending' OR 'admin_verified' status.
+      // The 'pending' → 'approved' path skips separate admin verification.
+      if (refund.status !== 'admin_verified' && refund.status !== 'pending') {
+        throw new Error(`Cannot approve - current status is ${refund.status}. Must be 'pending' or 'admin_verified'.`);
       }
 
       // Process the refund: cancel all related items
@@ -436,6 +477,9 @@ export const refundResolvers = {
         refundedAmount: refund.refundedAmount,
         refundFee: refund.refundFee || 0,
         refundableAmountAfterFee: refund.refundableAmountAfterFee || 0,
+        payoutMethod: refund.payoutMethod || null,
+        payoutReferenceId: refund.payoutReferenceId || null,
+        customerPhone: refund.customerPhone || null,
         requestedBy: refund.requestedBy.toString(),
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
@@ -450,8 +494,8 @@ export const refundResolvers = {
       { id, note }: { id: string; note?: string },
       context: any
     ) => {
-      if (!context.user || context.user.role !== 'super_admin') {
-        throw new Error('Not authorized - super_admin only');
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized - admin or super_admin only');
       }
 
       const refund = await RefundRequest.findById(id);
@@ -509,6 +553,9 @@ export const refundResolvers = {
         refundedAmount: refund.refundedAmount,
         refundFee: refund.refundFee || 0,
         refundableAmountAfterFee: refund.refundableAmountAfterFee || 0,
+        payoutMethod: refund.payoutMethod || null,
+        payoutReferenceId: refund.payoutReferenceId || null,
+        customerPhone: refund.customerPhone || null,
         requestedBy: refund.requestedBy.toString(),
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
@@ -565,6 +612,9 @@ export const refundResolvers = {
         refundedAmount: refund.refundedAmount,
         refundFee: refund.refundFee || 0,
         refundableAmountAfterFee: refund.refundableAmountAfterFee || 0,
+        payoutMethod: refund.payoutMethod || null,
+        payoutReferenceId: refund.payoutReferenceId || null,
+        customerPhone: refund.customerPhone || null,
         requestedBy: refund.requestedBy.toString(),
         createdAt: refund.createdAt?.toISOString() || '',
         updatedAt: refund.updatedAt?.toISOString() || '',
@@ -641,6 +691,11 @@ async function processRefundActions(
   }
 
   // 3. Actually send the refund to the customer via PawaPay Refund API
+  //    and track which payout method was used
+  let savedPayoutMethod: 'pawapay_refund' | 'manual_disbursement' | 'none' = 'none';
+  let savedPayoutRefId = '';
+  let savedCustomerPhone = '';
+
   try {
     const refundAmount = refund.refundableAmountAfterFee > 0
       ? refund.refundableAmountAfterFee
@@ -653,13 +708,18 @@ async function processRefundActions(
       .lean();
 
     if (!originalPayment) {
-      console.warn(`⚠️ Cannot find original payment ${refund.paymentId} for refund`);
+      console.error(`⚠️ Cannot find original payment ${refund.paymentId} for refund`);
+      // Save payout tracking and notify super admins
+      refund.payoutMethod = 'none';
+      refund.payoutReferenceId = null;
+      refund.customerPhone = null;
+      await notifyRefundPayoutFailed(refund, `Original payment record ${refund.paymentId} not found`);
       return;
     }
 
     // Try PawaPay Refund API first (properly reverses the original deposit)
     const pawapay = getPawaPay();
-    let refundAttempted = false;
+    let pawaRefundSucceeded = false;
 
     // The Payment.transactionId stores the PawaPay deposit ID for PawaPay payments
     const depositId = originalPayment.paymentMethod?.toLowerCase().includes('pawapay')
@@ -668,28 +728,34 @@ async function processRefundActions(
 
     if (pawapay && depositId) {
       try {
-        refundAttempted = true;          const refundResult = await pawapay.initiateRefund({
-            depositId,
-            amount: refundAmount,
-            currency: refund.currency || 'RWF',
-          });
+        const refundResult = await pawapay.initiateRefund({
+          depositId,
+          amount: refundAmount,
+          currency: refund.currency || 'RWF',
+        });
 
         if (refundResult.success) {
+          pawaRefundSucceeded = true;
+          savedPayoutMethod = 'pawapay_refund';
+          savedPayoutRefId = refundResult.refundId || '';
           console.log(`✅ PawaPay refund initiated: ${refundResult.refundId}, ${refundAmount} RWF`);
         } else {
-          console.warn(`⚠️ PawaPay refund rejected: ${refundResult.reason}, falling back to manual disbursement`);
+          console.warn(`⚠️ PawaPay refund rejected: ${refundResult.reason}, will disburse as refund instead`);
         }
       } catch (pawaErr) {
-        console.warn(`⚠️ PawaPay refund failed, falling back to manual disbursement:`, (pawaErr as Error).message);
+        console.warn(`⚠️ PawaPay refund failed, will disburse as refund instead:`, (pawaErr as Error).message);
       }
     } else {
-      console.log(`ℹ️ Payment ${refund.paymentId} was not a PawaPay payment (method: ${originalPayment.paymentMethod}), using manual disbursement for refund`);
+      console.log(`ℹ️ Payment ${refund.paymentId} was not a PawaPay payment (method: ${originalPayment.paymentMethod}), disbursing as refund`);
     }
 
-    // Fallback: manual disbursement to customer's phone
-    if (!refundAttempted) {
+    // Fallback: disburse refund to customer's phone via manual disbursement
+    // This always runs when PawaPay refund API is not available or fails
+    // Manual disbursement tries PawaPay payout first, then InTouch fallback
+    if (!pawaRefundSucceeded) {
       const customer = await User.findById(refund.userId).select('phone').lean();
       if (customer?.phone) {
+        savedCustomerPhone = customer.phone;
         const payoutResult = await disbursementService.manualDisburse(
           refund.paymentId.toString(),
           refundAmount,
@@ -697,26 +763,65 @@ async function processRefundActions(
           `Refund for payment ${refund.paymentId.toString().slice(-8)} — ${refund.itemTypes.join(', ')}`
         );
         if (payoutResult.success) {
-          console.log(`✅ Refund payout sent to customer ${customer.phone}: ${refundAmount} RWF`);
+          savedPayoutMethod = 'manual_disbursement';
+          savedPayoutRefId = payoutResult.intouchReferenceId || '';
+          console.log(`✅ Refund disbursed to customer ${customer.phone}: ${refundAmount} RWF`);
         } else {
-          console.warn(`⚠️ Refund payout failed for ${customer.phone}: ${payoutResult.message}`);
+          console.warn(`⚠️ Refund disbursement failed for ${customer.phone}: ${payoutResult.message}`);
         }
       } else {
-        console.warn(`⚠️ Cannot send refund payout: customer ${refund.userId} has no phone number`);
+        console.warn(`⚠️ Cannot disburse refund: customer ${refund.userId} has no phone number`);
       }
     }
   } catch (err) {
     console.error('❌ Refund payout error:', err);
   }
 
-  // 4. Log activity for the user
+  // Save payout tracking info on the refund record
+  refund.payoutMethod = savedPayoutMethod;
+  refund.payoutReferenceId = savedPayoutRefId || null;
+  refund.customerPhone = savedCustomerPhone || null;
+
+  // 4. Alert super admins if BOTH payout methods failed — manual intervention needed
+  if (savedPayoutMethod === 'none') {
+    await notifyRefundPayoutFailed(refund,
+      'Both PawaPay refund API and manual disbursement fallback failed');
+  }
+
+  // 5. Log activity for the user
   await User.findByIdAndUpdate(refund.userId, {
     $push: {
       activityLog: {
         action: 'REFUND_PROCESSED',
-        details: `Payment of ${refund.amount} RWF refunded. ${refund.itemTypes.length} item(s) cancelled.`,
+        details: `Payment of ${refund.amount} RWF refunded. ${refund.itemTypes.length} item(s) cancelled. Payout: ${savedPayoutMethod}${savedPayoutRefId ? ` (ref: ${savedPayoutRefId})` : ''}`,
         timestamp: new Date(),
       },
     },
   });
+}
+
+/**
+ * Send an emergency notification to all super admins when a refund payout fails
+ * so they can manually intervene.
+ */
+async function notifyRefundPayoutFailed(refund: any, reason: string): Promise<void> {
+  console.error(`🚨 CRITICAL: Refund ${refund._id} approved but payout FAILED!`);
+  console.error(`   Reason: ${reason}`);
+  console.error(`   Payment: ${refund.paymentId}, Amount: ${refund.amount} RWF, Customer: ${refund.userId}`);
+  try {
+    const superAdmins = await User.find({ role: 'super_admin' });
+    for (const sa of superAdmins) {
+      await sendNotification(sa._id.toString(), {
+        type: 'refund_payout_failed',
+        title: '🚨 REFUND PAYOUT FAILED — Manual Intervention Needed',
+        message: `Refund of ${refund.amount} RWF for payment ${refund.paymentId.toString().slice(-8)} was approved but payout failed: ${reason}. Customer ${refund.userId.toString().slice(-8)} has NOT received their money. Please intervene manually.`,
+        link: `/portal/super-admin/refunds`,
+        amount: refund.amount,
+        paymentId: refund.paymentId.toString(),
+      });
+    }
+    console.log(`   📧 Emergency notification sent to ${superAdmins.length} super admin(s)`);
+  } catch (notifyErr) {
+    console.error('❌ Failed to send emergency notification:', notifyErr);
+  }
 }

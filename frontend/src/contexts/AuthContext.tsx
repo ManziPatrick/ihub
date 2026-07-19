@@ -161,12 +161,21 @@ export function AuthProvider({
         variables: { email, password },
       });
 
+      const loginData = (data as any)?.login;
+      if (!loginData) {
+        throw new Error("Invalid credentials or account not found");
+      }
+
       const {
         token,
         user: userData,
         requires2FA,
         requires2FASetup,
-      } = (data as any).login;
+      } = loginData;
+
+      if (!token) {
+        throw new Error("Login failed — no authentication token returned");
+      }
 
       if (requires2FA || requires2FASetup) {
         return {

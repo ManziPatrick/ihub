@@ -3006,7 +3006,10 @@ export const typeDefs = `#graphql
     totalScore: Int
     feedback: String
     submittedAt: String
+    courseId: ID
+    courseTitle: String
   }
+
 
   type ReportGrade {
     courseId: ID
@@ -3686,6 +3689,9 @@ export const typeDefs = `#graphql
     refundFee: Float!
     refundableAmountAfterFee: Float!
     requestedBy: ID!
+    payoutMethod: String
+    payoutReferenceId: String
+    customerPhone: String
     createdAt: String!
     updatedAt: String!
   }
@@ -3709,6 +3715,7 @@ export const typeDefs = `#graphql
     getAllRefundRequests(page: Int, limit: Int, status: String): RefundRequestResponse!
     getRefundRequest(id: ID!): RefundRequest
     getRefundRequestStats: RefundRequestStats!
+    getMyRefundRequests: [RefundRequest!]!
   }
 
   extend type Mutation {
@@ -3867,13 +3874,12 @@ export const typeDefs = `#graphql
   extend type Query {
     discountCodes(courseId: ID, page: Int, limit: Int): DiscountCodeResponse
     discountCode(id: ID!): DiscountCode
-    validateDiscountCode(code: String!, courseId: ID!): ValidateDiscountResult
   }
 
   extend type Mutation {
     createDiscountCode(
       code: String!
-      courseId: ID!
+      courseId: ID
       discountType: String!
       discountValue: Float!
       maxUses: Int
@@ -3891,5 +3897,6 @@ export const typeDefs = `#graphql
       description: String
     ): DiscountCode
     deleteDiscountCode(id: ID!): Boolean
+    validateDiscountCode(code: String!, courseId: ID): ValidateDiscountResult
   }
 `;

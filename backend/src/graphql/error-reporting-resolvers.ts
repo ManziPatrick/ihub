@@ -224,7 +224,7 @@ export const errorReportResolvers = {
         componentName: args.input.componentName,
         operationName: args.input.operationName,
         statusCode: args.input.statusCode,
-        url: args.input.context?.url || '',
+        url: args.input.context?.url || 'unknown',
         userAgent,
         browserInfo,
         context: args.input.context,

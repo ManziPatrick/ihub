@@ -825,7 +825,6 @@ export const resolvers = {
       if (!context.user) throw new Error('Not authenticated');
       const filter: any = { isDeleted: false };
       if (status) filter.status = status;
-      if (contextType) filter.contextType = contextType;
       if (teamId) filter.teamIds = teamId;
       if (programId) {
         // Find teams in this program first
@@ -833,6 +832,39 @@ export const resolvers = {
         const teamIds = teams.map(t => t._id);
         filter.teamIds = { $in: teamIds };
       }
+
+      // Role-based access control — admins see only their own calendar
+      if (context.user.role === 'admin') {
+        // Admins see:
+        // 1. Meetings they host (created)
+        // 2. Meetings where they are listed as a mentor
+        // 3. General meetings (platform-wide, visible to all)
+        // 4. Meetings hosted by their parent (the admin/trainer who created them)
+        const userDoc = await User.findById(context.user.id).select('createdBy').lean();
+        const parentId = (userDoc as any)?.createdBy?.toString?.();
+
+        const ownershipFilter: any[] = [
+          { hostId: context.user.id },
+          { mentorIds: context.user.id },
+          { contextType: 'general' },
+        ];
+
+        if (parentId) {
+          ownershipFilter.push({ hostId: parentId });
+        }
+
+        if (contextType) {
+          filter.$and = [
+            { contextType },
+            { $or: ownershipFilter },
+          ];
+        } else {
+          filter.$or = ownershipFilter;
+        }
+      } else if (contextType) {
+        filter.contextType = contextType;
+      }
+
       return await InternshipMeeting.find(filter).sort({ startTime: 1 });
     },
 
@@ -848,20 +880,38 @@ export const resolvers = {
 
       const filter: any = { isDeleted: false };
 
-      // If the user is a student, filter meetings by relevance:
-      // - meetings where the user is directly listed in userIds
-      // - meetings for courses the student is enrolled in
-      // - meetings for teams the student belongs to
-      // - meetings where the student is listed as a mentor
-      // Admins/trainers see all meetings (global visibility)
-      if (context.user.role === 'student') {
-        // Get the user's enrolled courses
-        const user = await User.findById(context.user.id).select('enrolledCourses').lean();
-        const enrolledCourseIds = (user as any)?.enrolledCourses?.map((c: any) =>
+      // Role-based access control
+      if (context.user.role === 'admin') {
+        // Admins see:
+        // 1. Meetings they host
+        // 2. Meetings where they are a mentor
+        // 3. General meetings
+        // 4. Meetings hosted by their parent (the admin/trainer who created them)
+        const userDoc = await User.findById(context.user.id).select('createdBy').lean();
+        const parentId = (userDoc as any)?.createdBy?.toString?.();
+
+        const ownershipFilter: any[] = [
+          { hostId: context.user.id },
+          { mentorIds: context.user.id },
+          { contextType: 'general' },
+        ];
+
+        if (parentId) {
+          ownershipFilter.push({ hostId: parentId });
+        }
+
+        filter.$or = ownershipFilter;
+      } else if (context.user.role === 'student') {
+        // Students see:
+        // - meetings where the user is directly listed in userIds
+        // - meetings for courses the student is enrolled in
+        // - meetings for teams the student belongs to
+        // - meetings where the student is listed as a mentor
+        const userDoc = await User.findById(context.user.id).select('enrolledCourses').lean();
+        const enrolledCourseIds = (userDoc as any)?.enrolledCourses?.map((c: any) =>
           c?.toString?.() || c
         ) || [];
 
-        // Get the user's internship team memberships
         const teamMemberships = await InternshipTeamMember.find({ userId: context.user.id, isDeleted: false })
           .select('teamId').lean();
         const teamIds = teamMemberships.map(tm => tm.teamId);
@@ -3214,8 +3264,14 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
+
+      // Super admin sees everything; admin sees only discount codes they created
       const filter: any = {};
       if (courseId) filter.courseId = courseId;
+      if (context.user.role === 'admin') {
+        filter.createdBy = context.user.id;
+      }
+
       
       const totalCount = await DiscountCode.countDocuments(filter);
       const items = await DiscountCode.find(filter)
@@ -3225,8 +3281,17 @@ export const resolvers = {
         .populate('courseId')
         .populate('createdBy');
       
+      // Convert populated courseId back to string ID for GraphQL ID serialization
+      const sanitizedItems = items.map((item: any) => {
+        const obj: any = item.toObject ? item.toObject({ virtuals: true }) : { ...item, id: (item as any)._id?.toString() };
+        if (obj.courseId && typeof obj.courseId === 'object') {
+          obj.courseId = obj.courseId._id ? obj.courseId._id.toString() : obj.courseId.toString();
+        }
+        return obj;
+      });
+      
       return {
-        items,
+        items: sanitizedItems,
         pagination: {
           totalCount,
           totalPages: Math.ceil(totalCount / limit),
@@ -3240,54 +3305,16 @@ export const resolvers = {
     
     discountCode: async (_: any, { id }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      return await DiscountCode.findById(id).populate('courseId').populate('createdBy');
+      const item = await DiscountCode.findById(id).populate('courseId').populate('createdBy');
+      if (!item) return null;
+      // Convert populated courseId back to string ID for GraphQL ID serialization
+      const obj: any = item.toObject ? item.toObject({ virtuals: true }) : { ...item, id: (item as any)._id?.toString() };
+      if (obj.courseId && typeof obj.courseId === 'object') {
+        obj.courseId = obj.courseId._id ? obj.courseId._id.toString() : obj.courseId.toString();
+      }
+      return obj;
     },
     
-    validateDiscountCode: async (_: any, { code, courseId }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
-      
-      const discountCode = await DiscountCode.findOne({
-        code: code.toUpperCase(),
-        courseId,
-        isActive: true,
-      });
-      
-      if (!discountCode) {
-        return { valid: false, message: 'Invalid or expired discount code' };
-      }
-      
-      // Check expiry
-      if (discountCode.expiresAt && new Date(discountCode.expiresAt) < new Date()) {
-        return { valid: false, message: 'This discount code has expired' };
-      }
-      
-      // Check usage limit
-      if (discountCode.currentUses >= discountCode.maxUses) {
-        return { valid: false, message: 'This discount code has reached its maximum uses' };
-      }
-      
-      // Get course price
-      const courseDoc = await Course.findById(discountCode.courseId);
-      const coursePrice = courseDoc?.price || 0;
-      
-      let finalPrice = coursePrice;
-      if (discountCode.discountType === 'percentage') {
-        finalPrice = Math.max(0, coursePrice - (coursePrice * discountCode.discountValue / 100));
-      } else if (discountCode.discountType === 'fixed') {
-        finalPrice = Math.max(0, coursePrice - discountCode.discountValue);
-      }
-      
-      return {
-        valid: true,
-        discountType: discountCode.discountType,
-        discountValue: discountCode.discountValue,
-        finalPrice,
-        originalPrice: coursePrice,
-        message: discountCode.discountValue === 0 || finalPrice === 0
-          ? 'This code makes the course free!'
-          : `Code applied! You save ${discountCode.discountType === 'percentage' ? `${discountCode.discountValue}%` : `${discountCode.discountValue} RWF`}`,
-      };
-    },
 
     getSignedNDA: async (_: any, { applicationId }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
@@ -3411,6 +3438,51 @@ export const resolvers = {
     },
   },
   Mutation: {
+    validateDiscountCode: async (_: any, { code, courseId }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      
+      const discountCode = await DiscountCode.findOne({
+        code: code.toUpperCase(),
+        courseId,
+        isActive: true,
+      });
+      
+      if (!discountCode) {
+        return { valid: false, message: 'Invalid or expired discount code' };
+      }
+      
+      // Check expiry
+      if (discountCode.expiresAt && new Date(discountCode.expiresAt) < new Date()) {
+        return { valid: false, message: 'This discount code has expired' };
+      }
+      
+      // Check usage limit
+      if (discountCode.currentUses >= discountCode.maxUses) {
+        return { valid: false, message: 'This discount code has reached its maximum uses' };
+      }
+      
+      // Get course price
+      const courseDoc = await Course.findById(discountCode.courseId);
+      const coursePrice = courseDoc?.price || 0;
+      
+      let finalPrice = coursePrice;
+      if (discountCode.discountType === 'percentage') {
+        finalPrice = Math.max(0, coursePrice - (coursePrice * discountCode.discountValue / 100));
+      } else if (discountCode.discountType === 'fixed') {
+        finalPrice = Math.max(0, coursePrice - discountCode.discountValue);
+      }
+      
+      return {
+        valid: true,
+        discountType: discountCode.discountType,
+        discountValue: discountCode.discountValue,
+        finalPrice,
+        originalPrice: coursePrice,
+        message: discountCode.discountValue === 0 || finalPrice === 0
+          ? 'This code makes the course free!'
+          : `Code applied! You save ${discountCode.discountType === 'percentage' ? `${discountCode.discountValue}%` : `${discountCode.discountValue} RWF`}`,
+      };
+    },
     applyToCourse: async (_: any, { courseId, applicationAnswers, selectedDeliveryMode }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
@@ -4340,7 +4412,7 @@ export const resolvers = {
       }
     },
 
-    enroll: async (_: any, { courseId, selectedDeliveryMode }: { courseId: string, selectedDeliveryMode?: string }, context: any) => {
+    enroll: async (_: any, { courseId, selectedDeliveryMode, discountCode }: { courseId: string, selectedDeliveryMode?: string, discountCode?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
       const targetId = typeof courseId === 'object' ? ((courseId as any).id || (courseId as any)._id) : courseId;
@@ -4368,6 +4440,42 @@ export const resolvers = {
 
       const isEnrolledInUser = (user as any).enrolledCourses.some((c: any) => c.toString() === targetId);
 
+      // --- Discount Code Validation ---
+      let finalPrice = (course as any).price || 0;
+      let appliedDiscountCode: string | null = null;
+
+      if (discountCode && !isEnrolledInUser) {
+        const dc = await DiscountCode.findOne({
+          code: discountCode.toUpperCase(),
+          $or: [
+            { courseId: targetId },
+            { courseId: { $exists: false } },
+            { courseId: null },
+          ],
+          isActive: true,
+        });
+
+        if (dc) {
+          // Check expiry
+          const isExpired = dc.expiresAt && new Date(dc.expiresAt) < new Date();
+          // Check usage limit
+          const isExhausted = dc.currentUses >= dc.maxUses;
+
+          if (!isExpired && !isExhausted) {
+            const coursePrice = (course as any).price || 0;
+            if (dc.discountType === 'percentage') {
+              finalPrice = Math.max(0, coursePrice - (coursePrice * dc.discountValue / 100));
+            } else if (dc.discountType === 'fixed') {
+              finalPrice = Math.max(0, coursePrice - dc.discountValue);
+            }
+            appliedDiscountCode = dc.code;
+
+            // Increment usage counter
+            await DiscountCode.findByIdAndUpdate(dc._id, { $inc: { currentUses: 1 } });
+          }
+        }
+      }
+
       // Atomic updates to prevent race conditions and handle concurrent requests
       const [updatedUser] = await Promise.all([
         User.findByIdAndUpdate(
@@ -4379,17 +4487,17 @@ export const resolvers = {
           targetId,
           { $addToSet: { studentsEnrolled: user.id } }
         ),
-        // If course has a price, record a payment (but only if not already enrolled)
-        !isEnrolledInUser && (course as any).price > 0 ? new Payment({
+        // Record payment (0 finalPrice with a discount code = free enrollment)
+        !isEnrolledInUser && (finalPrice > 0 || appliedDiscountCode) ? new Payment({
           userId: user.id,
           courseId: course.id,
-          amount: (course as any).price,
+          amount: finalPrice,
           currency: 'RWF',
           status: 'completed',
-          paymentMethod: 'Pre-enrolled',
+          paymentMethod: appliedDiscountCode ? `Discount:${appliedDiscountCode}` : 'Pre-enrolled',
           transactionId: `TXN-ENR-${Math.random().toString(36).substring(7).toUpperCase()}`,
           type: 'Course Enrollment',
-          itemTitle: course.title
+          itemTitle: course.title,
         }).save() : Promise.resolve(null)
       ]);
 
@@ -5266,7 +5374,13 @@ export const resolvers = {
         createdBy: context.user.id,
       }).save();
       
-      return DiscountCode.findById(saved._id).populate('courseId').populate('createdBy');
+      const created = await DiscountCode.findById(saved._id).populate('courseId').populate('createdBy');
+      if (!created) return null;
+      const createdObj: any = created.toObject ? created.toObject({ virtuals: true }) : { ...created, id: (created as any)._id?.toString() };
+      if (createdObj.courseId && typeof createdObj.courseId === 'object') {
+        createdObj.courseId = createdObj.courseId._id ? createdObj.courseId._id.toString() : createdObj.courseId.toString();
+      }
+      return createdObj;
     },
     
     updateDiscountCode: async (_: any, args: any, context: any) => {
@@ -5287,7 +5401,11 @@ export const resolvers = {
         .populate('courseId')
         .populate('createdBy');
       if (!code) throw new Error('Discount code not found');
-      return code;
+      const updatedCodeObj: any = code.toObject ? code.toObject({ virtuals: true }) : { ...code, id: (code as any)._id?.toString() };
+      if (updatedCodeObj.courseId && typeof updatedCodeObj.courseId === 'object') {
+        updatedCodeObj.courseId = updatedCodeObj.courseId._id ? updatedCodeObj.courseId._id.toString() : updatedCodeObj.courseId.toString();
+      }
+      return updatedCodeObj;
     },
     
     deleteDiscountCode: async (_: any, { id }: any, context: any) => {

@@ -18,6 +18,11 @@ export const scholarshipResolvers = {
       if (status) filter.status = status;
       if (type) filter.type = type;
 
+      // Scope admins: they should only see scholarships they granted.
+      if (context.user.role === 'admin') {
+        filter.grantedBy = context.user.id;
+      }
+
       const skip = (page - 1) * limit;
       const [items, totalCount] = await Promise.all([
         Scholarship.find(filter)

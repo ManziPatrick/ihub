@@ -43,7 +43,23 @@ export const commissionResolvers = {
       const commissionEntries: any[] = [];
       let totalCommission = 0;
 
+      const entryDedupKey = (entry: any) => {
+        // Dedup by the fields that define a unique commission line
+        return `${entry.paymentId}|${entry.scope}|${entry.scopeId ?? ''}|${entry.itemTitle ?? ''}|${entry.commissionPercentage}|${entry.commissionAmount}`;
+      };
+      const seen = new Set<string>();
+
+      // Courses owned by this admin come from commission configs
+      const ownedCourseIds = new Set(
+        configs
+          .filter((c: any) => c.scope === 'course' && c.scopeId)
+          .map((c: any) => c.scopeId.toString())
+      );
+
+
       for (const payment of payments) {
+
+
         if (!payment.courseIds?.length && !payment.internshipIds?.length && !payment.courseId) {
           // Apply global commission if no specific scope matches
           if (globalConfig) {
@@ -78,11 +94,13 @@ export const commissionResolvers = {
               paymentId: payment._id.toString(),
               itemTitle: payment.itemTitle,
               type: payment.type,
-              amount: payment.amount,
+              // split price per course within the same cart
+              amount: amountPerCourse,
               commissionPercentage: effectivePercentage,
               commissionAmount: Math.round(commissionAmount),
               scope: courseConfig ? 'course' : 'global',
               scopeTitle: courseConfig?.scopeTitle || null,
+              scopeId: cId?.toString?.() || null,
               createdAt: payment.createdAt?.toISOString?.() || payment.createdAt,
             });
           }
@@ -111,12 +129,24 @@ export const commissionResolvers = {
         }
       }
 
+      // Only return entries that belong to courses this admin owns
+      // (if the frontend expects “by owner course”, scopeId-less entries will look wrong)
+      const filteredEntries = commissionEntries.filter((e: any) => {
+        if (e.scope === 'course' && e.scopeTitle) return true;
+        // if entry is course-scoped but scopeTitle is null/empty, still allow if we can match ownership
+        if (e.scope === 'course' && e.scopeId) return ownedCourseIds.has(e.scopeId.toString());
+        return e.scope === 'global' && (!ownedCourseIds.size ? true : true);
+      });
+
+      // NOTE: totalCommission should match returned entries
+      const filteredTotal = filteredEntries.reduce((sum: number, e: any) => sum + (e.commissionAmount || 0), 0);
+
       return {
         adminId,
         configs,
-        totalCommission: Math.round(totalCommission),
+        totalCommission: Math.round(filteredTotal || totalCommission),
         totalPayments: payments.length,
-        commissionEntries,
+        commissionEntries: filteredEntries,
       };
     },
 
