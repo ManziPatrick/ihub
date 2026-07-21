@@ -165,6 +165,7 @@
     width: 100%;
     overflow-x: hidden;
     position: relative;
+    max-width: 100%;
   }
 
   h1,
@@ -348,10 +349,18 @@ img, video, canvas, svg, iframe {
   }
 }
 
-/* No horizontal scrollbar on any page - force common containers */
-main, section, div[class*="container"], .min-h-screen {
-  max-width: 100vw;
-  overflow-x: hidden;
+/* Prevent horizontal scrollbar on small screens — clip prevents scroll containers */
+@media (max-width: 640px) {
+  main, section, div[class*="container"], .min-h-screen {
+    overflow-x: clip;
+  }
+}
+
+/* On larger screens, only hide overflow for the main app shell */
+@media (min-width: 641px) {
+  .min-h-screen, #root {
+    overflow-x: clip;
+  }
 }
 
 /* Specialized Scrollbar Utility */
