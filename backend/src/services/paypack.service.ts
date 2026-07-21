@@ -993,10 +993,12 @@ export class PawaPayService {
   };
 
   /**
-   * Truncate customer message to PawaPay's 22-character limit
+   * Sanitize customer message for PawaPay: only alphanumeric and spaces allowed.
+   * PawaPay rejects any special characters (apostrophes, colons, commas, etc.).
+   * Truncates to PawaPay's 22-character limit.
    */
   private sanitizeCustomerMessage(msg: string): string {
-    return msg.replace(/[^\x20-\x7E]/g, '').substring(0, 22).trim() || 'Payment';
+    return msg.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 22).trim() || 'Payment';
   }
 
   /**
