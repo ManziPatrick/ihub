@@ -63,7 +63,8 @@ import {
   DollarSign,
   AlertTriangle,
   Code,
-  Database
+  Database,
+  PlayCircle
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePusher } from "@/hooks/use-pusher";
@@ -287,6 +288,8 @@ import {
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ProfileCompletionGuard } from "./ProfileCompletionGuard";
+import { PlatformTour } from "./onboarding/PlatformTour";
+import { restartTour } from "./onboarding/PlatformTour";
 
 export function PortalLayout({ children }: PortalLayoutProps) {
   const { user, logout } = useAuth();
@@ -1129,10 +1132,9 @@ export function PortalLayout({ children }: PortalLayoutProps) {
               <ThemeToggle />
             </div>
 
-            {/* Notifications */}
-            <DropdownMenu>
+            {/* Notifications */}              <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="relative p-2 text-card-foreground/70 hover:text-card-foreground transition-colors">
+                <button data-tour="notifications" className="relative p-2 text-card-foreground/70 hover:text-card-foreground transition-colors">
                   <motion.div
                     animate={bellRinging ? {
                       rotate: [0, -15, 10, -10, 5, -5, 0],
@@ -1221,7 +1223,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-background/50 transition-colors">
+                <button data-tour="user-menu" className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-background/50 transition-colors">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.avatar} />
                     <AvatarFallback className="bg-accent text-accent-foreground text-xs">
@@ -1249,6 +1251,20 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link to="/portal/help" className="flex items-center gap-2 cursor-pointer">
+                    <HelpCircle className="w-4 h-4" />
+                    Help & Support
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => restartTour()}
+                  className="cursor-pointer"
+                >
+                  <PlayCircle className="w-4 h-4 mr-2" />
+                  Restart Tour
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/" className="flex items-center gap-2 cursor-pointer">
                     <Home className="w-4 h-4" />
                     Back to Website
@@ -1266,6 +1282,9 @@ export function PortalLayout({ children }: PortalLayoutProps) {
             </DropdownMenu>
           </div>
         </header>
+
+        {/* Platform Tour - auto-triggers on first login */}
+        <PlatformTour />
 
         {/* Page Content */}
         <main className="flex-1 p-3 sm:p-4 lg:p-6 pb-28 overflow-y-auto custom-scrollbar">

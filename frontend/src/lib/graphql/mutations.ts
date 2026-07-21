@@ -1738,6 +1738,15 @@ export const SUBMIT_PAYMENT_PROOF = gql`
   }
 `;
 
+export const MARK_TOUR_COMPLETED = gql`
+  mutation MarkTourCompleted {
+    markTourCompleted {
+      id
+      isFirst
+    }
+  }
+`;
+
 export const MARK_NOTIFICATION_READ = gql`
   mutation MarkNotificationRead($id: ID!) {
     markNotificationRead(id: $id) {

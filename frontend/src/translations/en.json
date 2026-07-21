@@ -165,7 +165,7 @@
     "checkCareerOriented": "Career-oriented training programs",
     "checkPracticalSkills": "Strong focus on practical skills",
     "trustedInstitution": "Trusted Institution",
-    "certifiedPrograms": "Certified Programs",
+    "certifiedProgramsBadge": "Certified Programs",
     "trainedCount": "1000+ Trained",
     "africaImpact": "Africa-Wide Impact",
     "whatWeDo": "What We Do",
@@ -595,5 +595,111 @@
     "enterEmail": "Please enter your email address",
     "enter6DigitCode": "Please enter a valid 6-digit code",
     "codeSent": "Verification code sent to your email!"
+  },
+  "tour": {
+    "locale": {
+      "back": "Back",
+      "close": "✕ Skip Tour",
+      "last": "🎉 Done!",
+      "next": "Next →",
+      "skip": "Skip Tour"
+    },
+    "student": {
+      "title": "Student Portal Tour",
+      "welcome": {"title": "👋 Welcome, Student!", "content": "Welcome to the Bootskills Student Portal! 🎉 This quick tour will show you around so you can start learning, coding, and building your career with confidence."},
+      "sidebar": {"title": "📋 Sidebar Navigation", "content": "This is your **navigation sidebar**. Use it to jump between all sections of your portal — dashboard, courses, projects, billing, and more."},
+      "dashboard": {"title": "📊 Dashboard", "content": "Your **Dashboard** gives you a snapshot of everything: your XP, streak, level, enrolled courses, recent activity, and upcoming deadlines."},
+      "projects": {"title": "💼 Projects", "content": "View and apply for **real-world Projects** posted by clients. Build your portfolio while earning experience."},
+      "courses": {"title": "📚 My Courses", "content": "Your **Courses** section — browse enrolled courses, continue lessons, track progress, and complete assignments all in one place."},
+      "internship": {"title": "🏢 Internship", "content": "Once you complete your courses, apply for **Internships** here. You'll get real work experience in your field."},
+      "schedule": {"title": "📅 Schedule", "content": "Your **Schedule** — view upcoming sessions, mentor calls, deadlines, and live classes in one calendar view."},
+      "billing": {"title": "💳 Billing & Payments", "content": "The **Billing** section is where you manage payments. Enroll in paid courses, view your receipts, and track payment history. You can pay using mobile money or card."},
+      "certificates": {"title": "🎓 Certificates", "content": "Once you pass all your courses, your **Certificates** will appear here. Download and share them anywhere."},
+      "header": {"title": "🔝 Top Header Bar", "content": "The **top bar** gives you quick access to search, your XP/streak/level (for students), notifications, theme toggle, and your profile menu."},
+      "notifications": {"title": "🔔 Notifications", "content": "Stay updated! Your **Notification Bell** lights up when you get messages, assignment feedback, or important updates."},
+      "userMenu": {"title": "👤 Your Profile Menu", "content": "Click your **Avatar** to access Settings, go back to the website, or Log Out. You can also restart this tour anytime from here."},
+      "ready": {"title": "🎉 You're Ready!", "content": "**You're all set!** 🚀 Start by exploring your Dashboard, enroll in courses, and begin your learning journey. Need help? Click the chat bubble or visit the Help page. You can restart this tour anytime from your profile menu."}
+    },
+    "trainer": {
+      "title": "Trainer Portal Tour",
+      "welcome": {"title": "👋 Welcome, Trainer!", "content": "Welcome to the Bootskills Trainer Portal! 🎓 This tour will guide you through managing students, courses, assignments, and your professional activities."},
+      "sidebar": {"title": "📋 Sidebar Navigation", "content": "Your **navigation sidebar** is your command center. Jump between courses, students, mentorship, schedule, and more from here."},
+      "dashboard": {"title": "📊 Dashboard", "content": "The **Dashboard** gives you an overview of your students, pending reviews, active courses, and recent activity at a glance."},
+      "courses": {"title": "📚 My Courses", "content": "Manage your **Courses** — create new lessons, track student progress, update content, and monitor completion rates."},
+      "students": {"title": "👥 Students", "content": "View your **Students** — see who's enrolled, check their progress, grades, and reach out to support them."},
+      "mentorship": {"title": "🤝 Mentorship", "content": "Your **Mentorship** section — schedule 1-on-1 sessions, track mentoring hours, and manage your mentees."},
+      "internships": {"title": "🏢 Internships", "content": "Supervise **Internships** — review intern progress, assign tasks, and provide feedback on real projects."},
+      "schedule": {"title": "📅 Schedule", "content": "Your **Schedule** — manage your availability, view upcoming sessions, and plan your teaching time."},
+      "header": {"title": "🔝 Top Header Bar", "content": "The **top header** shows your student count, active courses, pending reviews, and gives you quick access to notifications and your profile."},
+      "userMenu": {"title": "👤 Profile Menu", "content": "Your **profile menu** — access settings, switch back to the website, or log out. You can restart this tour anytime from here."},
+      "ready": {"title": "🎉 You're Ready!", "content": "**You're all set!** 🚀 Start exploring your dashboard, check your students, and manage your courses. Need help? The chat bubble is always there. You can restart this tour from your profile menu."}
+    },
+    "admin": {
+      "title": "Admin Dashboard Tour",
+      "welcome": {"title": "👋 Welcome, Admin!", "content": "Welcome to the Bootskills Admin Dashboard! 🛠️ This tour will walk you through managing users, courses, payments, projects, and the platform operations."},
+      "sidebar": {"title": "📋 Sidebar Navigation", "content": "Your **sidebar** is the admin command center. Navigate Management, Projects, Content, Operations, and more from here."},
+      "dashboard": {"title": "📊 Dashboard", "content": "The **Dashboard** gives you key metrics — total users, students, courses, revenue, and platform activity at a glance."},
+      "users": {"title": "👥 Users", "content": "Manage all **Users** — view, edit, assign roles, track activity, and handle student/trainer accounts from one place."},
+      "courses": {"title": "📚 Courses", "content": "The **Courses** manager — create, edit, publish, and organize courses. Assign trainers, set pricing, and manage modules."},
+      "payments": {"title": "💳 Payments & Billing", "content": "The **Payments** section — view all transactions, track revenue, manage refunds, and monitor payment statuses."},
+      "internships": {"title": "🏢 Internships", "content": "Manage **Internship Programs** — create programs, track intern progress, and manage placements."},
+      "analytics": {"title": "📈 Analytics", "content": "**Analytics** — deep dive into platform metrics, student performance, course completion rates, and revenue trends."},
+      "header": {"title": "🔝 Top Header Bar", "content": "The **top header** shows key stats — total users, students, and courses. You also get notifications, theme toggle, and your profile menu here."},
+      "userMenu": {"title": "👤 Profile Menu", "content": "Your **profile menu** — access settings, go back to the website, or log out. You can restart this tour anytime from here."},
+      "ready": {"title": "🎉 You're Ready!", "content": "**You're all set!** 🚀 Start managing your platform from the Dashboard. The sidebar has everything you need. Replay this tour anytime from your profile menu."}
+    },
+    "superAdmin": {
+      "title": "Super Admin Tour",
+      "welcome": {"title": "👋 Welcome, Super Admin!", "content": "Welcome to the Bootskills Super Admin Panel! 🔐 This comprehensive tour covers system configuration, user management, financial operations, and more."},
+      "sidebar": {"title": "📋 Sidebar Navigation", "content": "Your **sidebar** has everything — System management, Marketing, Analytics, User Map, and more. Each section has detailed sub-menus."},
+      "dashboard": {"title": "📊 Dashboard", "content": "The **Dashboard** gives you the big picture — total users, students, trainers, revenue, and platform health."},
+      "users": {"title": "👥 All Users", "content": "**All Users** — full control over every account. Filter, search, edit roles, and manage the entire user base."},
+      "config": {"title": "⚙️ Configuration", "content": "**Configuration** — set platform-wide settings, pricing, feature flags, and global preferences."},
+      "commissions": {"title": "💰 Commissions", "content": "**Commission Config** — set commission rates for trainers, referral bonuses, and payout structures."},
+      "disbursements": {"title": "💸 Disbursements", "content": "**Disbursements** — manage payouts to trainers and partners. View payment history and initiate transfers."},
+      "discountCodes": {"title": "🏷️ Discount Codes", "content": "**Discount Codes** — create and manage promotional codes, track usage analytics, and set discount campaigns."},
+      "refunds": {"title": "🔄 Refunds", "content": "**Refunds** — process student refund requests, review disputes, and manage the refund lifecycle."},
+      "header": {"title": "🔝 Top Header Bar", "content": "The **top header** shows real-time stats — total users, students, and trainers. Quick access to notifications and your profile."},
+      "userMenu": {"title": "👤 Profile Menu", "content": "Your **profile menu** — settings, back to website, or log out. Restart this tour anytime from here."},
+      "ready": {"title": "🎉 You're Ready!", "content": "**You're all set!** 🚀 You now know the key areas of the Super Admin panel. Start from the Dashboard and explore each section. Restart this tour anytime from your profile menu."}
+    }
+  },
+  "guide": {
+    "student": {
+      "overview": "The Student Portal is your learning command center. Here you'll access courses, track progress, manage payments, apply for internships, and earn certificates. Everything you need to go from beginner to job-ready professional.",
+      "sections": {
+        "coreNav": "🎯 Core Navigation",
+        "academics": "📚 Academics & Learning",
+        "career": "💼 Career & Projects",
+        "billing": "💳 Billing & Account"
+      }
+    },
+    "trainer": {
+      "overview": "The Trainer Portal gives you everything you need to manage courses, mentor students, grade assignments, and track your professional activities. Welcome to the teaching team!",
+      "sections": {
+        "coreNav": "🎯 Overview & Navigation",
+        "teaching": "📚 Teaching & Academics",
+        "professional": "🤝 Professional Activities"
+      }
+    },
+    "admin": {
+      "overview": "The Admin Dashboard is your platform management center. Here you control users, courses, payments, projects, internships, and platform analytics. Everything runs through here.",
+      "sections": {
+        "coreNav": "🎯 Overview & Navigation",
+        "management": "👥 Management",
+        "operations": "⚙️ Operations",
+        "schedule": "📅 Schedule & Communication"
+      }
+    },
+    "superAdmin": {
+      "overview": "The Super Admin Panel gives you complete control over the entire platform. System configuration, financial operations, user management, marketing tools, and advanced analytics are all at your fingertips.",
+      "sections": {
+        "coreNav": "🎯 Overview & Navigation",
+        "system": "🔧 System Management",
+        "finance": "💰 Financial Operations",
+        "analytics": "📊 Analytics & Monitoring",
+        "marketing": "📢 Communication & Marketing"
+      }
+    }
   }
 }
