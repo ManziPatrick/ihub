@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import confetti from "canvas-confetti";
 import {
   Joyride,
@@ -27,36 +27,43 @@ export function PlatformTour() {
   const [markTourCompletedServer] = useMutation(MARK_TOUR_COMPLETED);
 
   const [runTour, setRunTour] = useState(false);
-  const [stepIndex, setStepIndex] = useState(0);
-  const wasFinished = useRef(false);
 
-  // Build steps dynamically using i18n
+  // 🔁 MEMOIZE steps so Joyride doesn't see a new array on every render
+  //    (which would cause it to reset to step 0).
   const role = user?.role || "student";
   const tourConfig = tourFactoriesByRole[role];
-  const steps: Step[] = tourConfig?.factory(t) || [];
-
-  // Determine if the tour should auto-start
-  const isFirstTime = user?.isFirst === true;
-  const tourCompleted = localStorage.getItem(
-    `tour_completed_${user?.id}`
+  const steps: Step[] = useMemo(
+    () => tourConfig?.factory(t) || [],
+    // t from useTranslation() is stable across renders
+    [tourConfig, t]
   );
-  const shouldAutoStart =
-    isFirstTime && !tourCompleted && !!user;
+
+  // ───────────────────────────────────────────────
+  //  AUTO-TRIGGER ON FIRST LOGIN
+  //  → user.isFirst must be true
+  //  → no local-storage flag must exist
+  //  → wait 800ms for DOM to settle
+  // ───────────────────────────────────────────────
+  const isFirstTime = user?.isFirst === true;
+  const tourCompleted = user?.id
+    ? localStorage.getItem(`tour_completed_${user.id}`)
+    : null;
 
   useEffect(() => {
-    if (shouldAutoStart) {
+    if (isFirstTime && !tourCompleted && user) {
       const timer = setTimeout(() => {
         setRunTour(true);
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [shouldAutoStart]);
+  }, [isFirstTime, tourCompleted, user]);
 
-  // Fire confetti celebration
+  // ───────────────────────────────────────────────
+  //  CONFETTI CELEBRATION
+  // ───────────────────────────────────────────────
   const fireConfetti = useCallback(() => {
     console.log("[Tour] 🎉 Firing confetti!");
 
-    // Resolve the accent color from CSS variable (canvas can't read var() )
     let accentColor = "#f59e0b";
     try {
       const style = getComputedStyle(document.documentElement);
@@ -99,69 +106,74 @@ export function PlatformTour() {
     frame();
   }, []);
 
-  // Mark tour as completed (local + server sync)
-  const markTourCompleted = useCallback(() => {
-    // Fire confetti only if user actually completed the full tour
-    if (wasFinished.current) {
-      fireConfetti();
-    }
-
-    if (user?.id) {
-      localStorage.setItem(`tour_completed_${user.id}`, "true");
-      if (user.isFirst) {
-        updateUser({ isFirst: false });
-        // Sync to server so completion persists across devices
-        markTourCompletedServer().catch((err) =>
-          console.error("[Tour] Failed to sync tour completion to server:", err)
-        );
+  // ───────────────────────────────────────────────
+  //  COMPLETION — local + server sync + confetti
+  // ───────────────────────────────────────────────
+  const markTourCompleted = useCallback(
+    (finished: boolean) => {
+      if (finished) {
+        fireConfetti();
       }
-    }
-    setRunTour(false);
-    setStepIndex(0);
-    wasFinished.current = false;
-  }, [user, updateUser, markTourCompletedServer, fireConfetti]);
 
-  // Handle joyride callback
+      if (user?.id) {
+        localStorage.setItem(`tour_completed_${user.id}`, "true");
+        if (user.isFirst) {
+          updateUser({ isFirst: false });
+          markTourCompletedServer().catch((err) =>
+            console.error(
+              "[Tour] Failed to sync tour completion to server:",
+              err
+            )
+          );
+        }
+      }
+
+      setRunTour(false);
+    },
+    [user, updateUser, markTourCompletedServer, fireConfetti]
+  );
+
+  // ───────────────────────────────────────────────
+  //  JOYRIDE CALLBACK
+  //  We DON'T pass stepIndex so Joyride manages step
+  //  progression internally — that prevents the
+  //  "only welcome step showing" bug.
+  // ───────────────────────────────────────────────
   const handleJoyrideCallback = useCallback(
     (data: CallBackProps) => {
-      const { action, status, index, type } = data;
+      const { action, status } = data;
 
-      // Track if user actually reached the end (vs skipped/closed)
-      if (status === STATUS.FINISHED) {
-        wasFinished.current = true;
-      }
+      const finished = status === STATUS.FINISHED;
 
       if (
         action === ACTIONS.CLOSE ||
         action === ACTIONS.SKIP ||
-        status === STATUS.FINISHED ||
+        finished ||
         status === STATUS.SKIPPED
       ) {
-        markTourCompleted();
-        return;
-      }
-
-      if (type === EVENTS.STEP_AFTER) {
-        setStepIndex((prev) =>
-          action === ACTIONS.PREV ? prev - 1 : prev + 1
-        );
+        markTourCompleted(finished);
       }
     },
     [markTourCompleted]
   );
 
-  // Listen for manual restart
+  // ───────────────────────────────────────────────
+  //  MANUAL RESTART (via window event)
+  //  Toggle run false → true so Joyride resets
+  //  to step 0 internally.
+  // ───────────────────────────────────────────────
   useEffect(() => {
     const handler = () => {
       if (user?.id) {
         localStorage.removeItem(`tour_completed_${user.id}`);
       }
-      setStepIndex(0);
-      setRunTour(true);
+      // Stop then restart with a microtask gap so Joyride
+      // sees the state transition and resets correctly.
+      setRunTour(false);
+      setTimeout(() => setRunTour(true), 50);
     };
     window.addEventListener("restart-tour", handler);
-    return () =>
-      window.removeEventListener("restart-tour", handler);
+    return () => window.removeEventListener("restart-tour", handler);
   }, [user?.id]);
 
   if (!user) return null;
@@ -170,13 +182,17 @@ export function PlatformTour() {
     <Joyride
       steps={steps}
       run={runTour}
-      stepIndex={stepIndex}
       continuous
       showProgress
       showSkipButton
       disableCloseOnEsc
       disableOverlayClose
       hideBackButton={false}
+      disableScrollParentFix
+      floaterProps={{
+        // Keep tooltip inside the viewport
+        strategy: "fixed",
+      }}
       locale={{
         back: t("tour.locale.back"),
         close: t("tour.locale.close"),
@@ -188,11 +204,20 @@ export function PlatformTour() {
         options: {
           arrowColor: "hsl(var(--card))",
           backgroundColor: "hsl(var(--card))",
-          overlayColor: "rgba(0, 0, 0, 0.5)",
+          overlayColor: "rgba(0, 0, 0, 0.6)",
           primaryColor: "hsl(var(--accent))",
           textColor: "hsl(var(--card-foreground))",
           zIndex: 1000,
           width: 380,
+        },
+        overlay: {
+          // Full viewport coverage regardless of scroll
+          height: "100vh",
+          width: "100vw",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          pointerEvents: "auto",
         },
         tooltipContainer: {
           textAlign: "left",
