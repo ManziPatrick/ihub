@@ -3,9 +3,8 @@ import confetti from "canvas-confetti";
 import {
   Joyride,
   type Step,
-  type CallBackProps,
+  type EventData,
   ACTIONS,
-  EVENTS,
   STATUS,
 } from "react-joyride";
 import { useTranslation } from "react-i18next";
@@ -140,7 +139,7 @@ export function PlatformTour() {
   //  "only welcome step showing" bug.
   // ───────────────────────────────────────────────
   const handleJoyrideCallback = useCallback(
-    (data: CallBackProps) => {
+    (data: EventData) => {
       const { action, status } = data;
 
       const finished = status === STATUS.FINISHED;
@@ -188,10 +187,18 @@ export function PlatformTour() {
       disableCloseOnEsc
       disableOverlayClose
       hideBackButton={false}
-      disableScrollParentFix
-      floaterProps={{
+      floatingOptions={{
         // Keep tooltip inside the viewport
         strategy: "fixed",
+      }}
+      options={{
+        arrowColor: "hsl(var(--card))",
+        backgroundColor: "hsl(var(--card))",
+        overlayColor: "rgba(0, 0, 0, 0.6)",
+        primaryColor: "hsl(var(--accent))",
+        textColor: "hsl(var(--card-foreground))",
+        zIndex: 1000,
+        width: 380,
       }}
       locale={{
         back: t("tour.locale.back"),
@@ -201,15 +208,6 @@ export function PlatformTour() {
         skip: t("tour.locale.skip"),
       }}
       styles={{
-        options: {
-          arrowColor: "hsl(var(--card))",
-          backgroundColor: "hsl(var(--card))",
-          overlayColor: "rgba(0, 0, 0, 0.6)",
-          primaryColor: "hsl(var(--accent))",
-          textColor: "hsl(var(--card-foreground))",
-          zIndex: 1000,
-          width: 380,
-        },
         overlay: {
           // Full viewport coverage regardless of scroll
           height: "100vh",
@@ -233,7 +231,7 @@ export function PlatformTour() {
           lineHeight: 1.6,
           color: "hsl(var(--muted-foreground))",
         },
-        buttonNext: {
+        buttonPrimary: {
           backgroundColor: "hsl(var(--accent))",
           color: "hsl(var(--accent-foreground))",
           borderRadius: 8,
@@ -257,11 +255,9 @@ export function PlatformTour() {
         beacon: {
           display: "none",
         },
-        spotlight: {
-          borderRadius: 12,
-        },
+        spotlight: {}, // SVG path styling handled via spotlightRadius in step options
       }}
-      callback={handleJoyrideCallback}
+      onEvent={handleJoyrideCallback}
     />
   );
 }

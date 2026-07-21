@@ -288,8 +288,8 @@ import {
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ProfileCompletionGuard } from "./ProfileCompletionGuard";
-import { PlatformTour } from "./onboarding/PlatformTour";
-import { restartTour } from "./onboarding/PlatformTour";
+import { PlatformTour, restartTour } from "./onboarding/PlatformTour";
+import { Logo } from "@/components/Logo";
 
 export function PortalLayout({ children }: PortalLayoutProps) {
   const { user, logout } = useAuth();
@@ -518,13 +518,11 @@ export function PortalLayout({ children }: PortalLayoutProps) {
         {/* Sidebar Header & Search */}
         <div className="flex flex-col border-b border-border/50 shrink-0">
           <div className="h-16 flex items-center justify-between px-4">
-            <Link to="/" className={`flex items-center gap-2 ${isSidebarMinimized ? 'justify-center w-full' : ''}`}>
-              {branding.logoUrl && !isSidebarMinimized ? (
+            <Link to="/" className={`flex items-center ${isSidebarMinimized ? 'justify-center w-full' : ''}`}>
+              {branding.logoUrl ? (
                 <img src={branding.logoUrl} alt={branding.siteName} className="h-8 w-auto" />
               ) : (
-                <span className="font-heading font-black text-2xl tracking-tighter text-card-foreground">
-                  {isSidebarMinimized ? 'B' : 'Boot'}<span className="text-accent">{isSidebarMinimized ? 'S' : 'skills'}</span>
-                </span>
+                <Logo variant={isSidebarMinimized ? "icon" : "full"} />
               )}
             </Link>
           </div>
@@ -712,13 +710,11 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
               {/* Logo Area */}
               <div className="h-16 flex items-center justify-between px-4 border-b border-border/50 shrink-0">
-                <Link to="/" className="flex items-center gap-2">
+                <Link to="/" className="flex items-center">
                   {branding.logoUrl ? (
                     <img src={branding.logoUrl} alt={branding.siteName} className="h-8 w-auto" />
                   ) : (
-                    <span className="font-heading font-black text-2xl tracking-tighter text-card-foreground">
-                      Multi<span className="text-accent">Courses</span>
-                    </span>
+                    <Logo variant="full" />
                   )}
                 </Link>
                 <button

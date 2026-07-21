@@ -12,7 +12,7 @@ interface SEOHeadProps {
   children?: React.ReactNode;
 }
 
-const DEFAULT_OG_IMAGE = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=1200&h=630";
+const DEFAULT_OG_IMAGE = "https://bootskills.com/og-image.png";
 const SITE_NAME = "Bootskills";
 const BASE_URL = "https://bootskills.com";
 

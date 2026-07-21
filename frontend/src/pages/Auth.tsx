@@ -9,6 +9,7 @@ import { PasswordInput } from "@/components/ui/PasswordInput";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { Loader2, ArrowLeft, Mail } from "lucide-react";
+import { Logo } from "@/components/Logo";
 import { getGraphqlUrl } from "@/lib/env";
 import { GoogleLogin } from "@react-oauth/google";
 import { useMutation } from "@apollo/client/react";
@@ -235,10 +236,9 @@ export default function Auth() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md bg-card border border-border/50 shadow-2xl rounded-2xl p-6 sm:p-8"
       >
-        <div className="flex justify-center mb-6">
-          <Link to="/" className="flex items-center gap-2">
-            {/* <span className="text-accent text-3xl font-bold">BS</span> */}
-            <span className="text-2xl font-bold text-foreground tracking-tight">Bootskills</span>
+        <div className="flex justify-center mb-8">
+          <Link to="/" className="flex items-center">
+            <Logo variant="full" imgHeight="h-16 sm:h-20" />
           </Link>
         </div>
 
