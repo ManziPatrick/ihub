@@ -1309,6 +1309,7 @@ export const typeDefs = `#graphql
     deleteCourse(id: ID!): Boolean
     createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String): User
     updateUser(id: ID!, username: String, email: String, password: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String): User
+    markTourCompleted: User
         updateUserLocation(latitude: Float!, longitude: Float!): User
     adminUpdateUserLocation(userId: ID!, latitude: Float!, longitude: Float!): User
     setUserLocationDenied(userId: ID!, denied: Boolean!): LocationForceResult!

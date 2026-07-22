@@ -115,6 +115,7 @@ const PortalSettings = lazy(() => import("@/pages/portal/shared/PortalSettings")
 const CoursePreview = lazy(() => import("@/pages/portal/shared/CoursePreview"));
 const InternshipMeetings = lazy(() => import("@/pages/portal/shared/InternshipMeetings"));
 const PortalHelp = lazy(() => import("@/pages/portal/shared/PortalHelp"));
+const PortalGuide = lazy(() => import("@/pages/portal/shared/PortalGuide"));
 const NotificationsPage = lazy(() => import("@/pages/portal/shared/NotificationsPage"));
 
 const PageLoader = () => (
@@ -265,6 +266,7 @@ export function AnimatedRoutes() {
           {/* Shared Portal Routes */}
           <Route path="/portal/settings" element={<ProtectedRoute allowedRoles={["student", "trainer", "admin", "super_admin"]}><PortalSettings /></ProtectedRoute>} />
           <Route path="/portal/help" element={<ProtectedRoute allowedRoles={["student", "trainer", "admin", "super_admin"]}><PortalHelp /></ProtectedRoute>} />
+          <Route path="/portal/guide" element={<ProtectedRoute allowedRoles={["student", "trainer", "admin", "super_admin"]}><PortalGuide /></ProtectedRoute>} />
           <Route path="/portal/notifications" element={<ProtectedRoute allowedRoles={["student", "trainer", "admin", "super_admin"]}><NotificationsPage /></ProtectedRoute>} />
 
           {/* Experimental/Testing */}

@@ -18,10 +18,14 @@ export const YEAR_OPTIONS: Record<string, string[]> = {
 };
 
 /**
- * Invisible onboarding guard — silently dismisses the onboarding wizard
- * for all users by setting isFirst: false in the background.
+ * Invisible onboarding guard — silently dismisses the onboarding flag
+ * for returning users who have already completed the tour.
+ *
+ * For first-time users, does NOT dismiss — lets the PlatformTour
+ * auto-trigger so the user can complete the tour first.
+ * The PlatformTour sets isFirst: false after completion/skip.
+ *
  * Never blocks the user — renders children immediately.
- * Users can complete their profile later via settings.
  */
 export function ProfileCompletionGuard({ children }: { children: React.ReactNode }) {
     const { user, updateUser } = useAuth();
@@ -46,11 +50,12 @@ export function ProfileCompletionGuard({ children }: { children: React.ReactNode
 
         const me = data.me;
         const isFirst = me.isFirst;
-        const profileComplete = me.studentProfile?.isComplete;
+        const tourCompleted = localStorage.getItem(`tour_completed_${me.id}`);
 
-        // If this is a first-time user without a complete profile, silently dismiss
-        if (isFirst === true && !profileComplete) {
-            console.debug("[ProfileGuard] Silently dismissing onboarding for", me.email);
+        // Only dismiss isFirst if the user has already completed the tour.
+        // Otherwise the tour will auto-trigger and handle isFirst after completion.
+        if (isFirst === true && tourCompleted) {
+            console.debug("[ProfileGuard] Dismissing onboarding for returning user", me.email);
             dismissOnboarding({
                 variables: { id: me.id, isFirst: false },
             }).then(() => {

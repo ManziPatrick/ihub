@@ -5238,6 +5238,16 @@ export const resolvers = {
       return user;
     },
 
+    markTourCompleted: async (_: any, __: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const user = await User.findById(context.user.id);
+      if (!user) throw new Error('User not found');
+      user.isFirst = false;
+      await user.save();
+      console.log(`[Tour] Marked tour completed for ${user.username}`);
+      return user;
+    },
+
     updateUser: async (_: any, { id, ...args }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 

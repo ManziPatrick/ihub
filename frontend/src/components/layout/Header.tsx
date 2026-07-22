@@ -11,6 +11,7 @@ import { useQuery } from "@apollo/client/react";
 import { GET_UNREAD_NOTIFICATIONS } from "@/lib/graphql/queries";
 import { useBranding } from "@/components/BrandingProvider";
 import { useTranslation } from "react-i18next";
+import { Logo } from "@/components/Logo";
 
 // Reference image nav: Home + Applications only shown in desktop
 const navLinks = [
@@ -84,20 +85,15 @@ export function Header() {
         <div className="flex items-center justify-between h-14 lg:h-16">
 
           {/* ── Logo ── */}
-          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+          <Link to="/" className="flex items-center shrink-0">
             {branding.logoUrl ? (
               <img
                 src={branding.logoUrl}
                 alt={branding.siteName}
-                className="h-7 sm:h-8 w-auto"
+                className="h-7 sm:h-8 w-auto object-contain"
               />
             ) : (
-              <>
-                {/* <span className="text-accent text-2xl font-bold leading-none">BS</span> */}
-                <span className="font-semibold text-base lg:text-lg text-foreground tracking-wide">
-                  {branding.siteName}
-                </span>
-              </>
+              <Logo variant="with-text" />
             )}
           </Link>
 

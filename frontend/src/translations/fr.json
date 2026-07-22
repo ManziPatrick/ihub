@@ -165,7 +165,7 @@
     "checkCareerOriented": "Programmes de formation axés sur la carrière",
     "checkPracticalSkills": "Accent mis sur les compétences pratiques",
     "trustedInstitution": "Institution de confiance",
-    "certifiedPrograms": "Programmes certifiés",
+    "certifiedProgramsBadge": "Programmes certifiés",
     "trainedCount": "1000+ Formés",
     "africaImpact": "Impact panafricain",
     "whatWeDo": "Ce que nous faisons"
@@ -530,5 +530,111 @@
     "enterEmail": "Veuillez entrer votre adresse e-mail",
     "enter6DigitCode": "Veuillez entrer un code à 6 chiffres valide",
     "codeSent": "Code de vérification envoyé à votre e-mail !"
+  },
+  "tour": {
+    "locale": {
+      "back": "Retour",
+      "close": "✕ Ignorer",
+      "last": "🎉 Terminé !",
+      "next": "Suivant →",
+      "skip": "Passer"
+    },
+    "student": {
+      "title": "Visite du Portail Étudiant",
+      "welcome": {"title": "👋 Bienvenue, Étudiant !", "content": "Bienvenue sur le portail étudiant Bootskills ! 🎉 Cette visite rapide vous montrera comment commencer à apprendre, coder et bâtir votre carrière en toute confiance."},
+      "sidebar": {"title": "📋 Navigation latérale", "content": "Ceci est votre **barre de navigation latérale**. Utilisez-la pour naviguer entre toutes les sections de votre portail — tableau de bord, cours, projets, facturation, et plus."},
+      "dashboard": {"title": "📊 Tableau de bord", "content": "Votre **Tableau de bord** vous donne un aperçu de tout : votre XP, votre série, votre niveau, les cours inscrits, les activités récentes et les échéances à venir."},
+      "projects": {"title": "💼 Projets", "content": "Consultez et postulez aux **Projets réels** publiés par les clients. Construisez votre portfolio tout en acquérant de l'expérience."},
+      "courses": {"title": "📚 Mes Cours", "content": "Votre section **Cours** — parcourez les cours inscrits, continuez les leçons, suivez votre progression et terminez les devoirs en un seul endroit."},
+      "internship": {"title": "🏢 Stage", "content": "Une fois vos cours terminés, postulez aux **Stages** ici. Vous obtiendrez une véritable expérience professionnelle dans votre domaine."},
+      "schedule": {"title": "📅 Emploi du temps", "content": "Votre **Emploi du temps** — voyez les sessions à venir, les appels mentor, les échéances et les cours en direct dans une vue calendrier unique."},
+      "billing": {"title": "💳 Facturation & Paiements", "content": "La section **Facturation** est l'endroit où vous gérez les paiements. Inscrivez-vous aux cours payants, consultez vos reçus et suivez l'historique des paiements. Vous pouvez payer par mobile money ou par carte."},
+      "certificates": {"title": "🎓 Certificats", "content": "Une fois tous vos cours réussis, vos **Certificats** apparaîtront ici. Téléchargez-les et partagez-les où vous voulez."},
+      "header": {"title": "🔝 Barre d'en-tête", "content": "La **barre supérieure** vous donne un accès rapide à la recherche, votre XP/série/niveau (pour les étudiants), les notifications, le thème et votre menu de profil."},
+      "notifications": {"title": "🔔 Notifications", "content": "Restez informé ! Votre **Cloche de notification** s'allume lorsque vous recevez des messages, des commentaires sur les devoirs ou des mises à jour importantes."},
+      "userMenu": {"title": "👤 Votre menu profil", "content": "Cliquez sur votre **Avatar** pour accéder aux paramètres, revenir au site Web ou vous déconnecter. Vous pouvez aussi redémarrer cette visite à tout moment depuis ici."},
+      "ready": {"title": "🎉 Vous êtes prêt !", "content": "**Vous êtes paré !** 🚀 Commencez par explorer votre Tableau de bord, inscrivez-vous aux cours et lancez votre parcours d'apprentissage. Besoin d'aide ? Cliquez sur la bulle de chat ou visitez la page d'aide. Vous pouvez redémarrer cette visite depuis votre menu de profil."}
+    },
+    "trainer": {
+      "title": "Visite du Portail Formateur",
+      "welcome": {"title": "👋 Bienvenue, Formateur !", "content": "Bienvenue sur le portail formateur Bootskills ! 🎓 Cette visite vous guidera dans la gestion des étudiants, des cours, des devoirs et de vos activités professionnelles."},
+      "sidebar": {"title": "📋 Navigation latérale", "content": "Votre **barre de navigation latérale** est votre centre de commandement. Passez d'une section à l'autre : cours, étudiants, mentorat, emploi du temps, etc."},
+      "dashboard": {"title": "📊 Tableau de bord", "content": "Le **Tableau de bord** vous donne un aperçu de vos étudiants, des évaluations en attente, des cours actifs et de l'activité récente en un coup d'œil."},
+      "courses": {"title": "📚 Mes Cours", "content": "Gérez vos **Cours** — créez de nouvelles leçons, suivez la progression des étudiants, mettez à jour le contenu et surveillez les taux d'achèvement."},
+      "students": {"title": "👥 Étudiants", "content": "Consultez vos **Étudiants** — voyez qui est inscrit, vérifiez leur progression, leurs notes et contactez-les pour les soutenir."},
+      "mentorship": {"title": "🤝 Mentorat", "content": "Votre section **Mentorat** — planifiez des sessions individuelles, suivez vos heures de mentorat et gérez vos mentorés."},
+      "internships": {"title": "🏢 Stages", "content": "Supervisez les **Stages** — examinez la progression des stagiaires, assignez des tâches et fournissez des commentaires sur les projets réels."},
+      "schedule": {"title": "📅 Emploi du temps", "content": "Votre **Emploi du temps** — gérez votre disponibilité, voyez les sessions à venir et planifiez votre temps d'enseignement."},
+      "header": {"title": "🔝 Barre d'en-tête", "content": "L'**en-tête supérieur** affiche votre nombre d'étudiants, les cours actifs, les évaluations en attente et donne un accès rapide aux notifications et à votre profil."},
+      "userMenu": {"title": "👤 Menu Profil", "content": "Votre **menu de profil** — accédez aux paramètres, revenez au site Web ou déconnectez-vous. Vous pouvez redémarrer cette visite à tout moment depuis ici."},
+      "ready": {"title": "🎉 Vous êtes prêt !", "content": "**Vous êtes paré !** 🚀 Commencez par explorer votre tableau de bord, vérifiez vos étudiants et gérez vos cours. Besoin d'aide ? La bulle de chat est toujours là. Vous pouvez redémarrer cette visite depuis votre menu de profil."}
+    },
+    "admin": {
+      "title": "Visite du Tableau de Bord Admin",
+      "welcome": {"title": "👋 Bienvenue, Admin !", "content": "Bienvenue sur le tableau de bord administrateur Bootskills ! 🛠️ Cette visite vous guidera dans la gestion des utilisateurs, des cours, des paiements, des projets et des opérations de la plateforme."},
+      "sidebar": {"title": "📋 Navigation latérale", "content": "Votre **barre latérale** est le centre de commandement admin. Naviguez entre Gestion, Projets, Contenu, Opérations, et plus."},
+      "dashboard": {"title": "📊 Tableau de bord", "content": "Le **Tableau de bord** vous donne les indicateurs clés — nombre total d'utilisateurs, d'étudiants, de cours, de revenus et d'activités de la plateforme en un coup d'œil."},
+      "users": {"title": "👥 Utilisateurs", "content": "Gérez tous les **Utilisateurs** — consultez, modifiez, attribuez des rôles, suivez l'activité et gérez les comptes étudiants/formateurs depuis un seul endroit."},
+      "courses": {"title": "📚 Cours", "content": "Le gestionnaire de **Cours** — créez, modifiez, publiez et organisez les cours. Assignez des formateurs, définissez les prix et gérez les modules."},
+      "payments": {"title": "💳 Paiements & Facturation", "content": "La section **Paiements** — consultez toutes les transactions, suivez les revenus, gérez les remboursements et surveillez les statuts de paiement."},
+      "internships": {"title": "🏢 Stages", "content": "Gérez les **Programmes de Stage** — créez des programmes, suivez la progression des stagiaires et gérez les placements."},
+      "analytics": {"title": "📈 Analyses", "content": "**Analyses** — plongez dans les métriques de la plateforme, les performances des étudiants, les taux d'achèvement des cours et les tendances des revenus."},
+      "header": {"title": "🔝 Barre d'en-tête", "content": "L'**en-tête supérieur** affiche les statistiques clés — nombre total d'utilisateurs, d'étudiants et de cours. Vous avez aussi les notifications, le thème et votre menu de profil."},
+      "userMenu": {"title": "👤 Menu Profil", "content": "Votre **menu de profil** — accédez aux paramètres, revenez au site Web ou déconnectez-vous. Vous pouvez redémarrer cette visite à tout moment depuis ici."},
+      "ready": {"title": "🎉 Vous êtes prêt !", "content": "**Vous êtes paré !** 🚀 Commencez à gérer votre plateforme depuis le Tableau de bord. La barre latérale contient tout ce dont vous avez besoin. Rejouez cette visite à tout moment depuis votre menu de profil."}
+    },
+    "superAdmin": {
+      "title": "Visite Super Admin",
+      "welcome": {"title": "👋 Bienvenue, Super Admin !", "content": "Bienvenue sur le panneau Super Admin Bootskills ! 🔐 Cette visite complète couvre la configuration système, la gestion des utilisateurs, les opérations financières, et plus."},
+      "sidebar": {"title": "📋 Navigation latérale", "content": "Votre **barre latérale** contient tout — Gestion système, Marketing, Analyses, Carte des utilisateurs, etc. Chaque section a des sous-menus détaillés."},
+      "dashboard": {"title": "📊 Tableau de bord", "content": "Le **Tableau de bord** vous donne une vue d'ensemble — nombre total d'utilisateurs, d'étudiants, de formateurs, de revenus et la santé de la plateforme."},
+      "users": {"title": "👥 Tous les utilisateurs", "content": "**Tous les utilisateurs** — contrôle complet sur chaque compte. Filtrez, recherchez, modifiez les rôles et gérez l'ensemble de la base d'utilisateurs."},
+      "config": {"title": "⚙️ Configuration", "content": "**Configuration** — définissez les paramètres globaux de la plateforme, les prix, les fonctionnalités et les préférences générales."},
+      "commissions": {"title": "💰 Commissions", "content": "**Configuration des commissions** — définissez les taux de commission pour les formateurs, les bonus de parrainage et les structures de paiement."},
+      "disbursements": {"title": "💸 Décaissements", "content": "**Décaissements** — gérez les paiements aux formateurs et partenaires. Consultez l'historique des paiements et initiez les transferts."},
+      "discountCodes": {"title": "🏷️ Codes promo", "content": "**Codes promo** — créez et gérez des codes promotionnels, suivez les analyses d'utilisation et définissez des campagnes de réduction."},
+      "refunds": {"title": "🔄 Remboursements", "content": "**Remboursements** — traitez les demandes de remboursement des étudiants, examinez les litiges et gérez le cycle de vie des remboursements."},
+      "header": {"title": "🔝 Barre d'en-tête", "content": "L'**en-tête supérieur** affiche les statistiques en temps réel — nombre total d'utilisateurs, d'étudiants et de formateurs. Accès rapide aux notifications et à votre profil."},
+      "userMenu": {"title": "👤 Menu Profil", "content": "Votre **menu de profil** — paramètres, retour au site Web ou déconnexion. Redémarrez cette visite à tout moment depuis ici."},
+      "ready": {"title": "🎉 Vous êtes prêt !", "content": "**Vous êtes paré !** 🚀 Vous connaissez maintenant les zones clés du panneau Super Admin. Commencez par le Tableau de bord et explorez chaque section. Redémarrez cette visite à tout moment depuis votre menu de profil."}
+    }
+  },
+  "guide": {
+    "student": {
+      "overview": "Le Portail Étudiant est votre centre de commandement pour l'apprentissage. Vous y accéderez aux cours, suivrez votre progression, gérerez les paiements, postulerez aux stages et obtiendrez des certificats. Tout ce dont vous avez besoin pour passer de débutant à professionnel prêt à l'emploi.",
+      "sections": {
+        "coreNav": "🎯 Navigation principale",
+        "academics": "📚 Études et apprentissage",
+        "career": "💼 Carrière et projets",
+        "billing": "💳 Facturation et compte"
+      }
+    },
+    "trainer": {
+      "overview": "Le Portail Formateur vous donne tout ce dont vous avez besoin pour gérer des cours, encadrer des étudiants, noter des devoirs et suivre vos activités professionnelles. Bienvenue dans l'équipe pédagogique !",
+      "sections": {
+        "coreNav": "🎯 Aperçu et navigation",
+        "teaching": "📚 Enseignement et études",
+        "professional": "🤝 Activités professionnelles"
+      }
+    },
+    "admin": {
+      "overview": "Le Tableau de bord Admin est votre centre de gestion de la plateforme. Vous y contrôlez les utilisateurs, les cours, les paiements, les projets, les stages et les analyses. Tout passe par ici.",
+      "sections": {
+        "coreNav": "🎯 Aperçu et navigation",
+        "management": "👥 Gestion",
+        "operations": "⚙️ Opérations",
+        "schedule": "📅 Planning et communication"
+      }
+    },
+    "superAdmin": {
+      "overview": "Le panneau Super Admin vous donne un contrôle complet sur toute la plateforme. Configuration système, opérations financières, gestion des utilisateurs, outils marketing et analyses avancées sont à portée de main.",
+      "sections": {
+        "coreNav": "🎯 Aperçu et navigation",
+        "system": "🔧 Gestion système",
+        "finance": "💰 Opérations financières",
+        "analytics": "📊 Analyses et surveillance",
+        "marketing": "📢 Communication et marketing"
+      }
+    }
   }
 }
