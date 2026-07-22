@@ -30,6 +30,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { EnrollCourseDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
 import { useToast } from "@/hooks/use-toast";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 interface AICourse {
   _id: string;
@@ -606,13 +607,10 @@ const Explore = () => {
                           <div className="flex items-baseline gap-2">
                             {course.discountPrice > 0 ? (
                               <>
-                                <span className="text-base font-bold text-accent">RWF {course.discountPrice.toLocaleString()}</span>
-                                <span className="text-[10px] text-muted-foreground line-through">RWF {course.price.toLocaleString()}</span>
+                                <PriceDisplay price={course.price} discountPrice={course.discountPrice} size="md" row />
                               </>
                             ) : (
-                              <span className="text-base font-bold text-accent">
-                                {course.price === 0 ? "Scholarship" : `RWF ${course.price.toLocaleString()}`}
-                              </span>
+                              <PriceDisplay price={course.price} size="md" />
                             )}
                           </div>
                         </div>

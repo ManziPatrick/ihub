@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { BookOpen, Users, Clock, DollarSign, Star, PlayCircle, FileText } from "lucide-react";
 import { PPTViewer } from "../PPTViewer";
 import { useState } from "react";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface ViewCourseDialogProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface ViewCourseDialogProps {
 
 export function ViewCourseDialog({ open, onOpenChange, course }: ViewCourseDialogProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const { formatPrice } = useCurrency();
 
   if (!course) return null;
 
@@ -54,7 +56,7 @@ export function ViewCourseDialog({ open, onOpenChange, course }: ViewCourseDialo
                   Price
                 </div>
                 <p className="font-semibold text-card-foreground">
-                  {course.price === 0 ? "Free" : `$${course.price}`}
+                  {course.price === 0 ? "Free" : formatPrice(course.price)}
                 </p>
               </div>
               <div className="p-3 bg-background/50 rounded-lg">
