@@ -44,6 +44,12 @@ import {
   Menu,
   LogOut,
   ExternalLink,
+  DollarSign,
+  AlertTriangle,
+  Database,
+  Camera,
+  Palette,
+  MapPin,
 } from "lucide-react";
 
 // ============================================================

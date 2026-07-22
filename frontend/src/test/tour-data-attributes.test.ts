@@ -27,16 +27,22 @@ import {
   createTrainerTourSteps,
   createAdminTourSteps,
   createSuperAdminTourSteps,
+  tourFactoriesByRole,
 } from "@/components/portal/onboarding/TourConfig";
-import { tourFactoriesByRole } from "@/components/portal/onboarding/TourConfig";
+import type { StepFactory } from "@/components/portal/onboarding/TourConfig";
 
 /**
  * Helper: call a step factory with a no-op `t` function so we
  * get the Step objects (content/title will be empty strings, but
  * the `target` property is what we care about).
  */
-function targets(stepFactory: (t: (...args: any[]) => string) => Step[]): string[] {
-  return stepFactory(() => "").map((s) => s.target);
+/**
+ * Helper: call a step factory with a no-op `t` function so we
+ * get the Step objects. The `t` argument is unused since we only
+ * care about the `target` property.
+ */
+function targets(stepFactory: StepFactory): string[] {
+  return stepFactory((() => "") as any).map((s) => String(s.target));
 }
 
 // ---------------------------------------------------------------------------

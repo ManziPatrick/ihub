@@ -12,6 +12,20 @@ import { useMutation } from "@apollo/client/react";
 import { useAuth } from "@/contexts/AuthContext";
 import { MARK_TOUR_COMPLETED } from "@/lib/graphql/mutations";
 import { tourFactoriesByRole } from "./TourConfig";
+import { mdToHtml } from "@/lib/markdown";
+
+/**
+ * Render a string with basic markdown (**bold**, ### headings) as HTML.
+ */
+function renderMd(content: React.ReactNode): React.ReactNode {
+  if (typeof content !== "string") return content;
+  return (
+    <span
+      className="[&_strong]:font-semibold [&_strong]:text-foreground"
+      dangerouslySetInnerHTML={{ __html: mdToHtml(content) }}
+    />
+  );
+}
 
 /**
  * ───────────────────────────────────────────────
@@ -32,7 +46,13 @@ export function PlatformTour() {
   const role = user?.role || "student";
   const tourConfig = tourFactoriesByRole[role];
   const steps: Step[] = useMemo(
-    () => tourConfig?.factory(t) || [],
+    () =>
+      (tourConfig?.factory(t) || []).map((step) => ({
+        ...step,
+        // Render **bold** and ### headings from translation strings as HTML
+        content: renderMd(step.content),
+        title: step.title ? renderMd(step.title) : step.title,
+      })),
     // t from useTranslation() is stable across renders
     [tourConfig, t]
   );
@@ -182,11 +202,6 @@ export function PlatformTour() {
       steps={steps}
       run={runTour}
       continuous
-      showProgress
-      showSkipButton
-      disableCloseOnEsc
-      disableOverlayClose
-      hideBackButton={false}
       floatingOptions={{
         // Keep tooltip inside the viewport
         strategy: "fixed",
@@ -199,6 +214,10 @@ export function PlatformTour() {
         textColor: "hsl(var(--card-foreground))",
         zIndex: 1000,
         width: 380,
+        showProgress: true,
+        buttons: ["back", "close", "primary", "skip"],
+        dismissKeyAction: false,
+        overlayClickAction: false,
       }}
       locale={{
         back: t("tour.locale.back"),
@@ -209,12 +228,12 @@ export function PlatformTour() {
       }}
       styles={{
         overlay: {
-          // Full viewport coverage regardless of scroll
-          height: "100vh",
-          width: "100vw",
+          // Full viewport coverage regardless of scroll (use inset:0 instead
+          // of width/height: 100vw/vh to avoid scrollbar width issues)
           position: "fixed",
-          top: 0,
-          left: 0,
+          inset: 0,
+          width: "100%",
+          height: "100%",
           pointerEvents: "auto",
         },
         tooltipContainer: {

@@ -2,7 +2,7 @@ import type { Step } from "react-joyride";
 import type { UserRole } from "@/contexts/AuthContext";
 import type { TFunction } from "i18next";
 
-type StepFactory = (t: TFunction) => Step[];
+export type StepFactory = (t: TFunction) => Step[];
 
 /**
  * ───────────────────────────────────────────────
