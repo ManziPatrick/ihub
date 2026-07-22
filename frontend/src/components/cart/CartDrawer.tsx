@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PaymentForm } from "@/components/PaymentForm";
 import { useState } from "react";
+import { PriceDisplay } from "@/components/PriceDisplay";
 import { useMutation } from "@apollo/client/react";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
 import { useToast } from "@/hooks/use-toast";
@@ -144,11 +145,9 @@ export function CartDrawer() {
                         {item.title}
                       </h4>
                       <p className="text-xs font-bold text-accent">
-                        {Number(item.discountPrice) > 0
-                          ? `${Number(item.discountPrice).toLocaleString()} RWF`
-                          : Number(item.price) <= 0
+                        {Number(item.price) <= 0 && !Number(item.discountPrice)
                           ? "Free"
-                          : `${Number(item.price).toLocaleString()} RWF`}
+                          : <PriceDisplay price={Number(item.price)} discountPrice={Number(item.discountPrice) || undefined} size="sm" row />}
                       </p>
                     </div>
                     <button
@@ -169,7 +168,7 @@ export function CartDrawer() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground">Total</span>
                   <span className="text-lg font-bold text-foreground">
-                    {Number(cartTotal) <= 0 ? "Free" : `${Number(cartTotal).toLocaleString()} RWF`}
+                    {Number(cartTotal) <= 0 ? "Free" : <PriceDisplay price={Number(cartTotal)} size="md" row />}
                   </span>
                 </div>
                 <Button

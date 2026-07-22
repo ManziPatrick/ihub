@@ -16,6 +16,7 @@ import { useCart } from "@/contexts/CartContext";
 import { ApplyCourseDialog } from "@/components/portal/dialogs";
 import { useState, useCallback } from "react";
 import { stripHtml } from "@/lib/utils";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 const MODULES_PER_PAGE = 5;
 
@@ -433,10 +434,7 @@ export default function CoursePage() {
                     )}
                   </div>
                   <CardContent className="p-6 space-y-6">
-                    <div className="space-y-1">
-                      <p className="text-3xl font-bold">${course.price}</p>
-                      <p className="text-sm text-muted-foreground line-through">$199.99</p>
-                    </div>
+                    <PriceDisplay price={course.price} discountPrice={course.discountPrice} size="lg" />
 
                     {isEnrolled ? (
                       <Button
