@@ -309,6 +309,147 @@ const COURSES: CourseDef[] = [
         ],
         'Execute a complete social media marketing campaign.',
       ),
+
+
+      makeModule(
+        'Module 3: Email Marketing & Automation',
+        'Build email lists, write compelling newsletters, and automate email campaigns that convert.',
+        [
+          makeLesson(
+            'Building Your Email List from Scratch',
+            'Email marketing remains one of the highest-ROI channels. This lesson covers how to build an email list ethically in Rwanda using lead magnets like free guides and discount codes. Learn about compliance (Data Protection Law No. 058/2021), how to use Mailchimp and Brevo for free, and strategies to grow your list.\n\n### List Building Strategies:\n1. Offer a free download related to your business\n2. Collect emails at checkout or point of sale\n3. Run a social media contest requiring email sign-up\n4. Add sign-up forms to your website and social media\n5. Partner with complementary businesses to cross-promote',
+            'article',
+            1,
+          ),
+          makeLesson(
+            'Writing Emails That Get Opened',
+            'Learn to write subject lines that get opened, email copy that engages, and CTAs that drive sales. Covers the AIDA formula (Attention, Interest, Desire, Action) with real examples from Rwandan businesses.\n\n### Email Writing Tips:\n- Subject lines under 50 characters perform best\n- Personalise with the recipient first name\n- Keep paragraphs short (2-3 sentences)\n- Use bullet points for easy scanning\n- Always include one clear call-to-action',
+            'video',
+            2,
+            { videoUrl: 'https://www.youtube.com/watch?v=A7HpMRvqtzM', videoTitle: 'Email Marketing for Beginners - Quick Guide' },
+          ),
+          makeLesson(
+            'Automating Your Email Campaigns',
+            'Save time and increase sales by automating email sequences. Learn about welcome sequences, abandoned cart emails, re-engagement campaigns, and nurture sequences. Mailchimp and Brevo offer free tiers.\n\n### Automated Email Types:\n1. Welcome email - Send immediately after sign-up\n2. Nurture sequence - 3-5 educational emails over 2 weeks\n3. Promotional email - Offer discount or new product\n4. Re-engagement email - Win back inactive subscribers\n5. Feedback email - Ask for reviews or referrals',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 3: Knowledge Check',
+            'Test your understanding of email marketing.',
+            [
+              { question: 'What does AIDA stand for?', options: ['Attention, Interest, Desire, Action', 'Assess, Implement, Deploy, Analyse', 'Awareness, Interest, Decision, Action', 'Approach, Integrate, Deliver, Assess'], correctIndex: 0, explanation: 'AIDA stands for Attention, Interest, Desire, Action.' },
+              { question: 'Recommended max email subject line length?', options: ['100 chars', '50 chars', '25 chars', '200 chars'], correctIndex: 1, explanation: 'Subject lines under 50 characters have the best open rates.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 3: Email Campaign Project',
+            'Create a complete email marketing welcome sequence.',
+            'Build a 3-email welcome sequence with subject lines, body copy, and CTAs for each.',
+            [
+              { question: 'Write a 3-email welcome sequence for a business of your choice. Include subject lines, body, and CTAs.', type: 'open', explanation: 'Email 1: Welcome and set expectations. Email 2: Deliver value. Email 3: Present an offer.', points: 20 },
+              { question: 'What lead magnet would you offer to grow your email list and why?', type: 'open', explanation: 'Consider: free guide, discount code, checklist, or template relevant to your audience.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Build and automate an email marketing campaign that drives sales.',
+      ),
+
+      makeModule(
+        'Module 4: Analytics & Measuring ROI',
+        'Track your marketing performance, measure return on investment, and make data-driven decisions.',
+        [
+          makeLesson(
+            'Introduction to Marketing Analytics',
+            'Learn key metrics: impressions, reach, engagement rate, click-through rate, conversion rate, and ROAS. Set up tracking without a big budget.\n\n### Key Metrics:\n- Impressions: How many times content was seen\n- Reach: How many unique people saw it\n- CTR: Percentage of viewers who clicked\n- Conversion Rate: Percentage who took action\n- ROAS: Revenue per dollar spent on ads',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=3L7F7n5JU6U', videoTitle: 'Marketing Analytics for Beginners' },
+          ),
+          makeLesson(
+            'Google Analytics & Facebook Insights',
+            'Setup guides for Google Analytics and Facebook Insights. Learn to find actionable insights from your data.\n\n### What to Track:\n1. Traffic sources - Where do visitors come from?\n2. Popular content - What pages do they visit most?\n3. User behaviour - How long do they stay?\n4. Conversions - Are visitors taking desired actions?\n5. Demographics - Who is your audience?',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Calculating ROI for Your Marketing Efforts',
+            'Calculate ROI for different campaigns and channels.\n\n### ROI by Channel:\n- Social media organic: Track hours invested vs results\n- Social media ads: Track ad spend vs direct sales\n- Email marketing: Track time investment vs conversions\n- WhatsApp Business: Track response time and conversion rate\n- Content marketing: Track traffic growth and engagement',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Review analytics and ROI concepts.',
+            [
+              { question: 'What does CTR stand for?', options: ['Cost to Revenue', 'Click-Through Rate', 'Conversion Tracking Rate', 'Customer Turnover Ratio'], correctIndex: 1, explanation: 'CTR stands for Click-Through Rate.' },
+              { question: 'Best tool for tracking website visitors?', options: ['Facebook Insights', 'Google Analytics', 'Twitter Analytics', 'Instagram Insights'], correctIndex: 1, explanation: 'Google Analytics is the industry standard for website tracking.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Analytics Report Project',
+            'Create a marketing performance dashboard.',
+            'Design a dashboard tracking 5 key metrics with current performance, targets, and improvement actions.',
+            [
+              { question: 'Create a dashboard template with 5 metrics. For each: what it measures, current value, target, and improvement action.', type: 'open', explanation: 'Metrics: website traffic, email open rate, social engagement, conversion rate, customer acquisition cost.', points: 20 },
+              { question: 'Calculate ROI for a Facebook campaign costing 50,000 RWF generating 15 leads and 3 customers spending 25,000 RWF each.', type: 'open', explanation: 'Show: total revenue, total cost, net profit, and ROI percentage.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Track, measure, and optimise marketing campaigns using data.',
+      ),
+
+      makeModule(
+        'Module 5: Advanced Growth & Paid Advertising',
+        'Scale your business with paid advertising, influencer marketing, and advanced growth strategies.',
+        [
+          makeLesson(
+            'Introduction to Paid Advertising',
+            'Covers major ad platforms: Facebook Ads, Instagram Ads, Google Ads, YouTube Ads, and TikTok Ads. Learn targeting, budgeting, and creative best practices.\n\n### Ad Platform Overview:\n- Facebook/Instagram: Best for visual products, local targeting\n- Google Ads: Best for people actively searching\n- YouTube Ads: Best for video content, brand awareness\n- TikTok Ads: Best for reaching younger audiences\n- LinkedIn Ads: Best for B2B and professional services',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=qRyBcfjFhKY', videoTitle: 'Facebook Ads for Small Business - Quick Start' },
+          ),
+          makeLesson(
+            'Creating Ads That Convert',
+            'Three elements of a great ad: right audience, compelling creative, clear offer. Covers ad formats, copywriting, A/B testing, and retargeting.\n\n### Ad Creative Tips:\n1. Use bright, clear images or short videos\n2. Lead with the benefit, not features\n3. Include social proof (testimonials, reviews)\n4. Create urgency (limited time, low stock)\n5. Test different versions with A/B testing',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Influencer & Partnership Marketing',
+            'Collaborate with influencers and businesses to accelerate growth. Find influencers in Rwanda, negotiate partnerships, and measure results.\n\n### Finding Influencers:\n- Search relevant hashtags on Instagram/TikTok\n- Check competitor collaborations\n- Focus on engagement, not just follower count\n- Start with micro-influencers (1,000-10,000 followers)\n- Offer free products or small payments',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Test your understanding of paid advertising.',
+            [
+              { question: 'What is A/B testing?', options: ['Showing different ads to compare performance', 'Testing the budget', 'Asking customer preferences', 'Two platforms at once'], correctIndex: 0, explanation: 'A/B testing runs variations to different segments to compare performance.' },
+              { question: 'What is a micro-influencer?', options: ['1M+ followers', '1,000-10,000 followers', 'Only micro-content', 'Brand ambassador'], correctIndex: 1, explanation: 'Micro-influencers have smaller, highly engaged audiences of 1,000-10,000 followers.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Final Digital Marketing Project',
+            'Create a complete 3-month digital marketing campaign.',
+            'Design a 3-month campaign including goals, audience, channels, content plan, budget (max 200,000 RWF), and success metrics.',
+            [
+              { question: 'Design a 3-month campaign for a Rwandan business with goals, audience, channels, budget, and metrics.', type: 'open', explanation: 'Be specific about platforms, content, budget breakdown, and how you will measure success.', points: 25 },
+              { question: 'Allocate a 200,000 RWF monthly budget across channels. Justify your allocation.', type: 'open', explanation: 'Consider: Facebook Ads, Google Ads, content creation, influencer partnerships, and tools.', points: 20 },
+            ],
+            5,
+          ),
+        ],
+        'Execute paid advertising campaigns and advanced growth strategies to scale a business.',
+      ),
+
+/* INSERT_MODULES_1 */
     ],
   },
 
@@ -463,6 +604,147 @@ const COURSES: CourseDef[] = [
         ],
         'Identify and analyse fintech opportunities in African markets.',
       ),
+
+
+      makeModule(
+        'Module 3: Digital Lending & Alternative Credit',
+        'Understand how fintech companies provide credit to the unbanked using alternative data and technology.',
+        [
+          makeLesson(
+            'The Digital Lending Revolution in Africa',
+            'Explore how Branch, Tala, M-Shwari, and local lenders use mobile data to assess creditworthiness and disburse loans within minutes.\n\n### Key Players:\n- M-Shwari (Kenya): Savings/loan on M-Pesa\n- Branch: App-based loans via smartphone data\n- Tala: Alternative credit scoring via behaviour\n- Local: Urubuto, AC Group, BK TecHouse',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=yF7wk_p3Q78', videoTitle: 'Digital Lending in Africa' },
+          ),
+          makeLesson(
+            'Alternative Credit Scoring Models',
+            'Traditional credit scores exclude most Africans. Learn how mobile money, airtime, social data, and smartphone behaviour assess creditworthiness.\n\n### Alternative Data Sources:\n1. Mobile money transaction history\n2. Airtime recharge patterns\n3. Social media activity\n4. Smartphone usage patterns\n5. Utility bill payments\n6. E-commerce transaction data',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Responsible Lending & Regulation',
+            'BNR regulations, responsible lending principles, and balancing profitability with customer welfare.\n\n### Principles:\n1. Transparent pricing and terms\n2. Affordable loans based on repayment ability\n3. Fair debt collection practices\n4. Customer data protection\n5. Financial education for borrowers',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 3: Knowledge Check',
+            'Review digital lending concepts.',
+            [
+              { question: 'Which is an alternative credit data source?', options: ['Bank history', 'Mobile money transactions', 'Property ownership', 'Employer reference'], correctIndex: 1, explanation: 'Mobile money transactions are a key alternative data source.' },
+              { question: 'Which institution regulates digital lending in Rwanda?', options: ['RDB', 'BNR', 'RURA', 'RSB'], correctIndex: 1, explanation: 'BNR regulates all lending activities including digital lending.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 3: Credit Scoring Model Project',
+            'Design an alternative credit scoring model for Rwanda.',
+            'Create a credit scoring framework using non-traditional data for a borrower without a bank account.',
+            [
+              { question: 'Design a credit scoring model using mobile money data. What data points, how would you score, and what loan limits?', type: 'open', explanation: 'Consider: transaction volume, income consistency, savings, airtime, bill payments.', points: 20 },
+              { question: 'What safeguards prevent over-indebtedness in your lending product?', type: 'open', explanation: 'Consider: loan limits, cooling-off periods, debt detection, financial education.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Design alternative credit scoring models and understand digital lending regulation.',
+      ),
+
+      makeModule(
+        'Module 4: Building a Fintech Startup',
+        'Learn practical steps to launch a fintech startup in Africa.',
+        [
+          makeLesson(
+            'The Fintech Regulatory Journey in Rwanda',
+            'Step-by-step regulatory guide: RDB registration, BNR compliance, licensing, and sandbox testing.\n\n### Steps:\n1. Register company with RDB\n2. Submit business plan to BNR\n3. Technology and security audit\n4. Obtain licences (payment service provider, digital lender)\n5. Sandbox testing via BNR\n6. Full licence and launch',
+            'article',
+            1,
+          ),
+          makeLesson(
+            'Building an MVP Fintech Product',
+            'Build a simple MVP using USSD, mobile money APIs, and no-code platforms. Test with real users before scaling.\n\n### MVP Approach:\n1. Start with USSD - works on any phone\n2. Use MTN/Airtel Money APIs\n3. Build simple web app with basic features\n4. Test with small group of real users\n5. Iterate based on feedback',
+            'video',
+            2,
+            { videoUrl: 'https://www.youtube.com/watch?v=vaf4v0hW7wI', videoTitle: 'Build a Fintech App - 3 Minute Guide' },
+          ),
+          makeLesson(
+            'Partnerships & Go-To-Market Strategy',
+            'Form partnerships with MNOs, banks, SACCOs, and agents. Go-to-market strategies for Rwanda.\n\n### Key Partners:\n1. MNOs (MTN, Airtel) - Mobile money infrastructure\n2. Banks (BK, Equity, I&M) - Licence and trust\n3. SACCOs - Rural distribution\n4. Agent networks - Last-mile acquisition\n5. Government - Regulatory support',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Review fintech startup concepts.',
+            [
+              { question: 'First regulatory step to launch fintech in Rwanda?', options: ['Bank licence', 'Register with RDB', 'Hire 50 people', 'Raise $1M'], correctIndex: 1, explanation: 'Company registration with RDB is the first step.' },
+              { question: 'Why start with USSD for fintech?', options: ['More profitable', 'Works on any phone', 'Faster to code', 'Looks professional'], correctIndex: 1, explanation: 'USSD works on any phone, reaching feature phone users who are the majority.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Fintech Startup Plan',
+            'Develop a complete fintech launch plan.',
+            'Create a plan including problem, solution, target market, regulatory pathway, and revenue model.',
+            [
+              { question: 'Describe a fintech startup idea for Rwanda with problem, users, solution, revenue, and BNR licence needed.', type: 'open', explanation: 'Consider savings, lending, payments, insurance, or investments for the Rwandan market.', points: 20 },
+              { question: 'How would you acquire your first 1,000 users?', type: 'open', explanation: 'Consider: agent networks, SACCOs, universities, WhatsApp, and referral programmes.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Navigate fintech regulation and launch a fintech startup in Rwanda.',
+      ),
+
+      makeModule(
+        'Module 5: Future of Fintech & Career Opportunities',
+        'Explore emerging trends and careers in African fintech.',
+        [
+          makeLesson(
+            'Blockchain, CBDCs & Open Banking in Africa',
+            'Learn about CBDCs, blockchain for financial inclusion, and open banking APIs. Examples from across Africa.\n\n### Trends:\n1. CBDCs - Digital national currencies\n2. Blockchain - DeFi for the unbanked\n3. Open Banking - Third-party access to bank data\n4. Embedded Finance - Financial services in apps\n5. AI in Fintech - Chatbots, fraud detection',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=Y1mJgTt6GJk', videoTitle: 'Future of Fintech in Africa' },
+          ),
+          makeLesson(
+            'Fintech Career Paths & Skills',
+            'Discover careers in fintech: product management, engineering, compliance, data science, and business development.\n\n### In-Demand Skills:\n1. Product management - Building solutions for users\n2. Mobile dev - Android, iOS, USSD, cross-platform\n3. Data science - Credit scoring, fraud detection\n4. Compliance & AML - Regulatory knowledge\n5. Business development - Partnerships, growth\n6. UX/UI design - Simple financial interfaces',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Financial Inclusion & Social Impact',
+            'Fintech reaches underserved populations: rural farmers, women, youth, and small businesses.\n\n### Impact Areas:\n1. Rural access - Agent networks in villages\n2. Women inclusion - Products for female entrepreneurs\n3. Youth savings - Digital accounts for young people\n4. Agricultural finance - Insurance and loans\n5. Refugee services - Digital identities for displaced',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Review future fintech trends.',
+            [
+              { question: 'What does CBDC stand for?', options: ['Central Bank Digital Currency', 'Commercial Bank Deposit Certificate', 'Cryptocurrency Blockchain Digital Coin', 'Central Business Data Centre'], correctIndex: 0, explanation: 'CBDC is a digital version of a country official currency.' },
+              { question: 'Most in-demand fintech compliance skill?', options: ['Graphic design', 'AML knowledge', 'Video editing', 'Social media'], correctIndex: 1, explanation: 'Anti-Money Laundering knowledge is critical for fintech compliance roles.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Final Fintech Project',
+            'Design a fintech solution for financial inclusion.',
+            'Create a fintech solution addressing a specific challenge in Rwanda.',
+            [
+              { question: 'Design a fintech solution for a Rwandan financial inclusion challenge. Describe users, pain point, solution, and reach strategy.', type: 'open', explanation: 'Consider: farmers accessing loans, women saving, youth building credit, or gig workers.', points: 25 },
+              { question: 'Revenue model for serving low-income users affordably?', type: 'open', explanation: 'Consider: transaction fees, interest margin, subscription, or cross-selling.', points: 20 },
+            ],
+            5,
+          ),
+        ],
+        'Identify fintech career opportunities and understand emerging industry trends.',
+      ),
+
+/* INSERT_MODULES_2 */
     ],
   },
 
@@ -610,6 +892,147 @@ const COURSES: CourseDef[] = [
         ],
         'Win your first freelance client and build a sustainable business.',
       ),
+
+
+      makeModule(
+        'Module 3: High-Income Skills for Freelancers',
+        'Learn which freelance skills pay the most and how to develop them from scratch.',
+        [
+          makeLesson(
+            'Top High-Income Freelance Skills',
+            'Web development, copywriting, graphic design, video editing, virtual assistance, and digital marketing.\n\n### Rates:\n1. Web Development: $15-50/hour (React, WordPress)\n2. Copywriting: $20-100/project (websites, emails)\n3. Graphic Design: $15-45/hour (Canva, Figma)\n4. Video Editing: $20-60/video (CapCut, DaVinci)\n5. Virtual Assistant: $5-15/hour (admin, email)\n6. Digital Marketing: $15-40/hour (SEO, ads)',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=Uj7Wz3fY0YM', videoTitle: 'Highest Paying Freelance Skills 2025' },
+          ),
+          makeLesson(
+            'Learn Skills for Free',
+            'Free resources: freeCodeCamp, Google Digital Skills for Africa, Canva Design School, HubSpot Academy, YouTube.\n\n### Free Platforms:\n1. freeCodeCamp - Web development (free cert)\n2. Google Skills for Africa - Digital marketing\n3. Canva Design School - Graphic design\n4. HubSpot Academy - Marketing, sales, service\n5. ALX Africa - Professional programmes',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Build a Portfolio With No Experience',
+            'Overcome the experience paradox: build a portfolio from scratch.\n\n### Strategies:\n1. Volunteer for local NGOs\n2. Create sample projects for imaginary businesses\n3. Redesign existing websites for your portfolio\n4. Document learning on LinkedIn\n5. Offer discounts to first 5 clients for testimonials',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 3: Knowledge Check',
+            'Test knowledge of freelance skills.',
+            [
+              { question: 'Highest-paying freelance skill?', options: ['Data entry', 'Web development', 'Social media', 'Virtual assistance'], correctIndex: 1, explanation: 'Web development pays $15-50/hour.' },
+              { question: 'Free platform for web development certification?', options: ['LinkedIn Learning', 'freeCodeCamp', 'Udemy', 'Skillshare'], correctIndex: 1, explanation: 'freeCodeCamp offers free certifications with hands-on projects.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 3: Skill Development Plan',
+            'Create a 90-day learning plan.',
+            'Choose a skill and create a plan with resources, projects, and milestones.',
+            [
+              { question: 'Create a 90-day learning plan for a high-income skill with free resources, projects, and weekly milestones.', type: 'open', explanation: 'Include course names, project ideas, and measurable completion criteria.', points: 20 },
+              { question: 'Describe 3 portfolio projects you will create to showcase this skill.', type: 'open', explanation: 'Example: redesign a restaurant website, create NGO graphics, write blog posts.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Develop a high-income freelance skill and build a compelling portfolio.',
+      ),
+
+      makeModule(
+        'Module 4: Personal Branding & LinkedIn Mastery',
+        'Build your professional brand online to attract clients and opportunities.',
+        [
+          makeLesson(
+            'Creating Your Professional Brand',
+            'Define your identity, craft your story, and present consistently across platforms.\n\n### Brand Elements:\n1. Define your niche - What problem do you solve?\n2. Craft your story - Why you and why this matters\n3. Consistent visuals - Photo, colours, logo\n4. Your voice - Professional, helpful, authentic\n5. Value proposition - Why choose you?',
+            'article',
+            1,
+          ),
+          makeLesson(
+            'LinkedIn Optimisation for Freelancers',
+            'Optimise your profile: headline, about, featured, experience, and recommendations.\n\n### Checklist:\n1. Professional headshot\n2. Headline: what you do + who you help\n3. About: clear value proposition\n4. Featured: portfolio samples\n5. Recommendations from clients\n6. Post 2-3 times per week',
+            'video',
+            2,
+            { videoUrl: 'https://www.youtube.com/watch?v=b3x3TjG7H2I', videoTitle: 'LinkedIn Profile Optimisation' },
+          ),
+          makeLesson(
+            'Content Marketing to Attract Clients',
+            'Make clients come to you with valuable content.\n\n### Content Ideas:\n1. Case studies - Solved problems\n2. Tutorials - Teach your niche skills\n3. Industry insights - Trends and observations\n4. Behind-the-scenes - Your workflow\n5. Client results - Before and after\n6. Personal stories - Lessons learned',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Review personal branding concepts.',
+            [
+              { question: 'Most important on LinkedIn for freelancers?', options: ['Connection count', 'Clear headline stating value', 'Long work history', 'Fancy design'], correctIndex: 1, explanation: 'Your headline should clearly communicate what you do.' },
+              { question: 'Best content to attract freelance clients?', options: ['Vacation photos', 'Educational content', 'Funny memes', 'Politics'], correctIndex: 1, explanation: 'Educational content positions you as an authority.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Personal Brand Launch',
+            'Create your professional brand package.',
+            'Develop bio, LinkedIn headline, value proposition, and content strategy.',
+            [
+              { question: 'Write your LinkedIn profile: headline (max 220 chars), About (2-3 paragraphs), and Featured plan (3 items).', type: 'open', explanation: 'Headline: skill + who you help + results. Example: Web Developer helping Rwandan businesses build websites.', points: 20 },
+              { question: 'Create a 2-week LinkedIn content calendar with 6 posts (topic, format, key message).', type: 'open', explanation: 'Mix: case study, tutorial, insight, story, tip, and CTA.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Build a professional brand and optimise LinkedIn to attract freelance clients.',
+      ),
+
+      makeModule(
+        'Module 5: Managing Your Freelance Business',
+        'Master pricing, contracts, taxes, and scaling your freelance income.',
+        [
+          makeLesson(
+            'Pricing, Invoicing & Getting Paid',
+            'Set rates, create invoices, and get paid via mobile money, PayPal, and Payoneer.\n\n### Pricing Strategies:\n1. Hourly: Good for ongoing work\n2. Project: Good for defined scope\n3. Value-based: Price by value delivered\n4. Retainer: Monthly fee for services\n\n### Payment Methods:\n- Mobile money (MoMo, M-Pesa, Airtel)\n- PayPal (international)\n- Payoneer (US/EU)\n- Bank transfer',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=4F0lDv3J8Yk', videoTitle: 'Freelance Pricing Guide' },
+          ),
+          makeLesson(
+            'Contracts, Scope Creep & Boundaries',
+            'Essential contract elements, preventing scope creep, and setting client boundaries.\n\n### Contract Essentials:\n1. Scope of work\n2. Timeline\n3. Price and payment terms\n4. Revision policy\n5. Termination clause\n6. Confidentiality',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Taxes & Financial Planning for Freelancers',
+            'RRA registration, TIN, quarterly filings, VAT threshold (20M RWF), and saving for irregular income.\n\n### Obligations:\n1. Register with RRA for TIN\n2. Register for Income Tax\n3. VAT if turnover > 20M RWF\n4. File quarterly returns\n5. Keep income/expense records\n6. Consider hiring an accountant',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Review freelance business management.',
+            [
+              { question: 'What is scope creep?', options: ['Growing too fast', 'Client requesting extra work outside agreement', 'Multiple projects', 'Increasing rates'], correctIndex: 1, explanation: 'Scope creep means additional work beyond the agreed scope.' },
+              { question: 'VAT registration threshold in Rwanda?', options: ['10M RWF', '20M RWF', '50M RWF', '100M RWF'], correctIndex: 1, explanation: 'VAT registration is required above 20M RWF annual turnover.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Final Freelance Business Project',
+            'Create a complete freelance business plan.',
+            'Include services, pricing, client acquisition, and financial projections for 6 months.',
+            [
+              { question: 'Create a 6-month freelance plan with services, pricing, income goal, acquisition strategy, and budget.', type: 'open', explanation: 'Be realistic about clients/month and ramp-up. Include best-case and minimum scenarios.', points: 25 },
+              { question: 'Design a freelance contract with 8+ key clauses.', type: 'open', explanation: 'Cover: scope, timeline, payment, revisions, late penalties, IP, confidentiality, termination.', points: 20 },
+            ],
+            5,
+          ),
+        ],
+        'Manage your freelance business professionally with proper contracts and finances.',
+      ),
+
+/* INSERT_MODULES_3 */
     ],
   },
 
@@ -756,6 +1179,147 @@ const COURSES: CourseDef[] = [
         ],
         'Write a complete business plan and identify funding sources.',
       ),
+
+
+      makeModule(
+        'Module 3: Business Registration & Legal Essentials',
+        'Navigate legal requirements to register and operate a business in Rwanda.',
+        [
+          makeLesson(
+            'Registering Your Business at RDB',
+            'Step-by-step process: choose structure, reserve name, prepare documents, submit via Irembo, pay fees.\n\n### Steps:\n1. Choose structure (sole proprietorship, limited company, cooperative)\n2. Search and reserve company name\n3. Prepare documents (IDs, proof of address)\n4. Submit on RDB Irembo platform\n5. Pay fees (from 30,000 RWF)\n6. Receive certificate (24-72 hours)',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=J_rYp0Fr3WI', videoTitle: 'Register a Business in Rwanda' },
+          ),
+          makeLesson(
+            'Business Licences & Tax Registration',
+            'Common licences, RRA registration, and sector-specific permits.\n\n### Registrations:\n1. RRA TIN - Required for all businesses\n2. Professional licence - Regulated professions\n3. Sector permit - Hospitality, transport, food\n4. Environmental clearance - Certain activities\n5. RSSB registration - For businesses with employees',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Intellectual Property Protection',
+            'Trademarks, copyright, patents, and trade secrets through RDB IP department.\n\n### Protection Options:\n1. Trademark - Brand name, logo, slogan\n2. Copyright - Creative works\n3. Patent - Inventions\n4. Trade secret - Confidential information',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 3: Knowledge Check',
+            'Test business registration knowledge.',
+            [
+              { question: 'Which body handles business registration in Rwanda?', options: ['MINECOFIN', 'RDB', 'RRA', 'RURA'], correctIndex: 1, explanation: 'RDB handles all business registration in Rwanda.' },
+              { question: 'First step in registering a business?', options: ['Pay fees', 'Choose structure', 'Find office', 'Hire staff'], correctIndex: 1, explanation: 'First decide your business structure.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 3: Business Registration Project',
+            'Prepare documents for simulated business registration.',
+            'Choose a business idea and prepare all information needed for RDB registration.',
+            [
+              { question: 'Describe the complete registration process for your business: structure, name, documents, fees, timeline.', type: 'open', explanation: 'Research current fees on Irembo platform.', points: 20 },
+              { question: 'What extra licences would your specific business need beyond basic registration?', type: 'open', explanation: 'Consider health permits, transport licences, food handling permits.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Register a business in Rwanda and understand all legal requirements.',
+      ),
+
+      makeModule(
+        'Module 4: Marketing & Sales for New Businesses',
+        'Attract customers and grow your new business revenue from day one.',
+        [
+          makeLesson(
+            'Defining Your Target Market',
+            'Identify your ideal customer and craft a compelling value proposition.\n\n### Market Definition:\n1. Who has the problem you solve?\n2. Demographics (age, income, location)\n3. Behaviours and preferences\n4. Where do they get solutions now?\n5. What would make them switch to you?',
+            'article',
+            1,
+          ),
+          makeLesson(
+            'Sales Techniques for Rwandan Entrepreneurs',
+            'Build relationships, handle objections, and close deals in the Rwandan market.\n\n### Tips:\n1. Build relationships first - Rwandans buy from trusted people\n2. Be patient - decisions take multiple meetings\n3. Provide references - social proof works\n4. Offer samples or trials\n5. Follow up professionally',
+            'video',
+            2,
+            { videoUrl: 'https://www.youtube.com/watch?v=8d7qj3X5vRo', videoTitle: 'Sales for African Entrepreneurs' },
+          ),
+          makeLesson(
+            'Pricing Strategies for Rwanda',
+            'Cost-plus, competitor-based, value-based, and psychological pricing.\n\n### Considerations:\n1. Know costs (materials, labour, overhead)\n2. Research competitor prices\n3. Understand customer willingness to pay\n4. Consider payment terms (cash, mobile money)\n5. Plan discounts without hurting margins',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Review sales and marketing concepts.',
+            [
+              { question: 'What is a value proposition?', options: ['Product price', 'Why customers should buy from you', 'Slogan', 'Business summary'], correctIndex: 1, explanation: 'A value proposition explains why customers should choose you.' },
+              { question: 'What is competitor-based pricing?', options: ['Pricing by costs', 'Setting prices based on competitors', 'Customer surveys', 'Random'], correctIndex: 1, explanation: 'Using competitor prices as benchmarks for your pricing.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Sales Plan Project',
+            'Create a marketing and sales strategy.',
+            'Develop a plan including target market, value proposition, pricing, and sales process.',
+            [
+              { question: 'Create a customer persona: demographics, behaviours, pain points, goals, info sources.', type: 'open', explanation: 'Consider Kigali vs rural, age, income, and digital access in Rwanda.', points: 20 },
+              { question: 'Design a 5-step sales process from first contact to closing.', type: 'open', explanation: 'Example: 1-Cold contact, 2-Discovery, 3-Proposal, 4-Follow-up, 5-Close.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Develop a marketing and sales strategy to acquire customers.',
+      ),
+
+      makeModule(
+        'Module 5: Operations, Growth & Scaling',
+        'Run your business efficiently, hire employees, and plan for growth.',
+        [
+          makeLesson(
+            'Business Operations & Systems',
+            'Essential systems: accounting, CRM, inventory, communication, and document management.\n\n### Systems:\n1. Accounting - Track income, expenses, taxes\n2. CRM - Track customers, leads, pipeline\n3. Inventory - Track stock, orders, suppliers\n4. Communication - Internal and external\n5. Document management - Store contracts, invoices',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=K3aN5rJ7mG8', videoTitle: 'Business Operations - Scaling' },
+          ),
+          makeLesson(
+            'Hiring Your First Employees',
+            'When to hire, job descriptions, finding candidates, interviewing, and employer obligations.\n\n### Steps:\n1. Define the role\n2. Write a job description\n3. Advertise on channels\n4. Screen and shortlist\n5. Interview (behavioural questions)\n6. Check references\n7. Make an offer\n8. Register with RSSB',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Growth Strategies & Expansion',
+            'Market penetration, expansion, product development, and diversification.\n\n### Strategies:\n1. Market penetration - Sell more to existing customers\n2. Market expansion - Enter new regions\n3. Product development - New products/services\n4. Diversification - New markets entirely\n5. Digital expansion - Sell online',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Review operations and growth concepts.',
+            [
+              { question: 'CRM stands for?', options: ['Customer Revenue Management', 'Customer Relationship Management', 'Company Resource Management', 'Client Retention Metric'], correctIndex: 1, explanation: 'CRM manages interactions with current and potential customers.' },
+              { question: 'Social security institution in Rwanda?', options: ['RRA', 'RSSB', 'RDB', 'MIFOTRA'], correctIndex: 1, explanation: 'RSSB handles social security registration for employees.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Final Business Growth Plan',
+            'Create a 12-month growth plan.',
+            'Include systems, hiring, marketing, financial projections, and milestones.',
+            [
+              { question: 'Create a 12-month growth plan: systems, hiring timeline, marketing budget, revenue targets, milestones.', type: 'open', explanation: 'Include both optimistic and conservative financial scenarios.', points: 25 },
+              { question: 'How would you expand beyond your initial market (geographic, product, or segment)?', type: 'open', explanation: 'Consider other Rwandan cities, new products, or different customer segments.', points: 20 },
+            ],
+            5,
+          ),
+        ],
+        'Implement operational systems, hire employees, and plan for business growth.',
+      ),
+
+/* INSERT_MODULES_4 */
     ],
   },
 
@@ -901,6 +1465,147 @@ const COURSES: CourseDef[] = [
         ],
         'Deliver confident presentations and participate effectively in meetings.',
       ),
+
+
+      makeModule(
+        'Module 3: CV Writing & Interview Skills',
+        'Write compelling CVs and cover letters and ace job interviews in English.',
+        [
+          makeLesson(
+            'Writing a CV That Gets Interviews',
+            'Structure: personal details, summary, experience, education, skills, achievements.\n\n### CV Structure:\n1. Contact information\n2. Professional summary (2-3 sentences)\n3. Work experience (reverse chronological)\n4. Education and qualifications\n5. Skills (technical and soft)\n6. Achievements and awards\n7. References',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=Z7j5vQ0pG1I', videoTitle: 'How to Write a CV' },
+          ),
+          makeLesson(
+            'Writing Cover Letters That Stand Out',
+            'Structure and content for compelling cover letters.\n\n### Structure:\n1. Opening - Role and your interest\n2. Body 1 - Relevant experience and achievements\n3. Body 2 - Skills and fit\n4. Closing - Call to action\n5. Professional sign-off',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Acing English Job Interviews',
+            'Common questions, STAR method, and questions to ask employers.\n\n### Common Questions:\n1. Tell me about yourself (2-minute summary)\n2. Why this job? (research the company)\n3. Strengths and weaknesses?\n4. Where in 5 years? (show ambition)\n5. Tell me about a challenge (use STAR)\n6. Questions for us? (always have 3 ready)',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 3: Knowledge Check',
+            'Review CV and interview skills.',
+            [
+              { question: 'STAR stands for?', options: ['Stop, Think, Act, Review', 'Situation, Task, Action, Result', 'Start, Time, Answer, Respond', 'Structure, Talk, Answer, React'], correctIndex: 1, explanation: 'STAR is for behavioural interview answers.' },
+              { question: 'Ideal CV summary length?', options: ['One page', '2-3 sentences', 'Five sentences', 'One word'], correctIndex: 1, explanation: 'A professional summary should be 2-3 concise sentences.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 3: Job Application Project',
+            'Create a complete job application package.',
+            'Write a CV and cover letter for a specific job posting.',
+            [
+              { question: 'Write a complete CV for a real or desired job with professional summary, achievements, education, skills.', type: 'open', explanation: 'Use quantifiable achievements: Increased sales 20%, Managed team of 5, Reduced costs 15%.', points: 20 },
+              { question: 'Write a cover letter for a specific job posting addressed to the hiring manager.', type: 'open', explanation: 'Research the company. Connect your experience to their needs.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Write professional CVs and cover letters and succeed in English interviews.',
+      ),
+
+      makeModule(
+        'Module 4: Negotiation & Persuasion Skills',
+        'Develop English skills for negotiation and persuasion in business.',
+        [
+          makeLesson(
+            'Negotiation Skills for Professionals',
+            'Preparation, positioning, bargaining, and closing techniques.\n\n### Phases:\n1. Preparation - Know BATNA, target, walkaway point\n2. Opening - State position clearly\n3. Discussion - Explore options\n4. Bargaining - Make and respond to offers\n5. Closing - Summarise agreement',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=8_MetAOZlJ0', videoTitle: 'Business Negotiation Skills' },
+          ),
+          makeLesson(
+            'Persuasive Writing & Speaking',
+            'Ethos, pathos, logos and persuasive argument structure.\n\n### Three Pillars:\n1. Ethos - Credibility (Why believe you?)\n2. Pathos - Emotion (How do they feel?)\n3. Logos - Logic (What evidence supports?)\n\n### Structure: Hook, Problem, Solution, Evidence, Call to Action',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Handling Difficult Conversations',
+            'Framework for bad news, feedback, saying no, and sensitive topics.\n\n### Framework:\n1. Prepare - Know your message\n2. Start with purpose - Why this conversation\n3. Share perspective - Use I statements\n4. Ask their perspective - Listen actively\n5. Problem-solve together\n6. Agree on next steps',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Review negotiation concepts.',
+            [
+              { question: 'BATNA stands for?', options: ['Best Alternative To Negotiated Agreement', 'Basic Agreement Terms Need Analysis', 'Business Negotiation Approach', 'Balanced Approach'], correctIndex: 0, explanation: 'BATNA is your best alternative if negotiation fails.' },
+              { question: 'Which appeal uses logic and evidence?', options: ['Ethos', 'Pathos', 'Logos', 'Kairos'], correctIndex: 2, explanation: 'Logos appeals to logic and reason.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Negotiation Simulation',
+            'Prepare for a real business negotiation.',
+            'Prepare your position, research the other party, and develop arguments.',
+            [
+              { question: 'Prepare for salary negotiation: target, minimum, achievements, and responses to objections.', type: 'open', explanation: 'Research market rates for your role. Prepare specific achievements and impact.', points: 20 },
+              { question: 'Write a persuasive proposal using ethos, pathos, and logos with clear CTA.', type: 'open', explanation: 'Structure: hook, problem, solution, evidence, call to action.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Negotiate effectively and communicate persuasively in English.',
+      ),
+
+      makeModule(
+        'Module 5: Advanced Business Communication',
+        'Master advanced English for reports, proposals, and cross-cultural communication.',
+        [
+          makeLesson(
+            'Writing Business Reports & Proposals',
+            'Structure, executive summaries, data presentation, and compelling proposals.\n\n### Report Structure:\n1. Executive Summary - Key findings\n2. Introduction - Purpose and scope\n3. Methodology - How information was gathered\n4. Findings - What was discovered\n5. Analysis - What findings mean\n6. Recommendations - What to do\n7. Conclusion - Summary and next steps',
+            'article',
+            1,
+          ),
+          makeLesson(
+            'Cross-Cultural Business Communication',
+            'Adapt communication for different cultures.\n\n### Dimensions:\n1. Direct vs indirect communication\n2. Formal vs informal (titles, formality)\n3. Time: Monochronic vs polychronic\n4. Hierarchy: Deference to authority\n5. Relationship vs task focus',
+            'video',
+            2,
+            { videoUrl: 'https://www.youtube.com/watch?v=H0gJ7d8kL2P', videoTitle: 'Cross-Cultural Communication Tips' },
+          ),
+          makeLesson(
+            'Public Speaking & Presentation Mastery',
+            'Storytelling, difficult audiences, data visualisation, and confident delivery.\n\n### Techniques:\n1. Storytelling - Make messages memorable\n2. Data visualisation - Numbers into visuals\n3. Audience engagement - Questions, polls\n4. Handling Q&A - Anticipate questions\n5. Powerful closings - Memorable message',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Review advanced communication concepts.',
+            [
+              { question: 'Most important section of a business report?', options: ['Methodology', 'Executive Summary', 'Appendix', 'Bibliography'], correctIndex: 1, explanation: 'Executive summary distills key findings for busy readers.' },
+              { question: 'Which culture values punctuality most?', options: ['Polychronic', 'Monochronic', 'Relationship-focused', 'Hierarchical'], correctIndex: 1, explanation: 'Monochronic cultures view time linearly and value punctuality.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Final Communication Project',
+            'Create a business communication portfolio.',
+            'Produce a business report, presentation outline, and cross-cultural strategy.',
+            [
+              { question: 'Write a business report on a topic in your field (min 500 words): executive summary, findings, analysis, recommendations.', type: 'open', explanation: 'Use headings, bullet points, and at least one data point. Follow formal report structure.', points: 25 },
+              { question: 'Create a 10-slide presentation outline with key message, visuals, and speaker notes for each slide.', type: 'open', explanation: 'Hook, agenda, 3 key points, conclusion, CTA. Prepare for 3 difficult questions.', points: 20 },
+            ],
+            5,
+          ),
+        ],
+        'Produce professional reports and deliver compelling presentations.',
+      ),
+
+/* INSERT_MODULES_5 */
     ],
   },
 
@@ -1050,6 +1755,147 @@ const COURSES: CourseDef[] = [
         ],
         'Design a basic AgriTech solution for a real agricultural problem.',
       ),
+
+
+      makeModule(
+        'Module 3: Crop Management & Precision Farming',
+        'Use technology to optimise crop production and increase yields sustainably.',
+        [
+          makeLesson(
+            'Precision Farming Technologies',
+            'GPS mapping, soil sensors, satellite imagery, and drone monitoring.\n\n### Tools:\n1. GPS mapping - Field boundaries and soil variations\n2. Soil sensors - Moisture, pH, nutrients in real-time\n3. Variable rate tech - Apply inputs only where needed\n4. Satellite imagery - NDVI crop health monitoring\n5. Drone monitoring - High-resolution assessment',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=3D_t8nL2kP9', videoTitle: 'Precision Farming Explained' },
+          ),
+          makeLesson(
+            'Irrigation Technology & Water Management',
+            'Drip irrigation, sprinklers, solar pumps, and rainwater harvesting for Rwanda.\n\n### Options:\n1. Drip irrigation - Water-efficient for vegetables\n2. Sprinkler systems - Good for larger fields\n3. Solar pumps - Reduce energy costs\n4. Rainwater harvesting - Collect for dry seasons\n5. Moisture sensors - Automate irrigation',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Pest & Disease Management Technology',
+            'Plantix app, early warning systems, drone spraying, and integrated pest management.\n\n### Solutions:\n1. Plantix app - Identify diseases by photo\n2. Early warning - SMS alerts for pest outbreaks\n3. Drone spraying - Precise pesticide application\n4. Predictive analytics - Weather-based forecasting\n5. IPM - Biological, cultural, chemical controls',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 3: Knowledge Check',
+            'Review precision farming concepts.',
+            [
+              { question: 'NDVI stands for?', options: ['Normalised Difference Vegetation Index', 'National Digital Verification Index', 'Natural Development Indicator', 'Nutrient Distribution Index'], correctIndex: 0, explanation: 'NDVI measures plant health via satellite imagery.' },
+              { question: 'Most water-efficient irrigation method?', options: ['Flood', 'Drip', 'Sprinkler', 'Furrow'], correctIndex: 1, explanation: 'Drip irrigation delivers water directly to roots, minimising waste.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 3: Farm Technology Plan',
+            'Design a precision farming plan for a Rwandan crop.',
+            'Include soil preparation, irrigation, pest management, and monitoring technology.',
+            [
+              { question: 'Design a precision plan for a Rwandan crop: irrigation, pest management, monitoring, costs, and yield improvement.', type: 'open', explanation: 'Research current yields and costs. Compare traditional vs tech-enhanced approaches.', points: 20 },
+              { question: 'How can smallholder farmers share expensive precision technology through cooperatives?', type: 'open', explanation: 'Consider: equipment sharing, pay-per-use drone services, community irrigation.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Implement precision farming technologies to optimise crop production.',
+      ),
+
+      makeModule(
+        'Module 4: Market Access & Supply Chain',
+        'Connect farmers to markets and reduce post-harvest losses.',
+        [
+          makeLesson(
+            'Digital Marketplaces for Farmers',
+            'Platforms: Twigire Muhinzi, Smart Nkunganire, M-Farm, and WhatsApp market links.\n\n### Platforms:\n1. Twigire Muhinzi - Rwandan extension/market platform\n2. Smart Nkunganire - Inputs and market system\n3. M-Farm - Farmer-to-buyer connection\n4. Selina Wamucii - Fresh produce marketplace\n5. WhatsApp groups - Local market connections',
+            'article',
+            1,
+          ),
+          makeLesson(
+            'Cold Chain & Post-Harvest Management',
+            'Reduce 40% losses with solar cold rooms, proper harvesting, and better packaging.\n\n### Solutions:\n1. Harvest at right time\n2. Gentle handling to avoid bruising\n3. Rapid cooling after harvest\n4. Solar-powered cold rooms\n5. Proper packaging for transport\n6. Timely transport with proper conditions',
+            'video',
+            2,
+            { videoUrl: 'https://www.youtube.com/watch?v=5S7gH3jF8kL', videoTitle: 'Cold Chain for African Agriculture' },
+          ),
+          makeLesson(
+            'Traceability & Export Certification',
+            'Blockchain, QR codes, organic/fair-trade certification, and RAB standards.\n\n### Systems:\n1. Blockchain - Immutable product record\n2. QR codes - Scan for product origin\n3. Mobile tracking - Smartphone record-keeping\n4. Certifications - Organic, Fair Trade, GlobalGAP\n5. Rwanda specific - RAB certification, coffee traceability',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Review market access and supply chain.',
+            [
+              { question: 'Post-harvest loss rate in Africa?', options: ['10%', 'Up to 40%', '5%', '60%'], correctIndex: 1, explanation: 'Post-harvest losses reach 40% due to inadequate storage and transport.' },
+              { question: 'Technology for immutable traceability?', options: ['SMS', 'Blockchain', 'Email', 'Social media'], correctIndex: 1, explanation: 'Blockchain creates an immutable product record from farm to consumer.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Supply Chain Project',
+            'Design an efficient agricultural supply chain.',
+            'Trace a product from farm to consumer with technology improvements at each step.',
+            [
+              { question: 'Design a supply chain for a Rwandan product (coffee, maize, tomatoes, potatoes) with technology improvements.', type: 'open', explanation: 'Consider harvesting, storage, transport, market channels, and tech at each step.', points: 20 },
+              { question: 'Set up traceability for Rwandan coffee exported to Europe. What information at each step?', type: 'open', explanation: 'Consider farm practices, processing, certification, export docs, and QR codes.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Design efficient agricultural supply chains and connect farmers to better markets.',
+      ),
+
+      makeModule(
+        'Module 5: Climate Resilience & Sustainable Agriculture',
+        'Adapt to climate change and access carbon markets.',
+        [
+          makeLesson(
+            'Climate-Smart Agriculture in Rwanda',
+            'Drought-resistant crops, conservation agriculture, agroforestry, and adaptive techniques.\n\n### Practices:\n1. Drought-resistant varieties\n2. Conservation agriculture (minimum tillage, rotation)\n3. Agroforestry - Trees with crops\n4. Water harvesting and efficient irrigation\n5. Crop diversification for risk spread',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=2fJ4kP7rM9n', videoTitle: 'Climate-Smart Agriculture' },
+          ),
+          makeLesson(
+            'Carbon Credits & Green Financing',
+            'Earn income through carbon farming: agroforestry, reduced tillage, composting, biochar.\n\n### Opportunities:\n1. Agroforestry - Trees capture carbon\n2. Reduced tillage - More carbon in soil\n3. Composting - Organic matter improves soil\n4. Cover crops - Capture carbon between seasons\n5. Biochar - Stores carbon for centuries',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Regenerative Agriculture Principles',
+            'Actively improve soil health, biodiversity, and ecosystem services.\n\n### Principles:\n1. Minimise soil disturbance\n2. Keep soil covered\n3. Maintain living roots year-round\n4. Diversify crops\n5. Integrate livestock\n6. Build soil organic matter',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Review climate resilience concepts.',
+            [
+              { question: 'What is agroforestry?', options: ['Farming with tech', 'Integrating trees with crops', 'Growing without soil', 'Fishing and farming'], correctIndex: 1, explanation: 'Agroforestry integrates trees with crops and/or livestock.' },
+              { question: 'How do farmers earn carbon credits?', options: ['More fertiliser', 'Practices that capture carbon', 'More livestock', 'Clearing land'], correctIndex: 1, explanation: 'Farmers earn credits by adopting carbon-capturing practices like agroforestry.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Final AgriTech Project',
+            'Design a climate-smart farm plan.',
+            'Create a plan for a 1-hectare Rwandan farm with sustainable practices and carbon credit potential.',
+            [
+              { question: 'Design a climate-smart plan for a 1-hectare Rwandan farm with 3+ crops, sustainable practices, and technology.', type: 'open', explanation: 'Consider agro-ecological zone, climate patterns, market demand, and technology.', points: 25 },
+              { question: 'How would your farm earn additional income through carbon credits? Estimate annual revenue.', type: 'open', explanation: 'Research carbon credit prices. Consider agroforestry credits or watershed payments.', points: 20 },
+            ],
+            5,
+          ),
+        ],
+        'Implement climate-smart practices for long-term profitability.',
+      ),
+
+/* INSERT_MODULES_6 */
     ],
   },
 
@@ -1194,6 +2040,147 @@ const COURSES: CourseDef[] = [
         ],
         'Grow an engaged audience and implement at least one monetisation strategy.',
       ),
+
+
+      makeModule(
+        'Module 3: Advanced Video Production',
+        'Take your video content to the next level with professional editing skills.',
+        [
+          makeLesson(
+            'Video Storytelling & Narrative Structure',
+            'Hook-retain-payoff for TikTok, educational for YouTube, inspirational for Instagram.\n\n### Framework:\n1. Hook (0-3s) - Question or bold statement\n2. Problem (3-15s) - The audience problem\n3. Solution (15-45s) - Teach or demonstrate\n4. Payoff (45-60s) - Results or key insight\n5. Call to action - What viewers should do',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=K9lP3mR7nJ2', videoTitle: 'Video Storytelling Tips' },
+          ),
+          makeLesson(
+            'Smartphone Video Production Mastery',
+            'Composition, lighting, stabilisation, and audio techniques.\n\n### Techniques:\n1. Rule of thirds - Position subjects off-centre\n2. Leading lines - Guide the viewers eye\n3. Natural lighting - Golden hour shoots\n4. Three-point lighting - Cheap LED panels\n5. External microphone - Lavalier mic under $20\n6. Stabilisation - Tripod or gimbal',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Editing with CapCut & DaVinci Resolve',
+            'Both free tools: CapCut for mobile, DaVinci Resolve for professional editing.\n\n### Essentials:\n1. Cutting and trimming - Remove mistakes\n2. Transitions - Simple cuts look professional\n3. Text and titles - Captions, lower thirds\n4. Music - YouTube Audio Library (royalty-free)\n5. Colour correction - Consistent look\n6. Export settings - Optimise per platform',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 3: Knowledge Check',
+            'Review video production concepts.',
+            [
+              { question: 'Most critical element of short-form video?', options: ['Fancy transitions', 'Hook in first 3 seconds', 'Background music', 'Expensive gear'], correctIndex: 1, explanation: 'The first 3 seconds grab attention and prevent scrolling.' },
+              { question: 'Free tool for professional colour correction?', options: ['CapCut', 'DaVinci Resolve', 'iMovie', 'Windows Editor'], correctIndex: 1, explanation: 'DaVinci Resolve has professional colour correction tools for free.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 3: Video Production Project',
+            'Plan and produce a short-form video.',
+            'Create a 45-second video with script, visuals, and editing plan.',
+            [
+              { question: 'Plan a 45-second video for TikTok/Reels with script: hook, problem, solution, payoff, CTA and visuals.', type: 'open', explanation: 'Follow the storytelling framework. Make it educational or entertaining.', points: 20 },
+              { question: 'Describe your editing plan: cuts, transitions, text overlays, music, and colour adjustments.', type: 'open', explanation: 'Be specific about timing, captions, music type, and colour grading.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Produce professional-quality videos using smartphone and free editing tools.',
+      ),
+
+      makeModule(
+        'Module 4: Platform-Specific Growth Strategies',
+        'Master algorithms and best practices for each major platform.',
+        [
+          makeLesson(
+            'YouTube Growth & SEO Strategy',
+            'Keyword research, thumbnails, audience retention, and algorithm strategy.\n\n### Success Factors:\n1. Keyword research - Use VidIQ for high-volume keywords\n2. Compelling titles - Include keyword + curiosity\n3. Custom thumbnails - Bright, bold, text overlay\n4. Strong first 30 seconds - Hook viewers\n5. Audience retention - Pattern interrupts\n6. Call to action - Likes, comments, subscribe',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=R0fQ5mN2jK7', videoTitle: 'YouTube Growth Strategy' },
+          ),
+          makeLesson(
+            'TikTok & Instagram Reels Mastery',
+            'Trending sounds, hashtag strategies, posting times, and going viral.\n\n### Success Tips:\n1. Use trending sounds - Check Creative Centre\n2. Hook in first second - Motion or text\n3. Keep it tight - 15-30 seconds\n4. Use captions - Most watch without sound\n5. Post daily - Consistency drives growth\n6. Engage your niche - Comment on similar creators',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Multi-Platform Content Strategy',
+            'Repurpose content efficiently across platforms.\n\n### Repurposing:\n1. Create pillar content (10-min YouTube)\n2. Extract clips for TikTok, Reels, Shorts\n3. Turn insights into social posts\n4. Create blog from transcript\n5. Design quote graphics for Instagram\n6. Compile videos into a course',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Review platform growth strategies.',
+            [
+              { question: 'Tool for YouTube keyword research?', options: ['Canva', 'VidIQ', 'CapCut', 'Premiere'], correctIndex: 1, explanation: 'VidIQ is a browser extension for YouTube SEO.' },
+              { question: 'TikTok posting frequency for growth?', options: ['Weekly', 'At least daily', 'Monthly', 'Hourly'], correctIndex: 1, explanation: 'TikTok rewards consistent daily posting.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Multi-Platform Strategy',
+            'Create a 30-day multi-platform content strategy.',
+            'Plan 30 pieces of content across 3 platforms with repurposing strategy.',
+            [
+              { question: 'Create a 30-day calendar for 3 platforms showing how each repurposes from pillar content.', type: 'open', explanation: 'Start with pillar on YouTube/blog, repurpose for TikTok, LinkedIn, X.', points: 25 },
+              { question: 'How would you adapt content style per platform while keeping consistent branding?', type: 'open', explanation: 'YouTube favours depth (5-15 min), TikTok quick entertainment (15-60 sec), LinkedIn professional insights.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Grow on multiple content platforms using platform-specific strategies.',
+      ),
+
+      makeModule(
+        'Module 5: Building a Creator Business',
+        'Turn content creation into a sustainable business with multiple revenue streams.',
+        [
+          makeLesson(
+            'Revenue Streams for African Creators',
+            'YouTube ad revenue, sponsorships, affiliate marketing, and digital products.\n\n### Streams:\n1. YouTube Ads - 1,000 subs + 4,000 watch hours\n2. Brand sponsorships - Brands pay for features\n3. Affiliate marketing - Commission on sales\n4. Digital products - E-books, templates, courses\n5. Paid communities - Patreon, Buy Me a Coffee\n6. Consulting/coaching - One-on-one\n7. Merchandise - Branded products',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=T6kD9pQ2mN5', videoTitle: 'How African Creators Make Money' },
+          ),
+          makeLesson(
+            'Brand Deals & Sponsorships',
+            'Media kit, pitching brands, negotiating rates, and delivering value.\n\n### Steps:\n1. Build media kit - Stats, engagement, past work\n2. Identify target brands - Align with your content\n3. Create pitch - Show value you deliver\n4. Set rates - Based on reach and engagement\n5. Deliver results - Authentic content\n6. Measure ROI - Show brand the value',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Creating & Selling Digital Products',
+            'E-books, courses, templates, presets, and printables.\n\n### Ideas:\n1. E-books - Compile expertise into a guide\n2. Online courses - Teach a skill\n3. Templates - Canva, Notion, spreadsheet\n4. Presets - Lightroom, CapCut\n5. Stock content - Photos, videos, music\n6. Printables - Planners, journals',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Review creator business concepts.',
+            [
+              { question: 'YouTube Partner Programme requirements?', options: ['100 subs', '1,000 subs + 4,000 hours', '10,000 subs', '1M views'], correctIndex: 1, explanation: 'Need 1,000 subscribers and 4,000 watch hours in the last 12 months.' },
+              { question: 'What is a media kit?', options: ['Camera kit', 'Document showing audience stats and rates', 'Video collection', 'Scheduling tool'], correctIndex: 1, explanation: 'Media kit shows brands your audience, engagement, and sponsorship options.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Final Creator Business Project',
+            'Create a 6-month creator business plan.',
+            'Content strategy, revenue streams, brand partnerships, and financial projections.',
+            [
+              { question: 'Create a 6-month plan: monthly goals, audience targets, revenue streams, brand outreach, and projected income.', type: 'open', explanation: 'Most creators see income after 3-6 months of consistent posting.', points: 25 },
+              { question: 'Design one digital product you would create, sell, and market.', type: 'open', explanation: 'Solve a specific audience problem. Price based on value delivered.', points: 20 },
+            ],
+            5,
+          ),
+        ],
+        'Monetise content creation through multiple revenue streams.',
+      ),
+
+/* INSERT_MODULES_7 */
     ],
   },
 
@@ -1339,6 +2326,147 @@ const COURSES: CourseDef[] = [
         ],
         'Create a complete project plan with scope, schedule, budget, and risk management.',
       ),
+
+
+      makeModule(
+        'Module 3: Agile & Scrum Mastery',
+        'Master Agile methodologies and the Scrum framework.',
+        [
+          makeLesson(
+            'Understanding Agile & The Agile Manifesto',
+            'Four values of the Agile Manifesto and when to use Agile.\n\n### Values:\n1. Individuals and interactions over processes/tools\n2. Working software over comprehensive docs\n3. Customer collaboration over contract negotiation\n4. Responding to change over following a plan\n\n### When to Use Agile:\n- Requirements likely to change\n- Customer needs not fully understood\n- Innovation or new technology\n- Speed to market is important',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=7jF3kM9pR2n', videoTitle: 'Agile Project Management Guide' },
+          ),
+          makeLesson(
+            'Scrum: Roles, Events & Artifacts',
+            'Three roles, five events, and three artifacts of Scrum.\n\n### Roles:\n1. Product Owner - Manages backlog\n2. Scrum Master - Facilitates, removes impediments\n3. Development Team - Self-organising, cross-functional\n\n### Events:\n- Sprint Planning (2-4 hours for 2-week sprint)\n- Daily Scrum (15 min daily)\n- Sprint Review (1-2 hours at sprint end)\n- Sprint Retrospective (1-2 hours)',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Agile Estimation & Planning',
+            'Story points, planning poker, velocity, and burndown charts.\n\n### Techniques:\n1. Story points - 1,2,3,5,8,13,21\n2. Planning poker - Team consensus estimation\n3. T-shirt sizing - XS, S, M, L, XL\n4. Velocity - Points per sprint\n5. Burndown charts - Track remaining vs time',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 3: Knowledge Check',
+            'Review Agile and Scrum concepts.',
+            [
+              { question: 'Daily Scrum duration?', options: ['30 min', '15 min', '1 hour', '5 min'], correctIndex: 1, explanation: 'Daily Scrum is a 15-minute time-boxed event.' },
+              { question: 'Who manages the Product Backlog?', options: ['Scrum Master', 'Product Owner', 'Development Team', 'Sponsor'], correctIndex: 1, explanation: 'Product Owner manages and prioritises the Product Backlog.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 3: Scrum Implementation Plan',
+            'Implement Scrum for a project.',
+            'Create a Product Backlog, plan first Sprint, and define team roles.',
+            [
+              { question: 'Create a Product Backlog with 10+ user stories with estimates, priorities, and acceptance criteria for top 3.', type: 'open', explanation: 'Format: As a [user] I want to [goal] so that [benefit]. Use MoSCoW prioritisation.', points: 20 },
+              { question: 'Plan the first 2-week Sprint: goal, items, capacity, and ceremony schedule.', type: 'open', explanation: 'Assume 4-5 person team. Calculate capacity based on available person-days.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Implement Scrum framework for Agile project management.',
+      ),
+
+      makeModule(
+        'Module 4: Leadership & Stakeholder Management',
+        'Develop leadership skills and manage project stakeholders.',
+        [
+          makeLesson(
+            'Project Leadership vs Management',
+            'Management is processes; leadership is people and vision.\n\n### Leadership Qualities:\n1. Vision - See the bigger picture\n2. Communication - Clear, frequent, transparent\n3. Empathy - Understand team challenges\n4. Decisiveness - Timely decisions\n5. Adaptability - Adjust based on feedback\n6. Integrity - Model expected behaviour',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=X2pN5jR8mK1', videoTitle: 'Project Leadership Skills' },
+          ),
+          makeLesson(
+            'Stakeholder Identification & Analysis',
+            'Power/Interest Grid and engagement strategies.\n\n### Analysis:\n1. Identify all stakeholders\n2. Assess interest (low-high)\n3. Assess influence/power (low-high)\n4. Map on Power/Interest Grid:\n   - High power/interest: Manage closely\n   - High power/low interest: Keep satisfied\n   - Low power/high interest: Keep informed\n   - Low power/low interest: Monitor',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Conflict Resolution & Team Motivation',
+            'Five conflict resolution styles and team motivation techniques.\n\n### Styles:\n1. Competing - Quick urgency decisions\n2. Collaborating - Win-win for complex issues\n3. Compromising - Both give something\n4. Avoiding - Trivial or cooling off\n5. Accommodating - Preserve harmony\n\n### Motivation:\n1. Recognition and appreciation\n2. Professional development\n3. Clear goals and autonomy\n4. Fair workload\n5. Regular feedback',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Review leadership concepts.',
+            [
+              { question: 'Power/Interest Grid used for?', options: ['Cost estimation', 'Analysing stakeholders', 'Creating schedules', 'Allocating resources'], correctIndex: 1, explanation: 'The Power/Interest Grid categorises stakeholders by influence and interest.' },
+              { question: 'Style where both sides make concessions?', options: ['Competing', 'Collaborating', 'Compromising', 'Avoiding'], correctIndex: 2, explanation: 'Compromising involves both parties making concessions.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Stakeholder Management Plan',
+            'Create a comprehensive stakeholder plan.',
+            'Identify stakeholders, analyse interests, and develop engagement strategies.',
+            [
+              { question: 'Identify 8+ stakeholders for a project, create Power/Interest Grid, and describe engagement strategies.', type: 'open', explanation: 'Include: government, community, funders, contractors, workers, regulators, patients.', points: 20 },
+              { question: 'Describe a project conflict and how you would resolve it using the appropriate style.', type: 'open', explanation: 'Choose from: competing, collaborating, compromising, avoiding, accommodating.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Lead project teams effectively and manage stakeholder relationships.',
+      ),
+
+      makeModule(
+        'Module 5: Advanced PM Tools & Career Development',
+        'Master professional PM tools and prepare for PMP certification.',
+        [
+          makeLesson(
+            'Project Management Software Overview',
+            'MS Project, Jira, Trello, Asana, Monday.com, ClickUp.\n\n### Comparison:\n1. MS Project - Waterfall, detailed scheduling\n2. Jira - Agile/Scrum, software development\n3. Trello - Simple Kanban, small teams\n4. Asana - General team collaboration\n5. Monday.com - Visual management\n6. ClickUp - All-in-one (free tier)',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=Z9nL4pR2jM7', videoTitle: 'PM Software Overview' },
+          ),
+          makeLesson(
+            'PMP Certification & Career Growth',
+            'Requirements, exam structure, and study resources.\n\n### PMP Requirements:\n- Secondary degree: 5 years PM + 35 hours education\n- Four-year degree: 3 years PM + 35 hours education\n\n### Other Certs:\n- CAPM - Entry level\n- PRINCE2 - UK/EU/Africa\n- PMI-ACP - Agile focused\n- CSM/PSM - Scrum Master',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Building a PM Career in Rwanda',
+            'Industries, salaries, and career positioning.\n\n### Industries:\n1. Construction - VISION 2050 projects\n2. IT - Software, digital transformation\n3. NGOs - USAID, UN, development\n4. Financial services - Bank projects, fintech\n5. Government - MINECOFIN, RDB, districts\n6. Manufacturing - Agri-processing',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Review PM tools and career concepts.',
+            [
+              { question: 'Best tool for Agile/Scrum teams?', options: ['MS Project', 'Jira', 'Excel', 'Word'], correctIndex: 1, explanation: 'Jira is designed for Agile and Scrum with sprints and backlog management.' },
+              { question: 'PMP experience with four-year degree?', options: ['5 years', '3 years', '2 years', '1 year'], correctIndex: 1, explanation: 'With a degree, need 3 years (4,500 hours) of PM experience.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Final PM Project',
+            'Create a complete project management portfolio.',
+            'Project charter, WBS, schedule, budget, risk register, and career plan.',
+            [
+              { question: 'Create a complete project plan: charter, WBS, schedule, budget, risk register (5+ risks).', type: 'open', explanation: 'Use PMBOK framework. Real project like community event, launch, or renovation.', points: 25 },
+              { question: 'Create a 12-month PM career plan: skills, certifications, networking, target roles.', type: 'open', explanation: 'Research current PM job openings in Rwanda to understand requirements.', points: 20 },
+            ],
+            5,
+          ),
+        ],
+        'Use professional PM tools and develop a project management career.',
+      ),
+
+/* INSERT_MODULES_8 */
     ],
   },
 
@@ -1485,6 +2613,147 @@ const COURSES: CourseDef[] = [
         ],
         'Create a personalised investment plan and start building wealth.',
       ),
+
+
+      makeModule(
+        'Module 3: Investing in Rwandan Markets',
+        'Learn to invest in Rwandan financial markets and build wealth.',
+        [
+          makeLesson(
+            'Investment Options in Rwanda',
+            'SACCOs, treasury bills, Rwanda Stock Exchange, mutual funds, and REITs.\n\n### Options:\n1. SACCOs - 8-15% returns, medium risk\n2. Treasury bills - 6-12%, government-backed\n3. RSE stocks - Variable, higher risk\n4. Mutual funds - Professionally managed\n5. REITs - Real estate without property\n6. Pension schemes - Long-term, tax benefits',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=Iq72X8V64hQ', videoTitle: 'Investing Explained' },
+          ),
+          makeLesson(
+            'Building a Diversified Portfolio',
+            'Asset allocation by age, rebalancing, and starting small.\n\n### By Age:\n- 20s: 80% growth, 20% safe\n- 30s: 70% growth, 30% safe\n- 40s: 60% growth, 40% safe\n- 50s: 50% growth, 50% safe\n- 60+: 30% growth, 70% safe\n\n### Start: SACCO (5,000 RWF), T-bills (100,000 RWF), Mutual funds (10,000 RWF)',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Understanding Risk & Return',
+            'Risk assessment and matching investments to goals.\n\n### Risk Levels:\n1. Low: Savings, T-bills (2-12%)\n2. Medium: SACCOs, mutual funds (8-15%)\n3. Higher: Stocks (10-25%+)\n4. High: Crypto, venture capital (volatile)\n\n### Never invest money you cannot afford to lose in high-risk options.',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 3: Knowledge Check',
+            'Review investment concepts.',
+            [
+              { question: 'Minimum for Treasury bills in Rwanda?', options: ['50,000 RWF', '100,000 RWF', '500,000 RWF', '1,000,000 RWF'], correctIndex: 1, explanation: 'Treasury bills from 100,000 RWF through commercial banks.' },
+              { question: 'What is asset allocation?', options: ['Buying one asset', 'Dividing across asset types', 'Selling all', 'Paying fees'], correctIndex: 1, explanation: 'Asset allocation means dividing your portfolio among different investment types.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 3: Investment Plan Project',
+            'Create a personal investment plan.',
+            'Plan based on goals, risk tolerance, and time horizon.',
+            [
+              { question: 'Create an investment plan: goal, monthly amount, risk tolerance, allocation, and specific investments.', type: 'open', explanation: 'Build emergency fund first (3-6 months), then invest. Be realistic.', points: 20 },
+              { question: 'Calculate monthly investment for 10M RWF in 10 years at 8% return. Show contributions vs growth.', type: 'open', explanation: 'Use FV = PMT x ((1+r)^n - 1)/r formula.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Build a diversified investment portfolio in Rwanda.',
+      ),
+
+      makeModule(
+        'Module 4: Real Estate & Property Investment',
+        'Understand property investment opportunities in Rwanda.',
+        [
+          makeLesson(
+            'Real Estate Investing in Rwanda',
+            'Land, rental, flipping, development, and REITs.\n\n### Options:\n1. Land - Buy and hold for appreciation\n2. Rental property - Steady passive income\n3. House flipping - Renovate and sell\n4. Development - Build for sale\n5. REITs - Invest without direct property',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=K2nR5jL8pM3', videoTitle: 'Real Estate Investing for Beginners' },
+          ),
+          makeLesson(
+            'Property Financing & Mortgages',
+            'BK, Equity, I&M, SACCO housing loans, and Rwanda Housing Authority.\n\n### Requirements:\n- Down payment: 20-30%\n- Interest: 14-18%\n- Max term: 15-20 years\n- Payment: max 30-40% of income\n\n### Options:\n1. BK: Up to 80% financing, 20 years\n2. Equity: Competitive home loan rates\n3. I&M: Property financing\n4. SACCOs: Housing loans for members',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Rental Property Management',
+            'Finding tenants, setting rates, and maintaining property.\n\n### Tips:\n1. Location matters - Near transport, schools, markets\n2. Screen tenants - Check references and history\n3. Written lease - Always use an agreement\n4. Market rent - Research comparable properties\n5. Maintenance plan - Prevent expensive repairs\n6. Emergency fund - 10-20% of income for repairs',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Review real estate concepts.',
+            [
+              { question: 'Typical mortgage down payment in Rwanda?', options: ['5-10%', '20-30%', '50%', '100%'], correctIndex: 1, explanation: 'Rwandan banks require 20-30% down payment on mortgages.' },
+              { question: 'REIT stands for?', options: ['Real Estate Investment Trust', 'Rental Income Tax', 'Real Estate Insurance Title', 'Residential Equity Tool'], correctIndex: 0, explanation: 'REIT lets you invest in real estate without buying property.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Real Estate Investment Plan',
+            'Create a property investment strategy.',
+            'Choose property type, location, financing, and projected returns.',
+            [
+              { question: 'Create a real estate plan: type, location, price, down payment, mortgage, rental income, 5-year ROI.', type: 'open', explanation: 'Research current prices and rents. Consider appreciation and rental yield.', points: 20 },
+              { question: 'How would you finance your first property? Savings, financing, timeline.', type: 'open', explanation: 'Consider saving 2-3 years, combining bank and SACCO financing, or partnering.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Evaluate and execute real estate investment opportunities in Rwanda.',
+      ),
+
+      makeModule(
+        'Module 5: Multiple Income Streams & Financial Freedom',
+        'Create multiple income sources and achieve financial independence.',
+        [
+          makeLesson(
+            'The Multiple Income Streams Strategy',
+            'Earned, business, investment, passive, and rental income.\n\n### Types:\n1. Earned - Salary, freelance (time for money)\n2. Business - Profits from your business\n3. Investment - Stocks, real estate returns\n4. Passive - Royalties, digital products\n5. Rental - Property rentals',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=Y7nK4pR2jM9', videoTitle: 'Multiple Income Streams' },
+          ),
+          makeLesson(
+            'Side Hustle Ideas for Rwanda',
+            'Online selling, freelance, tutoring, food business, and digital services.\n\n### Ideas:\n1. Online selling - Jumia, Kasha, Instagram\n2. Freelance - Writing, design, VA\n3. Tutoring - English, math, computer skills\n4. Food business - Home cooking, baked goods\n5. Digital services - Social media management\n6. Photography - Events, portraits\n7. Dropshipping - No inventory needed',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'Designing Your Financial Freedom Plan',
+            'Calculate your number and create a path to independence.\n\n### Formula:\n1. Monthly expenses (E)\n2. Target passive income: P = E x 1.25\n3. Freedom number: F = P x 12 / 0.04\n4. Example: 500,000 RWF/month expenses\n   - Target: 625,000 RWF/month\n   - Freedom number: 187,500,000 RWF',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Review income streams and financial freedom.',
+            [
+              { question: 'What is passive income?', options: ['Job salary', 'Income needing minimal effort', 'Government benefits', 'Loan proceeds'], correctIndex: 1, explanation: 'Passive income requires little ongoing effort, like royalties.' },
+              { question: 'The 4% rule?', options: ['Save 4% of income', 'Withdraw 4% of portfolio annually', 'Inflation is 4%', 'Interest is 4%'], correctIndex: 1, explanation: 'You can safely withdraw 4% of your portfolio annually without running out.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Final Financial Freedom Project',
+            'Create your complete path to financial freedom.',
+            'Calculate your number, plan income streams, and set milestones.',
+            [
+              { question: 'Create your financial freedom plan: expenses, freedom number, income streams, and 12-month/3-year/10-year milestones.', type: 'open', explanation: 'Be honest and realistic. Include specific actions for each period.', points: 25 },
+              { question: 'Describe one side hustle you could start in 3 months: offer, customer, income, and first step.', type: 'open', explanation: 'Choose something you are interested in or skilled at. Calculate startup costs.', points: 20 },
+            ],
+            5,
+          ),
+        ],
+        'Build multiple income streams and create a path to financial independence.',
+      ),
+
+/* INSERT_MODULES_9 */
     ],
   },
 
@@ -1642,6 +2911,147 @@ const COURSES: CourseDef[] = [
         ],
         'Use AI tools effectively and automate routine tasks to boost productivity.',
       ),
+
+
+      makeModule(
+        'Module 3: Advanced AI Tools & Applications',
+        'Explore advanced AI tools beyond ChatGPT.',
+        [
+          makeLesson(
+            'The AI Tools Landscape',
+            'Claude, Gemini, Perplexity, Midjourney, Copilot, and specialised AI tools.\n\n### By Category:\n1. Writing: ChatGPT, Claude, Jasper\n2. Research: Perplexity, Elicit, Consensus\n3. Images: Midjourney, DALL-E, Stable Diffusion\n4. Video: Runway, Pika, HeyGen\n5. Code: GitHub Copilot, Cursor, Tabnine\n6. Music: Suno, Udio\n7. Design: Canva AI, Adobe Firefly',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=S3nJ8pR5mK2', videoTitle: 'Best AI Tools 2025' },
+          ),
+          makeLesson(
+            'Image Generation with AI',
+            'Midjourney, DALL-E, and Canva AI for marketing and social media.\n\n### Prompt Structure:\n1. Subject - Main focus\n2. Action - What is happening\n3. Environment - Where and when\n4. Style - Photorealistic, illustration, cinematic\n5. Technical - Resolution, aspect ratio, lighting\n\n### Free Tools:\n- Canva AI - Magic Media (free tier)\n- Bing Image Creator - Free (DALL-E 3)\n- Leonardo AI - Free tier\n- Craiyon - Completely free',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'AI for Data Analysis',
+            'Upload data to ChatGPT/Claude for insights, charts, and recommendations.\n\n### Use Cases:\n1. Analyse sales trends and patterns\n2. Create customer segments\n3. Forecast future sales\n4. Detect anomalies\n5. Generate reports with visualisations\n6. Get data-driven recommendations\n\n### Tools: ChatGPT Advanced Data Analysis, Google Sheets AI, Julius AI',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 3: Knowledge Check',
+            'Review advanced AI tools concepts.',
+            [
+              { question: 'Best AI tool for generating images?', options: ['ChatGPT', 'Midjourney', 'Suno', 'Otter.ai'], correctIndex: 1, explanation: 'Midjourney creates professional-quality images from text.' },
+              { question: 'What is prompt engineering?', options: ['Building hardware', 'Crafting inputs for best AI outputs', 'Designing AI software', 'Creating datasets'], correctIndex: 1, explanation: 'Prompt engineering designs text inputs for optimal AI outputs.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 3: AI Tools Project',
+            'Use multiple AI tools for a real-world task.',
+            'Generate an image, analyse data, and create content using AI.',
+            [
+              { question: 'Use AI image generator for a Rwandan business social post. Describe prompt, result, and improvements.', type: 'open', explanation: 'Try 3+ prompts. Use free Canva AI or Bing Image Creator.', points: 20 },
+              { question: 'Use ChatGPT/Claude to analyse sales data. What insights and recommendations?', type: 'open', explanation: 'Create 10-20 rows: Month, Revenue, Expenses, Customers. Ask AI for trends.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Use advanced AI tools for image generation, data analysis, and creative tasks.',
+      ),
+
+      makeModule(
+        'Module 4: AI for Business & Productivity',
+        'Automate business processes, improve customer service, and boost productivity with AI.',
+        [
+          makeLesson(
+            'Automating Business Tasks with AI',
+            'Zapier, Make, n8n, and custom GPTs for workflow automation.\n\n### Tools:\n1. Zapier - Connect apps, automate (free tier)\n2. Make - Visual automation builder\n3. n8n - Open-source, self-hosted\n4. ChatGPT workflows - Custom GPTs for tasks\n5. Power Automate - Office 365 users\n\n### Ideas:\n- Auto-respond to customer inquiries\n- Save attachments to cloud\n- Cross-post to multiple platforms\n- Generate weekly reports\n- Send follow-ups after meetings',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=P5sK2jR8nM1', videoTitle: 'AI Automation for Business' },
+          ),
+          makeLesson(
+            'AI-Powered Customer Service',
+            'Tidio, ManyChat, WhatsApp Business API, and custom ChatGPT bots.\n\n### Tools:\n1. Tidio - Website chatbot (free)\n2. ManyChat - Facebook/Instagram chatbot\n3. WhatsApp API - Automated AI responses\n4. Custom GPTs - Trained on your business\n5. Zendesk AI - Enterprise platform\n\n### Best Practices:\n1. Always offer human escalation\n2. Train AI on your products\n3. Keep tone friendly and professional\n4. Monitor quality\n5. Improve based on feedback',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'AI for Content Marketing',
+            'Research, outline, draft, edit, optimise, visualise, and repurpose with AI.\n\n### Workflow:\n1. Research - Perplexity or ChatGPT\n2. Outline - AI creates structure\n3. Draft - Generate with AI\n4. Edit - Review, fact-check, add expertise\n5. Optimise - AI for headlines, keywords\n6. Visuals - AI-generated images\n7. Repurpose - One piece to many formats\n\n### Ethical: Always review and add your perspective. AI assists, not replaces.',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Review AI for business concepts.',
+            [
+              { question: 'Best tool for connecting apps and automating workflows?', options: ['ChatGPT', 'Zapier', 'Midjourney', 'CapCut'], correctIndex: 1, explanation: 'Zapier connects thousands of apps without coding.' },
+              { question: 'Most important rule for AI customer service?', options: ['Never use AI', 'Always offer human escalation', 'Only for email', 'No oversight'], correctIndex: 1, explanation: 'Always offer human escalation for complex issues.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 4: AI Business Project',
+            'Design an AI-powered system for a business.',
+            'Design automation for a Rwandan business: tasks, tools, workflow, and savings.',
+            [
+              { question: 'Design an AI system for a Rwandan business (restaurant, farm, shop, tourism). Describe 3 automated tasks, tools, workflow, and savings.', type: 'open', explanation: 'Example: ManyChat for reservations, ChatGPT for menus, Zapier for calendar.', points: 25 },
+              { question: 'Create an AI content workflow from research to repurposing with specific prompts.', type: 'open', explanation: 'Show how one blog becomes social posts, emails, scripts, and graphics via AI.', points: 15 },
+            ],
+            5,
+          ),
+        ],
+        'Implement AI automation for business processes and content marketing.',
+      ),
+
+      makeModule(
+        'Module 5: Future of AI & Career Opportunities',
+        'Understand AI trends and discover careers in the AI industry.',
+        [
+          makeLesson(
+            'The Future of AI: Trends & Implications',
+            'AGI, autonomous agents, AI regulation, and Africa role.\n\n### Trends:\n1. AGI - AI for any intellectual task\n2. AI agents - Autonomous multi-step tasks\n3. On-device AI - No internet needed\n4. AI regulation - Government rules\n5. Healthcare AI - Diagnosis, drug discovery\n6. Education AI - Personalised tutoring\n7. African AI - Local models for local languages',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=X3nK8pR5jM2', videoTitle: 'Future of AI' },
+          ),
+          makeLesson(
+            'AI Ethics & Responsible Use',
+            'Bias, privacy, misinformation, and Rwanda AI Policy.\n\n### Principles:\n1. Transparency - Know when AI is used\n2. Fairness - No discrimination\n3. Accountability - Someone responsible\n4. Privacy - Respect user data\n5. Safety - Robust and secure systems\n6. Human oversight - Important decisions need humans\n\n### Rwanda: National AI Policy for ethical development.',
+            'article',
+            2,
+          ),
+          makeLesson(
+            'AI Career Opportunities & Skills',
+            'Prompt engineering, AI product management, ethics, and consulting.\n\n### Careers:\n1. Prompt engineer - Craft effective prompts\n2. AI product manager - Lead AI products\n3. AI ethicist - Fair, responsible AI\n4. AI content strategist - Optimise with AI\n5. AI trainer - Teach AI use\n6. ML engineer - Build AI models\n7. AI consultant - Help adopt AI\n\n### Skills: Critical thinking, prompt engineering, data literacy, domain expertise',
+            'article',
+            3,
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Review AI future and career concepts.',
+            [
+              { question: 'AGI stands for?', options: ['Automated General Intelligence', 'Artificial General Intelligence', 'Advanced Generative Intelligence', 'Applied Graphical Intelligence'], correctIndex: 1, explanation: 'AGI can perform any intellectual task a human can.' },
+              { question: 'Which Rwandan policy addresses AI?', options: ['Vision 2050', 'National AI Policy', 'Digital Rwanda', 'ICT Policy'], correctIndex: 1, explanation: 'Rwanda National AI Policy guides ethical AI development.' },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Final AI Project',
+            'Create a comprehensive AI adoption strategy.',
+            'Personal or business AI plan with tools, skills, ethics, and timeline.',
+            [
+              { question: 'Create a 12-month AI upskilling plan: 3 AI tools to master, what for, how to learn, and expected benefits.', type: 'open', explanation: 'Be specific: ChatGPT for social media (save 5 hrs/week), Midjourney for images, Zapier for automation.', points: 25 },
+              { question: 'As an AI consultant, write a proposal for a Rwandan business with assessment, 3 AI solutions, timeline, budget, and ethics.', type: 'open', explanation: 'Choose specific business (hotel, shop, farm, NGO). Tailor to their needs.', points: 20 },
+            ],
+            5,
+          ),
+        ],
+        'Anticipate AI trends, use AI ethically, and build a career in the AI economy.',
+      ),
+
+/* INSERT_MODULES_10 */
     ],
   },
 ];
