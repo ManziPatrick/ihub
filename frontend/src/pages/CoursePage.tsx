@@ -17,6 +17,8 @@ import { ApplyCourseDialog } from "@/components/portal/dialogs";
 import { useState, useCallback } from "react";
 import { stripHtml } from "@/lib/utils";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const MODULES_PER_PAGE = 5;
 
@@ -310,11 +312,9 @@ export default function CoursePage() {
                                           {/* Content */}
                                           {isEnrolled ? (
                                             <div className="prose prose-sm max-w-none">
-                                              <div
-                                                className="prose prose-sm max-w-none"
-                                                // Backend sometimes returns non-string/HTML payloads; ensure string + safe fallback.
-                                                dangerouslySetInnerHTML={{ __html: typeof cachedLesson.content === 'string' ? cachedLesson.content : '' }}
-                                              />
+                                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                {typeof cachedLesson.content === 'string' ? cachedLesson.content : ''}
+                                              </ReactMarkdown>
                                             </div>
                                           ) : (
                                             <div className="flex items-center justify-center p-8 bg-muted/30 rounded-lg border border-dashed border-border">

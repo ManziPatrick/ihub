@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 // Lazy-load heavy sub-components that aren't needed on initial page load
 const LessonQuiz = lazy(() => import("@/components/portal/LessonQuiz").then(m => ({ default: m.LessonQuiz })));
@@ -759,7 +761,9 @@ export default function CourseDetail() {
                     </div>
                     <CardContent className="p-8">
                       <h2 className="text-2xl font-bold mb-4">{currentLesson?.title}</h2>
-                      <div className="prose dark:prose-invert max-w-none mb-8 lesson-content-viewer" dangerouslySetInnerHTML={{ __html: currentLesson?.content || currentLesson?.description || "" }} />
+                      <div className="prose dark:prose-invert max-w-none mb-8 lesson-content-viewer">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentLesson?.content || currentLesson?.description || ""}</ReactMarkdown>
+                      </div>
 
                       {/* Code Exercises */}
                       {hasCodeExercises && (
