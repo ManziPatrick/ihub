@@ -1,0 +1,323 @@
+ INFO  Accepting connections at http://localhost:5173
+ HTTP  7/23/2026 4:28:16 PM ::1 GET /
+ HTTP  7/23/2026 4:28:16 PM ::1 Returned 200 in 53 ms
+ HTTP  7/23/2026 4:28:16 PM ::1 GET /assets/index-CGXX3kFE.js
+ HTTP  7/23/2026 4:28:16 PM ::1 GET /assets/apollo-vendor-D9vFB_Vt.js
+ HTTP  7/23/2026 4:28:16 PM ::1 GET /assets/ui-vendor-BgP7reAy.js
+ HTTP  7/23/2026 4:28:16 PM ::1 GET /assets/icons-vendor-BFj4ZslJ.js
+ HTTP  7/23/2026 4:28:16 PM ::1 GET /assets/utils-vendor-Cyyo3uLN.js
+ HTTP  7/23/2026 4:28:16 PM ::1 GET /assets/query-vendor-CJC6JPm8.js
+ HTTP  7/23/2026 4:28:16 PM ::1 Returned 200 in 70 ms
+ HTTP  7/23/2026 4:28:16 PM ::1 Returned 200 in 112 ms
+ HTTP  7/23/2026 4:28:16 PM ::1 Returned 200 in 101 ms
+ HTTP  7/23/2026 4:28:16 PM ::1 Returned 200 in 100 ms
+ HTTP  7/23/2026 4:28:17 PM ::1 GET /assets/index-LYCZYspq.css
+ HTTP  7/23/2026 4:28:17 PM ::1 GET /assets/react-vendor-BOggYonM.js
+ HTTP  7/23/2026 4:28:17 PM ::1 GET /assets/animation-vendor-BonE6Qw3.js
+ HTTP  7/23/2026 4:28:17 PM ::1 GET /assets/realtime-vendor-DlN28aJh.js
+ HTTP  7/23/2026 4:28:17 PM ::1 Returned 200 in 15 ms
+ HTTP  7/23/2026 4:28:17 PM ::1 Returned 200 in 115 ms
+ HTTP  7/23/2026 4:28:17 PM ::1 GET /assets/auth-vendor-DZzKl310.js
+ HTTP  7/23/2026 4:28:16 PM ::1 Returned 200 in 262 ms
+ HTTP  7/23/2026 4:28:17 PM ::1 Returned 200 in 129 ms
+ HTTP  7/23/2026 4:28:17 PM ::1 Returned 200 in 156 ms
+ HTTP  7/23/2026 4:28:16 PM ::1 Returned 200 in 286 ms
+ HTTP  7/23/2026 4:28:17 PM ::1 GET /registerSW.js
+ HTTP  7/23/2026 4:28:17 PM ::1 GET /env-config.js
+ HTTP  7/23/2026 4:28:17 PM ::1 Returned 200 in 31 ms
+ HTTP  7/23/2026 4:28:17 PM ::1 Returned 200 in 131 ms
+ HTTP  7/23/2026 4:28:17 PM ::1 Returned 200 in 209 ms
+ HTTP  7/23/2026 4:28:17 PM ::1 GET /manifest.webmanifest
+ HTTP  7/23/2026 4:28:17 PM ::1 Returned 200 in 13 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/Index-CkaIpKuI.js
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/Footer-BCh6XTfL.js
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/badge-cIvqDwBg.js
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/progress-C_4c9bXv.js
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/dialog-D-hShfOq.js
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/rich-text-vendor-5Z7owya0.js
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 5 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 6 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/quill-DZrYvFpI.css
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 11 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/chart-vendor-CHsiRmM5.js
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 7 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/tabs-DrShNU1D.js
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/textarea-DUmA5z9I.js
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 19 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 6 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 6 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/FileUpload-C0d5PlWk.js
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 41 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 43 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/useLazyQuery-CXAFLUXs.js
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 86 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/radio-group-CwccGLUI.js
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 114 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 180 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/text-editor-D8MUxYvp.js
+ HTTP  7/23/2026 4:28:19 PM ::1 GET /assets/alert-dialog-p0T7huvi.js
+ HTTP  7/23/2026 4:28:20 PM ::1 GET /assets/PasswordInput-DP1Evbzl.js
+ HTTP  7/23/2026 4:28:20 PM ::1 GET /assets/sheet-SicxZ75F.js
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 177 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 258 ms
+ HTTP  7/23/2026 4:28:19 PM ::1 Returned 200 in 174 ms
+ HTTP  7/23/2026 4:28:20 PM ::1 Returned 200 in 32 ms
+ HTTP  7/23/2026 4:28:20 PM ::1 Returned 200 in 27 ms
+ HTTP  7/23/2026 4:28:20 PM ::1 GET /assets/ApplyCourseDialog-CiCQHeL9.js
+ HTTP  7/23/2026 4:28:20 PM ::1 GET /assets/project-tasks-019-Pn5g.js
+ HTTP  7/23/2026 4:28:20 PM ::1 GET /assets/AuthAwareLink-BwLA4oeq.js
+ HTTP  7/23/2026 4:28:20 PM ::1 GET /assets/SEOHead-W95aPMEU.js
+ HTTP  7/23/2026 4:28:20 PM ::1 GET /assets/jsonld-CLUJps_Z.js
+ HTTP  7/23/2026 4:28:20 PM ::1 Returned 200 in 8 ms
+ HTTP  7/23/2026 4:28:20 PM ::1 Returned 200 in 7 ms
+ HTTP  7/23/2026 4:28:20 PM ::1 GET /version.json?cachebust=1784816899793
+ HTTP  7/23/2026 4:28:20 PM ::1 Returned 200 in 8 ms
+ HTTP  7/23/2026 4:28:20 PM ::1 Returned 200 in 7 ms
+ HTTP  7/23/2026 4:28:20 PM ::1 Returned 200 in 17 ms
+ HTTP  7/23/2026 4:28:20 PM ::1 Returned 200 in 41 ms
+ HTTP  7/23/2026 4:28:20 PM ::1 GET /assets/top-CCGMGbqg.webp
+ HTTP  7/23/2026 4:28:20 PM ::1 Returned 200 in 32 ms
+ HTTP  7/23/2026 4:28:22 PM ::1 GET /favicon.ico
+ HTTP  7/23/2026 4:28:22 PM ::1 GET /pwa-192x192.png
+ HTTP  7/23/2026 4:28:22 PM ::1 Returned 200 in 7 ms
+ HTTP  7/23/2026 4:28:22 PM ::1 Returned 200 in 5 ms
+ HTTP  7/23/2026 4:28:22 PM ::1 GET /favicon.png
+ HTTP  7/23/2026 4:28:22 PM ::1 Returned 200 in 4 ms
+ HTTP  7/23/2026 4:28:22 PM ::1 GET /sw.js
+ HTTP  7/23/2026 4:28:22 PM ::1 Returned 200 in 6 ms
+ HTTP  7/23/2026 4:28:22 PM ::1 GET /workbox-f641ca17.js
+ HTTP  7/23/2026 4:28:22 PM ::1 Returned 200 in 1 ms
+ HTTP  7/23/2026 4:28:25 PM ::1 GET /version.json?cachebust=1784816905611
+ HTTP  7/23/2026 4:28:25 PM ::1 Returned 200 in 2 ms
+ HTTP  7/23/2026 4:52:13 PM ::1 GET /src/assets/visibilities/bootskills%20logo%20black.svg
+ HTTP  7/23/2026 4:52:13 PM ::1 Returned 200 in 16 ms
+ HTTP  7/23/2026 4:52:13 PM ::1 GET /src/assets/visibilities/bootskills%20logo%20white%20.svg
+ HTTP  7/23/2026 4:52:13 PM ::1 Returned 200 in 27 ms
+ HTTP  7/23/2026 4:52:14 PM ::1 GET /src/assets/visibilities/bootskills%20log%20black%20with%20text.svg
+ HTTP  7/23/2026 4:52:14 PM ::1 Returned 200 in 0 ms
+ HTTP  7/23/2026 4:52:14 PM ::1 GET /src/assets/visibilities/bootskills%20log%20white%20with%20text.svg
+ HTTP  7/23/2026 4:52:14 PM ::1 Returned 200 in 15 ms
+ HTTP  7/23/2026 4:52:14 PM ::1 GET /
+ HTTP  7/23/2026 4:52:14 PM ::1 Returned 200 in 6 ms
+ HTTP  7/23/2026 4:52:44 PM ::1 GET /
+ HTTP  7/23/2026 4:52:44 PM ::1 Returned 200 in 4 ms
+ HTTP  7/23/2026 4:52:44 PM ::1 GET /
+ HTTP  7/23/2026 4:52:44 PM ::1 Returned 200 in 1 ms
+ HTTP  7/23/2026 4:52:44 PM ::1 HEAD /
+ HTTP  7/23/2026 4:52:44 PM ::1 Returned 200 in 1 ms
+ HTTP  7/23/2026 4:52:51 PM ::1 GET /
+ HTTP  7/23/2026 4:52:51 PM ::1 Returned 200 in 1 ms
+ HTTP  7/23/2026 4:52:51 PM ::1 GET /
+ HTTP  7/23/2026 4:52:51 PM ::1 Returned 200 in 1 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /assets/index-CGXX3kFE.js
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /assets/apollo-vendor-D9vFB_Vt.js
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /assets/index-LYCZYspq.css
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 5 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 5 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /assets/ui-vendor-BgP7reAy.js
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /assets/react-vendor-BOggYonM.js
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /assets/animation-vendor-BonE6Qw3.js
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /assets/icons-vendor-BFj4ZslJ.js
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 3 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /assets/realtime-vendor-DlN28aJh.js
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /assets/utils-vendor-Cyyo3uLN.js
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /assets/auth-vendor-DZzKl310.js
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /registerSW.js
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /env-config.js
+ HTTP  7/23/2026 4:53:18 PM ::1 GET /assets/query-vendor-CJC6JPm8.js
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 5 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 9 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 10 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 10 ms
+ HTTP  7/23/2026 4:53:18 PM ::1 Returned 304 in 10 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/Index-CkaIpKuI.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/Footer-BCh6XTfL.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/badge-cIvqDwBg.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/quill-DZrYvFpI.css
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/progress-C_4c9bXv.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/dialog-D-hShfOq.js
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 21 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 21 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 15 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 16 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 17 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/chart-vendor-CHsiRmM5.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/tabs-DrShNU1D.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/rich-text-vendor-5Z7owya0.js
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 104 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 75 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 75 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 75 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/textarea-DUmA5z9I.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/FileUpload-C0d5PlWk.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/useLazyQuery-CXAFLUXs.js
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 4 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 6 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 6 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/text-editor-D8MUxYvp.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/radio-group-CwccGLUI.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/alert-dialog-p0T7huvi.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/PasswordInput-DP1Evbzl.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/sheet-SicxZ75F.js
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 3 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 4 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 4 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 5 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/ApplyCourseDialog-CiCQHeL9.js
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 7 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/project-tasks-019-Pn5g.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/AuthAwareLink-BwLA4oeq.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/SEOHead-W95aPMEU.js
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 6 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 4 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 3 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /assets/jsonld-CLUJps_Z.js
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /version.json?cachebust=1784818399446
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 6 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 3 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 200 in 7 ms
+ HTTP  7/23/2026 4:53:19 PM ::1 GET /manifest.webmanifest
+ HTTP  7/23/2026 4:53:19 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 4:53:20 PM ::1 GET /assets/top-CCGMGbqg.webp
+ HTTP  7/23/2026 4:53:20 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 4:53:24 PM ::1 GET /version.json?cachebust=1784818404761
+ HTTP  7/23/2026 4:53:24 PM ::1 Returned 200 in 7 ms
+ HTTP  7/23/2026 4:53:25 PM ::1 GET /favicon.ico
+ HTTP  7/23/2026 4:53:25 PM ::1 GET /pwa-192x192.png
+ HTTP  7/23/2026 4:53:25 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 4:53:25 PM ::1 Returned 304 in 3 ms
+ HTTP  7/23/2026 4:53:27 PM ::1 GET /sw.js
+ HTTP  7/23/2026 4:53:27 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 4:53:28 PM ::1 GET /workbox-f641ca17.js
+ HTTP  7/23/2026 4:53:28 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 4:58:19 PM ::1 GET /sw.js
+ HTTP  7/23/2026 4:58:19 PM ::1 Returned 304 in 8 ms
+ HTTP  7/23/2026 4:58:19 PM ::1 GET /workbox-f641ca17.js
+ HTTP  7/23/2026 4:58:19 PM ::1 Returned 304 in 0 ms
+ HTTP  7/23/2026 4:58:19 PM ::1 GET /version.json?cachebust=1784818699767
+ HTTP  7/23/2026 4:58:19 PM ::1 Returned 200 in 1 ms
+ HTTP  7/23/2026 5:03:19 PM ::1 GET /sw.js
+ HTTP  7/23/2026 5:03:19 PM ::1 Returned 304 in 11 ms
+ HTTP  7/23/2026 5:03:19 PM ::1 GET /workbox-f641ca17.js
+ HTTP  7/23/2026 5:03:19 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 5:03:19 PM ::1 GET /version.json?cachebust=1784818999772
+ HTTP  7/23/2026 5:03:19 PM ::1 Returned 200 in 2 ms
+ HTTP  7/23/2026 5:04:07 PM ::1 GET /
+ HTTP  7/23/2026 5:04:07 PM ::1 Returned 304 in 22 ms
+ HTTP  7/23/2026 5:04:07 PM ::1 GET /assets/index-CGXX3kFE.js
+ HTTP  7/23/2026 5:04:07 PM ::1 Returned 304 in 3 ms
+ HTTP  7/23/2026 5:04:07 PM ::1 GET /assets/apollo-vendor-D9vFB_Vt.js
+ HTTP  7/23/2026 5:04:07 PM ::1 GET /assets/query-vendor-CJC6JPm8.js
+ HTTP  7/23/2026 5:04:07 PM ::1 GET /assets/index-LYCZYspq.css
+ HTTP  7/23/2026 5:04:07 PM ::1 Returned 304 in 7 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/ui-vendor-BgP7reAy.js
+ HTTP  7/23/2026 5:04:07 PM ::1 Returned 304 in 139 ms
+ HTTP  7/23/2026 5:04:07 PM ::1 Returned 304 in 150 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 29 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/react-vendor-BOggYonM.js
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/icons-vendor-BFj4ZslJ.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 29 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 29 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/animation-vendor-BonE6Qw3.js
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/auth-vendor-DZzKl310.js
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/realtime-vendor-DlN28aJh.js
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/utils-vendor-Cyyo3uLN.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 4 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 27 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 33 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /registerSW.js
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /env-config.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 35 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 5 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 8 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /manifest.webmanifest
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 3 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/Index-CkaIpKuI.js
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/Footer-BCh6XTfL.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 7 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/badge-cIvqDwBg.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/progress-C_4c9bXv.js
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/dialog-D-hShfOq.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 4 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/rich-text-vendor-5Z7owya0.js
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/chart-vendor-CHsiRmM5.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 4 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 3 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/tabs-DrShNU1D.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/textarea-DUmA5z9I.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/FileUpload-C0d5PlWk.js
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/useLazyQuery-CXAFLUXs.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 3 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/radio-group-CwccGLUI.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 0 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/text-editor-D8MUxYvp.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/quill-DZrYvFpI.css
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/alert-dialog-p0T7huvi.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/PasswordInput-DP1Evbzl.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/sheet-SicxZ75F.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/ApplyCourseDialog-CiCQHeL9.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 3 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/project-tasks-019-Pn5g.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/AuthAwareLink-BwLA4oeq.js
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/SEOHead-W95aPMEU.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 4 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 3 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/jsonld-CLUJps_Z.js
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /version.json?cachebust=1784819048745
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 200 in 1 ms
+ HTTP  7/23/2026 5:04:08 PM ::1 GET /assets/top-CCGMGbqg.webp
+ HTTP  7/23/2026 5:04:08 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:04:09 PM ::1 GET /favicon.ico
+ HTTP  7/23/2026 5:04:09 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:04:09 PM ::1 GET /pwa-192x192.png
+ HTTP  7/23/2026 5:04:09 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:04:13 PM ::1 GET /version.json?cachebust=1784819053818
+ HTTP  7/23/2026 5:04:13 PM ::1 Returned 200 in 3 ms
+ HTTP  7/23/2026 5:04:14 PM ::1 GET /sw.js
+ HTTP  7/23/2026 5:04:14 PM ::1 Returned 304 in 2 ms
+ HTTP  7/23/2026 5:04:14 PM ::1 GET /workbox-f641ca17.js
+ HTTP  7/23/2026 5:04:14 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:09:08 PM ::1 GET /version.json?cachebust=1784819348824
+ HTTP  7/23/2026 5:09:08 PM ::1 GET /sw.js
+ HTTP  7/23/2026 5:09:08 PM ::1 Returned 200 in 10 ms
+ HTTP  7/23/2026 5:09:08 PM ::1 Returned 304 in 13 ms
+ HTTP  7/23/2026 5:09:08 PM ::1 GET /workbox-f641ca17.js
+ HTTP  7/23/2026 5:09:08 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:14:08 PM ::1 GET /sw.js
+ HTTP  7/23/2026 5:14:08 PM ::1 GET /version.json?cachebust=1784819648829
+ HTTP  7/23/2026 5:14:08 PM ::1 Returned 304 in 8 ms
+ HTTP  7/23/2026 5:14:08 PM ::1 Returned 200 in 16 ms
+ HTTP  7/23/2026 5:14:08 PM ::1 GET /workbox-f641ca17.js
+ HTTP  7/23/2026 5:14:08 PM ::1 Returned 304 in 1 ms
+ HTTP  7/23/2026 5:19:08 PM ::1 GET /sw.js
+ HTTP  7/23/2026 5:19:08 PM ::1 Returned 304 in 3 ms
+ HTTP  7/23/2026 5:19:08 PM ::1 GET /version.json?cachebust=1784819948834
+ HTTP  7/23/2026 5:19:08 PM ::1 Returned 200 in 4 ms
+ HTTP  7/23/2026 5:19:08 PM ::1 GET /workbox-f641ca17.js
+ HTTP  7/23/2026 5:19:08 PM ::1 Returned 304 in 8 ms
+ HTTP  7/23/2026 5:24:08 PM ::1 GET /sw.js
+ HTTP  7/23/2026 5:24:08 PM ::1 GET /version.json?cachebust=1784820248840
+ HTTP  7/23/2026 5:24:08 PM ::1 Returned 304 in 16 ms
+ HTTP  7/23/2026 5:24:08 PM ::1 Returned 200 in 15 ms
+ HTTP  7/23/2026 5:24:08 PM ::1 GET /workbox-f641ca17.js
+ HTTP  7/23/2026 5:24:08 PM ::1 Returned 304 in 3 ms

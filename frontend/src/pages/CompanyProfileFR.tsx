@@ -222,7 +222,7 @@ const CompanyProfileFR = () => {
     "@type": "Organization",
     "name": "Bootskills",
     "url": "https://bootskills.com",
-    "logo": "https://bootskills.com/logo.png",
+    "logo": "https://bootskills.com/logo.svg",
     "description": "Plateforme d'apprentissage tout-en-un — cours dans tous les domaines. Projets. Stages.",
     "foundingDate": "2023",
     "address": {

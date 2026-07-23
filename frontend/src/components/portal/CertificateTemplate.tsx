@@ -1,5 +1,6 @@
 import React from 'react';
 import { Award, ShieldCheck, Globe } from 'lucide-react';
+import logoSvg from "@/assets/visibilities/bootskills logo black.svg";
 
 interface CertificateTemplateProps {
   recipientName: string;
@@ -44,8 +45,8 @@ export const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
           <div className="flex justify-center mb-2">
             <div className="w-16 h-16 rounded-full bg-[#1a3d3d] flex items-center justify-center p-3">
               <img 
-                src="/assets/logo.png" 
-                alt="Bootskills Logo" 
+                src={logoSvg}
+                alt="Bootskills" 
                 className="w-full h-full object-contain brightness-0 invert" 
               />
             </div>

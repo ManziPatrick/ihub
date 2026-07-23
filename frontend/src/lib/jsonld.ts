@@ -31,7 +31,7 @@ export const organizationLd: OrganizationLD = {
   "@type": "Organization",
   name: "Bootskills",
   url: BASE_URL,
-  logo: `${BASE_URL}/logo.png`,
+  logo: `${BASE_URL}/logo.svg`,
   description: "Bootskills is Rwanda's leading practical training platform offering courses, internships, and real-world project experience across technology, business, and creative fields.",
   foundingDate: "2024",
   founder: [

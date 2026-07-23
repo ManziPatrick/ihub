@@ -85,15 +85,17 @@ export function Header() {
         <div className="flex items-center justify-between h-14 lg:h-16">
 
           {/* ── Logo ── */}
-          <Link to="/" className="flex items-center shrink-0">
+          <Link to="/" className="flex items-center shrink-0 max-w-[280px] pr-2">
             {branding.logoUrl ? (
               <img
                 src={branding.logoUrl}
                 alt={branding.siteName}
-                className="h-7 sm:h-8 w-auto object-contain"
+                className="h-10 sm:h-12 w-auto object-contain"
               />
             ) : (
-              <Logo variant="with-text" />
+              <div className="w-full">
+                <Logo variant="with-text" />
+              </div>
             )}
           </Link>
 
