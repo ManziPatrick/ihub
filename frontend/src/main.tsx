@@ -19,7 +19,7 @@ initErrorCapture();
 // Default 95% zoom — users can adjust via zoom controls in the portal
 if (typeof window !== 'undefined') {
   const savedZoom = localStorage.getItem('app_zoom');
-  const defaultZoom = '0.97';
+  const defaultZoom = '0.87';
   document.documentElement.style.zoom = savedZoom || defaultZoom;
 }
 
