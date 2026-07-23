@@ -48,9 +48,22 @@ async function seedIntroDemoCourse() {
     const courseData = {
       title: 'Welcome to BootSkills: Platform Demo Tour',
       description:
-        'A quick guided tour of the BootSkills learning platform. ' +
-        'Explore courses, take quizzes, try an exam, and discover internships, ' +
-        'projects, and certificates — all at zero cost.',
+        'A complete guided tour of the BootSkills learning platform — designed for everyone. ' +
+        'Whether you are a **Student** starting your learning journey, a **Trainer** managing courses, ' +
+        'or an **Admin** overseeing the platform, this course shows you how each role works.\n\n' +
+        'Explore interactive courses, take quizzes and exams, join internship teams, ' +
+        'track your progress, earn certificates, and discover everything BootSkills offers — all at zero cost.\n\n' +
+        '### 🎯 What You Will See in This Tour\n' +
+        '- 👨‍🎓 **Student View** — Course enrollment, learning progress, quizzes, assignments, and certificates\n' +
+        '- 👨‍🏫 **Trainer View** — Course management, student tracking, grading assignments\n' +
+        '- 👨‍💼 **Admin View** — User management, course approvals, platform analytics, disbursements\n' +
+        '- 💼 **Internships** — Team projects, Kanban boards, sprint planning, mentor collaboration\n' +
+        '- 🏆 **Certificates** — Earn verifiable credentials after completing courses\n\n' +
+        '> 🚀 **Try It Yourself!** Run the platform locally and log in with test credentials:\n' +
+        '> - **Student:** student@bootskills.com / password123\n' +
+        '> - **Trainer:** trainer@bootskills.com / Password@123\n' +
+        '> - **Admin:** admin@bootskills.com / Password@123\n' +
+        '> Visit **http://localhost:5173/auth** and explore each role dashboard!',
       price: 0,                // FREE
       discountPrice: 0,
       category: 'Orientation',
@@ -84,9 +97,17 @@ async function seedIntroDemoCourse() {
                 '- **Code Editor** — write and test code right in your browser\n' +
                 '- **Internship Programs** — real-world team projects with mentorship\n' +
                 '- **Certificates** — earn verifiable credentials\n' +
-                '- **Progress Tracking** — see your learning journey at a glance',
+                '- **Progress Tracking** — see your learning journey at a glance\n\n' +
+                '![BootSkills Platform Overview](https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=800)\n\n' +
+                '### Who Uses BootSkills?\n' +
+                '| Role | What They Do | Key Pages | Screenshot |\n' +
+                '|---|---|---|---|\n' +
+                '| 👨‍🎓 **Student** | Enroll in courses, take lessons, submit assignments, earn certificates | /portal/student, /explore, /courses | ![Student View](https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=600) |\n' +
+                '| 👨‍🏫 **Trainer** | Create courses, manage lessons, grade students, track progress | /portal/trainer, /admin/courses | ![Trainer View](https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=600) |\n' +
+                '| 👨‍💼 **Admin** | Manage users, approve courses, view analytics, handle disbursements | /portal/admin, /admin/users, /analytics | ![Admin View](https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=600) |\n' +
+                '| 👑 **Super Admin** | Full platform control, configurations, system settings | /portal/super-admin | ![Super Admin View](https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&q=80&w=600) |',
               type: 'video',
-              videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+              videoUrl: 'https://www.youtube.com/watch?v=T6kD9pQ2mN5',
               videoTitle: 'BootSkills Platform Overview',
               duration: 8,
               order: 1,
@@ -110,7 +131,30 @@ async function seedIntroDemoCourse() {
                 'Your **Student Dashboard** shows your enrolled courses, progress bars, ' +
                 'upcoming deadlines, and recent activity.\n\n' +
                 '### 5️⃣ Join an Internship\n' +
-                'Apply for internship programs, join a team, and work on real projects with mentors.',
+                'Apply for internship programs, join a team, and work on real projects with mentors.\n\n' +
+                '![Student learning dashboard](https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=800)\n\n' +
+                '### Platform Walkthrough by Role\n' +
+                '**👨‍🎓 As a Student:**\n' +
+                '1. Browse courses on the **Explore** page\n' +
+                '2. Click **Enroll** to start any course\n' +
+                '3. Work through modules: watch videos, read articles, take quizzes\n' +
+                '4. Submit **assignments** for grading\n' +
+                '5. Pass **exams** to earn your certificate\n' +
+                '6. Apply for **internships** and join project teams\n' +
+                '7. Track your **XP, level, streaks, and badges** on your dashboard\n\n' +
+                '**👨‍🏫 As a Trainer:**\n' +
+                '1. View your assigned courses and students on the **Trainer Dashboard** (/portal/trainer)\n' +
+                '2. **Grade assignments** submitted by students\n' +
+                '3. Track **student progress** and identify struggling learners\n' +
+                '4. Update course content, add lessons, and modify quizzes\n' +
+                '5. Mentor **internship teams** and review project milestones\n\n' +
+                '**👨‍💼 As an Admin:**\n' +
+                '1. Manage all **users** (students, trainers, admins) from the Admin Panel (/portal/admin)\n' +
+                '2. **Approve/reject** course publications\n' +
+                '3. View **platform analytics** — enrollments, revenue, course completion rates\n' +
+                '4. Manage **disbursements** and payment configurations\n' +
+                '5. Handle **broadcast messages** to all users\n' +
+                '6. Configure **discount codes** and promotional pricing',
               type: 'article',
               duration: 10,
               order: 2,
@@ -235,7 +279,7 @@ async function seedIntroDemoCourse() {
                 'Projects use a **Kanban board** with tasks in backlog, todo, in-progress, and done columns. ' +
                 'Track your progress, assign tasks, and collaborate with team members.',
               type: 'video',
-              videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+              videoUrl: 'https://www.youtube.com/watch?v=GtYhNtRNRls',
               videoTitle: 'BootSkills Learning Tools',
               duration: 10,
               order: 1,

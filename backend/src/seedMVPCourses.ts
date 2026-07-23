@@ -34,7 +34,7 @@ function makeLesson(title: string, content: string, type: string = 'article', or
   const imgUrl = extras.imageUrl;
   const imgMd = imgUrl ? `\n\n![${title}](${imgUrl})` : '';
   // Add phone-friendly practical tips for article/video lessons
-  const phoneTips = type === 'article' || type === 'video' ? `\n\n>  **On a budget smartphone?** Most tools mentioned have free mobile apps. Use Chrome or your phone browser to follow along.\n>  **On a laptop/PC?** Open two browser tabs — one for this lesson, one to practice. Download templates from the resources section.\n>  **Limited data?** Connect at a WiFi hotspot to download lesson materials for offline study.` : '';
+  const phoneTips = type === 'article' || type === 'video' ? `\n\n---\n### 📱 Learn Your Way — Choose Your Setup\n\n| Icon | Your Scenario | Best Approach |\n|---|---|---|\n| 📱 | **Using a smartphone?** | All tools mentioned have **free mobile apps**. Open Chrome or your phone browser and follow along step-by-step. No laptop needed! |\n| 💻 | **Using a laptop/PC?** | Open **two browser tabs** — one for this lesson on this page, one to practice what you learn. Download templates from the Resources section to follow along. |\n| 📶 | **Limited data or wifi?** | Connect at a free WiFi hotspot (cafe, library, university campus). **Download this lesson** and practice offline later — no ongoing data needed! |\n| 🔋 | **Battery running low?** | Save a copy of this page or take screenshots of key steps. Study them offline to save battery while practicing. |\n| 🎧 | **Prefer listening?** | Use your phone text-to-speech feature to read lessons aloud while you follow along with exercises. |\n\n> 💡 **Tip:** Most successful learners use their phone for lessons and a notebook for practice. You do not need an expensive setup — just start!` : '';
   return {
     title,
     content: `## ${title}\n\n${content}${imgMd}${phoneTips}`,
@@ -128,7 +128,27 @@ const COURSES: CourseDef[] = [
       '🇷🇼 Made for Rwandan businesses — learn digital marketing with local examples you can actually use. ' +
       'From WhatsApp Business for Kigali shops to Instagram for tourism and Facebook Marketplace for farmers, ' +
       'this course shows you exactly how to attract customers without spending a fortune on ads. ' +
-      'Real strategies that worked for Rwandan SMEs — not generic advice from abroad.',
+      'Real strategies that worked for Rwandan SMEs — not generic advice from abroad.\n\n' +
+      '### 🎯 What You Will Learn\n' +
+      '- **Social Media Marketing** — Grow your business on WhatsApp, Instagram, Facebook, and TikTok\n' +
+      '- **Paid Advertising** — Run Facebook and Google ads with RWF budgets (start from just 5,000 RWF/day)\n' +
+      '- **Email Marketing** — Build an email list and create campaigns that convert using free tools\n' +
+      '- **Content Creation** — Create professional graphics, videos, and posts using only your smartphone\n' +
+      '- **Analytics & ROI** — Track what works and measure your return on investment\n' +
+      '- **Local Marketing** — Get found on Google Maps, WhatsApp Business catalogue, and Facebook Marketplace\n\n' +
+      '### 🧰 Your Digital Marketing Toolbox\n' +
+      '| Tool | Purpose | Cost | Sign Up |\n' +
+      '|---|---|---|---|\n' +
+      '| Canva | Graphics, social media posts | Free tier | [canva.com](https://www.canva.com) |\n' +
+      '| WhatsApp Business | Customer chat, catalogue | Free | [whatsapp.com/business](https://www.whatsapp.com/business) |\n' +
+      '| Facebook Business | Ad manager, page insights | Free to start | [business.facebook.com](https://business.facebook.com) |\n' +
+      '| Google My Business | Local search, Google Maps | Free | [google.com/business](https://www.google.com/business) |\n' +
+      '| Mailchimp | Email newsletters | Free tier (500 contacts) | [mailchimp.com](https://www.mailchimp.com) |\n' +
+      '| Brevo | Email + SMS marketing | Free tier (300/day) | [brevo.com](https://www.brevo.com) |\n' +
+      '| CapCut | Video editing (app) | Free | [capcut.com](https://www.capcut.com) |\n' +
+      '| Canva AI | AI image generation | Free tier | [canva.com](https://www.canva.com) |\n\n' +
+      '> 🎓 **By the end of this course, you will be able to** attract more customers, increase sales, ' +
+      'and grow any Rwandan business using digital tools — all on a budget of under 50,000 RWF!',
     category: 'Business',
     level: 'Beginner',
     price: 2000,
@@ -171,11 +191,19 @@ const COURSES: CourseDef[] = [
             'Low-Budget Marketing Tactics That Work',
             'You do not need a big budget to succeed at digital marketing in Africa. This lesson covers free and low-cost ' +
             'strategies including WhatsApp Business, organic social media, word-of-mouth marketing, and community building.\n\n' +
-            '### Free Tools:\n' +
-            '- **Canva** — Create professional graphics for free\n' +
-            '- **Google My Business** — Get found on Google Maps\n' +
-            '- **WhatsApp Business** — Catalogue, quick replies, and broadcast lists\n' +
-            '- **Facebook Marketplace** — Sell directly to local buyers',
+            '### Free Digital Marketing Tools Compared\n' +
+            '| Tool | Best For | Free Tier Limit | RWF Alternative |\n' +
+            '|---|---|---|---|\n' +
+            '| Canva | Social media graphics, flyers | 250K+ templates free | [Canva Free](https://www.canva.com) |\n' +
+            '| Google My Business | Local search presence | Completely free | [g.co/kms](https://www.google.com/business) |\n' +
+            '| WhatsApp Business | Customer chat, catalogue | Free app | [wa.me/business](https://www.whatsapp.com/business) |\n' +
+            '| Facebook Marketplace | Sell to local buyers | Free to list | [facebook.com/marketplace](https://www.facebook.com/marketplace) |\n' +
+            '| CapCut | Short video editing | Free, no watermark | [capcut.com](https://www.capcut.com) |\n' +
+            '| Mailchimp | Email marketing | 500 contacts free | [mailchimp.com](https://www.mailchimp.com) |\n' +
+            '| Buffer | Schedule social posts | 3 channels free | [buffer.com](https://www.buffer.com) |\n' +
+            '| Google Analytics | Website tracking | Completely free | [analytics.google.com](https://analytics.google.com) |\n\n' +
+            '> 💡 **All the tools above are 100% free to start.** You can run a full marketing campaign with just these 8 tools. ' +
+            'No need to spend on paid software until you are generating revenue!',
             'article',
             3,
             { imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600&h=400' },
@@ -409,7 +437,7 @@ const COURSES: CourseDef[] = [
         [
           makeLesson(
             'Introduction to Paid Advertising',
-            'Covers major ad platforms: Facebook Ads, Instagram Ads, Google Ads, YouTube Ads, and TikTok Ads. Learn targeting, budgeting, and creative best practices.\n\n### Ad Platform Overview:\n- Facebook/Instagram: Best for visual products, local targeting\n- Google Ads: Best for people actively searching\n- YouTube Ads: Best for video content, brand awareness\n- TikTok Ads: Best for reaching younger audiences\n- LinkedIn Ads: Best for B2B and professional services',
+            'Covers major ad platforms: Facebook Ads, Instagram Ads, Google Ads, YouTube Ads, and TikTok Ads. Learn targeting, budgeting, and creative best practices.\n\n### Ad Platform Comparison (RWF Budgets)\n| Platform | Best For | Min Daily Budget | Rwanda Reach | Best Content Type |\n|---|---|---|---|---|\n| Facebook Ads | Local businesses, products | 5,000 RWF/day | 3M+ users | Images, offers, events |\n| Instagram Ads | Visual products, tourism | 5,000 RWF/day | 1M+ users | Reels, stories, photos |\n| Google Ads | Active searchers, services | 3,000 RWF/day | 2M+ searches | Text ads, local maps |\n| YouTube Ads | Brand awareness, tutorials | 7,000 RWF/day | 1M+ viewers | Short skippable videos |\n| TikTok Ads | Youth products, trends | 10,000 RWF/day | 500K+ users | Short vertical videos |\n| WhatsApp Ads | Direct customer contact | 3,000 RWF/day | 5M+ users | Click-to-chat messages |\n| LinkedIn Ads | B2B, professional services | 15,000 RWF/day | 200K+ pros | Sponsored content, InMail |\n\n### 💰 Sample RWF Ad Budgets\n| Budget | What You Get | Expected Results |\n|---|---|---|\n| 50,000 RWF/mo | Facebook + Instagram | 10,000-20,000 reach, 100-300 clicks |\n| 100,000 RWF/mo | Facebook + Google | 20,000-50,000 reach, 300-800 clicks |\n| 300,000 RWF/mo | Full platform mix | 100,000+ reach, 1,000+ leads |\n| 1,000,000 RWF/mo | Aggressive scaling | 500,000+ reach, 5,000+ leads |\n\n> 💡 **Start small!** Test with just 10,000 RWF on Facebook to see what works before scaling.',
             'video',
             1,
             { videoUrl: 'https://www.youtube.com/watch?v=qRyBcfjFhKY', videoTitle: 'Facebook Ads for Small Business - Quick Start' },
@@ -436,12 +464,14 @@ const COURSES: CourseDef[] = [
             4,
           ),
           makeAssignmentLesson(
-            'Module 5: Final Digital Marketing Project',
-            'Create a complete 3-month digital marketing campaign.',
-            'Design a 3-month campaign including goals, audience, channels, content plan, budget (max 200,000 RWF), and success metrics.',
+            'Module 5: Final Digital Marketing Project — Earn 200,000+ RWF!',
+            'Your mission: Find a real client and run a real digital marketing campaign. Make real money!',
+            '**REAL CLIENT CHALLENGE: Earn Your First 200,000+ RWF in 30 Days**\n\nYour mission: Find ONE real small business in Rwanda (a boutique, restaurant, salon, or farm) and run a real marketing campaign for them. Charge 100,000-300,000 RWF for 1 month of social media management.\n\n**Week 1: Find Your Client**\nWalk into 10 businesses in Kigali (Kimironko, Remera, Downtown). Offer a "free social media audit" worth 50,000 RWF. Then pitch: "I will manage your social media for 1 month, 4 posts/week — 150,000 RWF. If you do not get 10 new customers, it is free."\n\n**Week 2: Set Up & Content Plan**\nCreate/optimise their Facebook and Instagram. Use [Canva](https://www.canva.com) for 16 posts (4 per week). Set up [WhatsApp Business](https://www.whatsapp.com/business) catalogue if they sell products.\n\n**Week 3: Run a Facebook Ad (50,000 RWF budget)**\nCreate a simple ad via [Facebook Business Suite](https://business.facebook.com) targeting their local area. Budget: 50,000 RWF for 7 days. Track leads via WhatsApp.\n\n**🎯 Quick access links:** [Canva Free](https://www.canva.com) | [WhatsApp Business](https://www.whatsapp.com/business) | [Facebook Ads Manager](https://business.facebook.com) | [Google My Business](https://www.google.com/business)\n\n**Week 4: Report Results & Get Paid**\nShow client: reach, engagement, leads generated, sales. Collect your 150,000 RWF fee.\n\n**🎯 Total: 150,000-300,000 RWF in 30 days!** Do this for 3 clients = 450,000-900,000 RWF/month = iPhone money!\n\n![Digital marketing money](https://images.unsplash.com/photo-1553729459-afe8f2e0e8c5?auto=format&fit=crop&q=80&w=600&h=400)\n\n> **Pro Tip:** Start with a family member or friends business for practice. Once you have 1 success case, finding the next client is 10x easier!',
             [
-              { question: 'Design a 3-month campaign for a Rwandan business with goals, audience, channels, budget, and metrics.', type: 'open', explanation: 'Be specific about platforms, content, budget breakdown, and how you will measure success.', points: 25 },
-              { question: 'Allocate a 200,000 RWF monthly budget across channels. Justify your allocation.', type: 'open', explanation: 'Consider: Facebook Ads, Google Ads, content creation, influencer partnerships, and tools.', points: 20 },
+              { question: 'Which client did you find? What business? What was your pitch and their response?', type: 'open', explanation: 'Describe the business, the owner, your pitch, and the outcome.', points: 20 },
+              { question: 'Show your content plan: 16 posts created (4/week) with platform, format, and caption for each.', type: 'open', explanation: 'Share your Canva designs or a content calendar screenshot.', points: 20 },
+              { question: 'Facebook Ad results: budget spent, reach, clicks, leads generated, cost per lead.', type: 'open', explanation: 'Show the actual ad dashboard metrics.', points: 20 },
+              { question: 'TOTAL EARNINGS: How much did the client pay you? Would they continue? Referrals?', type: 'open', explanation: 'Report your real income from this project!', points: 25 },
             ],
             5,
           ),
@@ -731,12 +761,14 @@ const COURSES: CourseDef[] = [
             4,
           ),
           makeAssignmentLesson(
-            'Module 5: Final Fintech Project',
-            'Design a fintech solution for financial inclusion.',
-            'Create a fintech solution addressing a specific challenge in Rwanda.',
+            'Module 5: Final Fintech Project — Build & Earn with Mobile Money!',
+            'Your mission: Create a real mobile-money-based service and earn your first 50,000+ RWF!',
+            '**FINITECH MICRO-PROJECT: Earn 50,000-200,000 RWF Using Mobile Money**\n\nYour mission: Launch a real service that uses MTN MoMo or Airtel Money to solve a problem and make money.\n\n**Business Ideas Using Mobile Money:**\n1. **Mobile Money Agent Assistant** — Help elderly/less-educated people use MoMo via [MTN MoMo](https://www.mtn.co.rw/momo) or [Airtel Money](https://www.airtel.co.rw/airtel-money). Charge 500 RWF per transaction. 100 transactions = 50,000 RWF.\n2. **SACCO Digital Registrar** — Help a local savings group (SACCO/ikibina) digitise their records. Charge 100,000 RWF setup + 20,000 RWF/month.\n3. **MoMo Payment Collection Service** — Collect payments for small businesses via MoMo (school fees, rent, products). Charge 5% fee. Collect 2,000,000 RWF = 100,000 RWF earnings.\n4. **Airtime & Bundle Reseller** — Buy wholesale airtime/data bundles via [MTN Airtime](https://www.mtn.co.rw/bundles) or [Airtel Data](https://www.airtel.co.rw/data), sell retail via WhatsApp. 10-15% profit margin.\n5. **Digital Savings Challenge** — Create a WhatsApp group savings challenge. Members send 5,000 RWF/week via MoMo. You manage the group for 10% of total saved.\n\n**🎯 Quick access links:** [MTN MoMo](https://www.mtn.co.rw/momo) | [Airtel Money](https://www.airtel.co.rw/airtel-money) | [BNR Rwanda](https://www.bnr.rw) | [RDB Registration](https://irembo.gov.rw)\n\n**🎯 Target: 50,000-200,000 RWF in 30 days!** Scale to 500,000+ RWF/month = iPhone money!\n\n![Mobile money](https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=600&h=400)\n\n> **Pro Tip:** The most successful fintech in Rwanda started with ONE simple service. M-Pesa started as "send money via SMS." Start simple, then add features!',
             [
-              { question: 'Design a fintech solution for a Rwandan financial inclusion challenge. Describe users, pain point, solution, and reach strategy.', type: 'open', explanation: 'Consider: farmers accessing loans, women saving, youth building credit, or gig workers.', points: 25 },
-              { question: 'Revenue model for serving low-income users affordably?', type: 'open', explanation: 'Consider: transaction fees, interest margin, subscription, or cross-selling.', points: 20 },
+              { question: 'YOUR FINITECH SERVICE: What service did you launch? How does it use mobile money? What problem does it solve?', type: 'open', explanation: 'Describe your service, target users, and how MoMo enables it.', points: 20 },
+              { question: 'CUSTOMERS: How many customers did you acquire? How did you find them? What was their feedback?', type: 'open', explanation: 'Share your customer acquisition strategy and real feedback.', points: 20 },
+              { question: 'FINANCIALS: Total revenue? Total costs (if any)? Net profit? MoMo transaction volume?', type: 'open', explanation: 'Show real numbers from your service.', points: 20 },
+              { question: 'SCALE PLAN: How would you scale this to 1,000+ customers? What would you need? Revenue potential?', type: 'open', explanation: 'Your growth strategy based on real experience.', points: 25 },
             ],
             5,
           ),
@@ -758,7 +790,18 @@ const COURSES: CourseDef[] = [
       'start freelancing on Upwork and Fiverr, even with zero experience. ' +
       'Learn to build a profile that gets hired, write winning proposals, impress international clients, ' +
       'and receive payments easily. Perfect for Rwandan graduates and professionals ' +
-      'who want to earn globally while living in Rwanda.',
+      'who want to earn globally while living in Rwanda.\n\n' +
+      '### 🧰 Your Freelance Toolbox\n' +
+      '| Platform | Purpose | Fees | Sign Up |\n' +
+      '|---|---|---|---|\n' +
+      '| Upwork | Client projects, long-term work | 20% first $500, then 5% | [upwork.com](https://www.upwork.com) |\n' +
+      '| Fiverr | Micro-gigs, creative services | 20% flat fee | [fiverr.com](https://www.fiverr.com) |\n' +
+      '| Payoneer | Receive USD/EUR payments | 1-2% withdrawal | [payoneer.com](https://www.payoneer.com) |\n' +
+      '| PayPal | International payments | 2.9% + $0.30 | [paypal.com](https://www.paypal.com) |\n' +
+      '| LinkedIn | Professional networking | Free | [linkedin.com](https://www.linkedin.com) |\n' +
+      '| Canva | Portfolio design, proposals | Free tier | [canva.com](https://www.canva.com) |\n' +
+      '| freeCodeCamp | Learn web dev free | Free | [freecodecamp.org](https://www.freecodecamp.org) |\n' +
+      '| Google Skills | Digital marketing cert | Free | [grow.google](https://grow.google) |',
     category: 'Business',
     level: 'Beginner',
     price: 2000,
@@ -787,12 +830,23 @@ const COURSES: CourseDef[] = [
             'Setting Up Your Freelancing Business',
             'From choosing your niche to registering on platforms — everything you need to get started. ' +
             'Learn about Upwork, Fiverr, Freelancer.com, Toptal, and niche platforms for specific skills.\n\n' +
+            '### Platform Comparison\n' +
+            '| Platform | Best For | Fee | Min Payout | Rwanda Access |\n' +
+            '|---|---|---|---|---|\n' +
+            '| Upwork | Long-term projects, $15-50/hr | 20% first $500, then 5% | $100 bank/Payoneer | ✅ Yes |\n' +
+            '| Fiverr | Quick gigs, $20-500/project | 20% flat | $20 PayPal/Bank | ✅ Yes |\n' +
+            '| Freelancer.com | Contests, hourly work | 10-15% | $30 minimum | ✅ Yes |\n' +
+            '| Toptal | Premium dev/design, $60-100/hr | Free to join | Direct bank | ⚠️ Invite only |\n' +
+            '| LinkedIn Pro | Consulting, networking | Free basic | Direct payout | ✅ Yes |\n' +
+            '| PeoplePerHour | Creative work, UK focus | 20% | £50 min | ✅ Yes |\n\n' +
             '### Getting Started Checklist:\n' +
-            '- Identify your in-demand skill\n' +
-            '- Create a professional profile with portfolio\n' +
-            '- Set competitive pricing\n' +
-            '- Write compelling proposals\n' +
-            '- Understand platform fees and payment methods',
+            '- [ ] Identify your in-demand skill (pick one from Module 3)\n' +
+            '- [ ] Create Upwork profile with professional photo\n' +
+            '- [ ] Upload 3 portfolio samples\n' +
+            '- [ ] Set rate at $15-25/hr to start\n' +
+            '- [ ] Write 5 sample proposals\n' +
+            '- [ ] Set up Payoneer account to receive payments\n' +
+            '- [ ] Add 2-3 skill tags',
             'article',
             2,
             { imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600&h=400' },
@@ -900,7 +954,20 @@ const COURSES: CourseDef[] = [
         [
           makeLesson(
             'Top High-Income Freelance Skills',
-            'Web development, copywriting, graphic design, video editing, virtual assistance, and digital marketing.\n\n### Rates:\n1. Web Development: $15-50/hour (React, WordPress)\n2. Copywriting: $20-100/project (websites, emails)\n3. Graphic Design: $15-45/hour (Canva, Figma)\n4. Video Editing: $20-60/video (CapCut, DaVinci)\n5. Virtual Assistant: $5-15/hour (admin, email)\n6. Digital Marketing: $15-40/hour (SEO, ads)',
+            'Web development, copywriting, graphic design, video editing, virtual assistance, and digital marketing.\n\n' +
+            '### Rates & Earning Potential (in RWF)\n' +
+            '| Skill | USD Rate | Rwandan Rate (1 USD ≈ 1,350 RWF) | Monthly Potential |\n' +
+            '|---|---|---|---|\n' +
+            '| Web Development | $15-50/hr | 20,250-67,500 RWF/hr | 1,620,000-5,400,000 RWF/mo |\n' +
+            '| Copywriting | $20-100/project | 27,000-135,000 RWF/project | 810,000-2,700,000 RWF/mo |\n' +
+            '| Graphic Design | $15-45/hr | 20,250-60,750 RWF/hr | 1,620,000-4,860,000 RWF/mo |\n' +
+            '| Video Editing | $20-60/video | 27,000-81,000 RWF/video | 540,000-1,620,000 RWF/mo |\n' +
+            '| Virtual Assistant | $5-15/hr | 6,750-20,250 RWF/hr | 540,000-1,620,000 RWF/mo |\n' +
+            '| Digital Marketing | $15-40/hr | 20,250-54,000 RWF/hr | 1,620,000-4,320,000 RWF/mo |\n' +
+            '| Data Entry | $3-8/hr | 4,050-10,800 RWF/hr | 324,000-864,000 RWF/mo |\n' +
+            '| Translation | $0.05-0.15/word | 68-203 RWF/word | 405,000-1,215,000 RWF/mo |\n\n' +
+            '> 💡 **Reality check:** Most freelancers start earning $200-500/mo (270,000-675,000 RWF) in their first year. ' +
+            'With experience and reviews, you will scale to $1,000-3,000/mo (1,350,000-4,050,000 RWF).',
             'video',
             1,
             { videoUrl: 'https://www.youtube.com/watch?v=Uj7Wz3fY0YM', videoTitle: 'Highest Paying Freelance Skills 2025' },
@@ -992,7 +1059,25 @@ const COURSES: CourseDef[] = [
         [
           makeLesson(
             'Pricing, Invoicing & Getting Paid',
-            'Set rates, create invoices, and get paid via mobile money, PayPal, and Payoneer.\n\n### Pricing Strategies:\n1. Hourly: Good for ongoing work\n2. Project: Good for defined scope\n3. Value-based: Price by value delivered\n4. Retainer: Monthly fee for services\n\n### Payment Methods:\n- Mobile money (MoMo, M-Pesa, Airtel)\n- PayPal (international)\n- Payoneer (US/EU)\n- Bank transfer',
+            'Set rates, create invoices, and get paid via mobile money, PayPal, and Payoneer.\n\n### Pricing Strategies\n' +
+            '| Strategy | When to Use | Example | Rwandan Advantage |\n' +
+            '|---|---|---|---|\n' +
+            '| Hourly | Ongoing work, unclear scope | $20/hr for admin tasks | Competitive $5-15/hr rate |\n' +
+            '| Project | Defined scope, one-time | $500 for website | Charge USD, earn RWF |\n' +
+            '| Value-based | High-impact projects | $2,000 for e-commerce site | 10x your hourly rate |\n' +
+            '| Retainer | Monthly recurring work | $800/mo for social media | Predictable income |\n' +
+            '| Package | Bundled services | $300 for logo + brand guide | Easy for clients to say yes |\n\n' +
+            '### Payment Method Comparison\n' +
+            '| Method | Receive | Withdrawal to Rwanda | Fee | Speed |\n' +
+            '|---|---|---|---|---|\n' +
+            '| Payoneer | USD from Upwork/Fiverr | MoMo or bank | 1.5% | 1-3 days |\n' +
+            '| PayPal | USD/EUR from clients | Bank transfer | 2.9% + $0.30 | 3-5 days |\n' +
+            '| Wise (TransferWise) | USD/EUR/GBP | Direct to bank | 0.5-1.5% | 1-2 days |\n' +
+            '| Mobile Money (MoMo) | Direct MoMo | Instant in RWF | 0-2% | Instant |\n' +
+            '| Bank Wire | Direct from client | Bank account | $15-30 fee | 3-7 days |\n' +
+            '| Crypto (USDT) ⚠️ Advanced | Fast but volatile | P2P exchange | 1-3% | 10 min |\n\n' +
+            '> 🇷🇼 **Pro Tip:** Most Rwandan freelancers use Payoneer to receive USD from Upwork, ' +
+            'then withdraw to their MoMo account. The total fee is about 3% — much cheaper than PayPal!',
             'video',
             1,
             { videoUrl: 'https://www.youtube.com/watch?v=4F0lDv3J8Yk', videoTitle: 'Freelance Pricing Guide' },
@@ -1019,12 +1104,14 @@ const COURSES: CourseDef[] = [
             4,
           ),
           makeAssignmentLesson(
-            'Module 5: Final Freelance Business Project',
-            'Create a complete freelance business plan.',
-            'Include services, pricing, client acquisition, and financial projections for 6 months.',
+            'Module 5: Final Freelance Project — Earn Your First $200 (265,000 RWF)!',
+            'Your mission: Land a REAL freelance client on Upwork or Fiverr and earn real USD!',
+            '**LAND YOUR FIRST FREELANCE CLIENT CHALLENGE: Target $200+ (265,000+ RWF)**\n\nYour mission: Get hired by a REAL international client and complete a paid project. No simulations!\n\n**Step 1: Choose Your Skill (Day 1)**\nPick ONE service to offer: logo design (Fiverr), article writing (Upwork), video editing (Fiverr), virtual assistant (Upwork), or social media management.\n\n**Step 2: Create Your Profile (Day 1-2)**\n- Upwork: Professional photo, headline with keywords, portfolio with 3 samples, set rate at $15-25/hour\n- Fiverr: Create 3 gigs starting at $20, $50, $100\n\n**Step 3: Send 20 Proposals (Day 3-7)**\n- Search for jobs with "beginner friendly" or "entry level"\n- Use the 5-part proposal template from Module 2\n- Apply to 20+ jobs minimum\n- Target: 3-5 interview requests\n\n**Step 4: Win Your First Client (Day 8-14)**\n- Respond within 1 hour\n- Offer a small discount or faster delivery\n- Get that first contract!\n\n**Step 5: Deliver & Get Paid (Day 15-30)**\n- Over-deliver on quality\n- Ask for 5-star review\n- Withdraw via Payoneer or PayPal to MoMo\n\n**🎯 Quick access links:** [Create Upwork Account](https://www.upwork.com) | [Create Fiverr Account](https://www.fiverr.com) | [Payoneer Signup](https://www.payoneer.com) | [LinkedIn Profile](https://www.linkedin.com)\n\n**🎯 Target: $200+ = 265,000+ RWF from your first client!** Once you have 1 five-star review, getting clients becomes 5x easier. Next target: $1,000/month = 1,300,000 RWF = iPhone money!\n\n![Freelancing money](https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&q=80&w=600&h=400)\n\n> **Pro Tip:** Rwandan freelancers earn $10-30/hour on average. With 5 hours/week = $200-600/month (265,000-800,000 RWF) extra income while studying or working!',
             [
-              { question: 'Create a 6-month freelance plan with services, pricing, income goal, acquisition strategy, and budget.', type: 'open', explanation: 'Be realistic about clients/month and ramp-up. Include best-case and minimum scenarios.', points: 25 },
-              { question: 'Design a freelance contract with 8+ key clauses.', type: 'open', explanation: 'Cover: scope, timeline, payment, revisions, late penalties, IP, confidentiality, termination.', points: 20 },
+              { question: 'SKILL & PROFILE: Which freelance skill did you choose? Share your Upwork/Fiverr profile link.', type: 'open', explanation: 'Describe your niche, rate, and portfolio samples.', points: 20 },
+              { question: 'PROPOSALS: How many proposals did you send? How many responses/interviews? Share one winning proposal.', type: 'open', explanation: 'Include your full proposal text and the clients response.', points: 20 },
+              { question: 'FIRST CLIENT: What project did you win? Describe the scope, timeline, and payment amount.', type: 'open', explanation: 'Share the contract details and client requirements.', points: 20 },
+              { question: 'TOTAL EARNINGS: How much did you earn in USD? In RWF? Client review received? Next steps?', type: 'open', explanation: 'Report your real income! Screenshot of payment receipt.', points: 25 },
             ],
             5,
           ),
@@ -1306,12 +1393,14 @@ const COURSES: CourseDef[] = [
             4,
           ),
           makeAssignmentLesson(
-            'Module 5: Final Business Growth Plan',
-            'Create a 12-month growth plan.',
-            'Include systems, hiring, marketing, financial projections, and milestones.',
+            'Module 5: Final Business Project — Launch & Earn 100,000+ RWF!',
+            'Your mission: Launch a real micro-business and make your first 100,000+ RWF in revenue!',
+            '**LAUNCH A MICRO-BUSINESS CHALLENGE: Earn 100,000+ RWF in 30 Days**\n\nYour mission: Start a REAL tiny business using what you learned. No business plan exercise — real revenue!\n\n**Low-Capital Business Ideas (Start with 10,000-50,000 RWF):**\n1. **Snack delivery service** — Buy wholesale at Kimironko, sell at schools/offices. 50% profit margin.\n2. **Social media management** — Offer to manage 1 local business Instagram for 100,000 RWF/month (you already learned this!).\n3. **Print-on-demand t-shirts** — Print 10 designs (35,000 RWF each), sell for 70,000 RWF each.\n4. **Mobile phone accessories** — Buy phone cases wholesale (5,000 RWF), sell for 15,000 RWF.\n5. **Freelance [Canva](https://www.canva.com) design** — Create social media posts for local businesses. Charge 20,000-50,000 RWF per client.\n\n**🎯 Quick access links:** [Register Business at RDB](https://irembo.gov.rw) | [RRA TIN Registration](https://rra.gov.rw) | [Canva Free](https://www.canva.com) | [MTN MoMo](https://www.mtn.co.rw/momo)\n\n**Your 30-Day Plan:**\n- **Week 1:** Choose business, buy supplies/equipment, set up MoMo payment\n- **Week 2:** Find first 5 customers (friends, family, WhatsApp groups)\n- **Week 3:** Get feedback and improve your offer\n- **Week 4:** Total your revenue. Reinvest 50% of profit.\n\n**🎯 Target: 100,000-300,000 RWF revenue in Month 1!** Scale to 500,000+ RWF/month by Month 3 = iPhone money!\n\n![Business money](https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=600&h=400)\n\n> **Pro Tip:** The best business to start is the one you start TODAY. Not next month, not when you have more money. Start small, learn fast, grow big!',
             [
-              { question: 'Create a 12-month growth plan: systems, hiring timeline, marketing budget, revenue targets, milestones.', type: 'open', explanation: 'Include both optimistic and conservative financial scenarios.', points: 25 },
-              { question: 'How would you expand beyond your initial market (geographic, product, or segment)?', type: 'open', explanation: 'Consider other Rwandan cities, new products, or different customer segments.', points: 20 },
+              { question: 'BUSINESS PLAN: What micro-business did you choose? Startup costs? Target customers? Expected profit?', type: 'open', explanation: 'Describe your business model, pricing, and target market.', points: 20 },
+              { question: 'LAUNCH REPORT: How did you find your first 5 customers? What marketing worked?', type: 'open', explanation: 'Share what channels you used and what got results.', points: 20 },
+              { question: 'FINANCIAL REPORT: Total revenue? Total costs? Net profit? What will you reinvest?', type: 'open', explanation: 'Show your actual income and expenses with receipts/screenshots.', points: 20 },
+              { question: 'GROWTH PLAN: How will you scale to 500,000+ RWF/month? New products? More customers? Online?', type: 'open', explanation: 'Your real expansion strategy based on what you learned.', points: 25 },
             ],
             5,
           ),
@@ -1905,10 +1994,11 @@ const COURSES: CourseDef[] = [
   {
     title: 'Create & Earn: Content Creation for Rwandan Youth',
     description:
-      ' Rwandan creators are gaining global audiences — and making money. This course shows you how ' +
-      'to create engaging content for TikTok, Instagram, YouTube, and LinkedIn using just your phone. ' +
-      'Learn video editing with free apps, storytelling, growing your audience, and making money ' +
-      'through brand deals, digital products, and affiliate marketing. Start creating today!',
+      ' 🎬 Turn your phone into a money-making machine! Rwandan youth are earning real income from content creation. ' +
+      'This course shows you exactly how to create scroll-stopping content for TikTok, Instagram, YouTube, and LinkedIn ' +
+      'using just your smartphone — no expensive gear needed. Learn smartphone filming techniques, CapCut video editing, ' +
+      'storytelling that hooks viewers, audience growth hacks, and how to earn in RWF through brand deals, ' +
+      'digital products, and affiliate marketing. Real examples from Rwandan creators included! 🇷🇼',
     category: 'Business',
     level: 'Beginner',
     price: 2000,
@@ -1933,21 +2023,134 @@ const COURSES: CourseDef[] = [
           ),
           makeLesson(
             'Smartphone Content Production',
-            'You do not need expensive gear to create great content. Learn how to use your smartphone to ' +
-            'shoot high-quality videos, record clear audio, and create professional-looking content on a budget.\n\n' +
-            '### Smartphone Kit:\n' +
-            '- **Smartphone** — Any modern phone works\n' +
-            '- **Tripod** — Inexpensive phone tripod ($15-30)\n' +
-            '- **Lavalier mic** — Clip-on microphone ($20)\n' +
-            '- **Ring light** — Even lighting ($25)\n' +
-            '- **Natural light** — Best and free!',
+            'You do not need expensive gear to create great content! In Rwanda, you can get a complete starter kit ' +
+            'for under 100,000 RWF. This lesson shows you exactly what to buy, where to find it in Kigali, ' +
+            'and how to use your smartphone to create professional-looking content on any budget.\n\n' +
+            '### 📱 Your Starter Kit (From 0 - 100,000 RWF)\n' +
+            '\n' +
+            '**1. Smartphone — You already have it! (0 RWF)**\n' +
+            'Your phone is all you need to start. Most modern smartphones shoot 1080p HD video — good enough for YouTube and TikTok!\n' +
+            '![Smartphone recording](https://images.unsplash.com/photo-1598532163257-ae3c6b2524b6?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '**2. Tripod — 20,000 - 40,000 RWF**\n' +
+            'Essential for steady shots, hands-free filming, and group videos. A cheap tripod beats a shaky hand every time!\n' +
+            '**📍 Where to buy:** Kimironko Market electronics section or phone accessory shops in Remera (Diamond/Mobile Zone shops).\n' +
+            '![Phone tripod](https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '**3. Lavalier Microphone — 15,000 - 25,000 RWF**\n' +
+            'Clips onto your collar for crystal-clear audio. Viewers forgive bad video but NEVER bad audio!\n' +
+            '**📍 Where to buy:** Diamond shops in Remera, IKOBE downtown, or [Jumia Rwanda](https://www.jumia.co.rw).\n' +
+            '![Lavalier microphone](https://images.unsplash.com/photo-1598653222000-6b7b7a552625?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '**4. Ring Light — 25,000 - 40,000 RWF**\n' +
+            'Affordable LED ring light with phone holder and adjustable brightness. A total game-changer for indoor filming!\n' +
+            '**📍 Where to buy:** Electronics shops in downtown Kigali, CNA stores, or [Jumia Rwanda](https://www.jumia.co.rw).\n' +
+            '![Ring light setup](https://images.unsplash.com/photo-1526947425960-945c6e72858f?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '### ☀️ Natural Light — 0 RWF (Best and free!)\n' +
+            'In Rwanda, we have tropical sun almost every day! Film near windows during the "golden hour" (6-8 AM or 4-6 PM) ' +
+            'for the best lighting. Nothing beats free, natural light for a professional look.\n' +
+            '\n' +
+            '### 🛍️ Where to Buy Equipment in Kigali:\n' +
+            '1. **Kimironko Market** — Bargain for the best prices on tripods and phone accessories\n' +
+            '2. **Remera (Diamond/Mobile Zone)** — Quality microphones and ring lights\n' +
+            '3. **Downtown Kigali** — CNA, IKOBE, and general electronics stores\n' +
+            '4. **Online** — [Jumia Rwanda](https://www.jumia.co.rw) delivers anywhere\n' +
+            '\n' +
+            '> **Pro Tip:** Start with just your phone and natural light. Add gear one piece at a time as you earn from content!',
             'article',
             2,
-            { imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600&h=400' },
+          ),
+          makeLesson(
+            'Choosing Your Content Creation Smartphone',
+            'The most important decision you will make as a creator is which phone to use. ' +
+            'The good news? You do NOT need an iPhone! Many affordable phones in Rwanda ' +
+            'shoot excellent video for TikTok, Instagram, and YouTube.\n\n' +
+            'This lesson breaks down exactly what specs matter, which phones to buy at every budget in RWF, ' +
+            'and where to find them in Kigali.\n\n' +
+            '---\n\n' +
+            '### 📱 Key Specs for Content Creation\n' +
+            '\n' +
+            '**1. Camera — Look for:**\n' +
+            '- **Resolution:** 48MP rear camera minimum, 8MP+ front camera for selfie videos\n' +
+            '- **Video:** 1080p at 30fps minimum — 4K if your budget allows\n' +
+            '- **Stabilisation (OIS/EIS):** Reduces shaky footage — the MOST important feature!\n' +
+            '- **Slow motion:** 120fps or higher for engaging TikTok effects\n' +
+            '\n' +
+            '**2. Storage — Video takes space!**\n' +
+            '- **128GB minimum** (1 minute of 1080p video = ~150MB)\n' +
+            '- **256GB recommended** if you film often\n' +
+            '- **MicroSD card slot** is a huge bonus for expandable storage\n' +
+            '\n' +
+            '**3. Battery — For all-day shooting**\n' +
+            '- **5000mAh or higher** keeps you filming all day\n' +
+            '- **Fast charging (18W+)** for quick top-ups between shoots\n' +
+            '\n' +
+            '**4. Processor — Affects recording & editing**\n' +
+            '- MediaTek Helio G-series or Dimensity, or Snapdragon 600+ series\n' +
+            '- Better processor = smoother video and faster CapCut editing\n' +
+            '\n' +
+            '---\n\n' +
+            '### 💰 Best Phones by Budget (RWF Prices in Rwanda 2025)\n' +
+            '\n' +
+            '#### 🟢 Budget: Under 100,000 RWF — Starter Level\n' +
+            'Great to begin. Focus on lighting and audio instead of the phone!\n' +
+            '| Phone | Price | Camera | Storage |\n' +
+            '|---|---|---|---|\n' +
+            '| Tecno Spark Go 2024 | ~70,000 RWF | 13MP | 64GB |\n' +
+            '| Infinix Smart 9 | ~75,000 RWF | 13MP | 64GB |\n' +
+            '| Nokia C22 | ~80,000 RWF | 13MP+2MP | 64GB |\n' +
+            '\n' +
+            '#### 🟡 Mid-Range: 100,000 \u2013 250,000 RWF — Best Value ⭐\n' +
+            'Sweet spot for content creators! Excellent cameras without breaking the bank.\n' +
+            '| Phone | Price | Camera | Video | Storage |\n' +
+            '|---|---|---|---|---|\n' +
+            '| Infinix Hot 40 Pro | ~170,000 RWF | 108MP | 1080p 120fps | 256GB |\n' +
+            '| Tecno Spark 20 Pro | ~180,000 RWF | 108MP | 1080p | 256GB |\n' +
+            '| Samsung A15 | ~200,000 RWF | 50MP OIS | 1080p 30fps | 128GB |\n' +
+            '| Oppo A79 | ~220,000 RWF | 50MP | 1080p | 256GB |\n' +
+            '\n' +
+            '#### 🔵 Premium: 250,000 \u2013 500,000 RWF — Professional\n' +
+            'OIS stabilisation and 4K video for professional-looking content.\n' +
+            '| Phone | Price | Camera | Video |\n' +
+            '|---|---|---|---|\n' +
+            '| Samsung A35 | ~350,000 RWF | 50MP OIS | 4K 30fps ⭐ |\n' +
+            '| Tecno Camon 30 Premier | ~380,000 RWF | 50MP Periscope | 4K 60fps ⭐ |\n' +
+            '| Google Pixel 6a | ~400,000 RWF | 12MP (best software) | 4K 60fps |\n' +
+            '| Tecno Phantom V Flip | ~450,000 RWF | 50MP | 4K 30fps |\n' +
+            '\n' +
+            '#### 🟣 Flagship: 500,000+ RWF — Pro Level\n' +
+            'Only if content creation is your full-time business.\n' +
+            '| Phone | Price | Camera | Video |\n' +
+            '|---|---|---|---|\n' +
+            '| Samsung S24 FE | ~600,000 RWF | 50MP OIS | 8K 24fps ⭐ |\n' +
+            '| iPhone 15 | ~900,000 RWF | 48MP OIS | 4K 60fps Dolby ⭐ |\n' +
+            '| iPhone 16 Pro | ~1,500,000 RWF | 48MP triple | 4K 120fps ProRes ⭐ |\n' +
+            '\n' +
+            '---\n\n' +
+            '### 🛍️ Where to Buy Phones in Kigali\n' +
+            '1. **MTN & Airtel Official Shops** — Warranty, slightly higher prices\n' +
+            '2. **Remera (Diamond/Mobile Zone)** — Wide selection, competitive prices\n' +
+            '3. **Downtown Kigali** — CNA, IKOBE, Phone City — bargain for best price\n' +
+            '4. **Online** — [Jumia Rwanda](https://www.jumia.co.rw), [Kikuu](https://www.kikuu.co.rw) — delivered to your door\n' +
+            '5. **Ikaze Showroom** — Authorised Tecno/Infinix/Oppo dealer\n' +
+            '\n' +
+            '### ✅ Quick Decision Guide\n' +
+            '- **Under 100k RWF:** Tecno Spark Go — cheapest option to start\n' +
+            '- **150k-200k RWF:** Infinix Hot 40 Pro — best value 108MP camera ⭐\n' +
+            '- **200k-350k RWF:** Samsung A35 — best video stabilisation (OIS) ⭐\n' +
+            '- **350k-500k RWF:** Tecno Camon 30 Premier — 4K 60fps professional ⭐\n' +
+            '- **800k+ RWF:** iPhone 15/16 — best in class stabilisation\n' +
+            '\n' +
+            '![Smartphones lined up](https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '> **Pro Tip:** Spend more on a phone with OIS (optical stabilisation) rather than just high megapixels. A steady 1080p video looks WAY better than a shaky 4K video!',
+            'article',
+            3,
           ),
           makeQuizLesson(
             'Module 1: Knowledge Check',
-            'Test your content creation fundamentals.',
+            'Test your content creation fundamentals, including phone selection.',
             [
               {
                 question: 'What is the most important factor in choosing a content niche?',
@@ -1961,8 +2164,20 @@ const COURSES: CourseDef[] = [
                 correctIndex: 1,
                 explanation: 'A modern smartphone is sufficient to start creating quality content today.',
               },
+              {
+                question: 'Which phone feature matters MOST for video quality?',
+                options: ['Highest megapixels', 'Optical Image Stabilisation (OIS)', 'Largest screen size', 'Water resistance'],
+                correctIndex: 1,
+                explanation: 'OIS reduces shaky footage - a steady 1080p looks better than shaky 4K!',
+              },
+              {
+                question: 'The best-value phone range for content creators in Rwanda is:',
+                options: ['Under 100,000 RWF', '150,000 - 250,000 RWF', 'Over 1,000,000 RWF', 'Any phone under 50,000 RWF'],
+                correctIndex: 1,
+                explanation: 'Phones in the 150k-250k RWF range (Infinix Hot 40 Pro, Spark 20 Pro) offer excellent 108MP cameras at great value.',
+              },
             ],
-            3,
+            4,
           ),
         ],
         'Identify your content niche and produce basic content with a smartphone.',
@@ -1973,27 +2188,191 @@ const COURSES: CourseDef[] = [
         [
           makeLesson(
             'Platform-Specific Growth Strategies',
-            'Each social media platform has its own algorithm and best practices. Learn how to optimise ' +
-            'for YouTube, TikTok, Instagram Reels, and LinkedIn to maximise your reach.\n\n' +
-            '### Platform Tips:\n' +
-            '- **YouTube** — SEO-friendly titles, thumbnails, and descriptions\n' +
-            '- **TikTok** — Trending sounds, hooks in first 3 seconds\n' +
-            '- **Instagram** — Reels for reach, Stories for engagement\n' +
-            '- **LinkedIn** — Educational content, industry insights',
+            'Each social media platform has its own algorithm and best practices. This lesson gives you ' +
+            'step-by-step guides for TikTok, Instagram, YouTube, and LinkedIn — plus how to repurpose ' +
+            'content across all platforms to save time and maximise reach.\n\n' +
+            '---\n\n' +
+            '## 🎵 TikTok — Step-by-Step Guide\n' +
+            '\n' +
+            '### Step 1: Download & Setup\n' +
+            '1. Download TikTok from Google Play Store (Android) or App Store (iPhone) — free!\n' +
+            '2. Sign up with email, phone number, or Google account\n' +
+            '3. Set your profile: profile picture, bio (tell people what you create), link to YouTube/Instagram\n' +
+            '4. Follow 20-30 creators in your niche to train your feed\n' +
+            '\n' +
+            '### Step 2: Film Your First Video\n' +
+            '1. Tap the **+** button at the bottom\n' +
+            '2. Choose **15s** (short) or **60s** (longer) — 15-30 seconds is best for beginners\n' +
+            '3. Hold your phone **horizontally or vertically** (vertical is best)\n' +
+            '4. Tap the red button to record. Tap again to stop.\n' +
+            '5. Use the **Speed** button for slow/fast motion effects\n' +
+            '\n' +
+            '### Step 3: Add Sounds & Effects\n' +
+            '1. Tap **Sounds** at the top to search for trending songs\n' +
+            '2. Use trending sounds — they help the algorithm show your video\n' +
+            '3. Tap **Effects** to add filters, transitions, and text\n' +
+            '4. Add **captions** (text on screen) — most people watch without sound!\n' +
+            '\n' +
+            '### Step 4: Publish & Hashtags\n' +
+            '1. Write a caption with 3-5 **hashtags** (mix popular + niche, e.g., #Rwanda, #Kigali, #TikTokRwanda)\n' +
+            '2. Tag your location (Rwanda, Kigali, etc.) for local reach\n' +
+            '3. Post at peak times: 6-9 AM or 6-9 PM (Rwandan time)\n' +
+            '4. Share to WhatsApp, Instagram, or YouTube for more views\n' +
+            '\n' +
+            '### Pro Growth Tips:\n' +
+            '- **Post 1-2 times per day** — consistency beats perfection\n' +
+            '- **Hook in first 2 seconds** — ask a question or show something interesting\n' +
+            '- **Use Duet/Stitch** — react to trending videos in your niche\n' +
+            '- **Engage back** — reply to comments within the first hour\n' +
+            '![TikTok app interface](https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '---\n\n' +
+            '## 📸 Instagram — Step-by-Step Guide\n' +
+            '\n' +
+            '### Step 1: Optimise Your Profile\n' +
+            '1. Switch to **Creator Account** (Settings \u2192 Account \u2192 Switch to Creator)\n' +
+            '2. Set your bio: who you help + what you create + call to action\n' +
+            '3. Add link in bio (Linktree or direct to your YouTube)\n' +
+            '\n' +
+            '### Step 2: Create Reels (Best for Growth)\n' +
+            '1. Tap **+** at bottom \u2192 **Reel**\n' +
+            '2. Film or upload video clips\n' +
+            '3. Add music from Instagram Music library (search trending songs)\n' +
+            '4. Use **Text** tool to add captions — essential for reach\n' +
+            '5. Set cover image (pick the best frame)\n' +
+            '6. Post with 3-5 hashtags and location tag\n' +
+            '\n' +
+            '### Step 3: Stories & Engagement\n' +
+            '1. Post Stories daily — behind-the-scenes, polls, Q&A\n' +
+            '2. Use **Stickers** (poll, question, countdown) to boost engagement\n' +
+            '3. Reply to DMs and comments within 24 hours\n' +
+            '4. Share others content to your Stories — they will share back!\n' +
+            '\n' +
+            '### Pro Growth Tips:\n' +
+            '- **Post Reels 3-5x per week** — Instagram prioritises Reels\n' +
+            '- **Use carousel posts** — swipeable posts get high engagement\n' +
+            '- **Post at 7-9 AM or 7-9 PM** (Rwandan time)\n' +
+            '- **Collaborate** — tag other creators, do shoutouts\n' +
+            '\n' +
+            '---\n\n' +
+            '## ▶️ YouTube — Step-by-Step Guide\n' +
+            '\n' +
+            '### Step 1: Start Your Channel\n' +
+            '1. Go to YouTube.com \u2192 Sign in with Google\n' +
+            '2. Click your profile picture \u2192 **Create a Channel**\n' +
+            '3. Name your channel (use your name or niche, e.g., \"Jane in Kigali\" or \"Tech Rwanda\")\n' +
+            '4. Add channel art/banner (use Canva — free templates)\n' +
+            '5. Write your channel description with keywords\n' +
+            '\n' +
+            '### Step 2: Film & Upload Your First Video\n' +
+            '1. Film with your phone (horizontal/landscape is best for YouTube!)\n' +
+            '2. Edit in CapCut (trim, add text, music)\n' +
+            '3. Click camera icon \u2192 **Upload Video**\n' +
+            '4. Add title with keywords (e.g., \"How to Start Content Creation in Rwanda — Complete Guide\")\n' +
+            '5. Write description (250+ words with keywords and timestamps)\n' +
+            '6. Add **tags** (relevant search terms)\n' +
+            '7. Choose **thumbnail** — make it bright with bold text\n' +
+            '8. Add to **playlist** (organise your content)\n' + 
+            '\n' +
+            '### Step 3: Grow Your Channel\n' +
+            '1. Post **weekly** — consistency is key on YouTube\n' +
+            '2. Use **Video Chapters** (timestamps in description)\n' +
+            '3. End each video with **suggested videos** (cards/screens)\n' +
+            '4. Ask viewers to **Like, Comment, Subscribe**\n' +
+            '5. Reply to ALL comments — boosts algorithm ranking\n' +
+            '6. Use **YouTube Studio** app to track performance\n' +
+            '\n' +
+            '### Pro Tips:\n' +
+            '- **Keyword research:** Use VidIQ extension (free) to find high-volume keywords\n' +
+            '- **Thumbnails:** Bright colours, close-up face, 3 words max\n' +
+            '- **First 30 seconds:** Hook viewers or they will click away\n' +
+            '- **Playlists:** Group similar videos — increases watch time\n' +
+            '![YouTube studio setup](https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '---\n\n' +
+            '## 💼 LinkedIn — Step-by-Step Guide\n' +
+            '\n' +
+            '### Step 1: Build Your Creator Profile\n' +
+            '1. Complete all sections: photo, headline, about, experience\n' +
+            '2. Turn on **Creator Mode** (Settings \u2192 Creator Mode)\n' +
+            '3. Add your niche hashtags in bio\n' +
+            '\n' +
+            '### Step 2: Post Content That Gets Noticed\n' +
+            '1. **Educational posts** — share what you know (how-to, tips, insights)\n' +
+            '2. **Personal stories** — your content creation journey\n' +
+            '3. **Industry insights** — trends in your niche\n' +
+            '4. **Video posts** — LinkedIn now prioritises video\n' +
+            '\n' +
+            '### Step 3: Network & Grow\n' +
+            '1. Connect with 10+ people daily in your niche\n' +
+            '2. Comment meaningfully on others posts\n' +
+            '3. Join relevant LinkedIn Groups\n' +
+            '4. Post 3-5x per week for steady growth\n' +
+            '\n' +
+            '---\n\n' +
+            '## 🔄 Cross-Platform Repurposing Strategy\n' +
+            'Save time by creating ONE piece of content and sharing it everywhere:\n' +
+            '1. **Film a 10-minute YouTube video** (your pillar content)\n' +
+            '2. **Extract 3 clips** for TikTok, Reels, and Shorts (15-60 seconds each)\n' +
+            '3. **Turn the script** into a LinkedIn post\n' +
+            '4. **Share screenshots/key points** as Instagram carousel\n' +
+            '5. **Post behind-the-scenes** on Stories\n' +
+            '6. **Save the transcript** for a blog post\n' +
+            '\n' +
+            '**Time savings:** Instead of making 6 separate pieces of content, you make 1 video + 30 minutes of repurposing = all platforms covered!\n' +
+            '\n' +
+            '![Social media apps on phone screen](https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '> **Pro Tip:** Start with ONE platform and master it before adding others. Trying to do all 4 at once can be overwhelming. TikTok and Instagram Reels are the easiest to grow on for beginners!',
             'article',
             1,
-            { imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600&h=400' },
           ),
           makeLesson(
             'Monetisation Strategies for African Creators',
             'From YouTube ad revenue and brand sponsorships to digital products and affiliate marketing — ' +
-            'learn how African creators can make money from content. Includes payment platforms and tax considerations.\n\n' +
-            '### Monetisation Methods:\n' +
-            '1. **Ad revenue** — YouTube Partner Programme\n' +
-            '2. **Brand deals** — Sponsorships with companies\n' +
-            '3. **Digital products** — E-books, templates, courses\n' +
-            '4. **Affiliate marketing** — Commission from product sales\n' +
-            '5. **Crowdfunding** — Patreon, Buy Me a Coffee',
+            'learn how African creators can make money from content. This lesson includes real earning examples in RWF, ' +
+            'payment platforms that work in Rwanda, and local tax considerations.\n\n' +
+            '### 💰 Monetisation Methods (with Real RWF Examples):\n' +
+            '\n' +
+            '**1. YouTube Ad Revenue**\n' +
+            'Join YouTube Partner Programme (1,000 subs + 4,000 watch hours). Rwandan creators earn roughly ' +
+            '500,000 - 2,000,000 RWF per million views depending on niche.\n' +
+            '**Rwandan creators to follow:** Ruger (music), Diana Wangeci (lifestyle), local vloggers.\n' +
+            '\n' +
+            '**2. Brand Deals & Sponsorships**\n' +
+            'Local brands pay creators 100,000 - 5,000,000 RWF per campaign. Brands like Airtel, MTN, BK, ' +
+            'Inyange, and local NGOs regularly sponsor creators.\n' +
+            '**Tips:** Build a media kit with your stats and pitch to brands that match your content.\n' +
+            '\n' +
+            '**3. Digital Products**\n' +
+            'Sell e-books, templates, online courses, or presets. Price: 5,000 - 100,000 RWF. ' +
+            'Payment via MoMo, Airtel Money, or bank transfer.\n' +
+            '**Platforms:** Gumroad, Payhip, or sell directly via WhatsApp.\n' +
+            '\n' +
+            '**4. Affiliate Marketing**\n' +
+            'Earn commission promoting products. Jumia Rwanda offers up to 11% commission on sales. ' +
+            'Also: Amazon Associates, local affiliate programmes.\n' +
+            '**Example:** Review a smartphone, include your affiliate link, earn 15,000 - 50,000 RWF per sale.\n' +
+            '\n' +
+            '**5. Crowdfunding & Fan Support**\n' +
+            'Platforms: Patreon (international), Buy Me a Coffee, or direct via MoMo.\n' +
+            'Rwandan fans can support creators with as little as 1,000 RWF/month via mobile money.\n' +
+            '\n' +
+            '### 📱 Payment Platforms That Work in Rwanda:\n' +
+            '- **MoMo (MTN Mobile Money)** — Most popular, instant payments\n' +
+            '- **Airtel Money** — Also widely accepted\n' +
+            '- **Bank transfer** — For larger payments\n' +
+            '- **PayPal** — International clients\n' +
+            '- **WorldRemit/Wise** — Receive from abroad\n' +
+            '\n' +
+            '### ⚠️ Tax Considerations for Rwandan Creators:\n' +
+            '- Register with RRA for a TIN (free)\n' +
+            '- Income tax: 0% first 360,000 RWF/month, then 10-30%\n' +
+            '- Keep records of all earnings and expenses\n' +
+            '- Consider an accountant once you earn over 1,000,000 RWF/month\n' +
+            '\n' +
+            '> **Reality check:** Most creators start with 50,000 - 200,000 RWF/month. ' +
+            'With consistency, top Rwandan creators earn 2,000,000 - 10,000,000+ RWF/month!',
             'video',
             2,
             { videoUrl: 'https://www.youtube.com/watch?v=8ZsQIa-LBIQ', videoTitle: 'Make Short Form Content Go Viral - Quick Tips' },
@@ -2055,7 +2434,123 @@ const COURSES: CourseDef[] = [
           ),
           makeLesson(
             'Smartphone Video Production Mastery',
-            'Composition, lighting, stabilisation, and audio techniques.\n\n### Techniques:\n1. Rule of thirds - Position subjects off-centre\n2. Leading lines - Guide the viewers eye\n3. Natural lighting - Golden hour shoots\n4. Three-point lighting - Cheap LED panels\n5. External microphone - Lavalier mic under $20\n6. Stabilisation - Tripod or gimbal',
+            'Now that you have the right phone, let us master how to use it for professional-looking videos. ' +
+            'This lesson covers composition, lighting, stabilisation, and audio techniques — all using ' +
+            'your smartphone and affordable accessories available in Rwanda.\n\n' +
+            '---\n\n' +
+            '## 📐 Camera Settings for Your Phone\n' +
+            '\n' +
+            'Before filming, check these settings:\n' +
+            '- **Resolution:** Set to 1080p at 30fps (most phones)\n' +
+            '- **Aspect ratio:** 16:9 for YouTube, 9:16 for TikTok/Reels\n' +
+            '- **Grid lines:** Turn ON grid lines (Settings \u2192 Camera \u2192 Grid) for composition\n' +
+            '- **HDR:** Turn ON for better colours in bright light\n' +
+            '- **Stabilisation:** Turn ON video stabilisation if available\n' +
+            '- **Flash:** NEVER use flash — use natural light or ring light instead\n' +
+            '\n' +
+            '![Phone camera settings](https://images.unsplash.com/photo-1598532163257-ae3c6b2524b6?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '---\n\n' +
+            '## 🎨 Composition Rules (Make Your Videos Look Professional)\n' +
+            '\n' +
+            '**1. Rule of Thirds**\n' +
+            'Imagine 2 horizontal and 2 vertical lines dividing your screen like a tic-tac-toe grid. ' +
+            'Place your subject where the lines intersect (not in the centre). This makes videos look instantly more professional.\n' +
+            '\n' +
+            '**2. Headroom**\n' +
+            'Leave a small space above your head. Too much space = amateur. Too little = cramped.\n' +
+            '\n' +
+            '**3. Eye Level**\n' +
+            'Hold the camera at eye level or slightly above. Filming from below makes you look unprofessional.\n' +
+            '\n' +
+            '**4. Clean Background**\n' +
+            'Remove clutter behind you. A plain wall, bookshelf, or outdoor scenery works best.\n' +
+            'In Rwanda, film outside with banana trees, hills, or Kigali city views as your background!\n' +
+            '\n' +
+            '---\n\n' +
+            '## 💡 Lighting — The Secret to Pro-Looking Videos\n' +
+            '\n' +
+            '### Natural Light (Free!)\n' +
+            '- **Golden hour:** 6-8 AM and 4-6 PM in Rwanda — soft, warm light\n' +
+            '- Face a window or door for even lighting\n' +
+            '- Avoid midday sun (harsh shadows on your face)\n' +
+            '- In Rwanda, cloudy days actually give you PERFECT diffused light!\n' +
+            '\n' +
+            '### Ring Light (25,000 \u2013 40,000 RWF)\n' +
+            '- Place the ring light behind your phone, at eye level\n' +
+            '- Adjust brightness — not too bright, not too dim\n' +
+            '- Available at: Kimironko Market, Remera shops, [Jumia Rwanda](https://www.jumia.co.rw)\n' +
+            '\n' +
+            '### Three-Point Lighting Setup (Pro)\n' +
+            '1. **Key light:** Main light (ring light or window), 45 degrees to your face\n' +
+            '2. **Fill light:** Secondary light on the opposite side, less bright\n' +
+            '3. **Back light:** Light behind you to separate from background\n' +
+            '\n' +
+            '![Ring light setup](https://images.unsplash.com/photo-1526947425960-945c6e72858f?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '---\n\n' +
+            '## 🎤 Audio — Why Sound Matters More Than Video\n' +
+            '\n' +
+            'Viewers forgive bad video quality, but they NEVER forgive bad audio.\n' +
+            '\n' +
+            '**Free Audio Tips:**\n' +
+            '- Record in a quiet room with soft surfaces (curtains, carpet absorb echo)\n' +
+            '- Speak 15-20cm from the phone microphone\n' +
+            '- Avoid filming near roads, fans, or fridges (background noise ruins videos)\n' +
+            '\n' +
+            '**Affordable Mic Options in Rwanda:**\n' +
+            '| Mic Type | Price | Best For | Where to Buy |\n' +
+            '|---|---|---|---|\n' +
+            '| Lavalier (clip-on) | 15,000 \u2013 25,000 RWF | TikTok, Reels, talking-heads | Remera, Jumia |\n' +
+            '| Shotgun (directional) | 40,000 \u2013 80,000 RWF | YouTube, outdoor filming | Jumia, Ikaze |\n' +
+            '| USB microphone | 50,000 \u2013 100,000 RWF | Voiceovers, podcasting | CNA, IKOBE |\n' +
+            '\n' +
+            '![Lavalier microphone](https://images.unsplash.com/photo-1598653222000-6b7b7a552625?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '---\n\n' +
+            '## 🤳 Stabilisation — No More Shaky Videos\n' +
+            '\n' +
+            '**Free Methods:**\n' +
+            '- Rest your phone on a table, wall, or stack of books\n' +
+            '- Hold phone with TWO hands, elbows tucked into your body\n' +
+            '- Lean against a wall for support\n' +
+            '- Breathe out slowly while recording\n' +
+            '\n' +
+            '**Affordable Tools:**\n' +
+            '- **Phone tripod:** 20,000 \u2013 40,000 RWF (Kimironko, Remera)\n' +
+            '- **Gimbal stabiliser:** 80,000 \u2013 150,000 RWF (Jumia, for walking videos)\n' +
+            '\n' +
+            '![Phone on tripod](https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '---\n\n' +
+            '## 📋 Pre-Filming Checklist\n' +
+            '\n' +
+            'Before you hit record, check these:\n' +
+            '- [ ] Phone battery charged (>50%)\n' +
+            '- [ ] Storage space available (check Settings \u2192 Storage)\n' +
+            '- [ ] Lens cleaned (wipe with a soft cloth!)\n' +
+            '- [ ] Airplane mode ON (no interruptions from calls/messages)\n' +
+            '- [ ] Ring light positioned at eye level\n' +
+            '- [ ] Background clean and uncluttered\n' +
+            '- [ ] Microphone clipped and positioned correctly\n' +
+            '- [ ] Water nearby (talking makes you thirsty!)\n' +
+            '\n' +
+            '## 🎬 Rwanda-Specific Content Ideas You Can Film Today\n' +
+            '\n' +
+            '1. **Kigali city tour** — film at Kigali Convention Centre, BK Arena, or Rwanda Art Museum\n' +
+            '2. **Akagera or Nyungwe trip** — nature content performs great globally\n' +
+            '3. **Umuganda community work** — authentic Rwandan content\n' +
+            '4. **Local food review** — brochettes, isombe, ugali, Rolex\n' +
+            '5. **Kigali Genocide Memorial** — educational/historical content\n' +
+            '6. **Rwandan fashion** — kitenge, agaseke, traditional wear\n' +
+            '7. **Coffee farm tour** — Rwanda is famous for coffee!\n' +
+            '8. **Motorbike taxi ride (taxi-moto)** — authentic daily life\n' +
+            '9. **Market day at Kimironko** — colourful, engaging content\n' +
+            '10. **Dance challenge with traditional Intore dance** — blend old and new\n' +
+            '\n' +
+            '![Filming outdoors in nature](https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=600&h=400)\n' +
+            '\n' +
+            '> **Pro Tip:** The best content in Rwanda is AUTHENTIC content. Show your real life, your real community, and your real culture. Audiences connect with genuine stories, not fake perfection!',
             'article',
             2,
           ),
@@ -2167,12 +2662,14 @@ const COURSES: CourseDef[] = [
             4,
           ),
           makeAssignmentLesson(
-            'Module 5: Final Creator Business Project',
-            'Create a 6-month creator business plan.',
-            'Content strategy, revenue streams, brand partnerships, and financial projections.',
+            'Module 5: Final Creator Project — Earn 500,000 RWF in 30 Days!',
+            'Your mission: Earn REAL money from content creation in 30 days. Not a simulation!',
+            '🚀 **THE 30-DAY CONTENT CREATOR CHALLENGE** 🚀\n\nYour target: Earn 300,000-500,000 RWF in 30 days using ONLY what you learned in this course. That is enough for an iPhone down payment!\n\n**Week 1: Post 15 videos (Target: 0 RWF, build followers)**\nPick ONE niche, create accounts on TikTok + Instagram, post 2-3 videos/day, reach 500+ followers.\n\n**Week 2: Affiliate Marketing Sprint (Target: 50,000-100,000 RWF)**\nSign up for [Jumia Rwanda Affiliate Programme](https://www.jumia.co.rw/affiliate) (free, 11% commission). Create 10 product review videos. Example: sell 5 phones at 200,000 RWF each = 110,000 RWF commission!\n\n**Week 3: Digital Product Launch (Target: 100,000-200,000 RWF)**\nCreate [Canva templates](https://www.canva.com), [CapCut](https://www.capcut.com) presets, or mini e-book. Price at 5,000-15,000 RWF each. Sell 20 at 10,000 RWF = 200,000 RWF via MoMo payments.\n\n**Week 4: Brand Deal Outreach (Target: 150,000-200,000 RWF)**\nBuild a media kit on Canva. DM 20 local brands (Airtel, MTN, BK, Inyange, restaurants). Offer: 2 TikToks + 1 Insta post + 1 Story for 150,000 RWF.\n\n**🎯 Total Potential: 300,000-500,000 RWF in Month 1!** Enough for a new Infinix Hot 40 Pro (170,000 RWF) + full creator kit (80,000 RWF) + savings toward iPhone!\n\n![Money from content creation](https://images.unsplash.com/photo-1553729459-afe8f2e0e8c5?auto=format&fit=crop&q=80&w=600&h=400)\n\n> **Reality Check:** You will not become a millionaire overnight. But post consistently for 30 days, promote affiliate products, and reach out to brands — you CAN earn 300,000 RWF. Top Rwandan creators earn 5,000,000+ RWF/month!',
             [
-              { question: 'Create a 6-month plan: monthly goals, audience targets, revenue streams, brand outreach, and projected income.', type: 'open', explanation: 'Most creators see income after 3-6 months of consistent posting.', points: 25 },
-              { question: 'Design one digital product you would create, sell, and market.', type: 'open', explanation: 'Solve a specific audience problem. Price based on value delivered.', points: 20 },
+              { question: 'WEEK 1 REPORT: Which niche and platform? How many followers after 15 posts? Best performing content?', type: 'open', explanation: 'Be honest. Even 100 followers is progress!', points: 20 },
+              { question: 'WEEK 2 REPORT: Which affiliate products promoted? How many clicks/sales? Commission earned?', type: 'open', explanation: 'Share Jumia affiliate dashboard results.', points: 20 },
+              { question: 'WEEK 3 REPORT: What digital product created? How many sales? Total revenue?', type: 'open', explanation: 'Describe product, pricing, promotion strategy, and sales.', points: 20 },
+              { question: 'WEEK 4 REPORT: Which brands contacted? How many responded? Deals landed? TOTAL EARNINGS?', type: 'open', explanation: 'Share pitch template and results. Rejections are learning!', points: 25 },
             ],
             5,
           ),
