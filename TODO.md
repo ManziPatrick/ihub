@@ -1,12 +1,8 @@
-# TODO
+# Logo Fix - Progress Tracker ✅ DONE
 
-## User report quality improvements (UserFullReport)
-- [ ] Update `backend/src/graphql/user-report-resolvers.ts` to populate required course fields (title/level/category/modules/thumbnail) for both:
-  - [ ] `enrolledCourses` (from `User`)
-  - [ ] `courseId` (from `AssignmentSubmission`)
-- [ ] Add smarter fallbacks so report fields don’t show `Unknown` or unnecessary `null`.
-- [ ] Improve formatting for print:
-  - [ ] Convert missing school/job fields into user-friendly “Not provided” strings where schema allows
-  - [ ] Ensure date fields are consistently ISO strings
-- [ ] Run backend TypeScript build / tests and verify the `getUserFullReport` output.
+## Steps
+- [x] 1. Fixed `bootskills log black with text.svg` - normalized viewBox to `0 0 380 320` + wrapped paths in `<g transform="translate(-760, -460)">`
+- [x] 2. Fixed `bootskills log white with text.svg` - normalized viewBox to `0 0 380 320` + wrapped paths in `<g transform="translate(-760, -460)">`
+- [x] 3. Decreased logo size in `Logo.tsx` - changed `with-text` height from `h-7 sm:h-8` → `h-5 sm:h-6`
+- [x] 4. Fixed `Header.tsx` - added `max-w-[180px]` to logo container link, also reduced branding logo height
 

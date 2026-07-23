@@ -1,10 +1,11 @@
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
-// ── Image imports ──
-import coloredLogoSrc from "@/assets/visibilities/bootskills colored logo.png";
-import singleColorLogoSrc from "@/assets/visibilities/bootskill single color logo.png";
-import logoWithTextSrc from "@/assets/visibilities/bootskills logo with text.png";
+// ── New SVG imports (black for light mode, white for dark mode) ──
+import logoSvgLight from "@/assets/visibilities/bootskills logo black.svg";
+import logoSvgDark from "@/assets/visibilities/bootskills logo white .svg";
+import logoWithTextSvgLight from "@/assets/visibilities/bootskills log black with text.svg";
+import logoWithTextSvgDark from "@/assets/visibilities/bootskills log white with text.svg";
 
 type LogoVariant = "icon" | "full" | "with-text";
 
@@ -21,19 +22,25 @@ interface LogoProps {
   alt?: string;
 }
 
-const variantMap: Record<LogoVariant, { src: string; defaultHeight: string; alt: string }> = {
+const variantMap: Record<
+  LogoVariant,
+  { srcLight: string; srcDark: string; defaultHeight: string; alt: string }
+> = {
   icon: {
-    src: singleColorLogoSrc,
+    srcLight: logoSvgLight,
+    srcDark: logoSvgDark,
     defaultHeight: "h-12 sm:h-14",
     alt: "Bootskills",
   },
   full: {
-    src: coloredLogoSrc,
+    srcLight: logoWithTextSvgLight,
+    srcDark: logoWithTextSvgDark,
     defaultHeight: "h-14 sm:h-16",
     alt: "Bootskills",
   },
   "with-text": {
-    src: logoWithTextSrc,
+    srcLight: logoWithTextSvgLight,
+    srcDark: logoWithTextSvgDark,
     defaultHeight: "h-10 sm:h-12",
     alt: "Bootskills",
   },
@@ -49,22 +56,41 @@ export function Logo({
   const config = variantMap[variant];
   const height = imgHeight || config.defaultHeight;
 
-  const img = (
+  // Light mode image (black logo)
+  const lightImg = (
     <img
-      src={config.src}
+      src={config.srcLight}
       alt={alt || config.alt}
-      className={cn(height, "w-auto object-contain", className)}
+      className={cn(height, "w-28 object-contain block dark:hidden", className)}
       loading="eager"
     />
+  );
+
+  // Dark mode image (white logo)
+  const darkImg = (
+    <img
+      src={config.srcDark}
+      alt=""
+      aria-hidden="true"
+      className={cn(height, "w-28 object-contain hidden dark:block", className)}
+      loading="eager"
+    />
+  );
+
+  const content = (
+    <>
+      {lightImg}
+      {darkImg}
+    </>
   );
 
   if (linkTo) {
     return (
       <Link to={linkTo} className="flex items-center shrink-0">
-        {img}
+        {content}
       </Link>
     );
   }
 
-  return img;
+  return content;
 }
