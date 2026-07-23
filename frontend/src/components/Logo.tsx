@@ -61,7 +61,7 @@ export function Logo({
     <img
       src={config.srcLight}
       alt={alt || config.alt}
-      className={cn(height, "w-auto object-contain block dark:hidden", className)}
+      className={cn(height, "w-28 object-contain block dark:hidden", className)}
       loading="eager"
     />
   );
@@ -72,7 +72,7 @@ export function Logo({
       src={config.srcDark}
       alt=""
       aria-hidden="true"
-      className={cn(height, "w-auto object-contain hidden dark:block", className)}
+      className={cn(height, "w-28 object-contain hidden dark:block", className)}
       loading="eager"
     />
   );
