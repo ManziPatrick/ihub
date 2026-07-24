@@ -497,7 +497,7 @@ async function seedFullProjectManagement() {
       applicationDeadline: new Date('2026-06-20'),
       eligibility: 'Basic programming knowledge\nEnrolled student or recent graduate\nAvailable 20+ hours/week',
       rules: 'Complete each phase before progressing. Attend all mentor sessions. Submit deliverables on time.',
-      price: 60000,
+      price: 1000,
       currency: 'RWF',
       discount: 5,
       maxParticipants: 25,

@@ -17,11 +17,17 @@ import { Course } from './models/Course';
 dotenv.config();
 
 const SEEDS = [
-  { file: 'seedIntroToJSAndPython.ts',       label: 'Intro to JavaScript & Python'         },
-  { file: 'seedComprehensiveJSCourse.ts',    label: 'Comprehensive JavaScript Course'       },
-  { file: 'seedDataStructuresCourse.ts',     label: 'Data Structures Mastery'               },
-  { file: 'seedsAdvancedJsModules.ts',       label: 'Advanced JS — Practical Exercises'     },
+  { file: 'seedIntroToJSAndPython.ts',       label: 'Intro to JavaScript & Python'                 },
+  { file: 'seedComprehensiveJSCourse.ts',    label: 'Comprehensive JavaScript Course'               },
+  { file: 'seedDataStructuresCourse.ts',     label: 'Data Structures Mastery'                       },
+  { file: 'seedsAdvancedJsModules.ts',       label: 'Advanced JS — Practical Exercises'             },
   { file: 'seedMultiLanguageCourses.ts',     label: 'Multi-Language (C, C++, Java, Go, Rust, Python)' },
+  { file: 'seedRwandaCourses.ts',            label: 'Rwanda-Specific Courses (Internet, Kinyarwanda, Kiswahili)' },
+  { file: 'seedExams.ts',                    label: 'Exam Preparation Courses'                       },
+  { file: 'seedMVPCourses.ts',               label: '10 MVP Courses — African Market Gap'            },
+  { file: 'seedAfricanMarketCourses.ts',     label: '5 New African Market Courses (Tourism, E-Comm, Solar, Fashion, Health)' },
+  { file: 'seedFreeCourses.ts',              label: '5 Free Foundation Courses (Computer Basics, Entrepreneurship, CV, Finance, Study Skills)' },
+  { file: 'seedExpandThinCourses.ts',        label: 'Expand Thin Courses — Add modules to Go, Rust, Java, Python DS' },
 ];
 
 async function main() {

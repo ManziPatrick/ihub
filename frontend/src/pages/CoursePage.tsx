@@ -19,6 +19,7 @@ import { stripHtml } from "@/lib/utils";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 const MODULES_PER_PAGE = 5;
 
@@ -199,9 +200,9 @@ export default function CoursePage() {
                   {course.category}
                 </Badge>
                 <h1 className="text-4xl font-bold font-heading">{course.title}</h1>
-                <p className="text-xl text-muted-foreground leading-relaxed">
-                  {stripHtml(course.description) || course.description}
-                </p>
+<div className="text-xl text-muted-foreground leading-relaxed prose prose-sm max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{course.description || ""}</ReactMarkdown>
+                </div>
 
                 <div className="flex flex-wrap gap-6 pt-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-2">
