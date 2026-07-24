@@ -38,7 +38,7 @@ import { WorkflowSettingsDialog } from './WorkflowSettingsDialog';
 import ReactMarkdown from 'react-markdown';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
+import { cn, normalizeContent } from '@/lib/utils';
 
 const DEFAULT_WORKFLOW = [
   { id: 'todo', label: 'To Do', color: 'bg-slate-500/10 border-slate-500/20 text-slate-500', icon: 'todo', type: 'todo' },
@@ -408,7 +408,7 @@ export function ProjectBoard({ projectId, teamId, teamName, projectTitle: propTi
             <ScrollArea className="flex-1 p-8">
               <div className="prose prose-sm dark:prose-invert max-w-none prose-h1:text-2xl prose-h1:font-black prose-p:leading-relaxed prose-li:my-1">
                 {project?.document ? (
-                  <ReactMarkdown>{project.document}</ReactMarkdown>
+                  <ReactMarkdown>{normalizeContent(project.document)}</ReactMarkdown>
                 ) : (
                   <div className="text-center py-20 text-muted-foreground opacity-40">
                     <FileText className="w-16 h-16 mx-auto mb-4" />

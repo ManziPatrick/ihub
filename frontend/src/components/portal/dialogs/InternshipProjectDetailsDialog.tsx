@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from "remark-gfm";
-import { cn } from "@/lib/utils";
+import { cn, normalizeContent } from "@/lib/utils";
 
 interface InternshipProjectDetailsDialogProps {
     open: boolean;
@@ -69,7 +69,7 @@ export function InternshipProjectDetailsDialog({ open, onOpenChange, project }: 
                                         a: ({ node, ...props }) => <a className="text-primary underline hover:opacity-80 transition-opacity" {...props} />
                                     }}
                                 >
-                                    {project.description}
+                                    {normalizeContent(project.description)}
                                 </ReactMarkdown>
                             </div>
                         </div>

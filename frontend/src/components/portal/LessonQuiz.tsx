@@ -11,7 +11,9 @@ import confetti from "canvas-confetti";
 import { KidAvatar, AvatarExpression } from "./student/KidAvatar";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import { tts } from "@/lib/tts";
+import { normalizeContent } from "@/lib/utils";
 import successSound from '@/assets/Voice/success.mp3';
 import failedSound from '@/assets/Voice/failed.mp3';
 import cheersSound from '@/assets/Voice/cheers.mp3';
@@ -671,9 +673,10 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div className="text-sm font-medium text-foreground leading-relaxed">
+                        <div className="text-sm font-medium text-foreground leading-relaxed lesson-content-viewer">
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
+                            rehypePlugins={[rehypeRaw]}
                             components={{
                               p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
                               strong: ({ node, ...props }) => <strong className="font-bold text-amber-600 dark:text-amber-400" {...props} />,
@@ -690,13 +693,14 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
                             <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
                               {hintChatMessages.map((msg, idx) => (
                                 <div key={idx} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                  <div className={`px-3 py-2 rounded-2xl max-w-[85%] text-xs font-medium ${
+                                  <div className={`px-3 py-2 rounded-2xl max-w-[85%] text-xs font-medium lesson-content-viewer ${
                                     msg.role === 'user' 
                                       ? 'bg-amber-500 text-white rounded-tr-sm' 
                                       : 'bg-background/50 border border-border/50 rounded-tl-sm text-foreground'
                                   }`}>
                                     <ReactMarkdown
                                       remarkPlugins={[remarkGfm]}
+                                      rehypePlugins={[rehypeRaw]}
                                       components={{
                                         p: ({ node, ...props }) => <p className="mb-1 last:mb-0" {...props} />,
                                         strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
@@ -793,18 +797,24 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
                     <span>AI is crafting a detailed breakdown for you...</span>
                   </div>
                 ) : (
-                  <div className="text-sm font-bold text-foreground leading-relaxed">
+                  <div className="text-sm font-bold text-foreground leading-relaxed lesson-content-viewer">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeRaw]}
                       components={{
+                        h1: ({ node, ...props }) => <h1 style={{fontSize:'1.85rem', fontWeight: 900, letterSpacing: '-0.03em', marginTop: '2.5rem', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '3px solid hsl(var(--accent) / 0.35)', position: 'relative', lineHeight: 1.25}} {...props} />,
+                        h2: ({ node, ...props }) => <h2 style={{fontSize:'1.45rem', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '2rem', marginBottom: '0.75rem', padding: '0.5rem 0 0.5rem 1rem', borderLeft: '4px solid hsl(var(--accent))', borderRadius: '0 4px 4px 0', lineHeight: 1.3, background: 'linear-gradient(to right, hsl(var(--accent) / 0.08), transparent 80%)'}} {...props} />,
+                        h3: ({ node, ...props }) => <h3 style={{fontSize:'1.2rem', fontWeight: 700, letterSpacing: '-0.01em', marginTop: '1.75rem', marginBottom: '0.5rem', paddingBottom: '0.35rem', borderBottom: '1px solid hsl(var(--border) / 0.6)', lineHeight: 1.35}} {...props} />,
+                        h4: ({ node, ...props }) => <h4 style={{fontSize:'1.1rem', fontWeight: 700, marginTop: '1.5rem', marginBottom: '0.5rem', paddingLeft: '0.75rem', borderLeft: '3px solid hsl(var(--accent) / 0.5)', lineHeight: 1.4}} {...props} />,
+                        h5: ({ node, ...props }) => <h5 style={{fontSize:'1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'hsl(var(--accent))', marginTop: '1.25rem', marginBottom: '0.4rem'}} {...props} />,
+                        h6: ({ node, ...props }) => <h6 style={{fontSize:'0.95rem', fontWeight: 600, fontStyle: 'italic', color: 'hsl(var(--muted-foreground))', marginTop: '1rem', marginBottom: '0.4rem'}} {...props} />,
                         p: ({ node, ...props }) => <p className="mb-4 last:mb-0" {...props} />,
                         strong: ({ node, ...props }) => <strong className="font-black text-gold" {...props} />,
                         ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-4 space-y-1" {...props} />,
                         li: ({ node, ...props }) => <li className="font-medium" {...props} />,
-                        h3: ({ node, ...props }) => <h3 className="text-lg font-black text-accent mt-6 mb-2" {...props} />,
                       }}
                     >
-                      {aiExplanation || currentQuestion.explanation || "No explanation provided."}
+                      {normalizeContent(aiExplanation || currentQuestion.explanation) || "No explanation provided."}
                     </ReactMarkdown>
                   </div>
                 )}

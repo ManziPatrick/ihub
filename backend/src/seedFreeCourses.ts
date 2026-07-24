@@ -202,7 +202,7 @@ const COURSES: CourseDef[] = [
             '- **rba.co.rw** — Rwanda Broadcasting Agency',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=00hbchgXK8E', videoTitle: 'How to Use the Internet - Beginners Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=93-3zmVvCGU', videoTitle: 'Computer Basics: Connecting to the Internet' },
           ),
           makeLesson(
             'Staying Safe Online',
@@ -284,7 +284,7 @@ const COURSES: CourseDef[] = [
             '> 💡 You already have what it takes to start. The only thing missing is action!',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=TuwAqnO1reQ', videoTitle: 'What is Entrepreneurship - 3 Min Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=pC5l5j2u9SQ', videoTitle: 'What is Entrepreneurship?' },
           ),
           makeLesson(
             'Finding Business Ideas with No Money',
@@ -371,7 +371,7 @@ const COURSES: CourseDef[] = [
             '- Handle complaints politely — offer a solution',
             'video',
             2,
-            { videoUrl: 'https://www.youtube.com/watch?v=EXYvLGl5SCM', videoTitle: 'How to Find Your First Customers - Free Marketing' },
+            { videoUrl: 'https://www.youtube.com/watch?v=F6mujZ4-yuQ', videoTitle: 'How To Get Your First Customers' },
           ),
           makeQuizLesson(
             'Module 2: Knowledge Check',
@@ -436,7 +436,7 @@ const COURSES: CourseDef[] = [
             '6. **References** — People who can vouch for you (optional for entry-level)',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=Sna8qnGUcVA', videoTitle: 'How to Write a CV - Beginners Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=_qWi6vp_0t4', videoTitle: 'Choosing the Right Resume Format' },
           ),
           makeLesson(
             'CV Template & Tips for Rwanda',
@@ -513,7 +513,7 @@ const COURSES: CourseDef[] = [
             '6. "Do you have any questions?" — Always ask at least one question!',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=HG68Ymzo18A', videoTitle: 'Job Interview Tips - How to Prepare' },
+            { videoUrl: 'https://www.youtube.com/watch?v=d1yfb93beSI', videoTitle: 'How to Introduce Yourself — and Get Hired | Rebecca Okamoto | TED' },
           ),
           makeLesson(
             'Interview Day Tips & Follow-Up',
@@ -607,7 +607,7 @@ const COURSES: CourseDef[] = [
             '- **20%** for savings and debt repayment',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=htSXJPgq0FA', videoTitle: 'How to Budget Your Money - Simple Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=bQxrtzfqLys', videoTitle: 'How To Budget Your Money And Stick To It' },
           ),
           makeLesson(
             'How to Save Money on a Small Income',
@@ -700,7 +700,7 @@ const COURSES: CourseDef[] = [
             '- **Stock market** — Rwanda Stock Exchange (RSE) for long-term growth',
             'video',
             2,
-            { videoUrl: 'https://www.youtube.com/watch?v=bBkQjqTg1B4', videoTitle: 'How to Build Wealth - Step by Step for Beginners' },
+            { videoUrl: 'https://www.youtube.com/watch?v=f4Lqk0iBsUo', videoTitle: 'How To Build Wealth For Beginners' },
           ),
           makeQuizLesson(
             'Module 2: Knowledge Check',

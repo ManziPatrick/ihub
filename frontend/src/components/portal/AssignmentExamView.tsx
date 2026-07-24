@@ -481,7 +481,7 @@ export function AssignmentExamView({
                         </p>
                       ) : (
                         <div 
-                          className={`text-sm prose prose-sm dark:prose-invert max-w-none p-3 rounded-xl border ${
+                          className={`text-sm prose prose-sm dark:prose-invert max-w-none lesson-content-viewer p-3 rounded-xl border ${
                             isCorrect 
                               ? 'bg-green-500/10 border-green-500/20' 
                               : 'bg-red-500/10 border-red-500/20'

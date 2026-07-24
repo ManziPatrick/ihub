@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { ApplyCourseDialog } from "@/components/portal/dialogs";
 import { useState, useCallback } from "react";
-import { stripHtml } from "@/lib/utils";
+import { stripHtml, getVideoEmbedUrl, isYouTubeUrl, normalizeContent } from "@/lib/utils";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -137,6 +137,11 @@ export default function CoursePage() {
 
   const totalLessons = modules.reduce((sum: number, m: any) => sum + (m.lessons?.length || 0), 0);
 
+  // Compute starting lesson index for free preview tracking (first 2 lessons are free)
+  const lessonsBeforeCurrentPage = modules.slice(0, (currentPage - 1) * MODULES_PER_PAGE)
+    .reduce((sum: number, m: any) => sum + (m.lessons?.length || 0), 0);
+  let globalLessonIndex = lessonsBeforeCurrentPage;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
@@ -201,7 +206,7 @@ export default function CoursePage() {
                 </Badge>
                 <h1 className="text-4xl font-bold font-heading">{course.title}</h1>
 <div className="text-xl text-muted-foreground leading-relaxed prose prose-sm max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{course.description || ""}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{normalizeContent(course.description || "")}</ReactMarkdown>
                 </div>
 
                 <div className="flex flex-wrap gap-6 pt-4 text-sm text-muted-foreground">
@@ -255,6 +260,9 @@ export default function CoursePage() {
                               const isExpanded = expandedLesson === lessonId;
                               const isLoading = loadingLesson === lessonId;
                               const cachedLesson = lessonCache[lessonId];
+                              // Track global lesson index for free preview (first 2 lessons)
+                              const currentLessonIndex = globalLessonIndex++;
+                              const isFreePreview = !isEnrolled && currentLessonIndex < 2;
 
                               return (
                                 <div key={lessonId}>
@@ -263,14 +271,19 @@ export default function CoursePage() {
                                     className="w-full flex items-center justify-between p-4 border-t border-border/30 hover:bg-slate-50 transition-colors text-left"
                                   >
                                     <div className="flex items-center gap-3 min-w-0">
-                                      {isEnrolled ? (
+                                      {isEnrolled || isFreePreview ? (
                                         <PlayCircle className="w-4 h-4 text-indigo-500 shrink-0" />
                                       ) : (
                                         <Lock className="w-4 h-4 text-gray-300 shrink-0" />
                                       )}
-                                      <span className={`text-sm truncate ${!isEnrolled && 'text-muted-foreground'}`}>
+                                      <span className={`text-sm truncate ${!isEnrolled && !isFreePreview && 'text-muted-foreground'}`}>
                                         {lesson.title}
                                       </span>
+                                      {isFreePreview && (
+                                        <span className="text-[10px] font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full ml-2 shrink-0">
+                                          Free Preview
+                                        </span>
+                                      )}
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
                                       {lesson.type && (
@@ -298,8 +311,17 @@ export default function CoursePage() {
                                         className="overflow-hidden border-t border-border/20"
                                       >
                                         <div className="p-4 bg-slate-50/30 space-y-4">
-                                          {/* Video player */}
-                                          {cachedLesson.videoUrl && (
+                                          {/* Video player — supports YouTube & direct video URLs */}
+                                          {cachedLesson.videoUrl && (isYouTubeUrl(cachedLesson.videoUrl) ? (
+                                            <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                                              <iframe
+                                                src={getVideoEmbedUrl(cachedLesson.videoUrl)}
+                                                className="w-full h-full"
+                                                allowFullScreen
+                                                loading="lazy"
+                                              />
+                                            </div>
+                                          ) : (
                                             <div className="aspect-video rounded-lg overflow-hidden bg-black/5">
                                               <video
                                                 src={cachedLesson.videoUrl}
@@ -308,13 +330,13 @@ export default function CoursePage() {
                                                 controlsList="nodownload"
                                               />
                                             </div>
-                                          )}
+                                          ))}
 
                                           {/* Content */}
-                                          {isEnrolled ? (
+                                          {isEnrolled || isFreePreview ? (
                                             <div className="prose prose-sm max-w-none">
                                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                {typeof cachedLesson.content === 'string' ? cachedLesson.content : ''}
+                                                {typeof cachedLesson.content === 'string' ? normalizeContent(cachedLesson.content) : ''}
                                               </ReactMarkdown>
                                             </div>
                                           ) : (
@@ -327,7 +349,7 @@ export default function CoursePage() {
                                           )}
 
                                           {/* Quiz questions if available */}
-                                          {cachedLesson.quizQuestions?.length > 0 && isEnrolled && (
+                                          {cachedLesson.quizQuestions?.length > 0 && (isEnrolled || isFreePreview) && (
                                             <div className="space-y-3 pt-2">
                                               <h4 className="text-sm font-bold flex items-center gap-2">
                                                 <ScrollText className="w-4 h-4 text-accent" />
@@ -359,7 +381,7 @@ export default function CoursePage() {
                                           )}
 
                                           {/* Assignment info */}
-                                          {cachedLesson.isAssignment && isEnrolled && (
+                                          {cachedLesson.isAssignment && (isEnrolled || isFreePreview) && (
                                             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                                               <p className="text-xs font-bold text-amber-700 flex items-center gap-2">
                                                 <FileText className="w-3 h-3" />

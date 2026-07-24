@@ -6,6 +6,38 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Convert a video URL (YouTube or direct) into an embed-friendly URL.
+ * Returns the original URL for direct video files; converts YouTube
+ * watch/shorts/you.be links to youtube.com/embed/… format.
+ */
+export function getVideoEmbedUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  if (url.includes("youtube.com/watch?v=")) return url.replace("watch?v=", "embed/").split("&")[0];
+  if (url.includes("youtube.com/shorts/")) return url.replace("shorts/", "embed/").split("?")[0];
+  if (url.includes("youtu.be/")) return `https://www.youtube.com/embed/${url.split("youtu.be/")[1].split("?")[0]}`;
+  return url;
+}
+
+/**
+ * Check whether a video URL is a YouTube link (embed-able via iframe).
+ */
+export function isYouTubeUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  return url.includes("youtube.com/watch?v=") || url.includes("youtube.com/shorts/") || url.includes("youtu.be/");
+}
+
+/**
+ * Normalize content that may contain literal `\n` (escaped newlines) from
+ * seed data or database storage. Converts them to actual newlines so that
+ * ReactMarkdown can interpret markdown syntax correctly.
+ */
+export function normalizeContent(content: string | null | undefined): string {
+  if (!content) return "";
+  // Replace literal \n (backslash + n) with actual newlines
+  return content.replace(/\\n/g, '\n');
+}
+
+/**
  * Strip HTML tags from a string, returning clean text.
  * Useful when displaying HTML-rich descriptions as plain text
  * (e.g., in meta tags, search previews, or plain text contexts).

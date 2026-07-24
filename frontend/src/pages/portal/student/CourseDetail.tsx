@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 // Lazy-load heavy sub-components that aren't needed on initial page load
 const LessonQuiz = lazy(() => import("@/components/portal/LessonQuiz").then(m => ({ default: m.LessonQuiz })));
@@ -76,6 +77,7 @@ import { GET_COURSE, GET_ME, GET_ASSIGNMENT_SUBMISSIONS, MY_CODE_EXERCISE_ANSWER
 import { COMPLETE_LESSON, SUBMIT_ASSIGNMENT, UPDATE_COURSE_PROGRESS } from "@/lib/graphql/mutations";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { triggerFileDownload } from "@/lib/download";
+import { getVideoEmbedUrl, normalizeContent } from "@/lib/utils";
 
 interface AssignmentSubmission {
   id: string;
@@ -731,16 +733,10 @@ export default function CourseDetail() {
                         </Suspense>
                       ) : currentLesson?.videoUrl ? (
                         <iframe 
-                          src={(() => {
-                            const url = currentLesson.videoUrl;
-                            if (!url) return "";
-                            if (url.includes("youtube.com/watch?v=")) return url.replace("watch?v=", "embed/").split("&")[0];
-                            if (url.includes("youtube.com/shorts/")) return url.replace("shorts/", "embed/").split("?")[0];
-                            if (url.includes("youtu.be/")) return `https://www.youtube.com/embed/${url.split("youtu.be/")[1].split("?")[0]}`;
-                            return url;
-                          })()}
+                          src={getVideoEmbedUrl(currentLesson.videoUrl)}
                           className="w-full h-full" 
                           allowFullScreen 
+                          loading="lazy"
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-center p-12">
@@ -762,7 +758,7 @@ export default function CourseDetail() {
                     <CardContent className="p-8">
                       <h2 className="text-2xl font-bold mb-4">{currentLesson?.title}</h2>
                       <div className="prose dark:prose-invert max-w-none mb-8 lesson-content-viewer">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentLesson?.content || currentLesson?.description || ""}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{normalizeContent(currentLesson?.content || currentLesson?.description || "")}</ReactMarkdown>
                       </div>
 
                       {/* Code Exercises */}
