@@ -9,6 +9,7 @@ import { Plus, Code, Trash2, Edit, ExternalLink, Users, Layers, Eye } from 'luci
 import { toast } from 'sonner';
 import { CreateInternshipProjectDialog, InternshipProjectDetailsDialog, CreateInternshipTeamDialog, EditInternshipProjectDialog, AssignProjectDialog } from '@/components/portal/dialogs';
 import ReactMarkdown from 'react-markdown';
+import { normalizeContent } from "@/lib/utils";
 
 export default function InternshipProjectList() {
     const [selectedProject, setSelectedProject] = useState<any>(null);
@@ -144,7 +145,7 @@ export default function InternshipProjectList() {
                             <CardContent className="flex-1 space-y-4">
                                 <div className="text-sm text-muted-foreground line-clamp-3 prose prose-sm dark:prose-invert">
                                     <ReactMarkdown>
-                                        {project.description}
+                                        {normalizeContent(project.description)}
                                     </ReactMarkdown>
                                 </div>
 

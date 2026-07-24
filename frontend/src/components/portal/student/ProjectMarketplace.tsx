@@ -27,6 +27,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { StartProjectDialog } from "@/components/portal/dialogs";
+import { normalizeContent } from "@/lib/utils";
 
 interface ProjectTemplate {
     id: string;
@@ -143,7 +144,7 @@ export function ProjectMarketplace() {
                                             p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>
                                         }}
                                     >
-                                        {template.description}
+                                        {normalizeContent(template.description)}
                                     </ReactMarkdown>
                                 </div>
 

@@ -442,11 +442,95 @@ img, video, canvas, svg, iframe {
 .lesson-content-viewer h1,
 .lesson-content-viewer h2,
 .lesson-content-viewer h3,
-.lesson-content-viewer h4 {
+.lesson-content-viewer h4,
+.lesson-content-viewer h5,
+.lesson-content-viewer h6 {
   color: hsl(var(--foreground)) !important;
+}
+
+/* H1 — Hero-style section title with gold underline accent */
+.lesson-content-viewer h1 {
+  font-size: 1.85rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid hsl(var(--accent) / 0.35);
+  position: relative;
+  line-height: 1.25;
+}
+
+.lesson-content-viewer h1::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 80px;
+  height: 3px;
+  background: hsl(var(--accent));
+  border-radius: 2px;
+}
+
+/* H2 — Section header with gold left accent bar */
+.lesson-content-viewer h2 {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0 0.5rem 1rem;
+  border-left: 4px solid hsl(var(--accent));
+  border-radius: 0 4px 4px 0;
+  line-height: 1.3;
+  background: linear-gradient(
+    to right,
+    hsl(var(--accent) / 0.08),
+    transparent 80%
+  );
+}
+
+/* H3 — Bold sub-section header */
+.lesson-content-viewer h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+  line-height: 1.35;
+}
+
+/* H4 — Emphasized sub-header */
+.lesson-content-viewer h4 {
+  font-size: 1.1rem;
   font-weight: 700;
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid hsl(var(--accent) / 0.5);
+  line-height: 1.4;
+}
+
+/* H5, H6 — Smaller headers with subtle styling */
+.lesson-content-viewer h5 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: hsl(var(--accent)) !important;
+  margin-top: 1.25rem;
+  margin-bottom: 0.4rem;
+}
+
+.lesson-content-viewer h6 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-style: italic;
+  color: hsl(var(--muted-foreground)) !important;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
 }
 
 .lesson-content-viewer a {

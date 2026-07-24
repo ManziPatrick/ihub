@@ -89,7 +89,7 @@ export const errorReportResolvers = {
         ];
       }
 
-      const [items, totalCount] = await Promise.all([
+      const [rawItems, totalCount] = await Promise.all([
         UserErrorReport.find(filter)
           .sort({ createdAt: -1 })
           .skip(skip)
@@ -100,6 +100,13 @@ export const errorReportResolvers = {
       ]);
 
       const totalPages = Math.ceil(totalCount / limit);
+
+      // .lean() returns plain objects without Mongoose virtuals (like `id`).
+      // Destructure _id and map it → id so GraphQL's non-nullable ID field resolves correctly.
+      const items = (rawItems as any[]).map((item: any) => {
+        const { _id, ...rest } = item;
+        return { ...rest, id: (_id?.toString?.() || _id) };
+      });
 
       return {
         items,
@@ -118,9 +125,12 @@ export const errorReportResolvers = {
       if (!['admin', 'super_admin'].includes(context.user?.role)) {
         throw new Error('Unauthorized');
       }
-      return await UserErrorReport.findById(id)
+      const raw = await UserErrorReport.findById(id)
         .populate('resolvedBy', 'id username fullName')
         .lean();
+      if (!raw) return null;
+      const { _id, ...rest } = raw;
+      return { ...rest, id: (_id?.toString?.() || _id) };
     },
 
     getErrorReportStats: async (_: any, __: any, context: any) => {
