@@ -137,7 +137,7 @@ async function seedAdminEverything() {
       {
         title: 'Web Development Fundamentals',
         description: 'Learn HTML, CSS, and JavaScript from scratch. Build modern responsive websites with hands-on projects.',
-        price: 75000,
+        price: 1000,
         category: 'Web Development',
         level: 'Beginner',
         status: 'published',
@@ -165,7 +165,7 @@ async function seedAdminEverything() {
       {
         title: 'Data Science & Analytics',
         description: 'Introduction to data analysis, visualization, and machine learning concepts using Python.',
-        price: 120000,
+        price: 1000,
         category: 'Data Science',
         level: 'Intermediate',
         status: 'published',
@@ -193,7 +193,7 @@ async function seedAdminEverything() {
       {
         title: 'Mobile App Development with React Native',
         description: 'Build cross-platform mobile applications using React Native and Expo.',
-        price: 95000,
+        price: 1000,
         discountPrice: 75000,
         category: 'Mobile Development',
         level: 'Intermediate',
@@ -223,7 +223,7 @@ async function seedAdminEverything() {
       {
         title: 'Luxury Hotel Management & Operations',
         description: 'Master the art of hospitality. Learn front desk operations, guest relations, and luxury service standards.',
-        price: 15000,
+        price: 1000,
         discountPrice: 12000,
         category: 'Hospitality',
         level: 'Intermediate',
@@ -238,7 +238,7 @@ async function seedAdminEverything() {
       {
         title: 'Advanced Cloud Computing with AWS',
         description: 'Deploy, manage, and scale secure applications on Amazon Web Services. Prepare for the Solutions Architect exam.',
-        price: 25000,
+        price: 1000,
         category: 'Technology',
         level: 'Advanced',
         status: 'published',
@@ -295,7 +295,7 @@ async function seedAdminEverything() {
       {
         title: 'Full-Stack Web Development with Next.js & GraphQL',
         description: 'Build enterprise-grade applications with modern React, Server Components, and a performant GraphQL API tier.',
-        price: 35000,
+        price: 1000,
         discountPrice: 28000,
         category: 'Technology',
         level: 'Advanced',
@@ -324,7 +324,7 @@ async function seedAdminEverything() {
       {
         title: 'UI/UX Design Masterclass: Figma to Production',
         description: 'Master high-fidelity user interface layouts, interactive prototypes, and UX user journeys using Figma.',
-        price: 18000,
+        price: 1000,
         discountPrice: 15000,
         category: 'Design',
         level: 'Intermediate',
@@ -339,7 +339,7 @@ async function seedAdminEverything() {
       {
         title: 'Financial Modeling & Valuation Techniques',
         description: 'Master discounted cash flows, leveraged buyouts, and comparative analytics models to analyze global corporations.',
-        price: 20000,
+        price: 1000,
         category: 'Finance',
         level: 'Advanced',
         status: 'published',

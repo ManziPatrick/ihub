@@ -151,7 +151,7 @@ const COURSES: CourseDef[] = [
       'and grow any Rwandan business using digital tools — all on a budget of under 50,000 RWF!',
     category: 'Business',
     level: 'Beginner',
-    price: 2000,
+    price: 1000,
     searchImage: 'digital marketing africa social media business',
     isFeatured: true,
     modules: [
@@ -495,7 +495,7 @@ const COURSES: CourseDef[] = [
       'and savings products are creating opportunities for Rwandan entrepreneurs and professionals.',
     category: 'Business',
     level: 'Intermediate',
-    price: 2000,
+    price: 1000,
     searchImage: 'mobile money payment fintech africa',
     isFeatured: true,
     modules: [
@@ -804,7 +804,7 @@ const COURSES: CourseDef[] = [
       '| Google Skills | Digital marketing cert | Free | [grow.google](https://grow.google) |',
     category: 'Business',
     level: 'Beginner',
-    price: 2000,
+    price: 1000,
     searchImage: 'remote work freelancing laptop africa',
     isFeatured: true,
     modules: [
@@ -1135,7 +1135,7 @@ const COURSES: CourseDef[] = [
       'Includes templates designed for the Rwandan market — financial projections, pitch decks, and more.',
     category: 'Business',
     level: 'Beginner',
-    price: 2000,
+    price: 1000,
     searchImage: 'entrepreneurship business planning africa startup',
     isFeatured: true,
     modules: [
@@ -1424,7 +1424,7 @@ const COURSES: CourseDef[] = [
       'government, NGOs, tech companies, and tourism — you will speak and write with confidence.',
     category: 'Languages',
     level: 'Beginner',
-    price: 2000,
+    price: 1000,
     searchImage: 'english learning education books professional',
     modules: [
       makeModule(
@@ -1710,7 +1710,7 @@ const COURSES: CourseDef[] = [
       'Twigire Muhinzi, Smart Nkunganire, and platforms linking farmers to buyers across Rwanda.',
     category: 'Technology',
     level: 'Beginner',
-    price: 2000,
+    price: 1000,
     searchImage: 'agriculture technology farming smart africa',
     isFeatured: true,
     modules: [
@@ -2001,7 +2001,7 @@ const COURSES: CourseDef[] = [
       'digital products, and affiliate marketing. Real examples from Rwandan creators included! 🇷🇼',
     category: 'Business',
     level: 'Beginner',
-    price: 2000,
+    price: 1000,
     searchImage: 'content creation social media video production',
     modules: [
       makeModule(
@@ -2693,7 +2693,7 @@ const COURSES: CourseDef[] = [
       'and stakeholder communication. Boost your career with these in-demand skills.',
     category: 'Business',
     level: 'Intermediate',
-    price: 2000,
+    price: 1000,
     searchImage: 'project management planning team collaboration',
     isFeatured: true,
     modules: [
@@ -2979,7 +2979,7 @@ const COURSES: CourseDef[] = [
       'No finance background needed — practical examples from the Rwandan market.',
     category: 'Business',
     level: 'Beginner',
-    price: 2000,
+    price: 1000,
     searchImage: 'personal finance investment savings africa',
     modules: [
       makeModule(
@@ -3266,7 +3266,7 @@ const COURSES: CourseDef[] = [
       'and boost your productivity. Real examples for Rwandan professionals and entrepreneurs.',
     category: 'Data & AI',
     level: 'Beginner',
-    price: 2000,
+    price: 1000,
     searchImage: 'artificial intelligence ai technology future',
     isFeatured: true,
     modules: [

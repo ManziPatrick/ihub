@@ -88,6 +88,36 @@ function makeAssignmentLesson(
   });
 }
 
+function makeFinalAssignmentLesson(
+  title: string,
+  description: string,
+  content: string,
+  questions: any[],
+  order: number,
+  timeLimit: number = 60,
+) {
+  return makeLesson(title, content, 'assignment', order, {
+    isAssignment: true,
+    requiredAssignment: true,
+    isFinalProject: true,
+    assignmentDescription: description,
+    assignmentConfig: {
+      timeLimit,
+      allowRetakes: true,
+      disableRightClick: false,
+      mode: 'exam',
+    },
+    assignmentQuestions: questions.map((q, i) => ({
+      questionText: q.question,
+      type: q.type || 'open',
+      options: q.options || [],
+      correctOptionIndex: q.correctIndex ?? 0,
+      explanation: q.explanation || '',
+      points: q.points || 10,
+    })),
+  });
+}
+
 function makeModule(title: string, description: string, lessons: any[], outcome: string = '', order: number = 1) {
   return {
     title,
@@ -126,7 +156,7 @@ const COURSES: CourseDef[] = [
       'All lessons work on both smartphones and computers. Designed for complete beginners in Rwanda.',
     category: 'Technology',
     level: 'Beginner',
-    price: 1500,
+    price: 1000,
     searchImage: 'internet basics smartphone beginners africa',
     isFeatured: true,
     modules: [
@@ -344,7 +374,7 @@ const COURSES: CourseDef[] = [
       'Developed with reference to the standard Kinyarwanda language curriculum.',
     category: 'Languages',
     level: 'Beginner',
-    price: 2000,
+    price: 1000,
     searchImage: 'kinyarwanda language learning education books',
     isFeatured: true,
     modules: [
@@ -529,7 +559,7 @@ const COURSES: CourseDef[] = [
       'Perfect for students, teachers, and anyone who wants to expand their Kinyarwanda vocabulary.',
     category: 'Languages',
     level: 'Beginner',
-    price: 2000,
+    price: 1000,
     searchImage: 'dictionary vocabulary book learning language',
     modules: [
       makeModule(
@@ -740,7 +770,7 @@ const COURSES: CourseDef[] = [
       'Perfect for Rwandans who want to connect with neighbours in Tanzania, Kenya, Uganda, and across the EAC.',
     category: 'Languages',
     level: 'Beginner',
-    price: 2000,
+    price: 1000,
     searchImage: 'swahili language learning africa education books',
     isFeatured: true,
     modules: [
@@ -1003,7 +1033,954 @@ const COURSES: CourseDef[] = [
   },
 
   // ──────────────────────────────────────────────────────────────────────────
-  // COURSE 5: Kinyarwanda for Beginners (Internationals) — Speak from Day One
+  // COURSE 5: African Fashion Business in Rwanda
+  // ──────────────────────────────────────────────────────────────────────────
+  {
+    title: 'African Fashion Business in Rwanda',
+    description:
+      '🌍 African fashion is having a global moment — and Rwanda is at the center of it. ' +
+      'From traditional Kitenge fabrics to modern couture, the fashion industry in Rwanda offers huge opportunities for creative entrepreneurs. ' +
+      'This course teaches you how to start and grow a fashion business in Rwanda — whether you are a tailor, designer, fabric trader, ' +
+      'or someone who wants to launch a clothing brand. Learn to design, produce, market, and sell fashion products locally and internationally.\n\n' +
+      '### What You Will Learn\n\n' +
+      '- **Fashion Design Basics** — Sketching, pattern making, sewing techniques\n' +
+      '- **Sourcing Fabrics** — Kitenge, cotton, linen — where to buy in Rwanda and import\n' +
+      '- **Production** — Tailoring, quality control, scaling production\n' +
+      '- **Brand Building** — Creating your fashion brand identity\n' +
+      '- **Marketing** — Selling on Instagram, at markets, to boutiques\n' +
+      '- **Business Management** — Pricing, customers, finances, growth\n\n' +
+      '### Your Fashion Business Toolbox\n\n' +
+      '| Tool | Purpose | Cost | Sign Up |\n' +
+      '|------|---------|------|---------|\n' +
+      '| **Canva** | Design logos, lookbooks, social media graphics | Free tier | [www.canva.com](https://www.canva.com) |\n' +
+      '| **Instagram** | Showcase your designs, attract customers | Free | [www.instagram.com](https://www.instagram.com) |\n' +
+      '| **WhatsApp Business** | Customer orders, inquiries | Free | [www.whatsapp.com/business](https://www.whatsapp.com/business) |\n' +
+      '| **Etsy** | Sell to international customers | $0.20/listing | [www.etsy.com](https://www.etsy.com) |\n' +
+      '| **Jumia Fashion** | Sell clothes online in Rwanda | Commission | [www.jumia.co.rw](https://www.jumia.co.rw) |\n' +
+      '| **Sewing Machine** | Basic production equipment | 200,000-800,000 RWF | Local suppliers |\n' +
+      '| **Kimironko Market** | Fabric shopping in Kigali | Cash | Visit in person |\n' +
+      '| **PayPal** | Receive international payments | 2.9% + $0.30 | [www.paypal.com](https://www.paypal.com) |',
+    category: 'Business',
+    level: 'Beginner',
+    price: 1000,
+    searchImage: 'african fashion design rwanda kitenge clothing business',
+    isFeatured: true,
+    modules: [
+      makeModule(
+        'Module 1: Introduction to the Rwandan Fashion Industry',
+        'Understand the fashion landscape in Rwanda — from traditional textiles to modern markets.',
+        [
+          makeLesson(
+            'The Rwandan Fashion Opportunity',
+            'Rwanda\'s fashion industry is growing rapidly. With Kigali positioning itself as a regional hub for ' +
+            'creativity and innovation, fashion entrepreneurs have unprecedented opportunities. This module ' +
+            'introduces you to the ecosystem, key players, and how to find your niche.\n\n' +
+            '### Why Fashion in Rwanda?\n' +
+            '- Kigali is becoming known as a creative capital in East Africa\n' +
+            '- Growing middle class with interest in both traditional and modern fashion\n' +
+            '- Government support for Made in Rwanda products\n' +
+            '- International interest in African fashion and textiles\n' +
+            '- Events like Kwita Izina and Kigali Fashion Week showcase local talent\n\n' +
+            '### Key Fashion Hubs in Kigali:\n' +
+            '- **Kimironko Market** — Largest fabric market, hundreds of vendors\n' +
+            '- **Kacyiru** — Boutiques and tailors\n' +
+            '- **Downtown Kigali** — Fabric shops, tailors, and accessories\n' +
+            '- **Kicukiro** — Emerging fashion and design spaces\n' +
+            '- **Nyarutarama** — High-end boutiques and designers\n\n' +
+            '### Types of Fashion Businesses in Rwanda:\n' +
+            '- Custom tailoring and made-to-measure clothing\n' +
+            '- Ready-to-wear clothing brands\n' +
+            '- Fabric trading (Kitenge, cotton, linen, wax prints)\n' +
+            '- Fashion accessories (jewellery, bags, shoes)\n' +
+            '- Fashion education and workshops\n' +
+            '- Online clothing retail',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=7TNO6EF5iU4', videoTitle: 'Rwanda Fashion Industry Overview' },
+          ),
+          makeLesson(
+            'Understanding Your Customer: The Rwandan Market',
+            'To succeed in fashion, you must understand who your customers are, what they want to wear, ' +
+            'and how much they are willing to spend. This lesson covers market research tailored to Rwanda.\n\n' +
+            '### Customer Segments in Rwanda:\n' +
+            '- **Young professionals (25-35)** — Office wear, smart casual, want quality at fair prices\n' +
+            '- **Students (18-25)** — Affordable trendy clothing, secondhand (carge) market\n' +
+            '- **Working professionals (35-50)** — Formal wear, suits, traditional wear for events\n' +
+            '- **International visitors/expats** — African-inspired fashion, souvenirs, custom pieces\n' +
+            '- **Events market** — Wedding wear, gala outfits, traditional ceremony attire\n\n' +
+            '### How to Research Your Market:\n' +
+            '1. Visit boutiques in different areas and note what sells\n' +
+            '2. Ask tailors what styles customers request most\n' +
+            '3. Browse Instagram and see what fashion content Rwandans engage with\n' +
+            '4. Attend fashion events and talk to designers\n' +
+            '5. Survey your own network about what they would buy\n\n' +
+            '### Price Sensitivity:\n' +
+            '- Most Rwandan customers are price-sensitive but value quality\n' +
+            '- 5,000-15,000 RWF for simple tops/dresses\n' +
+            '- 15,000-40,000 RWF for quality outfits\n' +
+            '- 50,000+ RWF for premium/custom pieces\n' +
+            '- Fabric prices at Kimironko: 3,000-15,000 RWF per metre depending on quality',
+            'article',
+            2,
+            { imageUrl: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=600&h=400' },
+          ),
+          makeLesson(
+            'Fashion Business Models: Choose Your Path',
+            'There are many ways to build a fashion business in Rwanda. This lesson helps you choose the right model for your skills, capital, and goals.\n\n' +
+            '### Business Models:\n\n' +
+            '**1. Custom Tailoring Shop**\n' +
+            '- Make clothes for individual customers\n' +
+            '- Low startup cost (machine + space + fabrics)\n' +
+            '- Steady income from repeat customers\n' +
+            '- Best for: Experienced tailors\n\n' +
+            '**2. Ready-to-Wear Brand**\n' +
+            '- Design and produce clothing in bulk\n' +
+            '- Sell through Instagram, Jumia, boutiques\n' +
+            '- Higher risk but higher reward\n' +
+            '- Best for: Designers with some capital\n\n' +
+            '**3. Fabric Trading**\n' +
+            '- Buy fabrics wholesale and sell retail\n' +
+            '- Can be done from market stall or online\n' +
+            '- Good margins on imported fabrics\n' +
+            '- Best for: Those with market connections\n\n' +
+            '**4. Fashion Accessories**\n' +
+            '- Jewellery, bags, shoes, belts\n' +
+            '- Lower production cost\n' +
+            '- Easy to sell online\n' +
+            '- Best for: Creative entrepreneurs with small budgets\n\n' +
+            '**5. Online Fashion Retail**\n' +
+            '- Curate and resell clothing from local designers\n' +
+            '- Sell on Jumia Fashion or your own Instagram shop\n' +
+            '- No production costs\n' +
+            '- Best for: Digital-savvy entrepreneurs',
+            'article',
+            3,
+            { imageUrl: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&q=80&w=600&h=400' },
+          ),
+          makeQuizLesson(
+            'Module 1: Knowledge Check',
+            'Test your understanding of the Rwandan fashion industry.',
+            [
+              {
+                question: 'Which market is the largest fabric market in Kigali?',
+                options: [
+                  'Kacyiru Market',
+                  'Kimironko Market',
+                  'Nyarutarama Market',
+                  'Gikondo Market',
+                ],
+                correctIndex: 1,
+                explanation: 'Kimironko Market is the largest fabric market in Kigali, with hundreds of vendors selling Kitenge, cotton, linen, and other fabrics.',
+              },
+              {
+                question: 'In what price range do most quality outfits sell for in Rwanda?',
+                options: [
+                  '1,000-3,000 RWF',
+                  '5,000-10,000 RWF',
+                  '15,000-40,000 RWF',
+                  '100,000+ RWF',
+                ],
+                correctIndex: 2,
+                explanation: 'Most quality outfits in Rwanda are priced between 15,000-40,000 RWF, though prices vary based on fabric and complexity.',
+              },
+              {
+                question: 'Which business model is best for someone with limited capital but strong sewing skills?',
+                options: [
+                  'Online fashion retail',
+                  'Custom tailoring shop',
+                  'Ready-to-wear brand',
+                  'Fabric trading',
+                ],
+                correctIndex: 1,
+                explanation: 'Custom tailoring has the lowest startup cost - a sewing machine, small space, and fabrics are all you need to start.',
+              },
+            ],
+            4,
+          ),
+        ],
+        'Understand the Rwandan fashion industry and choose the right business model for your fashion venture.',
+      ),
+      makeModule(
+        'Module 2: Fashion Design Basics — Sketching, Patterns & Sewing',
+        'Learn the fundamental skills every fashion entrepreneur needs — from sketching ideas to creating finished garments.',
+        [
+          makeLesson(
+            'Fashion Sketching for Beginners',
+            'You don\'t need to be a professional artist to sketch fashion designs. This lesson teaches you simple techniques ' +
+            'to get your ideas on paper so you can communicate with tailors and manufacturers.\n\n' +
+            '### Tools You Need:\n' +
+            '- Notebook or sketchpad (available at stationery shops in Kigali)\n' +
+            '- Pencil and eraser\n' +
+            '- Coloured pencils or markers\n' +
+            '- Ruler for straight lines\n' +
+            '- **Or use Canva** — Digital templates at www.canva.com\n\n' +
+            '### Basic Fashion Figure (Croquis):\n' +
+            'A fashion croquis is a simple drawing of a model\'s body used to sketch designs on. ' +
+            'The figure is 9 "heads" tall (fashion proportions are elongated).\n\n' +
+            '1. Draw a vertical line (the centre of the body)\n' +
+            '2. Mark 9 equal sections (each = height of the head)\n' +
+            '3. Draw an oval for the head at the top\n' +
+            '4. Mark shoulders, waist, hips, knees, and feet\n' +
+            '5. Connect with simple lines for the body\n' +
+            '6. Draw your garment design over the figure\n\n' +
+            '### Practice Activity:\n' +
+            'Sketch 3 different design ideas for a simple dress. Focus on getting the proportions right. ' +
+            'Don\'t worry about details — just practice the basic shapes.',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=I2qA4ceTSCw', videoTitle: 'Fashion Sketching for Beginners - Step by Step' },
+          ),
+          makeLesson(
+            'Pattern Making: From Design to Fabric',
+            'Patterns are the templates you cut fabric from. Without accurate patterns, your clothes won\'t fit properly. ' +
+            'This lesson covers the basics of pattern making so you can create garments that fit well.\n\n' +
+            '### What is a Pattern?\n' +
+            'A pattern is a paper template that shows the shapes of each piece of fabric needed to sew a garment. ' +
+            'Patterns include markings for seams, darts, pleats, and buttonholes.\n\n' +
+            '### Basic Pattern Making Steps:\n' +
+            '1. **Take measurements** — Bust, waist, hips, shoulder width, arm length, back length\n' +
+            '2. **Draw the basic block** — Start with a simple bodice or skirt block based on measurements\n' +
+            '3. **Add design details** — Modify the block for your specific design (neckline, sleeves, length)\n' +
+            '4. **Add seam allowance** — Usually 1-1.5cm extra around each piece\n' +
+            '5. **Cut and test** — Make a toile (test garment) from cheap fabric to check the fit\n' +
+            '6. **Adjust and finalise** — Modify the pattern based on the toile fit\n\n' +
+            '### Where to Learn More in Kigali:\n' +
+            '- **UTEXRWA** — Rwanda\'s textile school offers short courses\n' +
+            '- **Local tailors** — Many experienced tailors offer apprenticeship\n' +
+            '- **Kigali Fashion Cluster** — Network of fashion professionals\n' +
+            '- **YouTube** — Free pattern-making tutorials (search "basic pattern making")',
+            'video',
+            2,
+            { videoUrl: 'https://www.youtube.com/watch?v=N6PSsg79yeg', videoTitle: 'Pattern Making for Beginners - Basic Bodice' },
+          ),
+          makeLesson(
+            'Essential Sewing Techniques for Fashion Entrepreneurs',
+            'Whether you sew yourself or manage tailors, you need to understand sewing basics. ' +
+            'This lesson covers the techniques every fashion entrepreneur should know.\n\n' +
+            '### Essential Stitches:\n' +
+            '- **Straight stitch** — Basic seam, used for joining fabric pieces\n' +
+            '- **Zigzag stitch** — Finishes raw edges to prevent fraying\n' +
+            '- **Backstitch** — Reinforces the start and end of seams\n' +
+            '- **Basting stitch** — Temporary long stitch for fitting\n' +
+            '- **Hem stitch** — Finishes the bottom edges of garments\n' +
+            '- **Buttonhole stitch** — For creating buttonholes\n\n' +
+            '### Sewing Machine Basics:\n' +
+            'If you own a machine (or plan to buy one), learn these operations:\n' +
+            '- Threading the machine correctly\n' +
+            '- Winding and inserting the bobbin\n' +
+            '- Adjusting stitch length and tension\n' +
+            '- Changing needles (different fabrics need different needles)\n' +
+            '- Cleaning and maintaining the machine\n\n' +
+            '### Sewing Machine Prices in Rwanda (2024):\n' +
+            '- **Basic manual machine** — 80,000-150,000 RWF (secondhand)\n' +
+            '- **New domestic machine** — 200,000-400,000 RWF\n' +
+            '- **Industrial machine** — 500,000-1,500,000 RWF\n' +
+            '- **Overlock/serger** — 400,000-800,000 RWF\n\n' +
+            '### Where to Buy Sewing Machines in Kigali:\n' +
+            '- **Rwanda Sewing Machine Centre** — Near Kimironko\n' +
+            '- **Spare parts shops** — Downtown Kigali\n' +
+            '- **Online** — Jumia, classified ads\n' +
+            '- **Local markets** — Secondhand machines available',
+            'article',
+            3,
+            { imageUrl: 'https://images.unsplash.com/photo-1523381294911-8d3cead13475?auto=format&fit=crop&q=80&w=600&h=400' },
+          ),
+          makeQuizLesson(
+            'Module 2: Knowledge Check',
+            'Test your understanding of fashion design basics.',
+            [
+              {
+                question: 'What is a pattern in fashion design?',
+                options: [
+                  'A sketch of the finished garment',
+                  'A paper template showing fabric piece shapes for sewing',
+                  'A type of fabric',
+                  'A sewing machine attachment',
+                ],
+                correctIndex: 1,
+                explanation: 'A pattern is a paper template that shows the shapes of each fabric piece needed, with markings for seams, darts, and other details.',
+              },
+              {
+                question: 'What is a toile (muslin) used for?',
+                options: [
+                  'The final fabric for the garment',
+                  'A test garment made from cheap fabric to check fit',
+                  'A type of decorative stitching',
+                  'A pattern storage method',
+                ],
+                correctIndex: 1,
+                explanation: 'A toile is a test garment made from inexpensive fabric that lets you check fit and make adjustments before cutting the final fabric.',
+              },
+              {
+                question: 'Where in Kigali can you buy a sewing machine?',
+                options: [
+                  'Only at supermarkets',
+                  'Rwanda Sewing Machine Centre and downtown spare parts shops',
+                  'Only online from China',
+                  'Kimironko vegetable section',
+                ],
+                correctIndex: 1,
+                explanation: 'Sewing machines are available at dedicated sewing machine centres, spare parts shops downtown, on Jumia, and through classified ads.',
+              },
+            ],
+            4,
+          ),
+        ],
+        'Sketch design ideas, understand pattern making, and know the essential sewing techniques for your fashion business.',
+      ),
+      makeModule(
+        'Module 3: Sourcing Fabrics — Kitenge, Cotton, Linen & More',
+        'Learn where to buy fabrics in Rwanda and how to import quality materials for your fashion business.',
+        [
+          makeLesson(
+            'Fabric Shopping at Kimironko Market',
+            'Kimironko Market is the fabric capital of Kigali. This lesson teaches you how to shop there like a pro — ' +
+            'finding quality fabrics, negotiating prices, and building relationships with vendors.\n\n' +
+            '### What You\'ll Find at Kimironko:\n' +
+            '- **Kitenge (Ankara)** — Colourful African wax prints, 3,000-8,000 RWF/metre\n' +
+            '- **Cotton** — Plain and printed, 3,000-6,000 RWF/metre\n' +
+            '- **Linen** — Quality fabric for professional wear, 5,000-10,000 RWF/metre\n' +
+            '- **Silk** — For special occasion wear, 8,000-15,000 RWF/metre\n' +
+            '- **Lace** — For elegant and bridal wear, 5,000-20,000 RWF/metre\n' +
+            '- **Kikoy** — Traditional East African woven fabric, 3,000-6,000 RWF\n\n' +
+            '### Tips for Buying Fabric at Kimironko:\n' +
+            '1. **Go early** — Best selection arrives in the morning (7-9 AM)\n' +
+            '2. **Bring cash** — Most vendors don\'t accept mobile money or cards\n' +
+            '3. **Check quality** — Hold the fabric up to light, feel it, stretch it\n' +
+            '4. **Negotiate** — Start at 50-60% of the quoted price\n' +
+            '5. **Buy wholesale** — Buying 5+ metres of the same fabric gets you better prices\n' +
+            '6. **Build relationships** — Return to the same vendors for better deals over time\n' +
+            '7. **Know your widths** — Fabric width varies (90cm, 112cm, 150cm are common)',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=g-kNFv10Cts', videoTitle: 'Shopping for African Fabrics in Kigali - Kimironko Market Tour' },
+          ),
+          makeLesson(
+            'Importing Fabrics from Outside Rwanda',
+            'Sometimes the fabric you need isn\'t available locally. This lesson teaches you how to import fabrics ' +
+            'from Kenya, Tanzania, China, India, and Dubai — safely and cost-effectively.\n\n' +
+            '### Best Sources for Imported Fabrics:\n' +
+            '- **Kenya** — High-quality Kitenge and Kikoy, especially from Nairobi\n' +
+            '- **Tanzania** — Famous for printed cotton and Kitenge (lower prices than Rwanda)\n' +
+            '- **China** — Bulk fabrics at low prices (minimum orders usually 100+ metres)\n' +
+            '- **India** — Silk, cotton, linen — good quality at competitive prices\n' +
+            '- **Dubai** — Premium fabrics, lace, and embellishments\n' +
+            '- **Turkey** — High-quality cotton and jersey fabrics\n\n' +
+            '### Import Process:\n' +
+            '1. **Find suppliers** — Use Alibaba.com, TradeKey.com, or attend trade fairs\n' +
+            '2. **Request samples** — Always order samples first (3-5 metres) to check quality\n' +
+            '3. **Get quotes** — Ask for CIF (Cost, Insurance, Freight) prices to Kigali\n' +
+            '4. **Calculate duties** — Check RRA customs duties for fabric imports\n' +
+            '5. **Arrange shipping** — Air freight for small orders, sea freight for bulk\n' +
+            '6. **Clear customs** — Use a clearing agent at Mombasa/Kigali border\n\n' +
+            '### Estimated Import Costs (per kg):\n' +
+            '- Air freight from China: $3-5/kg\n' +
+            '- Sea freight from China: $0.5-1.5/kg\n' +
+            '- Customs duty: 25% on fabric (check current RRA rates)\n' +
+            '- Clearing agent fee: 50,000-100,000 RWF per shipment',
+            'article',
+            2,
+            { imageUrl: 'https://images.unsplash.com/photo-1551163944-3f1bb1b3b7d0?auto=format&fit=crop&q=80&w=600&h=400' },
+          ),
+          makeLesson(
+            'Working with Local Weavers and Artisans',
+            'Rwanda has talented weavers and artisans creating unique textiles. Incorporating their work into your fashion brand ' +
+            'adds authenticity and supports local craftsmanship.\n\n' +
+            '### Local Textiles in Rwanda:\n' +
+            '- **Agaseke** — Traditional woven baskets (can inspire handbag designs)\n' +
+            '- **Imigongo** — Traditional cow dung art (patterns used in fabric design)\n' +
+            '- **Kitenge** — Wax prints produced locally and regionally\n' +
+            '- **Kikoy** — Woven cotton fabric (also called Kikoi in Swahili)\n' +
+            '- **Handwoven cotton** — Small-scale artisan weaving\n\n' +
+            '### How to Find and Partner with Artisans:\n' +
+            '1. **Visit cooperatives** — Many weaving groups in rural areas (contact Rwanda Cooperative Agency)\n' +
+            '2. **Attend craft fairs** — Rwanda Expo, HAGARIMANA, and local markets\n' +
+            '3. **Use social media** — Search for "Rwanda artisans" or "handmade Rwanda"\n' +
+            '4. **Contact RDB** — Rwanda Development Board can connect you with artisan groups\n' +
+            '5. **Fair pricing** — Agree on prices upfront, pay deposits, build long-term relationships\n\n' +
+            '### Benefits of Working with Artisans:\n' +
+            '- Unique fabrics and designs you won\'t find anywhere else\n' +
+            '- Storytelling for your brand ("handwoven by Rwandan artisans")\n' +
+            '- Supporting local communities\n' +
+            '- Potential for premium pricing (customers pay more for authentic products)',
+            'article',
+            3,
+            { imageUrl: 'https://images.unsplash.com/photo-1562183241-b937e95585b6?auto=format&fit=crop&q=80&w=600&h=400' },
+          ),
+          makeQuizLesson(
+            'Module 3: Knowledge Check',
+            'Test your fabric sourcing knowledge.',
+            [
+              {
+                question: 'What is a good negotiation strategy when buying fabric at Kimironko Market?',
+                options: [
+                  'Accept the first price quoted',
+                  'Start negotiating at 50-60% of the quoted price',
+                  'Only buy at fixed-price shops',
+                  'Never negotiate fabric prices',
+                ],
+                correctIndex: 1,
+                explanation: 'Starting at 50-60% of the quoted price is a standard negotiation practice at Kimironko Market.',
+              },
+              {
+                question: 'What is the typical customs duty rate for fabric imports into Rwanda?',
+                options: [
+                  '5%',
+                  '25%',
+                  '50%',
+                  'No duty on fabric',
+                ],
+                correctIndex: 1,
+                explanation: 'Fabric imports into Rwanda typically incur around 25% customs duty, but always check current RRA rates as they may change.',
+              },
+              {
+                question: 'Why should you order fabric samples before placing a bulk import order?',
+                options: [
+                  'Samples are free',
+                  'To check the quality before committing to a large order',
+                  'Samples arrive faster',
+                  'It is required by law',
+                ],
+                correctIndex: 1,
+                explanation: 'Always order samples first to verify fabric quality, colour, and feel matches what you need before placing a large order.',
+              },
+            ],
+            4,
+          ),
+        ],
+        'Source fabrics from local markets and international suppliers for your fashion business.',
+      ),
+      makeModule(
+        'Module 4: Production, Quality Control & Scaling',
+        'Learn to manage production efficiently, maintain quality standards, and scale your fashion business.',
+        [
+          makeLesson(
+            'Setting Up Your Production Space',
+            'Whether you work from home or rent a workspace, your production area affects quality and efficiency. ' +
+            'Learn how to set up a functional sewing and production space.\n\n' +
+            '### Home-Based Production (Starting Out):\n' +
+            '- Minimum space: 3m x 4m for one machine, cutting table, and storage\n' +
+            '- Ensure good lighting (natural light is best for colour matching)\n' +
+            '- Keep a clean, dry space (fabric absorbs moisture and odours)\n' +
+            '- Invest in proper storage (shelves, plastic bins protect fabric from dust)\n\n' +
+            '### Renting a Workshop (Scaling Up):\n' +
+            '- Commercial spaces in Kigali: 100,000-300,000 RWF/month (small workshop)\n' +
+            '- Areas: Kacyiru, Kimironko, Gikondo, Kicukiro\n' +
+            '- Look for: Good lighting, power (consider solar backup), ventilation, security\n\n' +
+            '### Essential Equipment Checklist:\n' +
+            '☐ Sewing machine (domestic or industrial)\n' +
+            '☐ Overlock/serger machine (for professional finishes)\n' +
+            '☐ Cutting table (large, flat, waist-height)\n' +
+            '☐ Fabric scissors (sharp, fabric-only)\n' +
+            '☐ Measuring tape and rulers\n' +
+            '☐ Iron and ironing board\n' +
+            '☐ Mannequin/dress form (for fitting)\n' +
+            '☐ Storage shelves and bins\n' +
+            '☐ Good lighting\n' +
+            '☐ First aid kit (sewing injuries happen!)',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=5nPE3ZWHnZY', videoTitle: 'How to Set Up a Small Sewing Workshop' },
+          ),
+          makeLesson(
+            'Quality Control: Ensuring Every Garment is Perfect',
+            'Quality is what makes customers come back and recommend you to others. This lesson teaches you ' +
+            'how to check quality at every stage of production.\n\n' +
+            '### Quality Checks at Each Stage:\n\n' +
+            '**Before Cutting:**\n' +
+            '- Check fabric for defects (holes, stains, uneven dye)\n' +
+            '- Pre-wash fabric if needed (cotton shrinks)\n' +
+            '- Iron fabric flat\n' +
+            '- Check pattern pieces are correct\n\n' +
+            '**During Cutting:**\n' +
+            '- Cut precisely along pattern lines\n' +
+            '- Check pattern direction (especially for patterned fabrics like Kitenge)\n' +
+            '- Mark darts, pleats, and notches clearly\n' +
+            '- Check that all pieces are present for each garment\n\n' +
+            '**During Sewing:**\n' +
+            '- Seams should be straight and even width\n' +
+            '- Stitch tension should be correct (not too tight, not too loose)\n' +
+            '- Raw edges should be finished (zigzag or overlock)\n' +
+            '- Corners and curves should be smooth\n\n' +
+            '**Final Inspection (Before Delivering):**\n' +
+            '- Check all seams are secure\n' +
+            '- Remove all loose threads\n' +
+            '- Check buttons and zippers work\n' +
+            '- Iron/press the garment\n' +
+            '- Try on mannequin to check fit\n' +
+            '- Ask a colleague to do a second check',
+            'article',
+            2,
+            { imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600&h=400' },
+          ),
+          makeLesson(
+            'Scaling Production: From 1 to 100 Pieces',
+            'When orders increase, you need systems to scale production without sacrificing quality. ' +
+            'This lesson covers how to grow from making one piece at a time to batch production.\n\n' +
+            '### Production Planning:\n' +
+            '- **Track your time** — How long does each garment type take? (e.g., simple dress = 3 hours)\n' +
+            '- **Batch tasks** — Cut all pieces first, then sew all seams, then finish all hems\n' +
+            '- **Create a production schedule** — Week by week plan for orders\n' +
+            '- **Build in buffer time** — Things go wrong, add 20% extra time\n\n' +
+            '### Hiring and Training Staff:\n' +
+            'When you hire tailors, invest time in training:\n' +
+            '- Create standard operating procedures (SOPs) for each garment\n' +
+            '- Provide sample garments as quality references\n' +
+            '- Do daily quality checks on first 2-3 pieces each tailor makes\n' +
+            '- Pay by piece (e.g., 5,000 RWF per dress) to incentivize productivity\n\n' +
+            '### Line Production (6+ Staff):\n' +
+            'For larger orders, use assembly line system:\n' +
+            '- Person 1: Cutting\n' +
+            '- Person 2: Sewing main seams\n' +
+            '- Person 3: Sewing details (collars, cuffs, zippers)\n' +
+            '- Person 4: Finishing (hems, buttons, ironing)\n' +
+            '- Person 5: Quality control and packaging\n\n' +
+            '### Pricing for Wholesale Orders:\n' +
+            'When scaling, you can offer wholesale prices:\n' +
+            '- 1-10 pieces: Retail price\n' +
+            '- 11-50 pieces: 10-15% discount\n' +
+            '- 51-100 pieces: 15-25% discount\n' +
+            '- 100+ pieces: 25-35% discount',
+            'article',
+            3,
+            { imageUrl: 'https://images.unsplash.com/photo-1560343776-97e42e3b5f48?auto=format&fit=crop&q=80&w=600&h=400' },
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Test your production and quality control knowledge.',
+            [
+              {
+                question: 'What is the first quality check you should do before cutting fabric?',
+                options: [
+                  'Check the colour is fashionable',
+                  'Check fabric for defects like holes, stains, or uneven dye',
+                  'Check the price tag',
+                  'Check if the fabric is in style',
+                ],
+                correctIndex: 1,
+                explanation: 'Always inspect fabric for defects before cutting. Catching a flaw early saves wasted time and materials.',
+              },
+              {
+                question: 'What is the benefit of batching tasks in production?',
+                options: [
+                  'It is more boring for workers',
+                  'It is more efficient than making one garment completely before starting the next',
+                  'It uses less fabric',
+                  'It requires fewer staff',
+                ],
+                correctIndex: 1,
+                explanation: 'Batching tasks (cutting all pieces first, then sewing all of one type of seam) is much more efficient than making each garment one at a time.',
+              },
+              {
+                question: 'What discount is typical for wholesale orders of 50+ pieces?',
+                options: [
+                  '5%',
+                  '15-25%',
+                  '50%',
+                  'No discount for bulk',
+                ],
+                correctIndex: 1,
+                explanation: 'For orders of 51-100 pieces, a standard wholesale discount is 15-25% off the retail price.',
+              },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Production Plan Assignment',
+            'Create a production plan for a small fashion collection.',
+            'Apply what you have learned to plan your production process.',
+            [
+              {
+                question: 'You receive an order for 20 identical dresses. Create a step-by-step production plan showing how you will batch tasks, manage quality checks, and schedule the work. Include estimated time for each step.',
+                type: 'open',
+                explanation: 'Consider: cutting all 20 at once, batching seam types, adding quality checks at each stage, building in buffer time for corrections.',
+                points: 20,
+              },
+              {
+                question: 'List 5 quality control checkpoints you will implement in your fashion business, explaining what you check at each point and why it matters.',
+                type: 'open',
+                explanation: 'Example: Check 1 - Before cutting (fabric defects). Check 2 - After cutting (pieces match pattern). Check 3 - During sewing (seam quality). Check 4 - Before finishing (fit check). Check 5 - Final (overall quality).',
+                points: 20,
+              },
+            ],
+            5,
+          ),
+        ],
+        'Set up production, implement quality control, and scale your fashion business efficiently.',
+      ),
+      makeModule(
+        'Module 5: Brand Building & Marketing Your Fashion Brand',
+        'Create a strong fashion brand identity and market your products to customers in Rwanda and internationally.',
+        [
+          makeLesson(
+            'Creating Your Fashion Brand Identity',
+            'Your brand is more than your logo — it\'s the feeling customers get when they see your clothes. ' +
+            'This lesson helps you define and build a fashion brand that stands out.\n\n' +
+            '### Elements of a Strong Fashion Brand:\n' +
+            '- **Brand name** — Memorable, easy to pronounce, available as a social media handle\n' +
+            '- **Logo** — Simple, works in black and white, recognisable at small sizes (use Canva)\n' +
+            '- **Brand colours** — 2-3 colours that represent your brand\n' +
+            '- **Brand voice** — How you speak to customers (e.g., elegant, playful, professional)\n' +
+            '- **Brand story** — Why you started, what makes your brand special\n\n' +
+            '### Your Brand Story Template:\n' +
+            '"I started [Brand Name] because I wanted to [problem you solve]. ' +
+            'Growing up in Rwanda, I noticed that [insight about fashion gap]. ' +
+            'My designs combine [traditional element] with [modern element] to create clothing ' +
+            'that makes women/men feel [emotion]. Every piece is [quality promise]. ' +
+            'When you wear [Brand Name], you are wearing [value proposition]."\n\n' +
+            '### Creating a Brand Kit (Free Tools):\n' +
+            '- **Canva** — design logo, business cards, lookbooks (www.canva.com)\n' +
+            '- **Coolors.co** — create colour palettes\n' +
+            '- **Google Fonts** — choose brand fonts\n' +
+            '- **Remove.bg** — remove image backgrounds for product photos\n' +
+            '- **Looka** — AI logo generation (paid, but affordable)',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=gVvi_L8gIAI', videoTitle: 'How to Build a Fashion Brand from Scratch' },
+          ),
+          makeLesson(
+            'Selling on Instagram: Your Fashion Storefront',
+            'Instagram is the most powerful platform for fashion brands in Rwanda. This lesson teaches you how to ' +
+            'set up and grow a fashion Instagram account that attracts customers.\n\n' +
+            '### Setting Up Your Fashion Instagram:\n' +
+            '1. Create a **business account** (not personal)\n' +
+            '2. Write a clear bio: what you sell + location + contact\n' +
+            '3. Link to your WhatsApp Business for orders\n' +
+            '4. Use a consistent visual style for your feed\n' +
+            '5. Post at least once daily (best times: 7-9 AM and 5-8 PM Kigali time)\n\n' +
+            '### Content Ideas for Fashion Brands:\n' +
+            '- **Product photos** — Flat lays, on mannequin, on models\n' +
+            '- **Behind the scenes** — Show fabric selection, sewing process\n' +
+            '- **Customer try-ons** — Share photos of happy customers (with permission)\n' +
+            '- **Style tips** — How to wear your pieces, accessorize\n' +
+            '- **Fabric stories** — Explain where your fabrics come from\n' +
+            '- **Flash sales** — Limited-time discounts to create urgency\n' +
+            '- **New arrivals** — Announce new collections\n\n' +
+            '### Growing Your Following in Rwanda:\n' +
+            '- Use hashtags: #RwandanFashion #KigaliStyle #MadeInRwanda #AfricanFashion\n' +
+            '- Tag relevant accounts: @VisitRwanda, @KigaliFashionWeek, local influencers\n' +
+            '- Collaborate with Rwandan models and photographers\n' +
+            '- Run giveaways ("Tag a friend who loves fashion")\n' +
+            '- Respond to every comment and DM within 24 hours\n' +
+            '- Use Instagram Shopping if available in Rwanda',
+            'video',
+            2,
+            { videoUrl: 'https://www.youtube.com/watch?v=WeNY3NVcjY0', videoTitle: 'Instagram Marketing for Fashion Brands - Complete Guide' },
+          ),
+          makeLesson(
+            'Selling on Etsy, Jumia & Exporting Internationally',
+            'Reach customers beyond Rwanda by selling on international and regional platforms. ' +
+            'This lesson covers how to sell on Etsy (global) and Jumia Fashion (Africa-wide).\n\n' +
+            '### Selling on Etsy:\n' +
+            '- **Listing fee**: $0.20 per item\n' +
+            '- **Commission**: 5% of sale price\n' +
+            '- **Payment processing**: 3% + $0.25 (via PayPal)\n' +
+            '- **Best for**: Unique, handmade, African-inspired fashion\n' +
+            '- **Tips**: High-quality photos, detailed descriptions, use tags like "African dress" "Kitenge"\n\n' +
+            '### Selling on Jumia Fashion:\n' +
+            '- **Commission**: 10-15% depending on category\n' +
+            '- **Fulfillment**: You ship or use Jumia\'s warehouse\n' +
+            '- **Payment**: Jumia handles collection, pays you\n' +
+            '- **Best for**: Ready-to-wear clothing, accessories\n' +
+            '- **Tips**: Competitive pricing, fast shipping, good product descriptions\n\n' +
+            '### International Shipping:\n' +
+            'To sell globally, you need reliable shipping:\n' +
+            '- **RwandaPost** — Cheapest for small packages (but slow)\n' +
+            '- **DHL/FedEx** — Fast but expensive (good for premium items)\n' +
+            '- **Cargo services** — Options to Kenya, Uganda, Tanzania\n' +
+            '- **Shipping costs** — A dress to the US/Europe: 15,000-30,000 RWF via air\n\n' +
+            '### Receiving International Payments:\n' +
+            '- **PayPal** — Most widely accepted (www.paypal.com)\n' +
+            '- **Bank transfer** — For regular wholesale customers\n' +
+            '- **WorldRemit/Wise** — Lower fees than bank transfers\n' +
+            '- **Fees**: PayPal charges 2.9% + $0.30 per transaction',
+            'article',
+            3,
+            { imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=600&h=400' },
+          ),
+          makeLesson(
+            'Selling at Local Markets and Events in Rwanda',
+            'Local markets and events are excellent for building brand awareness and making direct sales. ' +
+            'Rwanda has many opportunities to showcase your fashion brand in person.\n\n' +
+            '### Best Markets and Events in Rwanda:\n' +
+            '- **Kigali Fashion Week** — The biggest fashion event in Rwanda (annual)\n' +
+            '- **Rwanda Expo** — Annual trade fair showing Made in Rwanda products\n' +
+            '- **HAGARIMANA** — Arts and crafts exhibition in Kigali\n' +
+            '- **Kimironko Market** — Daily market, great for fabric and ready-to-wear\n' +
+            '- **City Market** — Downtown Kigali, good for accessories\n' +
+            '- **Milima Street Market** — Weekend market in Kimihurura\n' +
+            '- **Boutique collaborations** — Partner with existing boutiques to stock your brand\n' +
+            '- **Pop-up shops** — Rent temporary space at malls (Kigali Heights, UTC)\n\n' +
+            '### How to Prepare for a Market:\n' +
+            '1. **Apply early** — Popular events fill up months in advance\n' +
+            '2. **Bring inventory** — Estimate 2x what you think you will sell\n' +
+            '3. **Display well** — Good lighting, mannequins, clear pricing\n' +
+            '4. **Accept payments** — Mobile money, cash, and card (use a POS machine)\n' +
+            '5. **Collect contacts** — Have a signup sheet or QR code for Instagram\n' +
+            '6. **Bring change** — Many customers pay in cash\n' +
+            '7. **Brand your booth** — Banner, business cards, packaging with your logo\n\n' +
+            '### Pricing at Markets:\n' +
+            '- Stall fee: 5,000-50,000 RWF per day depending on the event\n' +
+            '- Offer "market special" prices — slightly lower than your boutique/online prices\n' +
+            '- Bundle deals: "Buy 2 pieces, get 10% off"',
+            'article',
+            4,
+            { imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=600&h=400' },
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Test your brand building and marketing knowledge.',
+            [
+              {
+                question: 'What is the most important platform for selling fashion in Rwanda?',
+                options: ['Facebook', 'Instagram', 'Twitter', 'TikTok'],
+                correctIndex: 1,
+                explanation: 'Instagram is the most powerful platform for fashion brands in Rwanda, where visual content drives sales.',
+              },
+              {
+                question: 'How much does Etsy charge per listing?',
+                options: ['Free', '$0.20 per item', '$5 per item', '10% of sale price'],
+                correctIndex: 1,
+                explanation: 'Etsy charges $0.20 per item listing fee, plus a 5% commission on the sale price.',
+              },
+              {
+                question: 'Which payment platform is most widely used for receiving international payments?',
+                options: ['Mobile Money', 'PayPal', 'Cash', 'Bank cheque'],
+                correctIndex: 1,
+                explanation: 'PayPal is the most widely accepted international payment platform for small businesses selling globally.',
+              },
+            ],
+            5,
+          ),
+        ],
+        'Build a fashion brand identity, market on Instagram, sell on global platforms, and participate in local fashion events.',
+      ),
+      makeModule(
+        'Module 6: Business Management — Pricing, Customers & Finances',
+        'Learn to price your products, manage customers, handle finances, and grow a profitable fashion business.',
+        [
+          makeLesson(
+            'Pricing Your Fashion Products',
+            'Pricing is one of the hardest but most important decisions in your fashion business. This lesson teaches you ' +
+            'how to calculate costs and set prices that are profitable and competitive.\n\n' +
+            '### Cost Calculation Formula:\n' +
+            '**Total Cost = Materials + Labour + Overheads + Marketing**\n\n' +
+            '**Materials:** Fabric, thread, buttons, zippers, tags\n' +
+            '**Labour:** Your time or your tailors\' wages\n' +
+            '**Overheads:** Rent, electricity, machine maintenance\n' +
+            '**Marketing:** Instagram ads, photoshoots, packaging\n\n' +
+            '### Pricing Strategies:\n\n' +
+            '**Markup Pricing (Simplest):**\n' +
+            '- Calculate total cost per piece\n' +
+            '- Add 50-100% markup for retail price\n' +
+            '- Example: Cost = 8,000 RWF, Retail = 15,000-20,000 RWF\n\n' +
+            '**Value-Based Pricing (Best for Brands):**\n' +
+            '- Price based on perceived value and brand positioning\n' +
+            '- Premium brands charge 3-5x cost\n' +
+            '- Works well if you have a strong brand story\n\n' +
+            '### Sample Pricing for a Simple Dress:\n' +
+            '- Fabric (2 metres at 5,000 RWF/metre): 10,000 RWF\n' +
+            '- Thread, zipper, buttons: 2,000 RWF\n' +
+            '- Labour (3 hours at 2,000 RWF/hour): 6,000 RWF\n' +
+            '- Overheads (20% of labour): 1,200 RWF\n' +
+            '- = Total Cost: 19,200 RWF\n' +
+            '- **Retail Price (60% markup): 30,000 RWF**',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=eW4EaHV2aJE', videoTitle: 'How to Price Your Fashion Products - Small Business Guide' },
+          ),
+          makeLesson(
+            'Managing Customers and Building Loyalty',
+            'Happy customers are the best marketing. This lesson teaches you how to manage customer relationships ' +
+            'for repeat business and referrals.\n\n' +
+            '### Customer Journey:\n' +
+            '1. **Discovery** — Customer finds you on Instagram, market, or referral\n' +
+            '2. **Interest** — They browse your products, ask questions\n' +
+            '3. **Purchase** — They place an order or buy at a market\n' +
+            '4. **Delivery** — They receive the product\n' +
+            '5. **Post-purchase** — Follow up to ensure satisfaction\n' +
+            '6. **Loyalty** — They come back and refer others\n\n' +
+            '### Using WhatsApp Business:\n' +
+            '- Create a WhatsApp Business account (www.whatsapp.com/business)\n' +
+            '- Set up automated greeting messages\n' +
+            '- Use labels: New Order, Payment Received, Completed, Delivered\n' +
+            '- Create catalogues (show your products)\n' +
+            '- Use broadcast lists for promotions (be careful not to spam)\n' +
+            '- Set business hours so customers know when to expect replies\n\n' +
+            '### Customer Service Tips:\n' +
+            '- Respond to messages within 2 hours (or set expectations)\n' +
+            '- Send order confirmation and tracking updates\n' +
+            '- Always deliver on or before the promised date\n' +
+            '- Handle complaints politely — offer a remake or refund if needed\n' +
+            '- Ask for reviews and testimonials (share on Instagram)\n' +
+            '- Offer referral discounts ("Refer a friend, both get 10% off")',
+            'article',
+            2,
+            { imageUrl: 'https://images.unsplash.com/photo-1556740714-a8395b3bf30f?auto=format&fit=crop&q=80&w=600&h=400' },
+          ),
+          makeLesson(
+            'Managing Your Fashion Business Finances',
+            'Good financial management keeps your fashion business alive. This lesson covers simple but effective ' +
+            'financial practices for fashion entrepreneurs in Rwanda.\n\n' +
+            '### Essential Financial Records:\n' +
+            '- **Sales log** — Date, customer, items sold, price, payment method\n' +
+            '- **Expense log** — Date, item, cost, category (materials, rent, marketing)\n' +
+            '- **Inventory log** — What you have in stock, what you need to buy\n' +
+            '- **Customer list** — Name, phone, preferences, order history\n\n' +
+            '### Simple Bookkeeping (Free with Google Sheets):\n' +
+            'Create a spreadsheet with these columns:\n' +
+            '- **Income**: Date, Customer, Items, Amount, Payment Method, Notes\n' +
+            '- **Expenses**: Date, Item, Category, Amount, Receipt?\n' +
+            '- **Monthly Summary**: Total Income - Total Expenses = Profit\n\n' +
+            '### Understanding Your Margins:\n' +
+            '- **Gross Profit Margin** = (Selling Price - Cost of Goods) / Selling Price × 100\n' +
+            '- **Target**: At least 50% gross margin for fashion\n' +
+            '- **Example**: Selling price 30,000 RWF, cost 12,000 RWF\n' +
+            '  = (30,000 - 12,000) / 30,000 × 100 = **60% margin** (Excellent!)\n\n' +
+            '### Tax Obligations in Rwanda:\n' +
+            '- Register with **RRA** (Rwanda Revenue Authority)\n' +
+            '- Small businesses may qualify for **lump sum tax** (simplified)\n' +
+            '- Keep receipts for all business expenses\n' +
+            '- File taxes monthly or quarterly depending on your turnover\n' +
+            '- Consult an accountant or visit RRA for guidance',
+            'article',
+            3,
+            { imageUrl: 'https://images.unsplash.com/photo-1560472355-536de3962603?auto=format&fit=crop&q=80&w=600&h=400' },
+          ),
+          makeQuizLesson(
+            'Module 6: Knowledge Check',
+            'Test your business management knowledge.',
+            [
+              {
+                question: 'What is a good gross profit margin target for a fashion business?',
+                options: ['10%', '25%', '50% or more', '5%'],
+                correctIndex: 2,
+                explanation: 'A target of 50% or higher gross profit margin is recommended for fashion businesses to cover overheads and remain profitable.',
+              },
+              {
+                question: 'Which tool is best for managing customer orders and inquiries in Rwanda?',
+                options: ['Email only', 'WhatsApp Business', 'Phone calls only', 'Facebook Messenger'],
+                correctIndex: 1,
+                explanation: 'WhatsApp Business is the most popular and effective tool in Rwanda for managing customer orders, inquiries, and communication.',
+              },
+              {
+                question: 'What is the first step for tax compliance as a fashion business in Rwanda?',
+                options: [
+                  'Hire an accountant',
+                  'Register with the Rwanda Revenue Authority (RRA)',
+                  'Open a business bank account',
+                  'Print receipts',
+                ],
+                correctIndex: 1,
+                explanation: 'All businesses in Rwanda must register with the RRA for tax purposes. You can then determine which tax regime applies to your business.',
+              },
+            ],
+            4,
+          ),
+          makeAssignmentLesson(
+            'Module 6: Business Plan Assignment',
+            'Create a mini business plan for your fashion venture.',
+            'Demonstrate your understanding of pricing, customers, and financial management.',
+            [
+              {
+                question: 'Calculate the cost and retail price for one product you want to sell. List materials needed, their costs, labour time, and overhead. Then show your markup percentage and final retail price.',
+                type: 'open',
+                explanation: 'Follow the cost calculation formula: Materials + Labour + Overheads = Total Cost. Then apply a 50-100% markup for retail price.',
+                points: 25,
+              },
+              {
+                question: 'Write a one-page summary of your fashion business plan including: your business name, what you will sell, who your target customers are, how you will price your products, how you will market (online and offline), and what your first 3-month goals are.',
+                type: 'open',
+                explanation: 'Be specific about your niche, target market in Rwanda, pricing approach, marketing channels (Instagram, WhatsApp, markets), and realistic goals.',
+                points: 25,
+              },
+            ],
+            5,
+          ),
+        ],
+        'Price products profitably, manage customer relationships, and maintain healthy business finances.',
+      ),
+      makeModule(
+        'Module 7: Final Project — Launch Your Fashion Brand',
+        'Apply everything you have learned to plan and launch your own fashion brand.',
+        [
+          makeLesson(
+            'Bringing It All Together: Your Fashion Brand Launch Plan',
+            'This final module guides you through creating a complete launch plan for your fashion brand. ' +
+            'You will use all the knowledge from previous modules to create a roadmap for your fashion business.\n\n' +
+            '### Your Brand Launch Checklist:\n' +
+            '**Week 1-2: Planning**\n' +
+            '☐ Define your brand identity (name, logo, colours, story)\n' +
+            '☐ Choose your business model (custom, ready-to-wear, etc.)\n' +
+            '☐ Research your target customers\n' +
+            '☐ Calculate startup costs and secure funding\n\n' +
+            '**Week 3-4: Setup**\n' +
+            '☐ Set up production space\n' +
+            '☐ Source initial fabric inventory\n' +
+            '☐ Buy/rent equipment (sewing machine, etc.)\n' +
+            '☐ Create your Instagram and WhatsApp Business accounts\n' +
+            '☐ Design your first collection (3-10 pieces)\n' +
+            '☐ Create samples and test fit\n\n' +
+            '**Week 5-6: Pre-Launch**\n' +
+            '☐ Photograph your collection\n' +
+            '☐ Create your Canva lookbook\n' +
+            '☐ Set up pricing\n' +
+            '☐ Prepare packaging with your brand\n' +
+            '☐ Build pre-launch buzz on Instagram (teaser posts)\n' +
+            '☐ Send samples to 1-2 local influencers\n\n' +
+            '**Week 7-8: Launch**\n' +
+            '☐ Launch on Instagram with a photoshoot\n' +
+            '☐ List on Jumia Fashion or Etsy\n' +
+            '☐ Host a small launch event or pop-up\n' +
+            '☐ Start taking orders\n' +
+            '☐ Collect customer feedback\n\n' +
+            '### Key Resources:\n' +
+            '- **Canva**: Brand design (www.canva.com)\n' +
+            '- **Instagram**: Marketing (www.instagram.com)\n' +
+            '- **WhatsApp Business**: Customer management (www.whatsapp.com/business)\n' +
+            '- **Etsy**: International selling (www.etsy.com)\n' +
+            '- **Jumia Fashion**: Regional selling (www.jumia.co.rw)\n' +
+            '- **PayPal**: International payments (www.paypal.com)\n' +
+            '- **Kimironko Market**: Fabric sourcing (visit in person)',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=FTumBs8s3aw', videoTitle: 'How to Launch a Fashion Brand - Complete Step-by-Step Guide' },
+          ),
+          makeAssignmentLesson(
+            'Final Project: Your Fashion Brand Launch Plan',
+            'Complete this final assignment to earn your certificate.',
+            'Create a comprehensive launch plan for your fashion brand.',
+            [
+              {
+                question: 'Create a complete 8-week brand launch plan following the checklist above. For each week, list 3-5 specific actions you will take. Include estimated costs for each major expense.',
+                type: 'open',
+                explanation: 'Your plan should cover all phases: planning, setup, pre-launch, and launch. Include specific actions, timelines, and budget estimates.',
+                points: 30,
+              },
+              {
+                question: 'Design your brand identity package: Write your brand story (3-4 sentences), describe your brand colours, include a sketch or description of your logo concept, and describe your target customer in detail (age, income, location, style preferences).',
+                type: 'open',
+                explanation: 'Draw from Module 5 on brand building. Your brand identity should be cohesive and reflect what makes your fashion brand unique.',
+                points: 30,
+              },
+              {
+                question: 'Calculate your projected costs and revenue for the first 3 months. List: startup costs, monthly operating costs, projected monthly sales (units × price), and when you expect to break even.',
+                type: 'open',
+                explanation: 'Use the financial management skills from Module 6. Be realistic about costs and conservative about sales projections.',
+                points: 30,
+              },
+            ],
+            6,
+            60,
+          ),
+        ],
+        'Create a complete brand launch plan with budget, timeline, and marketing strategy.',
+      ),
+    ],
+  },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // COURSE 6: Kinyarwanda for Beginners (Internationals) — Speak from Day One
   // ──────────────────────────────────────────────────────────────────────────
   {
     title: 'Kinyarwanda for Beginners (Internationals) — Speak from Day One',
@@ -1016,7 +1993,7 @@ const COURSES: CourseDef[] = [
       'researchers, and anyone new to Rwanda who wants to connect with locals in their language.',
     category: 'Languages',
     level: 'Beginner',
-    price: 2000,
+    price: 1000,
     searchImage: 'kinyarwanda language learning beginners africa international',
     isFeatured: true,
     modules: [

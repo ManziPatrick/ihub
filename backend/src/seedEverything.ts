@@ -160,11 +160,11 @@ async function seedEverything() {
     // ── 1. Courses (with modules & lessons) ────────────────────────────────
     console.log('\n━━━ STEP 1: Courses ─━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     const courseData = [
-      { title: 'Web Development Fundamentals', description: 'Learn HTML, CSS, and JavaScript.', price: 75000, category: 'Web Development', level: 'Beginner' },
-      { title: 'Data Science & Analytics', description: 'Python-based data analysis.', price: 120000, category: 'Data Science', level: 'Intermediate' },
-      { title: 'React Native Mobile Apps', description: 'Cross-platform mobile development.', price: 95000, discountPrice: 75000, category: 'Mobile Development', level: 'Intermediate' },
-      { title: 'Advanced Cloud Computing with AWS', description: 'Deploy and scale on AWS.', price: 25000, category: 'Technology', level: 'Advanced' },
-      { title: 'UI/UX Design Masterclass', description: 'Figma to production design.', price: 18000, discountPrice: 15000, category: 'Design', level: 'Intermediate' },
+      { title: 'Web Development Fundamentals', description: 'Learn HTML, CSS, and JavaScript.', price: 1000, category: 'Web Development', level: 'Beginner' },
+      { title: 'Data Science & Analytics', description: 'Python-based data analysis.', price: 1000, category: 'Data Science', level: 'Intermediate' },
+      { title: 'React Native Mobile Apps', description: 'Cross-platform mobile development.', price: 1000, category: 'Mobile Development', level: 'Intermediate' },
+      { title: 'Advanced Cloud Computing with AWS', description: 'Deploy and scale on AWS.', price: 1000, category: 'Technology', level: 'Advanced' },
+      { title: 'UI/UX Design Masterclass', description: 'Figma to production design.', price: 1000, category: 'Design', level: 'Intermediate' },
       { title: 'Artificial Intelligence & ML Basics', description: 'AI/ML algorithms in Python.', price: 0, category: 'AI', level: 'Beginner' },
     ];
 
@@ -347,7 +347,7 @@ async function seedEverything() {
     // ── 9. Internship Programs ─────────────────────────────────────────────
     console.log('\n━━━ STEP 9: Internship Programs ─━━━━━━━━━━━━━━━━━━━━━━');
     const programData = [
-      { title: 'Full Stack Engineering Internship', description: 'Build production-grade applications.', price: 100000, duration: '3 months' },
+      { title: 'Full Stack Engineering Internship', description: 'Build production-grade applications.', price: 1000, duration: '3 months' },
       { title: 'Data Analytics Internship', description: 'Drive decisions with data.', price: 0, duration: '2 months' },
     ];
     const createdPrograms: any[] = [];

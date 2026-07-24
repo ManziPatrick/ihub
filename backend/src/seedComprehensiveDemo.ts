@@ -156,7 +156,7 @@ const COURSE_DEFS = [
   {
     title: 'Web Development Fundamentals',
     description: 'Learn HTML, CSS, and JavaScript from scratch. Build modern responsive websites with hands-on projects and real-world assignments.',
-    price: 75000,
+    price: 1000,
     discountPrice: 60000,
     category: 'Web Development',
     level: 'Beginner',
@@ -167,7 +167,7 @@ const COURSE_DEFS = [
   {
     title: 'Data Science & Analytics with Python',
     description: 'Introduction to data analysis, visualization, and machine learning using Python, Pandas, NumPy, and Scikit-Learn.',
-    price: 120000,
+    price: 1000,
     discountPrice: 95000,
     category: 'Data Science',
     level: 'Intermediate',
@@ -178,7 +178,7 @@ const COURSE_DEFS = [
   {
     title: 'Mobile App Development with React Native',
     description: 'Build cross-platform iOS and Android apps using React Native, Expo, and Firebase.',
-    price: 95000,
+    price: 1000,
     discountPrice: 75000,
     category: 'Mobile Development',
     level: 'Intermediate',
@@ -189,7 +189,7 @@ const COURSE_DEFS = [
   {
     title: 'UI/UX Design Masterclass',
     description: 'Master user interface and user experience design using Figma. Learn design systems, prototyping, and user research.',
-    price: 80000,
+    price: 1000,
     discountPrice: 65000,
     category: 'Design',
     level: 'Beginner',
@@ -200,7 +200,7 @@ const COURSE_DEFS = [
   {
     title: 'Digital Marketing & Growth Hacking',
     description: 'Learn SEO, SEM, social media marketing, content strategy, and data-driven growth techniques.',
-    price: 60000,
+    price: 1000,
     discountPrice: 45000,
     category: 'Marketing',
     level: 'Beginner',
@@ -211,7 +211,7 @@ const COURSE_DEFS = [
   {
     title: 'Advanced Cloud Computing with AWS',
     description: 'Deploy, manage, and scale applications on AWS. Prepare for the Solutions Architect Associate exam.',
-    price: 150000,
+    price: 1000,
     discountPrice: 120000,
     category: 'Technology',
     level: 'Advanced',
@@ -222,7 +222,7 @@ const COURSE_DEFS = [
   {
     title: 'Interactive Coding Bootcamp',
     description: 'Hands-on coding bootcamp with an integrated code editor and live exercises.',
-    price: 90000,
+    price: 1000,
     discountPrice: 70000,
     category: 'Web Development',
     level: 'Beginner',
@@ -233,7 +233,7 @@ const COURSE_DEFS = [
   {
     title: 'Algorithms & Data Structures (with Code Editor)',
     description: 'Master algorithms and data structures with interactive code challenges and automated tests.',
-    price: 110000,
+    price: 1000,
     discountPrice: 85000,
     category: 'Computer Science',
     level: 'Intermediate',
@@ -244,7 +244,7 @@ const COURSE_DEFS = [
   {
     title: 'Exam Prep: Certification Simulations',
     description: 'Simulated exams, timed assessments, and practice tests to prepare for certification.',
-    price: 50000,
+    price: 1000,
     discountPrice: 35000,
     category: 'Test Prep',
     level: 'Beginner',
@@ -268,7 +268,7 @@ const COURSE_DEFS = [
   {
     title: 'Affordable: Small Business Finance',
     description: 'Budgeting, bookkeeping, and basic finance for small business owners.',
-    price: 30000,
+    price: 1000,
     discountPrice: 20000,
     category: 'Business',
     level: 'Beginner',
@@ -280,7 +280,7 @@ const COURSE_DEFS = [
   {
     title: 'Premium: Executive Leadership Retreat (Live)',
     description: 'An intensive live leadership retreat with real-time workshops and coaching.',
-    price: 500000,
+    price: 1000,
     discountPrice: 450000,
     category: 'Leadership',
     level: 'Advanced',
@@ -292,7 +292,7 @@ const COURSE_DEFS = [
   {
     title: 'Live: Culinary Arts — Real-time Kitchen Sessions',
     description: 'Hands-on culinary classes delivered live with real-time Q&A and instructor feedback.',
-    price: 80000,
+    price: 1000,
     discountPrice: 60000,
     category: 'Culinary',
     level: 'Beginner',
@@ -304,7 +304,7 @@ const COURSE_DEFS = [
   {
     title: 'Live: Public Speaking & Presentation Skills',
     description: 'Real-time workshops to build public speaking confidence and stage presence.',
-    price: 45000,
+    price: 1000,
     discountPrice: 35000,
     category: 'Personal Development',
     level: 'Beginner',
@@ -316,7 +316,7 @@ const COURSE_DEFS = [
   {
     title: 'Algorithms Interview Prep (with Code Editor)',
     description: 'Intensive interview prep with interactive code editor challenges and timed quizzes.',
-    price: 140000,
+    price: 1000,
     discountPrice: 99999,
     category: 'Computer Science',
     level: 'Advanced',
@@ -677,7 +677,7 @@ async function seedComprehensiveDemo() {
         title: 'Full Stack Engineering Internship',
         description: 'A 3-month intensive program where you build production-grade full-stack applications using React, Node.js, and MongoDB.',
         duration: '3 Months',
-        price: 100000,
+        price: 1000,
         currency: 'RWF',
         eligibility: 'JavaScript basics, HTML/CSS familiarity, Teamwork skills',
       },
