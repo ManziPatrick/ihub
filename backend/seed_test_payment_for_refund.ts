@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 async function seed() {
-  const uri = process.env.MONGO_URI || 'mongodb://mongo:Jonathan%402026.@109.123.252.110:27018/bootskills??authSource=admin&directConnection=true';
+  const uri = process.env.MONGO_URI || 'mongodb://bootskills:bootskills@169.58.74.138:27017/?authSource=admin&directConnection=true';
   await mongoose.connect(uri);
   console.log('📦 Connected to MongoDB');
 
