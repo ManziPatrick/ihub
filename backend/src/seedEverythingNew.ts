@@ -15,7 +15,7 @@ import { InternshipActivityLog } from './models/internship/ActivityLog';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongo:Jonathan%402026.@109.123.252.110:27018/bootskills??authSource=admin&directConnection=true';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://bootskills:bootskills@169.58.74.138:27017/?authSource=admin&directConnection=true';
 
 const DEFAULT_WORKFLOW: any = [
   { id: 'todo', label: 'To Do', color: 'slate', order: 0, type: 'todo' },
