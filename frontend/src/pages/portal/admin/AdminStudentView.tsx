@@ -108,7 +108,7 @@ export default function AdminStudentView() {
     if (/<[a-z][\s\S]*>/i.test(raw)) return raw;
     // Otherwise it's markdown — convert to HTML for WYSIWYG display
     try {
-      return marked.parseSync(raw);
+      return marked.parse(raw);
     } catch {
       return raw;
     }
@@ -1229,7 +1229,6 @@ export default function AdminStudentView() {
           }}
           courseId={courseId!}
           lessonId={editLessonForQuiz.id || editLessonForQuiz._id}
-          type={editLessonForQuiz.type === "assignment" ? "assignment" : "quiz"}
           questions={dialogQuestions}
           config={dialogConfig}
           lessonTitle={editLessonForQuiz.title}
@@ -1256,8 +1255,6 @@ export default function AdminStudentView() {
           onSave={(savedExercises: any[]) => {
             setDialogCodeExercises(savedExercises);
           }}
-          courseId={courseId!}
-          lessonId={editLessonForCode.id || editLessonForCode._id}
         />
       )}
     </PortalLayout>
