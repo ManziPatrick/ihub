@@ -538,6 +538,88 @@ const COURSES: CourseDef[] = [
         ],
         'Launch and operate a real tourism or hospitality business in Rwanda.',
       ),
+      makeModule(
+        'Module 5: Marketing Your Tourism Business Online',
+        'Learn how to use digital marketing to attract more tourists and guests to your business.',
+        [
+          makeLesson(
+            'Digital Marketing for Tourism Businesses',
+            'Marketing is essential for any tourism business. This lesson covers digital marketing strategies specific to tourism in Rwanda.\\n\\n' +
+            '### Digital Marketing Channels for Tourism:\\n' +
+            '1. **Instagram** — Post stunning photos of your location, tours, and experiences. Use hashtags like #VisitRwanda #GorillaTrekking #Kigali\\n' +
+            '2. **TripAdvisor** — Claim your listing, respond to every review, encourage guests to leave reviews\\n' +
+            '3. **Google My Business** — Essential for local search, update hours, photos, and respond to Q&A\\n' +
+            '4. **Facebook** — Create a business page, share events, special offers, and guest testimonials\\n' +
+            '5. **Email Marketing** — Collect guest emails, send newsletters with special offers\\n' +
+            '6. **TikTok** — Short videos of gorillas, landscapes, and cultural experiences go viral easily\\n\\n' +
+            '### Free Marketing Tools:\\n' +
+            '- **Canva** — Create professional posts, flyers, and brochures for free\\n' +
+            '- **Later** — Schedule Instagram posts in advance (free up to 30 posts)\\n' +
+            '- **Mailchimp** — Free email marketing for up to 500 contacts\\n' +
+            '- **CapCut** — Edit tourism videos for TikTok and Instagram Reels',
+            'article',
+            1,
+            { imageUrl: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeLesson(
+            'Building Partnerships with Tour Operators',
+            'Partnering with tour operators is one of the most effective ways to get consistent bookings.\\n\\n' +
+            '### How to Find Tour Operators:\\n' +
+            '1. **RDB tourism directory** — List of all registered tour operators in Rwanda\\n' +
+            '2. **Visit Rwanda website** — Partner with Visit Rwanda-promoted operators\\n' +
+            '3. **Travel trade shows** — Kwita Izina, Rwanda Tourism Expo\\n' +
+            '4. **Online travel agencies** — Get listed on Booking.com, Expedia, Agoda\\n\\n' +
+            '### Partnership Tips:\\n' +
+            '- Offer tour operators a commission (10-20% per booking)\\n' +
+            '- Provide high-quality photos they can use to promote your business\\n' +
+            '- Offer familiarization trips (free stays for tour operators to experience your service)\\n' +
+            '- Maintain consistent quality — tour operators will stop recommending if guests complain',
+            'article',
+            2,
+            { imageUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Test your tourism marketing knowledge.',
+            [
+              {
+                question: 'Which platform is most important for getting found by local tourists searching on Google?',
+                options: ['Instagram', 'Google My Business', 'TikTok', 'Pinterest'],
+                correctIndex: 1,
+                explanation: 'Google My Business is essential for local search visibility on Google Maps and Search.',
+              },
+              {
+                question: 'What is a familiarization trip in tourism?',
+                options: ['A vacation for employees', 'Free stay for tour operators to experience your service', 'A marketing campaign', 'A type of travel insurance'],
+                correctIndex: 1,
+                explanation: 'Fam trips allow tour operators to experience your service firsthand so they can recommend it with confidence.',
+              },
+            ],
+            3,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Tourism Marketing Plan',
+            'Create a comprehensive marketing plan for your tourism business.',
+            'Develop a 30-day marketing plan to attract at least 5 new customers.',
+            [
+              {
+                question: 'Create a 30-day marketing calendar for your tourism business. Include which platforms you will use, what content you will post, and how often. Include at least 15 specific post ideas.',
+                type: 'open',
+                explanation: 'Show a detailed content calendar with dates, platforms, and content types.',
+                points: 20,
+              },
+              {
+                question: 'Identify 5 tour operators or hotels you could partner with. For each, write a brief partnership proposal explaining what you offer and what you need from them.',
+                type: 'open',
+                explanation: 'Show specific research on potential partners and what value you bring to the relationship.',
+                points: 15,
+              },
+            ],
+            4,
+          ),
+        ],
+        'Market your tourism business and build partnerships with tour operators.',
+      ),
     ],
   },
 
@@ -891,6 +973,176 @@ const COURSES: CourseDef[] = [
         ],
         'Launch and grow a profitable e-commerce business in Rwanda.',
       ),
+      makeModule(
+        'Module 4: Advanced E-Commerce Marketing & Ads',
+        'Master paid advertising, influencer marketing, and advanced promotion strategies for your online store.',
+        [
+          makeLesson(
+            'Facebook & Instagram Ads for E-Commerce',
+            'Paid advertising on Facebook and Instagram is the fastest way to get customers. Starting from just 5,000 RWF per day, you can reach thousands of potential buyers.\\n\\n' +
+            '### Getting Started with Ads:\\n' +
+            '1. **Create a Business Page** — Required to run ads. Use your business name and logo.\\n' +
+            '2. **Install Meta Pixel** — Tracks visitors and conversions on your website or Jumia store.\\n' +
+            '3. **Define Your Audience** — Target by location (Kigali, Rwanda), age (18-45), interests (fashion, electronics, etc.)\\n' +
+            '4. **Set Your Budget** — Start small: 5,000-10,000 RWF/day for 7 days to test\\n' +
+            '5. **Choose Ad Format** — Carousel (multiple products), single image, video, or collection ad\\n\\n' +
+            '### Ad Budget Guide for Rwandan E-Commerce:\\n' +
+            '- **Testing phase:** 5,000 RWF/day for 7 days = 35,000 RWF total\\n' +
+            '- **Scaling phase:** 15,000-30,000 RWF/day when you have winning products\\n' +
+            '- **Expected results:** 500-2,000 RWF cost per customer depending on product price\\n' +
+            '- **Break-even rule:** Customer acquisition cost should be less than 30% of product price',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=aLN4Meje-_0', videoTitle: 'Facebook Ads for Small Business - Quick Start' },
+          ),
+          makeLesson(
+            'Influencer Marketing & Partnerships',
+            'Partnering with influencers is a powerful way to build trust and reach new customers in Rwanda.\\n\\n' +
+            '### How to Work with Influencers:\\n' +
+            '1. **Find relevant influencers** — Look for Rwandan influencers in your niche (fashion, tech, food, lifestyle)\\n' +
+            '2. **Check engagement** — Look for real engagement (comments, shares), not just followers\\n' +
+            '3. **Start small** — Offer free products in exchange for a post or story\\n' +
+            '4. **Track results** — Use discount codes unique to each influencer to track sales\\n' +
+            '5. **Build relationships** — Work with the same influencers regularly for better results\\n\\n' +
+            '### Influencer Pricing in Rwanda:\\n' +
+            '- Micro-influencers (1,000-10,000 followers): Free product + 10,000-30,000 RWF per post\\n' +
+            '- Mid-tier (10,000-50,000 followers): 50,000-150,000 RWF per post\\n' +
+            '- Macro (50,000+): 200,000-500,000+ RWF per post\\n' +
+            '- Tip: Micro-influencers often have the most engaged audiences!',
+            'article',
+            2,
+            { imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Test your e-commerce marketing knowledge.',
+            [
+              {
+                question: 'What is the minimum recommended daily ad budget to start testing Facebook ads in Rwanda?',
+                options: ['1,000 RWF', '5,000 RWF', '50,000 RWF', '100,000 RWF'],
+                correctIndex: 1,
+                explanation: '5,000 RWF/day is enough to start testing ads and gathering data on what works.',
+              },
+              {
+                question: 'Which type of influencer typically has the most engaged audience?',
+                options: ['Macro-influencers (500k+ followers)', 'Micro-influencers (1k-10k followers)', 'Celebrities', 'TV personalities'],
+                correctIndex: 1,
+                explanation: 'Micro-influencers often have the highest engagement rates because their audiences trust their recommendations.',
+              },
+              {
+                question: 'What is a good way to track which influencer brought you sales?',
+                options: ['Ask them directly', 'Use unique discount codes per influencer', 'Check your bank account', 'No way to track'],
+                correctIndex: 1,
+                explanation: 'Unique discount codes for each influencer let you track exactly which partner generated sales.',
+              },
+            ],
+            3,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Marketing Campaign Plan',
+            'Design a marketing campaign to promote your e-commerce store.',
+            'Create a detailed marketing campaign including budget, audience, and creative strategy.',
+            [
+              {
+                question: 'Design a 2-week Facebook ad campaign for your e-commerce store. Include: target audience (age, location, interests), budget per day, ad creative description (what images/video you will use), and how you will measure success.',
+                type: 'open',
+                explanation: 'Show a complete campaign brief with specific targeting criteria and creative ideas.',
+                points: 20,
+              },
+              {
+                question: 'Identify 3 Rwandan influencers in your niche. For each, describe their audience, engagement level, and write a brief outreach message asking for a collaboration.',
+                type: 'open',
+                explanation: 'Research real Rwandan influencers and write professional outreach messages.',
+                points: 15,
+              },
+            ],
+            4,
+          ),
+        ],
+        'Run effective Facebook and Instagram ads and partner with influencers to grow sales.',
+      ),
+      makeModule(
+        'Module 5: Scaling & Automating Your E-Commerce Business',
+        'Learn how to automate operations, manage inventory, and scale your e-commerce business beyond one person.',
+        [
+          makeLesson(
+            'Automating Orders & Customer Management',
+            'As your business grows, you need systems to manage orders, inventory, and customers automatically.\\n\\n' +
+            '### Tools for Automation:\\n' +
+            '1. **Inventory management** — Use a simple spreadsheet or Zoho Inventory (free tier)\\n' +
+            '2. **Order tracking** — Google Sheets with order status (pending, paid, shipped, delivered)\\n' +
+            '3. **Customer database** — Collect names, phone numbers, purchase history in a CRM\\n' +
+            '4. **Automated messages** — WhatsApp Business automated replies for order confirmations\\n' +
+            '5. **Email automation** — Mailchimp free tier for abandoned cart reminders and promotions\\n\\n' +
+            '### When to Hire Help:\\n' +
+            '- **50+ orders/month** — Hire someone for delivery and packaging\\n' +
+            '- **100+ orders/month** — Hire a part-time customer service person\\n' +
+            '- **200+ orders/month** — Consider a small warehouse and dedicated staff\\n' +
+            '- **500+ orders/month** — Full team: inventory, marketing, customer service, delivery',
+            'article',
+            1,
+            { imageUrl: 'https://images.unsplash.com/photo-1556742111-a301076d9d18?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeLesson(
+            'Expanding to New Markets & Products',
+            'Once your store is running smoothly, it is time to expand.\\n\\n' +
+            '### Expansion Strategies:\\n' +
+            '1. **New product categories** — Add complementary products your customers request\\n' +
+            '2. **New platforms** — Expand from WhatsApp to Jumia, then to your own Shopify store\\n' +
+            '3. **New locations** — Deliver to other Rwandan cities (Musanze, Gisenyi, Huye)\\n' +
+            '4. **Cross-border** — Sell to other EAC countries (Kenya, Uganda, Tanzania, Burundi)\\n' +
+            '5. **Wholesale** — Sell in bulk to other businesses, not just individual customers\\n\\n' +
+            '### Cross-Border E-Commerce Tips:\\n' +
+            '- Use AfCFTA (African Continental Free Trade Area) for reduced tariffs\\n' +
+            '- Partner with logistics companies that handle cross-border delivery\\n' +
+            '- Accept mobile money payments from other countries (MTN Uganda, M-Pesa Kenya)\\n' +
+            '- Research import/export regulations for each country',
+            'article',
+            2,
+            { imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Test your e-commerce scaling knowledge.',
+            [
+              {
+                question: 'At what order volume should you consider hiring a customer service person?',
+                options: ['10 orders/month', '100+ orders/month', '1,000+ orders/month', '10,000+ orders/month'],
+                correctIndex: 1,
+                explanation: 'At 100+ orders per month, customer service becomes too much for one person to handle alone.',
+              },
+              {
+                question: 'What is AfCFTA?',
+                options: ['A shipping company', 'African Continental Free Trade Area', 'A payment system', 'A marketing platform'],
+                correctIndex: 1,
+                explanation: 'AfCFTA is the African Continental Free Trade Area, which reduces tariffs between African countries.',
+              },
+            ],
+            3,
+          ),
+          makeAssignmentLesson(
+            'Module 5: E-Commerce Scaling Plan',
+            'Create a 6-month scaling plan for your e-commerce business.',
+            'Develop a detailed plan to grow from your current level to 500+ orders per month.',
+            [
+              {
+                question: 'Create a 6-month growth plan for your e-commerce business. Include: monthly order targets, hiring plan, new products/categories to add, platforms to expand to, and marketing budget increases.',
+                type: 'open',
+                explanation: 'Show specific targets for each month with concrete action steps.',
+                points: 20,
+              },
+              {
+                question: 'Identify one new market (city or country) you want to expand to. Research the delivery options, payment methods, and potential demand. Write a one-page expansion plan.',
+                type: 'open',
+                explanation: 'Show real research on the new market with actionable steps.',
+                points: 15,
+              },
+            ],
+            4,
+          ),
+        ],
+        'Automate operations, hire a team, and expand your e-commerce business to new markets.',
+      ),
     ],
   },
 
@@ -1212,6 +1464,176 @@ const COURSES: CourseDef[] = [
           ),
         ],
         'Install, maintain, and grow a profitable solar energy business.',
+      ),
+      makeModule(
+        'Module 4: Solar Business Operations & Customer Financing',
+        'Learn how to run your solar business efficiently and help customers afford your systems.',
+        [
+          makeLesson(
+            'Running Your Solar Business Day-to-Day',
+            'Operating a solar installation business requires managing inventory, scheduling installations, and providing customer support.\\n\\n' +
+            '### Daily Operations Checklist:\\n' +
+            '1. **Inventory management** — Track panels, batteries, inverters, and accessories in stock\\n' +
+            '2. **Installation scheduling** — Assign installations to your team, manage customer appointments\\n' +
+            '3. **Customer follow-up** — Check if systems are working properly after installation\\n' +
+            '4. **Supplier orders** — Reorder popular products before you run out\\n' +
+            '5. **Financial records** — Track income, expenses, and profits daily\\n\\n' +
+            '### Tools for Solar Business Operations:\\n' +
+            '- **Google Sheets** — Free inventory and customer management\\n' +
+            '- **WhatsApp Business** — Customer communication and order updates\\n' +
+            '- **QuickBooks or Wave** — Accounting and invoicing\\n' +
+            '- **Google Calendar** — Schedule installations and site visits\\n' +
+            '- **Mobile Money** — Accept payments via MTN MoMo Merchant',
+            'article',
+            1,
+            { imageUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeLesson(
+            'Customer Financing & PAYG Solar',
+            'Many customers cannot afford to pay for a solar system upfront. Offering financing options can multiply your sales.\\n\\n' +
+            '### Financing Models for Solar:\\n' +
+            '1. **PAYG (Pay-As-You-Go)** — Customer pays in small daily/weekly installments via MoMo\\n' +
+            '2. **Rent-to-own** — Customer rents the system for 6-12 months, then owns it\\n' +
+            '3. **Bank loans** — Partner with banks like BRD (Development Bank of Rwanda) for customer loans\\n' +
+            '4. **Government subsidies** — REG offers subsidies for off-grid solar systems\\n' +
+            '5. **Microfinance** — Partner with microfinance institutions for customer financing\\n\\n' +
+            '### PAYG Solar System Example:\\n' +
+            '- System cost: 300,000 RWF\\n' +
+            '- Down payment: 50,000 RWF\\n' +
+            '- Weekly payment: 10,000 RWF for 25 weeks\\n' +
+            '- If customer misses payment, system can be locked remotely\\n' +
+            '- This makes solar affordable for rural households earning 5,000-15,000 RWF/day',
+            'article',
+            2,
+            { imageUrl: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Test your solar business operations knowledge.',
+            [
+              {
+                question: 'What does PAYG stand for in solar energy?',
+                options: ['Pay All Year Gold', 'Pay-As-You-Go', 'Purchase At Great Yield', 'Power And You Generate'],
+                correctIndex: 1,
+                explanation: 'PAYG (Pay-As-You-Go) allows customers to pay in small installments via mobile money.',
+              },
+              {
+                question: 'Which Rwandan bank offers loans for solar energy businesses?',
+                options: ['Bank of Kigali', 'BRD (Development Bank of Rwanda)', 'Equity Bank', 'I&M Bank'],
+                correctIndex: 1,
+                explanation: 'BRD (Development Bank of Rwanda) provides financing for renewable energy projects.',
+              },
+            ],
+            3,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Solar Financing Plan',
+            'Create a financing plan to make solar affordable for your customers.',
+            'Design a PAYG or financing model for a typical solar home system.',
+            [
+              {
+                question: 'Design a PAYG payment plan for a 500,000 RWF solar home system. Include: down payment amount, weekly/monthly payment amount, total payment period, and how you will handle late or missed payments.',
+                type: 'open',
+                explanation: 'Show a complete payment plan that is affordable for customers and profitable for you.',
+                points: 20,
+              },
+              {
+                question: 'Identify 3 potential partners for customer financing (bank, microfinance, or government program). Research their requirements and write a brief partnership proposal for each.',
+                type: 'open',
+                explanation: 'Show real research on Rwandan financing options for solar.',
+                points: 15,
+              },
+            ],
+            4,
+          ),
+        ],
+        'Run daily operations efficiently and offer customer financing to increase solar adoption.',
+      ),
+      makeModule(
+        'Module 5: Commercial Solar & Advanced Applications',
+        'Expand beyond home systems into commercial solar installations, water pumping, and mini-grids.',
+        [
+          makeLesson(
+            'Commercial Solar Systems for Businesses',
+            'Businesses in Rwanda need reliable power. Offering commercial solar installations is a higher-value market.\\n\\n' +
+            '### Commercial Solar Opportunities:\\n' +
+            '1. **Hotels and lodges** — Need backup power for guests, especially during grid outages\\n' +
+            '2. **Schools and hospitals** — Need reliable power for lights, computers, and medical equipment\\n' +
+            '3. **Shops and supermarkets** — Need power for refrigerators, lighting, and security\\n' +
+            '4. **Coffee and tea factories** — Need processing power in rural areas with no grid\\n' +
+            '5. **Telecom towers** — MTN and Airtel need solar for remote towers\\n\\n' +
+            '### Sizing Commercial Systems:\\n' +
+            '- Small shop: 500W-1kW system, 1,500,000-3,000,000 RWF\\n' +
+            '- Hotel (10 rooms): 5kW-10kW system, 5,000,000-15,000,000 RWF\\n' +
+            '- School: 10kW-50kW system, 10,000,000-50,000,000 RWF\\n' +
+            '- Tea factory: 50kW-100kW system, 50,000,000-100,000,000+ RWF',
+            'video',
+            1,
+            { videoUrl: 'https://www.youtube.com/watch?v=ptd3kU284rQ', videoTitle: 'Solar Business Opportunities in Africa' },
+          ),
+          makeLesson(
+            'Solar Water Pumping & Mini-Grids',
+            'Solar water pumping is one of the fastest-growing segments of the solar industry in Rwanda.\\n\\n' +
+            '### Solar Water Pumping:\\n' +
+            '- Perfect for farmers who need irrigation\\n' +
+            '- Replaces expensive diesel generators\\n' +
+            '- Systems from 500W to 10kW depending on water depth and volume\\n' +
+            '- Cost: 500,000 to 5,000,000 RWF for a complete system\\n\\n' +
+            '### Mini-Grids:\\n' +
+            '- Small solar-powered electricity networks for villages without grid access\\n' +
+            '- Can power 50-500 households per mini-grid\\n' +
+            '- Supported by REG and international donors\\n' +
+            '- Requires partnership with REG and community organization\\n' +
+            '- Typical investment: 50,000,000-500,000,000 RWF per mini-grid\\n\\n' +
+            '### Government Support:\\n' +
+            '- REG provides technical assistance for mini-grid projects\\n' +
+            '- Rwanda Energy Access Fund provides grants and subsidies\\n' +
+            '- World Bank and African Development Bank fund off-grid electrification',
+            'article',
+            2,
+            { imageUrl: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Test your commercial solar knowledge.',
+            [
+              {
+                question: 'Which type of business is the best market for commercial solar in Rwanda?',
+                options: ['Street food vendors', 'Hotels and lodges', 'Bicycle repair shops', 'Hair salons'],
+                correctIndex: 1,
+                explanation: 'Hotels and lodges need reliable power for guest comfort and operations, making them ideal commercial solar customers.',
+              },
+              {
+                question: 'What is a solar mini-grid?',
+                options: ['A small solar panel', 'A solar-powered electricity network for a village', 'A type of solar water pump', 'A solar battery'],
+                correctIndex: 1,
+                explanation: 'A mini-grid is a small solar-powered electricity network that serves a community without grid access.',
+              },
+            ],
+            3,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Commercial Solar Proposal',
+            'Design a commercial solar proposal for a real business in Rwanda.',
+            'Create a professional proposal for a commercial solar installation.',
+            [
+              {
+                question: 'Choose a real business in Rwanda (hotel, school, or shop). Research their location and estimate their energy needs. Design a solar system for them including: panel size, battery capacity, inverter size, and total cost. Show your calculations.',
+                type: 'open',
+                explanation: 'Use real business information and show detailed system sizing calculations.',
+                points: 20,
+              },
+              {
+                question: 'Write a professional proposal letter to the business owner explaining the benefits of your solar system, the cost, expected savings on electricity, payback period, and warranty terms.',
+                type: 'open',
+                explanation: 'Write a persuasive proposal that a business owner would take seriously.',
+                points: 15,
+              },
+            ],
+            4,
+          ),
+        ],
+        'Design and sell commercial solar systems, solar water pumps, and mini-grid solutions.',
       ),
     ],
   },
@@ -1572,6 +1994,176 @@ const COURSES: CourseDef[] = [
           ),
         ],
         'Market, sell, and scale a profitable fashion business in Rwanda.',
+      ),
+      makeModule(
+        'Module 4: Fashion Production & Quality Control',
+        'Learn how to manage production, maintain quality, and work with manufacturers.',
+        [
+          makeLesson(
+            'Fashion Production Processes',
+            'Understanding the production process is essential for creating quality fashion products.\\n\\n' +
+            '### Production Steps:\\n' +
+            '1. **Design** — Sketch your designs or work with a fashion designer\\n' +
+            '2. **Pattern making** — Create paper patterns for cutting fabric\\n' +
+            '3. **Fabric selection** — Choose the right fabric (Kitenge, cotton, linen, lace)\\n' +
+            '4. **Cutting** — Cut fabric according to patterns\\n' +
+            '5. **Sewing** — Assemble the garment with professional stitching\\n' +
+            '6. **Finishing** — Buttons, zippers, hems, labels, packaging\\n\\n' +
+            '### Working with Local Tailors:\\n' +
+            '- Many skilled tailors in Kigali markets (Kimironko, Remera, Nyabugogo)\\n' +
+            '- Cost per piece: 5,000-15,000 RWF depending on complexity\\n' +
+            '- Minimum order: Usually 10-50 pieces per design\\n' +
+            '- Provide clear specifications and samples to ensure quality\\n' +
+            '- Build long-term relationships with reliable tailors',
+            'article',
+            1,
+            { imageUrl: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeLesson(
+            'Quality Control & Sizing Standards',
+            'Consistent quality is what separates successful fashion brands from hobbyists.\\n\\n' +
+            '### Quality Control Checklist:\\n' +
+            '- Check fabric quality before cutting (flaws, color consistency)\\n' +
+            '- Measure finished pieces against size specifications\\n' +
+            '- Inspect stitching (straight, tight, no loose threads)\\n' +
+            '- Check buttons, zippers, and closures\\n' +
+            '- Test washing and ironing for fabric durability\\n' +
+            '- Package neatly with brand labels and care instructions\\n\\n' +
+            '### Standard Sizing for African Fashion:\\n' +
+            '- African body shapes differ from Western sizing standards\\n' +
+            '- Offer custom sizing for better fit and customer satisfaction\\n' +
+            '- Include a sizing chart with every product listing\\n' +
+            '- Common sizes: S (8-10), M (12-14), L (16-18), XL (20-22), 2XL (24-26)\\n' +
+            '- Always add 2-3 cm allowance for African fabric shrinkage',
+            'article',
+            2,
+            { imageUrl: 'https://images.unsplash.com/photo-1565084888279-3b0e1c6f8a1a?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Test your fashion production knowledge.',
+            [
+              {
+                question: 'What is the typical minimum order quantity when working with local tailors in Rwanda?',
+                options: ['1-2 pieces', '10-50 pieces', '500-1000 pieces', '10,000+ pieces'],
+                correctIndex: 1,
+                explanation: 'Most local tailors require a minimum of 10-50 pieces per design for production.',
+              },
+              {
+                question: 'Why should African fashion brands offer custom sizing?',
+                options: ['It is cheaper', 'African body shapes differ from Western standards', 'Custom sizing is faster', 'No reason'],
+                correctIndex: 1,
+                explanation: 'African body shapes differ from Western sizing standards, so custom sizing ensures better fit and customer satisfaction.',
+              },
+            ],
+            3,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Production Planning',
+            'Create a production plan for your fashion collection.',
+            'Plan the production of a small collection of fashion items.',
+            [
+              {
+                question: 'Design a small collection of 5 fashion items. For each item, describe: the design, fabric needed (type and quantity), production cost per piece, and suggested retail price. Calculate total production cost and potential profit margin.',
+                type: 'open',
+                explanation: 'Show detailed cost breakdown for each item including materials, labor, and overhead.',
+                points: 20,
+              },
+              {
+                question: 'Create a quality control checklist that you would use to inspect each finished piece before delivery. Include at least 10 checkpoints.',
+                type: 'open',
+                explanation: 'A thorough QC checklist ensures consistent quality across all products.',
+                points: 15,
+              },
+            ],
+            4,
+          ),
+        ],
+        'Manage fashion production and maintain consistent quality standards.',
+      ),
+      makeModule(
+        'Module 5: Fashion Brand Growth & Export',
+        'Learn how to grow your fashion brand, reach wholesale buyers, and export to international markets.',
+        [
+          makeLesson(
+            'Building a Recognizable Fashion Brand',
+            'A strong brand identity sets you apart in the competitive fashion industry.\\n\\n' +
+            '### Brand Building Essentials:\\n' +
+            '1. **Brand name** — Memorable, easy to pronounce, reflects your style\\n' +
+            '2. **Logo** — Professional design, consistent across all platforms\\n' +
+            '3. **Brand story** — Share why you started, your inspiration, and what makes your brand unique\\n' +
+            '4. **Packaging** — Branded bags, tags, and boxes create a premium experience\\n' +
+            '5. **Social media presence** — Consistent aesthetic, professional photos\\n' +
+            '6. **Customer experience** — Excellent service, fast delivery, easy returns\\n\\n' +
+            '### Pricing for Brand Growth:\\n' +
+            '- Entry level: 15,000-30,000 RWF (everyday wear, accessible)\\n' +
+            '- Mid-range: 30,000-80,000 RWF (quality pieces, special occasions)\\n' +
+            '- Premium: 80,000-200,000+ RWF (exclusive designs, luxury fabrics)\\n' +
+            '- Start with entry-level and mid-range, then introduce premium as your brand grows',
+            'article',
+            1,
+            { imageUrl: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeLesson(
+            'Exporting Rwandan Fashion to International Markets',
+            'Rwandan fashion has global appeal. Learn how to reach customers outside Rwanda.\\n\\n' +
+            '### Export Channels:\\n' +
+            '1. **Etsy** — Global marketplace for handmade and unique items\\n' +
+            '2. **Instagram international** — Use hashtags like #AfricanFashion #RwandanFashion #KitengeStyle\\n' +
+            '3. **Trade shows** — Attend Africa Fashion Week, Pitti Uomo, or MAGIC Show in the US\\n' +
+            '4. **Wholesale** — Sell to boutiques in Nairobi, Lagos, Johannesburg, London, New York\\n' +
+            '5. **Made in Rwanda export program** — Government support for exporting products\\n\\n' +
+            '### Export Logistics:\\n' +
+            '- Use DHL, UPS, or FedEx for international shipping\\n' +
+            '- International shipping costs: $30-80 per package\\n' +
+            '- Payment: PayPal (international), bank transfer, or Western Union\\n' +
+            '- Include customs documentation and commercial invoice\\n' +
+            '- Research import duties for each target country (ranges from 0-25%)',
+            'article',
+            2,
+            { imageUrl: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Test your fashion brand growth knowledge.',
+            [
+              {
+                question: 'What is a good entry-level price point for a new Rwandan fashion brand?',
+                options: ['5,000 RWF', '15,000-30,000 RWF', '100,000-200,000 RWF', '500,000+ RWF'],
+                correctIndex: 1,
+                explanation: 'Entry-level pricing of 15,000-30,000 RWF makes your brand accessible while still being profitable.',
+              },
+              {
+                question: 'Which global marketplace is best for selling handmade Rwandan fashion internationally?',
+                options: ['Amazon', 'Etsy', 'Alibaba', 'eBay'],
+                correctIndex: 1,
+                explanation: 'Etsy is ideal for handmade, unique fashion items and has a global customer base.',
+              },
+            ],
+            3,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Fashion Brand Growth Project',
+            'Create a growth strategy for your fashion brand targeting both local and international markets.',
+            'Develop a comprehensive brand growth and export plan.',
+            [
+              {
+                question: 'Create a brand identity document for your fashion brand including: brand name, logo description, brand story, target customer, brand values, and visual style guide (colors, fonts, photography style).',
+                type: 'open',
+                explanation: 'A complete brand guide that you could give to a designer to create your brand visuals.',
+                points: 20,
+              },
+              {
+                question: 'Research an international market for your fashion (US, UK, Kenya, or South Africa). Create an export plan including: target market analysis, pricing in local currency, shipping method and cost, payment method, and marketing strategy for that market.',
+                type: 'open',
+                explanation: 'Show specific research on one target market with actionable steps to start selling there.',
+                points: 15,
+              },
+            ],
+            4,
+          ),
+        ],
+        'Build a recognized fashion brand and export to international markets.',
       ),
     ],
   },
@@ -1941,6 +2533,153 @@ const COURSES: CourseDef[] = [
         ],
         'Create and sell health products, natural remedies, and wellness services.',
       ),
+      makeModule(
+        'Module 4: Managing Your Health & Wellness Business',
+        'Learn how to run your health business professionally — from staffing to compliance.',
+        [
+          makeLesson(
+            'Health Business Regulations in Rwanda',
+            'Health businesses in Rwanda are regulated by multiple government agencies. Understanding the regulations is essential.\n\n' +
+            '### Regulatory Bodies:\n' +
+            '1. **Rwanda FDA** — Regulates food, drugs, cosmetics, and medical devices\n' +
+            '2. **RBC (Rwanda Biomedical Centre)** — Health standards and guidelines\n' +
+            '3. **RDB** — Business registration and licensing\n' +
+            '4. **District health offices** — Local health facility permits\n' +
+            '5. **RRA** — Tax registration and compliance\n\n' +
+            '### Required Licenses:\n' +
+            '- Health facility license (for clinics, pharmacies)\n' +
+            '- Product registration (for supplements, remedies) — Rwanda FDA\n' +
+            '- Business registration — RDB\n' +
+            '- Tax registration — RRA\n' +
+            '- Professional certifications for staff',
+            'article',
+            1,
+            { imageUrl: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeQuizLesson(
+            'Module 4: Knowledge Check',
+            'Test your health business management knowledge.',
+            [
+              {
+                question: 'Which government agency regulates health products in Rwanda?',
+                options: ['RRA', 'Rwanda FDA', 'RURA', 'RSB'],
+                correctIndex: 1,
+                explanation: 'Rwanda FDA regulates food, drugs, cosmetics, and medical devices.',
+              },
+              {
+                question: 'Why verify staff qualifications in a health business?',
+                options: ['Optional', 'For quality and legal compliance', 'To reduce costs', 'No reason'],
+                correctIndex: 1,
+                explanation: 'Verifying qualifications ensures competent staff and regulatory compliance.',
+              },
+            ],
+            3,
+          ),
+          makeAssignmentLesson(
+            'Module 4: Business Compliance Plan',
+            'Create a compliance plan for your business.',
+            'Research and document regulatory requirements.',
+            [
+              {
+                question: 'Research licensing requirements for your health business. List every license, agency, cost, and process.',
+                type: 'open',
+                explanation: 'Show detailed research on regulatory requirements.',
+                points: 20,
+              },
+              {
+                question: 'Create a job description for a key position in your health business.',
+                type: 'open',
+                explanation: 'Include role, responsibilities, qualifications, and salary range.',
+                points: 15,
+              },
+            ],
+            4,
+          ),
+        ],
+        'Manage your health business in compliance with Rwandan regulations.',
+      ),
+      makeModule(
+        'Module 5: Scaling Health — Digital & Franchising',
+        'Learn how to scale through franchising, digital health, and partnerships.',
+        [
+          makeLesson(
+            'Digital Health Opportunities in Rwanda',
+            'Technology is transforming healthcare. Leverage digital tools.\n\n' +
+            '### Digital Health Trends:\n' +
+            '1. **Telemedicine** — Consult via phone or video\n' +
+            '2. **Health apps** — Fitness tracking, nutrition, bookings\n' +
+            '3. **E-commerce** — Sell supplements and remedies online\n' +
+            '4. **Social media education** — Build following on Instagram/TikTok\n' +
+            '5. **Online booking** — Appointments via WhatsApp or website\n\n' +
+            '### Digital Tools:\n' +
+            '- **WhatsApp Business** — Client communication, reminders\n' +
+            '- **Google My Business** — Local search visibility\n' +
+            '- **Instagram** — Share results, education, testimonials\n' +
+            '- **YouTube** — Exercise videos, cooking demos, advice',
+            'article',
+            1,
+            { imageUrl: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeLesson(
+            'Franchising & Partnerships',
+            'Expand through franchising and strategic partnerships.\n\n' +
+            '### Franchising Steps:\n' +
+            '1. **Document your system** — Create an operations manual\n' +
+            '2. **Pilot locations** — Test 2-3 before franchising\n' +
+            '3. **Franchise fee** — 500,000-2,000,000 RWF upfront\n' +
+            '4. **Royalties** — 5-10% of monthly revenue\n' +
+            '5. **Support** — Training, marketing, ongoing help\n\n' +
+            '### Partnership Opportunities:\n' +
+            '- **Corporate wellness** — Services for company employees\n' +
+            '- **School health** — Health education for schools\n' +
+            '- **Hotel spa partnerships** — Wellness services for guests\n' +
+            '- **Insurance partnerships** — Wellness benefits via insurers',
+            'article',
+            2,
+            { imageUrl: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&q=80&w=800&h=500' },
+          ),
+          makeQuizLesson(
+            'Module 5: Knowledge Check',
+            'Test your scaling knowledge.',
+            [
+              {
+                question: 'Typical franchise royalty fee?',
+                options: ['1%', '5-10% of monthly revenue', '50%', 'Fixed 10,000 RWF'],
+                correctIndex: 1,
+                explanation: 'Franchise royalties typically range 5-10% of monthly revenue.',
+              },
+              {
+                question: 'Best digital tool for health client communication in Rwanda?',
+                options: ['Telegram', 'WhatsApp Business', 'Signal', 'WeChat'],
+                correctIndex: 1,
+                explanation: 'WhatsApp Business is the most widely used business messaging platform.',
+              },
+            ],
+            3,
+          ),
+          makeAssignmentLesson(
+            'Module 5: Scaling Project',
+            'Create a scaling plan for your health business.',
+            'Develop a strategy to grow to 1,000+ clients.',
+            [
+              {
+                question: 'Create a 12-month scaling plan: targets, services, staff, marketing, tools. Monthly milestones.',
+                type: 'open',
+                explanation: 'Show specific measurable targets for each month.',
+                points: 20,
+              },
+              {
+                question: 'Design a franchise model OR digital health service. Describe concept, pricing, tech, launch plan.',
+                type: 'open',
+                explanation: 'Choose one and create a detailed implementation plan.',
+                points: 15,
+              },
+            ],
+            4,
+          ),
+        ],
+        'Scale your health business through franchising and digital health.',
+      ),
     ],
   },
 ];
@@ -1954,17 +2693,32 @@ async function seedAfricanMarketCourses() {
 
     // Check for admin user to set as instructor
     const admin = await User.findOne({ role: 'super_admin' }).lean() as any;
-    const instructorId = admin?._id || new mongoose.Types.ObjectId();
-
-    let createdCount = 0;
-    let skippedCount = 0;
+    const instructorId = admin?._id || new mongoose.Types.ObjectId();      let createdCount = 0;
+      let updatedCount = 0;
+      let skippedCount = 0;
 
     for (const cd of COURSES) {
       // Check if course already exists
       const existing = await Course.findOne({ title: cd.title }).lean() as any;
       if (existing) {
-        console.log(`   ⏭️  Skipped (exists): ${cd.title}`);
-        skippedCount++;
+        // Update existing course with new modules & content
+        await Course.findOneAndUpdate(
+          { title: cd.title },
+          { $set: {
+            modules: cd.modules,
+            modulesCount: cd.modules.length,
+            totalLessonsCount: cd.modules.reduce((sum: number, m: any) => sum + (m.lessons?.length || 0), 0),
+            description: cd.description,
+            category: cd.category,
+            level: cd.level,
+            price: cd.price,
+            discountPrice: cd.discountPrice,
+            isFeatured: cd.isFeatured || false,
+            searchImage: cd.searchImage,
+          }}
+        );
+        console.log(`   ✅ Updated: ${cd.title}`);
+        updatedCount++;
         continue;
       }
 
