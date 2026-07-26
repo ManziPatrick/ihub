@@ -2,6 +2,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 import { Calendar, ArrowRight, Clock, User, Tag, Search, Loader2 } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/env";
 import heroImage from "@/assets/hero-training.webp";
@@ -303,37 +304,16 @@ const Blog = () => {
                         <p className="mt-2">Try searching for something else or changing categories.</p>
                       </div>
                     )}
-                    {/* Pagination */}
-                    {pagination.pages > 1 && (
-                      <div className="mt-12 flex justify-center items-center gap-4">
-                        <Button
-                          variant="outline"
-                          disabled={currentPage === 1}
-                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        >
-                          Previous
-                        </Button>
-                        <div className="flex gap-2">
-                          {[...Array(pagination.pages)].map((_, i) => (
-                            <Button
-                              key={i + 1}
-                              variant={currentPage === i + 1 ? "gold" : "outline"}
-                              className="w-10 h-10 p-0"
-                              onClick={() => setCurrentPage(i + 1)}
-                            >
-                              {i + 1}
-                            </Button>
-                          ))}
-                        </div>
-                        <Button
-                          variant="outline"
-                          disabled={currentPage === pagination.pages}
-                          onClick={() => setCurrentPage(prev => Math.min(pagination.pages, prev + 1))}
-                        >
-                          Next
-                        </Button>
-                      </div>
-                    )}
+                    <PaginationBar
+                      currentPage={currentPage}
+                      totalPages={pagination.pages}
+                      totalCount={pagination.total}
+                      onPageChange={setCurrentPage}
+                      hasPreviousPage={currentPage > 1}
+                      hasNextPage={currentPage < pagination.pages}
+                      showFirstLast={false}
+                      pageSize={undefined}
+                    />
                   </div>
                 </div>
               </div>

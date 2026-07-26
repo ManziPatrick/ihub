@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_ALL_PROJECTS, GET_COURSES_SUMMARY, GET_USERS, GET_ASSIGNMENT_SUBMISSIONS, GET_STUDENT_PROJECT_PROGRESS } from "@/lib/graphql/queries";
 import { GET_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
@@ -239,7 +240,7 @@ export default function AdminProjects() {
     variables: { page: currentPage, limit: pageSize, course: courseFilter !== "all" ? courseFilter : undefined }
   });
   const projects = (data as any)?.projects?.items || [];
-  const pagination = (data as any)?.projects?.pagination;
+  const pagination = (data as any)?.projects?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
 
   const { data: studentProgressData, loading: studentsLoading } = useQuery<{ studentProjectProgress: any[] }>(GET_STUDENT_PROJECT_PROGRESS, {
     skip: !['admin', 'super_admin'].includes(user?.role || ''),
@@ -597,71 +598,17 @@ export default function AdminProjects() {
               </div>
             )}
 
-            {/* Pagination UI */}
-            {pagination && pagination.totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>Show</span>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => {
-                      setPageSize(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="bg-background border border-border/50 rounded-md px-2 py-1 text-sm"
-                  >
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                  </select>
-                  <span>
-                    Showing <span className="font-semibold text-foreground">{((currentPage - 1) * pageSize) + 1}</span>
-                    -
-                    <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, pagination.totalCount)}</span>
-                    of <span className="font-semibold text-foreground">{pagination.totalCount}</span>
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={!pagination.hasPreviousPage}
-                  >
-                    <ChevronLeft className="w-4 h-4 mr-2" /> Previous
-                  </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                      .filter(p => p === 1 || p === pagination.totalPages || Math.abs(p - currentPage) <= 1)
-                      .map((p, i, arr) => {
-                        const showEllipsis = i > 0 && p - arr[i - 1] > 1;
-                        return (
-                          <div key={p} className="flex items-center">
-                            {showEllipsis && <span className="px-1 text-muted-foreground">...</span>}
-                            <Button
-                              variant={currentPage === p ? "gold" : "outline"}
-                              size="sm"
-                              onClick={() => setCurrentPage(p)}
-                              className="w-8 h-8 p-0"
-                            >
-                              {p}
-                            </Button>
-                          </div>
-                        );
-                      })}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-                    disabled={!pagination.hasNextPage}
-                  >
-                    Next <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-              </div>
-            )}
+            <PaginationBar
+              currentPage={currentPage}
+              totalPages={pagination.totalPages}
+              totalCount={pagination.totalCount}
+              onPageChange={setCurrentPage}
+              hasPreviousPage={pagination.hasPreviousPage}
+              hasNextPage={pagination.hasNextPage}
+              pageSize={pageSize}
+              onPageSizeChange={(v) => { setPageSize(v); setCurrentPage(1); }}
+              pageSizeOptions={[10, 25, 50, 100]}
+            />
             </>
             )}
           </TabsContent>

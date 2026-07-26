@@ -64,6 +64,7 @@ import { useMutation } from "@apollo/client/react";
 import { useToast } from "@/hooks/use-toast";
 import { InterestsOverlay } from "./InterestsOverlay";
 import { MoreHorizontal } from "lucide-react";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 
 // ─── Category normalization ────────────────────────────────────────────────
 const CATEGORY_MAP: Record<string, string> = {
@@ -1406,81 +1407,18 @@ export function FeaturedCourses() {
                   </div>
                 )}
 
-                {/* Pagination */}
-                <div className="flex flex-col items-center gap-4 mt-10 pb-4">
-                  <div className="flex items-center gap-4">
-                    <p className="text-xs text-muted-foreground">
-                      Page {pagination.currentPage} of {pagination.totalPages}
-                      {' '}({" "}
-                      <span className="font-medium">{pagination.totalCount}</span>
-                      {' '}total courses)
-                    </p>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <span>Per page:</span>
-                      <select
-                        value={pageSize}
-                        onChange={(e) => {
-                          const newSize = parseInt(e.target.value, 10);
-                          setPageSize(newSize);
-                          setCurrentPage(1);
-                        }}
-                        className="bg-muted/40 border border-border/30 rounded-lg px-2 py-1 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-accent/30 cursor-pointer"
-                      >
-                        <option value={12}>12</option>
-                        <option value={24}>24</option>
-                        <option value={48}>48</option>
-                        <option value={96}>96</option>
-                        <option value={120}>120</option>
-                      </select>
-                    </div>
-                  </div>
-                  {pagination.totalPages > 1 && (
-                    <div className="flex items-center gap-1.5">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 rounded-xl"
-                        disabled={!pagination.hasPreviousPage || courseLoading}
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-
-                      {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                        .filter(p => p === 1 || p === pagination.totalPages || Math.abs(p - currentPage) <= 1)
-                        .map((p, idx, arr) => (
-                          <React.Fragment key={p}>
-                            {idx > 0 && arr[idx - 1] !== p - 1 && (
-                              <span className="text-muted-foreground/50 text-xs px-1">...</span>
-                            )}
-                            <Button
-                              variant={currentPage === p ? "default" : "outline"}
-                              size="icon"
-                              className={`h-9 w-9 rounded-xl text-xs font-bold ${
-                                currentPage === p
-                                  ? "bg-foreground text-background shadow-sm"
-                                  : "text-muted-foreground hover:text-foreground"
-                              }`}
-                              onClick={() => setCurrentPage(p)}
-                              disabled={courseLoading}
-                            >
-                              {p}
-                            </Button>
-                          </React.Fragment>
-                        ))}
-
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 rounded-xl"
-                        disabled={!pagination.hasNextPage || courseLoading}
-                        onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                )}
-              </div>
+                <PaginationBar
+                  currentPage={currentPage}
+                  totalPages={pagination.totalPages}
+                  totalCount={pagination.totalCount}
+                  onPageChange={setCurrentPage}
+                  hasPreviousPage={pagination.hasPreviousPage}
+                  hasNextPage={pagination.hasNextPage}
+                  pageSize={pageSize}
+                  onPageSizeChange={(v) => { setPageSize(v); setCurrentPage(1); }}
+                  pageSizeOptions={[12, 24, 48, 96, 120]}
+                  isLoading={courseLoading}
+                />
               </motion.div>
             </AnimatePresence>
           )}
@@ -1633,59 +1571,16 @@ export function FeaturedCourses() {
                       })}
                     </div>
 
-                    {/* Internship Pagination */}
-                    {internshipPagination.totalPages > 1 && (
-                      <div className="flex flex-col items-center gap-4 mt-10 pb-4">
-                        <p className="text-xs text-muted-foreground">
-                          Page {internshipPagination.currentPage} of {internshipPagination.totalPages}
-                          {' '}({" "}
-                          <span className="font-medium">{internshipPagination.totalCount}</span>
-                          {' '}total internships)
-                        </p>
-                        <div className="flex items-center gap-1.5">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-9 w-9 rounded-xl"
-                            disabled={!internshipPagination.hasPreviousPage || internLoading}
-                            onClick={() => setInternshipPage(prev => Math.max(1, prev - 1))}
-                          >
-                            <ChevronLeft className="w-4 h-4" />
-                          </Button>
-                          {Array.from({ length: internshipPagination.totalPages }, (_, i) => i + 1)
-                            .filter(p => p === 1 || p === internshipPagination.totalPages || Math.abs(p - internshipPage) <= 1)
-                            .map((p, idx, arr) => (
-                              <React.Fragment key={p}>
-                                {idx > 0 && arr[idx - 1] !== p - 1 && (
-                                  <span className="text-muted-foreground/50 text-xs px-1">...</span>
-                                )}
-                                <Button
-                                  variant={internshipPage === p ? "default" : "outline"}
-                                  size="icon"
-                                  className={`h-9 w-9 rounded-xl text-xs font-bold ${
-                                    internshipPage === p
-                                      ? "bg-foreground text-background shadow-sm"
-                                      : "text-muted-foreground hover:text-foreground"
-                                  }`}
-                                  onClick={() => setInternshipPage(p)}
-                                  disabled={internLoading}
-                                >
-                                  {p}
-                                </Button>
-                              </React.Fragment>
-                            ))}
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-9 w-9 rounded-xl"
-                            disabled={!internshipPagination.hasNextPage || internLoading}
-                            onClick={() => setInternshipPage(prev => Math.min(internshipPagination.totalPages, prev + 1))}
-                          >
-                            <ChevronRight className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                    <PaginationBar
+                      currentPage={internshipPage}
+                      totalPages={internshipPagination.totalPages}
+                      totalCount={internshipPagination.totalCount}
+                      onPageChange={setInternshipPage}
+                      hasPreviousPage={internshipPagination.hasPreviousPage}
+                      hasNextPage={internshipPagination.hasNextPage}
+                      isLoading={internLoading}
+                      showRange={false}
+                    />
                   </>
                 )}
               </motion.div>

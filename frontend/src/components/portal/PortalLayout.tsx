@@ -875,7 +875,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col h-dvh overflow-hidden transition-all duration-300 ${isSidebarMinimized ? 'lg:ml-20' : 'lg:ml-64'}`}>
+      <div className={`flex-1 flex flex-col h-dvh overflow-hidden transition-all duration-300 ${isSidebarMinimized ? 'lg:pl-20' : 'lg:pl-64'}`}>
         {/* Top Header */}
         <header className="h-16 bg-card border-b border-border/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
           {/* Mobile Menu Button */}
@@ -1017,7 +1017,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                     )}
                   </button>
                 </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 p-0" sideOffset={8}>
+              <DropdownMenuContent align="end" className="w-72 p-0" side="bottom" sideOffset={8}>
                 <div className="px-4 py-3 border-b border-border/50">
                   <div className="flex items-center justify-between">
                     <DropdownMenuLabel className="p-0 text-sm font-semibold">
@@ -1146,7 +1146,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80 p-0">
+              <DropdownMenuContent align="end" className="w-80 p-0" side="bottom" sideOffset={8}>
                 <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
                   <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
                   <Button
@@ -1232,7 +1232,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                   <ChevronDown className="w-4 h-4 text-card-foreground/50 hidden sm:block" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" sideOffset={8} className="w-56">
+              <DropdownMenuContent align="center" sideOffset={8} className="w-56" side="bottom">
                 <DropdownMenuLabel>
                   <div>
                     <p className="font-medium">{user.fullName}</p>

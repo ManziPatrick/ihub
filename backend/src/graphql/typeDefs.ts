@@ -332,6 +332,7 @@ export const typeDefs = `#graphql
     quizConfig: QuizConfig
     codeExercises: [CodeExercise]
     order: Int
+    aiGradingGuide: String
   }
 
   type QuizQuestion {
@@ -1056,6 +1057,7 @@ export const typeDefs = `#graphql
     quizConfig: QuizConfigInput
     codeExercises: [CodeExerciseInput]
     order: Int
+    aiGradingGuide: String
   }
 
   input QuizQuestionInput {

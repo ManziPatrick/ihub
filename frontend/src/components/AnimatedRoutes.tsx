@@ -75,6 +75,7 @@ const AdminProjectApplications = lazy(() => import("@/pages/portal/admin/AdminPr
 const AdminProjectOnboarding = lazy(() => import("@/pages/portal/admin/AdminProjectOnboarding"));
 const CreateCourse = lazy(() => import("@/pages/portal/admin/CreateCourse").then(m => ({ default: m.default })));
 const CreateInternship = lazy(() => import("@/pages/portal/admin/CreateInternship").then(m => ({ default: m.default })));
+const AdminStudentView = lazy(() => import("@/pages/portal/admin/AdminStudentView"));
 
 // Super Admin Portal
 const SuperAdminDashboard = lazy(() => import("@/pages/portal/super-admin/SuperAdminDashboard"));
@@ -224,6 +225,8 @@ export function AnimatedRoutes() {
 
           <Route path="/portal/admin/course-preview" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><CoursePreview /></ProtectedRoute>} />
           <Route path="/portal/admin/course-preview/:courseId" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><CoursePreview /></ProtectedRoute>} />
+
+          <Route path="/portal/admin/student-view/:courseId" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><AdminStudentView /></ProtectedRoute>} />
 
           {/* <Route path="/portal/admin/blogs" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBlogManager /></ProtectedRoute>} /> */}
           {/* <Route path="/portal/admin/team" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTeamManager /></ProtectedRoute>} /> */}

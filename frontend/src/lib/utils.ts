@@ -12,10 +12,40 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function getVideoEmbedUrl(url: string | null | undefined): string {
   if (!url) return "";
-  if (url.includes("youtube.com/watch?v=")) return url.replace("watch?v=", "embed/").split("&")[0];
-  if (url.includes("youtube.com/shorts/")) return url.replace("shorts/", "embed/").split("?")[0];
-  if (url.includes("youtu.be/")) return `https://www.youtube.com/embed/${url.split("youtu.be/")[1].split("?")[0]}`;
-  return url;
+
+  // Normalize protocol
+  let normalized = url.trim();
+  if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
+    normalized = "https://" + normalized;
+  }
+
+  // Helper: extract video ID from various YouTube URL patterns
+  const extractYouTubeId = (u: string): string | null => {
+    const patterns = [
+      /(?:youtube\.com|youtu\.be)\/(?:watch\?v=|embed\/|shorts\/|v\/|live\/|)([a-zA-Z0-9_-]{11})(?:[&?#]|$)/,
+      /youtu\.be\/([a-zA-Z0-9_-]{11})(?:[?&#]|$)/,
+      /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})(?:[?&#]|$)/,
+    ];
+    for (const pattern of patterns) {
+      const match = u.match(pattern);
+      if (match && match[1]) return match[1];
+    }
+    return null;
+  };
+
+  // YouTube: convert to embed URL
+  if (normalized.includes("youtube.com") || normalized.includes("youtu.be")) {
+    const id = extractYouTubeId(normalized);
+    if (id) return `https://www.youtube.com/embed/${id}`;
+  }
+
+  // Vimeo: convert to embed URL
+  const vimeoMatch = normalized.match(/(?:vimeo\.com)\/(\d+)/);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  }
+
+  return normalized;
 }
 
 /**

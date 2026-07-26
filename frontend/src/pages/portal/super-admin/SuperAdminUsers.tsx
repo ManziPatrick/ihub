@@ -65,6 +65,7 @@ import { DELETE_USER, UPDATE_USER } from "@/lib/graphql/mutations";
 import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 import { ScholarshipDialog } from "@/components/portal/dialogs/ScholarshipDialog";
 import { toast } from "sonner";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 
 export default function SuperAdminUsers() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,7 +120,7 @@ export default function SuperAdminUsers() {
   const [updateUserMutation, { loading: updating }] = useMutation(UPDATE_USER);
 
   const allUsers = (data as any)?.users?.items || [];
-  const pagination = (data as any)?.users?.pagination;
+  const pagination = (data as any)?.users?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
   const analytics = (analyticsData as any)?.analytics;
   const roleDistribution = analytics?.roleDistribution || [];
 
@@ -527,99 +528,17 @@ export default function SuperAdminUsers() {
                 )}
               </div>
 
-              {/* Pagination UI */}
-              {pagination && pagination.totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-border/50 gap-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground order-2 sm:order-1">
-                    <span>Show</span>
-                    <select
-                      value={pageSize}
-                      onChange={(e) => {
-                        setPageSize(Number(e.target.value));
-                        setCurrentPage(1);
-                      }}
-                      className="bg-background border border-border/50 rounded-md px-2 py-1 text-sm"
-                    >
-                      <option value={10}>10</option>
-                      <option value={25}>25</option>
-                      <option value={50}>50</option>
-                      <option value={100}>100</option>
-                    </select>
-                    <span>
-                      Showing <span className="font-semibold text-foreground">{((currentPage - 1) * pageSize) + 1}</span>
-                      -
-                      <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, pagination.totalCount)}</span>
-                      of <span className="font-semibold text-foreground">{pagination.totalCount}</span>
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 order-1 sm:order-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(1, prev - 1))
-                      }
-                      disabled={!pagination.hasPreviousPage}
-                      className="rounded-xl border-border/50 h-9"
-                    >
-                      Previous
-                    </Button>
-
-                    <div className="flex items-center gap-1">
-                      {Array.from(
-                        { length: pagination.totalPages },
-                        (_, i) => i + 1
-                      )
-                        .filter(
-                          (p) =>
-                            p === 1 ||
-                            p === pagination.totalPages ||
-                            Math.abs(p - currentPage) <= 1
-                        )
-                        .map((p, i, arr) => {
-                          const showEllipsis = i > 0 && p - arr[i - 1] > 1;
-                          return (
-                            <div key={p} className="flex items-center">
-                              {showEllipsis && (
-                                <span className="px-1 text-muted-foreground">
-                                  ...
-                                </span>
-                              )}
-                              <Button
-                                variant={
-                                  currentPage === p ? "default" : "outline"
-                                }
-                                size="sm"
-                                onClick={() => setCurrentPage(p)}
-                                className={`h-9 w-9 p-0 rounded-xl border-border/50 ${
-                                  currentPage === p
-                                    ? "bg-accent text-accent-foreground"
-                                    : ""
-                                }`}
-                              >
-                                {p}
-                              </Button>
-                            </div>
-                          );
-                        })}
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setCurrentPage((prev) =>
-                          Math.min(pagination.totalPages, prev + 1)
-                        )
-                      }
-                      disabled={!pagination.hasNextPage}
-                      className="rounded-xl border-border/50 h-9"
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <PaginationBar
+                currentPage={currentPage}
+                totalPages={pagination.totalPages}
+                totalCount={pagination.totalCount}
+                onPageChange={setCurrentPage}
+                hasPreviousPage={pagination.hasPreviousPage}
+                hasNextPage={pagination.hasNextPage}
+                pageSize={pageSize}
+                onPageSizeChange={(v) => { setPageSize(v); setCurrentPage(1); }}
+                pageSizeOptions={[10, 25, 50, 100]}
+              />
             </CardContent>
           </Card>
         </motion.div>

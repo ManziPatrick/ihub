@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 import {
   Award,
   Plus,
@@ -62,7 +63,7 @@ export default function AdminBadges() {
     variables: { page: currentPage, limit: pageSize, createdBy: user?.id }
   });
   const badges = data?.badges?.items || [];
-  const pagination = data?.badges?.pagination;
+  const pagination = data?.badges?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
 
   const [createBadge] = useMutation(CREATE_BADGE, {
     refetchQueries: [{ query: GET_BADGES }],
@@ -301,53 +302,17 @@ export default function AdminBadges() {
           </div>
         )}
 
-        {/* Pagination UI */}
-        {pagination && pagination.totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between px-2 py-6 border-t border-border/50 mt-8 gap-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Show</span>
-                    <select
-                        value={pageSize}
-                        onChange={(e) => {
-                            setPageSize(Number(e.target.value));
-                            setCurrentPage(1);
-                        }}
-                        className="bg-background border border-border/50 rounded-md px-2 py-1 text-sm"
-                    >
-                        <option value={12}>12</option>
-                        <option value={24}>24</option>
-                        <option value={48}>48</option>
-                        <option value={96}>96</option>
-                    </select>
-                    <span>
-                        Showing <span className="font-semibold text-foreground">{((currentPage - 1) * pageSize) + 1}</span>
-                        -
-                        <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, pagination.totalCount)}</span>
-                        of <span className="font-semibold text-foreground">{pagination.totalCount}</span>
-                    </span>
-                </div>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        disabled={!pagination.hasPreviousPage}
-                        className="rounded-xl px-4"
-                    >
-                        Previous
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-                        disabled={!pagination.hasNextPage}
-                        className="rounded-xl px-4"
-                    >
-                        Next
-                    </Button>
-                </div>
-            </div>
-        )}
+        <PaginationBar
+          currentPage={currentPage}
+          totalPages={pagination.totalPages}
+          totalCount={pagination.totalCount}
+          onPageChange={setCurrentPage}
+          hasPreviousPage={pagination.hasPreviousPage}
+          hasNextPage={pagination.hasNextPage}
+          pageSize={pageSize}
+          onPageSizeChange={(v) => { setPageSize(v); setCurrentPage(1); }}
+          pageSizeOptions={[12, 24, 48, 96]}
+        />
 
         {/* Create/Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

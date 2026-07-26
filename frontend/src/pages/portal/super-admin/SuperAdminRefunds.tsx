@@ -232,7 +232,7 @@ export default function SuperAdminRefunds() {
   const [rejectRefund, { loading: rejecting }] = useMutation(REJECT_REFUND);
 
   const refunds: RefundItem[] = (data as any)?.getAllRefundRequests?.items || [];
-  const pagination = (data as any)?.getAllRefundRequests?.pagination;
+  const pagination = (data as any)?.getAllRefundRequests?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
   const stats: RefundStats = (statsData as any)?.getRefundRequestStats;
 
   const handleVerify = async () => {

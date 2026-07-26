@@ -212,7 +212,7 @@ export default function CoursePage() {
                 <div className="flex flex-wrap gap-6 pt-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-2">
                     <User className="w-4 h-4 text-accent" />
-                    Instructor: <span className="text-foreground font-medium">{course.instructor?.username || "TBD"}</span>
+                    Instructor: <span className="text-foreground font-medium">{course.instructor?.fullName || course.instructor?.username || "TBD"}</span>
                   </span>
                   <span className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-accent" />
@@ -335,7 +335,7 @@ export default function CoursePage() {
                                           {/* Content */}
                                           {isEnrolled || isFreePreview ? (
                                             <div className="prose prose-sm max-w-none">
-                                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                                                 {typeof cachedLesson.content === 'string' ? normalizeContent(cachedLesson.content) : ''}
                                               </ReactMarkdown>
                                             </div>
