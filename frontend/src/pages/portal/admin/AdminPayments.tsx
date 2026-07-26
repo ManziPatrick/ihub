@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@apollo/client/react";
 import { GET_PAYMENTS, GET_ALL_DISBURSEMENTS, GET_DISBURSEMENT_STATS } from "@/lib/graphql/queries";
+import { toast } from "sonner";
 import { VerifyPaymentDialog } from "@/components/portal/dialogs";
 import {
   Table,
@@ -55,13 +56,13 @@ const statusIcons: Record<string, React.ElementType> = {
 };
 
 export default function AdminPayments() {
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [verifyingPayment, setVerifyingPayment] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const { data, loading } = useQuery(GET_PAYMENTS, {
+  const { data, loading, refetch: refetchPayments } = useQuery(GET_PAYMENTS, {
     variables: { page: currentPage, limit: pageSize },
-    pollInterval: 30000
   });
 
   // Disbursement queries — admins can now see their scoped disbursements
@@ -70,12 +71,9 @@ export default function AdminPayments() {
   const LIMIT = 20;
   const { data: disbData, loading: disbLoading, refetch: refetchDisb } = useQuery(GET_ALL_DISBURSEMENTS, {
     variables: { page: disbPage, limit: LIMIT, status: disbStatus || undefined },
-    pollInterval: 30000,
   });
 
-  const { data: disbStatsData, loading: disbStatsLoading, refetch: refetchDisbStats } = useQuery(GET_DISBURSEMENT_STATS, {
-    pollInterval: 60000,
-  });
+  const { data: disbStatsData, loading: disbStatsLoading, refetch: refetchDisbStats } = useQuery(GET_DISBURSEMENT_STATS);
 
   const disbursements: any[] = (disbData as any)?.getAllDisbursements?.items || [];
   const disbPagination = (disbData as any)?.getAllDisbursements?.pagination;
@@ -135,10 +133,26 @@ export default function AdminPayments() {
               Track course enrollments and internship fee payments
             </p>
           </div>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export Report
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={async () => {
+                setIsRefreshing(true);
+                try {
+                  await Promise.all([refetchPayments(), refetchDisb(), refetchDisbStats()]);
+                  toast.success('Payments refreshed!');
+                } catch {
+                  toast.error('Failed to refresh payments');
+                } finally {
+                  setIsRefreshing(false);
+                }
+              }} disabled={isRefreshing}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
+            <Button variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export Report
+            </Button>
+          </div>
         </motion.div>
 
         {/* Stats */}

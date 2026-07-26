@@ -27,8 +27,10 @@ import {
   Info,
   XCircle,
   FolderOpen,
+  RefreshCw,
 } from "lucide-react";
 import { useQuery } from "@apollo/client/react";import { GET_ME, GET_MY_BOOKINGS, GET_CONVERSATIONS, GET_MY_PAYMENTS, GET_MY_PROJECTS, MY_COURSE_APPLICATIONS, GET_MY_INTERNSHIP_APPLICATIONS, GET_COURSES_LITE_SUMMARY, GET_INTERNSHIP_PROGRAMS } from "@/lib/graphql/queries";
+import { toast } from "sonner";
 import { GET_MY_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 import { ApplyCourseDialog, ApplyInternshipDialog } from "@/components/portal/dialogs";
 import { useState, useCallback } from "react";
@@ -46,25 +48,26 @@ import {
 export default function StudentDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { data: meData, loading: meLoading } = useQuery(GET_ME);
-  const { data: bookingsData, loading: bookingsLoading } = useQuery(GET_MY_BOOKINGS);
-  const { data: conversationsData } = useQuery(GET_CONVERSATIONS);
-  const { data: paymentsData } = useQuery(GET_MY_PAYMENTS);
-  const { data: projectsData, loading: projectsLoading } = useQuery(GET_MY_PROJECTS);
-  const { data: myTasksData } = useQuery(GET_MY_PROJECT_TASKS);
+  const { data: meData, loading: meLoading, refetch: refetchMe } = useQuery(GET_ME);
+  const { data: bookingsData, loading: bookingsLoading, refetch: refetchBookings } = useQuery(GET_MY_BOOKINGS);
+  const { data: conversationsData, refetch: refetchConversations } = useQuery(GET_CONVERSATIONS);
+  const { data: paymentsData, refetch: refetchPayments } = useQuery(GET_MY_PAYMENTS);
+  const { data: projectsData, loading: projectsLoading, refetch: refetchProjects } = useQuery(GET_MY_PROJECTS);
+  const { data: myTasksData, refetch: refetchTasks } = useQuery(GET_MY_PROJECT_TASKS);
   const { data: appData, refetch: refetchApps } = useQuery(MY_COURSE_APPLICATIONS);
   const { data: internAppData, refetch: refetchInternApps } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS);
   const [coursePage, setCoursePage] = useState(1);
   const [coursePerPage, setCoursePerPage] = useState(12);
-  const { data: allCoursesData, loading: allCoursesLoading } = useQuery(GET_COURSES_LITE_SUMMARY, {
+  const { data: allCoursesData, loading: allCoursesLoading, refetch: refetchCourses } = useQuery(GET_COURSES_LITE_SUMMARY, {
     variables: { page: coursePage, limit: coursePerPage },
   });
   const [internshipPage, setInternshipPage] = useState(1);
   const [internshipPerPage, setInternshipPerPage] = useState(6);
-  const { data: allInternshipsData, loading: allInternshipsLoading } = useQuery(GET_INTERNSHIP_PROGRAMS, {
+  const { data: allInternshipsData, loading: allInternshipsLoading, refetch: refetchInternships } = useQuery(GET_INTERNSHIP_PROGRAMS, {
     variables: { page: internshipPage, limit: internshipPerPage },
   });
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [selectedInternshipId, setSelectedInternshipId] = useState<string | null>(null);
 
@@ -165,6 +168,24 @@ export default function StudentDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={async () => {
+                setIsRefreshing(true);
+                try {
+                  await Promise.all([
+                    refetchMe(), refetchBookings(), refetchConversations(),
+                    refetchPayments(), refetchProjects(), refetchTasks(),
+                    refetchApps(), refetchInternApps(), refetchCourses(), refetchInternships()
+                  ]);
+                  toast.success('Dashboard refreshed!');
+                } catch {
+                  toast.error('Failed to refresh dashboard');
+                } finally {
+                  setIsRefreshing(false);
+                }
+              }} disabled={isRefreshing} className="h-9">
+              <RefreshCw className={`w-4 h-4 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
             <div className="flex flex-col items-end">
               <span className="text-xs font-medium text-accent uppercase tracking-wider">{me?.academicStatus || 'Student'}</span>
               <span className="text-sm font-bold">Level {me?.level || 1}</span>
