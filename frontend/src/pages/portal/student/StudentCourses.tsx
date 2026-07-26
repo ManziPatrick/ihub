@@ -477,24 +477,24 @@ export default function StudentCourses() {
                 </div>
 
                 {/* Pagination */}
-                {totalEnrolledPages > 1 && (
-                  <div className="flex items-center justify-between pt-3 border-t border-border/30">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>Rows per page:</span>
-                      <Select value={String(enrolledPerPage)} onValueChange={handleEnrolledPerPageChange}>
-                        <SelectTrigger className="w-16 h-8 text-xs rounded-lg">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[6, 9, 12, 18].map(n => (
-                            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <span className="ml-2">
-                        {enrolledStart + 1}–{enrolledEnd} of {totalEnrolled}
-                      </span>
-                    </div>
+                <div className="flex items-center justify-between pt-3 border-t border-border/30">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>Rows per page:</span>
+                    <Select value={String(enrolledPerPage)} onValueChange={handleEnrolledPerPageChange}>
+                      <SelectTrigger className="w-16 h-8 text-xs rounded-lg">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[6, 9, 12, 18].map(n => (
+                          <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="ml-2">
+                      {enrolledStart + 1}–{enrolledEnd} of {totalEnrolled}
+                    </span>
+                  </div>
+                  {totalEnrolledPages > 1 && (
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleEnrolledPageChange(1)}
@@ -686,24 +686,24 @@ export default function StudentCourses() {
             </div>
 
             {/* Pagination */}
-            {coursesPagination.totalPages > 1 && (
-              <div className="flex items-center justify-between pt-3 border-t border-border/30">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>Rows per page:</span>
-                  <Select value={String(availPerPage)} onValueChange={handleAvailPerPageChange}>
-                    <SelectTrigger className="w-16 h-8 text-xs rounded-lg">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[6, 9, 12, 18].map(n => (
-                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <span className="ml-2">
-                    {((availPage - 1) * availPerPage) + 1}–{Math.min(availPage * availPerPage, coursesPagination.totalCount)} of {coursesPagination.totalCount}
-                  </span>
-                </div>
+            <div className="flex items-center justify-between pt-3 border-t border-border/30">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Rows per page:</span>
+                <Select value={String(availPerPage)} onValueChange={handleAvailPerPageChange}>
+                  <SelectTrigger className="w-16 h-8 text-xs rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[6, 9, 12, 18].map(n => (
+                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="ml-2">
+                  {((availPage - 1) * availPerPage) + 1}–{Math.min(availPage * availPerPage, coursesPagination.totalCount)} of {coursesPagination.totalCount}
+                </span>
+              </div>
+              {coursesPagination.totalPages > 1 && (
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleAvailPageChange(1)}
