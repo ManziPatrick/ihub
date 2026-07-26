@@ -68,6 +68,7 @@ export default function AdminStudentView() {
   const [editLessonForCode, setEditLessonForCode] = useState<any>(null);
   const [dialogQuestions, setDialogQuestions] = useState<any[]>([]);
   const [dialogConfig, setDialogConfig] = useState<any>({});
+  const [dialogLessonId, setDialogLessonId] = useState<string | null>(null);
 
   const { data, loading, error, refetch } = useQuery(GET_COURSE, {
     variables: { id: courseId },
@@ -258,6 +259,10 @@ export default function AdminStudentView() {
       toast.success("Lesson saved successfully!");
       setEditingLessonId(null);
       setEditDraft(null);
+      // Clear dialog cache so fresh data loads from the server on next open
+      setDialogLessonId(null);
+      setDialogQuestions([]);
+      setDialogConfig({});
       // Refetch in background to sync cache after save
       refetch();
     } catch (err: any) {
@@ -663,9 +668,14 @@ export default function AdminStudentView() {
                               size="sm"
                               className="h-7 text-[10px] font-bold"
                               onClick={() => {
+                                const lid = currentLesson?.id || currentLesson?._id;
                                 setEditLessonForQuiz(currentLesson);
-                                setDialogQuestions(currentLesson.quizQuestions || []);
-                                setDialogConfig(currentLesson.quizConfig || {});
+                                // Only reload from course data if switching to a different lesson
+                                if (lid !== dialogLessonId) {
+                                  setDialogQuestions(currentLesson.quizQuestions || []);
+                                  setDialogConfig(currentLesson.quizConfig || {});
+                                  setDialogLessonId(lid);
+                                }
                                 setQuizDialogOpen(true);
                               }}
                             >
@@ -729,9 +739,14 @@ export default function AdminStudentView() {
                               size="sm"
                               className="h-7 text-[10px] font-bold"
                               onClick={() => {
+                                const lid = currentLesson?.id || currentLesson?._id;
                                 setEditLessonForQuiz(currentLesson);
-                                setDialogQuestions(currentLesson.quizQuestions || []);
-                                setDialogConfig(currentLesson.quizConfig || {});
+                                // Only reload from course data if switching to a different lesson
+                                if (lid !== dialogLessonId) {
+                                  setDialogQuestions(currentLesson.quizQuestions || []);
+                                  setDialogConfig(currentLesson.quizConfig || {});
+                                  setDialogLessonId(lid);
+                                }
                                 setQuizDialogOpen(true);
                               }}
                             >
@@ -1116,9 +1131,8 @@ export default function AdminStudentView() {
           open={quizDialogOpen}
           onOpenChange={(open) => {
             setQuizDialogOpen(open);
-            if (!open) {
-              refetch();
-            }
+            // No refetch here — let handleSave be the single save point
+            // to avoid race conditions with Apollo cache
           }}
           courseId={courseId!}
           lessonId={editLessonForQuiz.id || editLessonForQuiz._id}
@@ -1129,7 +1143,7 @@ export default function AdminStudentView() {
           courseTitle={course?.title}
           lessonContent={editLessonForQuiz.content || ""}
           onSave={(savedQuestions: any[], savedConfig: any) => {
-            // Update local state so the edit UI reflects changes immediately
+            // Update local state — this is what handleSave will use
             setDialogQuestions(savedQuestions);
             setDialogConfig(savedConfig);
           }}
