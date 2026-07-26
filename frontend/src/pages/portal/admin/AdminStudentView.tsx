@@ -403,48 +403,23 @@ export default function AdminStudentView() {
                 {/* ─── Lesson Content Card ─── */}
                 <Card className="border-border/50 overflow-hidden shadow-2xl">
                   {isEditing ? (
-                    /* ── INLINE EDITOR ── */
+                    /* ── TYPE-SPECIFIC INLINE EDITOR ── */
                     <div className="p-6 space-y-6">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                          Lesson Title
-                        </label>
-                        <Input
-                          className="h-10 text-base font-bold"
-                          value={editDraft?.title || ""}
-                          onChange={(e) => setEditDraft((d: any) => ({ ...d, title: e.target.value }))}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1">
-                            <Video className="w-3 h-3" /> Video URL
+                      {/* Always show title + type selector + duration */}
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-2 space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                            Lesson Title
                           </label>
                           <Input
-                            className="h-10 text-sm font-mono"
-                            placeholder="YouTube URL..."
-                            value={editDraft?.videoUrl || ""}
-                            onChange={(e) => setEditDraft((d: any) => ({ ...d, videoUrl: e.target.value }))}
+                            className="h-10 text-base font-bold"
+                            value={editDraft?.title || ""}
+                            onChange={(e) => setEditDraft((d: any) => ({ ...d, title: e.target.value }))}
                           />
                         </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1">
-                            <ExternalLink className="w-3 h-3" /> File/Resource URL
-                          </label>
-                          <Input
-                            className="h-10 text-sm font-mono"
-                            placeholder="Resource link..."
-                            value={editDraft?.fileUrl || ""}
-                            onChange={(e) => setEditDraft((d: any) => ({ ...d, fileUrl: e.target.value }))}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                            Duration (minutes)
+                            Duration (min)
                           </label>
                           <Input
                             type="number"
@@ -453,61 +428,254 @@ export default function AdminStudentView() {
                             onChange={(e) => setEditDraft((d: any) => ({ ...d, duration: parseInt(e.target.value) || 0 }))}
                           />
                         </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                            Type
-                          </label>
-                          <select
-                            className="h-10 w-full px-3 rounded-xl border border-border/40 bg-background text-sm outline-none focus:border-accent/60"
-                            value={editDraft?.type || "video"}
-                            onChange={(e) => setEditDraft((d: any) => ({ ...d, type: e.target.value }))}
-                          >
-                            {["video", "article", "pdf", "ppt", "book", "quiz", "assignment"].map((t) => (
-                              <option key={t} value={t}>
-                                {t.toUpperCase()}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
                       </div>
 
                       <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                          Lesson Content (Markdown)
+                          Lesson Type
                         </label>
-                        <Textarea
-                          className="min-h-[200px] text-sm font-mono leading-relaxed"
-                          placeholder="Write lesson content in markdown..."
-                          value={editDraft?.content || ""}
-                          onChange={(e) => setEditDraft((d: any) => ({ ...d, content: e.target.value }))}
-                        />
+                        <select
+                          className="h-10 w-full max-w-xs px-3 rounded-xl border border-border/40 bg-background text-sm outline-none focus:border-accent/60"
+                          value={editDraft?.type || "video"}
+                          onChange={(e) => setEditDraft((d: any) => ({ ...d, type: e.target.value }))}
+                        >
+                          {["video", "article", "pdf", "ppt", "book", "quiz", "assignment"].map((t) => (
+                            <option key={t} value={t}>
+                              {t.toUpperCase()}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
-                      {/* Quiz & Code Exercise management buttons */}
-                      <div className="flex items-center gap-3 pt-2 border-t border-border/40">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 text-[10px] font-bold"
-                          onClick={() => {
-                            setEditLessonForQuiz(currentLesson);
-                            setQuizDialogOpen(true);
-                          }}
-                        >
-                          <HelpCircle className="w-3 h-3 mr-1" /> Manage Quiz
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 text-[10px] font-bold"
-                          onClick={() => {
-                            setEditLessonForCode(currentLesson);
-                            setCodeDialogOpen(true);
-                          }}
-                        >
-                          <Code className="w-3 h-3 mr-1" /> Manage Code Exercises
-                        </Button>
-                      </div>
+                      {/* ── TYPE: Video / PDF / PPT / Book ── */}
+                      {["video", "pdf", "ppt", "book"].includes(editDraft?.type) && (
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1">
+                              <Video className="w-3 h-3" /> Media / Stream URL
+                            </label>
+                            <Input
+                              className="h-10 text-sm font-mono"
+                              placeholder="YouTube, Vimeo, AWS S3..."
+                              value={editDraft?.videoUrl || ""}
+                              onChange={(e) => setEditDraft((d: any) => ({ ...d, videoUrl: e.target.value }))}
+                            />
+                            {/* Live video preview */}
+                            {editDraft?.videoUrl && (
+                              <div className="mt-2 aspect-video bg-black rounded-xl overflow-hidden">
+                                <iframe
+                                  src={getVideoEmbedUrl(editDraft.videoUrl)}
+                                  className="w-full h-full"
+                                  allowFullScreen
+                                  loading="lazy"
+                                />
+                              </div>
+                            )}
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1">
+                              <ExternalLink className="w-3 h-3" /> File / Resource URL
+                            </label>
+                            <Input
+                              className="h-10 text-sm font-mono"
+                              placeholder="G-Drive, Dropbox link..."
+                              value={editDraft?.fileUrl || ""}
+                              onChange={(e) => setEditDraft((d: any) => ({ ...d, fileUrl: e.target.value }))}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ── TYPE: Article (content-focused) ── */}
+                      {editDraft?.type === "article" && (
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                              Content / Description (Markdown)
+                            </label>
+                            <Textarea
+                              className="min-h-[200px] text-sm font-mono leading-relaxed"
+                              placeholder="Write lesson content in markdown. HTML tags like <code>code</code> will render as styled."
+                              value={editDraft?.content || ""}
+                              onChange={(e) => setEditDraft((d: any) => ({ ...d, content: e.target.value }))}
+                            />
+                          </div>
+                          {/* Live markdown preview */}
+                          {editDraft?.content && (
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                                Preview
+                              </label>
+                              <div className="prose dark:prose-invert max-w-none p-4 rounded-xl bg-muted/10 border border-border/40 lesson-content-viewer">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                                  {normalizeContent(editDraft.content)}
+                                </ReactMarkdown>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ── TYPE: Quiz ── */}
+                      {editDraft?.type === "quiz" && (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                              Quiz Questions
+                            </label>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-[10px] font-bold"
+                              onClick={() => {
+                                setEditLessonForQuiz(currentLesson);
+                                setQuizDialogOpen(true);
+                              }}
+                            >
+                              <HelpCircle className="w-3 h-3 mr-1" /> Manage Quiz
+                            </Button>
+                          </div>
+                          {currentLesson.quizQuestions?.length > 0 ? (
+                            <div className="space-y-3">
+                              {currentLesson.quizQuestions.map((q: any, qi: number) => (
+                                <div key={q.id || qi} className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                                  <p className="text-sm font-bold mb-2 flex items-center gap-2">
+                                    <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center text-[10px] font-black shrink-0">
+                                      {qi + 1}
+                                    </span>
+                                    {q.questionText}
+                                  </p>
+                                  <div className="ml-8 space-y-1.5">
+                                    {(q.options || []).map((opt: string, oi: number) => (
+                                      <div
+                                        key={oi}
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${
+                                          oi === q.correctOptionIndex
+                                            ? "bg-green-500/10 text-green-500 border border-green-500/20 font-semibold"
+                                            : "bg-muted/20 text-muted-foreground border border-border/20"
+                                        }`}
+                                      >
+                                        {oi === q.correctOptionIndex ? (
+                                          <CheckCircle className="w-3 h-3 shrink-0" />
+                                        ) : (
+                                          <div className="w-3 h-3 rounded-full border border-border shrink-0" />
+                                        )}
+                                        {opt}
+                                        {oi === q.correctOptionIndex && (
+                                          <span className="text-[8px] font-black uppercase ml-auto text-green-500">Correct</span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="p-8 text-center rounded-xl bg-amber-500/5 border border-dashed border-amber-500/30">
+                              <HelpCircle className="w-8 h-8 text-amber-500/50 mx-auto mb-2" />
+                              <p className="text-sm text-muted-foreground">No quiz questions yet</p>
+                              <p className="text-xs text-muted-foreground/60 mt-1">Click "Manage Quiz" to add questions</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ── TYPE: Assignment / Exam ── */}
+                      {editDraft?.type === "assignment" && (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                              Exam / Assignment Questions
+                            </label>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-[10px] font-bold"
+                              onClick={() => {
+                                setEditLessonForQuiz(currentLesson);
+                                setQuizDialogOpen(true);
+                              }}
+                            >
+                              <HelpCircle className="w-3 h-3 mr-1" /> Manage Exam
+                            </Button>
+                          </div>
+                          {currentLesson.assignmentQuestions?.length > 0 ? (
+                            <div className="space-y-3">
+                              {currentLesson.assignmentQuestions.map((q: any, qi: number) => (
+                                <div key={q.id || qi} className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/20">
+                                  <p className="text-sm font-bold mb-2 flex items-center gap-2">
+                                    <span className="w-6 h-6 rounded-full bg-purple-500/10 text-purple-500 flex items-center justify-center text-[10px] font-black shrink-0">
+                                      {qi + 1}
+                                    </span>
+                                    {q.questionText}
+                                  </p>
+                                  {q.options?.length > 0 && (
+                                    <div className="ml-8 space-y-1.5">
+                                      {(q.options || []).map((opt: string, oi: number) => (
+                                        <div
+                                          key={oi}
+                                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${
+                                            oi === q.correctOptionIndex
+                                              ? "bg-green-500/10 text-green-500 border border-green-500/20 font-semibold"
+                                              : "bg-muted/20 text-muted-foreground border border-border/20"
+                                          }`}
+                                        >
+                                          {oi === q.correctOptionIndex ? (
+                                            <CheckCircle className="w-3 h-3 shrink-0" />
+                                          ) : (
+                                            <div className="w-3 h-3 rounded-full border border-border shrink-0" />
+                                          )}
+                                          {opt}
+                                          {oi === q.correctOptionIndex && (
+                                            <span className="text-[8px] font-black uppercase ml-auto text-green-500">Correct</span>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="p-8 text-center rounded-xl bg-purple-500/5 border border-dashed border-purple-500/30">
+                              <GraduationCap className="w-8 h-8 text-purple-500/50 mx-auto mb-2" />
+                              <p className="text-sm text-muted-foreground">No exam questions yet</p>
+                              <p className="text-xs text-muted-foreground/60 mt-1">Click "Manage Exam" to add questions</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ── Code Exercises (shown for all types that can have them) ── */}
+                      {currentLesson.codeExercises?.length > 0 && (
+                        <div className="space-y-3 pt-2 border-t border-border/40">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                              Code Exercises
+                            </label>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-[10px] font-bold"
+                              onClick={() => {
+                                setEditLessonForCode(currentLesson);
+                                setCodeDialogOpen(true);
+                              }}
+                            >
+                              <Code className="w-3 h-3 mr-1" /> Manage Exercises
+                            </Button>
+                          </div>
+                          {currentLesson.codeExercises.map((ex: any, ei: number) => (
+                            <div key={ex.id || ei} className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="text-xs font-bold">{ei + 1}. {ex.title || `Exercise ${ei + 1}`}</p>
+                                <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-[8px] font-black">{ex.language}</Badge>
+                              </div>
+                              {ex.description && <p className="text-[11px] text-muted-foreground">{ex.description}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     /* ── STUDENT VIEW (read-only preview) ── */
@@ -823,7 +991,7 @@ export default function AdminStudentView() {
         </div>
       </div>
 
-      {/* ─── Quiz Questions Dialog ─── */}
+      {/* ─── Quiz / Exam Questions Dialog ─── */}
       {editLessonForQuiz && (
         <ManageQuestionsDialog
           open={quizDialogOpen}
@@ -835,7 +1003,7 @@ export default function AdminStudentView() {
           }}
           courseId={courseId!}
           lessonId={editLessonForQuiz.id || editLessonForQuiz._id}
-          type="quiz"
+          type={editLessonForQuiz.type === "assignment" ? "assignment" : "quiz"}
         />
       )}
 
