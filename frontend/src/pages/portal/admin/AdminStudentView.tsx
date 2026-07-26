@@ -175,6 +175,7 @@ export default function AdminStudentView() {
 
             // Apply editDraft changes (from inline editor) if this is the lesson being edited
             if (lid === lessonId) {
+              const isAssignment = editDraft.type === "assignment";
               cleanLesson.title = editDraft.title;
               cleanLesson.content = editDraft.content;
               cleanLesson.videoUrl = editDraft.videoUrl;
@@ -184,44 +185,88 @@ export default function AdminStudentView() {
               cleanLesson.aiGradingGuide = editDraft.aiGradingGuide || "";
 
               // Quiz questions: use dialog data if available, otherwise preserve existing
-              if (dialogQuestions.length > 0) {
-                cleanLesson.quizQuestions = dialogQuestions.map((q: any) => ({
-                  questionText: q.questionText,
-                  type: q.type || "multiple_choice",
-                  options: q.options || [],
-                  correctOptionIndex: q.correctOptionIndex,
-                  explanation: q.explanation || "",
-                  imageUrl: q.imageUrl || "",
-                  matchingPairs: q.matchingPairs || [],
-                }));
-              } else if (l.quizQuestions?.length > 0) {
-                cleanLesson.quizQuestions = l.quizQuestions.map((q: any) => ({
-                  questionText: q.questionText,
-                  type: q.type || "multiple_choice",
-                  options: q.options || [],
-                  correctOptionIndex: q.correctOptionIndex,
-                  explanation: q.explanation || "",
-                  imageUrl: q.imageUrl || "",
-                  matchingPairs: q.matchingPairs || [],
-                }));
+              if (isAssignment) {
+                // For assignment/exam lessons, dialogQuestions maps to assignmentQuestions
+                if (dialogQuestions.length > 0) {
+                  cleanLesson.assignmentQuestions = dialogQuestions.map((q: any) => ({
+                    questionText: q.questionText,
+                    type: q.type || "multiple_choice",
+                    options: q.options || [],
+                    correctOptionIndex: q.correctOptionIndex,
+                    points: q.points || 0,
+                  }));
+                } else if (l.assignmentQuestions?.length > 0) {
+                  cleanLesson.assignmentQuestions = l.assignmentQuestions.map((q: any) => ({
+                    questionText: q.questionText,
+                    type: q.type || "multiple_choice",
+                    options: q.options || [],
+                    correctOptionIndex: q.correctOptionIndex,
+                    points: q.points || 0,
+                  }));
+                }
+                // Preserve existing quiz questions if any
+                if (l.quizQuestions?.length > 0) {
+                  cleanLesson.quizQuestions = l.quizQuestions.map((q: any) => ({
+                    questionText: q.questionText,
+                    type: q.type || "multiple_choice",
+                    options: q.options || [],
+                    correctOptionIndex: q.correctOptionIndex,
+                    explanation: q.explanation || "",
+                    imageUrl: q.imageUrl || "",
+                    matchingPairs: q.matchingPairs || [],
+                  }));
+                }
+              } else {
+                // Quiz or other lesson type: dialogQuestions maps to quizQuestions
+                if (dialogQuestions.length > 0) {
+                  cleanLesson.quizQuestions = dialogQuestions.map((q: any) => ({
+                    questionText: q.questionText,
+                    type: q.type || "multiple_choice",
+                    options: q.options || [],
+                    correctOptionIndex: q.correctOptionIndex,
+                    explanation: q.explanation || "",
+                    imageUrl: q.imageUrl || "",
+                    matchingPairs: q.matchingPairs || [],
+                  }));
+                } else if (l.quizQuestions?.length > 0) {
+                  cleanLesson.quizQuestions = l.quizQuestions.map((q: any) => ({
+                    questionText: q.questionText,
+                    type: q.type || "multiple_choice",
+                    options: q.options || [],
+                    correctOptionIndex: q.correctOptionIndex,
+                    explanation: q.explanation || "",
+                    imageUrl: q.imageUrl || "",
+                    matchingPairs: q.matchingPairs || [],
+                  }));
+                }
+                // Preserve existing assignment questions if any
+                if (l.assignmentQuestions?.length > 0) {
+                  cleanLesson.assignmentQuestions = l.assignmentQuestions.map((q: any) => ({
+                    questionText: q.questionText,
+                    type: q.type || "multiple_choice",
+                    options: q.options || [],
+                    correctOptionIndex: q.correctOptionIndex,
+                    points: q.points || 0,
+                  }));
+                }
               }
-              // Assignment questions: always preserve existing on the edited lesson
-              if (l.assignmentQuestions?.length > 0) {
-                cleanLesson.assignmentQuestions = l.assignmentQuestions.map((q: any) => ({
-                  questionText: q.questionText,
-                  type: q.type || "multiple_choice",
-                  options: q.options || [],
-                  correctOptionIndex: q.correctOptionIndex,
-                  points: q.points || 0,
-                }));
-              }
+              // Apply dialogConfig to the correct config field based on lesson type
               if (dialogConfig && Object.keys(dialogConfig).length > 0) {
-                cleanLesson.quizConfig = {
-                  disableRightClick: dialogConfig.disableRightClick ?? false,
-                  timeLimit: dialogConfig.timeLimit ?? 0,
-                  quizType: dialogConfig.quizType || 'exercise',
-                  questionsPerPage: dialogConfig.questionsPerPage ?? 5,
-                };
+                if (isAssignment) {
+                  cleanLesson.assignmentConfig = {
+                    timeLimit: dialogConfig.timeLimit ?? null,
+                    allowRetakes: dialogConfig.allowRetakes ?? false,
+                    disableRightClick: dialogConfig.disableRightClick ?? false,
+                    mode: dialogConfig.mode || 'exam',
+                  };
+                } else {
+                  cleanLesson.quizConfig = {
+                    disableRightClick: dialogConfig.disableRightClick ?? false,
+                    timeLimit: dialogConfig.timeLimit ?? 0,
+                    quizType: dialogConfig.quizType || 'exercise',
+                    questionsPerPage: dialogConfig.questionsPerPage ?? 5,
+                  };
+                }
               }
             } else {
               // For non-edited lessons, preserve their existing quiz/exam data from course
@@ -688,14 +733,10 @@ export default function AdminStudentView() {
                               size="sm"
                               className="h-7 text-[10px] font-bold"
                               onClick={() => {
-                                const lid = currentLesson?.id || currentLesson?._id;
                                 setEditLessonForQuiz(currentLesson);
-                                // Only reload from course data if switching to a different lesson
-                                if (lid !== dialogLessonId) {
-                                  setDialogQuestions(currentLesson.quizQuestions || []);
-                                  setDialogConfig(currentLesson.quizConfig || {});
-                                  setDialogLessonId(lid);
-                                }
+                                setDialogQuestions(currentLesson.quizQuestions || []);
+                                setDialogConfig(currentLesson.quizConfig || {});
+                                setDialogLessonId(currentLesson?.id || currentLesson?._id);
                                 setQuizDialogOpen(true);
                               }}
                             >
@@ -759,14 +800,11 @@ export default function AdminStudentView() {
                               size="sm"
                               className="h-7 text-[10px] font-bold"
                               onClick={() => {
-                                const lid = currentLesson?.id || currentLesson?._id;
                                 setEditLessonForQuiz(currentLesson);
-                                // Only reload from course data if switching to a different lesson
-                                if (lid !== dialogLessonId) {
-                                  setDialogQuestions(currentLesson.quizQuestions || []);
-                                  setDialogConfig(currentLesson.quizConfig || {});
-                                  setDialogLessonId(lid);
-                                }
+                                // Assignment/exam lessons store questions in assignmentQuestions/assignmentConfig
+                                setDialogQuestions(currentLesson.assignmentQuestions || []);
+                                setDialogConfig(currentLesson.assignmentConfig || {});
+                                setDialogLessonId(currentLesson?.id || currentLesson?._id);
                                 setQuizDialogOpen(true);
                               }}
                             >
