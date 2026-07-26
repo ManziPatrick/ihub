@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MarkdownEditor } from "@/components/ui/MarkdownEditor";
+import { TextEditor } from "@/components/ui/text-editor";
+import { marked } from "marked";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import {
@@ -98,6 +99,20 @@ export default function AdminStudentView() {
     }
   }, [allLessons, activeLessonId]);
 
+  // Convert markdown to HTML for WYSIWYG display — non-technical users shouldn't see raw markdown
+  const contentForEditor = useMemo(() => {
+    const raw = currentLesson?.content || currentLesson?.description || "";
+    if (!raw) return "";
+    // If already HTML (has HTML tags), use as-is
+    if (/<[a-z][\s\S]*>/i.test(raw)) return raw;
+    // Otherwise it's markdown — convert to HTML for WYSIWYG display
+    try {
+      return marked.parseSync(raw);
+    } catch {
+      return raw;
+    }
+  }, [currentLesson?.content, currentLesson?.description]);
+
   // Start editing the current lesson
   const startEditing = () => {
     const lid = currentLesson?.id || currentLesson?._id;
@@ -105,7 +120,7 @@ export default function AdminStudentView() {
     setEditingLessonId(lid);
     setEditDraft({
       title: currentLesson.title || "",
-      content: currentLesson.content || "",
+      content: contentForEditor,
       videoUrl: currentLesson.videoUrl || "",
       fileUrl: currentLesson.fileUrl || "",
       duration: currentLesson.duration || 0,
@@ -646,19 +661,18 @@ export default function AdminStudentView() {
                         </select>
                       </div>
 
-                      {/* ── Content / Description (shown for ALL types) ── */}
+                      {/* ── Content / Description — WYSIWYG Editor ── */}
                       <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
-                          Content / Description (Markdown)
+                          Content / Description
                           <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[7px] font-black uppercase tracking-wider">
-                            Toolbar • Split Preview • Full Screen
+                            WYSIWYG • Paste from Word/Web
                           </Badge>
                         </label>
-                        <MarkdownEditor
+                        <TextEditor
                           value={editDraft?.content || ""}
                           onChange={(val) => setEditDraft((d: any) => ({ ...d, content: val }))}
-                          placeholder="Write lesson content in markdown. Use the toolbar above for formatting — **bold**, *italic*, ## headings, ```code```, > quotes, etc."
-                          minHeight={200}
+                          placeholder="Write directly or paste content from Word, Google Docs, or web pages — formatting is preserved automatically."
                         />
                       </div>
 
