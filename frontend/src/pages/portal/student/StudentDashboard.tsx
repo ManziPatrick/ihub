@@ -34,14 +34,7 @@ import { toast } from "sonner";
 import { GET_MY_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 import { ApplyCourseDialog, ApplyInternshipDialog } from "@/components/portal/dialogs";
 import { useState, useCallback } from "react";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 
 // No static achievements needed
 
@@ -520,90 +513,18 @@ export default function StudentDashboard() {
                     })}
                   </div>
 
-                  {/* Pagination Controls */}
-                  {allCoursesPagination.totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>Rows per page:</span>
-                        <Select value={String(coursePerPage)} onValueChange={handleCoursePerPageChange}>
-                          <SelectTrigger className="w-16 h-8 text-xs rounded-lg">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[6, 9, 12, 18].map(n => (
-                              <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <span className="ml-2">
-                          {((coursePage - 1) * coursePerPage) + 1}–{Math.min(coursePage * coursePerPage, allCoursesPagination.totalCount)} of {allCoursesPagination.totalCount}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleCoursePageChange(1)}
-                          disabled={!allCoursesPagination.hasPreviousPage}
-                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                        >
-                          <ChevronsLeft className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleCoursePageChange(coursePage - 1)}
-                          disabled={!allCoursesPagination.hasPreviousPage}
-                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <div className="flex items-center gap-1 mx-2">
-                          {(() => {
-                            const current = coursePage;
-                            const total = allCoursesPagination.totalPages;
-                            const pages: (number | string)[] = [];
-                            if (total <= 7) {
-                              for (let i = 1; i <= total; i++) pages.push(i);
-                            } else {
-                              pages.push(1);
-                              if (current > 3) pages.push('...');
-                              for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
-                              if (current < total - 2) pages.push('...');
-                              pages.push(total);
-                            }
-                            return pages.map((p, i) =>
-                              p === '...' ? (
-                                <span key={`ellipsis-${i}`} className="px-1 text-xs text-muted-foreground">...</span>
-                              ) : (
-                                <button
-                                  key={p}
-                                  onClick={() => handleCoursePageChange(p as number)}
-                                  className={`min-w-[28px] h-7 text-xs font-semibold rounded-lg transition ${
-                                    p === current
-                                      ? 'bg-accent text-accent-foreground shadow-sm'
-                                      : 'hover:bg-accent/10 text-muted-foreground'
-                                  }`}
-                                >
-                                  {p}
-                                </button>
-                              )
-                            );
-                          })()}
-                        </div>
-                        <button
-                          onClick={() => handleCoursePageChange(coursePage + 1)}
-                          disabled={!allCoursesPagination.hasNextPage}
-                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleCoursePageChange(allCoursesPagination.totalPages)}
-                          disabled={!allCoursesPagination.hasNextPage}
-                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                        >
-                          <ChevronsRight className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <PaginationBar
+                    currentPage={coursePage}
+                    totalPages={allCoursesPagination.totalPages}
+                    totalCount={allCoursesPagination.totalCount}
+                    onPageChange={handleCoursePageChange}
+                    hasPreviousPage={allCoursesPagination.hasPreviousPage}
+                    hasNextPage={allCoursesPagination.hasNextPage}
+                    pageSize={coursePerPage}
+                    onPageSizeChange={(v) => { setCoursePerPage(v); setCoursePage(1); }}
+                    pageSizeOptions={[6, 9, 12, 18]}
+                    pageSizeLabel="Rows per page:"
+                  />
                 </>
               )}
             </CardContent>
@@ -686,90 +607,18 @@ export default function StudentDashboard() {
                     })}
                   </div>
 
-                  {/* Pagination Controls */}
-                  {allInternshipsPagination.totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>Rows per page:</span>
-                        <Select value={String(internshipPerPage)} onValueChange={handleInternshipPerPageChange}>
-                          <SelectTrigger className="w-16 h-8 text-xs rounded-lg">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[6, 9, 12, 18].map(n => (
-                              <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <span className="ml-2">
-                          {((internshipPage - 1) * internshipPerPage) + 1}–{Math.min(internshipPage * internshipPerPage, allInternshipsPagination.totalCount)} of {allInternshipsPagination.totalCount}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleInternshipPageChange(1)}
-                          disabled={!allInternshipsPagination.hasPreviousPage}
-                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                        >
-                          <ChevronsLeft className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleInternshipPageChange(internshipPage - 1)}
-                          disabled={!allInternshipsPagination.hasPreviousPage}
-                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <div className="flex items-center gap-1 mx-2">
-                          {(() => {
-                            const current = internshipPage;
-                            const total = allInternshipsPagination.totalPages;
-                            const pages: (number | string)[] = [];
-                            if (total <= 7) {
-                              for (let i = 1; i <= total; i++) pages.push(i);
-                            } else {
-                              pages.push(1);
-                              if (current > 3) pages.push('...');
-                              for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
-                              if (current < total - 2) pages.push('...');
-                              pages.push(total);
-                            }
-                            return pages.map((p, i) =>
-                              p === '...' ? (
-                                <span key={`iellipsis-${i}`} className="px-1 text-xs text-muted-foreground">...</span>
-                              ) : (
-                                <button
-                                  key={p}
-                                  onClick={() => handleInternshipPageChange(p as number)}
-                                  className={`min-w-[28px] h-7 text-xs font-semibold rounded-lg transition ${
-                                    p === current
-                                      ? 'bg-accent text-accent-foreground shadow-sm'
-                                      : 'hover:bg-accent/10 text-muted-foreground'
-                                  }`}
-                                >
-                                  {p}
-                                </button>
-                              )
-                            );
-                          })()}
-                        </div>
-                        <button
-                          onClick={() => handleInternshipPageChange(internshipPage + 1)}
-                          disabled={!allInternshipsPagination.hasNextPage}
-                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleInternshipPageChange(allInternshipsPagination.totalPages)}
-                          disabled={!allInternshipsPagination.hasNextPage}
-                          className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                        >
-                          <ChevronsRight className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <PaginationBar
+                    currentPage={internshipPage}
+                    totalPages={allInternshipsPagination.totalPages}
+                    totalCount={allInternshipsPagination.totalCount}
+                    onPageChange={handleInternshipPageChange}
+                    hasPreviousPage={allInternshipsPagination.hasPreviousPage}
+                    hasNextPage={allInternshipsPagination.hasNextPage}
+                    pageSize={internshipPerPage}
+                    onPageSizeChange={(v) => { setInternshipPerPage(v); setInternshipPage(1); }}
+                    pageSizeOptions={[6, 9, 12, 18]}
+                    pageSizeLabel="Rows per page:"
+                  />
                 </>
               )}
             </CardContent>

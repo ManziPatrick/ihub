@@ -21,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 import {
   GraduationCap,
   Award,
@@ -370,42 +371,16 @@ export default function AdminCompletedUsers() {
               )}
             </div>
 
-            {/* Pagination */}
-            {pagination && pagination.totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between px-2 py-4 border-t border-border/50 gap-4">
-                <div className="text-sm text-muted-foreground">
-                  Showing{" "}
-                  <span className="font-semibold text-foreground">
-                    {(currentPage - 1) * pageSize + 1}
-                  </span>{" "}
-                  -{" "}
-                  <span className="font-semibold text-foreground">
-                    {Math.min(currentPage * pageSize, pagination.totalCount)}
-                  </span>{" "}
-                  of <span className="font-semibold text-foreground">{pagination.totalCount}</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={!pagination.hasPreviousPage}
-                    className="rounded-xl px-4"
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
-                    disabled={!pagination.hasNextPage}
-                    className="rounded-xl px-4"
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
+            <PaginationBar
+              currentPage={currentPage}
+              totalPages={pagination?.totalPages || 0}
+              totalCount={pagination?.totalCount}
+              onPageChange={setCurrentPage}
+              hasPreviousPage={pagination?.hasPreviousPage}
+              hasNextPage={pagination?.hasNextPage}
+              pageSize={pageSize}
+              pageSizeLabel="Show"
+            />
           </>
         )}
       </div>

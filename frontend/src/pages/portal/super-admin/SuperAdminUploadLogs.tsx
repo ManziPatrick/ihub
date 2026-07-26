@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 import {
   Upload,
   Trash2,
@@ -356,30 +357,17 @@ export default function SuperAdminUploadLogs() {
           </Card>
         </motion.div>
 
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!pagination.hasPreviousPage}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              Previous
-            </Button>
-            <span className="text-xs text-muted-foreground px-2">
-              Page {pagination.currentPage} of {pagination.totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!pagination.hasNextPage}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        )}
+        <PaginationBar
+          currentPage={page}
+          totalPages={pagination.totalPages}
+          totalCount={pagination.totalCount}
+          onPageChange={setPage}
+          hasPreviousPage={pagination.hasPreviousPage}
+          hasNextPage={pagination.hasNextPage}
+          showPageNumbers={false}
+          showFirstLast={false}
+          showRange={false}
+        />
       </div>
 
       {/* Delete confirmation dialog */}

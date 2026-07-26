@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 import { Plus, Search, Edit2, Trash2, Loader2, User, Github, Linkedin, Twitter, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -352,33 +353,15 @@ const AdminTeamManager = () => {
                         </Table>
                     )}
 
-                    {pagination && pagination.totalPages > 1 && (
-                        <div className="p-4 border-t border-border/50 flex items-center justify-between">
-                            <p className="text-sm text-muted-foreground font-medium">
-                                Page <span className="text-foreground font-bold">{pagination.currentPage}</span> of {pagination.totalPages}
-                            </p>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage(prev => Math.max(1, prev - 1))}
-                                    disabled={!pagination.hasPreviousPage}
-                                    className="rounded-xl px-4"
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage(prev => Math.min(pagination.totalPages, prev + 1))}
-                                    disabled={!pagination.hasNextPage}
-                                    className="rounded-xl px-4"
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        </div>
-                    )}
+                    <PaginationBar
+                      currentPage={page}
+                      totalPages={pagination?.totalPages || 0}
+                      onPageChange={setPage}
+                      hasPreviousPage={pagination?.hasPreviousPage}
+                      hasNextPage={pagination?.hasNextPage}
+                      showRange={false}
+                      showFirstLast={false}
+                    />
                 </div>
             </div>
         </PortalLayout>
