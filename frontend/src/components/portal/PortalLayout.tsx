@@ -875,7 +875,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col h-dvh overflow-hidden transition-all duration-300 ${isSidebarMinimized ? 'lg:ml-20' : 'lg:ml-64'}`}>
+      <div className={`flex-1 flex flex-col h-dvh overflow-hidden transition-all duration-300 ${isSidebarMinimized ? 'lg:pl-20' : 'lg:pl-64'}`}>
         {/* Top Header */}
         <header className="h-16 bg-card border-b border-border/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
           {/* Mobile Menu Button */}
