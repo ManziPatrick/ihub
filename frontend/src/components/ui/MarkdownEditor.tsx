@@ -27,6 +27,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn, normalizeContent } from "@/lib/utils";
+import TurndownService from "turndown";
+
+// Initialize turndown once — converts pasted HTML to markdown for non-technical users
+const turndownService = new TurndownService({
+  headingStyle: "atx",
+  hr: "---",
+  bulletListMarker: "-",
+  codeBlockStyle: "fenced",
+  emDelimiter: "*",
+  strongDelimiter: "**",
+});
 
 interface MarkdownEditorProps {
   value: string;
@@ -123,6 +134,32 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 200 }
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isMaximized]);
 
+  // Handle paste: convert HTML to markdown so non-technical users don't see raw HTML tags
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const html = e.clipboardData.getData("text/html");
+      if (!html) return; // plain text paste — let it through normally
+
+      // Check if there's actual HTML content (tags), not just text/html format
+      if (/<[a-z][\s\S]*>/i.test(html)) {
+        e.preventDefault();
+        const textarea = e.currentTarget;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const markdown = turndownService.turndown(html);
+        const before = value.substring(0, start);
+        const after = value.substring(end);
+        const newValue = before + markdown + after;
+        onChange(newValue);
+        // Restore cursor position after paste
+        requestAnimationFrame(() => {
+          textarea.setSelectionRange(start + markdown.length, start + markdown.length);
+        });
+      }
+    },
+    [value, onChange]
+  );
+
   const handleToolbarAction = useCallback(
     (action: ToolbarAction) => {
       const textarea = textareaRef.current;
@@ -196,6 +233,7 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 200 }
               "scrollbar-thin scrollbar-thumb-border/30 scrollbar-track-transparent"
             )}
             style={{ minHeight }}
+            onPaste={handlePaste}
             spellCheck
           />
         </div>
@@ -298,6 +336,7 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 200 }
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder || "Write in Markdown..."}
                 className="flex-1 w-full resize-none bg-background p-6 text-base font-mono leading-relaxed outline-none placeholder:text-muted-foreground/25 scrollbar-thin"
+                onPaste={handlePaste}
                 spellCheck
               />
             </div>
