@@ -643,7 +643,7 @@ export default function AdminStudentView() {
                           value={editDraft?.content || ""}
                           onChange={(val) => setEditDraft((d: any) => ({ ...d, content: val }))}
                           placeholder="Write lesson content in markdown. Use the toolbar above for formatting — **bold**, *italic*, ## headings, ```code```, > quotes, etc."
-                          minHeight={140}
+                          minHeight={200}
                         />
                       </div>
 

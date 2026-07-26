@@ -97,7 +97,7 @@ const TOOLBAR_ACTIONS: ToolbarAction[] = [
   { icon: Table, label: "Table", action: insertAtCursor("\n| Header 1 | Header 2 | Header 3 |\n|----------|----------|----------|\n| Cell 1   | Cell 2   | Cell 3   |\n") },
 ];
 
-export function MarkdownEditor({ value, onChange, placeholder, minHeight = 120 }: MarkdownEditorProps) {
+export function MarkdownEditor({ value, onChange, placeholder, minHeight = 200 }: MarkdownEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isMaximized, setIsMaximized] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
@@ -195,7 +195,7 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 120 }
               "placeholder:text-muted-foreground/30",
               "scrollbar-thin scrollbar-thumb-border/30 scrollbar-track-transparent"
             )}
-            style={{ minHeight: isMaximized ? "50vh" : minHeight }}
+            style={{ minHeight }}
             spellCheck
           />
         </div>
@@ -221,7 +221,7 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 120 }
   // ─── Maximized / Fullscreen Mode ───
   if (isMaximized) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-background/98 backdrop-blur-sm flex flex-col animate-in fade-in duration-200">
+      <div className="fixed inset-0 z-[9999] bg-background flex flex-col animate-in fade-in duration-150">
         {/* Maximized Header */}
         <div className="flex items-center justify-between px-6 py-3 border-b border-border/30 bg-card shrink-0">
           <div className="flex items-center gap-3">
@@ -284,11 +284,11 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 120 }
             )}
           </div>
 
-          {/* Split editor/preview */}
-          <div className="flex-1 flex overflow-hidden">
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-1.5 border-b border-border/10">
-                <Badge className="text-[8px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 border-blue-500/20">
+          {/* Split editor/preview with visible borders */}
+          <div className="flex-1 flex overflow-hidden border-t border-border/20">
+            <div className="flex-1 flex flex-col overflow-hidden border-r border-border/20">
+              <div className="flex items-center justify-between px-5 py-2 border-b border-border/15 bg-muted/5">
+                <Badge className="text-[9px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-400 border-blue-500/20">
                   Editor
                 </Badge>
               </div>
@@ -297,18 +297,17 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 120 }
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder || "Write in Markdown..."}
-                className="flex-1 w-full resize-none bg-transparent p-6 text-sm font-mono leading-relaxed outline-none placeholder:text-muted-foreground/20 scrollbar-thin"
+                className="flex-1 w-full resize-none bg-background p-6 text-base font-mono leading-relaxed outline-none placeholder:text-muted-foreground/25 scrollbar-thin"
                 spellCheck
               />
             </div>
-            <div className="w-px bg-border/20 shrink-0" />
             <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-1.5 border-b border-border/10">
-                <Badge className="text-[8px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+              <div className="flex items-center justify-between px-5 py-2 border-b border-border/15 bg-muted/5">
+                <Badge className="text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
                   Preview
                 </Badge>
               </div>
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-6 bg-background">
                 {value.trim() ? (
                   <div className="prose dark:prose-invert prose-sm max-w-none lesson-content-viewer">
                     <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
@@ -328,7 +327,7 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 120 }
 
   // ─── Inline / Normal Mode ───
   return (
-    <div className="bg-background rounded-xl border border-border/40 overflow-hidden transition-all hover:border-border/60 focus-within:ring-1 focus-within:ring-accent/40 shadow-sm">
+    <div className="bg-background rounded-xl border border-border/40 overflow-hidden transition-all hover:border-border/70 focus-within:ring-1 focus-within:ring-accent/50 shadow-sm">
       {editorContent}
     </div>
   );
