@@ -310,7 +310,10 @@ export default function AdminStudentView() {
               }
             }
 
-            // Code exercises: only apply dialog data if the dialog was opened for THIS lesson
+            // Code exercises: ALWAYS include for ALL lessons (prevents data loss since mutation replaces modules)
+            // For the edited lesson: use dialog data if dialog was opened, otherwise preserve course data
+            // For non-edited lessons: preserve course data
+            // Always emit codeExercises (even empty) to avoid clearing existing data via the full-module replacement
             if (lid === lessonId && dialogCodeLessonId === lessonId) {
               if (dialogCodeExercises.length > 0) {
                 cleanLesson.codeExercises = dialogCodeExercises.map((ex: any) => ({
@@ -329,19 +332,23 @@ export default function AdminStudentView() {
                 // User deleted all exercises — save empty array
                 cleanLesson.codeExercises = [];
               }
-            } else if (l.codeExercises?.length > 0) {
-              cleanLesson.codeExercises = l.codeExercises.map((ex: any) => ({
-                id: ex.id,
-                title: ex.title,
-                description: ex.description || "",
-                language: ex.language || "javascript",
-                initialCode: ex.initialCode || "",
-                solutionCode: ex.solutionCode || "",
-                testCode: ex.testCode || "",
-                type: ex.type || "write",
-                setupCode: ex.setupCode || "",
-                expectedOutput: ex.expectedOutput || "",
-              }));
+            } else {
+              // Non-edited lesson or dialog not opened: preserve existing code exercises from course data
+              if (l.codeExercises?.length > 0) {
+                cleanLesson.codeExercises = l.codeExercises.map((ex: any) => ({
+                  id: ex.id,
+                  title: ex.title,
+                  description: ex.description || "",
+                  language: ex.language || "javascript",
+                  initialCode: ex.initialCode || "",
+                  solutionCode: ex.solutionCode || "",
+                  testCode: ex.testCode || "",
+                  type: ex.type || "write",
+                  setupCode: ex.setupCode || "",
+                  expectedOutput: ex.expectedOutput || "",
+                }));
+              }
+              // If no existing code exercises, don't set the field (avoids sending empty array needlessly)
             }
 
             return cleanLesson;
