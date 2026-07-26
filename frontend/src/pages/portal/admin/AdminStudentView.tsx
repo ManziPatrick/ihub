@@ -72,6 +72,7 @@ export default function AdminStudentView() {
   const [dialogConfig, setDialogConfig] = useState<any>({});
   const [dialogLessonId, setDialogLessonId] = useState<string | null>(null);
   const [dialogCodeExercises, setDialogCodeExercises] = useState<any[]>([]);
+  const [dialogCodeLessonId, setDialogCodeLessonId] = useState<string | null>(null);
 
   const { data, loading, error, refetch } = useQuery(GET_COURSE, {
     variables: { id: courseId },
@@ -309,20 +310,25 @@ export default function AdminStudentView() {
               }
             }
 
-            // Code exercises: prefer dialog data for the edited lesson, otherwise from course
-            if (lid === lessonId && dialogCodeExercises.length > 0) {
-              cleanLesson.codeExercises = dialogCodeExercises.map((ex: any) => ({
-                id: ex.id,
-                title: ex.title,
-                description: ex.description || "",
-                language: ex.language || "javascript",
-                initialCode: ex.initialCode || "",
-                solutionCode: ex.solutionCode || "",
-                testCode: ex.testCode || "",
-                type: ex.type || "write",
-                setupCode: ex.setupCode || "",
-                expectedOutput: ex.expectedOutput || "",
-              }));
+            // Code exercises: only apply dialog data if the dialog was opened for THIS lesson
+            if (lid === lessonId && dialogCodeLessonId === lessonId) {
+              if (dialogCodeExercises.length > 0) {
+                cleanLesson.codeExercises = dialogCodeExercises.map((ex: any) => ({
+                  id: ex.id,
+                  title: ex.title,
+                  description: ex.description || "",
+                  language: ex.language || "javascript",
+                  initialCode: ex.initialCode || "",
+                  solutionCode: ex.solutionCode || "",
+                  testCode: ex.testCode || "",
+                  type: ex.type || "write",
+                  setupCode: ex.setupCode || "",
+                  expectedOutput: ex.expectedOutput || "",
+                }));
+              } else {
+                // User deleted all exercises — save empty array
+                cleanLesson.codeExercises = [];
+              }
             } else if (l.codeExercises?.length > 0) {
               cleanLesson.codeExercises = l.codeExercises.map((ex: any) => ({
                 id: ex.id,
@@ -359,6 +365,8 @@ export default function AdminStudentView() {
       setDialogLessonId(null);
       setDialogQuestions([]);
       setDialogConfig({});
+      setDialogCodeLessonId(null);
+      setDialogCodeExercises([]);
       // Refetch in background to sync cache after save
       refetch();
     } catch (err: any) {
@@ -691,12 +699,12 @@ export default function AdminStudentView() {
                             />
                             {/* Live video preview */}
                             {editDraft?.videoUrl && (
-                              <div className="mt-2 aspect-video bg-black rounded-xl overflow-hidden">
+                              <div className="mt-2 aspect-video bg-muted rounded-xl overflow-hidden shadow-inner">
                                 <iframe
                                   src={getVideoEmbedUrl(editDraft.videoUrl)}
                                   className="w-full h-full"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                   allowFullScreen
-                                  loading="lazy"
                                 />
                               </div>
                             )}
@@ -890,6 +898,7 @@ export default function AdminStudentView() {
                               onClick={() => {
                                 setEditLessonForCode(currentLesson);
                                 setDialogCodeExercises(currentLesson.codeExercises || []);
+                                setDialogCodeLessonId(currentLesson?.id || currentLesson?._id);
                                 setCodeDialogOpen(true);
                               }}
                             >
@@ -912,13 +921,13 @@ export default function AdminStudentView() {
                     /* ── STUDENT VIEW (read-only preview) ── */
                     <div className="space-y-6">
                       {/* Video / Media */}
-                      <div className="aspect-video bg-black relative group">
+                      <div className="aspect-video bg-muted/60 relative group rounded-t-xl overflow-hidden">
                         {currentLesson.videoUrl ? (
                           <iframe
                             src={getVideoEmbedUrl(currentLesson.videoUrl)}
                             className="w-full h-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                             allowFullScreen
-                            loading="lazy"
                           />
                         ) : currentLesson.fileUrl ? (
                           <div className="w-full h-full flex flex-col items-center justify-center text-center p-12 bg-muted/20">
