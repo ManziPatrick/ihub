@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ManageQuestionsDialog, ManageCodeExercisesDialog } from "@/components/portal/dialogs";
+import { CodeExercise } from "@/components/portal/CodeExercise";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -833,59 +834,39 @@ export default function AdminStudentView() {
                           </div>
                         )}
 
-                        {/* Code Exercise preview */}
+                        {/* Code Exercises — fully runnable for admin testing */}
                         {currentLesson.codeExercises?.length > 0 && (
-                          <div className="mt-8 p-6 rounded-2xl border border-blue-500/20 bg-blue-500/5">
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="font-bold flex items-center gap-2 text-blue-500">
-                                <Code className="w-5 h-5" />
-                                Code Exercises Preview
-                              </h3>
+                          <div className="mt-8 space-y-8">
+                            <div className="flex items-center gap-2 mb-4">
+                              <Code className="w-5 h-5 text-blue-500" />
+                              <h3 className="font-bold text-blue-500">Code Exercises — Test Them Here</h3>
                               <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">
                                 {currentLesson.codeExercises.length} Exercises
                               </Badge>
                             </div>
-                            <div className="space-y-3">
-                              {currentLesson.codeExercises.map((ex: any, ei: number) => (
-                                <div
-                                  key={ex.id || ei}
-                                  className="p-4 rounded-xl bg-card border border-border/40"
-                                >
-                                  <div className="flex items-center justify-between mb-2">
-                                    <p className="text-sm font-bold">
-                                      {ei + 1}. {ex.title || `Exercise ${ei + 1}`}
-                                    </p>
-                                    <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-[8px] font-black uppercase">
-                                      {ex.language || "javascript"}
-                                    </Badge>
-                                  </div>
-                                  {ex.description && (
-                                    <p className="text-xs text-muted-foreground mb-2">{ex.description}</p>
-                                  )}
-                                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                                    {ex.initialCode && (
-                                      <span className="flex items-center gap-1">
-                                        <Check className="w-3 h-3 text-green-500" /> Initial code set
-                                      </span>
-                                    )}
-                                    {ex.testCode && (
-                                      <span className="flex items-center gap-1">
-                                        <Check className="w-3 h-3 text-green-500" /> Tests defined
-                                      </span>
-                                    )}
-                                    {ex.expectedOutput && (
-                                      <span className="flex items-center gap-1">
-                                        <Check className="w-3 h-3 text-green-500" /> Expected output
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                            {currentLesson.codeExercises.map((ex: any, ei: number) => (
+                              <CodeExercise
+                                key={ex.id || ei}
+                                exercise={{
+                                  id: ex.id,
+                                  title: ex.title,
+                                  description: ex.description,
+                                  language: ex.language,
+                                  initialCode: ex.initialCode,
+                                  solutionCode: ex.solutionCode,
+                                  testCode: ex.testCode,
+                                  type: ex.type,
+                                  setupCode: ex.setupCode,
+                                  expectedOutput: ex.expectedOutput,
+                                }}
+                                courseId={courseId}
+                                lessonId={currentLesson?.id || currentLesson?._id}
+                              />
+                            ))}
                           </div>
                         )}
 
-                        {/* Navigation buttons (disabled, this is a preview) */}
+                        {/* Navigation buttons */}
                         <div className="flex justify-between mt-10 gap-4">
                           <Button
                             variant="outline"
