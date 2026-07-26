@@ -70,6 +70,7 @@ export default function AdminStudentView() {
   const [dialogQuestions, setDialogQuestions] = useState<any[]>([]);
   const [dialogConfig, setDialogConfig] = useState<any>({});
   const [dialogLessonId, setDialogLessonId] = useState<string | null>(null);
+  const [dialogCodeExercises, setDialogCodeExercises] = useState<any[]>([]);
 
   const { data, loading, error, refetch } = useQuery(GET_COURSE, {
     variables: { id: courseId },
@@ -293,7 +294,21 @@ export default function AdminStudentView() {
               }
             }
 
-            if (l.codeExercises?.length > 0) {
+            // Code exercises: prefer dialog data for the edited lesson, otherwise from course
+            if (lid === lessonId && dialogCodeExercises.length > 0) {
+              cleanLesson.codeExercises = dialogCodeExercises.map((ex: any) => ({
+                id: ex.id,
+                title: ex.title,
+                description: ex.description || "",
+                language: ex.language || "javascript",
+                initialCode: ex.initialCode || "",
+                solutionCode: ex.solutionCode || "",
+                testCode: ex.testCode || "",
+                type: ex.type || "write",
+                setupCode: ex.setupCode || "",
+                expectedOutput: ex.expectedOutput || "",
+              }));
+            } else if (l.codeExercises?.length > 0) {
               cleanLesson.codeExercises = l.codeExercises.map((ex: any) => ({
                 id: ex.id,
                 title: ex.title,
@@ -860,6 +875,7 @@ export default function AdminStudentView() {
                               className="h-7 text-[10px] font-bold"
                               onClick={() => {
                                 setEditLessonForCode(currentLesson);
+                                setDialogCodeExercises(currentLesson.codeExercises || []);
                                 setCodeDialogOpen(true);
                               }}
                             >
@@ -1203,9 +1219,12 @@ export default function AdminStudentView() {
           open={codeDialogOpen}
           onOpenChange={(open) => {
             setCodeDialogOpen(open);
-            if (!open) {
-              refetch();
-            }
+            // No refetch here — let handleSave be the single save point
+            // to avoid race conditions with Apollo cache
+          }}
+          exercises={dialogCodeExercises}
+          onSave={(savedExercises: any[]) => {
+            setDialogCodeExercises(savedExercises);
           }}
           courseId={courseId!}
           lessonId={editLessonForCode.id || editLessonForCode._id}
