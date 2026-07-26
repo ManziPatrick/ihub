@@ -126,7 +126,6 @@
 
   html {
     scroll-behavior: smooth;
-    overflow-x: hidden;
     width: 100%;
   }
 
@@ -156,9 +155,7 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Outfit', sans-serif;
     line-height: 1.5;
-    overflow-x: hidden;
     width: 100%;
-    position: relative;
   }
 
   #root {
@@ -350,6 +347,8 @@ img, video, canvas, svg, iframe {
 }
 
 /* Prevent horizontal scrollbar on small screens — clip prevents scroll containers */
+/* Note: overflow-x only on app-shell elements, NOT on html/body,
+   to avoid clipping fixed-position overlays like Google One Tap */
 @media (max-width: 640px) {
   main, section, div[class*="container"], .min-h-screen {
     overflow-x: clip;
@@ -360,6 +359,29 @@ img, video, canvas, svg, iframe {
 @media (min-width: 641px) {
   .min-h-screen, #root {
     overflow-x: clip;
+  }
+}
+
+/* ── Safeguard: Google One Tap prompt — full width & never clipped ── */
+/* Google injects a fixed-position iframe into body for One Tap.
+   By default Google renders it at ~380px (~80% width). This makes
+   it full-width on mobile and uses the full available space while
+   staying visually balanced. Also ensures it's never accidentally
+   clipped by parent overflow properties. */
+body > iframe[src*="accounts.google.com/gsi/"] {
+  overflow: visible !important;
+  clip-path: none !important;
+}
+
+/* Mobile: full-width Google One Tap prompt */
+@media (max-width: 640px) {
+  body > iframe[src*="accounts.google.com/gsi/"] {
+    width: calc(100vw - 16px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    /* Do NOT override height — Google sets inline height dynamically.
+       The global iframe {height:auto} rule can't override inline styles
+       (lower specificity), so Google's calculated height is preserved. */
   }
 }
 

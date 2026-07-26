@@ -93,6 +93,7 @@ export const createStudentTourSteps: StepFactory = (t) => [
     title: t("tour.student.userMenu.title"),
     placement: "bottom",
     disableBeacon: true,
+    spotlightPadding: 14,
   },
   {
     target: "body",
@@ -178,6 +179,7 @@ export const createTrainerTourSteps: StepFactory = (t) => [
     title: t("tour.trainer.userMenu.title"),
     placement: "bottom",
     disableBeacon: true,
+    spotlightPadding: 14,
   },
   {
     target: "body",
@@ -263,6 +265,7 @@ export const createAdminTourSteps: StepFactory = (t) => [
     title: t("tour.admin.userMenu.title"),
     placement: "bottom",
     disableBeacon: true,
+    spotlightPadding: 14,
   },
   {
     target: "body",
@@ -355,6 +358,7 @@ export const createSuperAdminTourSteps: StepFactory = (t) => [
     title: t("tour.superAdmin.userMenu.title"),
     placement: "bottom",
     disableBeacon: true,
+    spotlightPadding: 14,
   },
   {
     target: "body",

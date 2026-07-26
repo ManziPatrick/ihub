@@ -38,6 +38,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  RefreshCw,
 } from "lucide-react";
 import {
   Select,
@@ -71,10 +72,10 @@ export default function StudentCourses() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   
   // Queries
-  const { data: meData, loading: meLoading } = useQuery(GET_ME);
+  const { data: meData, loading: meLoading, refetch: refetchMe } = useQuery(GET_ME);
   const [availPage, setAvailPage] = useState(1);
   const [availPerPage, setAvailPerPage] = useState(12);
-  const { data: coursesData, loading: coursesLoading } = useQuery(GET_COURSES_LITE_SUMMARY, {
+  const { data: coursesData, loading: coursesLoading, refetch: refetchCourses } = useQuery(GET_COURSES_LITE_SUMMARY, {
     variables: { page: availPage, limit: availPerPage },
   });
   const { data: projectsData, loading: projectsLoading } = useQuery(GET_MY_PROJECTS);
@@ -124,6 +125,7 @@ export default function StudentCourses() {
   const [submitProject, setSubmitProject] = useState<any | null>(null);
   const [chatProject, setChatProject] = useState<any | null>(null);
   const [guidelinesProject, setGuidelinesProject] = useState<any | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -144,7 +146,9 @@ export default function StudentCourses() {
 
   const FALLBACK_IMG = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600";
 
-  if (meLoading || coursesLoading || projectsLoading) {
+  // Show skeleton only on initial load, not during background refreshes
+  const isInitialLoad = (!meData && meLoading) || (!coursesData && coursesLoading) || (!projectsData && projectsLoading);
+  if (isInitialLoad) {
     return (
       <PortalLayout>
         <div className="space-y-6 animate-in fade-in duration-300">
@@ -253,6 +257,20 @@ export default function StudentCourses() {
               Track your progress and explore new learning opportunities
             </p>
           </div>
+          <Button variant="outline" onClick={async () => {
+              setIsRefreshing(true);
+              try {
+                await Promise.all([refetchMe(), refetchCourses()]);
+                toast.success('Courses refreshed!');
+              } catch {
+                toast.error('Failed to refresh courses');
+              } finally {
+                setIsRefreshing(false);
+              }
+            }} disabled={isRefreshing}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </Button>
 
         </motion.div>
 

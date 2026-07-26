@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  RefreshCw,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -53,12 +54,13 @@ export default function AdminCourses() {
   const [deleteCourse, setDeleteCourse] = useState<any | null>(null);
   const [editPricingCourse, setEditPricingCourse] = useState<any | null>(null);
   const [manageQuestionsCourse, setManageQuestionsCourse] = useState<any | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Queries & Mutations
   const { data, loading, refetch } = useQuery(GET_COURSES_LITE_SUMMARY, {
     fetchPolicy: "cache-first",
     variables: { page: currentPage, limit: pageSize },
-    pollInterval: 30000
+    pollInterval: 3600000
   });
   const [loadCourse, { data: fullCourseData, loading: courseLoading }] = useLazyQuery(GET_COURSE);
   const [updateCourseMutation, { loading: updateLoading }] = useMutation(UPDATE_COURSE, {
@@ -84,7 +86,7 @@ export default function AdminCourses() {
     u.role === 'trainer' || u.role === 'admin' || u.role === 'super_admin'
   ) || [];
 
-  const { data: statsData } = useQuery(GET_STATS, { pollInterval: 30000 });
+  const { data: statsData, refetch: refetchStats } = useQuery(GET_STATS, { pollInterval: 3600000 });
   const liveStats = (statsData as any)?.stats || { totalUsers: 0, totalCourses: 0, totalStudents: 0, totalRevenue: 0 };
 
   const handleDeleteCourse = async () => {
@@ -229,6 +231,20 @@ export default function AdminCourses() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={async () => {
+                setIsRefreshing(true);
+                try {
+                  await Promise.all([refetch(), refetchStats()]);
+                  toast.success('Courses refreshed!');
+                } catch {
+                  toast.error('Failed to refresh courses');
+                } finally {
+                  setIsRefreshing(false);
+                }
+              }} disabled={isRefreshing}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
             <Button variant="outline" onClick={() => setShowExportDialog(true)}>
               <Download className="w-4 h-4 mr-2" />
               Export

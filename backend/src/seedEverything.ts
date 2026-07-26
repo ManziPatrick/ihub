@@ -72,10 +72,20 @@ const randomElement = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.len
 const daysAgo = (d: number) => new Date(Date.now() - d * 24 * 60 * 60 * 1000);
 const daysFromNow = (d: number) => new Date(Date.now() + d * 24 * 60 * 60 * 1000);
 
+const lessonContentTemplates = [
+  (title: string) => `## ${title}\n\nIn this lesson, we explore the fundamentals of **${title}**. You will learn through hands-on examples and practical exercises designed to build real-world skills.`,
+  (title: string) => `## ${title}\n\nWelcome to **${title}**! This session covers essential concepts, best practices, and step-by-step guidance to help you master this topic.`,
+  (title: string) => `## ${title}\n\n**${title}** is a key topic in this course. This lesson breaks down complex ideas into simple, actionable steps with clear examples and practical applications.`,
+  (title: string) => `## ${title}\n\nLet's dive into **${title}**. This lesson combines theory with practice, giving you the knowledge and skills to apply what you've learned in real projects.`,
+  (title: string) => `## ${title}\n\nThis lesson on **${title}** provides a comprehensive overview including key definitions, practical demonstrations, and self-assessment questions to reinforce learning.`,
+];
+let _lessonCallCount = 0;
+
 function makeLesson(title: string, type: string = 'video', order: number = 1) {
+  const idx = _lessonCallCount++ % lessonContentTemplates.length;
   return {
     title,
-    content: `## ${title}\n\nLesson content for **${title}**. This covers key concepts and practical examples.`,
+    content: lessonContentTemplates[idx](title),
     duration: randomInt(10, 45),
     type,
     videoUrl: type === 'video' ? `https://www.youtube.com/watch?v=dQw4w9WgXcQ` : null,

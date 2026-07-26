@@ -174,7 +174,7 @@ const COURSES: CourseDef[] = [
             '7. **Bird Watching** — Over 700 bird species recorded in Rwanda',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=6TqUaz3rWZg', videoTitle: 'Visit Rwanda - Tourism Highlights' },
+            { videoUrl: 'https://www.youtube.com/watch?v=bI7WQe6bxKA', videoTitle: 'Visit Rwanda - Tourism Highlights' },
           ),
           makeLesson(
             'Key Players in Rwanda Tourism',
@@ -289,7 +289,7 @@ const COURSES: CourseDef[] = [
             '- Budget: Start with 2-3 rooms in your own home (Airbnb) — under 5 million RWF!',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=g0h36ebmjsI', videoTitle: 'How to Start a Hotel Business - Quick Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=hOq428St_14', videoTitle: 'How to Start a Hotel Business - Quick Guide' },
           ),
           makeLesson(
             'Restaurant & Catering Business in Rwanda',
@@ -399,7 +399,7 @@ const COURSES: CourseDef[] = [
             '- Get certified by RDB as a community tourism initiative',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=Qs7pQbSr0S8', videoTitle: 'Rwandan Culture and Traditions' },
+            { videoUrl: 'https://www.youtube.com/watch?v=mBcDvCc3jiU', videoTitle: 'Rwandan Culture and Traditions' },
           ),
           makeLesson(
             'Community-Based Tourism (CBT) in Rwanda',
@@ -489,7 +489,7 @@ const COURSES: CourseDef[] = [
             '- [ ] Join Rwanda Tourism Association',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=-s09BgDYeTs', videoTitle: 'How to Start a Tourism Business - 5 Min Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=TJIUnpfIytk', videoTitle: 'How to Start a Tourism Business - 5 Min Guide' },
           ),
           makeLesson(
             'Tourism Business Financial Management',
@@ -598,7 +598,7 @@ const COURSES: CourseDef[] = [
             '5. **Government support** — Smart Rwanda, cashless economy push',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=bpFBeK75jqA', videoTitle: 'E-Commerce in Africa - Boom Opportunity' },
+            { videoUrl: 'https://www.youtube.com/watch?v=2X_HxY5hO0g', videoTitle: 'E-Commerce in Africa - Boom Opportunity' },
           ),
           makeLesson(
             'E-Commerce Platforms Comparison',
@@ -709,7 +709,7 @@ const COURSES: CourseDef[] = [
             '5. Arrange transport (motorbike 2,000 RWF, taxi 5,000 RWF)',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=bis6MPXIGB0', videoTitle: 'Product Sourcing for E-Commerce - Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=4cO-YtVUZMo', videoTitle: 'Product Sourcing for E-Commerce - Guide' },
           ),
           makeLesson(
             'Creating Product Listings That Sell',
@@ -836,7 +836,7 @@ const COURSES: CourseDef[] = [
             '- Automated messages — Away message, greeting message',
             'video',
             2,
-            { videoUrl: 'https://www.youtube.com/watch?v=3PpqPPB8shY', videoTitle: 'WhatsApp Business for E-Commerce - Full Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=2Eanrc4BW44', videoTitle: 'WhatsApp Business for E-Commerce - Full Guide' },
           ),
           makeLesson(
             'Growing Your E-Commerce Business',
@@ -951,7 +951,7 @@ const COURSES: CourseDef[] = [
             '- Off-grid solar: 30% of rural households targeted for off-grid solutions',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=xKxrkht7CpY', videoTitle: 'Solar Energy Explained - How Solar Panels Work' },
+            { videoUrl: 'https://www.youtube.com/watch?v=jq3PvTmt7N8', videoTitle: 'Solar Energy Explained - How Solar Panels Work' },
           ),
           makeLesson(
             'Solar System Components & Sizing',
@@ -1062,7 +1062,7 @@ const COURSES: CourseDef[] = [
             '- PAYG financing — Allow customers to pay in installments via MoMo',
             'video',
             2,
-            { videoUrl: 'https://www.youtube.com/watch?v=C_tM4RcUxqA', videoTitle: 'Solar Business Opportunities in Africa' },
+            { videoUrl: 'https://www.youtube.com/watch?v=ptd3kU284rQ', videoTitle: 'Solar Business Opportunities in Africa' },
           ),
           makeLesson(
             'Selling Solar to Rural Communities',
@@ -1153,7 +1153,7 @@ const COURSES: CourseDef[] = [
             '- Never work alone on large systems',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=3vRcYRAKu5k', videoTitle: 'DIY Solar Installation - Step by Step' },
+            { videoUrl: 'https://www.youtube.com/watch?v=D-14_NwgGL0', videoTitle: 'DIY Solar Installation - Step by Step' },
           ),
           makeLesson(
             'Maintenance & Troubleshooting',
@@ -1276,7 +1276,7 @@ const COURSES: CourseDef[] = [
             '5. **Fabric trading** — Selling Kitenge, cotton, linen, lace',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=6Ih_SDEJRs0', videoTitle: 'African Fashion Industry - Opportunities' },
+            { videoUrl: 'https://www.youtube.com/watch?v=_mhREK2XEGk', videoTitle: 'African Fashion Industry - Opportunities' },
           ),
           makeLesson(
             'Fabrics & Materials Guide',
@@ -1385,7 +1385,7 @@ const COURSES: CourseDef[] = [
             '- Cutting table or large flat surface',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=YntkGv3tRwM', videoTitle: 'Fashion Design for Beginners - Complete Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=adkb2iRaTRY', videoTitle: 'Fashion Design for Beginners - Complete Guide' },
           ),
           makeLesson(
             'Building Your Fashion Brand',
@@ -1492,7 +1492,7 @@ const COURSES: CourseDef[] = [
             '- Use relevant hashtags: #RwandaFashion #MadeInRwanda #AfricanDesigner #Kigali',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=28aN4rL6vts', videoTitle: 'How to Start a Fashion Brand - Marketing Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=5G9Jqz7P9dI', videoTitle: 'How to Start a Fashion Brand - Marketing Guide' },
           ),
           makeLesson(
             'Managing Customers & Orders',
@@ -1636,7 +1636,7 @@ const COURSES: CourseDef[] = [
             '- Medical equipment supply',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=5e0Wxw8Xx78', videoTitle: 'Rwanda Healthcare System Explained' },
+            { videoUrl: 'https://www.youtube.com/watch?v=YiVTKOI18vk', videoTitle: 'Rwanda Healthcare System Explained' },
           ),
           makeLesson(
             'Licensing & Regulation for Health Businesses',
@@ -1758,7 +1758,7 @@ const COURSES: CourseDef[] = [
             '- Personal training: 10,000-25,000 RWF/session',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=1FO6J3n7qGg', videoTitle: 'How to Start a Gym Business - Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=Kq33s-Ef_d8', videoTitle: 'How to Start a Gym Business - Guide' },
           ),
           makeLesson(
             'Nutrition & Meal Planning Business',
@@ -1884,7 +1884,7 @@ const COURSES: CourseDef[] = [
             '- Export to EAC countries',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=Vn7STOmH9HM', videoTitle: 'How to Start a Natural Soap Business' },
+            { videoUrl: 'https://www.youtube.com/watch?v=kT6q5EX3NnA', videoTitle: 'How to Start a Natural Soap Business' },
           ),
           makeLesson(
             'Herbal & Traditional Medicine Business',
