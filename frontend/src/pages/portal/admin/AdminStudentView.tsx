@@ -310,45 +310,43 @@ export default function AdminStudentView() {
               }
             }
 
-            // Code exercises: ALWAYS include for ALL lessons (prevents data loss since mutation replaces modules)
+            // Code exercises: ALWAYS include for ALL lessons
             // For the edited lesson: use dialog data if dialog was opened, otherwise preserve course data
-            // For non-edited lessons: preserve course data
-            // Always emit codeExercises (even empty) to avoid clearing existing data via the full-module replacement
+            // For non-edited lessons: always emit from course data (even empty)
+            // This ensures the mutation always sends explicit data for EVERY lesson,
+            // preventing the backend from accidentally clearing existing exercises
             if (lid === lessonId && dialogCodeLessonId === lessonId) {
-              if (dialogCodeExercises.length > 0) {
-                cleanLesson.codeExercises = dialogCodeExercises.map((ex: any) => ({
-                  id: ex.id,
-                  title: ex.title,
-                  description: ex.description || "",
-                  language: ex.language || "javascript",
-                  initialCode: ex.initialCode || "",
-                  solutionCode: ex.solutionCode || "",
-                  testCode: ex.testCode || "",
-                  type: ex.type || "write",
-                  setupCode: ex.setupCode || "",
-                  expectedOutput: ex.expectedOutput || "",
-                }));
-              } else {
-                // User deleted all exercises — save empty array
-                cleanLesson.codeExercises = [];
-              }
+              // Edited lesson with dialog data
+              cleanLesson.codeExercises = dialogCodeExercises.length > 0
+                ? dialogCodeExercises.map((ex: any) => ({
+                    id: ex.id,
+                    title: ex.title,
+                    description: ex.description || "",
+                    language: ex.language || "javascript",
+                    initialCode: ex.initialCode || "",
+                    solutionCode: ex.solutionCode || "",
+                    testCode: ex.testCode || "",
+                    type: ex.type || "write",
+                    setupCode: ex.setupCode || "",
+                    expectedOutput: ex.expectedOutput || "",
+                  }))
+                : [];
             } else {
-              // Non-edited lesson or dialog not opened: preserve existing code exercises from course data
-              if (l.codeExercises?.length > 0) {
-                cleanLesson.codeExercises = l.codeExercises.map((ex: any) => ({
-                  id: ex.id,
-                  title: ex.title,
-                  description: ex.description || "",
-                  language: ex.language || "javascript",
-                  initialCode: ex.initialCode || "",
-                  solutionCode: ex.solutionCode || "",
-                  testCode: ex.testCode || "",
-                  type: ex.type || "write",
-                  setupCode: ex.setupCode || "",
-                  expectedOutput: ex.expectedOutput || "",
-                }));
-              }
-              // If no existing code exercises, don't set the field (avoids sending empty array needlessly)
+              // Non-edited lesson: preserve existing code exercises from course data, or empty
+              cleanLesson.codeExercises = l.codeExercises?.length > 0
+                ? l.codeExercises.map((ex: any) => ({
+                    id: ex.id,
+                    title: ex.title,
+                    description: ex.description || "",
+                    language: ex.language || "javascript",
+                    initialCode: ex.initialCode || "",
+                    solutionCode: ex.solutionCode || "",
+                    testCode: ex.testCode || "",
+                    type: ex.type || "write",
+                    setupCode: ex.setupCode || "",
+                    expectedOutput: ex.expectedOutput || "",
+                  }))
+                : [];
             }
 
             return cleanLesson;
@@ -712,6 +710,7 @@ export default function AdminStudentView() {
                                   className="w-full h-full"
                                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                   allowFullScreen
+                                  referrerPolicy="strict-origin-when-cross-origin"
                                 />
                               </div>
                             )}
@@ -935,6 +934,7 @@ export default function AdminStudentView() {
                             className="w-full h-full"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                             allowFullScreen
+                            referrerPolicy="strict-origin-when-cross-origin"
                           />
                         ) : currentLesson.fileUrl ? (
                           <div className="w-full h-full flex flex-col items-center justify-center text-center p-12 bg-muted/20">

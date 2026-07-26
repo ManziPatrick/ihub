@@ -4828,6 +4828,16 @@ export const resolvers = {
                 console.log(`[UpdateCourse] PRESERVING ${existing.assignmentQuestions.length} assignment questions for lesson "${l.title || lid}"`);
                 l.assignmentQuestions = existing.assignmentQuestions;
               }
+
+              // Preserve codeExercises if incoming is empty but DB has them
+              if (
+                existing &&
+                (!l.codeExercises || l.codeExercises.length === 0) &&
+                existing.codeExercises?.length > 0
+              ) {
+                console.log(`[UpdateCourse] PRESERVING ${existing.codeExercises.length} code exercises for lesson "${l.title || lid}"`);
+                l.codeExercises = existing.codeExercises;
+              }
             });
           });
         }
