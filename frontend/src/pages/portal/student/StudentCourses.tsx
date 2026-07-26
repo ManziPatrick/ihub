@@ -558,8 +558,8 @@ export default function StudentCourses() {
                         <ChevronsRight className="w-4 h-4" />
                       </button>
                     </div>
-                  </div>
                 )}
+                </div>
               </>
             )}
           </TabsContent>
@@ -767,8 +767,8 @@ export default function StudentCourses() {
                     <ChevronsRight className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
             )}
+            </div>
           </TabsContent>
 
           {/* Projects Tab */}

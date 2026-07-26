@@ -67,6 +67,7 @@ export default function SuperAdminAnalytics() {
 
   const { data: statsData, refetch: refetchStats } = useQuery(GET_STATS);
   const { data: trainersData, refetch: refetchTrainers } = useQuery(GET_ALL_TRAINERS);
+  const { data: activityData, refetch: refetchActivity } = useQuery(GET_RECENT_ACTIVITY);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -79,6 +80,7 @@ export default function SuperAdminAnalytics() {
         refetchCourses(),
         refetchStats(),
         refetchTrainers(),
+        refetchActivity(),
       ]);
       toast.success("Analytics refreshed");
     } catch {

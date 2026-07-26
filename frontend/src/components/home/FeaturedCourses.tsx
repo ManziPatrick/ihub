@@ -1479,8 +1479,8 @@ export function FeaturedCourses() {
                         <ChevronRight className="w-4 h-4" />
                       </Button>
                     </div>
-                  </div>
                 )}
+              </div>
               </motion.div>
             </AnimatePresence>
           )}
