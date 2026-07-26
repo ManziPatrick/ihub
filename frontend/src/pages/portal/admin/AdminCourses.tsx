@@ -35,6 +35,7 @@ import { ViewCourseDialog, EditCourseDialog, DeleteConfirmDialog } from "@/compo
 import { QuestionManagerDialog } from "@/components/portal/QuestionManagerDialog";
 import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 import { toast } from "sonner";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
 import { GET_COURSES_LITE_SUMMARY, GET_STATS, GET_USERS, GET_COURSE, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
 import { UPDATE_COURSE, DELETE_COURSE, RESTORE_COURSE } from "@/lib/graphql/mutations";
@@ -495,71 +496,17 @@ export default function AdminCourses() {
             </CardContent>
           </Card>
 
-          {/* Pagination */}
-          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Show</span>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="bg-background border border-border/50 rounded-md px-2 py-1 text-sm"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-              {pagination && (
-                <span>
-                  Showing <span className="font-semibold text-foreground">{((currentPage - 1) * pageSize) + 1}</span>
-                  -
-                  <span className="font-semibold text-foreground">{Math.min(currentPage * pageSize, pagination.totalCount)}</span>
-                  of <span className="font-semibold text-foreground">{pagination.totalCount}</span>
-                </span>
-              )}
-            </div>
-            {pagination && pagination.totalPages > 1 && (
-              <div className="flex gap-2">
-                <Button
-                  variant="outline" size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={!pagination.hasPreviousPage}
-                >
-                  <ChevronLeft className="w-4 h-4 mr-2" /> Previous
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                    .filter(p => p === 1 || p === pagination.totalPages || Math.abs(p - currentPage) <= 1)
-                    .map((p, i, arr) => {
-                      const showEllipsis = i > 0 && p - arr[i - 1] > 1;
-                      return (
-                        <div key={p} className="flex items-center">
-                          {showEllipsis && <span className="px-1 text-muted-foreground">...</span>}
-                          <Button
-                            variant={currentPage === p ? "gold" : "outline"}
-                            size="sm"
-                            onClick={() => setCurrentPage(p)}
-                            className="w-8 h-8 p-0"
-                          >
-                            {p}
-                          </Button>
-                        </div>
-                      );
-                    })}
-                </div>
-                <Button
-                  variant="outline" size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-                  disabled={!pagination.hasNextPage}
-                >
-                  Next <ChevronRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            )}
-          </div>
+          <PaginationBar
+            currentPage={currentPage}
+            totalPages={pagination.totalPages}
+            totalCount={pagination.totalCount}
+            onPageChange={setCurrentPage}
+            hasPreviousPage={pagination.hasPreviousPage}
+            hasNextPage={pagination.hasNextPage}
+            pageSize={pageSize}
+            onPageSizeChange={(v) => { setPageSize(v); setCurrentPage(1); }}
+            pageSizeOptions={[10, 25, 50, 100]}
+          />
         </motion.div>
       </div>
 

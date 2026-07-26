@@ -63,6 +63,7 @@ import { Badge } from "@/components/ui/badge";
 import type { CourseFilters } from "@/components/portal/dialogs/FilterCoursesDialog";
 import { toast } from "sonner";
 
+import { PaginationBar } from "@/components/ui/pagination-bar";
 
 import { useQuery } from "@apollo/client/react";
 import { GET_ME, GET_COURSES_LITE_SUMMARY, GET_MY_PROJECTS, MY_COURSE_APPLICATIONS } from "@/lib/graphql/queries";
@@ -474,92 +475,18 @@ export default function StudentCourses() {
                       </motion.div>
                     );
                   })}
-                </div>
-
-                {/* Pagination */}
-                <div className="flex items-center justify-between pt-3 border-t border-border/30">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>Rows per page:</span>
-                    <Select value={String(enrolledPerPage)} onValueChange={handleEnrolledPerPageChange}>
-                      <SelectTrigger className="w-16 h-8 text-xs rounded-lg">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[6, 9, 12, 18].map(n => (
-                          <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span className="ml-2">
-                      {enrolledStart + 1}–{enrolledEnd} of {totalEnrolled}
-                    </span>
-                  </div>
-                  {totalEnrolledPages > 1 && (
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleEnrolledPageChange(1)}
-                        disabled={enrolledPage === 1}
-                        className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                      >
-                        <ChevronsLeft className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEnrolledPageChange(enrolledPage - 1)}
-                        disabled={enrolledPage === 1}
-                        className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      <div className="flex items-center gap-1 mx-2">
-                        {(() => {
-                          const current = enrolledPage;
-                          const total = totalEnrolledPages;
-                          const pages: (number | string)[] = [];
-                          if (total <= 7) {
-                            for (let i = 1; i <= total; i++) pages.push(i);
-                          } else {
-                            pages.push(1);
-                            if (current > 3) pages.push('...');
-                            for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
-                            if (current < total - 2) pages.push('...');
-                            pages.push(total);
-                          }
-                          return pages.map((p, i) =>
-                            p === '...' ? (
-                              <span key={`eellipsis-${i}`} className="px-1 text-xs text-muted-foreground">...</span>
-                            ) : (
-                              <button
-                                key={p}
-                                onClick={() => handleEnrolledPageChange(p as number)}
-                                className={`min-w-[28px] h-7 text-xs font-semibold rounded-lg transition ${
-                                  p === current
-                                    ? 'bg-accent text-accent-foreground shadow-sm'
-                                    : 'hover:bg-accent/10 text-muted-foreground'
-                                }`}
-                              >
-                                {p}
-                              </button>
-                            )
-                          );
-                        })()}
-                      </div>
-                      <button
-                        onClick={() => handleEnrolledPageChange(enrolledPage + 1)}
-                        disabled={enrolledPage === totalEnrolledPages}
-                        className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEnrolledPageChange(totalEnrolledPages)}
-                        disabled={enrolledPage === totalEnrolledPages}
-                        className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                      >
-                        <ChevronsRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                )}
-                </div>
+                </div>                <PaginationBar
+                  currentPage={enrolledPage}
+                  totalPages={totalEnrolledPages}
+                  totalCount={totalEnrolled}
+                  onPageChange={handleEnrolledPageChange}
+                  hasPreviousPage={enrolledPage > 1}
+                  hasNextPage={enrolledPage < totalEnrolledPages}
+                  pageSize={enrolledPerPage}
+                  onPageSizeChange={(v) => { setEnrolledPerPage(v); setEnrolledPage(1); }}
+                  pageSizeOptions={[6, 9, 12, 18]}
+                  pageSizeLabel="Rows per page:"
+                />
               </>
             )}
           </TabsContent>
@@ -683,92 +610,18 @@ export default function StudentCourses() {
                   </motion.div>
                 );
               })}
-            </div>
-
-            {/* Pagination */}
-            <div className="flex items-center justify-between pt-3 border-t border-border/30">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>Rows per page:</span>
-                <Select value={String(availPerPage)} onValueChange={handleAvailPerPageChange}>
-                  <SelectTrigger className="w-16 h-8 text-xs rounded-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[6, 9, 12, 18].map(n => (
-                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span className="ml-2">
-                  {((availPage - 1) * availPerPage) + 1}–{Math.min(availPage * availPerPage, coursesPagination.totalCount)} of {coursesPagination.totalCount}
-                </span>
-              </div>
-              {coursesPagination.totalPages > 1 && (
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleAvailPageChange(1)}
-                    disabled={!coursesPagination.hasPreviousPage}
-                    className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                  >
-                    <ChevronsLeft className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleAvailPageChange(availPage - 1)}
-                    disabled={!coursesPagination.hasPreviousPage}
-                    className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <div className="flex items-center gap-1 mx-2">
-                    {(() => {
-                      const current = availPage;
-                      const total = coursesPagination.totalPages;
-                      const pages: (number | string)[] = [];
-                      if (total <= 7) {
-                        for (let i = 1; i <= total; i++) pages.push(i);
-                      } else {
-                        pages.push(1);
-                        if (current > 3) pages.push('...');
-                        for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
-                        if (current < total - 2) pages.push('...');
-                        pages.push(total);
-                      }
-                      return pages.map((p, i) =>
-                        p === '...' ? (
-                          <span key={`celipsis-${i}`} className="px-1 text-xs text-muted-foreground">...</span>
-                        ) : (
-                          <button
-                            key={p}
-                            onClick={() => handleAvailPageChange(p as number)}
-                            className={`min-w-[28px] h-7 text-xs font-semibold rounded-lg transition ${
-                              p === current
-                                ? 'bg-accent text-accent-foreground shadow-sm'
-                                : 'hover:bg-accent/10 text-muted-foreground'
-                            }`}
-                          >
-                            {p}
-                          </button>
-                        )
-                      );
-                    })()}
-                  </div>
-                  <button
-                    onClick={() => handleAvailPageChange(availPage + 1)}
-                    disabled={!coursesPagination.hasNextPage}
-                    className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleAvailPageChange(coursesPagination.totalPages)}
-                    disabled={!coursesPagination.hasNextPage}
-                    className="p-1.5 rounded-lg hover:bg-accent/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                  >
-                    <ChevronsRight className="w-4 h-4" />
-                  </button>
-                </div>
-            )}
-            </div>
+            </div>            <PaginationBar
+              currentPage={availPage}
+              totalPages={coursesPagination.totalPages}
+              totalCount={coursesPagination.totalCount}
+              onPageChange={handleAvailPageChange}
+              hasPreviousPage={coursesPagination.hasPreviousPage}
+              hasNextPage={coursesPagination.hasNextPage}
+              pageSize={availPerPage}
+              onPageSizeChange={(v) => { setAvailPerPage(v); setAvailPage(1); }}
+              pageSizeOptions={[6, 9, 12, 18]}
+              pageSizeLabel="Rows per page:"
+            />
           </TabsContent>
 
           {/* Projects Tab */}
