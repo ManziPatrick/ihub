@@ -1232,7 +1232,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                   <ChevronDown className="w-4 h-4 text-card-foreground/50 hidden sm:block" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" sideOffset={8} className="w-56">
+              <DropdownMenuContent align="end" sideOffset={8} className="w-56">
                 <DropdownMenuLabel>
                   <div>
                     <p className="font-medium">{user.fullName}</p>
