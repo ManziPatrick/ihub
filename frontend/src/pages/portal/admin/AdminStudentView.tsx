@@ -122,24 +122,16 @@ export default function AdminStudentView() {
     if (!courseId || !editingLessonId || !editDraft || !course) return;
     setIsSaving(true);
     try {
-      // 1. Refetch to get the absolute latest data (quiz/exam dialog may have saved changes)
-      const { data: freshData } = await refetch();
-      const freshCourse = (freshData as any)?.course;
-      if (!freshCourse?.modules) throw new Error("Course data not available after refresh");
-
-      // 2. Build modules array with only the fields the server expects (no __typename, _id, etc.)
       const lessonId = editingLessonId;
-      const updatedModules = freshCourse.modules.map((mod: any) => {
-        // Only keep fields that ModuleInput expects, preserving id for matching
+      const updatedModules = course.modules.map((mod: any) => {
         const cleanMod: any = {
-          id: mod.id, // keep id so server matches existing module
+          id: mod.id,
           title: mod.title,
           description: mod.description || "",
           lessons: (mod.lessons || []).map((l: any) => {
             const lid = l.id || l._id;
-            // Only keep fields that LessonInput expects, preserving id for matching
             const cleanLesson: any = {
-              id: l.id || l._id, // keep id so server matches existing lesson
+              id: l.id || l._id,
               title: l.title,
               content: l.content || "",
               type: l.type || "video",
@@ -152,7 +144,6 @@ export default function AdminStudentView() {
               assignmentDeliverables: l.assignmentDeliverables || "",
             };
 
-            // Preserve optional sub-objects if they exist
             if (l.quizConfig) cleanLesson.quizConfig = l.quizConfig;
             if (l.assignmentConfig) cleanLesson.assignmentConfig = l.assignmentConfig;
             if (l.resources?.length > 0) {
@@ -166,7 +157,7 @@ export default function AdminStudentView() {
               }));
             }
 
-            // Apply editDraft changes if this is the lesson being edited
+            // Apply editDraft changes (from inline editor) if this is the lesson being edited
             if (lid === lessonId) {
               cleanLesson.title = editDraft.title;
               cleanLesson.content = editDraft.content;
@@ -175,33 +166,46 @@ export default function AdminStudentView() {
               cleanLesson.duration = editDraft.duration;
               cleanLesson.type = editDraft.type;
               cleanLesson.aiGradingGuide = editDraft.aiGradingGuide || "";
+
+              // For quiz/assignment lessons, use dialogQuestions (set by ManageQuestionsDialog onSave)
+              if (dialogQuestions.length > 0) {
+                cleanLesson.quizQuestions = dialogQuestions.map((q: any) => ({
+                  questionText: q.questionText,
+                  type: q.type || "multiple_choice",
+                  options: q.options || [],
+                  correctOptionIndex: q.correctOptionIndex,
+                  explanation: q.explanation || "",
+                  imageUrl: q.imageUrl || "",
+                  matchingPairs: q.matchingPairs || [],
+                }));
+              }
+              if (dialogConfig && Object.keys(dialogConfig).length > 0) {
+                cleanLesson.quizConfig = dialogConfig;
+              }
+            } else {
+              // For non-edited lessons, preserve their existing quiz/exam data from course
+              if (l.quizQuestions?.length > 0) {
+                cleanLesson.quizQuestions = l.quizQuestions.map((q: any) => ({
+                  questionText: q.questionText,
+                  type: q.type || "multiple_choice",
+                  options: q.options || [],
+                  correctOptionIndex: q.correctOptionIndex,
+                  explanation: q.explanation || "",
+                  imageUrl: q.imageUrl || "",
+                  matchingPairs: q.matchingPairs || [],
+                }));
+              }
+              if (l.assignmentQuestions?.length > 0) {
+                cleanLesson.assignmentQuestions = l.assignmentQuestions.map((q: any) => ({
+                  questionText: q.questionText,
+                  type: q.type || "multiple_choice",
+                  options: q.options || [],
+                  correctOptionIndex: q.correctOptionIndex,
+                  points: q.points || 0,
+                }));
+              }
             }
 
-            // Include quiz questions if present (fresh from refetch after dialog save)
-            if (l.quizQuestions?.length > 0) {
-              cleanLesson.quizQuestions = l.quizQuestions.map((q: any) => ({
-                questionText: q.questionText,
-                type: q.type || "multiple_choice",
-                options: q.options || [],
-                correctOptionIndex: q.correctOptionIndex,
-                explanation: q.explanation || "",
-                imageUrl: q.imageUrl || "",
-                matchingPairs: q.matchingPairs || [],
-              }));
-            }
-
-            // Include assignment questions if present
-            if (l.assignmentQuestions?.length > 0) {
-              cleanLesson.assignmentQuestions = l.assignmentQuestions.map((q: any) => ({
-                questionText: q.questionText,
-                type: q.type || "multiple_choice",
-                options: q.options || [],
-                correctOptionIndex: q.correctOptionIndex,
-                points: q.points || 0,
-              }));
-            }
-
-            // Include code exercises if present
             if (l.codeExercises?.length > 0) {
               cleanLesson.codeExercises = l.codeExercises.map((ex: any) => ({
                 id: ex.id,
@@ -223,6 +227,7 @@ export default function AdminStudentView() {
         return cleanMod;
       });
 
+      // Also pass dialogConfig back if it's a quiz lesson
       await updateCourse({
         variables: {
           id: courseId,
@@ -233,6 +238,8 @@ export default function AdminStudentView() {
       toast.success("Lesson saved successfully!");
       setEditingLessonId(null);
       setEditDraft(null);
+      // Refetch in background to sync cache after save
+      refetch();
     } catch (err: any) {
       toast.error(err.message || "Failed to save lesson");
     } finally {
