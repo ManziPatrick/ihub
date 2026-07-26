@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/ui/MarkdownEditor";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import {
@@ -631,31 +632,19 @@ export default function AdminStudentView() {
                       </div>
 
                       {/* ── Content / Description (shown for ALL types) ── */}
-                      <div className="space-y-4">
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                            Content / Description (Markdown)
-                          </label>
-                          <Textarea
-                            className="min-h-[120px] text-sm font-mono leading-relaxed"
-                            placeholder="Write lesson content in markdown. HTML tags like <code>code</code> will render as styled."
-                            value={editDraft?.content || ""}
-                            onChange={(e) => setEditDraft((d: any) => ({ ...d, content: e.target.value }))}
-                          />
-                        </div>
-                        {/* Live markdown preview */}
-                        {editDraft?.content && (
-                          <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                              Preview
-                            </label>
-                            <div className="prose dark:prose-invert max-w-none p-4 rounded-xl bg-muted/10 border border-border/40 lesson-content-viewer">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                                {normalizeContent(editDraft.content)}
-                              </ReactMarkdown>
-                            </div>
-                          </div>
-                        )}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                          Content / Description (Markdown)
+                          <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 text-[7px] font-black uppercase tracking-wider">
+                            Toolbar • Split Preview • Full Screen
+                          </Badge>
+                        </label>
+                        <MarkdownEditor
+                          value={editDraft?.content || ""}
+                          onChange={(val) => setEditDraft((d: any) => ({ ...d, content: val }))}
+                          placeholder="Write lesson content in markdown. Use the toolbar above for formatting — **bold**, *italic*, ## headings, ```code```, > quotes, etc."
+                          minHeight={140}
+                        />
                       </div>
 
                       {/* ── Video / Media URL (shown for video, pdf, ppt, book — article can also attach media) ── */}
