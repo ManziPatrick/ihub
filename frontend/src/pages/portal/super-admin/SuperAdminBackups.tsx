@@ -256,17 +256,14 @@ export default function SuperAdminBackups() {
   });
 
   const { data, loading, error, refetch } = useQuery(GET_BACKUPS, {
-    pollInterval: 15000,
     fetchPolicy: "network-only",
   });
 
   const { data: analyticsData } = useQuery(GET_BACKUP_ANALYTICS, {
-    pollInterval: 15000,
     fetchPolicy: "network-only",
   });
 
   const { data: liveDbData, loading: liveDbLoading } = useQuery(GET_LIVE_DB_STATS, {
-    pollInterval: 15000,
     fetchPolicy: "network-only",
   });
 

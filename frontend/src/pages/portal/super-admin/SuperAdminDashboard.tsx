@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,28 +66,24 @@ const CURRENCY_MAP: Record<string, { flag: string; name: string; country: string
 
 export default function SuperAdminDashboard() {
   const { user } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  const { data, loading } = useQuery(GET_ADMIN_DASHBOARD_DATA);
-  const { data: usersData } = useQuery(GET_USERS);
-  const { data: activityData, loading: recentActivityLoading } = useQuery(GET_RECENT_ACTIVITY, {
-    pollInterval: 15000
+  const { data, loading, refetch: refetchDashboard } = useQuery(GET_ADMIN_DASHBOARD_DATA);
+  const { data: usersData, refetch: refetchUsers } = useQuery(GET_USERS);
+  const { data: activityData, loading: recentActivityLoading, refetch: refetchActivity } = useQuery(GET_RECENT_ACTIVITY, {
   });
 
-  const { data: analyticsData } = useQuery(GET_ANALYTICS);
-  const { data: statsData } = useQuery(GET_STATS);
-  const { data: trainersData } = useQuery(GET_ALL_TRAINERS);
-  const { data: disbStatsData, loading: disbStatsLoading } = useQuery(GET_DISBURSEMENT_STATS, {
-    pollInterval: 60000,
+  const { data: analyticsData, refetch: refetchAnalytics } = useQuery(GET_ANALYTICS);
+  const { data: statsData, refetch: refetchStats } = useQuery(GET_STATS);
+  const { data: trainersData, refetch: refetchTrainers } = useQuery(GET_ALL_TRAINERS);
+  const { data: disbStatsData, loading: disbStatsLoading, refetch: refetchDisbStats } = useQuery(GET_DISBURSEMENT_STATS, {
   });
   const { data: balanceData, loading: balanceLoading, error: intouchBalanceError, refetch: refetchIntouchBalance } = useQuery(GET_INTOUCH_BALANCE, {
-    pollInterval: 60000,
     fetchPolicy: "network-only",
   });
   const { data: pawapayData, loading: pawapayLoading, error: pawapayStatusError, refetch: refetchPawaPayStatus } = useQuery(GET_PAWAPAY_STATUS, {
-    pollInterval: 120000,
   });
   const { data: pawapayBalanceData, loading: pawapayBalanceLoading, error: pawapayBalanceError, refetch: refetchPawaPayBalance } = useQuery(GET_PAWAPAY_BALANCE, {
-    pollInterval: 60000,
     fetchPolicy: "network-only",
   });
   const analytics = (analyticsData as any)?.analytics;
@@ -141,6 +139,30 @@ export default function SuperAdminDashboard() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              setIsRefreshing(true);
+              Promise.all([
+                refetchDashboard(),
+                refetchUsers(),
+                refetchActivity(),
+                refetchAnalytics(),
+                refetchStats(),
+                refetchTrainers(),
+                refetchDisbStats(),
+                refetchIntouchBalance(),
+                refetchPawaPayStatus(),
+                refetchPawaPayBalance(),
+              ]).then(() => {
+                toast.success("Dashboard refreshed");
+              }).catch(() => {
+                toast.error("Failed to refresh dashboard");
+              }).finally(() => {
+                setIsRefreshing(false);
+              });
+            }} disabled={isRefreshing}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
             <Button variant="outline">
               <Database className="w-4 h-4 mr-2" />
               Backup System

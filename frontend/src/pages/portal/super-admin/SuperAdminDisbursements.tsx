@@ -195,15 +195,12 @@ export default function SuperAdminDisbursements() {
 
   const { data: disbData, loading: disbLoading, refetch: refetchDisb } = useQuery(GET_ALL_DISBURSEMENTS, {
     variables: { page, limit: LIMIT, status: statusFilter || undefined },
-    pollInterval: 30000,
   });
   const { data: statsData, loading: statsLoading, refetch: refetchStats } = useQuery(GET_DISBURSEMENT_STATS, {
-    pollInterval: 60000,
   });
   const { data: configData, loading: configLoading, refetch: refetchConfig } = useQuery(GET_PLATFORM_COMMISSION_CONFIG);
   const { data: holdDaysData, refetch: refetchHoldDays } = useQuery(GET_HOLD_DAYS_CONFIG);
   const { data: balanceData, loading: balanceLoading, refetch: refetchBalance } = useQuery(GET_INTOUCH_BALANCE, {
-    pollInterval: 60000,
     fetchPolicy: "network-only",
   });
 

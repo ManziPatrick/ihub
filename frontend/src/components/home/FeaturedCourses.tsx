@@ -1407,34 +1407,34 @@ export function FeaturedCourses() {
                 )}
 
                 {/* Pagination */}
-                {pagination.totalPages > 1 && (
-                  <div className="flex flex-col items-center gap-4 mt-10 pb-4">
-                    <div className="flex items-center gap-4">
-                      <p className="text-xs text-muted-foreground">
-                        Page {pagination.currentPage} of {pagination.totalPages}
-                        {' '}({" "}
-                        <span className="font-medium">{pagination.totalCount}</span>
-                        {' '}total courses)
-                      </p>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <span>Per page:</span>
-                        <select
-                          value={pageSize}
-                          onChange={(e) => {
-                            const newSize = parseInt(e.target.value, 10);
-                            setPageSize(newSize);
-                            setCurrentPage(1);
-                          }}
-                          className="bg-muted/40 border border-border/30 rounded-lg px-2 py-1 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-accent/30 cursor-pointer"
-                        >
-                          <option value={12}>12</option>
-                          <option value={24}>24</option>
-                          <option value={48}>48</option>
-                          <option value={96}>96</option>
-                          <option value={120}>120</option>
-                        </select>
-                      </div>
+                <div className="flex flex-col items-center gap-4 mt-10 pb-4">
+                  <div className="flex items-center gap-4">
+                    <p className="text-xs text-muted-foreground">
+                      Page {pagination.currentPage} of {pagination.totalPages}
+                      {' '}({" "}
+                      <span className="font-medium">{pagination.totalCount}</span>
+                      {' '}total courses)
+                    </p>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span>Per page:</span>
+                      <select
+                        value={pageSize}
+                        onChange={(e) => {
+                          const newSize = parseInt(e.target.value, 10);
+                          setPageSize(newSize);
+                          setCurrentPage(1);
+                        }}
+                        className="bg-muted/40 border border-border/30 rounded-lg px-2 py-1 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-accent/30 cursor-pointer"
+                      >
+                        <option value={12}>12</option>
+                        <option value={24}>24</option>
+                        <option value={48}>48</option>
+                        <option value={96}>96</option>
+                        <option value={120}>120</option>
+                      </select>
                     </div>
+                  </div>
+                  {pagination.totalPages > 1 && (
                     <div className="flex items-center gap-1.5">
                       <Button
                         variant="outline"

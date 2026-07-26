@@ -41,6 +41,7 @@ import {
   CalendarDays,
   ListTodo,
   Pencil,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -670,7 +671,6 @@ function ScheduledBroadcastsList() {
   const [statusFilter, setStatusFilter] = useState("");
   const { data, loading, refetch } = useQuery(GET_SCHEDULED_BROADCASTS, {
     variables: { page: 1, limit: 50, status: statusFilter || undefined },
-    pollInterval: 30000,
   });
 
   const [editBroadcast, setEditBroadcast] = useState<any | null>(null);

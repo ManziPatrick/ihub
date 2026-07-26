@@ -62,15 +62,24 @@ const randomElement = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.len
 const daysAgo = (d: number) => new Date(Date.now() - d * 24 * 60 * 60 * 1000);
 const daysFromNow = (d: number) => new Date(Date.now() + d * 24 * 60 * 60 * 1000);
 
+const contentTemplates = [
+  (title: string) => `## ${title}\n\nIn this lesson, we explore the fundamentals of **${title}**. You will learn through hands-on examples and practical exercises designed to build real-world skills.`,
+  (title: string) => `## ${title}\n\nWelcome to **${title}**! This session covers essential concepts, best practices, and step-by-step guidance to help you master this topic.`,
+  (title: string) => `## ${title}\n\n**${title}** is a key topic in this course. This lesson breaks down complex ideas into simple, actionable steps with clear examples and practical applications.`,
+  (title: string) => `## ${title}\n\nLet's dive into **${title}**. This lesson combines theory with practice, giving you the knowledge and skills to apply what you've learned in real projects.`,
+  (title: string) => `## ${title}\n\nThis lesson on **${title}** provides a comprehensive overview including key definitions, practical demonstrations, and self-assessment questions to reinforce learning.`,
+];
+
 function makeLesson(
   title: string,
   type: 'video' | 'article' | 'assignment' | 'quiz' | 'code' = 'video',
   duration: number = randomInt(10, 45),
   opts: { isAssignment?: boolean; assignmentDescription?: string } = {},
 ) {
+  const templateIndex = title.length % contentTemplates.length;
   const lesson: any = {
     title,
-    content: `## ${title}\n\nLesson content for **${title}**. This covers key concepts and practical examples that students need to master.`,
+    content: contentTemplates[templateIndex](title),
     duration,
     // Use a schema-compatible lesson type; code exercises are stored in `codeExercises`
     type: type === 'code' ? 'challenge' : type,

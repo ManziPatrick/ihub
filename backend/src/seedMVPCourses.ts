@@ -171,7 +171,7 @@ const COURSES: CourseDef[] = [
             '- **Targeted reach**: Reach exactly the customers who need your product',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=NlLQH3ZKLDA', videoTitle: 'Digital Marketing in 3 Minutes - Quick Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=60f-_oOFwVA', videoTitle: 'Digital Marketing in 3 Minutes - Quick Guide' },
           ),
           makeLesson(
             'Building Your Digital Marketing Strategy',
@@ -276,7 +276,7 @@ const COURSES: CourseDef[] = [
             '- Engage with your audience — reply to comments and DMs',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=ErN2pvkSXKA', videoTitle: 'Social Media Strategies for Small Business' },
+            { videoUrl: 'https://www.youtube.com/watch?v=60f-_oOFwVA', videoTitle: 'Social Media Strategies for Small Business' },
           ),
           makeLesson(
             'Content Creation with Minimal Resources',
@@ -354,7 +354,7 @@ const COURSES: CourseDef[] = [
             'Learn to write subject lines that get opened, email copy that engages, and CTAs that drive sales. Covers the AIDA formula (Attention, Interest, Desire, Action) with real examples from Rwandan businesses.\n\n### Email Writing Tips:\n- Subject lines under 50 characters perform best\n- Personalise with the recipient first name\n- Keep paragraphs short (2-3 sentences)\n- Use bullet points for easy scanning\n- Always include one clear call-to-action',
             'video',
             2,
-            { videoUrl: 'https://www.youtube.com/watch?v=A7HpMRvqtzM', videoTitle: 'Email Marketing for Beginners - Quick Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=By7qL9Wk44M', videoTitle: 'Email Marketing for Beginners - Quick Guide' },
           ),
           makeLesson(
             'Automating Your Email Campaigns',
@@ -394,7 +394,7 @@ const COURSES: CourseDef[] = [
             'Learn key metrics: impressions, reach, engagement rate, click-through rate, conversion rate, and ROAS. Set up tracking without a big budget.\n\n### Key Metrics:\n- Impressions: How many times content was seen\n- Reach: How many unique people saw it\n- CTR: Percentage of viewers who clicked\n- Conversion Rate: Percentage who took action\n- ROAS: Revenue per dollar spent on ads',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=3L7F7n5JU6U', videoTitle: 'Marketing Analytics for Beginners' },
+            { videoUrl: 'https://www.youtube.com/watch?v=T3EsWknnVBQ', videoTitle: 'Marketing Analytics for Beginners' },
           ),
           makeLesson(
             'Google Analytics & Facebook Insights',
@@ -440,7 +440,7 @@ const COURSES: CourseDef[] = [
             'Covers major ad platforms: Facebook Ads, Instagram Ads, Google Ads, YouTube Ads, and TikTok Ads. Learn targeting, budgeting, and creative best practices.\n\n### Ad Platform Comparison (RWF Budgets)\n| Platform | Best For | Min Daily Budget | Rwanda Reach | Best Content Type |\n|---|---|---|---|---|\n| Facebook Ads | Local businesses, products | 5,000 RWF/day | 3M+ users | Images, offers, events |\n| Instagram Ads | Visual products, tourism | 5,000 RWF/day | 1M+ users | Reels, stories, photos |\n| Google Ads | Active searchers, services | 3,000 RWF/day | 2M+ searches | Text ads, local maps |\n| YouTube Ads | Brand awareness, tutorials | 7,000 RWF/day | 1M+ viewers | Short skippable videos |\n| TikTok Ads | Youth products, trends | 10,000 RWF/day | 500K+ users | Short vertical videos |\n| WhatsApp Ads | Direct customer contact | 3,000 RWF/day | 5M+ users | Click-to-chat messages |\n| LinkedIn Ads | B2B, professional services | 15,000 RWF/day | 200K+ pros | Sponsored content, InMail |\n\n### 💰 Sample RWF Ad Budgets\n| Budget | What You Get | Expected Results |\n|---|---|---|\n| 50,000 RWF/mo | Facebook + Instagram | 10,000-20,000 reach, 100-300 clicks |\n| 100,000 RWF/mo | Facebook + Google | 20,000-50,000 reach, 300-800 clicks |\n| 300,000 RWF/mo | Full platform mix | 100,000+ reach, 1,000+ leads |\n| 1,000,000 RWF/mo | Aggressive scaling | 500,000+ reach, 5,000+ leads |\n\n> 💡 **Start small!** Test with just 10,000 RWF on Facebook to see what works before scaling.',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=qRyBcfjFhKY', videoTitle: 'Facebook Ads for Small Business - Quick Start' },
+            { videoUrl: 'https://www.youtube.com/watch?v=aLN4Meje-_0', videoTitle: 'Facebook Ads for Small Business - Quick Start' },
           ),
           makeLesson(
             'Creating Ads That Convert',
@@ -514,7 +514,7 @@ const COURSES: CourseDef[] = [
             '- Over 200 million active mobile money accounts in Africa',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=xcAC2iU1xvI', videoTitle: 'M-Pesa Explained - Mobile Money in 2 Min', imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600&h=400' },
+            { videoUrl: 'https://www.youtube.com/watch?v=ejqW7-BXSgI', videoTitle: 'M-Pesa Explained - Mobile Money in 2 Min', imageUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=600&h=400' },
           ),
           makeLesson(
             'How Mobile Money Works',
@@ -585,7 +585,7 @@ const COURSES: CourseDef[] = [
             '- Focus on trust and security',
             'video',
             2,
-            { videoUrl: 'https://www.youtube.com/watch?v=c97IXtFAzlI', videoTitle: 'How Mobile Money M-Pesa Works - 2 Min' },
+            { videoUrl: 'https://www.youtube.com/watch?v=0n1CK8oZ-AQ', videoTitle: 'How Mobile Money M-Pesa Works - 2 Min' },
           ),
           makeQuizLesson(
             'Module 2: Knowledge Check',
@@ -645,7 +645,7 @@ const COURSES: CourseDef[] = [
             'Explore how Branch, Tala, M-Shwari, and local lenders use mobile data to assess creditworthiness and disburse loans within minutes.\n\n### Key Players:\n- M-Shwari (Kenya): Savings/loan on M-Pesa\n- Branch: App-based loans via smartphone data\n- Tala: Alternative credit scoring via behaviour\n- Local: Urubuto, AC Group, BK TecHouse',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=yF7wk_p3Q78', videoTitle: 'Digital Lending in Africa' },
+            { videoUrl: 'https://www.youtube.com/watch?v=vbcUCs7og7k', videoTitle: 'Digital Lending in Africa' },
           ),
           makeLesson(
             'Alternative Credit Scoring Models',
@@ -697,7 +697,7 @@ const COURSES: CourseDef[] = [
             'Build a simple MVP using USSD, mobile money APIs, and no-code platforms. Test with real users before scaling.\n\n### MVP Approach:\n1. Start with USSD - works on any phone\n2. Use MTN/Airtel Money APIs\n3. Build simple web app with basic features\n4. Test with small group of real users\n5. Iterate based on feedback',
             'video',
             2,
-            { videoUrl: 'https://www.youtube.com/watch?v=vaf4v0hW7wI', videoTitle: 'Build a Fintech App - 3 Minute Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=Lx-lxeW_JWQ', videoTitle: 'Build a Fintech App - 3 Minute Guide' },
           ),
           makeLesson(
             'Partnerships & Go-To-Market Strategy',
@@ -737,7 +737,7 @@ const COURSES: CourseDef[] = [
             'Learn about CBDCs, blockchain for financial inclusion, and open banking APIs. Examples from across Africa.\n\n### Trends:\n1. CBDCs - Digital national currencies\n2. Blockchain - DeFi for the unbanked\n3. Open Banking - Third-party access to bank data\n4. Embedded Finance - Financial services in apps\n5. AI in Fintech - Chatbots, fraud detection',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=Y1mJgTt6GJk', videoTitle: 'Future of Fintech in Africa' },
+            { videoUrl: 'https://www.youtube.com/watch?v=kXYTl7DcDQc', videoTitle: 'Future of Fintech in Africa' },
           ),
           makeLesson(
             'Fintech Career Paths & Skills',
@@ -970,7 +970,7 @@ const COURSES: CourseDef[] = [
             'With experience and reviews, you will scale to $1,000-3,000/mo (1,350,000-4,050,000 RWF).',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=Uj7Wz3fY0YM', videoTitle: 'Highest Paying Freelance Skills 2025' },
+            { videoUrl: 'https://www.youtube.com/watch?v=3HKDuHq7pXo', videoTitle: 'Highest Paying Freelance Skills 2025' },
           ),
           makeLesson(
             'Learn Skills for Free',
@@ -1022,7 +1022,7 @@ const COURSES: CourseDef[] = [
             'Optimise your profile: headline, about, featured, experience, and recommendations.\n\n### Checklist:\n1. Professional headshot\n2. Headline: what you do + who you help\n3. About: clear value proposition\n4. Featured: portfolio samples\n5. Recommendations from clients\n6. Post 2-3 times per week',
             'video',
             2,
-            { videoUrl: 'https://www.youtube.com/watch?v=b3x3TjG7H2I', videoTitle: 'LinkedIn Profile Optimisation' },
+            { videoUrl: 'https://www.youtube.com/watch?v=hSVO8SvIVWQ', videoTitle: 'LinkedIn Profile Optimisation' },
           ),
           makeLesson(
             'Content Marketing to Attract Clients',
@@ -1080,7 +1080,7 @@ const COURSES: CourseDef[] = [
             'then withdraw to their MoMo account. The total fee is about 3% — much cheaper than PayPal!',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=4F0lDv3J8Yk', videoTitle: 'Freelance Pricing Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=TA63_BqTdmI', videoTitle: 'Freelance Pricing Guide' },
           ),
           makeLesson(
             'Contracts, Scope Creep & Boundaries',
@@ -1154,7 +1154,7 @@ const COURSES: CourseDef[] = [
             '- **Skills** — What can you do better than others?',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=uZVTKZ8RSnc', videoTitle: 'Business Plan in 3 Minutes - Quick Start' },
+            { videoUrl: 'https://www.youtube.com/watch?v=YYpDOu4Pgcw', videoTitle: 'Business Plan in 3 Minutes - Quick Start' },
           ),
           makeLesson(
             'Validating Your Business Idea',
@@ -1277,7 +1277,7 @@ const COURSES: CourseDef[] = [
             'Step-by-step process: choose structure, reserve name, prepare documents, submit via Irembo, pay fees.\n\n### Steps:\n1. Choose structure (sole proprietorship, limited company, cooperative)\n2. Search and reserve company name\n3. Prepare documents (IDs, proof of address)\n4. Submit on RDB Irembo platform\n5. Pay fees (from 30,000 RWF)\n6. Receive certificate (24-72 hours)',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=J_rYp0Fr3WI', videoTitle: 'Register a Business in Rwanda' },
+            { videoUrl: 'https://www.youtube.com/watch?v=JDIBSNZPCZ8', videoTitle: 'Register a Business in Rwanda' },
           ),
           makeLesson(
             'Business Licences & Tax Registration',
@@ -1329,7 +1329,7 @@ const COURSES: CourseDef[] = [
             'Build relationships, handle objections, and close deals in the Rwandan market.\n\n### Tips:\n1. Build relationships first - Rwandans buy from trusted people\n2. Be patient - decisions take multiple meetings\n3. Provide references - social proof works\n4. Offer samples or trials\n5. Follow up professionally',
             'video',
             2,
-            { videoUrl: 'https://www.youtube.com/watch?v=8d7qj3X5vRo', videoTitle: 'Sales for African Entrepreneurs' },
+            { videoUrl: 'https://www.youtube.com/watch?v=OqLG96qX-YA', videoTitle: 'Sales for African Entrepreneurs' },
           ),
           makeLesson(
             'Pricing Strategies for Rwanda',
@@ -1369,7 +1369,7 @@ const COURSES: CourseDef[] = [
             'Essential systems: accounting, CRM, inventory, communication, and document management.\n\n### Systems:\n1. Accounting - Track income, expenses, taxes\n2. CRM - Track customers, leads, pipeline\n3. Inventory - Track stock, orders, suppliers\n4. Communication - Internal and external\n5. Document management - Store contracts, invoices',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=K3aN5rJ7mG8', videoTitle: 'Business Operations - Scaling' },
+            { videoUrl: 'https://www.youtube.com/watch?v=5L7K50xEeJg', videoTitle: 'Business Operations - Scaling' },
           ),
           makeLesson(
             'Hiring Your First Employees',
@@ -1565,7 +1565,7 @@ const COURSES: CourseDef[] = [
             'Structure: personal details, summary, experience, education, skills, achievements.\n\n### CV Structure:\n1. Contact information\n2. Professional summary (2-3 sentences)\n3. Work experience (reverse chronological)\n4. Education and qualifications\n5. Skills (technical and soft)\n6. Achievements and awards\n7. References',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=Z7j5vQ0pG1I', videoTitle: 'How to Write a CV' },
+            { videoUrl: 'https://www.youtube.com/watch?v=10y9AfffGEM', videoTitle: 'How to Write a CV' },
           ),
           makeLesson(
             'Writing Cover Letters That Stand Out',
@@ -1611,7 +1611,7 @@ const COURSES: CourseDef[] = [
             'Preparation, positioning, bargaining, and closing techniques.\n\n### Phases:\n1. Preparation - Know BATNA, target, walkaway point\n2. Opening - State position clearly\n3. Discussion - Explore options\n4. Bargaining - Make and respond to offers\n5. Closing - Summarise agreement',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=8_MetAOZlJ0', videoTitle: 'Business Negotiation Skills' },
+            { videoUrl: 'https://www.youtube.com/watch?v=a2pYOIndD2Y', videoTitle: 'Business Negotiation Skills' },
           ),
           makeLesson(
             'Persuasive Writing & Speaking',
@@ -1663,7 +1663,7 @@ const COURSES: CourseDef[] = [
             'Adapt communication for different cultures.\n\n### Dimensions:\n1. Direct vs indirect communication\n2. Formal vs informal (titles, formality)\n3. Time: Monochronic vs polychronic\n4. Hierarchy: Deference to authority\n5. Relationship vs task focus',
             'video',
             2,
-            { videoUrl: 'https://www.youtube.com/watch?v=H0gJ7d8kL2P', videoTitle: 'Cross-Cultural Communication Tips' },
+            { videoUrl: 'https://www.youtube.com/watch?v=AuROwC6p2ws', videoTitle: 'Cross-Cultural Communication Tips' },
           ),
           makeLesson(
             'Public Speaking & Presentation Mastery',
@@ -1855,7 +1855,7 @@ const COURSES: CourseDef[] = [
             'GPS mapping, soil sensors, satellite imagery, and drone monitoring.\n\n### Tools:\n1. GPS mapping - Field boundaries and soil variations\n2. Soil sensors - Moisture, pH, nutrients in real-time\n3. Variable rate tech - Apply inputs only where needed\n4. Satellite imagery - NDVI crop health monitoring\n5. Drone monitoring - High-resolution assessment',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=3D_t8nL2kP9', videoTitle: 'Precision Farming Explained' },
+            { videoUrl: 'https://www.youtube.com/watch?v=-qu43qZlnQE', videoTitle: 'Precision Farming Explained' },
           ),
           makeLesson(
             'Irrigation Technology & Water Management',
@@ -1907,7 +1907,7 @@ const COURSES: CourseDef[] = [
             'Reduce 40% losses with solar cold rooms, proper harvesting, and better packaging.\n\n### Solutions:\n1. Harvest at right time\n2. Gentle handling to avoid bruising\n3. Rapid cooling after harvest\n4. Solar-powered cold rooms\n5. Proper packaging for transport\n6. Timely transport with proper conditions',
             'video',
             2,
-            { videoUrl: 'https://www.youtube.com/watch?v=5S7gH3jF8kL', videoTitle: 'Cold Chain for African Agriculture' },
+            { videoUrl: 'https://www.youtube.com/watch?v=uiGCuDVyY_8', videoTitle: 'Cold Chain for African Agriculture' },
           ),
           makeLesson(
             'Traceability & Export Certification',
@@ -1947,7 +1947,7 @@ const COURSES: CourseDef[] = [
             'Drought-resistant crops, conservation agriculture, agroforestry, and adaptive techniques.\n\n### Practices:\n1. Drought-resistant varieties\n2. Conservation agriculture (minimum tillage, rotation)\n3. Agroforestry - Trees with crops\n4. Water harvesting and efficient irrigation\n5. Crop diversification for risk spread',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=2fJ4kP7rM9n', videoTitle: 'Climate-Smart Agriculture' },
+            { videoUrl: 'https://www.youtube.com/watch?v=wBlfYq21lqI', videoTitle: 'Climate-Smart Agriculture' },
           ),
           makeLesson(
             'Carbon Credits & Green Financing',
@@ -2430,7 +2430,7 @@ const COURSES: CourseDef[] = [
             'Hook-retain-payoff for TikTok, educational for YouTube, inspirational for Instagram.\n\n### Framework:\n1. Hook (0-3s) - Question or bold statement\n2. Problem (3-15s) - The audience problem\n3. Solution (15-45s) - Teach or demonstrate\n4. Payoff (45-60s) - Results or key insight\n5. Call to action - What viewers should do',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=K9lP3mR7nJ2', videoTitle: 'Video Storytelling Tips' },
+            { videoUrl: 'https://www.youtube.com/watch?v=rwsFlnLO6oY', videoTitle: 'Video Storytelling Tips' },
           ),
           makeLesson(
             'Smartphone Video Production Mastery',
@@ -2592,7 +2592,7 @@ const COURSES: CourseDef[] = [
             'Keyword research, thumbnails, audience retention, and algorithm strategy.\n\n### Success Factors:\n1. Keyword research - Use VidIQ for high-volume keywords\n2. Compelling titles - Include keyword + curiosity\n3. Custom thumbnails - Bright, bold, text overlay\n4. Strong first 30 seconds - Hook viewers\n5. Audience retention - Pattern interrupts\n6. Call to action - Likes, comments, subscribe',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=R0fQ5mN2jK7', videoTitle: 'YouTube Growth Strategy' },
+            { videoUrl: 'https://www.youtube.com/watch?v=iOVibCFKzhA', videoTitle: 'YouTube Growth Strategy' },
           ),
           makeLesson(
             'TikTok & Instagram Reels Mastery',
@@ -2834,7 +2834,7 @@ const COURSES: CourseDef[] = [
             'Four values of the Agile Manifesto and when to use Agile.\n\n### Values:\n1. Individuals and interactions over processes/tools\n2. Working software over comprehensive docs\n3. Customer collaboration over contract negotiation\n4. Responding to change over following a plan\n\n### When to Use Agile:\n- Requirements likely to change\n- Customer needs not fully understood\n- Innovation or new technology\n- Speed to market is important',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=7jF3kM9pR2n', videoTitle: 'Agile Project Management Guide' },
+            { videoUrl: 'https://www.youtube.com/watch?v=P1mbqnACR0M', videoTitle: 'Agile Project Management Guide' },
           ),
           makeLesson(
             'Scrum: Roles, Events & Artifacts',
@@ -2880,7 +2880,7 @@ const COURSES: CourseDef[] = [
             'Management is processes; leadership is people and vision.\n\n### Leadership Qualities:\n1. Vision - See the bigger picture\n2. Communication - Clear, frequent, transparent\n3. Empathy - Understand team challenges\n4. Decisiveness - Timely decisions\n5. Adaptability - Adjust based on feedback\n6. Integrity - Model expected behaviour',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=X2pN5jR8mK1', videoTitle: 'Project Leadership Skills' },
+            { videoUrl: 'https://www.youtube.com/watch?v=2-Kcdt0dZSA', videoTitle: 'Project Leadership Skills' },
           ),
           makeLesson(
             'Stakeholder Identification & Analysis',
@@ -2926,7 +2926,7 @@ const COURSES: CourseDef[] = [
             'MS Project, Jira, Trello, Asana, Monday.com, ClickUp.\n\n### Comparison:\n1. MS Project - Waterfall, detailed scheduling\n2. Jira - Agile/Scrum, software development\n3. Trello - Simple Kanban, small teams\n4. Asana - General team collaboration\n5. Monday.com - Visual management\n6. ClickUp - All-in-one (free tier)',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=Z9nL4pR2jM7', videoTitle: 'PM Software Overview' },
+            { videoUrl: 'https://www.youtube.com/watch?v=PbfzjZGG4h4', videoTitle: 'PM Software Overview' },
           ),
           makeLesson(
             'PMP Certification & Career Growth',
@@ -3167,7 +3167,7 @@ const COURSES: CourseDef[] = [
             'Land, rental, flipping, development, and REITs.\n\n### Options:\n1. Land - Buy and hold for appreciation\n2. Rental property - Steady passive income\n3. House flipping - Renovate and sell\n4. Development - Build for sale\n5. REITs - Invest without direct property',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=K2nR5jL8pM3', videoTitle: 'Real Estate Investing for Beginners' },
+            { videoUrl: 'https://www.youtube.com/watch?v=WgbhG_2X3tI', videoTitle: 'Real Estate Investing for Beginners' },
           ),
           makeLesson(
             'Property Financing & Mortgages',
@@ -3213,7 +3213,7 @@ const COURSES: CourseDef[] = [
             'Earned, business, investment, passive, and rental income.\n\n### Types:\n1. Earned - Salary, freelance (time for money)\n2. Business - Profits from your business\n3. Investment - Stocks, real estate returns\n4. Passive - Royalties, digital products\n5. Rental - Property rentals',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=Y7nK4pR2jM9', videoTitle: 'Multiple Income Streams' },
+            { videoUrl: 'https://www.youtube.com/watch?v=sZnxMq87ecc', videoTitle: 'Multiple Income Streams' },
           ),
           makeLesson(
             'Side Hustle Ideas for Rwanda',
@@ -3419,7 +3419,7 @@ const COURSES: CourseDef[] = [
             'Claude, Gemini, Perplexity, Midjourney, Copilot, and specialised AI tools.\n\n### By Category:\n1. Writing: ChatGPT, Claude, Jasper\n2. Research: Perplexity, Elicit, Consensus\n3. Images: Midjourney, DALL-E, Stable Diffusion\n4. Video: Runway, Pika, HeyGen\n5. Code: GitHub Copilot, Cursor, Tabnine\n6. Music: Suno, Udio\n7. Design: Canva AI, Adobe Firefly',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=S3nJ8pR5mK2', videoTitle: 'Best AI Tools 2025' },
+            { videoUrl: 'https://www.youtube.com/watch?v=w70XVzGO6vQ', videoTitle: 'Best AI Tools 2025' },
           ),
           makeLesson(
             'Image Generation with AI',
@@ -3465,7 +3465,7 @@ const COURSES: CourseDef[] = [
             'Zapier, Make, n8n, and custom GPTs for workflow automation.\n\n### Tools:\n1. Zapier - Connect apps, automate (free tier)\n2. Make - Visual automation builder\n3. n8n - Open-source, self-hosted\n4. ChatGPT workflows - Custom GPTs for tasks\n5. Power Automate - Office 365 users\n\n### Ideas:\n- Auto-respond to customer inquiries\n- Save attachments to cloud\n- Cross-post to multiple platforms\n- Generate weekly reports\n- Send follow-ups after meetings',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=P5sK2jR8nM1', videoTitle: 'AI Automation for Business' },
+            { videoUrl: 'https://www.youtube.com/watch?v=XYGU78hUVnA', videoTitle: 'AI Automation for Business' },
           ),
           makeLesson(
             'AI-Powered Customer Service',
@@ -3511,7 +3511,7 @@ const COURSES: CourseDef[] = [
             'AGI, autonomous agents, AI regulation, and Africa role.\n\n### Trends:\n1. AGI - AI for any intellectual task\n2. AI agents - Autonomous multi-step tasks\n3. On-device AI - No internet needed\n4. AI regulation - Government rules\n5. Healthcare AI - Diagnosis, drug discovery\n6. Education AI - Personalised tutoring\n7. African AI - Local models for local languages',
             'video',
             1,
-            { videoUrl: 'https://www.youtube.com/watch?v=X3nK8pR5jM2', videoTitle: 'Future of AI' },
+            { videoUrl: 'https://www.youtube.com/watch?v=BK_mMvGWSo0', videoTitle: 'Future of AI' },
           ),
           makeLesson(
             'AI Ethics & Responsible Use',

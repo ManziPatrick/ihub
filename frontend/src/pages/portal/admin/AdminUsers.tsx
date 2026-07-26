@@ -25,6 +25,7 @@ import {
   Download,
   Trophy,
   Activity,
+  RefreshCw,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -78,6 +79,7 @@ export default function AdminUsers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
   // Dialog states
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -95,7 +97,6 @@ export default function AdminUsers() {
   }
   const { data, loading, refetch } = useQuery(GET_USERS, {
     variables: queryVariables,
-    pollInterval: 30000 // auto-refresh every 30 seconds
   });
   
   const { data: topStudentsData } = useQuery(GET_TOP_STUDENTS, {
@@ -247,6 +248,20 @@ export default function AdminUsers() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={async () => {
+                setIsRefreshing(true);
+                try {
+                  await refetch();
+                  toast.success('Users refreshed!');
+                } catch {
+                  toast.error('Failed to refresh users');
+                } finally {
+                  setIsRefreshing(false);
+                }
+              }} disabled={isRefreshing}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
             <Button variant="outline" onClick={() => setShowExportDialog(true)}>
               <Download className="w-4 h-4 mr-2" />
               Export

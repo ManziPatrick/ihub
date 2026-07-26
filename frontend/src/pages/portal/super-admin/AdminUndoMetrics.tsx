@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
+import { toast } from "sonner";
 import {
   BarChart3,
   RotateCcw,
@@ -80,7 +81,6 @@ export default function AdminUndoMetrics() {
   const [days, setDays] = useState(30);
   const { data, loading, refetch } = useQuery(GET_UNDO_METRICS, {
     variables: { days },
-    pollInterval: 60000,
   });
 
   const metrics = (data as any)?.undoMetrics;

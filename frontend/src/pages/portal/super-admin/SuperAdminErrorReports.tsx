@@ -207,12 +207,10 @@ export default function SuperAdminErrorReports() {
       severity: severityFilter || undefined,
       search: searchQuery || undefined,
     },
-    pollInterval: 30000,
     fetchPolicy: "network-only",
   });
 
   const { data: statsData, loading: statsLoading, refetch: refetchStats } = useQuery(GET_ERROR_REPORT_STATS, {
-    pollInterval: 60000,
     fetchPolicy: "network-only",
   });
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import {
   Book,
   Download,
   UserCog,
+  RefreshCw,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -50,12 +52,12 @@ import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 
 export default function SuperAdminAnalytics() {
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const { data: analyticsData, loading: analyticsLoading } = useQuery(GET_ANALYTICS);
-  const { data: dashboardData } = useQuery(GET_ADMIN_DASHBOARD_DATA);
-  const { data: activityData } = useQuery(GET_RECENT_ACTIVITY, { pollInterval: 60000 });
-  const { data: topStudentsData } = useQuery(GET_TOP_STUDENTS, { variables: { limit: 5 } });
-  const { data: usersData } = useQuery(GET_USERS, { variables: { limit: 100 } });
-  const { data: coursesData } = useQuery(GET_COURSES_LITE_SUMMARY, {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { data: analyticsData, loading: analyticsLoading, refetch: refetchAnalytics } = useQuery(GET_ANALYTICS);
+  const { data: dashboardData, refetch: refetchDashboard } = useQuery(GET_ADMIN_DASHBOARD_DATA);
+  const { data: topStudentsData, refetch: refetchTopStudents } = useQuery(GET_TOP_STUDENTS, { variables: { limit: 5 } });
+  const { data: usersData, refetch: refetchUsers } = useQuery(GET_USERS, { variables: { limit: 100 } });
+  const { data: coursesData, refetch: refetchCourses } = useQuery(GET_COURSES_LITE_SUMMARY, {
     variables: { limit: 50 },
     fetchPolicy: "cache-first",
   });
@@ -63,8 +65,28 @@ export default function SuperAdminAnalytics() {
     fetchPolicy: "cache-first",
   });
 
-  const { data: statsData } = useQuery(GET_STATS);
-  const { data: trainersData } = useQuery(GET_ALL_TRAINERS);
+  const { data: statsData, refetch: refetchStats } = useQuery(GET_STATS);
+  const { data: trainersData, refetch: refetchTrainers } = useQuery(GET_ALL_TRAINERS);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        refetchAnalytics(),
+        refetchDashboard(),
+        refetchTopStudents(),
+        refetchUsers(),
+        refetchCourses(),
+        refetchStats(),
+        refetchTrainers(),
+      ]);
+      toast.success("Analytics refreshed");
+    } catch {
+      toast.error("Failed to refresh analytics");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
   const analytics = (analyticsData as any)?.analytics;
   const statsFromBackend = (statsData as any)?.stats;
   const dashboardStats = (dashboardData as any)?.adminDashboardData?.stats || { totalRevenue: 0, totalUsers: 0, totalCourses: 0 };
@@ -128,6 +150,10 @@ export default function SuperAdminAnalytics() {
             <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)}>
               <Download className="w-4 h-4 mr-2" />
               Export
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </Button>
             <Button variant="outline" size="sm">
               <Calendar className="w-4 h-4 mr-2" />

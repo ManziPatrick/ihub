@@ -17,23 +17,24 @@ import {
   GraduationCap,
   MessageSquare,
   Download,
+  RefreshCw,
 } from "lucide-react";
 
 import { useQuery } from "@apollo/client/react";
 import { GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY, GET_CONVERSATIONS } from "@/lib/graphql/queries";
 import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
+import { toast } from "sonner";
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const { data, loading } = useQuery(GET_ADMIN_DASHBOARD_DATA, {
+  const { data, loading, refetch: refetchDashboard } = useQuery(GET_ADMIN_DASHBOARD_DATA, {
     variables: { createdBy: user?.id },
   });
-  const { data: activityData, loading: recentActivityLoading } = useQuery(GET_RECENT_ACTIVITY, {
-    pollInterval: 10000
-  });
-  const { data: conversationsData } = useQuery(GET_CONVERSATIONS);
+  const { data: activityData, loading: recentActivityLoading, refetch: refetchActivity } = useQuery(GET_RECENT_ACTIVITY);
+  const { data: conversationsData, refetch: refetchConversations } = useQuery(GET_CONVERSATIONS);
 
   const dashboardData = (data as any)?.adminDashboardData || { 
       stats: { totalUsers: 0, totalCourses: 0, totalStudents: 0, totalRevenue: 0 },
@@ -71,6 +72,20 @@ export default function AdminDashboard() {
             </p>
             </div>
             <div className="flex gap-2">
+            <Button variant="outline" onClick={async () => {
+                setIsRefreshing(true);
+                try {
+                  await Promise.all([refetchDashboard(), refetchActivity(), refetchConversations()]);
+                  toast.success('Dashboard refreshed!');
+                } catch {
+                  toast.error('Failed to refresh dashboard');
+                } finally {
+                  setIsRefreshing(false);
+                }
+              }} disabled={isRefreshing}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
             <Button variant="outline" onClick={() => setShowExportDialog(true)}>
                 <Download className="w-4 h-4 mr-2" />
                 Export

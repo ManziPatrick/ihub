@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import { GET_ADMIN_COMMISSION_REPORT } from "@/lib/graphql/queries";
 import {
   Card,
@@ -69,7 +70,6 @@ export default function AdminCommissionDashboard() {
   const { data, loading, error, refetch } = useQuery(GET_ADMIN_COMMISSION_REPORT, {
     variables: { adminId },
     skip: !adminId,
-    pollInterval: 60000,
   });
 
   const report: CommissionReport | null = (data as any)?.getAdminCommissionReport || null;
