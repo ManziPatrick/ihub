@@ -236,6 +236,7 @@ export const UPDATE_COURSE = gql`
             setupCode
             expectedOutput
           }
+          aiGradingGuide
         }
       }
     }

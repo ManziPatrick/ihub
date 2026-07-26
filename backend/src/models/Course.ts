@@ -79,6 +79,9 @@ const lessonSchema = new mongoose.Schema({
     expectedOutput: { type: String, default: '' },
   }],
 
+  // AI Grading Guide — instructions for AI on how to grade student answers
+  aiGradingGuide: { type: String, default: '' },
+
   order: { type: Number }
 });
 

@@ -514,6 +514,7 @@ export const GET_COURSE = gql`
             setupCode
             expectedOutput
           }
+          aiGradingGuide
         }
       }
       studentsEnrolled {

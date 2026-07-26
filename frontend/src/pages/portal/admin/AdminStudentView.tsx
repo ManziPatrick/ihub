@@ -66,6 +66,8 @@ export default function AdminStudentView() {
   const [codeDialogOpen, setCodeDialogOpen] = useState(false);
   const [editLessonForQuiz, setEditLessonForQuiz] = useState<any>(null);
   const [editLessonForCode, setEditLessonForCode] = useState<any>(null);
+  const [dialogQuestions, setDialogQuestions] = useState<any[]>([]);
+  const [dialogConfig, setDialogConfig] = useState<any>({});
 
   const { data, loading, error, refetch } = useQuery(GET_COURSE, {
     variables: { id: courseId },
@@ -105,6 +107,7 @@ export default function AdminStudentView() {
       fileUrl: currentLesson.fileUrl || "",
       duration: currentLesson.duration || 0,
       type: currentLesson.type || "video",
+      aiGradingGuide: currentLesson.aiGradingGuide || "",
     });
   };
 
@@ -171,6 +174,7 @@ export default function AdminStudentView() {
               cleanLesson.fileUrl = editDraft.fileUrl;
               cleanLesson.duration = editDraft.duration;
               cleanLesson.type = editDraft.type;
+              cleanLesson.aiGradingGuide = editDraft.aiGradingGuide || "";
             }
 
             // Include quiz questions if present (fresh from refetch after dialog save)
@@ -596,9 +600,33 @@ export default function AdminStudentView() {
                         </div>
                       )}
 
+                      {/* ── AI Grading Guide (shown for quiz AND assignment) ── */}
+                      {["quiz", "assignment"].includes(editDraft?.type) && (
+                        <div className="space-y-3 pt-4 border-t border-border/30">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                              AI Grading Guide
+                            </label>
+                            <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 text-[7px] font-black uppercase tracking-wider">
+                              Instructs AI How to Grade
+                            </Badge>
+                          </div>
+                          <Textarea
+                            className="min-h-[80px] text-xs font-mono leading-relaxed border-indigo-500/20 focus:border-indigo-500/40"
+                            placeholder={`Explain how AI should grade student answers. Example: "Look for key terms like X, Y, Z. Award partial credit if they mention A but not B. Short correct answers should get full points. Reference: Module 1 taught how variables store data."`}
+                            value={editDraft?.aiGradingGuide || ""}
+                            onChange={(e) => setEditDraft((d: any) => ({ ...d, aiGradingGuide: e.target.value }))}
+                          />
+                          <p className="text-[9px] text-muted-foreground/50 italic">
+                            This guide is sent to the AI when auto-grading. Be specific about what to look for, what counts as correct, and how to handle partial credit.
+                          </p>
+                        </div>
+                      )}
+
                       {/* ── Quiz Questions ── */}
                       {editDraft?.type === "quiz" && (
-                        <div className="space-y-4 pt-4 border-t border-border/30">
+                        <div className="space-y-4 pt-1">
                           <div className="flex items-center justify-between">
                             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
                               Quiz Questions
@@ -609,6 +637,8 @@ export default function AdminStudentView() {
                               className="h-7 text-[10px] font-bold"
                               onClick={() => {
                                 setEditLessonForQuiz(currentLesson);
+                                setDialogQuestions(currentLesson.quizQuestions || []);
+                                setDialogConfig(currentLesson.quizConfig || {});
                                 setQuizDialogOpen(true);
                               }}
                             >
@@ -662,7 +692,7 @@ export default function AdminStudentView() {
 
                       {/* ── Exam / Assignment Questions ── */}
                       {editDraft?.type === "assignment" && (
-                        <div className="space-y-4 pt-4 border-t border-border/30">
+                        <div className="space-y-4 pt-1">
                           <div className="flex items-center justify-between">
                             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
                               Exam / Assignment Questions
@@ -673,6 +703,8 @@ export default function AdminStudentView() {
                               className="h-7 text-[10px] font-bold"
                               onClick={() => {
                                 setEditLessonForQuiz(currentLesson);
+                                setDialogQuestions(currentLesson.quizQuestions || []);
+                                setDialogConfig(currentLesson.quizConfig || {});
                                 setQuizDialogOpen(true);
                               }}
                             >
@@ -1064,6 +1096,16 @@ export default function AdminStudentView() {
           courseId={courseId!}
           lessonId={editLessonForQuiz.id || editLessonForQuiz._id}
           type={editLessonForQuiz.type === "assignment" ? "assignment" : "quiz"}
+          questions={dialogQuestions}
+          config={dialogConfig}
+          lessonTitle={editLessonForQuiz.title}
+          courseTitle={course?.title}
+          lessonContent={editLessonForQuiz.content || ""}
+          onSave={(savedQuestions: any[], savedConfig: any) => {
+            // Update local state so the edit UI reflects changes immediately
+            setDialogQuestions(savedQuestions);
+            setDialogConfig(savedConfig);
+          }}
         />
       )}
 
