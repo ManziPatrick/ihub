@@ -145,8 +145,23 @@ export default function AdminStudentView() {
               assignmentDeliverables: l.assignmentDeliverables || "",
             };
 
-            if (l.quizConfig) cleanLesson.quizConfig = l.quizConfig;
-            if (l.assignmentConfig) cleanLesson.assignmentConfig = l.assignmentConfig;
+            // Clean config/sub-objects to strip __typename and GraphQL metadata
+            if (l.quizConfig) {
+              cleanLesson.quizConfig = {
+                disableRightClick: l.quizConfig.disableRightClick ?? false,
+                timeLimit: l.quizConfig.timeLimit ?? 0,
+                quizType: l.quizConfig.quizType || 'exercise',
+                questionsPerPage: l.quizConfig.questionsPerPage ?? 5,
+              };
+            }
+            if (l.assignmentConfig) {
+              cleanLesson.assignmentConfig = {
+                timeLimit: l.assignmentConfig.timeLimit ?? null,
+                allowRetakes: l.assignmentConfig.allowRetakes ?? false,
+                disableRightClick: l.assignmentConfig.disableRightClick ?? false,
+                mode: l.assignmentConfig.mode || 'exam',
+              };
+            }
             if (l.resources?.length > 0) {
               cleanLesson.resources = l.resources.map((r: any) => ({
                 id: r.id,
@@ -201,7 +216,12 @@ export default function AdminStudentView() {
                 }));
               }
               if (dialogConfig && Object.keys(dialogConfig).length > 0) {
-                cleanLesson.quizConfig = dialogConfig;
+                cleanLesson.quizConfig = {
+                  disableRightClick: dialogConfig.disableRightClick ?? false,
+                  timeLimit: dialogConfig.timeLimit ?? 0,
+                  quizType: dialogConfig.quizType || 'exercise',
+                  questionsPerPage: dialogConfig.questionsPerPage ?? 5,
+                };
               }
             } else {
               // For non-edited lessons, preserve their existing quiz/exam data from course
