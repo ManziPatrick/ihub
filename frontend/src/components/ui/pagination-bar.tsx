@@ -59,6 +59,11 @@ export function PaginationBar({
   rangeStart,
   rangeEnd,
 }: PaginationBarProps) {
+  // Guard against undefined pagination (e.g., while data is loading)
+  if (totalPages === undefined || totalPages === null) {
+    return null;
+  }
+
   const disabled = isLoading;
   const prevDisabled = disabled || !hasPreviousPage;
   const nextDisabled = disabled || !hasNextPage;

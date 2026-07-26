@@ -120,7 +120,7 @@ export default function SuperAdminUsers() {
   const [updateUserMutation, { loading: updating }] = useMutation(UPDATE_USER);
 
   const allUsers = (data as any)?.users?.items || [];
-  const pagination = (data as any)?.users?.pagination;
+  const pagination = (data as any)?.users?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
   const analytics = (analyticsData as any)?.analytics;
   const roleDistribution = analytics?.roleDistribution || [];
 

@@ -219,7 +219,7 @@ export default function SuperAdminScholarships() {
   });
 
   const scholarships: ScholarshipItem[] = (data as any)?.getAllScholarships?.items || [];
-  const pagination = (data as any)?.getAllScholarships?.pagination;
+  const pagination = (data as any)?.getAllScholarships?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
   const stats: ScholarshipStats = (statsData as any)?.getScholarshipStats;
 
   // Client-side search

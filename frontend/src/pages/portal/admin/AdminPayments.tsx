@@ -81,7 +81,7 @@ export default function AdminPayments() {
   const disbStats = (disbStatsData as any)?.getDisbursementStats;
 
   const payments = (data as any)?.payments?.items || [];
-  const pagination = (data as any)?.payments?.pagination;
+  const pagination = (data as any)?.payments?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
 
   // Calculate stats
   const totalRevenue = payments

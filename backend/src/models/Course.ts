@@ -148,4 +148,7 @@ courseSchema.index({ instructor: 1 });
 courseSchema.index({ isFeatured: 1, status: 1 });
 courseSchema.index({ school: 1 });
 
+// Text index for full-text search (SEO)
+courseSchema.index({ title: 'text', description: 'text' });
+
 export const Course = mongoose.model('Course', courseSchema);

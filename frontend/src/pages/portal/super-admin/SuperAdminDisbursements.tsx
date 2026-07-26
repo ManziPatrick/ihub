@@ -225,7 +225,7 @@ export default function SuperAdminDisbursements() {
   const [manualDisburse, { loading: manualDisbursing }] = useMutation(MANUAL_DISBURSE);
 
   const disbursements: DisbursementItem[] = (disbData as any)?.getAllDisbursements?.items || [];
-  const pagination = (disbData as any)?.getAllDisbursements?.pagination;
+  const pagination = (disbData as any)?.getAllDisbursements?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
   const stats: DisbursementStats = (statsData as any)?.getDisbursementStats;
   const platformConfig: PlatformConfig = (configData as any)?.getPlatformCommissionConfig;
   const holdDays: number = (holdDaysData as any)?.getHoldDaysConfig ?? 15;

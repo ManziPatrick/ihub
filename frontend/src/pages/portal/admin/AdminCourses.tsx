@@ -79,7 +79,7 @@ export default function AdminCourses() {
   }, [fullCourseData, editCourse?.id]);
 
   const courses = (data as any)?.courses?.items || [];
-  const pagination = (data as any)?.courses?.pagination;
+  const pagination = (data as any)?.courses?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
 
   const { data: usersData } = useQuery(GET_USERS);
   const trainers = (usersData as any)?.users?.items?.filter((u: any) =>

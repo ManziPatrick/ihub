@@ -240,7 +240,7 @@ export default function AdminProjects() {
     variables: { page: currentPage, limit: pageSize, course: courseFilter !== "all" ? courseFilter : undefined }
   });
   const projects = (data as any)?.projects?.items || [];
-  const pagination = (data as any)?.projects?.pagination;
+  const pagination = (data as any)?.projects?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
 
   const { data: studentProgressData, loading: studentsLoading } = useQuery<{ studentProjectProgress: any[] }>(GET_STUDENT_PROJECT_PROGRESS, {
     skip: !['admin', 'super_admin'].includes(user?.role || ''),

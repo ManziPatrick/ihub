@@ -63,7 +63,7 @@ export default function AdminBadges() {
     variables: { page: currentPage, limit: pageSize, createdBy: user?.id }
   });
   const badges = data?.badges?.items || [];
-  const pagination = data?.badges?.pagination;
+  const pagination = data?.badges?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
 
   const [createBadge] = useMutation(CREATE_BADGE, {
     refetchQueries: [{ query: GET_BADGES }],

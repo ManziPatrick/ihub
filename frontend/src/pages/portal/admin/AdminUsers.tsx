@@ -116,7 +116,7 @@ export default function AdminUsers() {
   const [restoreUserMutation] = useMutation(RESTORE_USER);
 
   const users = (data as any)?.users?.items || [];
-  const pagination = (data as any)?.users?.pagination;
+  const pagination = (data as any)?.users?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
 
   const filteredUsers = users.filter((u: any) => {
     if (currentUser?.role !== "super_admin" && u.role === "super_admin") {

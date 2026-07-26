@@ -61,7 +61,7 @@ export default function AdminCompletedUsers() {
   });
 
   const completedUsers = (data as any)?.completedUsers?.items || [];
-  const pagination = (data as any)?.completedUsers?.pagination;
+  const pagination = (data as any)?.completedUsers?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
 
   const filteredUsers = completedUsers.filter((u: any) => {
     if (!searchQuery) return true;
