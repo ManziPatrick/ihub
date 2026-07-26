@@ -529,9 +529,37 @@ export default function AdminStudentView() {
                         </select>
                       </div>
 
-                      {/* ── TYPE: Video / PDF / PPT / Book ── */}
-                      {["video", "pdf", "ppt", "book"].includes(editDraft?.type) && (
-                        <div className="space-y-4">
+                      {/* ── Content / Description (shown for ALL types) ── */}
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                            Content / Description (Markdown)
+                          </label>
+                          <Textarea
+                            className="min-h-[120px] text-sm font-mono leading-relaxed"
+                            placeholder="Write lesson content in markdown. HTML tags like <code>code</code> will render as styled."
+                            value={editDraft?.content || ""}
+                            onChange={(e) => setEditDraft((d: any) => ({ ...d, content: e.target.value }))}
+                          />
+                        </div>
+                        {/* Live markdown preview */}
+                        {editDraft?.content && (
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+                              Preview
+                            </label>
+                            <div className="prose dark:prose-invert max-w-none p-4 rounded-xl bg-muted/10 border border-border/40 lesson-content-viewer">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                                {normalizeContent(editDraft.content)}
+                              </ReactMarkdown>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ── Video / Media URL (shown for video, pdf, ppt, book — article can also attach media) ── */}
+                      {!["quiz", "assignment"].includes(editDraft?.type) && (
+                        <div className="space-y-4 pt-2">
                           <div className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1">
                               <Video className="w-3 h-3" /> Media / Stream URL
@@ -568,39 +596,9 @@ export default function AdminStudentView() {
                         </div>
                       )}
 
-                      {/* ── TYPE: Article (content-focused) ── */}
-                      {editDraft?.type === "article" && (
-                        <div className="space-y-4">
-                          <div className="space-y-1.5">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                              Content / Description (Markdown)
-                            </label>
-                            <Textarea
-                              className="min-h-[200px] text-sm font-mono leading-relaxed"
-                              placeholder="Write lesson content in markdown. HTML tags like <code>code</code> will render as styled."
-                              value={editDraft?.content || ""}
-                              onChange={(e) => setEditDraft((d: any) => ({ ...d, content: e.target.value }))}
-                            />
-                          </div>
-                          {/* Live markdown preview */}
-                          {editDraft?.content && (
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                                Preview
-                              </label>
-                              <div className="prose dark:prose-invert max-w-none p-4 rounded-xl bg-muted/10 border border-border/40 lesson-content-viewer">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                                  {normalizeContent(editDraft.content)}
-                                </ReactMarkdown>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* ── TYPE: Quiz ── */}
+                      {/* ── Quiz Questions ── */}
                       {editDraft?.type === "quiz" && (
-                        <div className="space-y-4">
+                        <div className="space-y-4 pt-4 border-t border-border/30">
                           <div className="flex items-center justify-between">
                             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
                               Quiz Questions
@@ -662,9 +660,9 @@ export default function AdminStudentView() {
                         </div>
                       )}
 
-                      {/* ── TYPE: Assignment / Exam ── */}
+                      {/* ── Exam / Assignment Questions ── */}
                       {editDraft?.type === "assignment" && (
-                        <div className="space-y-4">
+                        <div className="space-y-4 pt-4 border-t border-border/30">
                           <div className="flex items-center justify-between">
                             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
                               Exam / Assignment Questions
