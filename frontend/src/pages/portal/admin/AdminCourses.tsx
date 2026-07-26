@@ -60,7 +60,6 @@ export default function AdminCourses() {
   const { data, loading, refetch } = useQuery(GET_COURSES_LITE_SUMMARY, {
     fetchPolicy: "cache-first",
     variables: { page: currentPage, limit: pageSize },
-    pollInterval: 3600000
   });
   const [loadCourse, { data: fullCourseData, loading: courseLoading }] = useLazyQuery(GET_COURSE);
   const [updateCourseMutation, { loading: updateLoading }] = useMutation(UPDATE_COURSE, {
@@ -86,7 +85,7 @@ export default function AdminCourses() {
     u.role === 'trainer' || u.role === 'admin' || u.role === 'super_admin'
   ) || [];
 
-  const { data: statsData, refetch: refetchStats } = useQuery(GET_STATS, { pollInterval: 3600000 });
+  const { data: statsData, refetch: refetchStats } = useQuery(GET_STATS);
   const liveStats = (statsData as any)?.stats || { totalUsers: 0, totalCourses: 0, totalStudents: 0, totalRevenue: 0 };
 
   const handleDeleteCourse = async () => {
