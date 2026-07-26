@@ -634,8 +634,13 @@ function CourseStructurePreview({ courseId }: { courseId: string }) {
           </Link>
         </Button>
         <Button variant="outline" size="sm" asChild>
-          <Link to={`/portal/student/courses/${course.id || course._id}`}>
-            <BookOpen className="w-3.5 h-3.5 mr-1.5" /> Student View
+          <Link to={`/portal/admin/student-view/${course.id || course._id}`}>
+            <Eye className="w-3.5 h-3.5 mr-1.5" /> Admin Student View
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link to={`/portal/student/courses/${course.id || course._id}`} target="_blank">
+            <BookOpen className="w-3.5 h-3.5 mr-1.5" /> Real Student View
           </Link>
         </Button>
       </div>

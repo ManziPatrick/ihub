@@ -427,6 +427,9 @@ export default function AdminCourses() {
                                   <DropdownMenuItem onClick={() => window.open(`/courses/${course.id}`, '_blank')}>
                                     <ExternalLink className="w-4 h-4 mr-2" /> Public Preview
                                   </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => navigate(`/portal/admin/student-view/${course.id}`)}>
+                                    <Eye className="w-4 h-4 mr-2" /> Student View
+                                  </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleEditClick(course)}>
                                     <Edit className="w-4 h-4 mr-2" /> Edit Course
                                   </DropdownMenuItem>
