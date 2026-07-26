@@ -19,6 +19,7 @@ import {
   HardDrive,
   ExternalLink,
   RotateCcw,
+  RefreshCw,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -117,7 +118,6 @@ export default function SuperAdminUploadLogs() {
 
   const { data, loading, refetch } = useQuery(GET_UPLOAD_LOGS, {
     variables: { page, limit: 50, type: typeFilter || undefined },
-    pollInterval: 30000,
   });
 
   const [deleteLog, { loading: deleting }] = useMutation(DELETE_UPLOAD_LOG, {

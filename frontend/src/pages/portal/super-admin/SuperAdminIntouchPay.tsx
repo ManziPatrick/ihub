@@ -50,7 +50,6 @@ export default function SuperAdminIntouchPay() {
     loading: balanceLoading,
     refetch: refetchBalance,
   } = useQuery(GET_INTOUCH_BALANCE, {
-    pollInterval: 60000,
     fetchPolicy: "network-only",
   });
 

@@ -155,7 +155,6 @@ export default function SuperAdminCommissionConfig() {
     loading: allReportsLoading,
     refetch: refetchAllReports,
   } = useQuery(GET_ALL_COMMISSION_REPORTS, {
-    pollInterval: 60000,
   });
   const { data: coursesData } = useQuery(GET_ALL_COURSES_QUERY);
   const { data: programsData } = useQuery(GET_INTERNSHIP_PROGRAMS_QUERY);
@@ -170,7 +169,6 @@ export default function SuperAdminCommissionConfig() {
   const { data: reportData, loading: reportLoading, error: reportError, refetch: refetchReport } = useQuery(GET_ADMIN_COMMISSION_REPORT, {
     variables: { adminId: selectedReportAdmin },
     skip: !selectedReportAdmin,
-    pollInterval: 60000,
   });
   const report: any = (reportData as any)?.getAdminCommissionReport || null;
   

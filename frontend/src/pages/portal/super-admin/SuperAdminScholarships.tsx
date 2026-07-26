@@ -186,7 +186,6 @@ export default function SuperAdminScholarships() {
   });
 
   const { data: statsData, loading: statsLoading, refetch: refetchStats } = useQuery(GET_SCHOLARSHIP_STATS, {
-    pollInterval: 60000,
   });
 
   const [approveScholarship, { loading: approving }] = useMutation(APPROVE_SCHOLARSHIP, {
