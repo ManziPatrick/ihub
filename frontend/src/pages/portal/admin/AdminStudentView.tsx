@@ -167,7 +167,7 @@ export default function AdminStudentView() {
               cleanLesson.type = editDraft.type;
               cleanLesson.aiGradingGuide = editDraft.aiGradingGuide || "";
 
-              // For quiz/assignment lessons, use dialogQuestions (set by ManageQuestionsDialog onSave)
+              // Quiz questions: use dialog data if available, otherwise preserve existing
               if (dialogQuestions.length > 0) {
                 cleanLesson.quizQuestions = dialogQuestions.map((q: any) => ({
                   questionText: q.questionText,
@@ -177,6 +177,26 @@ export default function AdminStudentView() {
                   explanation: q.explanation || "",
                   imageUrl: q.imageUrl || "",
                   matchingPairs: q.matchingPairs || [],
+                }));
+              } else if (l.quizQuestions?.length > 0) {
+                cleanLesson.quizQuestions = l.quizQuestions.map((q: any) => ({
+                  questionText: q.questionText,
+                  type: q.type || "multiple_choice",
+                  options: q.options || [],
+                  correctOptionIndex: q.correctOptionIndex,
+                  explanation: q.explanation || "",
+                  imageUrl: q.imageUrl || "",
+                  matchingPairs: q.matchingPairs || [],
+                }));
+              }
+              // Assignment questions: always preserve existing on the edited lesson
+              if (l.assignmentQuestions?.length > 0) {
+                cleanLesson.assignmentQuestions = l.assignmentQuestions.map((q: any) => ({
+                  questionText: q.questionText,
+                  type: q.type || "multiple_choice",
+                  options: q.options || [],
+                  correctOptionIndex: q.correctOptionIndex,
+                  points: q.points || 0,
                 }));
               }
               if (dialogConfig && Object.keys(dialogConfig).length > 0) {
