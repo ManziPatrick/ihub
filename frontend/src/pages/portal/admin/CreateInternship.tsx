@@ -140,7 +140,7 @@ export default function CreateInternship() {
           applicationQuestions: formData.applicationQuestions.length > 0 ? formData.applicationQuestions : undefined,
           signerName: formData.signerName || undefined,
           signerSignature: formData.signerSignature || undefined,
-          eligibility: formData.eligibility.length > 0 ? formData.eligibility : undefined,
+          eligibility: formData.eligibility.length > 0 ? formData.eligibility.join('\n') : undefined,
           rules: formData.rules || undefined,
           maxSpots: formData.maxSpots > 0 ? formData.maxSpots : undefined,
           discount: formData.discount > 0 ? formData.discount : undefined,
