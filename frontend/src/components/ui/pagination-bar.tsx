@@ -97,7 +97,7 @@ export function PaginationBar({
               <SelectTrigger className="h-8 w-[70px] text-xs rounded-lg">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[9999]">
                 {pageSizeOptions.map((n) => (
                   <SelectItem key={n} value={String(n)}>
                     {n}
