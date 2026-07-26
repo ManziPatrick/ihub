@@ -1017,7 +1017,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                     )}
                   </button>
                 </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72 p-0" sideOffset={8}>
+              <DropdownMenuContent align="end" className="w-72 p-0" side="bottom" sideOffset={8}>
                 <div className="px-4 py-3 border-b border-border/50">
                   <div className="flex items-center justify-between">
                     <DropdownMenuLabel className="p-0 text-sm font-semibold">
@@ -1146,7 +1146,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80 p-0">
+              <DropdownMenuContent align="end" className="w-80 p-0" side="bottom" sideOffset={8}>
                 <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
                   <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
                   <Button
@@ -1232,7 +1232,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                   <ChevronDown className="w-4 h-4 text-card-foreground/50 hidden sm:block" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" sideOffset={8} className="w-56">
+              <DropdownMenuContent align="end" sideOffset={8} className="w-56" side="bottom">
                 <DropdownMenuLabel>
                   <div>
                     <p className="font-medium">{user.fullName}</p>
