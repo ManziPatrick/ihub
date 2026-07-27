@@ -82,7 +82,7 @@ export default defineConfig(({ mode }) => ({
     // and runtime caching rules configured below.
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["pwa-192x192.png", "pwa-512x512.png"],
+      includeAssets: ["pwa-icon.svg"],
       manifest: {
         name: "Bootskills — Learn. Build. Grow.",
         short_name: "Bootskills",
@@ -94,8 +94,8 @@ export default defineConfig(({ mode }) => ({
         scope: "/",
         start_url: "/",
         icons: [
-          { src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
-          { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png" },
+          { src: "/pwa-icon.svg", sizes: "192x192", type: "image/svg+xml" },
+          { src: "/pwa-icon.svg", sizes: "512x512", type: "image/svg+xml" },
         ],
       },
       workbox: {
