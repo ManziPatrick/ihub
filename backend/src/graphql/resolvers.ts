@@ -1257,7 +1257,7 @@ export const resolvers = {
           { category: searchRegex },
           { school: searchRegex },
           { level: searchRegex },
-          { descriptionSnippet: searchRegex },
+          { description: searchRegex },
         ]};
 
         if (query.$or) {
@@ -1391,21 +1391,25 @@ export const resolvers = {
         }
       }
 
+      // Filter out courses without thumbnails for public views
+      if (!context.user || (context.user.role !== 'admin' && context.user.role !== 'super_admin' && context.user.role !== 'trainer')) {
+        query.thumbnail = { $exists: true, $nin: [null, ''] };
+      }
+
       const totalCount = await Course.countDocuments(query);
 
       let items;
 
       // For popular and trending, fetch all matching courses and sort in-memory
-      // (skip/limit applied manually to ensure correct global ordering)
+      // Uses studentsEnrolledCount (pre-computed) instead of expensive populate of all students
       if (sortBy === 'popular' || sortBy === 'trending') {
         const allItems = await Course.find(query)
           .populate('instructor')
-          .populate('studentsEnrolled')
           .sort({ createdAt: -1 })
           .lean({ virtuals: true });
 
         if (sortBy === 'popular') {
-          allItems.sort((a: any, b: any) => (b.studentsEnrolled?.length || 0) - (a.studentsEnrolled?.length || 0));
+          allItems.sort((a: any, b: any) => (b.studentsEnrolledCount || 0) - (a.studentsEnrolledCount || 0));
         } else if (sortBy === 'trending') {
           allItems.sort((a: any, b: any) => {
             const scoreA = trendingScores.get((a as any)._id.toString()) || 0;
@@ -1417,9 +1421,9 @@ export const resolvers = {
         items = allItems.slice(skip, skip + limit);
       } else {
         // Latest: use DB-level sort with skip/limit (efficient)
+        // Only populate instructor — studentsEnrolled is expensive and not needed for list view
         items = await Course.find(query)
           .populate('instructor')
-          .populate('studentsEnrolled')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit)
@@ -1457,7 +1461,7 @@ export const resolvers = {
         return null;
       }
 
-      // Try regular Course first
+      // Try regular Course first — need studentsEnrolled populate for enrollment checks on course detail page
       let course = await Course.findById(targetId).populate('instructor').populate('studentsEnrolled');
       console.log('--- course query: Regular Course found:', !!course);
 
@@ -1491,11 +1495,14 @@ export const resolvers = {
         return courseObj;
       }
 
-      // Check enrollment
+      // Check enrollment using the pre-computed count + stored IDs
       let isEnrolled = false;
       if (context.user) {
-        // Check if user is enrolled
-        isEnrolled = (course.studentsEnrolled as any).some((s: any) => s._id.toString() === context.user.id || s.id === context.user.id);
+        // Check if user's ID is in the studentsEnrolled array (stored as ObjectId refs)
+        isEnrolled = (course.studentsEnrolled as any[] || []).some((s: any) => {
+          const sId = s?._id?.toString?.() || s?.toString?.() || s?.id;
+          return sId === context.user.id;
+        });
 
         // Grant access to instructor, admin, super_admin
         if ((course.instructor as any)._id.toString() === context.user.id ||
@@ -1533,7 +1540,7 @@ export const resolvers = {
         throw new Error('courseId and lessonId are required');
       }
 
-      const course = await Course.findById(courseId).populate('instructor').populate('studentsEnrolled');
+      const course = await Course.findById(courseId).populate('instructor');
       if (!course) {
         throw new Error('Course not found');
       }
@@ -1562,10 +1569,13 @@ export const resolvers = {
         throw new Error('Lesson not found in course');
       }
 
-      // Check enrollment for content restriction
+      // Check enrollment for content restriction (use stored IDs, no populate needed)
       let isEnrolled = false;
       if (context.user) {
-        isEnrolled = (course.studentsEnrolled as any).some((s: any) => s._id.toString() === context.user.id || s.id === context.user.id);
+        isEnrolled = (course.studentsEnrolled as any[] || []).some((s: any) => {
+          const sId = s?._id?.toString?.() || s?.toString?.() || s?.id;
+          return sId === context.user.id;
+        });
         if ((course.instructor as any)._id.toString() === context.user.id ||
           ['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
           isEnrolled = true;
@@ -3545,12 +3555,12 @@ export const resolvers = {
         const user = await User.findById(app.userId);
         const course = await Course.findById(app.courseId);
         if (user && course && !user.enrolledCourses.some(id => id.toString() === app.courseId.toString())) {
-          user.enrolledCourses.push(app.courseId as any);
-          if (!course.studentsEnrolled.some(id => id.toString() === app.userId.toString())) {
-            course.studentsEnrolled.push(app.userId as any);
-          }
-          await user.save();
-          await course.save();
+          user.enrolledCourses.push(app.courseId as any);          if (!course.studentsEnrolled.some(id => id.toString() === app.userId.toString())) {
+             course.studentsEnrolled.push(app.userId as any);
+             course.studentsEnrolledCount = course.studentsEnrolled.length;
+           }
+           await course.save();
+           await user.save();
         }
       }
 
@@ -4541,8 +4551,9 @@ export const resolvers = {
 
       // Enroll student in Course
       if (!course.studentsEnrolled.some((s: any) => s.toString() === student.id)) {
-        course.studentsEnrolled.push(student.id as any);
-        await course.save();
+            course.studentsEnrolled.push(student.id as any);
+            course.studentsEnrolledCount = course.studentsEnrolled.length;
+            await course.save();
       }
 
       // Add course to student's enrolledCourses

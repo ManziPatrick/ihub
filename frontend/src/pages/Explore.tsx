@@ -185,6 +185,8 @@ const Explore = () => {
 
   const filteredCourses = useMemo(() => {
     return loadedCourses.filter((course: any) => {
+      // Filter out courses without thumbnails
+      if (!course.thumbnail || course.thumbnail.trim() === '') return false;
       const matchesSchool = activeSchool === "ALL" || course.school === activeSchool;
       const matchesSearch = !courseSearchQuery || [
         course.title,
