@@ -142,7 +142,12 @@ const courseSchema = new mongoose.Schema({
   signerSignature: { type: String },
   school: { type: String, trim: true },
   isFeatured: { type: Boolean, default: false },
-}, { timestamps: true });
+
+  // Pre-computed counts for performance (avoids expensive populate on list queries)
+  studentsEnrolledCount: { type: Number, default: 0 },
+  modulesCount: { type: Number, default: 0 },
+  totalLessonsCount: { type: Number, default: 0 },
+}, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
 // Indexes for efficient course queries
 courseSchema.index({ status: 1, isDeleted: 1 });
@@ -151,7 +156,51 @@ courseSchema.index({ instructor: 1 });
 courseSchema.index({ isFeatured: 1, status: 1 });
 courseSchema.index({ school: 1 });
 
+// Compound indexes for common query patterns (sort + filter)
+courseSchema.index({ isDeleted: 1, status: 1, createdAt: -1 });
+courseSchema.index({ isDeleted: 1, status: 1, isFeatured: -1, createdAt: -1 });
+courseSchema.index({ isDeleted: 1, status: 1, category: 1, createdAt: -1 });
+
 // Text index for full-text search (SEO)
 courseSchema.index({ title: 'text', description: 'text' });
+
+// Virtual: auto-generate descriptionSnippet from description
+courseSchema.virtual('descriptionSnippet').get(function () {
+  const desc = this.description || '';
+  // Strip HTML tags
+  const plain = desc.replace(/<[^>]+>/g, '').trim();
+  return plain.length > 180 ? plain.substring(0, 177) + '...' : plain;
+});
+
+// Pre-save hook: auto-compute counts from modules
+// Mongoose 9+ no longer provides next() callback
+courseSchema.pre('save', function () {
+  if (this.isModified('modules') || this.isModified('studentsEnrolled')) {
+    this.modulesCount = this.modules?.length || 0;
+    this.totalLessonsCount = this.modules?.reduce(
+      (sum: number, m: any) => sum + (m.lessons?.length || 0), 0
+    ) || 0;
+    this.studentsEnrolledCount = this.studentsEnrolled?.length || 0;
+  }
+});
+
+// Post-findOneAndUpdate hook: recompute counts after atomic updates
+// Note: we mutate the doc in-memory only (no save()) to avoid extra DB writes
+courseSchema.post('findOneAndUpdate', function (doc) {
+  if (doc) {
+    const update = this.getUpdate() as any;
+    if (update?.$addToSet?.studentsEnrolled || update?.$pull?.studentsEnrolled) {
+      const courseDoc = doc as any;
+      courseDoc.studentsEnrolledCount = courseDoc.studentsEnrolled?.length || 0;
+    }
+    if (update?.$set?.modules || update?.$push?.modules) {
+      const courseDoc = doc as any;
+      courseDoc.modulesCount = courseDoc.modules?.length || 0;
+      courseDoc.totalLessonsCount = courseDoc.modules?.reduce(
+        (sum: number, m: any) => sum + (m.lessons?.length || 0), 0
+      ) || 0;
+    }
+  }
+});
 
 export const Course = mongoose.model('Course', courseSchema);
