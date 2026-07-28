@@ -3533,6 +3533,8 @@ export const GET_EVENT_APPLICATIONS = gql`
           title
           type
           startDate
+          isOnline
+          location
         }
         user {
           id

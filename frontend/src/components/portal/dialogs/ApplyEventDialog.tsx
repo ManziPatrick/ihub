@@ -99,14 +99,6 @@ export function ApplyEventDialog({
     });
   };
 
-  const formatTime = (dateStr: string) => {
-    if (!dateStr) return "";
-    return new Date(dateStr).toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   const handleClose = () => {
     onOpenChange(false);
   };

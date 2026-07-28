@@ -434,7 +434,6 @@ export default function EventDetail() {
         </div>
       </main>
       <Footer />
-    </div>
 
       {/* Apply Dialog */}
       <ApplyEventDialog
