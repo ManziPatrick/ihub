@@ -35,7 +35,9 @@ import {
   Layout,
   Building2,
   GraduationCap,
-  Globe
+  Globe,
+  CalendarCheck,
+  Sparkles
 } from "lucide-react";
 import { ViewSessionDialog, CreateInternshipMeetingDialog } from "@/components/portal/dialogs";
 import { toast } from "sonner";
@@ -50,6 +52,8 @@ const CONTEXT_FILTERS = [
   { id: 'project', label: 'Projects', icon: Layout },
   { id: 'client', label: 'Clients', icon: Building2 },
   { id: 'internship', label: 'Internships', icon: GraduationCap },
+  { id: 'event', label: 'Events', icon: CalendarCheck },
+  { id: 'session', label: 'Sessions', icon: Sparkles },
 ];
 
 export default function AdminSchedule() {
@@ -238,6 +242,8 @@ export default function AdminSchedule() {
     project: { label: 'Project', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
     client: { label: 'Client', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
     internship: { label: 'Internship', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    event: { label: 'Event', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
+    session: { label: 'Session', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
     general: { label: 'General', color: 'bg-gold/10 text-gold border-gold/20' },
   };
 

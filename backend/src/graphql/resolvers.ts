@@ -8229,11 +8229,24 @@ export const resolvers = {
           });
         }
 
+        const startDate = new Date(meeting.startTime);
+        const endDate = new Date(meeting.endTime);
+        const durationMs = endDate.getTime() - startDate.getTime();
+        const durationMinutes = Math.round(durationMs / 60000);
+        const durationStr = durationMinutes >= 60
+          ? `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`
+          : `${durationMinutes}m`;
+
         const bookingDetails = {
           type: meeting.type,
-          date: new Date(meeting.startTime).toISOString().split('T')[0],
-          time: new Date(meeting.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          meetingLink: meeting.meetLink
+          title: args.title || meeting.title,
+          date: startDate.toISOString().split('T')[0],
+          time: startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          meetingLink: meeting.meetLink,
+          contextType: args.contextType || 'general',
+          contextTitle: args.contextTitle || undefined,
+          description: args.description || undefined,
+          duration: durationStr,
         };
 
         for (const email of participantEmails) {

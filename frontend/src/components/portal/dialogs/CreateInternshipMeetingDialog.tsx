@@ -189,6 +189,8 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
   const CONTEXT_TYPES = [
     { id: 'general', label: 'General', icon: Globe },
     { id: 'course', label: 'Course', icon: BookOpen },
+    { id: 'event', label: 'Event', icon: Sparkles },
+    { id: 'session', label: 'Session', icon: Video },
     { id: 'project', label: 'Project', icon: Layout },
     { id: 'client', label: 'Client', icon: Building2 },
     { id: 'internship', label: 'Internship', icon: GraduationCap },
@@ -244,11 +246,13 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
                       <Input
                         value={contextTitle}
                         onChange={e => setContextTitle(e.target.value)}
-                        placeholder={`e.g. ${contextType === 'course' ? 'Introduction to Web Development' : contextType === 'project' ? 'E-commerce Platform' : contextType === 'client' ? 'Acme Corp' : 'Software Engineering Bootcamp'}`}
+                        placeholder={`e.g. ${contextType === 'course' ? 'Introduction to Web Development' : contextType === 'event' ? 'AI Bootcamp 2026' : contextType === 'session' ? 'Live Q&A Session' : contextType === 'project' ? 'E-commerce Platform' : contextType === 'client' ? 'Acme Corp' : 'Software Engineering Bootcamp'}`}
                         className="h-10 text-sm rounded-2xl border-accent/10"
                       />
                       <p className="text-[9px] text-muted-foreground mt-1">
                         {contextType === 'course' ? 'The course this meeting is for' : 
+                         contextType === 'event' ? 'The event (bootcamp/workshop) this meeting is for' :
+                         contextType === 'session' ? 'The live session this meeting is part of' :
                          contextType === 'project' ? 'The project this meeting is related to' :
                          contextType === 'client' ? 'The client this meeting is for' :
                          'The internship program this meeting is for'}
