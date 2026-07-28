@@ -70,6 +70,7 @@ import { GraphQLUpload } from 'graphql-upload';
 import { pusher } from '../lib/pusher';
 import { InternshipProgram } from '../models/internship/InternshipProgram';
 import { Event } from '../models/Event';
+import { EventApplication } from '../models/EventApplication';
 import { InternshipApplication } from '../models/internship/InternshipApplication';
 import { InternshipProject } from '../models/internship/InternshipProject';
 import { InternshipTeam } from '../models/internship/Team';
@@ -8214,6 +8215,26 @@ export const resolvers = {
         // 5. Selected client users
         if (args.clientIds && args.clientIds.length > 0) {
           args.clientIds.forEach((id: string) => participantIds.add(id));
+        }
+
+        // 6. Event/Session applicants — notify approved/waitlisted applicants
+        if (args.eventIds && args.eventIds.length > 0) {
+          const eventApps = await EventApplication.find({
+            eventId: { $in: args.eventIds },
+            status: { $in: ['approved', 'waitlisted'] },
+            isDeleted: false,
+          }).select('userId').lean();
+          eventApps.forEach((ea: any) => participantIds.add(ea.userId.toString()));
+        }
+
+        // 7. Internship Program applicants — notify approved/waitlisted applicants
+        if (args.internshipProgramIds && args.internshipProgramIds.length > 0) {
+          const progApps = await InternshipApplication.find({
+            internshipProgramId: { $in: args.internshipProgramIds },
+            status: { $in: ['approved', 'waitlisted'] },
+            isDeleted: false,
+          }).select('userId').lean();
+          progApps.forEach((pa: any) => participantIds.add(pa.userId.toString()));
         }
 
         for (const pid of participantIds) {

@@ -2308,6 +2308,7 @@ export const typeDefs = `#graphql
       teamIds: [ID!]
       clientIds: [ID!]
       internshipProgramIds: [ID!]
+      eventIds: [ID!]
       userIds: [ID!]
       mentorIds: [ID!]
       meetLink: String
@@ -2328,6 +2329,7 @@ export const typeDefs = `#graphql
       teamIds: [ID!]
       clientIds: [ID!]
       internshipProgramIds: [ID!]
+      eventIds: [ID!]
       userIds: [ID!]
       mentorIds: [ID!]
       meetLink: String

@@ -256,8 +256,7 @@ export default function ApplicantManager() {
           <Button
             variant="gold"
             size="sm"
-            className="h-10 rounded-xl gap-2 text-xs font-black uppercase tracking-wider"
-            onClick={() => { setView('all'); setPage(1); setFilter('all'); }}
+            className="h-10 rounded-xl gap-2 text-xs font-black uppercase tracking-wider"                          onClick={() => { setSelectedItem(null); setView('all'); setPage(1); setFilter('all'); }}
           >
             <Users className="w-4 h-4" />
             All Applicants

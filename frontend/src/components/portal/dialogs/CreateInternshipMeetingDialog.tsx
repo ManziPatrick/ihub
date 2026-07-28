@@ -16,10 +16,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Video, Loader2, Calendar as CalendarIcon, RefreshCw, Users, ShieldCheck, User as UserIcon, Check, BookOpen, Layout, Building2, GraduationCap, Globe } from "lucide-react";
+import { Search, Video, Loader2, Calendar as CalendarIcon, RefreshCw, Users, ShieldCheck, User as UserIcon, Check, BookOpen, Layout, Building2, GraduationCap, Globe, Sparkles, CalendarCheck } from "lucide-react";
 import { toast } from "sonner";
 import { CREATE_INTERNSHIP_MEETING } from "@/lib/graphql/mutations";
-import { GET_COURSES_LITE_SUMMARY, GET_INTERNSHIP_TEAMS, GET_INTERNSHIP_MEETINGS, GET_ALL_STUDENTS, GET_ALL_TRAINERS } from "@/lib/graphql/queries";
+import { GET_COURSES_LITE_SUMMARY, GET_INTERNSHIP_TEAMS, GET_INTERNSHIP_MEETINGS, GET_ALL_STUDENTS, GET_ALL_TRAINERS, GET_EVENTS } from "@/lib/graphql/queries";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -62,12 +62,14 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
   const [searchCourses, setSearchCourses] = useState("");
   const [searchStudents, setSearchStudents] = useState("");
   const [searchMentors, setSearchMentors] = useState("");
+  const [searchEvents, setSearchEvents] = useState("");
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
   
   const [contextType, setContextType] = useState("general");
   const [contextTitle, setContextTitle] = useState("");
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
+  const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -91,6 +93,10 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
   });
   const { data: studentsData, loading: studentsLoading } = useQuery(GET_ALL_STUDENTS, { skip: !open });
   const { data: mentorsData, loading: mentorsLoading } = useQuery(GET_ALL_TRAINERS, { skip: !open });
+  const { data: eventsData, loading: eventsLoading } = useQuery(GET_EVENTS, {
+    variables: { page: 1, limit: 100, status: 'published' },
+    skip: !open,
+  });
 
   const [createMeeting, { loading: creating }] = useMutation(CREATE_INTERNSHIP_MEETING, {
     onCompleted: () => {
@@ -121,12 +127,14 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
     setSelectedTeams([]);
     setSelectedClients([]);
     setSelectedPrograms([]);
+    setSelectedEvents([]);
     setSelectedUsers([]);
     setSelectedMentors([]);
     setRecurrenceDays([]);
     setSearchCourses("");
     setSearchStudents("");
     setSearchMentors("");
+    setSearchEvents("");
   };
 
   const toggleSelection = (id: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
@@ -144,8 +152,8 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
       toast.error("Please fill in all required fields");
       return;
     }
-    if (selectedCourses.length === 0 && selectedTeams.length === 0 && selectedUsers.length === 0 && selectedMentors.length === 0) {
-      toast.error("Please select at least one course, team, or individual attendee");
+    if (selectedCourses.length === 0 && selectedTeams.length === 0 && selectedUsers.length === 0 && selectedMentors.length === 0 && selectedEvents.length === 0) {
+      toast.error("Please select at least one course, team, event, or individual attendee");
       return;
     }
 
@@ -163,6 +171,7 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
         teamIds: selectedTeams,
         clientIds: selectedClients,
         internshipProgramIds: selectedPrograms,
+        eventIds: selectedEvents,
         userIds: selectedUsers,
         mentorIds: selectedMentors,
         recurrenceDays: formData.type !== "ONCE" ? recurrenceDays : undefined,
@@ -184,6 +193,11 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
   const filteredCourses = ((coursesData as any)?.courses?.items || []).filter((c: any) => 
     (c.title || "").toLowerCase().includes(searchCourses.toLowerCase()) ||
     (c.category || "").toLowerCase().includes(searchCourses.toLowerCase())
+  );
+
+  const filteredEvents = ((eventsData as any)?.events?.items || []).filter((e: any) => 
+    (e.title || "").toLowerCase().includes(searchEvents.toLowerCase()) ||
+    (e.type || "").toLowerCase().includes(searchEvents.toLowerCase())
   );
 
   const CONTEXT_TYPES = [
@@ -421,6 +435,45 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
                       }
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Events/Sessions Selection */}
+              <div className="space-y-4 border-t border-border/10 pt-8">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
+                    <CalendarCheck className="w-3 h-3 text-rose-400" /> Select Events / Sessions
+                  </Label>
+                  <Badge variant="outline" className="text-[8px] font-black uppercase">{selectedEvents.length} Selected</Badge>
+                </div>
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                    <Input placeholder="Search events & sessions..." value={searchEvents} onChange={e => setSearchEvents(e.target.value)} className="pl-8 h-9 rounded-xl text-xs bg-muted/10 border-none" />
+                  </div>
+                  <div className="h-[200px] border border-rose-500/10 rounded-3xl overflow-hidden bg-muted/5 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+                    {eventsLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto mt-10" /> : 
+                      filteredEvents.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center mt-10 italic">No published events or sessions yet</p>
+                      ) : (
+                        filteredEvents.map((e: any) => (
+                          <div key={e.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-rose-500/5 transition-colors cursor-pointer" onClick={() => toggleSelection(e.id, setSelectedEvents)}>
+                             <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedEvents.includes(e.id) ? "bg-rose-500 border-rose-500 text-white" : "border-border/50")}>
+                                {selectedEvents.includes(e.id) && <Check className="w-3 h-3" />}
+                             </div>
+                             <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", e.type === 'bootcamp' ? 'bg-amber-500/10' : 'bg-rose-500/10')}>
+                               {e.type === 'bootcamp' ? <GraduationCap className="w-4 h-4 text-amber-500" /> : <Sparkles className="w-4 h-4 text-rose-500" />}
+                             </div>
+                             <div className="flex-1 truncate">
+                               <p className="text-[10px] font-black uppercase truncate">{e.title}</p>
+                               <p className="text-[8px] text-muted-foreground">{e.type} · {e.startDate ? new Date(e.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'TBD'}</p>
+                             </div>
+                          </div>
+                        ))
+                      )
+                    }
+                  </div>
+                  <p className="text-[8px] text-rose-400/60 italic">Approved/waitlisted applicants of selected events will be notified of this meeting.</p>
                 </div>
               </div>
 

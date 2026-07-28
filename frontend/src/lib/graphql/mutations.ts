@@ -2268,8 +2268,8 @@ export const ASSIGN_PROJECT_TO_TEAM = gql`
 `;
 
 export const CREATE_INTERNSHIP_MEETING = gql`
-  mutation CreateInternshipMeeting($title: String!, $description: String, $startTime: String!, $endTime: String!, $meetLink: String, $type: String!, $contextType: String, $contextTitle: String, $courseIds: [ID!], $teamIds: [ID!], $clientIds: [ID!], $internshipProgramIds: [ID!], $userIds: [ID!], $mentorIds: [ID!], $recurrenceDays: [Int], $recurrenceEndDate: String) {
-    createInternshipMeeting(title: $title, description: $description, startTime: $startTime, endTime: $endTime, meetLink: $meetLink, type: $type, contextType: $contextType, contextTitle: $contextTitle, courseIds: $courseIds, teamIds: $teamIds, clientIds: $clientIds, internshipProgramIds: $internshipProgramIds, userIds: $userIds, mentorIds: $mentorIds, recurrenceDays: $recurrenceDays, recurrenceEndDate: $recurrenceEndDate) {
+  mutation CreateInternshipMeeting($title: String!, $description: String, $startTime: String!, $endTime: String!, $meetLink: String, $type: String!, $contextType: String, $contextTitle: String, $courseIds: [ID!], $teamIds: [ID!], $clientIds: [ID!], $internshipProgramIds: [ID!], $eventIds: [ID!], $userIds: [ID!], $mentorIds: [ID!], $recurrenceDays: [Int], $recurrenceEndDate: String) {
+    createInternshipMeeting(title: $title, description: $description, startTime: $startTime, endTime: $endTime, meetLink: $meetLink, type: $type, contextType: $contextType, contextTitle: $contextTitle, courseIds: $courseIds, teamIds: $teamIds, clientIds: $clientIds, internshipProgramIds: $internshipProgramIds, eventIds: $eventIds, userIds: $userIds, mentorIds: $mentorIds, recurrenceDays: $recurrenceDays, recurrenceEndDate: $recurrenceEndDate) {
       id
       title
       type
