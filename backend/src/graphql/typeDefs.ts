@@ -169,6 +169,11 @@ export const typeDefs = `#graphql
     pagination: PaginationInfo
   }
 
+  type EventResponse {
+    items: [Event]
+    pagination: PaginationInfo
+  }
+
   type InternshipApplicationResponse {
     items: [InternshipApplication]
     pagination: PaginationInfo
@@ -1522,6 +1527,56 @@ export const typeDefs = `#graphql
     # Course Applications
     applyToCourse(courseId: ID!, applicationAnswers: [ApplicationAnswerInput], selectedDeliveryMode: String): CourseApplication
     updateCourseApplicationStatus(applicationId: ID!, status: String!, rejectionReason: String): CourseApplication
+
+    # Event Mutations
+    createEvent(
+      title: String!
+      description: String!
+      shortDescription: String
+      type: String!
+      startDate: String!
+      endDate: String!
+      timezone: String
+      location: String
+      isOnline: Boolean
+      meetingLink: String
+      image: String
+      price: Float
+      currency: String
+      maxAttendees: Int
+      organizerName: String
+      organizerBio: String
+      organizerPhoto: String
+      tags: [String!]
+      status: String
+      featured: Boolean
+    ): Event
+
+    updateEvent(
+      id: ID!
+      title: String
+      description: String
+      shortDescription: String
+      type: String
+      startDate: String
+      endDate: String
+      timezone: String
+      location: String
+      isOnline: Boolean
+      meetingLink: String
+      image: String
+      price: Float
+      currency: String
+      maxAttendees: Int
+      organizerName: String
+      organizerBio: String
+      organizerPhoto: String
+      tags: [String!]
+      status: String
+      featured: Boolean
+    ): Event
+
+    deleteEvent(id: ID!): Boolean
   }
 
   # New Internship Module Types
@@ -1743,6 +1798,10 @@ export const typeDefs = `#graphql
   }
 
   extend type Query {
+    events(page: Int, limit: Int, type: String, status: String, search: String, featured: Boolean, upcoming: Boolean): EventResponse
+    event(id: ID!): Event
+    unifiedEventsAndInternships(page: Int, limit: Int, type: String, search: String, upcoming: Boolean): [UnifiedEventItem]
+
     internshipPrograms(page: Int, limit: Int, search: String, category: String, price: String, level: String, school: String): InternshipProgramResponse
     internshipProgram(id: ID!): InternshipProgram
     internshipApplications(programId: ID, status: String, page: Int, limit: Int): InternshipApplicationResponse
@@ -1936,6 +1995,26 @@ export const typeDefs = `#graphql
   }
 
   # Certificate Types
+  type UnifiedEventItem {
+    id: ID!
+    title: String!
+    description: String!
+    shortDescription: String
+    type: String!
+    source: String! # "event" or "internship"
+    startDate: String
+    endDate: String
+    image: String
+    price: Float
+    currency: String
+    location: String
+    isOnline: Boolean
+    tags: [String]
+    status: String
+    organizerName: String
+    createdAt: String
+  }
+
   type InternshipCertificate {
     id: ID!
     userId: ID!
@@ -1964,6 +2043,35 @@ export const typeDefs = `#graphql
     revokedByUser: User
     revocationReason: String
     createdAt: String
+  }
+
+  type Event {
+    id: ID!
+    title: String!
+    description: String!
+    shortDescription: String
+    type: String!
+    eventType: String!
+    startDate: String!
+    endDate: String!
+    timezone: String!
+    location: String
+    isOnline: Boolean!
+    meetingLink: String
+    image: String
+    price: Float!
+    currency: String!
+    maxAttendees: Int!
+    organizerName: String
+    organizerBio: String
+    organizerPhoto: String
+    tags: [String!]
+    status: String!
+    featured: Boolean!
+    isDeleted: Boolean
+    createdBy: User
+    createdAt: String
+    updatedAt: String
   }
 
   # Meeting Types

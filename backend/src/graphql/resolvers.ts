@@ -69,6 +69,7 @@ const generateMeetLink = (): string => {
 import { GraphQLUpload } from 'graphql-upload';
 import { pusher } from '../lib/pusher';
 import { InternshipProgram } from '../models/internship/InternshipProgram';
+import { Event } from '../models/Event';
 import { InternshipApplication } from '../models/internship/InternshipApplication';
 import { InternshipProject } from '../models/internship/InternshipProject';
 import { InternshipTeam } from '../models/internship/Team';
@@ -2782,6 +2783,132 @@ export const resolvers = {
           hasPreviousPage: page > 1
         }
       };
+    },
+    // Event Queries
+    events: async (_: any, { page = 1, limit = 10, type, status, search, featured, upcoming }: any, context: any) => {
+      const query: any = { isDeleted: false };
+      if (context.user?.role === 'admin') {
+        query.createdBy = context.user.id;
+        if (status) query.status = status;
+      } else if (context.user?.role === 'super_admin') {
+        if (status) query.status = status;
+      } else {
+        query.status = 'published';
+      }
+      if (type) query.type = type;
+      if (featured) query.featured = true;
+      if (upcoming) {
+        query.startDate = { $gte: new Date() };
+      }
+      if (search && search.trim()) {
+        const q = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const searchRegex = new RegExp(q, 'i');
+        query.$or = [
+          { title: searchRegex },
+          { description: searchRegex },
+          { shortDescription: searchRegex },
+          { tags: searchRegex },
+        ];
+      }
+      const skip = (page - 1) * limit;
+      const [items, totalCount] = await Promise.all([
+        Event.find(query).populate('createdBy').sort({ startDate: -1 }).skip(skip).limit(limit),
+        Event.countDocuments(query)
+      ]);
+      const totalPages = Math.ceil(totalCount / limit);
+      return {
+        items,
+        pagination: {
+          totalCount,
+          totalPages,
+          currentPage: page,
+          pageSize: limit,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1
+        }
+      };
+    },
+    event: async (_: any, { id }: { id: string }) => {
+      return await Event.findById(id).populate('createdBy');
+    },
+    unifiedEventsAndInternships: async (_: any, { page = 1, limit = 20, type, search, upcoming }: any, context: any) => {
+      const eventQuery: any = { isDeleted: false, status: 'published' };
+      const internQuery: any = { isDeleted: false, status: { $in: ['active', 'upcoming', 'published', 'open'] } };
+
+      if (upcoming) {
+        eventQuery.startDate = { $gte: new Date() };
+        internQuery.startDate = { $gte: new Date() };
+      }
+
+      if (search && search.trim()) {
+        const q = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const searchRegex = new RegExp(q, 'i');
+        eventQuery.$or = [
+          { title: searchRegex },
+          { description: searchRegex },
+          { shortDescription: searchRegex },
+        ];
+        internQuery.$or = [
+          { title: searchRegex },
+          { description: searchRegex },
+        ];
+      }
+
+      const [events, internships] = await Promise.all([
+        Event.find(eventQuery).sort({ startDate: -1 }).lean(),
+        InternshipProgram.find(internQuery).sort({ startDate: -1 }).lean(),
+      ]);
+
+      const unified = [
+        ...events.map((e: any) => ({
+          id: e._id.toString(),
+          title: e.title,
+          description: e.description,
+          shortDescription: e.shortDescription || '',
+          type: e.type,
+          source: 'event',
+          startDate: e.startDate?.toISOString?.() || e.startDate,
+          endDate: e.endDate?.toISOString?.() || e.endDate,
+          image: e.image,
+          price: e.price,
+          currency: e.currency || 'RWF',
+          location: e.location,
+          isOnline: e.isOnline,
+          tags: e.tags,
+          status: e.status,
+          organizerName: e.organizerName || (e.createdBy as any)?.username || '',
+          createdAt: e.createdAt?.toISOString?.() || e.createdAt,
+        })),
+        ...internships.map((i: any) => ({
+          id: i._id.toString(),
+          title: i.title,
+          description: i.description,
+          shortDescription: i.description?.substring(0, 200),
+          type: i.type || 'internship',
+          source: 'internship',
+          startDate: i.startDate?.toISOString?.() || i.startDate,
+          endDate: i.endDate?.toISOString?.() || i.endDate,
+          image: i.image,
+          price: i.price,
+          currency: i.currency || 'RWF',
+          location: i.allowedDeliveryModes?.includes('physical') ? 'Kigali, Rwanda' : 'Online',
+          isOnline: i.allowedDeliveryModes?.includes('online') && !i.allowedDeliveryModes?.includes('physical'),
+          tags: i.tags || [i.normalizedCategory].filter(Boolean),
+          status: i.status,
+          organizerName: 'Bootskills Academy',
+          createdAt: i.createdAt?.toISOString?.() || i.createdAt,
+        })),
+      ];
+
+      // Sort by startDate descending (most recent first), with fallback to createdAt for items without dates
+      unified.sort((a: any, b: any) => {
+        const dateA = a.startDate ? new Date(a.startDate).getTime() : 0;
+        const dateB = b.startDate ? new Date(b.startDate).getTime() : 0;
+        return dateB - dateA;
+      });
+
+      const skip = (page - 1) * limit;
+      return unified.slice(skip, skip + limit);
     },
     internshipProgram: async (_: any, { id }: { id: string }) => await InternshipProgram.findById(id),
     internshipApplications: async (_: any, { programId, status, page = 1, limit = 10 }: any, context: any) => {
@@ -9424,6 +9551,38 @@ export const resolvers = {
     },
     ...errorReportResolvers.Mutation,
     ...meetingAttendanceResolvers.Mutation,
+
+    // Event Mutations
+    createEvent: async (_: any, args: any, context: any) => {
+      if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+      const event = new Event({
+        ...args,
+        startDate: new Date(args.startDate),
+        endDate: new Date(args.endDate),
+        createdBy: context.user.id,
+      });
+      await event.save();
+      await logActivity(context.user.id, 'CREATE', 'Event', event.id, `Created event: ${event.title}`);
+      return event.populate('createdBy');
+    },
+    updateEvent: async (_: any, { id, ...args }: any, context: any) => {
+      if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+      const updateData: any = { ...args };
+      if (args.startDate) updateData.startDate = new Date(args.startDate);
+      if (args.endDate) updateData.endDate = new Date(args.endDate);
+
+      const event = await Event.findByIdAndUpdate(id, updateData, { new: true }).populate('createdBy');
+      if (!event) throw new Error('Event not found');
+      await logActivity(context.user.id, 'UPDATE', 'Event', id, `Updated event: ${event.title}`);
+      return event;
+    },
+    deleteEvent: async (_: any, { id }: { id: string }, context: any) => {
+      if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+      const event = await Event.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+      if (!event) throw new Error('Event not found');
+      await logActivity(context.user.id, 'DELETE', 'Event', id, `Soft deleted event: ${event.title}`);
+      return true;
+    },
   },
   User: {
     id: (parent: any) => parent.id || parent._id || parent.toString(),

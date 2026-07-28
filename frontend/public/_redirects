@@ -1,0 +1,29 @@
+# ── SPA Fallback ─────────────────────────────────────────────────────────
+# All routes not matched by existing files serve index.html for the SPA
+/*    /index.html    200
+
+# ── Crawler Prerendering ──────────────────────────────────────────────────
+# When a prerender service is active (e.g., prerender.io, netlify-plugin-prerender),
+# bots listed below will get the cached HTML snapshot instead of the SPA.
+#
+# Uncomment the line below and set your prerender service token:
+#   https://service.prerender.io/https://bootskills.com/:splat
+#
+# Bot User-Agents that trigger prerendering:
+#   * Googlebot
+#   * twitterbot
+#   * facebookexternalhit
+#   * linkedinbot
+#   * whatsapp
+#   * telegrambot
+#   * discordbot
+#   * Slackbot
+#   * bingbot
+#   * Applebot
+#   * Google-InspectionTool
+#   * Pinterest
+#   * SemrushBot
+#
+# The service.prerender.io approach:
+#   /*    https://service.prerender.io/https://bootskills.com/:splat    200
+#   ## Condition: User-Agent =~ /(googlebot|twitterbot|facebookexternalhit|linkedinbot|whatsapp|telegrambot)/i

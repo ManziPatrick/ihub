@@ -1,9 +1,11 @@
-import { useQuery as useApolloQuery, type DocumentNode, type TypedDocumentNode, type OperationVariables, type QueryHookOptions, type QueryResult } from "@apollo/client/react";
+import { useQuery as useApolloQuery } from "@apollo/client/react";
+import type { DocumentNode } from "graphql";
+import type { TypedDocumentNode, OperationVariables } from "@apollo/client";
 
 /**
  * Options for `usePaginatedQuery`.
  *
- * Extends Apollo's `QueryHookOptions` so you can pass any standard
+ * Extends Apollo's `useQuery.Options` so you can pass any standard
  * `useQuery` option — variables, skip, pollInterval, onCompleted, etc.
  *
  * The only difference: `fetchPolicy` defaults to `"cache-and-network"`
@@ -19,10 +21,35 @@ import { useQuery as useApolloQuery, type DocumentNode, type TypedDocumentNode, 
  * });
  * ```
  */
-export interface UsePaginatedQueryOptions<
+/** @internal - Extract the options type from Apollo's useQuery namespace */
+type UseQueryOptions<TData, TVariables extends OperationVariables> = Omit<
+  Parameters<typeof useApolloQuery>[1],
+  "fetchPolicy" | "nextFetchPolicy"
+> & { variables?: TVariables };
+
+/**
+ * Options for `usePaginatedQuery`.
+ *
+ * Extends Apollo's `useQuery` options so you can pass any standard
+ * `useQuery` option — variables, skip, pollInterval, onCompleted, etc.
+ *
+ * The only difference: `fetchPolicy` defaults to `"cache-and-network"`
+ * with `nextFetchPolicy: "cache-first"` and
+ * `notifyOnNetworkStatusChange: true`, so every pagination change
+ * triggers a fresh network request while still showing cached data
+ * on repeat visits.
+ *
+ * @example
+ * ```tsx
+ * const { data, loading } = usePaginatedQuery(GET_USERS, {
+ *   variables: { page: currentPage, limit: pageSize },
+ * });
+ * ```
+ */
+export type UsePaginatedQueryOptions<
   TData = any,
-  TVariables = OperationVariables,
-> extends QueryHookOptions<TData, TVariables> {
+  TVariables extends OperationVariables = OperationVariables,
+> = UseQueryOptions<TData, TVariables> & {
   /**
    * When `true`, uses `fetchPolicy: "network-only"` instead of the
    * default `"cache-and-network"`. Useful for pages like error reports
@@ -31,7 +58,7 @@ export interface UsePaginatedQueryOptions<
    * @default false
    */
   networkOnly?: boolean;
-}
+};
 
 /**
  * A drop‑in replacement for Apollo's `useQuery` optimised for
@@ -66,17 +93,17 @@ export interface UsePaginatedQueryOptions<
  */
 export function usePaginatedQuery<
   TData = any,
-  TVariables = OperationVariables,
+  TVariables extends OperationVariables = OperationVariables,
 >(
   query: DocumentNode | TypedDocumentNode<TData, TVariables>,
   options?: UsePaginatedQueryOptions<TData, TVariables>,
-): QueryResult<TData, TVariables> {
+) {
   const { networkOnly, ...rest } = options ?? {};
 
   return useApolloQuery(query, {
-    ...rest,
-    fetchPolicy: rest.fetchPolicy ?? (networkOnly ? "network-only" : "cache-and-network"),
-    nextFetchPolicy: rest.nextFetchPolicy ?? "cache-first",
+    ...(rest as any),
+    fetchPolicy: (rest as any).fetchPolicy ?? (networkOnly ? "network-only" : "cache-and-network"),
+    nextFetchPolicy: (rest as any).nextFetchPolicy ?? "cache-first",
     notifyOnNetworkStatusChange: true,
   });
 }

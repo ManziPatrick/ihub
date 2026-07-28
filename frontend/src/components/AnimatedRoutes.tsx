@@ -23,6 +23,8 @@ const CompanyProfile = lazy(() => import("@/pages/CompanyProfile"));
 const CompanyProfileFR = lazy(() => import("@/pages/CompanyProfileFR"));
 const Contact = lazy(() => import("@/pages/Contact"));
 const InternshipDetail = lazy(() => import("@/pages/InternshipDetail"));
+const Events = lazy(() => import("@/pages/Events"));
+const EventDetail = lazy(() => import("@/pages/EventDetail"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Auth = lazy(() => import("@/pages/Auth"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
@@ -62,6 +64,7 @@ const AdminDashboard = lazy(() => import("@/pages/portal/admin/AdminDashboard"))
 const AdminUsers = lazy(() => import("@/pages/portal/admin/AdminUsers"));
 const AdminCourses = lazy(() => import("@/pages/portal/admin/AdminCourses"));
 const AdminInternships = lazy(() => import("@/pages/portal/admin/AdminInternships"));
+const AdminEvents = lazy(() => import("@/pages/portal/admin/AdminEvents"));
 const AdminProjects = lazy(() => import("@/pages/portal/admin/AdminProjects"));
 const AdminPayments = lazy(() => import("@/pages/portal/admin/AdminPayments"));
 const AdminBadges = lazy(() => import("@/pages/portal/admin/AdminBadges"));
@@ -166,6 +169,8 @@ export function AnimatedRoutes() {
           <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
           <Route path="/blog/:slug" element={<PageTransition><BlogDetail /></PageTransition>} />
           <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+          <Route path="/events" element={<PageTransition><Events /></PageTransition>} />
+          <Route path="/events/:id" element={<PageTransition><EventDetail /></PageTransition>} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/success" element={<PaymentSuccess />} />
@@ -210,6 +215,7 @@ export function AnimatedRoutes() {
           <Route path="/portal/admin/applications" element={<ProtectedRoute allowedRoles={["admin"]}><AdminApplications /></ProtectedRoute>} />
           <Route path="/portal/admin/internships" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInternships /></ProtectedRoute>} />
           <Route path="/portal/admin/internships/create" element={<ProtectedRoute allowedRoles={["admin"]}><CreateInternship /></ProtectedRoute>} />
+          <Route path="/portal/admin/events" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><AdminEvents /></ProtectedRoute>} />
           <Route path="/portal/admin/schedule" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><AdminSchedule /></ProtectedRoute>} />
           <Route path="/portal/internship/meetings" element={<ProtectedRoute allowedRoles={["admin", "trainer", "student"]}><InternshipMeetings /></ProtectedRoute>} />
           <Route path="/portal/admin/projects" element={<ProtectedRoute allowedRoles={["admin"]}><AdminProjects /></ProtectedRoute>} />

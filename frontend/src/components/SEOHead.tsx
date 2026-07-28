@@ -6,13 +6,18 @@ interface SEOHeadProps {
   description: string;
   canonicalUrl?: string;
   ogImage?: string;
+  ogImageAlt?: string;
   ogType?: string;
   keywords?: string;
   author?: string;
+  publishedTime?: string;
+  updatedTime?: string;
+  twitterCard?: "summary_large_image" | "summary" | "player" | "app";
+  noIndex?: boolean;
   children?: React.ReactNode;
 }
 
-const DEFAULT_OG_IMAGE = "https://bootskills.com/og-image.svg";
+const DEFAULT_OG_IMAGE = "https://bootskills.com/og-image.png";
 const SITE_NAME = "Bootskills";
 const BASE_URL = "https://bootskills.com";
 
@@ -31,9 +36,14 @@ export function SEOHead({
   description,
   canonicalUrl,
   ogImage = DEFAULT_OG_IMAGE,
+  ogImageAlt,
   ogType = "website",
   keywords,
   author = "Bootskills",
+  publishedTime,
+  updatedTime,
+  twitterCard = "summary_large_image",
+  noIndex,
   children,
 }: SEOHeadProps) {
   const fullTitle = `${title} | ${SITE_NAME}`;
@@ -54,7 +64,7 @@ export function SEOHead({
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
       <meta name="author" content={author} />
-      <meta name="robots" content="index, follow, max-snippet:200, max-image-preview:large" />
+      <meta name="robots" content={noIndex ? "noindex, nofollow" : "index, follow, max-snippet:200, max-image-preview:large"} />
 
       {/* Canonical URL */}
       <link rel="canonical" href={url} />
@@ -66,7 +76,7 @@ export function SEOHead({
         <link key={code} rel="alternate" hrefLang={code} href={url} />
       ))}
 
-      {/* Open Graph / Facebook */}
+      {/* Open Graph / Facebook / LinkedIn */}
       <meta property="og:type" content={ogType} />
       <meta property="og:url" content={url} />
       <meta property="og:title" content={fullTitle} />
@@ -74,14 +84,18 @@ export function SEOHead({
       <meta property="og:image" content={ogImage} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
+      {ogImageAlt && <meta property="og:image:alt" content={ogImageAlt} />}
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:locale" content={`${htmlLang}_RW`} />
+      {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+      {updatedTime && <meta property="article:modified_time" content={updatedTime} />}
 
-      {/* Twitter */}
-      <meta name="twitter:card" content="summary_large_image" />
+      {/* Twitter Cards */}
+      <meta name="twitter:card" content={twitterCard} />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
+      {ogImageAlt && <meta name="twitter:image:alt" content={ogImageAlt} />}
       <meta name="twitter:site" content="@bootskills" />
 
       {/* Geo tags for local SEO */}
