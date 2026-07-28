@@ -466,10 +466,30 @@ export default function CoursePage() {
                       >
                         <CheckCircle className="w-5 h-5 mr-2" /> Learning
                       </Button>
+                    ) : appStatus === 'approved' && course.price > 0 ? (
+                      <Button
+                        variant="gold"
+                        className="w-full h-12 text-lg font-bold shadow-lg shadow-gold/20"
+                        onClick={() => {
+                          addToCart({
+                            id: course.id || course._id,
+                            title: course.title,
+                            price: course.price,
+                            discountPrice: course.discountPrice,
+                            type: "course",
+                            image: course.thumbnail || course.image
+                          });
+                        }}
+                      >
+                        <ShoppingCart className="w-5 h-5 mr-2" /> Pay Now to Enroll
+                      </Button>
                     ) : appStatus === 'approved' ? (
                       <Button
                         className="w-full bg-green-600 hover:bg-green-700 h-12 text-lg font-bold"
-                        onClick={() => navigate(`/portal/student/courses/${course.id || course._id}`)}
+                        onClick={async () => {
+                          await enrollMutation({ variables: { courseId: course.id || course._id } });
+                          navigate(`/portal/student/courses/${course.id || course._id}`);
+                        }}
                       >
                         <ArrowRight className="w-5 h-5 mr-2" /> Continue
                       </Button>

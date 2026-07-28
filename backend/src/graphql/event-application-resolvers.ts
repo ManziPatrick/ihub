@@ -104,7 +104,7 @@ export const eventApplicationResolvers = {
               type: 'application_status_update',
               title: `Application ${status}`,
               message: `Your application for "${event?.title || 'the event'}" has been ${status}.${rejectionReason ? ` Reason: ${rejectionReason}` : ''}`,
-              link: `/events/${eventId}`,
+              link: `/events/${event}`,
             }
           );
         }
