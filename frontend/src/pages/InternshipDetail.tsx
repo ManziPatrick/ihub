@@ -80,7 +80,7 @@ export default function InternshipDetail() {
         <Header />
         <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
           <AlertCircle className="w-12 h-12 text-muted-foreground/30" />
-          <p className="text-muted-foreground font-medium">Internship program not found</p>
+          <p className="text-muted-foreground font-medium">Program not found</p>
           <Button variant="outline" onClick={() => navigate("/explore")}>
             Browse Programs
           </Button>
@@ -128,7 +128,7 @@ export default function InternshipDetail() {
     <div className="min-h-screen bg-background">
       <SEOHead
         title={program.title || "Internship Program"}
-        description={stripHtml(program.description)?.substring(0, 160) || "Apply for this internship program at Bootskills."}
+        description={stripHtml(program.description)?.substring(0, 160) || "Apply for this program at Bootskills."}
         canonicalUrl={program.id ? `https://bootskills.com/internship/${program.id}` : "https://bootskills.com/internships"}
         ogImage={program.image || undefined}
         keywords={`${program.category || 'internship'}, ${program.title || 'program'}, internship Rwanda, Kigali training, practical experience, career development`}
@@ -138,7 +138,7 @@ export default function InternshipDetail() {
             "@context": "https://schema.org",
             "@graph": [
               organizationLd,
-              webPageLd(program.title || "Internship Program", stripHtml(program.description)?.substring(0, 160) || "Internship program at Bootskills.", `https://bootskills.com/internship/${program.id}`),
+              webPageLd(program.title || "Program", stripHtml(program.description)?.substring(0, 160) || "Program at Bootskills.", `https://bootskills.com/internship/${program.id}`),
               breadcrumbListLd([
                 { name: "Home", item: "/" },
                 { name: "Internships", item: "/internships" },
@@ -162,7 +162,7 @@ export default function InternshipDetail() {
                 className="space-y-4"
               >
                 <Badge variant="secondary" className="bg-accent/10 text-accent border-0">
-                  <Briefcase className="w-3 h-3 mr-1" /> Internship Program
+                  <Briefcase className="w-3 h-3 mr-1" /> Program
                 </Badge>
                 <h1 className="text-3xl lg:text-4xl font-bold font-heading">
                   {program.title}

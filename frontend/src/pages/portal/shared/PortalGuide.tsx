@@ -187,7 +187,7 @@ const studentGuide: RoleGuide = {
         },
         {
           icon: Briefcase,
-          title: "Internship",
+          title: "Program",
           path: "/portal/student/internship",
           description:
             "Apply for internship placement once you meet eligibility (80% course completion). Upload payment proof and wait for admin approval to start your internship.",
@@ -210,7 +210,7 @@ const studentGuide: RoleGuide = {
           description:
             "Manage all your payments in one place. Enroll in paid courses, view your payment history, download receipts, and track billing status. Supports mobile money and card payments.",
           tips: [
-            "Keep your receipts — you'll need them for internship applications.",
+            "Keep your receipts — you'll need them for program applications.",
             "Payments are processed securely via mobile money or credit/debit card.",
             "Contact support if you have billing questions or issues.",
           ],
@@ -467,12 +467,12 @@ const adminGuide: RoleGuide = {
         },
         {
           icon: Briefcase,
-          title: "Internships",
+          title: "Programs",
           path: "/portal/admin/internships",
           description:
-            "Manage internship programs, track intern progress, assign supervisors, and oversee the entire internship lifecycle.",
+            "Manage programs, track intern progress, assign supervisors, and oversee the entire program lifecycle.",
           tips: [
-            "Create structured internship programs with clear milestones.",
+            "Create structured programs with clear milestones.",
             "Assign experienced trainers as intern supervisors.",
             "Track intern progress weekly to ensure they're on schedule.",
           ],

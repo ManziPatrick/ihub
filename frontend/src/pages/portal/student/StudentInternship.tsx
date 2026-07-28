@@ -26,7 +26,7 @@ import {
   Rocket
 } from "lucide-react";
 import { 
-  ApplyInternshipDialog, 
+  ApplyProgramDialog, 
   BookCallDialog, 
   TeamChatDialog, 
   ProjectDetailsDialog, 
@@ -38,9 +38,9 @@ import { GET_MY_INTERNSHIP } from "@/lib/graphql/queries";
 import { toast } from "sonner";
 import DailyStandup from "@/components/portal/student/DailyStandup";
 import { AIHelper } from "@/components/portal/AIHelper";
-import { DailyInternshipDashboard } from "@/components/portal/student/DailyInternshipDashboard";
+import { DailyProgramDashboard } from "@/components/portal/student/DailyProgramDashboard";
 
-export default function StudentInternship() {
+export default function StudentProgram() {
   const [activeProject, setActiveProject] = useState<any>(null);
   const [bookCallOpen, setBookCallOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -50,7 +50,7 @@ export default function StudentInternship() {
 
   const { data, loading, error, refetch } = useQuery(GET_MY_INTERNSHIP);
 
-  const internship = (data as any)?.myInternship;
+  const internship = (data as any)?.myProgram;
 
   const safeFormatDate = (dateStr: string) => {
     try {
@@ -101,13 +101,13 @@ export default function StudentInternship() {
   return (
     <PortalLayout>
       <div className="space-y-6 pb-12">
-        {internship && <DailyInternshipDashboard username={internship.user?.username || "Scholar"} />}
+        {internship && <DailyProgramDashboard username={internship.user?.username || "Scholar"} />}
         
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="font-heading text-2xl lg:text-3xl font-medium text-foreground">
-              Your Internship Journey
+              Your Program Journey
             </h1>
             <p className="text-muted-foreground mt-1">
               Master professional skills through real-world academy projects
@@ -134,7 +134,7 @@ export default function StudentInternship() {
               </p>
               <Link to="/portal/student/internships">
                 <Button variant="gold" size="lg" className="h-14 px-10 rounded-2xl shadow-premium hover:-translate-y-1 transition-all">
-                  Browse Internship Tracks <ArrowRight className="w-5 h-5 ml-2" />
+                  Browse Program Tracks <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
             </CardContent>
@@ -375,7 +375,7 @@ export default function StudentInternship() {
               <Card className="border-border/50 p-6">
                 <h3 className="font-bold mb-4 flex items-center gap-2">
                   <Activity className="w-5 h-5 text-accent" />
-                  Internship Activity
+                  Program Activity
                 </h3>
                 <div className="space-y-4">
                   {internship.activityLog?.map((log: any, idx: number) => (
@@ -435,7 +435,7 @@ export default function StudentInternship() {
           onOpenChange={setProofDialogOpen}
           payment={{
             id: internship.payment.id || internship.id,
-            itemTitle: "Internship Application Fee",
+            itemTitle: "Program Application Fee",
             amount: internship.payment.amount || 20000,
             currency: internship.payment.currency || "RWF"
           }}

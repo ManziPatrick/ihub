@@ -25,7 +25,7 @@ const testimonials = [
   },
   {
     id: 3,
-    quote: "From training to internship to full-time employment, Bootskills's network opened doors I never knew existed.",
+    quote: "From training to program to full-time employment, Bootskills's network opened doors I never knew existed.",
     author: "Jean Paul N.",
     role: "IoT Engineer",
     company: "SmartFarm Solutions",

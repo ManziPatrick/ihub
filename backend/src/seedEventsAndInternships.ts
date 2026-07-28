@@ -350,7 +350,7 @@ async function seedEventsAndInternships() {
             status,
             applicationAnswers: [
               { questionLabel: 'Why do you want to attend?', answer: `I'm very interested in ${event.title} to enhance my skills.` },
-              { questionLabel: 'Any prior experience?', answer: student.skills || 'Some relevant background' },
+              { questionLabel: 'Any prior experience?', answer: 'Some relevant background' },
             ],
             selectedDeliveryMode: event.isOnline ? 'online' : 'physical',
             isDeleted: false,

@@ -21,7 +21,7 @@ const values = [
 ];
 
 const achievements = [
-  { number: "250+", label: "Successful Interns" },
+  { number: "250+", label: "Successful Graduates" },
   { number: "15+", label: "Real-world Projects" },
   { number: "10+", label: "AI Solutions Built" },
   { number: "100%", label: "Practical Focus" },
@@ -48,7 +48,7 @@ const services = [
   },
   {
     icon: Briefcase,
-    title: "Structured Internships",
+    title: "Structured Programs",
     description: "Simulated workplace environments working on real projects with professional mentorship.",
   },
   {

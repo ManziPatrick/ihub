@@ -116,17 +116,17 @@ const Internships = () => {
               animate={{ opacity: 1, y: 0 }}
             >
               <span className="inline-block px-4 py-1 bg-accent/20 text-accent text-sm font-medium rounded-full mb-4">
-                Internship Programs
+                Program Programs
               </span>
               <h1 className="font-heading text-3xl lg:text-5xl font-medium text-card-foreground mb-6">
                 Gain Real-World Experience That Matters
               </h1>
               <p className="text-card-foreground/80 max-w-2xl mx-auto text-lg">
-                Bridge the gap between learning and employment with our structured internship programs.
+                Bridge the gap between learning and employment with our structured programs.
                 Work on real projects, get mentored by experts, and build a portfolio that stands out.
               </p>
               <div className="flex flex-wrap justify-center gap-4 mt-8">
-                <AuthAwareLink variant="gold" size="lg" to="/portal/student/internship">Apply for Internship</AuthAwareLink>
+                <AuthAwareLink variant="gold" size="lg" to="/portal/student/internship">Apply for Program</AuthAwareLink>
                 <Link to="/explore">
                   <Button variant="outline" size="lg">View Training First</Button>
                 </Link>
@@ -144,12 +144,12 @@ const Internships = () => {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <span className="text-accent text-sm font-medium uppercase tracking-wider">Why Intern With Us</span>
+              <span className="text-accent text-sm font-medium uppercase tracking-wider">Why Join a Program</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-foreground mt-2 mb-4">
                 What You'll Gain
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Our internships are designed to give you the practical experience employers want to see,
+                Our programs are designed to give you the practical experience employers want to see,
                 combined with the support you need to succeed.
               </p>
             </motion.div>
@@ -206,7 +206,7 @@ const Internships = () => {
           </div>
         </section>
 
-        {/* Available Internships */}
+        {/* Available Programs */}
         <section className="py-16 lg:py-20 bg-card">
           <div className="container mx-auto px-4 lg:px-8">
             <motion.div
@@ -217,13 +217,13 @@ const Internships = () => {
             >
               <span className="text-accent text-sm font-medium uppercase tracking-wider">Open Positions</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mt-2">
-                Available Internships
+                Available Programs
               </h2>
             </motion.div>
             <div className="grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
               {internshipPrograms.length === 0 && !internsLoading ? (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">No internship programs available at the moment.</p>
+                  <p className="text-muted-foreground">No programs available at the moment.</p>
                 </div>
               ) : (
                 internshipPrograms.map((intern: any, index: number) => {
@@ -406,7 +406,7 @@ const Internships = () => {
               viewport={{ once: true }}
             >
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-foreground mb-4">
-                Ready to Start Your Internship?
+                Ready to Start Your Program?
               </h2>
               <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
                 Applications are reviewed on a rolling basis. Apply early to secure your spot

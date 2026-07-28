@@ -127,7 +127,7 @@ export default function ProgramList() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-black text-foreground">Internship Programs</h2>
+          <h2 className="text-xl font-black text-foreground">Programs</h2>
           <p className="text-sm text-muted-foreground mt-0.5">{programs.length} program{programs.length !== 1 ? 's' : ''} total</p>
         </div>
         <div className="flex gap-2">
@@ -402,7 +402,7 @@ export default function ProgramList() {
         <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border/50 rounded-3xl">
           <AlertCircle className="w-12 h-12 text-muted-foreground/30 mb-4" />
           <p className="text-lg font-bold text-muted-foreground">No programs yet</p>
-          <p className="text-sm text-muted-foreground/60 mt-1">Create your first internship program to get started.</p>            <Button className="mt-6 gap-2 bg-accent text-accent-foreground" onClick={() => navigate('/portal/admin/internships/create')}>
+          <p className="text-sm text-muted-foreground/60 mt-1">Create your first program to get started.</p>            <Button className="mt-6 gap-2 bg-accent text-accent-foreground" onClick={() => navigate('/portal/admin/internships/create')}>
             <Plus className="w-4 h-4" />
             Create Program
           </Button>

@@ -63,7 +63,7 @@ export const MeetingScheduler: React.FC<MeetingSchedulerProps> = ({ internshipId
           Schedule a Meeting
         </CardTitle>
         <CardDescription>
-          Set up a 1-on-1 or group sync for this internship program.
+          Set up a 1-on-1 or group sync for this program.
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -642,7 +642,7 @@ function InternshipCelebrationTemplate({ config }: { config: TemplateConfig }) {
           {config.customImage && <CustomImageDisplay src={config.customImage} />}
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold mb-3">
             <GraduationCap className="w-3 h-3" />
-            Internship Program
+            Program
           </div>
           <h2 className="text-xl md:text-2xl font-extrabold text-emerald-900 leading-tight mb-1">
             {config.headline || `Join Our Team: ${intern.role}`}
@@ -1217,7 +1217,7 @@ export default function SocialPostGenerator() {
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { value: "course" as PostType, label: "Course", icon: BookOpen },
-                  { value: "internship" as PostType, label: "Internship", icon: Briefcase },
+                  { value: "internship" as PostType, label: "Program", icon: Briefcase },
                   { value: "greeting" as PostType, label: "Greeting", icon: Heart },
                 ].map(({ value, label, icon: Icon }) => (
                   <button

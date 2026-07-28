@@ -66,7 +66,7 @@ export function CommissionSidebar({ report, loading, error, onRefresh }: Commiss
     switch (s) {
       case "global": return "Global";
       case "course": return "Courses";
-      case "internship": return "Internships";
+      case "internship": return "Programs";
       default: return s;
     }
   };

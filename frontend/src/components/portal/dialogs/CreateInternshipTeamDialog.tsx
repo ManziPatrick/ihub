@@ -253,7 +253,7 @@ export function CreateInternshipTeamDialog({ open, onOpenChange, preSelectedProg
           )}
 
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground pl-1">Internship Program</Label>
+            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground pl-1">Program</Label>
             <Select
               value={formData.internshipProgramId}
               disabled={!!preSelectedProgramId}

@@ -67,7 +67,7 @@ export function ProjectMarketplace() {
 
     const categories = [
         { id: "all", label: "All Projects" },
-        { id: "Internship", label: "Internship" },
+        { id: "Program", label: "Program" },
         { id: "Training", label: "Training" },
         { id: "Capstone", label: "Capstone" },
         { id: "Other", label: "Other" },

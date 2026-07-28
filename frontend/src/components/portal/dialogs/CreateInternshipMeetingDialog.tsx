@@ -311,7 +311,7 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
                          contextType === 'session' ? 'The live session this meeting is part of' :
                          contextType === 'project' ? 'The project this meeting is related to' :
                          contextType === 'client' ? 'The client this meeting is for' :
-                         'The internship program this meeting is for'}
+                         'The program this meeting is for'}
                       </p>
                     </div>
                   )}
@@ -529,12 +529,12 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
                 </div>
               )}
 
-              {/* Internship Programs Selection */}
+              {/* Programs Selection */}
               {showSection.programs && (
                 <div className="space-y-4 border-t border-border/10 pt-8">
                   <div className="flex items-center justify-between">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
-                      <GraduationCap className="w-3 h-3 text-amber-400" /> Select Internship Programs
+                      <GraduationCap className="w-3 h-3 text-amber-400" /> Select Programs
                     </Label>
                     <Badge variant="outline" className="text-[8px] font-black uppercase">{selectedPrograms.length} Selected</Badge>
                   </div>

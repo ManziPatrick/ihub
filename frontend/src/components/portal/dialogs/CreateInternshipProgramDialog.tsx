@@ -35,7 +35,7 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
   const [createProgram, { loading }] = useMutation(CREATE_INTERNSHIP_PROGRAM, {
     refetchQueries: [{ query: GET_INTERNSHIP_PROGRAMS }, { query: GET_ADMIN_DASHBOARD_DATA }],
     onCompleted: () => {
-      toast.success('Internship program created successfully');
+      toast.success('Program created successfully');
       onOpenChange(false);
       setFormData({
         title: '',
@@ -70,7 +70,7 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Internship Program</DialogTitle>
+          <DialogTitle>Create Program</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

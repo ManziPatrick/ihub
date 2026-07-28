@@ -44,7 +44,7 @@ export default function AdminInternships() {
         >
           <div>
             <h1 className="font-heading text-2xl lg:text-3xl font-medium text-foreground">
-              Internship Command Center
+              Program Command Center
             </h1>
             <p className="text-muted-foreground mt-1">
               Manage programs, review applications, and track team progress across the academy.

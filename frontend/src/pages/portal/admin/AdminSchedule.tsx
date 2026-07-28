@@ -39,7 +39,7 @@ import {
   CalendarCheck,
   Sparkles
 } from "lucide-react";
-import { ViewSessionDialog, CreateInternshipMeetingDialog } from "@/components/portal/dialogs";
+import { ViewSessionDialog, CreateProgramMeetingDialog } from "@/components/portal/dialogs";
 import { toast } from "sonner";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_ALL_BOOKINGS, GET_INTERNSHIP_MEETINGS, GET_MEETING_ATTENDANCE } from "@/lib/graphql/queries";
@@ -51,7 +51,7 @@ const CONTEXT_FILTERS = [
   { id: 'course', label: 'Courses', icon: BookOpen },
   { id: 'project', label: 'Projects', icon: Layout },
   { id: 'client', label: 'Clients', icon: Building2 },
-  { id: 'internship', label: 'Internships', icon: GraduationCap },
+  { id: 'internship', label: 'Programs', icon: GraduationCap },
   { id: 'event', label: 'Events', icon: CalendarCheck },
   { id: 'session', label: 'Sessions', icon: Sparkles },
 ];
@@ -70,7 +70,7 @@ export default function AdminSchedule() {
   const { data: bookingsData, loading: bookingsLoading } = useQuery(GET_ALL_BOOKINGS, {
     variables: { limit: 100 }
   });
-  const { data: meetingsData, loading: meetingsLoading, refetch: refetchInternshipMeetings } = useQuery(GET_INTERNSHIP_MEETINGS, {
+  const { data: meetingsData, loading: meetingsLoading, refetch: refetchProgramMeetings } = useQuery(GET_INTERNSHIP_MEETINGS, {
     variables: contextFilter !== 'all' ? { contextType: contextFilter } : {},
   });
   const { data: attendanceData, loading: attendanceLoading } = useQuery(GET_MEETING_ATTENDANCE, {
@@ -80,7 +80,7 @@ export default function AdminSchedule() {
   const [batchMarkAttendance] = useMutation(BATCH_MARK_ATTENDANCE);
 
   const bookings = (bookingsData as any)?.bookings?.items || [];
-  const internshipMeetings = (meetingsData as any)?.getInternshipMeetings || [];
+  const internshipMeetings = (meetingsData as any)?.getProgramMeetings || [];
   const meetingAttendees = (attendanceData as any)?.getMeetingAttendance || [];
 
   // Expand recurring meetings
@@ -241,7 +241,7 @@ export default function AdminSchedule() {
     course: { label: 'Course', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
     project: { label: 'Project', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
     client: { label: 'Client', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-    internship: { label: 'Internship', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    internship: { label: 'Program', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
     event: { label: 'Event', color: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
     session: { label: 'Session', color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
     general: { label: 'General', color: 'bg-gold/10 text-gold border-gold/20' },
@@ -587,10 +587,10 @@ export default function AdminSchedule() {
           link: viewSession?.meetingLink || viewSession?.link,
         }}
         onJoin={() => handleJoinSession(viewSession?.meetingLink || viewSession?.link)}
-        onMeetingUpdated={() => { refetchInternshipMeetings?.(); }}
+        onMeetingUpdated={() => { refetchProgramMeetings?.(); }}
       />
 
-      <CreateInternshipMeetingDialog
+      <CreateProgramMeetingDialog
         open={scheduleOpen}
         onOpenChange={setScheduleOpen}
       />

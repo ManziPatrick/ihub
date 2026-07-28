@@ -182,7 +182,7 @@ export function EditInternshipProjectDialog({ open, onOpenChange, refetch, proje
                         {step === 1 && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="space-y-2">
-                                    <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Internship Program Track</Label>
+                                    <Label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Program Track</Label>
                                     <Select
                                         value={formData.internshipProgramId}
                                         onValueChange={(val) => setFormData({ ...formData, internshipProgramId: val })}

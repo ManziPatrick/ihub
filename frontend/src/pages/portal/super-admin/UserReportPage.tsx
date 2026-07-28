@@ -390,7 +390,7 @@ export default function UserReportPage() {
           <StatCard icon={GraduationCap} label="Courses" value={stats.totalCourses} sub={`${stats.totalCoursesCompleted} completed`} color="bg-accent/10" />
           <StatCard icon={Star} label="Avg Grade" value={stats.averageGrade ?? "—"} sub={`${stats.totalGrades} graded`} color="bg-amber-500/10" />
           <StatCard icon={BookOpen} label="Lessons Done" value={stats.totalLessonsCompleted} sub={`${stats.courseCompletionRate}% rate`} color="bg-blue-500/10" />
-          <StatCard icon={Briefcase} label="Internships" value={stats.totalInternships} sub={`${stats.activeInternships} active`} color="bg-purple-500/10" />
+          <StatCard icon={Briefcase} label="Programs" value={stats.totalInternships} sub={`${stats.activeInternships} active`} color="bg-purple-500/10" />
           <StatCard icon={FileText} label="Projects" value={stats.totalProjects} sub={`${stats.completedProjects} done`} color="bg-green-500/10" />
           <StatCard icon={Activity} label="Submissions" value={stats.totalSubmissions} sub={`${stats.passedSubmissions} passed`} color="bg-rose-500/10" />
         </motion.div>

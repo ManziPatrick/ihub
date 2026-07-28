@@ -117,7 +117,7 @@ export default function ApplicantManager() {
   const {
     data: internshipAppsData,
     loading: internshipAppsLoading,
-    refetch: refetchInternshipApps,
+    refetch: refetchProgramApps,
   } = useQuery(GET_INTERNSHIP_APPLICATIONS, {
     variables: {
       programId: selectedItem?.source === 'internship' ? selectedItem.id : undefined,
@@ -142,8 +142,8 @@ export default function ApplicantManager() {
   });
 
   // ── Mutations ────────────────────────────────────────────────────────
-  const [reviewInternshipApp] = useMutation(REVIEW_INTERNSHIP_APPLICATION, {
-    onCompleted: () => { refetchInternshipApps(); refetchPrograms(); },
+  const [reviewProgramApp] = useMutation(REVIEW_INTERNSHIP_APPLICATION, {
+    onCompleted: () => { refetchProgramApps(); refetchPrograms(); },
   });
   const [reviewEventApp] = useMutation(REVIEW_EVENT_APPLICATION, {
     onCompleted: () => { refetchEventApps(); refetchEvents(); },
@@ -184,7 +184,7 @@ export default function ApplicantManager() {
     e.stopPropagation();
     try {
       if (app.source === 'internship') {
-        await reviewInternshipApp({ variables: { id: app.id, status } });
+        await reviewProgramApp({ variables: { id: app.id, status } });
       } else {
         await reviewEventApp({ variables: { id: app.id, status } });
       }
@@ -201,7 +201,7 @@ export default function ApplicantManager() {
     setPage(1);
   };
 
-  const isInternship = (item: any) => item.source === 'internship';
+  const isProgram = (item: any) => item.source === 'internship';
   const isEvent = (item: any) => item.source === 'event';
 
   const getStatusBadge = (status: string) => {
@@ -285,24 +285,24 @@ export default function ApplicantManager() {
                 >
                   <CardContent className="p-0">
                     <div className={`h-1.5 bg-gradient-to-r ${
-                      isInternship(item) ? 'from-accent/60 to-accent/30' : 'from-purple-500/60 to-pink-500/30'
+                      isProgram(item) ? 'from-accent/60 to-accent/30' : 'from-purple-500/60 to-pink-500/30'
                     }`} />
                     <div className="p-5">
                       {/* Icon + Status */}
                       <div className="flex items-start justify-between mb-3">
                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center group-hover:opacity-80 transition-colors ${
-                          isInternship(item) ? 'bg-accent/10' : 'bg-purple-500/10'
+                          isProgram(item) ? 'bg-accent/10' : 'bg-purple-500/10'
                         }`}>
-                          <SourceIcon source={item.source} className={`w-5.5 h-5.5 ${isInternship(item) ? 'text-accent' : 'text-purple-500'}`} />
+                          <SourceIcon source={item.source} className={`w-5.5 h-5.5 ${isProgram(item) ? 'text-accent' : 'text-purple-500'}`} />
                         </div>
                         <div className="flex items-center gap-1.5">
                           {/* Source badge */}
                           <Badge className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0 ${
-                            isInternship(item)
+                            isProgram(item)
                               ? 'bg-accent/10 text-accent border-accent/20'
                               : 'bg-purple-500/10 text-purple-600 border-purple-500/20'
                           }`}>
-                            {isInternship(item) ? 'Internship' : item.type || 'Event'}
+                            {isProgram(item) ? 'Program' : item.type || 'Event'}
                           </Badge>
                           <Badge variant="outline"
                             className={`text-[10px] font-bold capitalize border-border/50 ${
@@ -337,7 +337,7 @@ export default function ApplicantManager() {
                           <Calendar className="w-3 h-3" />
                           {formatDate(item.startDate || item.createdAt)}
                         </span>
-                        {isInternship(item) && item.duration && (
+                        {isProgram(item) && item.duration && (
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {item.duration}
@@ -371,7 +371,7 @@ export default function ApplicantManager() {
     ? allItems.find((i: any) => i.id === selectedItem.id && i.source === selectedItem.source)?.title || 'Selected'
     : 'All Programs & Events';
 
-  const sourceLabel = currentSource === 'internship' ? 'Internship' : 'Event';
+  const sourceLabel = currentSource === 'internship' ? 'Program' : 'Event';
 
   return (
     <div className="space-y-6">
@@ -423,7 +423,7 @@ export default function ApplicantManager() {
             variant="outline"
             className="h-8 rounded-lg text-[10px] font-black uppercase tracking-wider gap-1"
             onClick={() => {
-              refetchInternshipApps();
+              refetchProgramApps();
               refetchEventApps();
               toast.success('Refreshed');
             }}
@@ -453,14 +453,14 @@ export default function ApplicantManager() {
           </div>
         ) : (
           apps.map((app: any) => {
-            const appIsInternship = app.source === 'internship';
-            const entityTitle = appIsInternship
+            const appIsProgram = app.source === 'internship';
+            const entityTitle = appIsProgram
               ? app.internshipProgram?.title
               : app.event?.title;
-            const skills = appIsInternship ? app.skills || [] : [];
-            const availability = appIsInternship ? app.availability : null;
-            const portfolioUrl = appIsInternship ? app.portfolioUrl : null;
-            const resumeUrl = appIsInternship ? app.resumeUrl : null;
+            const skills = appIsProgram ? app.skills || [] : [];
+            const availability = appIsProgram ? app.availability : null;
+            const portfolioUrl = appIsProgram ? app.portfolioUrl : null;
+            const resumeUrl = appIsProgram ? app.resumeUrl : null;
 
             return (
               <Card
@@ -498,7 +498,7 @@ export default function ApplicantManager() {
                           </div>
                           {entityTitle && (
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                              {appIsInternship ? (
+                              {appIsProgram ? (
                                 <Briefcase className="w-3.5 h-3.5 text-accent/60" />
                               ) : (
                                 <Sparkles className="w-3.5 h-3.5 text-accent/60" />
@@ -583,7 +583,7 @@ export default function ApplicantManager() {
                                       <p className="font-bold">{app.user?.email}</p>
                                     </div>
                                   </div>
-                                  {appIsInternship && (
+                                  {appIsProgram && (
                                     <div className="flex items-center gap-3 text-sm">
                                       <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center border border-border/50">
                                         <Phone className="w-4 h-4 text-muted-foreground" />
@@ -597,7 +597,7 @@ export default function ApplicantManager() {
                                 </div>
                               </div>
 
-                              {appIsInternship && (
+                              {appIsProgram && (
                                 <div>
                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-accent mb-4">Skills</h4>
                                   <div className="flex flex-wrap gap-1.5">
@@ -612,14 +612,14 @@ export default function ApplicantManager() {
                                 </div>
                               )}
 
-                              {appIsInternship && availability && (
+                              {appIsProgram && availability && (
                                 <div className="p-3 bg-background/50 rounded-xl border border-border/30">
                                   <p className="text-[10px] font-black uppercase tracking-widest text-accent mb-1">Availability</p>
                                   <p className="text-sm font-bold">{availability}</p>
                                 </div>
                               )}
 
-                              {!appIsInternship && app.event && (
+                              {!appIsProgram && app.event && (
                                 <div className="p-3 bg-background/50 rounded-xl border border-border/30">
                                   <p className="text-[10px] font-black uppercase tracking-widest text-accent mb-1">Event Type</p>
                                   <p className="text-sm font-bold capitalize">{app.event.type}</p>
@@ -630,7 +630,7 @@ export default function ApplicantManager() {
                                 </div>
                               )}
 
-                              {appIsInternship && (portfolioUrl || resumeUrl) && (
+                              {appIsProgram && (portfolioUrl || resumeUrl) && (
                                 <div>
                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-accent mb-3">Links</h4>
                                   <div className="flex flex-wrap gap-2">
@@ -679,9 +679,9 @@ export default function ApplicantManager() {
                                   <UserCheck className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                                   <div>
                                     <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                      Applying for <strong className="text-foreground">&ldquo;{entityTitle || (appIsInternship ? 'Program' : 'Event')}&rdquo;</strong>
-                                      {appIsInternship && `. Listed ${skills.length || 0} skills.`}
-                                      {appIsInternship && availability && ` Availability: ${availability}.`}
+                                      Applying for <strong className="text-foreground">&ldquo;{entityTitle || (appIsProgram ? 'Program' : 'Event')}&rdquo;</strong>
+                                      {appIsProgram && `. Listed ${skills.length || 0} skills.`}
+                                      {appIsProgram && availability && ` Availability: ${availability}.`}
                                     </p>
                                     {app.status === 'approved' && (
                                       <p className="text-[11px] text-green-600 font-bold mt-1">✓ Approved — ready to proceed.</p>
@@ -689,7 +689,7 @@ export default function ApplicantManager() {
                                     {app.status === 'rejected' && app.rejectionReason && (
                                       <p className="text-[11px] text-red-600 mt-1">✗ Reason: {app.rejectionReason}</p>
                                     )}
-                                    {!appIsInternship && app.selectedDeliveryMode && (
+                                    {!appIsProgram && app.selectedDeliveryMode && (
                                       <p className="text-[11px] text-muted-foreground mt-1">
                                         Delivery mode: <strong className="text-foreground">{app.selectedDeliveryMode}</strong>
                                       </p>

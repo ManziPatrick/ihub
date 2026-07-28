@@ -20,7 +20,7 @@ export function InternshipsSection() {
             <div className="aspect-[4/3] rounded-lg overflow-hidden bg-background/10 shadow-card">
               <ImageWithSkeleton
                 src={internshipImage}
-                alt="Internship program"
+                alt="Program"
                 className="w-full h-full object-cover"
                 containerClassName="w-full h-full"
               />
@@ -44,7 +44,7 @@ export function InternshipsSection() {
             className="order-1 lg:order-2"
           >
             <h2 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mb-2">
-              Internships & Work Experience
+              Programs & Work Experience
             </h2>
             <p className="text-accent text-sm mb-4">Bridging Education and Employment</p>
             
@@ -68,7 +68,7 @@ export function InternshipsSection() {
 
             <div className="flex flex-col sm:flex-row gap-3">
               <AuthAwareLink variant="gold" size="sm">
-                Apply for Internship
+                Apply for Program
               </AuthAwareLink>
               <AuthAwareLink 
                 variant="heroOutline" 

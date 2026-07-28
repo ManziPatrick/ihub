@@ -48,7 +48,7 @@ export default function TrainerInternships() {
                 >
                     <div>
                         <h1 className="font-heading text-2xl lg:text-3xl font-medium text-foreground">
-                            Internship Management
+                            Program Management
                         </h1>
                         <p className="text-muted-foreground mt-1">
                             Review applications, manage your teams, and track intern progress.

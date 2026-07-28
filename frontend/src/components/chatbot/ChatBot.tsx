@@ -113,7 +113,7 @@ type GreetingQueryData = {
       }]);
     } else if (greetingError) {
       greetingSet.current = true;
-      setMessages([{ role: 'assistant', content: 'Hello! 👋 Welcome to **Bootskills Academy Hub**! How can I assist you today?\n\nFeel free to ask about:\n- **Courses** we offer\n- **Internship programs**\n- **Mentorship bookings**\n- Help with a **technical blocker**\n\nJust let me know what you\'d like to do!' }]);
+      setMessages([{ role: 'assistant', content: 'Hello! 👋 Welcome to **Bootskills Academy Hub**! How can I assist you today?\n\nFeel free to ask about:\n- **Courses** we offer\n- **Programs**\n- **Mentorship bookings**\n- Help with a **technical blocker**\n\nJust let me know what you\'d like to do!' }]);
     }
   }, [greetingData, greetingError]);
 

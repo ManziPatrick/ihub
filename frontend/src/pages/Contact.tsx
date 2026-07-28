@@ -35,7 +35,7 @@ const Contact = () => {
 
   const inquiryTypes = [
     { icon: GraduationCap, titleKey: "contact.trainingPrograms" as const, descKey: "contact.trainingProgramsDesc" as const },
-    { icon: Briefcase, titleKey: "contact.internships" as const, descKey: "contact.internshipsDesc" as const },
+    { icon: Briefcase, titleKey: "contact.programs" as const, descKey: "contact.programsDesc" as const },
     { icon: Users, titleKey: "contact.corporateSolutions" as const, descKey: "contact.corporateSolutionsDesc" as const },
     { icon: MessageSquare, titleKey: "contact.generalInquiry" as const, descKey: "contact.generalInquiryDesc" as const },
   ];
@@ -80,7 +80,7 @@ const Contact = () => {
         description={t("contact.heroDesc")}
         canonicalUrl="https://bootskills.com/contact"
         ogImageAlt="Bootskills — Get in touch with us in Kigali, Rwanda"
-        keywords="contact Bootskills, Kigali Rwanda, tech training inquiries, internship applications, corporate training"
+        keywords="contact Bootskills, Kigali Rwanda, tech training inquiries, program applications, corporate training"
       >
         <script type="application/ld+json">
           {JSON.stringify({
@@ -255,7 +255,7 @@ const Contact = () => {
                         >
                           <option value="">{t("contact.selectType")}</option>
                           <option value="training">{t("contact.optionTraining")}</option>
-                          <option value="internship">{t("contact.optionInternship")}</option>
+                          <option value="program">{t("contact.optionProgram")}</option>
                           <option value="corporate">{t("contact.optionCorporate")}</option>
                           <option value="partnership">{t("contact.optionPartnership")}</option>
                           <option value="general">{t("contact.optionGeneral")}</option>

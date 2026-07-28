@@ -5,7 +5,7 @@ const steps = [
   { number: "02", title: "Learn", description: "Guided sessions" },
   { number: "03", title: "Practice", description: "Mentorship" },
   { number: "04", title: "Build", description: "Real projects" },
-  { number: "05", title: "Experience", description: "Internship" },
+  { number: "05", title: "Experience", description: "Program" },
   { number: "06", title: "Graduate", description: "Certification" },
 ];
 
