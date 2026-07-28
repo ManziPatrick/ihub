@@ -2041,6 +2041,35 @@ export const ASSIGN_PROJECT_TO_USERS = gql`
   }
 `;
 
+// ========== EVENT APPLICATION MUTATIONS ==========
+export const APPLY_TO_EVENT = gql`
+  mutation ApplyToEvent($eventId: ID!, $applicationAnswers: [ApplicationAnswerInput], $selectedDeliveryMode: String) {
+    applyToEvent(eventId: $eventId, applicationAnswers: $applicationAnswers, selectedDeliveryMode: $selectedDeliveryMode) {
+      id
+      status
+    }
+  }
+`;
+
+export const REVIEW_EVENT_APPLICATION = gql`
+  mutation ReviewEventApplication($id: ID!, $status: String!, $rejectionReason: String) {
+    reviewEventApplication(id: $id, status: $status, rejectionReason: $rejectionReason) {
+      id
+      status
+    }
+  }
+`;
+
+export const ENROLL_EVENT_APPLICANT = gql`
+  mutation EnrollEventApplicant($applicationId: ID!) {
+    enrollEventApplicant(applicationId: $applicationId) {
+      id
+      username
+      email
+    }
+  }
+`;
+
 export const REQUEST_PROJECT_START = gql`
   mutation RequestProjectStart($templateId: ID!, $type: String!, $teamMembers: [ID]) {
     requestProjectStart(templateId: $templateId, type: $type, teamMembers: $teamMembers) {

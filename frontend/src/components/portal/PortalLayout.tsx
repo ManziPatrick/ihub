@@ -139,6 +139,7 @@ const adminNavItems: NavItem[] = [
       { label: "Courses", href: "/portal/admin/courses", icon: BookOpen },
       { label: "Course Preview", href: "/portal/admin/course-preview", icon: Eye },
       { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
+      { label: "Applicant Hub", href: "/portal/admin/applicants", icon: Users },
       { label: "Internships", href: "/portal/admin/internships", icon: Briefcase },
       { label: "Scholarships", href: "/portal/admin/scholarships", icon: Award },
       { label: "Discount Codes", href: "/portal/super-admin/discount-codes", icon: Tag },

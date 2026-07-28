@@ -179,6 +179,11 @@ export const typeDefs = `#graphql
     pagination: PaginationInfo
   }
 
+  type EventApplicationResponse {
+    items: [EventApplication]
+    pagination: PaginationInfo
+  }
+
   type InternshipActivityLogResponse {
     items: [InternshipActivityLog]
     pagination: PaginationInfo
@@ -1577,6 +1582,9 @@ export const typeDefs = `#graphql
     ): Event
 
     deleteEvent(id: ID!): Boolean
+    applyToEvent(eventId: ID!, applicationAnswers: [ApplicationAnswerInput], selectedDeliveryMode: String): EventApplication
+    reviewEventApplication(id: ID!, status: String!, rejectionReason: String): EventApplication
+    enrollEventApplicant(applicationId: ID!): User
   }
 
   # New Internship Module Types
@@ -1657,6 +1665,20 @@ export const typeDefs = `#graphql
     applicationAnswers: [ApplicationAnswer!]
     rejectionReason: String
     payment: InternshipPayment
+    createdAt: String
+  }
+
+  type EventApplication {
+    id: ID!
+    eventId: ID!
+    event: Event
+    userId: ID!
+    user: User
+    status: String!
+    applicationAnswers: [ApplicationAnswer!]
+    selectedDeliveryMode: String
+    rejectionReason: String
+    notes: String
     createdAt: String
   }
 
@@ -1801,6 +1823,8 @@ export const typeDefs = `#graphql
     events(page: Int, limit: Int, type: String, status: String, search: String, featured: Boolean, upcoming: Boolean): EventResponse
     event(id: ID!): Event
     unifiedEventsAndInternships(page: Int, limit: Int, type: String, search: String, upcoming: Boolean): [UnifiedEventItem]
+    eventApplications(eventId: ID, status: String, page: Int, limit: Int): EventApplicationResponse
+    myEventApplications: [EventApplication]
 
     internshipPrograms(page: Int, limit: Int, search: String, category: String, price: String, level: String, school: String): InternshipProgramResponse
     internshipProgram(id: ID!): InternshipProgram

@@ -208,12 +208,16 @@ import { refundResolvers } from './refund-resolvers';
 import { meetingAttendanceResolvers } from './meeting-attendance-resolvers';
 import { errorReportResolvers } from './error-reporting-resolvers';
 import { backupResolvers } from './backup-resolvers';
+import { eventApplicationResolvers } from './event-application-resolvers';
 
 export const resolvers = {
   Upload: GraphQLUpload,
   Scholarship: scholarshipResolvers.Scholarship,
   BackupRecord: backupResolvers.BackupRecord,
   RestoreResult: backupResolvers.RestoreResult,
+  EventApplication: {
+    ...eventApplicationResolvers.EventApplication,
+  },
   Query: {
     ...applicationPhaseResolvers.Query,
     ...projectTaskResolvers.Query,    ...locationResolvers.Query,
@@ -221,6 +225,7 @@ export const resolvers = {
     ...meetingAttendanceResolvers.Query,
     ...errorReportResolvers.Query,
     ...backupResolvers.Query,
+    ...eventApplicationResolvers.Query,
     // Ensure non-nullability: schema defines [ProjectApplication!]! but missing resolvers can return null.
     // This resolver returns an empty array when the user has no applications.
     myProjectApplications: async (_: any, __: any, context: any) => {
@@ -9217,7 +9222,8 @@ export const resolvers = {
       };
     },
     ...applicationPhaseResolvers.Mutation,
-    ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,
+    ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,
+    ...eventApplicationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,
 
     assignDeveloperToProject: async (_: any, { projectId, developerId, role, checklistTasks }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {

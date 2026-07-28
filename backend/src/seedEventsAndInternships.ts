@@ -2,7 +2,9 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { User } from './models/User';
 import { Event } from './models/Event';
+import { EventApplication } from './models/EventApplication';
 import { InternshipProgram } from './models/internship/InternshipProgram';
+import { InternshipApplication } from './models/internship/InternshipApplication';
 import connectDB from './config/db';
 
 dotenv.config();
@@ -331,10 +333,64 @@ async function seedEventsAndInternships() {
       }
     }
 
+    // ── 4. Seed Event Applications (for test data) ────────────────────
+    const publishedEvents = await Event.find({ status: 'published' }).lean();
+    const studentUsers = await User.find({ role: 'student', isDeleted: { $ne: true } }).limit(10).lean();
+
+    let eventAppCount = 0;
+    for (const event of publishedEvents.slice(0, 4)) {
+      for (const student of studentUsers.slice(0, 3)) {
+        const existing = await EventApplication.findOne({ eventId: event._id, userId: student._id });
+        if (!existing) {
+          const statuses = ['pending', 'pending', 'pending', 'approved', 'rejected'];
+          const status = statuses[Math.floor(Math.random() * statuses.length)];
+          await new EventApplication({
+            eventId: event._id,
+            userId: student._id,
+            status,
+            applicationAnswers: [
+              { questionLabel: 'Why do you want to attend?', answer: `I'm very interested in ${event.title} to enhance my skills.` },
+              { questionLabel: 'Any prior experience?', answer: student.skills || 'Some relevant background' },
+            ],
+            selectedDeliveryMode: event.isOnline ? 'online' : 'physical',
+            isDeleted: false,
+          }).save();
+          eventAppCount++;
+        }
+      }
+    }
+
+    // ── 5. Seed Internship Applications ───────────────────────────────
+    const programs = await InternshipProgram.find({ status: 'active' }).limit(3).lean();
+    let internAppCount = 0;
+    for (const program of programs) {
+      for (const student of studentUsers.slice(0, 4)) {
+        const existing = await InternshipApplication.findOne({ internshipProgramId: program._id, userId: student._id });
+        if (!existing) {
+          const statuses = ['pending', 'pending', 'approved', 'rejected', 'waitlisted'];
+          const status = statuses[Math.floor(Math.random() * statuses.length)];
+          await new InternshipApplication({
+            internshipProgramId: program._id,
+            userId: student._id,
+            status,
+            skills: ['JavaScript', 'React', 'Node.js', 'Python'].slice(0, Math.floor(Math.random() * 3) + 1),
+            availability: ['Full-time', 'Part-time', 'Flexible'][Math.floor(Math.random() * 3)],
+            applicationAnswers: [
+              { questionLabel: 'Why do you want to join?', answer: `I'm passionate about ${program.title} and eager to learn.` },
+            ],
+            isDeleted: false,
+          }).save();
+          internAppCount++;
+        }
+      }
+    }
+
     // ── Summary ──────────────────────────────────────────────────────
     console.log('\n🎉 Seeding complete!');
     console.log(`   📅 Events: ${eventsCreated} created`);
+    console.log(`   📋 Event Applications: ${eventAppCount} created`);
     console.log(`   💼 Internships: ${internshipsCreated} created`);
+    console.log(`   📋 Internship Applications: ${internAppCount} created`);
     process.exit(0);
   } catch (error) {
     console.error('❌ Error seeding events and internships:', error);
