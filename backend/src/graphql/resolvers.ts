@@ -10015,6 +10015,26 @@ export const resolvers = {
     id: (parent: any) => parent.id || parent._id,
     course: async (parent: any) => await Course.findById(parent.courseId),
     user: async (parent: any) => await User.findById(parent.userId),
+    paymentStatus: async (parent: any) => {
+      try {
+        const course = await Course.findById(parent.courseId).select('price').lean();
+        if (!course) return 'unknown';
+        // Free courses — no payment needed
+        if (!course.price || course.price === 0) return 'free';
+        // Check for a completed payment
+        const payment = await Payment.findOne({
+          userId: parent.userId,
+          $or: [
+            { courseId: parent.courseId },
+            { courseIds: parent.courseId }
+          ],
+          status: 'completed'
+        }).lean();
+        return payment ? 'paid' : 'unpaid';
+      } catch {
+        return 'unknown';
+      }
+    },
   },
   ProjectOnboarding: {
     id: (parent: any) => parent.id || parent._id,

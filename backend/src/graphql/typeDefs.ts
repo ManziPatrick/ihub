@@ -414,6 +414,7 @@ export const typeDefs = `#graphql
     userId: ID!
     user: User
     status: String!
+    paymentStatus: String!
     applicationAnswers: [ApplicationAnswer]!
     selectedDeliveryMode: String
     rejectionReason: String

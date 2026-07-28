@@ -2859,6 +2859,7 @@ export const GET_COURSE_APPLICATIONS = gql`
           }
         }
         status
+        paymentStatus
         selectedDeliveryMode
         applicationAnswers {
           questionLabel
