@@ -209,10 +209,12 @@ export default function SuperAdminErrorReports() {
       search: searchQuery || undefined,
     },
     fetchPolicy: "network-only",
+    notifyOnNetworkStatusChange: true,
   });
 
   const { data: statsData, loading: statsLoading, refetch: refetchStats } = useQuery(GET_ERROR_REPORT_STATS, {
     fetchPolicy: "network-only",
+    notifyOnNetworkStatusChange: true,
   });
 
   const [resolveReport, { loading: resolving }] = useMutation(RESOLVE_ERROR_REPORT, {

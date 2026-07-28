@@ -362,26 +362,121 @@ img, video, canvas, svg, iframe {
   }
 }
 
-/* ── Safeguard: Google One Tap prompt — full width & never clipped ── */
-/* Google injects a fixed-position iframe into body for One Tap.
-   By default Google renders it at ~380px (~80% width). This makes
-   it full-width on mobile and uses the full available space while
-   staying visually balanced. Also ensures it's never accidentally
-   clipped by parent overflow properties. */
+/* ═══════════════════════════════════════════════════════════════════
+   GOOGLE ONE TAP & SIGN-IN — Responsive Overlays
+   Google injects fixed-position elements into <body> for both
+   One Tap (iframe) and the credential picker (popup).
+   These styles ensure they render correctly at every breakpoint
+   without being clipped by our app's overflow-x: hidden rules.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Z-INDEX STACKING ────────────────────────────────────────── */
+/* Ensure Google overlays sit above our app shell but below
+   modals/toasts (z-50+). Google defaults to z-index 999999,
+   which clashes with custom dialogs. We cap it at a reasonable
+   layer and let the credential picker sit higher. */
+
+/* One Tap prompt iframe — sits above app, below modals */
+body > iframe[src*="accounts.google.com/gsi/"] {
+  z-index: 1000 !important;
+}
+
+/* Credential picker popup container — needs to be above One Tap */
+.credential_picker_container {
+  z-index: 1001 !important;
+}
+
+/* The picker's internal iframe */
+.credential_picker_container iframe {
+  z-index: 1002 !important;
+}
+
+/* ── BASE: NEVER CLIPPED ─────────────────────────────────────── */
 body > iframe[src*="accounts.google.com/gsi/"] {
   overflow: visible !important;
   clip-path: none !important;
 }
 
-/* Mobile: full-width Google One Tap prompt */
-@media (max-width: 640px) {
+/* ── RESPONSIVE BREAKPOINTS ──────────────────────────────────── */
+
+/* 📱 Mobile (< 640px): full-width prompt with safe-area padding */
+@media (max-width: 639px) {
   body > iframe[src*="accounts.google.com/gsi/"] {
     width: calc(100vw - 16px) !important;
+    max-width: 400px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    /* Do NOT override height — Google sets inline height dynamically.
-       The global iframe {height:auto} rule can't override inline styles
-       (lower specificity), so Google's calculated height is preserved. */
+    /* Preserve vertical position — Google sets bottom/top inline */
+  }
+
+  /* Credential picker: full-screen on mobile */
+  .credential_picker_container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .credential_picker_container iframe {
+    width: calc(100vw - 32px) !important;
+    max-width: 400px !important;
+    height: auto !important;
+    min-height: 300px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+  }
+}
+
+/* 📱 Tablet (640px – 1023px): centered, constrained width */
+@media (min-width: 640px) and (max-width: 1023px) {
+  body > iframe[src*="accounts.google.com/gsi/"] {
+    max-width: 420px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+
+  .credential_picker_container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .credential_picker_container iframe {
+    max-width: 480px !important;
+    width: 90vw !important;
+    border-radius: 12px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+  }
+}
+
+/* 💻 Desktop (1024px – 1535px): Google default positioning */
+@media (min-width: 1024px) and (max-width: 1535px) {
+  body > iframe[src*="accounts.google.com/gsi/"] {
+    max-width: 440px !important;
+  }
+
+  .credential_picker_container iframe {
+    max-width: 500px !important;
+    border-radius: 12px !important;
+  }
+}
+
+/* 🖥️ Large Desktop (> 1536px): wider max-width */
+@media (min-width: 1536px) {
+  body > iframe[src*="accounts.google.com/gsi/"] {
+    max-width: 480px !important;
+  }
+
+  .credential_picker_container iframe {
+    max-width: 540px !important;
+    border-radius: 12px !important;
   }
 }
 

@@ -35,7 +35,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { gql } from "@apollo/client";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useMutation } from "@apollo/client/react";
+import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
 import { useToast } from "@/hooks/use-toast";
 
 const GET_UPLOAD_LOGS = gql`
@@ -117,7 +118,7 @@ export default function SuperAdminUploadLogs() {
   const [showClearDialog, setShowClearDialog] = useState(false);
   const { toast } = useToast();
 
-  const { data, loading, refetch } = useQuery(GET_UPLOAD_LOGS, {
+  const { data, loading, refetch } = usePaginatedQuery(GET_UPLOAD_LOGS, {
     variables: { page, limit: 50, type: typeFilter || undefined },
   });
 

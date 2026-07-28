@@ -42,6 +42,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { useQuery, useMutation } from "@apollo/client/react";
+import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
 import { GET_ALL_PROJECTS, GET_COURSES_SUMMARY, GET_USERS, GET_ASSIGNMENT_SUBMISSIONS, GET_STUDENT_PROJECT_PROGRESS } from "@/lib/graphql/queries";
 import { GET_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 import { DELETE_PROJECT, UPDATE_PROJECT, GRADE_ASSIGNMENT, RESTORE_PROJECT } from "@/lib/graphql/mutations";
@@ -236,7 +237,7 @@ export default function AdminProjects() {
     fetchPolicy: "cache-first",
   });
 
-  const { data, loading, refetch } = useQuery(GET_ALL_PROJECTS, {
+  const { data, loading, refetch } = usePaginatedQuery(GET_ALL_PROJECTS, {
     variables: { page: currentPage, limit: pageSize, course: courseFilter !== "all" ? courseFilter : undefined }
   });
   const projects = (data as any)?.projects?.items || [];

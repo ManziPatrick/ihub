@@ -35,7 +35,8 @@ import {
   MoreVertical,
   Loader2
 } from "lucide-react";
-import { useQuery, useMutation } from "@apollo/client/react";
+import { useMutation } from "@apollo/client/react";
+import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
 import { GET_BADGES } from "@/lib/graphql/queries";
 import { CREATE_BADGE, UPDATE_BADGE, DELETE_BADGE, RESTORE_BADGE } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
@@ -59,7 +60,7 @@ export default function AdminBadges() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
 
-  const { data, loading: queryLoading, refetch } = useQuery<{ badges: { items: any[], pagination: any } }>(GET_BADGES, {
+  const { data, loading: queryLoading, refetch } = usePaginatedQuery<{ badges: { items: any[], pagination: any } }>(GET_BADGES, {
     variables: { page: currentPage, limit: pageSize, createdBy: user?.id }
   });
   const badges = data?.badges?.items || [];

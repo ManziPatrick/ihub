@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation } from "@apollo/client/react";
+import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import {
   GET_ALL_DISBURSEMENTS,
@@ -193,11 +194,10 @@ export default function SuperAdminDisbursements() {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const LIMIT = 20;
 
-  const { data: disbData, loading: disbLoading, refetch: refetchDisb } = useQuery(GET_ALL_DISBURSEMENTS, {
+  const { data: disbData, loading: disbLoading, refetch: refetchDisb } = usePaginatedQuery(GET_ALL_DISBURSEMENTS, {
     variables: { page, limit: LIMIT, status: statusFilter || undefined },
   });
-  const { data: statsData, loading: statsLoading, refetch: refetchStats } = useQuery(GET_DISBURSEMENT_STATS, {
-  });
+  const { data: statsData, loading: statsLoading, refetch: refetchStats } = usePaginatedQuery(GET_DISBURSEMENT_STATS, {});
   const { data: configData, loading: configLoading, refetch: refetchConfig } = useQuery(GET_PLATFORM_COMMISSION_CONFIG);
   const { data: holdDaysData, refetch: refetchHoldDays } = useQuery(GET_HOLD_DAYS_CONFIG);
   const { data: balanceData, loading: balanceLoading, refetch: refetchBalance } = useQuery(GET_INTOUCH_BALANCE, {

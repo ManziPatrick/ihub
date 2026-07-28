@@ -66,6 +66,7 @@ import { toast } from "sonner";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 
 import { useQuery } from "@apollo/client/react";
+import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
 import { GET_ME, GET_COURSES_LITE_SUMMARY, GET_MY_PROJECTS, MY_COURSE_APPLICATIONS } from "@/lib/graphql/queries";
 
 export default function StudentCourses() {
@@ -76,7 +77,7 @@ export default function StudentCourses() {
   const { data: meData, loading: meLoading, refetch: refetchMe } = useQuery(GET_ME);
   const [availPage, setAvailPage] = useState(1);
   const [availPerPage, setAvailPerPage] = useState(12);
-  const { data: coursesData, loading: coursesLoading, refetch: refetchCourses } = useQuery(GET_COURSES_LITE_SUMMARY, {
+  const { data: coursesData, loading: coursesLoading, refetch: refetchCourses } = usePaginatedQuery(GET_COURSES_LITE_SUMMARY, {
     variables: { page: availPage, limit: availPerPage },
   });
   const { data: projectsData, loading: projectsLoading } = useQuery(GET_MY_PROJECTS);

@@ -37,6 +37,7 @@ import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 import { toast } from "sonner";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
+import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
 import { GET_COURSES_LITE_SUMMARY, GET_STATS, GET_USERS, GET_COURSE, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
 import { UPDATE_COURSE, DELETE_COURSE, RESTORE_COURSE } from "@/lib/graphql/mutations";
 import { Star } from "lucide-react";
@@ -58,8 +59,7 @@ export default function AdminCourses() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Queries & Mutations
-  const { data, loading, refetch } = useQuery(GET_COURSES_LITE_SUMMARY, {
-    fetchPolicy: "cache-first",
+  const { data, loading, refetch } = usePaginatedQuery(GET_COURSES_LITE_SUMMARY, {
     variables: { page: currentPage, limit: pageSize },
   });
   const [loadCourse, { data: fullCourseData, loading: courseLoading }] = useLazyQuery(GET_COURSE);
