@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Video, Loader2, Calendar as CalendarIcon, RefreshCw, Users, ShieldCheck, User as UserIcon, Check, BookOpen, Layout, Building2, GraduationCap, Globe, Sparkles, CalendarCheck } from "lucide-react";
 import { toast } from "sonner";
 import { CREATE_INTERNSHIP_MEETING } from "@/lib/graphql/mutations";
-import { GET_COURSES_LITE_SUMMARY, GET_INTERNSHIP_TEAMS, GET_INTERNSHIP_MEETINGS, GET_ALL_STUDENTS, GET_ALL_TRAINERS, GET_EVENTS } from "@/lib/graphql/queries";
+import { GET_COURSES_LITE_SUMMARY, GET_INTERNSHIP_TEAMS, GET_INTERNSHIP_MEETINGS, GET_ALL_STUDENTS, GET_ALL_TRAINERS, GET_EVENTS, GET_INTERNSHIP_PROGRAMS } from "@/lib/graphql/queries";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +63,7 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
   const [searchStudents, setSearchStudents] = useState("");
   const [searchMentors, setSearchMentors] = useState("");
   const [searchEvents, setSearchEvents] = useState("");
+  const [searchPrograms, setSearchPrograms] = useState("");
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
   
   const [contextType, setContextType] = useState("general");
@@ -95,6 +96,10 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
   const { data: mentorsData, loading: mentorsLoading } = useQuery(GET_ALL_TRAINERS, { skip: !open });
   const { data: eventsData, loading: eventsLoading } = useQuery(GET_EVENTS, {
     variables: { page: 1, limit: 100, status: 'published' },
+    skip: !open,
+  });
+  const { data: programsData, loading: programsLoading } = useQuery(GET_INTERNSHIP_PROGRAMS, {
+    variables: { page: 1, limit: 100 },
     skip: !open,
   });
 
@@ -135,6 +140,7 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
     setSearchStudents("");
     setSearchMentors("");
     setSearchEvents("");
+    setSearchPrograms("");
   };
 
   const toggleSelection = (id: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
@@ -198,6 +204,10 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
   const filteredEvents = ((eventsData as any)?.events?.items || []).filter((e: any) => 
     (e.title || "").toLowerCase().includes(searchEvents.toLowerCase()) ||
     (e.type || "").toLowerCase().includes(searchEvents.toLowerCase())
+  );
+
+  const filteredPrograms = ((programsData as any)?.internshipPrograms?.items || []).filter((p: any) => 
+    (p.title || "").toLowerCase().includes(searchPrograms.toLowerCase())
   );
 
   const CONTEXT_TYPES = [
@@ -474,6 +484,45 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
                     }
                   </div>
                   <p className="text-[8px] text-rose-400/60 italic">Approved/waitlisted applicants of selected events will be notified of this meeting.</p>
+                </div>
+              </div>
+
+              {/* Internship Programs Selection */}
+              <div className="space-y-4 border-t border-border/10 pt-8">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
+                    <GraduationCap className="w-3 h-3 text-amber-400" /> Select Internship Programs
+                  </Label>
+                  <Badge variant="outline" className="text-[8px] font-black uppercase">{selectedPrograms.length} Selected</Badge>
+                </div>
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                    <Input placeholder="Search programs..." value={searchPrograms} onChange={e => setSearchPrograms(e.target.value)} className="pl-8 h-9 rounded-xl text-xs bg-muted/10 border-none" />
+                  </div>
+                  <div className="h-[200px] border border-amber-500/10 rounded-3xl overflow-hidden bg-muted/5 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+                    {programsLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto mt-10" /> : 
+                      filteredPrograms.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center mt-10 italic">No programs yet</p>
+                      ) : (
+                        filteredPrograms.map((p: any) => (
+                          <div key={p.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-amber-500/5 transition-colors cursor-pointer" onClick={() => toggleSelection(p.id, setSelectedPrograms)}>
+                             <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedPrograms.includes(p.id) ? "bg-amber-500 border-amber-500 text-white" : "border-border/50")}>
+                                {selectedPrograms.includes(p.id) && <Check className="w-3 h-3" />}
+                             </div>
+                             <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                               <GraduationCap className="w-4 h-4 text-amber-500" />
+                             </div>
+                             <div className="flex-1 truncate">
+                               <p className="text-[10px] font-black uppercase truncate">{p.title}</p>
+                               <p className="text-[8px] text-muted-foreground">{p.duration || 'Program'} · {p.status}</p>
+                             </div>
+                          </div>
+                        ))
+                      )
+                    }
+                  </div>
+                  <p className="text-[8px] text-amber-400/60 italic">Approved/waitlisted applicants of selected programs will be notified of this meeting.</p>
                 </div>
               </div>
 

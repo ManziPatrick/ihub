@@ -2335,9 +2335,12 @@ export const typeDefs = `#graphql
       meetLink: String
       recurrenceDays: [Int]
       recurrenceEndDate: String
+      changeReason: String
     ): InternshipMeeting
     
-    deleteInternshipMeeting(id: ID!): Boolean
+    deleteInternshipMeeting(id: ID!, reason: String): Boolean
+    
+    cancelInternshipMeeting(id: ID!, reason: String!): Boolean
     
     markAttendance(
       meetingId: ID!

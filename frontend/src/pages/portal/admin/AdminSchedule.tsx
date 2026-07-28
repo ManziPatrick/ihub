@@ -70,7 +70,7 @@ export default function AdminSchedule() {
   const { data: bookingsData, loading: bookingsLoading } = useQuery(GET_ALL_BOOKINGS, {
     variables: { limit: 100 }
   });
-  const { data: meetingsData, loading: meetingsLoading } = useQuery(GET_INTERNSHIP_MEETINGS, {
+  const { data: meetingsData, loading: meetingsLoading, refetch: refetchInternshipMeetings } = useQuery(GET_INTERNSHIP_MEETINGS, {
     variables: contextFilter !== 'all' ? { contextType: contextFilter } : {},
   });
   const { data: attendanceData, loading: attendanceLoading } = useQuery(GET_MEETING_ATTENDANCE, {
@@ -574,17 +574,20 @@ export default function AdminSchedule() {
 
       <ViewSessionDialog
         open={!!viewSession}
-        onOpenChange={(open) => !open && setViewSession(null)}
+        onOpenChange={(open) => { if (!open) setViewSession(null); }}
         session={{
+          ...viewSession,
+          actualId: viewSession?.id?.split('-')[0] || viewSession?.id,
           title: viewSession?.title || "Session",
           instructor: viewSession?.mentor?.username || viewSession?.host?.username || 'TBD',
           date: viewSession?.date,
           time: viewSession?.time,
-          course: viewSession?.topic || "Program Session",
+          course: viewSession?.topic || viewSession?.contextTitle || "Program Session",
           type: viewSession?.type,
-          link: viewSession?.meetingLink
+          link: viewSession?.meetingLink || viewSession?.link,
         }}
-        onJoin={() => handleJoinSession(viewSession?.meetingLink)}
+        onJoin={() => handleJoinSession(viewSession?.meetingLink || viewSession?.link)}
+        onMeetingUpdated={() => { refetchInternshipMeetings?.(); }}
       />
 
       <CreateInternshipMeetingDialog
