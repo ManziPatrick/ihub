@@ -397,6 +397,15 @@ body > iframe[src*="accounts.google.com/gsi/"] {
   clip-path: none !important;
 }
 
+/* ── Y-AXIS SCROLLBAR for credential picker ──────────────────── */
+/* On small viewports the Google Sign-In popup can exceed screen height.
+   This adds a vertical scrollbar so users can scroll to see all content. */
+.credential_picker_container {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+
 /* ── RESPONSIVE BREAKPOINTS ──────────────────────────────────── */
 
 /* 📱 Mobile (< 640px): full-width prompt with safe-area padding */
@@ -422,11 +431,14 @@ body > iframe[src*="accounts.google.com/gsi/"] {
     align-items: center !important;
     justify-content: center !important;
     background: rgba(0, 0, 0, 0.4) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .credential_picker_container iframe {
     width: calc(100vw - 32px) !important;
     max-width: 400px !important;
+    max-height: 90vh !important;
     height: auto !important;
     min-height: 300px !important;
     border-radius: 12px !important;
