@@ -70,6 +70,7 @@ import { GraphQLUpload } from 'graphql-upload';
 import { pusher } from '../lib/pusher';
 import { InternshipProgram } from '../models/internship/InternshipProgram';
 import { Event } from '../models/Event';
+import { EventApplication } from '../models/EventApplication';
 import { InternshipApplication } from '../models/internship/InternshipApplication';
 import { InternshipProject } from '../models/internship/InternshipProject';
 import { InternshipTeam } from '../models/internship/Team';
@@ -208,12 +209,16 @@ import { refundResolvers } from './refund-resolvers';
 import { meetingAttendanceResolvers } from './meeting-attendance-resolvers';
 import { errorReportResolvers } from './error-reporting-resolvers';
 import { backupResolvers } from './backup-resolvers';
+import { eventApplicationResolvers } from './event-application-resolvers';
 
 export const resolvers = {
   Upload: GraphQLUpload,
   Scholarship: scholarshipResolvers.Scholarship,
   BackupRecord: backupResolvers.BackupRecord,
   RestoreResult: backupResolvers.RestoreResult,
+  EventApplication: {
+    ...eventApplicationResolvers.EventApplication,
+  },
   Query: {
     ...applicationPhaseResolvers.Query,
     ...projectTaskResolvers.Query,    ...locationResolvers.Query,
@@ -221,6 +226,7 @@ export const resolvers = {
     ...meetingAttendanceResolvers.Query,
     ...errorReportResolvers.Query,
     ...backupResolvers.Query,
+    ...eventApplicationResolvers.Query,
     // Ensure non-nullability: schema defines [ProjectApplication!]! but missing resolvers can return null.
     // This resolver returns an empty array when the user has no applications.
     myProjectApplications: async (_: any, __: any, context: any) => {
@@ -8211,6 +8217,26 @@ export const resolvers = {
           args.clientIds.forEach((id: string) => participantIds.add(id));
         }
 
+        // 6. Event/Session applicants — notify approved/waitlisted applicants
+        if (args.eventIds && args.eventIds.length > 0) {
+          const eventApps = await EventApplication.find({
+            eventId: { $in: args.eventIds },
+            status: { $in: ['approved', 'waitlisted'] },
+            isDeleted: false,
+          }).select('userId').lean();
+          eventApps.forEach((ea: any) => participantIds.add(ea.userId.toString()));
+        }
+
+        // 7. Internship Program applicants — notify approved/waitlisted applicants
+        if (args.internshipProgramIds && args.internshipProgramIds.length > 0) {
+          const progApps = await InternshipApplication.find({
+            internshipProgramId: { $in: args.internshipProgramIds },
+            status: { $in: ['approved', 'waitlisted'] },
+            isDeleted: false,
+          }).select('userId').lean();
+          progApps.forEach((pa: any) => participantIds.add(pa.userId.toString()));
+        }
+
         for (const pid of participantIds) {
           if (pid === context.user.id) continue;
           const user = await User.findById(pid);
@@ -8224,11 +8250,24 @@ export const resolvers = {
           });
         }
 
+        const startDate = new Date(meeting.startTime);
+        const endDate = new Date(meeting.endTime);
+        const durationMs = endDate.getTime() - startDate.getTime();
+        const durationMinutes = Math.round(durationMs / 60000);
+        const durationStr = durationMinutes >= 60
+          ? `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`
+          : `${durationMinutes}m`;
+
         const bookingDetails = {
           type: meeting.type,
-          date: new Date(meeting.startTime).toISOString().split('T')[0],
-          time: new Date(meeting.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          meetingLink: meeting.meetLink
+          title: args.title || meeting.title,
+          date: startDate.toISOString().split('T')[0],
+          time: startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          meetingLink: meeting.meetLink,
+          contextType: args.contextType || 'general',
+          contextTitle: args.contextTitle || undefined,
+          description: args.description || undefined,
+          duration: durationStr,
         };
 
         for (const email of participantEmails) {
@@ -8242,21 +8281,172 @@ export const resolvers = {
       return meeting;
     },
 
-    updateInternshipMeeting: async (_: any, { id, ...args }: any, context: any) => {
+    updateInternshipMeeting: async (_: any, { id, changeReason, ...args }: any, context: any) => {
       if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
       const meeting = await InternshipMeeting.findByIdAndUpdate(id, args, { new: true });
       if (!meeting) throw new Error('Meeting not found');
+
+      // Notify all participants about the change
+      if (changeReason) {
+        try {
+          const host = await User.findById(context.user.id);
+          const hostName = host?.username || host?.fullName || 'Host';
+          const participantIds = new Set<string>();
+          if ((meeting as any).teamIds) for (const tid of (meeting as any).teamIds) {
+            const members = await InternshipTeamMember.find({ teamId: tid, isDeleted: false });
+            members.forEach((m: any) => participantIds.add(m.userId.toString()));
+          }
+          if ((meeting as any).userIds) (meeting as any).userIds.forEach((uid: any) => participantIds.add(uid.toString?.() || uid));
+          if ((meeting as any).mentorIds) (meeting as any).mentorIds.forEach((mid: any) => participantIds.add(mid.toString?.() || mid));
+          if ((meeting as any).courseIds) {
+            const courses = await Course.find({ _id: { $in: (meeting as any).courseIds } }).select('studentsEnrolled').lean();
+            for (const course of courses) (course as any).studentsEnrolled?.forEach((s: any) => participantIds.add(s?.toString?.() || s));
+          }
+
+          for (const pid of participantIds) {
+            if (pid === context.user.id) continue;
+            await sendNotification(pid, {
+              type: 'meeting',
+              title: 'Meeting Rescheduled',
+              message: `Meeting "${meeting.title}" has been updated. Reason: ${changeReason}`,
+              link: `/portal/internship/meetings`
+            });
+            const user = await User.findById(pid);
+            if (user?.email) {
+              const startDate = new Date(meeting.startTime);
+              const endDate = new Date(meeting.endTime);
+              const durationMs = endDate.getTime() - startDate.getTime();
+              const durationStr = Math.round(durationMs / 60000) >= 60
+                ? `${Math.floor(durationMs / 60000 / 60)}h ${Math.round(durationMs / 60000) % 60}m`
+                : `${Math.round(durationMs / 60000)}m`;
+              await sendMeetingInvitation(user.email, user.username || 'Participant', hostName, {
+                type: meeting.type,
+                title: `🔄 UPDATED: ${meeting.title}`,
+                date: startDate.toISOString().split('T')[0],
+                time: startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+                meetingLink: meeting.meetLink,
+                contextType: (meeting as any).contextType || 'general',
+                contextTitle: (meeting as any).contextTitle || undefined,
+                description: `⚠️ Change reason: ${changeReason}`,
+                duration: durationStr,
+              });
+            }
+          }
+        } catch (err) {
+          console.error('[updateInternshipMeeting] notification error:', err);
+        }
+      }
+
       await logActivity(context.user.id, 'UPDATE', 'InternshipMeeting', id, `Updated meeting: ${meeting.title}`);
       return meeting;
     },
 
-    deleteInternshipMeeting: async (_: any, { id }: { id: string }, context: any) => {
+    deleteInternshipMeeting: async (_: any, { id, reason }: { id: string; reason?: string }, context: any) => {
       if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
       const meeting = await InternshipMeeting.findById(id);
       if (!meeting) throw new Error('Meeting not found');
+
+      // Send cancellation notifications before deleting
+      try {
+        const host = await User.findById(context.user.id);
+        const hostName = host?.username || host?.fullName || 'Host';
+        const participantIds = new Set<string>();
+        if ((meeting as any).teamIds) for (const tid of (meeting as any).teamIds) {
+          const members = await InternshipTeamMember.find({ teamId: tid, isDeleted: false });
+          members.forEach((m: any) => participantIds.add(m.userId.toString()));
+        }
+        if ((meeting as any).userIds) (meeting as any).userIds.forEach((uid: any) => participantIds.add(uid.toString?.() || uid));
+        if ((meeting as any).mentorIds) (meeting as any).mentorIds.forEach((mid: any) => participantIds.add(mid.toString?.() || mid));
+        if ((meeting as any).courseIds) {
+          const courses = await Course.find({ _id: { $in: (meeting as any).courseIds } }).select('studentsEnrolled').lean();
+          for (const course of courses) (course as any).studentsEnrolled?.forEach((s: any) => participantIds.add(s?.toString?.() || s));
+        }
+
+        const cancelMsg = reason || 'No specific reason provided';
+        for (const pid of participantIds) {
+          if (pid === context.user.id) continue;
+          await sendNotification(pid, {
+            type: 'meeting',
+            title: 'Meeting Cancelled',
+            message: `Meeting "${meeting.title}" has been cancelled. ${reason ? `Reason: ${reason}` : 'We apologize for the inconvenience.'}`,
+            link: `/portal/internship/meetings`
+          });
+          const user = await User.findById(pid);
+          if (user?.email) {
+            await sendMeetingInvitation(user.email, user.username || 'Participant', hostName, {
+              type: meeting.type,
+              title: `❌ CANCELLED: ${meeting.title}`,
+              date: '',
+              time: '',
+              meetingLink: '',
+              contextType: meeting.contextType || 'general',
+              contextTitle: meeting.contextTitle || undefined,
+              description: `❌ This meeting has been cancelled. \n\n${reason ? `Reason: ${reason}` : 'We apologize for any inconvenience.'}\n\n— ${hostName}`,
+              duration: '',
+            });
+          }
+        }
+      } catch (err) {
+        console.error('[deleteInternshipMeeting] cancellation notification error:', err);
+      }
+
       meeting.isDeleted = true;
       await meeting.save();
-      await logActivity(context.user.id, 'DELETE', 'InternshipMeeting', id, `Deleted meeting: ${meeting.title}`);
+      await logActivity(context.user.id, 'DELETE', 'InternshipMeeting', id, `Deleted meeting: ${meeting.title}${reason ? ` (${reason})` : ''}`);
+      return true;
+    },
+
+    cancelInternshipMeeting: async (_: any, { id, reason }: { id: string; reason: string }, context: any) => {
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
+      const meeting = await InternshipMeeting.findById(id);
+      if (!meeting) throw new Error('Meeting not found');
+
+      // Send cancellation notifications
+      try {
+        const host = await User.findById(context.user.id);
+        const hostName = host?.username || host?.fullName || 'Host';
+        const participantIds = new Set<string>();
+        if (meeting.teamIds) for (const tid of meeting.teamIds) {
+          const members = await InternshipTeamMember.find({ teamId: tid, isDeleted: false });
+          members.forEach(m => participantIds.add(m.userId.toString()));
+        }
+        if ((meeting as any).userIds) (meeting as any).userIds.forEach((uid: any) => participantIds.add(uid.toString?.() || uid));
+        if ((meeting as any).mentorIds) (meeting as any).mentorIds.forEach((mid: any) => participantIds.add(mid.toString?.() || mid));
+        if ((meeting as any).courseIds) {
+          const courses = await Course.find({ _id: { $in: (meeting as any).courseIds } }).select('studentsEnrolled').lean();
+          for (const course of courses) (course as any).studentsEnrolled?.forEach((s: any) => participantIds.add(s?.toString?.() || s));
+        }
+
+        for (const pid of participantIds) {
+          if (pid === context.user.id) continue;
+          await sendNotification(pid, {
+            type: 'meeting',
+            title: 'Meeting Cancelled',
+            message: `Meeting "${meeting.title}" has been cancelled. Reason: ${reason}`,
+            link: `/portal/internship/meetings`
+          });
+          const user = await User.findById(pid);
+          if (user?.email) {
+            await sendMeetingInvitation(user.email, user.username || 'Participant', hostName, {
+              type: meeting.type,
+              title: `❌ CANCELLED: ${meeting.title}`,
+              date: '',
+              time: '',
+              meetingLink: '',
+              contextType: meeting.contextType || 'general',
+              contextTitle: meeting.contextTitle || undefined,
+              description: `❌ This meeting has been cancelled.\n\nReason: ${reason}\n\nWe apologize for any inconvenience.\n— ${hostName}`,
+              duration: '',
+            });
+          }
+        }
+      } catch (err) {
+        console.error('[cancelInternshipMeeting] notification error:', err);
+      }
+
+      meeting.isDeleted = true;
+      await meeting.save();
+      await logActivity(context.user.id, 'DELETE', 'InternshipMeeting', id, `Cancelled meeting: ${meeting.title} — ${reason}`);
       return true;
     },
 
@@ -9217,7 +9407,8 @@ export const resolvers = {
       };
     },
     ...applicationPhaseResolvers.Mutation,
-    ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,
+    ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,
+    ...eventApplicationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,
 
     assignDeveloperToProject: async (_: any, { projectId, developerId, role, checklistTasks }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
@@ -10009,6 +10200,26 @@ export const resolvers = {
     id: (parent: any) => parent.id || parent._id,
     course: async (parent: any) => await Course.findById(parent.courseId),
     user: async (parent: any) => await User.findById(parent.userId),
+    paymentStatus: async (parent: any) => {
+      try {
+        const course = await Course.findById(parent.courseId).select('price').lean();
+        if (!course) return 'unknown';
+        // Free courses — no payment needed
+        if (!course.price || course.price === 0) return 'free';
+        // Check for a completed payment
+        const payment = await Payment.findOne({
+          userId: parent.userId,
+          $or: [
+            { courseId: parent.courseId },
+            { courseIds: parent.courseId }
+          ],
+          status: 'completed'
+        }).lean();
+        return payment ? 'paid' : 'unpaid';
+      } catch {
+        return 'unknown';
+      }
+    },
   },
   ProjectOnboarding: {
     id: (parent: any) => parent.id || parent._id,

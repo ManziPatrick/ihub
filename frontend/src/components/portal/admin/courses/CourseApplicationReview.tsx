@@ -16,7 +16,8 @@ import {
   ChevronUp,
   Calendar,
   User,
-  MapPin
+  MapPin,
+  DollarSign
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from "framer-motion";
@@ -56,6 +57,19 @@ export default function CourseApplicationReview() {
       case 'approved': return <Badge className="bg-green-500/10 text-green-600 border-green-500/20 font-black uppercase tracking-wider text-[10px]">Approved</Badge>;
       case 'rejected': return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20 font-black uppercase tracking-wider text-[10px]">Rejected</Badge>;
       default: return <Badge variant="secondary" className="font-black uppercase tracking-wider text-[10px]">Pending</Badge>;
+    }
+  };
+
+  const getPaymentBadge = (paymentStatus: string) => {
+    switch (paymentStatus) {
+      case 'paid':
+        return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] font-black px-1.5"><DollarSign className="w-3 h-3 mr-0.5" />Paid</Badge>;
+      case 'unpaid':
+        return <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[10px] font-black px-1.5"><DollarSign className="w-3 h-3 mr-0.5" />Unpaid</Badge>;
+      case 'free':
+        return <Badge variant="outline" className="bg-sky-500/10 text-sky-600 border-sky-500/20 text-[10px] font-black px-1.5">Free</Badge>;
+      default:
+        return null;
     }
   };
 
@@ -136,7 +150,10 @@ export default function CourseApplicationReview() {
                         <h3 className="font-black text-lg text-foreground group-hover/user:text-accent transition-colors">
                           {app.user?.fullName || app.user?.username || 'Unknown User'}
                         </h3>
-                        {getStatusBadge(app.status)}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {getStatusBadge(app.status)}
+                          {getPaymentBadge(app.paymentStatus)}
+                        </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

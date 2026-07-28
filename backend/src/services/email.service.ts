@@ -202,7 +202,7 @@ export const sendAdminNewUserNotification = async (
 };
 
 /**
- * Send meeting invitation to student and mentor
+ * Send meeting invitation to participants — calendar-reminder style with context info
  */
 export const sendMeetingInvitation = async (
   recipientEmail: string,
@@ -213,48 +213,226 @@ export const sendMeetingInvitation = async (
     date: string;
     time: string;
     meetingLink?: string;
+    contextType?: string;    // 'course' | 'event' | 'session' | 'internship' | 'general'
+    contextTitle?: string;   // e.g. "JavaScript Bootcamp" or "Team Standup"
+    title?: string;          // Meeting title
+    description?: string;    // Agenda/notes
+    duration?: string;       // e.g. "1 hour"
   }
 ): Promise<boolean> => {
   const config = await getEmailConfig();
+
+  // Context icons and labels
+  const CONTEXT_LABELS: Record<string, { icon: string; label: string }> = {
+    course: { icon: '📚', label: 'Course Session' },
+    event: { icon: '🎪', label: 'Event' },
+    session: { icon: '🔴', label: 'Live Session' },
+    internship: { icon: '💼', label: 'Internship Program' },
+    project: { icon: '📋', label: 'Project Meeting' },
+    client: { icon: '🤝', label: 'Client Meeting' },
+    general: { icon: '📅', label: 'General Meeting' },
+  };
+
+  const ctx = CONTEXT_LABELS[bookingDetails.contextType || 'general'] || CONTEXT_LABELS.general;
+  const contextDisplay = bookingDetails.contextTitle
+    ? `${ctx.icon} ${ctx.label}: ${bookingDetails.contextTitle}`
+    : `${ctx.icon} ${ctx.label}`;
+
+  const meetingTitle = bookingDetails.title || bookingDetails.type;
+  const formattedDate = new Date(bookingDetails.date + 'T' + (bookingDetails.time || '12:00')).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  const formattedTime = bookingDetails.time || '';
+
   const html = `
     <!DOCTYPE html>
     <html>
     <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #3b82f6; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-        .details-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0; }
-        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-        .btn { display: inline-block; background: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin-top: 10px; font-weight: bold; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f5; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px 10px; }
+        .card { background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+        .header { 
+          background: linear-gradient(135deg, #D4AF37 0%, #B8860B 50%, #B08D2A 100%);
+          padding: 36px 30px; 
+          text-align: center; 
+        }
+        .header h1 { margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; }
+        .header .badge { 
+          display: inline-block; 
+          background: rgba(255,255,255,0.2); 
+          color: #ffffff; 
+          padding: 6px 16px; 
+          border-radius: 20px; 
+          font-size: 12px; 
+          margin-top: 12px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+        }
+        .content { padding: 35px 30px; }
+        .content h2 { margin: 0 0 16px; font-size: 20px; color: #1a1a1a; font-weight: 600; }
+        .calendar-card {
+          background: #fafaf9;
+          border-radius: 12px;
+          overflow: hidden;
+          margin: 24px 0;
+          border: 1px solid #e5e5e5;
+        }
+        .calendar-date {
+          background: #D4AF37;
+          color: #ffffff;
+          padding: 16px;
+          text-align: center;
+          font-weight: 700;
+          font-size: 14px;
+          letter-spacing: 1px;
+        }
+        .calendar-body { padding: 20px; }
+        .cal-row { display: flex; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        .cal-row:last-child { border-bottom: none; }
+        .cal-label { color: #888; width: 100px; font-weight: 500; flex-shrink: 0; }
+        .cal-value { color: #1a1a1a; font-weight: 600; word-break: break-word; }
+        .context-tag {
+          display: inline-block;
+          background: #fef3c7;
+          color: #92400e;
+          padding: 4px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+        .btn-wrapper { text-align: center; margin: 28px 0 8px; }
+        .btn {
+          display: inline-block;
+          background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+          color: #ffffff !important;
+          padding: 14px 36px;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 15px;
+          letter-spacing: 0.3px;
+          box-shadow: 0 4px 14px rgba(212, 175, 55, 0.3);
+        }
+        .btn:hover { box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4); }
+        .btn-secondary {
+          display: inline-block;
+          background: #ffffff;
+          color: #D4AF37 !important;
+          padding: 12px 28px;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 13px;
+          border: 2px solid #D4AF37;
+          margin-left: 8px;
+        }
+        .description-box {
+          background: #f9f9f9;
+          padding: 16px;
+          border-radius: 8px;
+          margin: 16px 0;
+          border-left: 4px solid #D4AF37;
+          font-size: 14px;
+          color: #555;
+        }
+        .divider { height: 1px; background: #e5e5e5; margin: 24px 0; }
+        .footer-text { font-size: 13px; color: #888; text-align: center; line-height: 1.5; margin-top: 20px; }
+        @media only screen and (max-width: 480px) {
+          .header { padding: 24px 20px; }
+          .header h1 { font-size: 20px; }
+          .content { padding: 24px 20px; }
+          .btn, .btn-secondary { display: block; width: 100%; margin: 8px 0; text-align: center; }
+          .cal-row { flex-direction: column; gap: 2px; }
+          .cal-label { width: auto; }
+        }
       </style>
     </head>
     <body>
       <div class="container">
-        <div class="header">
-          <h1>📅 Meeting Scheduled</h1>
-        </div>
-        <div class="content">
-          <h2>Hi ${recipientName},</h2>
-          <p>Your ${bookingDetails.type} meeting with <strong>${participantName}</strong> has been scheduled.</p>
-          
-          <div class="details-box">
-            <p><strong>Topic:</strong> ${bookingDetails.type}</p>
-            <p><strong>Date:</strong> ${bookingDetails.date}</p>
-            <p><strong>Time:</strong> ${bookingDetails.time}</p>
-            ${bookingDetails.meetingLink ? `<p><strong>Link:</strong> <a href="${bookingDetails.meetingLink}">${bookingDetails.meetingLink}</a></p>` : ''}
+        <div class="card">
+          <div class="header">
+            <h1>📅 Meeting Reminder</h1>
+            <div class="badge">${config.siteName}</div>
           </div>
-          
-          ${bookingDetails.meetingLink ? `
-            <p>Please click the button below to join the meeting at the scheduled time:</p>
-            <a href="${bookingDetails.meetingLink}" class="btn">Join Meeting</a>
-          ` : '<p>The meeting link will be updated in your portal shortly.</p>'}
-          
-          <p>If you need to reschedule, please do so through your portal dashboard.</p>
+          <div class="content">
+            <h2>Hi ${recipientName},</h2>
+            <p>You have been invited to a meeting with <strong>${participantName}</strong>.</p>
+
+            <div class="context-tag">${contextDisplay}</div>
+
+            ${bookingDetails.description ? `
+              <div class="description-box">
+                <strong>📝 Agenda:</strong><br>${bookingDetails.description.replace(/\n/g, '<br>')}
+              </div>
+            ` : ''}
+
+            <div class="calendar-card">
+              <div class="calendar-date">
+                🗓 ${formattedDate}
+              </div>
+              <div class="calendar-body">
+                <div class="cal-row">
+                  <span class="cal-label">Meeting</span>
+                  <span class="cal-value">${meetingTitle}</span>
+                </div>
+                ${formattedTime ? `
+                <div class="cal-row">
+                  <span class="cal-label">Time</span>
+                  <span class="cal-value">${formattedTime}</span>
+                </div>
+                ` : ''}
+                ${bookingDetails.duration ? `
+                <div class="cal-row">
+                  <span class="cal-label">Duration</span>
+                  <span class="cal-value">${bookingDetails.duration}</span>
+                </div>
+                ` : ''}
+                <div class="cal-row">
+                  <span class="cal-label">Host</span>
+                  <span class="cal-value">${participantName}</span>
+                </div>
+                ${bookingDetails.contextTitle ? `
+                <div class="cal-row">
+                  <span class="cal-label">Related To</span>
+                  <span class="cal-value">${bookingDetails.contextTitle}</span>
+                </div>
+                ` : ''}
+              </div>
+            </div>
+
+            ${bookingDetails.meetingLink ? `
+              <div class="btn-wrapper">
+                <a href="${bookingDetails.meetingLink}" class="btn">🔗 Join Meeting</a>
+                <a href="${bookingDetails.meetingLink}" class="btn-secondary">Add to Calendar</a>
+              </div>
+              <p style="font-size: 13px; color: #888; text-align: center; margin-top: 12px;">
+                Meeting link: <a href="${bookingDetails.meetingLink}" style="color: #D4AF37; word-break: break-all;">${bookingDetails.meetingLink}</a>
+              </p>
+            ` : `
+              <p style="font-size: 14px; color: #666; text-align: center; padding: 16px; background: #f9f9f9; border-radius: 8px;">
+                🕐 The meeting link will be available in your portal closer to the scheduled time.
+              </p>
+            `}
+
+            <div class="divider"></div>
+
+            <p style="font-size: 14px; color: #666; margin: 0;">
+              If you have any questions or need to reschedule, please reach out through your portal dashboard or contact the organizer directly.
+            </p>
+          </div>
         </div>
-        <div class="footer">
-          <p>© 2026 ${config.siteName}. Building Africa's Tech Talent.</p>
+        <div class="footer-text">
+          <p>© 2026 ${config.siteName}. All rights reserved.</p>
+          <p>Building Africa's Tech Talent.</p>
+          <p style="margin-top: 12px; font-size: 12px; color: #aaa;">
+            This is an automated meeting reminder. You received this because you were invited to this session.
+          </p>
         </div>
       </div>
     </body>
@@ -263,7 +441,7 @@ export const sendMeetingInvitation = async (
 
   return sendEmail({
     to: recipientEmail,
-    subject: `Meeting Invitation: ${bookingDetails.type} with ${participantName}`,
+    subject: `📅 Meeting Reminder: ${meetingTitle}${bookingDetails.contextTitle ? ` - ${bookingDetails.contextTitle}` : ''}`,
     html
   });
 };

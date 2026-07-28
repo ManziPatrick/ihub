@@ -2041,6 +2041,35 @@ export const ASSIGN_PROJECT_TO_USERS = gql`
   }
 `;
 
+// ========== EVENT APPLICATION MUTATIONS ==========
+export const APPLY_TO_EVENT = gql`
+  mutation ApplyToEvent($eventId: ID!, $applicationAnswers: [ApplicationAnswerInput], $selectedDeliveryMode: String) {
+    applyToEvent(eventId: $eventId, applicationAnswers: $applicationAnswers, selectedDeliveryMode: $selectedDeliveryMode) {
+      id
+      status
+    }
+  }
+`;
+
+export const REVIEW_EVENT_APPLICATION = gql`
+  mutation ReviewEventApplication($id: ID!, $status: String!, $rejectionReason: String) {
+    reviewEventApplication(id: $id, status: $status, rejectionReason: $rejectionReason) {
+      id
+      status
+    }
+  }
+`;
+
+export const ENROLL_EVENT_APPLICANT = gql`
+  mutation EnrollEventApplicant($applicationId: ID!) {
+    enrollEventApplicant(applicationId: $applicationId) {
+      id
+      username
+      email
+    }
+  }
+`;
+
 export const REQUEST_PROJECT_START = gql`
   mutation RequestProjectStart($templateId: ID!, $type: String!, $teamMembers: [ID]) {
     requestProjectStart(templateId: $templateId, type: $type, teamMembers: $teamMembers) {
@@ -2239,8 +2268,8 @@ export const ASSIGN_PROJECT_TO_TEAM = gql`
 `;
 
 export const CREATE_INTERNSHIP_MEETING = gql`
-  mutation CreateInternshipMeeting($title: String!, $description: String, $startTime: String!, $endTime: String!, $meetLink: String, $type: String!, $contextType: String, $contextTitle: String, $courseIds: [ID!], $teamIds: [ID!], $clientIds: [ID!], $internshipProgramIds: [ID!], $userIds: [ID!], $mentorIds: [ID!], $recurrenceDays: [Int], $recurrenceEndDate: String) {
-    createInternshipMeeting(title: $title, description: $description, startTime: $startTime, endTime: $endTime, meetLink: $meetLink, type: $type, contextType: $contextType, contextTitle: $contextTitle, courseIds: $courseIds, teamIds: $teamIds, clientIds: $clientIds, internshipProgramIds: $internshipProgramIds, userIds: $userIds, mentorIds: $mentorIds, recurrenceDays: $recurrenceDays, recurrenceEndDate: $recurrenceEndDate) {
+  mutation CreateInternshipMeeting($title: String!, $description: String, $startTime: String!, $endTime: String!, $meetLink: String, $type: String!, $contextType: String, $contextTitle: String, $courseIds: [ID!], $teamIds: [ID!], $clientIds: [ID!], $internshipProgramIds: [ID!], $eventIds: [ID!], $userIds: [ID!], $mentorIds: [ID!], $recurrenceDays: [Int], $recurrenceEndDate: String) {
+    createInternshipMeeting(title: $title, description: $description, startTime: $startTime, endTime: $endTime, meetLink: $meetLink, type: $type, contextType: $contextType, contextTitle: $contextTitle, courseIds: $courseIds, teamIds: $teamIds, clientIds: $clientIds, internshipProgramIds: $internshipProgramIds, eventIds: $eventIds, userIds: $userIds, mentorIds: $mentorIds, recurrenceDays: $recurrenceDays, recurrenceEndDate: $recurrenceEndDate) {
       id
       title
       type
@@ -2260,8 +2289,8 @@ export const CREATE_INTERNSHIP_MEETING = gql`
 `;
 
 export const UPDATE_INTERNSHIP_MEETING = gql`
-  mutation UpdateInternshipMeeting($id: ID!, $title: String, $description: String, $startTime: String, $endTime: String, $meetLink: String, $type: String, $teamIds: [ID!], $recurrenceDays: [Int], $recurrenceEndDate: String) {
-    updateInternshipMeeting(id: $id, title: $title, description: $description, startTime: $startTime, endTime: $endTime, meetLink: $meetLink, type: $type, teamIds: $teamIds, recurrenceDays: $recurrenceDays, recurrenceEndDate: $recurrenceEndDate) {
+  mutation UpdateInternshipMeeting($id: ID!, $title: String, $description: String, $startTime: String, $endTime: String, $meetLink: String, $type: String, $teamIds: [ID!], $recurrenceDays: [Int], $recurrenceEndDate: String, $changeReason: String) {
+    updateInternshipMeeting(id: $id, title: $title, description: $description, startTime: $startTime, endTime: $endTime, meetLink: $meetLink, type: $type, teamIds: $teamIds, recurrenceDays: $recurrenceDays, recurrenceEndDate: $recurrenceEndDate, changeReason: $changeReason) {
       id
       title
       type
@@ -2274,8 +2303,14 @@ export const UPDATE_INTERNSHIP_MEETING = gql`
 `;
 
 export const DELETE_INTERNSHIP_MEETING = gql`
-  mutation DeleteInternshipMeeting($id: ID!) {
-    deleteInternshipMeeting(id: $id)
+  mutation DeleteInternshipMeeting($id: ID!, $reason: String) {
+    deleteInternshipMeeting(id: $id, reason: $reason)
+  }
+`;
+
+export const CANCEL_INTERNSHIP_MEETING = gql`
+  mutation CancelInternshipMeeting($id: ID!, $reason: String!) {
+    cancelInternshipMeeting(id: $id, reason: $reason)
   }
 `;
 

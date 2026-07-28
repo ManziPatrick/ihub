@@ -2859,6 +2859,7 @@ export const GET_COURSE_APPLICATIONS = gql`
           }
         }
         status
+        paymentStatus
         selectedDeliveryMode
         applicationAnswers {
           questionLabel
@@ -3512,6 +3513,62 @@ export const GET_EVENT = gql`
     }
   }
 `
+
+// ========== EVENT APPLICATION QUERIES ==========
+export const GET_EVENT_APPLICATIONS = gql`
+  query GetEventApplications($eventId: ID, $status: String, $page: Int, $limit: Int) {
+    eventApplications(eventId: $eventId, status: $status, page: $page, limit: $limit) {
+      items {
+        id
+        status
+        applicationAnswers {
+          questionLabel
+          answer
+        }
+        selectedDeliveryMode
+        rejectionReason
+        notes
+        createdAt
+        event {
+          id
+          title
+          type
+          startDate
+          isOnline
+          location
+        }
+        user {
+          id
+          username
+          email
+          fullName
+          avatar
+          phone
+        }
+      }
+      pagination {
+        ...PaginationFragment
+      }
+    }
+  }
+  ${PAGINATION_FRAGMENT}
+`;
+
+export const GET_MY_EVENT_APPLICATIONS = gql`
+  query GetMyEventApplications {
+    myEventApplications {
+      id
+      status
+      rejectionReason
+      event {
+        id
+        title
+        startDate
+      }
+      createdAt
+    }
+  }
+`;
 
 export const GET_UNIFIED_EVENTS = gql`
   query GetUnifiedEvents($page: Int, $limit: Int, $type: String, $search: String, $upcoming: Boolean) {

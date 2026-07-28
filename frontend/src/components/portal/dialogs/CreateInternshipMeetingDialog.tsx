@@ -16,10 +16,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Video, Loader2, Calendar as CalendarIcon, RefreshCw, Users, ShieldCheck, User as UserIcon, Check, BookOpen, Layout, Building2, GraduationCap, Globe } from "lucide-react";
+import { Search, Video, Loader2, Calendar as CalendarIcon, RefreshCw, Users, ShieldCheck, User as UserIcon, Check, BookOpen, Layout, Building2, GraduationCap, Globe, Sparkles, CalendarCheck } from "lucide-react";
 import { toast } from "sonner";
 import { CREATE_INTERNSHIP_MEETING } from "@/lib/graphql/mutations";
-import { GET_COURSES_LITE_SUMMARY, GET_INTERNSHIP_TEAMS, GET_INTERNSHIP_MEETINGS, GET_ALL_STUDENTS, GET_ALL_TRAINERS } from "@/lib/graphql/queries";
+import { GET_COURSES_LITE_SUMMARY, GET_INTERNSHIP_TEAMS, GET_INTERNSHIP_MEETINGS, GET_ALL_STUDENTS, GET_ALL_TRAINERS, GET_EVENTS, GET_INTERNSHIP_PROGRAMS } from "@/lib/graphql/queries";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -62,12 +62,15 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
   const [searchCourses, setSearchCourses] = useState("");
   const [searchStudents, setSearchStudents] = useState("");
   const [searchMentors, setSearchMentors] = useState("");
+  const [searchEvents, setSearchEvents] = useState("");
+  const [searchPrograms, setSearchPrograms] = useState("");
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
   
   const [contextType, setContextType] = useState("general");
   const [contextTitle, setContextTitle] = useState("");
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
+  const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -91,6 +94,14 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
   });
   const { data: studentsData, loading: studentsLoading } = useQuery(GET_ALL_STUDENTS, { skip: !open });
   const { data: mentorsData, loading: mentorsLoading } = useQuery(GET_ALL_TRAINERS, { skip: !open });
+  const { data: eventsData, loading: eventsLoading } = useQuery(GET_EVENTS, {
+    variables: { page: 1, limit: 100, status: 'published' },
+    skip: !open,
+  });
+  const { data: programsData, loading: programsLoading } = useQuery(GET_INTERNSHIP_PROGRAMS, {
+    variables: { page: 1, limit: 100 },
+    skip: !open,
+  });
 
   const [createMeeting, { loading: creating }] = useMutation(CREATE_INTERNSHIP_MEETING, {
     onCompleted: () => {
@@ -121,12 +132,15 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
     setSelectedTeams([]);
     setSelectedClients([]);
     setSelectedPrograms([]);
+    setSelectedEvents([]);
     setSelectedUsers([]);
     setSelectedMentors([]);
     setRecurrenceDays([]);
     setSearchCourses("");
     setSearchStudents("");
     setSearchMentors("");
+    setSearchEvents("");
+    setSearchPrograms("");
   };
 
   const toggleSelection = (id: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
@@ -144,8 +158,8 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
       toast.error("Please fill in all required fields");
       return;
     }
-    if (selectedCourses.length === 0 && selectedTeams.length === 0 && selectedUsers.length === 0 && selectedMentors.length === 0) {
-      toast.error("Please select at least one course, team, or individual attendee");
+    if (!hasRelevantSelection) {
+      toast.error("Please select at least one attendee relevant to the selected context");
       return;
     }
 
@@ -163,6 +177,7 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
         teamIds: selectedTeams,
         clientIds: selectedClients,
         internshipProgramIds: selectedPrograms,
+        eventIds: selectedEvents,
         userIds: selectedUsers,
         mentorIds: selectedMentors,
         recurrenceDays: formData.type !== "ONCE" ? recurrenceDays : undefined,
@@ -186,15 +201,58 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
     (c.category || "").toLowerCase().includes(searchCourses.toLowerCase())
   );
 
+  const filteredEvents = ((eventsData as any)?.events?.items || []).filter((e: any) => 
+    (e.title || "").toLowerCase().includes(searchEvents.toLowerCase()) ||
+    (e.type || "").toLowerCase().includes(searchEvents.toLowerCase())
+  );
+
+  const filteredPrograms = ((programsData as any)?.internshipPrograms?.items || []).filter((p: any) => 
+    (p.title || "").toLowerCase().includes(searchPrograms.toLowerCase())
+  );
+
+  // Combine students + trainers for client context (no dedicated client query)
+  const clientUsers = (() => {
+    const all = [
+      ...((studentsData as any)?.getAllStudents || []),
+      ...((mentorsData as any)?.getAllTrainers || []),
+    ];
+    const map = new Map();
+    all.forEach((u: any) => map.set(u.id, u));
+    return Array.from(map.values());
+  })();
+
   const CONTEXT_TYPES = [
     { id: 'general', label: 'General', icon: Globe },
     { id: 'course', label: 'Course', icon: BookOpen },
+    { id: 'event', label: 'Event', icon: Sparkles },
+    { id: 'session', label: 'Session', icon: Video },
     { id: 'project', label: 'Project', icon: Layout },
     { id: 'client', label: 'Client', icon: Building2 },
     { id: 'internship', label: 'Internship', icon: GraduationCap },
   ];
 
   const isRecurring = formData.type === "DAILY" || formData.type === "WEEKLY";
+
+  // ── Context-aware section visibility ────────────────────────────────
+  const showSection = {
+    courses: contextType === 'general' || contextType === 'course',
+    teams: contextType === 'general' || contextType === 'course' || contextType === 'project' || contextType === 'internship',
+    trainers: contextType === 'general' || contextType === 'course' || contextType === 'project' || contextType === 'internship',
+    events: contextType === 'general' || contextType === 'event' || contextType === 'session',
+    programs: contextType === 'general' || contextType === 'internship',
+    students: contextType === 'general' || contextType === 'course' || contextType === 'project' || contextType === 'internship' || contextType === 'client',
+    clients: contextType === 'general' || contextType === 'client',
+  };
+
+  // Validation: check if at least one relevant section has selections
+  const hasRelevantSelection =
+    (showSection.courses && selectedCourses.length > 0) ||
+    (showSection.teams && selectedTeams.length > 0) ||
+    (showSection.trainers && selectedMentors.length > 0) ||
+    (showSection.events && selectedEvents.length > 0) ||
+    (showSection.programs && selectedPrograms.length > 0) ||
+    (showSection.students && selectedUsers.length > 0) ||
+    (showSection.clients && selectedClients.length > 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -244,11 +302,13 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
                       <Input
                         value={contextTitle}
                         onChange={e => setContextTitle(e.target.value)}
-                        placeholder={`e.g. ${contextType === 'course' ? 'Introduction to Web Development' : contextType === 'project' ? 'E-commerce Platform' : contextType === 'client' ? 'Acme Corp' : 'Software Engineering Bootcamp'}`}
+                        placeholder={`e.g. ${contextType === 'course' ? 'Introduction to Web Development' : contextType === 'event' ? 'AI Bootcamp 2026' : contextType === 'session' ? 'Live Q&A Session' : contextType === 'project' ? 'E-commerce Platform' : contextType === 'client' ? 'Acme Corp' : 'Software Engineering Bootcamp'}`}
                         className="h-10 text-sm rounded-2xl border-accent/10"
                       />
                       <p className="text-[9px] text-muted-foreground mt-1">
                         {contextType === 'course' ? 'The course this meeting is for' : 
+                         contextType === 'event' ? 'The event (bootcamp/workshop) this meeting is for' :
+                         contextType === 'session' ? 'The live session this meeting is part of' :
                          contextType === 'project' ? 'The project this meeting is related to' :
                          contextType === 'client' ? 'The client this meeting is for' :
                          'The internship program this meeting is for'}
@@ -328,133 +388,260 @@ export function CreateInternshipMeetingDialog({ open, onOpenChange, programId }:
               )}
 
               {/* Assignments Selection Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                {/* Course Selection */}
-                <div className="space-y-4">
+              {(showSection.courses || showSection.teams || showSection.trainers) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                  {/* Course Selection */}
+                  {showSection.courses && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
+                          <BookOpen className="w-3 h-3" /> Select Courses
+                        </Label>
+                        <Badge variant="outline" className="text-[8px] font-black uppercase">{selectedCourses.length} Selected</Badge>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                          <Input placeholder="Search courses..." value={searchCourses} onChange={e => setSearchCourses(e.target.value)} className="pl-8 h-9 rounded-xl text-xs bg-muted/10 border-none" />
+                        </div>
+                        <div className="h-[200px] border border-accent/10 rounded-3xl overflow-hidden bg-muted/5 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+                          {coursesLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto mt-10" /> : 
+                            filteredCourses.map((c: any) => (
+                              <div key={c.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-accent/5 transition-colors cursor-pointer" onClick={() => toggleSelection(c.id, setSelectedCourses)}>
+                                 <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedCourses.includes(c.id) ? "bg-accent border-accent text-accent-foreground" : "border-border/50")}>
+                                    {selectedCourses.includes(c.id) && <Check className="w-3 h-3" />}
+                                 </div>
+                                 <div className="flex-1 truncate">
+                                   <p className="text-[10px] font-black uppercase truncate">{c.title}</p>
+                                   <p className="text-[8px] text-muted-foreground">{c.category || c.level || "Course"} · {c.studentsEnrolledCount || 0} Enrolled</p>
+                                 </div>
+                              </div>
+                            ))
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Team Selection */}
+                  {showSection.teams && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
+                          <Users className="w-3 h-3" /> Select Teams
+                        </Label>
+                      </div>
+                      <div className="h-[250px] border border-accent/10 rounded-3xl overflow-hidden bg-muted/5 p-4 space-y-2 overflow-y-auto custom-scrollbar">
+                        {teamsLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto mt-20" /> : 
+                          ((teamsData as any)?.internshipTeams?.items || []).map((t: any) => (
+                            <div key={t.id} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-accent/5 transition-colors group cursor-pointer" onClick={() => toggleSelection(t.id, setSelectedTeams)}>
+                              <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedTeams.includes(t.id) ? "bg-accent border-accent text-accent-foreground" : "border-border/50")}>
+                                 {selectedTeams.includes(t.id) && <Check className="w-3 h-3" />}
+                              </div>
+                              <div className="flex-1">
+                                 <p className="text-xs font-black uppercase tracking-tight leading-none">{t.name}</p>
+                                 <p className="text-[9px] text-muted-foreground mt-1">{t.type} Group · {t.members?.length || 0} Members</p>
+                              </div>
+                            </div>
+                          ))
+                        }
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Trainer/Creator Selection */}
+                  {showSection.trainers && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
+                          <ShieldCheck className="w-3 h-3 text-gold" /> Select Creators/Trainers
+                        </Label>
+                        <Badge variant="outline" className="text-[8px] font-black uppercase text-gold border-gold/30">{selectedMentors.length} Selected</Badge>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                          <Input placeholder="Search creators..." value={searchMentors} onChange={e => setSearchMentors(e.target.value)} className="pl-8 h-9 rounded-xl text-xs bg-muted/10 border-none" />
+                        </div>
+                        <div className="h-[200px] border border-gold/10 rounded-3xl overflow-hidden bg-muted/5 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+                          {mentorsLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto mt-10" /> : 
+                            filteredMentors.map((m: any) => (
+                              <div key={m.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gold/5 transition-colors cursor-pointer" onClick={() => toggleSelection(m.id, setSelectedMentors)}>
+                                 <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedMentors.includes(m.id) ? "bg-accent border-accent text-accent-foreground" : "border-border/50")}>
+                                    {selectedMentors.includes(m.id) && <Check className="w-3 h-3" />}
+                                 </div>
+                                 <Avatar className="h-6 w-6">
+                                   <AvatarImage src={m.avatar} />
+                                   <AvatarFallback className="text-[8px]">{m.username?.[0]}</AvatarFallback>
+                                 </Avatar>
+                                 <div className="flex-1 truncate">
+                                   <p className="text-[10px] font-black uppercase">{m.fullName || m.username}</p>
+                                   <p className="text-[8px] text-muted-foreground">{m.role}</p>
+                                 </div>
+                              </div>
+                            ))
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Events/Sessions Selection */}
+              {showSection.events && (
+                <div className="space-y-4 border-t border-border/10 pt-8">
                   <div className="flex items-center justify-between">
                     <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
-                      <BookOpen className="w-3 h-3" /> Select Courses
+                      <CalendarCheck className="w-3 h-3 text-rose-400" /> Select Events / Sessions
                     </Label>
-                    <Badge variant="outline" className="text-[8px] font-black uppercase">{selectedCourses.length} Selected</Badge>
+                    <Badge variant="outline" className="text-[8px] font-black uppercase">{selectedEvents.length} Selected</Badge>
                   </div>
                   <div className="space-y-3">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-                      <Input placeholder="Search courses..." value={searchCourses} onChange={e => setSearchCourses(e.target.value)} className="pl-8 h-9 rounded-xl text-xs bg-muted/10 border-none" />
+                      <Input placeholder="Search events & sessions..." value={searchEvents} onChange={e => setSearchEvents(e.target.value)} className="pl-8 h-9 rounded-xl text-xs bg-muted/10 border-none" />
                     </div>
-                    <div className="h-[200px] border border-accent/10 rounded-3xl overflow-hidden bg-muted/5 p-3 space-y-1 overflow-y-auto custom-scrollbar">
-                      {coursesLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto mt-10" /> : 
-                        filteredCourses.map((c: any) => (
-                          <div key={c.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-accent/5 transition-colors cursor-pointer" onClick={() => toggleSelection(c.id, setSelectedCourses)}>
-                             <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedCourses.includes(c.id) ? "bg-accent border-accent text-accent-foreground" : "border-border/50")}>
-                                {selectedCourses.includes(c.id) && <Check className="w-3 h-3" />}
+                    <div className="h-[200px] border border-rose-500/10 rounded-3xl overflow-hidden bg-muted/5 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+                      {eventsLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto mt-10" /> : 
+                        filteredEvents.length === 0 ? (
+                          <p className="text-xs text-muted-foreground text-center mt-10 italic">No published events or sessions yet</p>
+                        ) : (
+                          filteredEvents.map((e: any) => (
+                            <div key={e.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-rose-500/5 transition-colors cursor-pointer" onClick={() => toggleSelection(e.id, setSelectedEvents)}>
+                               <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedEvents.includes(e.id) ? "bg-rose-500 border-rose-500 text-white" : "border-border/50")}>
+                                  {selectedEvents.includes(e.id) && <Check className="w-3 h-3" />}
+                               </div>
+                               <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", e.type === 'bootcamp' ? 'bg-amber-500/10' : 'bg-rose-500/10')}>
+                                 {e.type === 'bootcamp' ? <GraduationCap className="w-4 h-4 text-amber-500" /> : <Sparkles className="w-4 h-4 text-rose-500" />}
+                               </div>
+                               <div className="flex-1 truncate">
+                                 <p className="text-[10px] font-black uppercase truncate">{e.title}</p>
+                                 <p className="text-[8px] text-muted-foreground">{e.type} · {e.startDate ? new Date(e.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'TBD'}</p>
+                               </div>
+                            </div>
+                          ))
+                        )
+                      }
+                    </div>
+                    <p className="text-[8px] text-rose-400/60 italic">Approved/waitlisted applicants of selected events will be notified of this meeting.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Internship Programs Selection */}
+              {showSection.programs && (
+                <div className="space-y-4 border-t border-border/10 pt-8">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
+                      <GraduationCap className="w-3 h-3 text-amber-400" /> Select Internship Programs
+                    </Label>
+                    <Badge variant="outline" className="text-[8px] font-black uppercase">{selectedPrograms.length} Selected</Badge>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                      <Input placeholder="Search programs..." value={searchPrograms} onChange={e => setSearchPrograms(e.target.value)} className="pl-8 h-9 rounded-xl text-xs bg-muted/10 border-none" />
+                    </div>
+                    <div className="h-[200px] border border-amber-500/10 rounded-3xl overflow-hidden bg-muted/5 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+                      {programsLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto mt-10" /> : 
+                        filteredPrograms.length === 0 ? (
+                          <p className="text-xs text-muted-foreground text-center mt-10 italic">No programs yet</p>
+                        ) : (
+                          filteredPrograms.map((p: any) => (
+                            <div key={p.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-amber-500/5 transition-colors cursor-pointer" onClick={() => toggleSelection(p.id, setSelectedPrograms)}>
+                               <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedPrograms.includes(p.id) ? "bg-amber-500 border-amber-500 text-white" : "border-border/50")}>
+                                  {selectedPrograms.includes(p.id) && <Check className="w-3 h-3" />}
+                               </div>
+                               <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                                 <GraduationCap className="w-4 h-4 text-amber-500" />
+                               </div>
+                               <div className="flex-1 truncate">
+                                 <p className="text-[10px] font-black uppercase truncate">{p.title}</p>
+                                 <p className="text-[8px] text-muted-foreground">{p.duration || 'Program'} · {p.status}</p>
+                               </div>
+                            </div>
+                          ))
+                        )
+                      }
+                    </div>
+                    <p className="text-[8px] text-amber-400/60 italic">Approved/waitlisted applicants of selected programs will be notified of this meeting.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Client Selection */}
+              {showSection.clients && (
+                <div className="space-y-4 border-t border-border/10 pt-8">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
+                      <Building2 className="w-3 h-3 text-emerald-400" /> Select Users (Client Context)
+                    </Label>
+                    <Badge variant="outline" className="text-[8px] font-black uppercase">{selectedClients.length} Selected</Badge>
+                  </div>
+                  <div className="h-[200px] border border-emerald-500/10 rounded-3xl overflow-hidden bg-muted/5 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+                    {studentsLoading || mentorsLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto mt-10" /> : 
+                      clientUsers.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center mt-10 italic">No users available</p>
+                      ) : (
+                        clientUsers.map((c: any) => (
+                          <div key={c.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-emerald-500/5 transition-colors cursor-pointer" onClick={() => toggleSelection(c.id, setSelectedClients)}>
+                             <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedClients.includes(c.id) ? "bg-emerald-500 border-emerald-500 text-white" : "border-border/50")}>
+                                {selectedClients.includes(c.id) && <Check className="w-3 h-3" />}
+                             </div>
+                             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                               <Building2 className="w-4 h-4 text-emerald-500" />
                              </div>
                              <div className="flex-1 truncate">
-                               <p className="text-[10px] font-black uppercase truncate">{c.title}</p>
-                               <p className="text-[8px] text-muted-foreground">{c.category || c.level || "Course"} · {c.studentsEnrolledCount || 0} Enrolled</p>
+                               <p className="text-[10px] font-black uppercase truncate">{c.fullName || c.username}</p>
+                               <p className="text-[8px] text-muted-foreground">{c.role || 'User'} · {c.email}</p>
                              </div>
                           </div>
                         ))
-                      }
-                    </div>
-                  </div>
-                </div>
-
-                {/* Team Selection */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
-                      <Users className="w-3 h-3" /> Select Teams
-                    </Label>
-                  </div>
-                  <div className="h-[250px] border border-accent/10 rounded-3xl overflow-hidden bg-muted/5 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-                    {teamsLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto mt-20" /> : 
-                      ((teamsData as any)?.internshipTeams?.items || []).map((t: any) => (
-                        <div key={t.id} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-accent/5 transition-colors group cursor-pointer" onClick={() => toggleSelection(t.id, setSelectedTeams)}>
-                          <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedTeams.includes(t.id) ? "bg-accent border-accent text-accent-foreground" : "border-border/50")}>
-                             {selectedTeams.includes(t.id) && <Check className="w-3 h-3" />}
-                          </div>
-                          <div className="flex-1">
-                             <p className="text-xs font-black uppercase tracking-tight leading-none">{t.name}</p>
-                             <p className="text-[9px] text-muted-foreground mt-1">{t.type} Group · {t.members?.length || 0} Members</p>
-                          </div>
-                        </div>
-                      ))
+                      )
                     }
                   </div>
+                  <p className="text-[8px] text-emerald-400/60 italic">Select users to invite for this client meeting.</p>
                 </div>
-
-                {/* Trainer/Creator Selection */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
-                      <ShieldCheck className="w-3 h-3 text-gold" /> Select Creators/Trainers
-                    </Label>
-                    <Badge variant="outline" className="text-[8px] font-black uppercase text-gold border-gold/30">{selectedMentors.length} Selected</Badge>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-                      <Input placeholder="Search creators..." value={searchMentors} onChange={e => setSearchMentors(e.target.value)} className="pl-8 h-9 rounded-xl text-xs bg-muted/10 border-none" />
-                    </div>
-                    <div className="h-[200px] border border-gold/10 rounded-3xl overflow-hidden bg-muted/5 p-3 space-y-1 overflow-y-auto custom-scrollbar">
-                      {mentorsLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto mt-10" /> : 
-                        filteredMentors.map((m: any) => (
-                          <div key={m.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gold/5 transition-colors cursor-pointer" onClick={() => toggleSelection(m.id, setSelectedMentors)}>
-                             <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedMentors.includes(m.id) ? "bg-accent border-accent text-accent-foreground" : "border-border/50")}>
-                                {selectedMentors.includes(m.id) && <Check className="w-3 h-3" />}
-                             </div>
-                             <Avatar className="h-6 w-6">
-                               <AvatarImage src={m.avatar} />
-                               <AvatarFallback className="text-[8px]">{m.username?.[0]}</AvatarFallback>
-                             </Avatar>
-                             <div className="flex-1 truncate">
-                               <p className="text-[10px] font-black uppercase">{m.fullName || m.username}</p>
-                               <p className="text-[8px] text-muted-foreground">{m.role}</p>
-                             </div>
-                          </div>
-                        ))
-                      }
-                    </div>
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Individual Student Selection */}
-              <div className="space-y-4 border-t border-border/10 pt-8">
-                 <div className="flex items-center justify-between">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
-                      <UserIcon className="w-3 h-3" /> Select Individual Users/Students
-                    </Label>
-                    <Badge variant="outline" className="text-[8px] font-black uppercase">{selectedUsers.length} Selected</Badge>
-                  </div>
-                  <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input placeholder="Search users by name or email..." value={searchStudents} onChange={e => setSearchStudents(e.target.value)} className="pl-12 h-12 rounded-2xl bg-muted/10 border-none text-sm" />
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 h-[200px] overflow-y-auto p-4 border border-accent/10 rounded-3xl bg-muted/5 custom-scrollbar">
-                     {studentsLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto" /> : 
-                        filteredStudents.map((s: any) => (
-                          <div key={s.id} className={cn(
-                            "flex items-center gap-3 p-3 rounded-2xl border transition-all cursor-pointer",
-                            selectedUsers.includes(s.id) ? "bg-accent/10 border-accent/30" : "bg-card border-border/40 hover:border-accent/20"
-                          )} onClick={() => toggleSelection(s.id, setSelectedUsers)}>
-                             <Avatar className="h-8 w-8">
-                               <AvatarImage src={s.avatar} />
-                               <AvatarFallback className="text-xs">{s.username?.[0]}</AvatarFallback>
-                             </Avatar>
-                             <div className="flex-1 truncate">
-                               <p className="text-[10px] font-black uppercase truncate">{s.fullName || s.username}</p>
-                               <p className="text-[8px] text-muted-foreground lowercase truncate">{s.email}</p>
-                             </div>
-                             <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedUsers.includes(s.id) ? "bg-accent border-accent text-accent-foreground" : "border-border/50")}>
-                                {selectedUsers.includes(s.id) && <Check className="w-3 h-3" />}
-                             </div>
-                          </div>
-                        ))
-                     }
-                  </div>
-              </div>
+              {showSection.students && (
+                <div className="space-y-4 border-t border-border/10 pt-8">
+                   <div className="flex items-center justify-between">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-accent/70 flex items-center gap-2">
+                        <UserIcon className="w-3 h-3" /> Select Individual Users/Students
+                      </Label>
+                      <Badge variant="outline" className="text-[8px] font-black uppercase">{selectedUsers.length} Selected</Badge>
+                    </div>
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input placeholder="Search users by name or email..." value={searchStudents} onChange={e => setSearchStudents(e.target.value)} className="pl-12 h-12 rounded-2xl bg-muted/10 border-none text-sm" />
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 h-[200px] overflow-y-auto p-4 border border-accent/10 rounded-3xl bg-muted/5 custom-scrollbar">
+                       {studentsLoading ? <Loader2 className="w-4 h-4 animate-spin m-auto" /> : 
+                          filteredStudents.map((s: any) => (
+                            <div key={s.id} className={cn(
+                              "flex items-center gap-3 p-3 rounded-2xl border transition-all cursor-pointer",
+                              selectedUsers.includes(s.id) ? "bg-accent/10 border-accent/30" : "bg-card border-border/40 hover:border-accent/20"
+                            )} onClick={() => toggleSelection(s.id, setSelectedUsers)}>
+                               <Avatar className="h-8 w-8">
+                                 <AvatarImage src={s.avatar} />
+                                 <AvatarFallback className="text-xs">{s.username?.[0]}</AvatarFallback>
+                               </Avatar>
+                               <div className="flex-1 truncate">
+                                 <p className="text-[10px] font-black uppercase truncate">{s.fullName || s.username}</p>
+                                 <p className="text-[8px] text-muted-foreground lowercase truncate">{s.email}</p>
+                               </div>
+                               <div className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selectedUsers.includes(s.id) ? "bg-accent border-accent text-accent-foreground" : "border-border/50")}>
+                                  {selectedUsers.includes(s.id) && <Check className="w-3 h-3" />}
+                               </div>
+                            </div>
+                          ))
+                       }
+                    </div>
+                </div>
+              )}
 
               {/* Description & Link */}
               <div className="space-y-4 border-t border-border/10 pt-8">

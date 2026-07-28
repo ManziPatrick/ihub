@@ -28,6 +28,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useState } from "react";
+import { ApplyEventDialog } from "@/components/portal/dialogs";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TYPE_BADGES: Record<string, { label: string; color: string }> = {
   bootcamp: { label: "🔥 Bootcamp", color: "bg-orange-500/10 text-orange-500" },
@@ -42,7 +44,9 @@ const TYPE_BADGES: Record<string, { label: string; color: string }> = {
 export default function EventDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [showApplyDialog, setShowApplyDialog] = useState(false);
 
   const { data, loading, error } = useQuery(GET_EVENT, {
     variables: { id },
@@ -345,7 +349,28 @@ export default function EventDetail() {
                       )}
                     </div>
 
-                    {/* Meeting Link */}
+                    {/* Register Button */}
+                    {event.status === 'published' || event.status === 'active' ? (
+                      <Button
+                        className="w-full rounded-xl h-12 text-sm font-bold shadow-lg shadow-gold/20"
+                        variant="gold"
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            navigate("/auth", { state: { from: { pathname: `/events/${id}` } } });
+                          } else {
+                            setShowApplyDialog(true);
+                          }
+                        }}
+                      >
+                        {event.price > 0 ? (
+                          <><DollarSign className="w-4 h-4 mr-2" /> Register & Pay</>
+                        ) : (
+                          <><Check className="w-4 h-4 mr-2" /> Register for Free</>
+                        )}
+                      </Button>
+                    ) : null}
+
+                    {/* Meeting Link (always shown if available) */}
                     {event.meetingLink && (
                       <a
                         href={event.meetingLink}
@@ -353,7 +378,7 @@ export default function EventDetail() {
                         rel="noopener noreferrer"
                         className="block"
                       >
-                        <Button className="w-full rounded-xl" variant="gold">
+                        <Button className="w-full rounded-xl" variant="outline">
                           <ExternalLink className="w-4 h-4 mr-2" /> Join Event
                         </Button>
                       </a>
@@ -409,6 +434,14 @@ export default function EventDetail() {
         </div>
       </main>
       <Footer />
+
+      {/* Apply Dialog */}
+      <ApplyEventDialog
+        open={showApplyDialog}
+        onOpenChange={(open) => !open && setShowApplyDialog(false)}
+        eventId={id || ""}
+        onSuccess={() => setShowApplyDialog(false)}
+      />
     </div>
   );
 }

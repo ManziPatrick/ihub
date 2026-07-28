@@ -7,7 +7,7 @@ export interface CartItem {
   title: string;
   price: number;
   discountPrice?: number;
-  type: "course" | "internship";
+  type: "course" | "internship" | "event";
   image?: string;
 }
 
