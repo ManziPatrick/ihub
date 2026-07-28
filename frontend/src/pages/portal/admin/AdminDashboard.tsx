@@ -68,7 +68,7 @@ export default function AdminDashboard() {
                 {t("portal.adminDashboard") || "Admin Dashboard"}
             </h1>
             <p className="text-muted-foreground mt-1">
-                {t("portal.adminDashboardDesc") || "Platform overview and management"}
+                {t("portal.adminDashboardDesc") || "Overview"}
             </p>
             </div>
             <div className="flex gap-2">

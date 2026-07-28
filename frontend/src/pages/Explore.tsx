@@ -690,7 +690,7 @@ const Explore = () => {
                             onClick={(e) => { e.stopPropagation(); handleEnrollClick(course); }}
                             disabled={enrolling}
                           >
-                            {enrolling ? "Enrolling..." : "Enroll Now"} <ArrowRight className="w-4 h-4 ml-2" />
+                            {enrolling ? "Enrolling..." : course.enrollmentMode === "application" ? "Apply Now" : "Enroll Now"} <ArrowRight className="w-4 h-4 ml-2" />
                           </Button>
                         );
                       })()}

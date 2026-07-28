@@ -12,20 +12,6 @@ import { useMutation } from "@apollo/client/react";
 import { useAuth } from "@/contexts/AuthContext";
 import { MARK_TOUR_COMPLETED } from "@/lib/graphql/mutations";
 import { tourFactoriesByRole } from "./TourConfig";
-import { mdToHtml } from "@/lib/markdown";
-
-/**
- * Render a string with basic markdown (**bold**, ### headings) as HTML.
- */
-function renderMd(content: React.ReactNode): React.ReactNode {
-  if (typeof content !== "string") return content;
-  return (
-    <span
-      className="[&_strong]:font-semibold [&_strong]:text-foreground"
-      dangerouslySetInnerHTML={{ __html: mdToHtml(content) }}
-    />
-  );
-}
 
 /**
  * ───────────────────────────────────────────────
@@ -43,15 +29,18 @@ export function PlatformTour() {
 
   // 🔁 MEMOIZE steps so Joyride doesn't see a new array on every render
   //    (which would cause it to reset to step 0).
+  // IMPORTANT: Do NOT render React elements inside steps — Joyride sees
+  // new references and resets to step 0, then jumps to the last step.
+  // Pass plain strings and let Joyride render them.
   const role = user?.role || "student";
   const tourConfig = tourFactoriesByRole[role];
   const steps: Step[] = useMemo(
     () =>
       (tourConfig?.factory(t) || []).map((step) => ({
         ...step,
-        // Render **bold** and ### headings from translation strings as HTML
-        content: renderMd(step.content),
-        title: step.title ? renderMd(step.title) : step.title,
+        // Keep as plain string — React elements break Joyride's step tracking
+        content: typeof step.content === 'string' ? step.content : step.content,
+        title: typeof step.title === 'string' ? step.title : step.title,
       })),
     // t from useTranslation() is stable across renders
     [tourConfig, t]
@@ -197,8 +186,13 @@ export function PlatformTour() {
 
   if (!user) return null;
 
+  // Unique key forces Joyride to remount cleanly when user changes
+  // (prevents stale internal state from causing step jumps)
+  const joyrideKey = `tour-${user?.id || 'anon'}-${runTour ? 'running' : 'stopped'}`;
+
   return (
     <Joyride
+      key={joyrideKey}
       steps={steps}
       run={runTour}
       continuous

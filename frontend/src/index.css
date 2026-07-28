@@ -730,3 +730,37 @@ body > iframe[src*="accounts.google.com/gsi/"] {
 .lesson-content-viewer .ql-cursor {
   display: none;
 }
+/* ═══════════════════════════════════════════════════
+   MOBILE PERFORMANCE OPTIMIZATIONS
+   ═══════════════════════════════════════════════════ */
+
+/* Reduce animation intensity on small devices */
+@media (max-width: 640px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Faster, lighter animations on mobile */
+  .motion-div,
+  [style*="transition"] {
+    transition-duration: 0.15s !important;
+  }
+  
+  /* Disable parallax and heavy effects on mobile */
+  .parallax,
+  [data-parallax] {
+    transform: none !important;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

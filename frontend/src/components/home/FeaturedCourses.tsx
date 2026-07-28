@@ -1555,7 +1555,7 @@ export function FeaturedCourses() {
                                   }
                                   return (
                                     <Button variant="gold" size="sm" className={`w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20 ${!isOpen ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isOpen} onClick={(e) => { e.stopPropagation(); if (isOpen) { navigate(`/internship/${intern.id}`); } }}>
-                                      {isOpen ? "Apply Now" : "Closed"} <ArrowRight className="w-3 h-3 ml-1.5" />
+                                      {isOpen ? "Enroll Now" : "Closed"} <ArrowRight className="w-3 h-3 ml-1.5" />
                                     </Button>
                                   );
                                 })()}
