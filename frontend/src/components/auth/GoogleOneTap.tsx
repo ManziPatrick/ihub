@@ -71,8 +71,9 @@ export function GoogleOneTap() {
                     client_id: env.GOOGLE_CLIENT_ID,
                     callback: handleCredentialResponse,
                     cancel_on_tap_outside: false,
-                    auto_select: false,
+                    auto_select: true,
                     use_fedcm_for_prompt: true,
+                    itp_support: true,
                 });
                 isInitializedRef.current = true;
             }
@@ -103,10 +104,16 @@ export function GoogleOneTap() {
             initializeGoogleOneTap();
         }
 
+            // Cleanup: cancel prompt and cancel any pending auto-select
         return () => {
             isPromptActiveRef.current = false;
             if ((window as any).google?.accounts?.id) {
                 (window as any).google.accounts.id.cancel();
+                try {
+                    (window as any).google.accounts.id.disableAutoSelect();
+                } catch {
+                    // disableAutoSelect may not be available in all versions
+                }
             }
         };
     }, [user, googleLogin, loginWithToken]);

@@ -58,6 +58,7 @@ export default function AdminCompletedUsers() {
       courseId: courseFilter !== "all" ? courseFilter : undefined,
     },
     fetchPolicy: "network-only",
+    notifyOnNetworkStatusChange: true,
   });
 
   const completedUsers = (data as any)?.completedUsers?.items || [];

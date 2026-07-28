@@ -29,7 +29,9 @@ import {
   FolderOpen,
   RefreshCw,
 } from "lucide-react";
-import { useQuery } from "@apollo/client/react";import { GET_ME, GET_MY_BOOKINGS, GET_CONVERSATIONS, GET_MY_PAYMENTS, GET_MY_PROJECTS, MY_COURSE_APPLICATIONS, GET_MY_INTERNSHIP_APPLICATIONS, GET_COURSES_LITE_SUMMARY, GET_INTERNSHIP_PROGRAMS } from "@/lib/graphql/queries";
+import { useQuery } from "@apollo/client/react";
+import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
+import { GET_ME, GET_MY_BOOKINGS, GET_CONVERSATIONS, GET_MY_PAYMENTS, GET_MY_PROJECTS, MY_COURSE_APPLICATIONS, GET_MY_INTERNSHIP_APPLICATIONS, GET_COURSES_LITE_SUMMARY, GET_INTERNSHIP_PROGRAMS } from "@/lib/graphql/queries";
 import { toast } from "sonner";
 import { GET_MY_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 import { ApplyCourseDialog, ApplyInternshipDialog } from "@/components/portal/dialogs";
@@ -51,12 +53,12 @@ export default function StudentDashboard() {
   const { data: internAppData, refetch: refetchInternApps } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS);
   const [coursePage, setCoursePage] = useState(1);
   const [coursePerPage, setCoursePerPage] = useState(12);
-  const { data: allCoursesData, loading: allCoursesLoading, refetch: refetchCourses } = useQuery(GET_COURSES_LITE_SUMMARY, {
+  const { data: allCoursesData, loading: allCoursesLoading, refetch: refetchCourses } = usePaginatedQuery(GET_COURSES_LITE_SUMMARY, {
     variables: { page: coursePage, limit: coursePerPage },
   });
   const [internshipPage, setInternshipPage] = useState(1);
   const [internshipPerPage, setInternshipPerPage] = useState(6);
-  const { data: allInternshipsData, loading: allInternshipsLoading, refetch: refetchInternships } = useQuery(GET_INTERNSHIP_PROGRAMS, {
+  const { data: allInternshipsData, loading: allInternshipsLoading, refetch: refetchInternships } = usePaginatedQuery(GET_INTERNSHIP_PROGRAMS, {
     variables: { page: internshipPage, limit: internshipPerPage },
   });
 

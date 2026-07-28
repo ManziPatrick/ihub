@@ -3436,3 +3436,103 @@ export const GET_DISCOUNT_CODE = gql`
   }
 `;
 
+
+// ========== EVENT QUERIES ==========
+export const GET_EVENTS = gql`
+  query GetEvents($page: Int, $limit: Int, $type: String, $status: String, $search: String, $featured: Boolean, $upcoming: Boolean) {
+    events(page: $page, limit: $limit, type: $type, status: $status, search: $search, featured: $featured, upcoming: $upcoming) {
+      items {
+        id
+        title
+        description
+        shortDescription
+        type
+        startDate
+        endDate
+        timezone
+        location
+        isOnline
+        meetingLink
+        image
+        price
+        currency
+        maxAttendees
+        organizerName
+        organizerBio
+        tags
+        status
+        featured
+        createdAt
+        createdBy {
+          id
+          username
+          fullName
+          avatar
+        }
+      }
+      pagination {
+        ...PaginationFragment
+      }
+    }
+  }
+  ${PAGINATION_FRAGMENT}
+`
+
+export const GET_EVENT = gql`
+  query GetEvent($id: ID!) {
+    event(id: $id) {
+      id
+      title
+      description
+      shortDescription
+      type
+      startDate
+      endDate
+      timezone
+      location
+      isOnline
+      meetingLink
+      image
+      price
+      currency
+      maxAttendees
+      organizerName
+      organizerBio
+      organizerPhoto
+      tags
+      status
+      featured
+      createdAt
+      createdBy {
+        id
+        username
+        fullName
+        avatar
+      }
+    }
+  }
+`
+
+export const GET_UNIFIED_EVENTS = gql`
+  query GetUnifiedEvents($page: Int, $limit: Int, $type: String, $search: String, $upcoming: Boolean) {
+    unifiedEventsAndInternships(page: $page, limit: $limit, type: $type, search: $search, upcoming: $upcoming) {
+      id
+      title
+      description
+      shortDescription
+      type
+      source
+      startDate
+      endDate
+      image
+      price
+      currency
+      location
+      isOnline
+      tags
+      status
+      organizerName
+      createdAt
+    }
+  }
+`

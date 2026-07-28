@@ -14,10 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { SEOHead } from "@/components/SEOHead";
 import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 
-import { Helmet } from "react-helmet-async";
-
-
-
 const Contact = () => {
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,18 +75,27 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>{t("contact.getInTouch")} | Bootskills - Kigali, Rwanda</title>
-        <meta name="description" content={t("contact.heroDesc")} />
-        <link rel="canonical" href="https://bootskills.com/contact" />
-        <meta property="og:title" content={`${t("contact.getInTouch")} | Bootskills - Kigali, Rwanda`} />
-        <meta property="og:description" content={t("contact.heroDesc")} />
-        <meta property="og:url" content="https://bootskills.com/contact" />
-        <meta property="og:type" content="website" />
-        <meta name="geo.region" content="RW-01" />
-        <meta name="geo.placename" content="Kigali" />
-        <meta name="geo.position" content="-1.9441;30.0619" />
-      </Helmet>
+      <SEOHead
+        title={t("contact.getInTouch")}
+        description={t("contact.heroDesc")}
+        canonicalUrl="https://bootskills.com/contact"
+        ogImageAlt="Bootskills — Get in touch with us in Kigali, Rwanda"
+        keywords="contact Bootskills, Kigali Rwanda, tech training inquiries, internship applications, corporate training"
+      >
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              organizationLd,
+              webPageLd(t("contact.getInTouch"), t("contact.heroDesc"), "https://bootskills.com/contact"),
+              breadcrumbListLd([
+                { name: "Home", item: "/" },
+                { name: "Contact", item: "/contact" },
+              ]),
+            ]
+          })}
+        </script>
+      </SEOHead>
       <Header />
       <main className="pt-20">
         {/* Hero */}

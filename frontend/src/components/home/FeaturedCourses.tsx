@@ -2,6 +2,7 @@ import React, { useState, useRef, useMemo, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@apollo/client/react";
 import { Button } from "@/components/ui/button";
+import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -348,11 +349,8 @@ export function FeaturedCourses() {
     school: filterSchool === "all" ? undefined : filterSchool,
   }), [currentPage, pageSize, sortBy, debouncedSearchQuery, activeCategory, filterPrice, filterLevel, filterSchool]);
 
-  const { data: courseData, loading: courseLoading, previousData: prevCourseData } = useQuery(GET_COURSES_SUMMARY, {
+  const { data: courseData, loading: courseLoading, previousData: prevCourseData } = usePaginatedQuery(GET_COURSES_SUMMARY, {
     variables: queryVariables,
-    fetchPolicy: "cache-first",
-    nextFetchPolicy: "cache-first",
-    notifyOnNetworkStatusChange: false,
   });
 
   // Internship programs — with server-side pagination, search, and filters
@@ -370,11 +368,8 @@ export function FeaturedCourses() {
     school: filterSchool === "all" ? undefined : filterSchool,
   }), [internshipPage, pageSize, debouncedSearchQuery, activeCategory, filterPrice, filterLevel, filterSchool]);
 
-  const { data: internData, loading: internLoading, previousData: prevInternData } = useQuery(GET_INTERNSHIP_PROGRAMS, {
+  const { data: internData, loading: internLoading, previousData: prevInternData } = usePaginatedQuery(GET_INTERNSHIP_PROGRAMS, {
     variables: internshipQueryVariables,
-    fetchPolicy: "cache-first",
-    nextFetchPolicy: "cache-first",
-    notifyOnNetworkStatusChange: false,
   });
 
   const { data: meData } = useQuery(GET_ME, {

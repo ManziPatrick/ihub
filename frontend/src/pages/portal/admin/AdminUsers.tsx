@@ -45,6 +45,7 @@ import {
 import { toast } from "sonner";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { useQuery, useMutation, useApolloClient } from "@apollo/client/react";
+import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
 import { FileSpreadsheet } from "lucide-react";
 import { GET_USERS, GET_TOP_STUDENTS, GET_ANALYTICS_EXPORT } from "@/lib/graphql/queries";
 import { CREATE_USER, UPDATE_USER, DELETE_USER, RESTORE_USER } from "@/lib/graphql/mutations";
@@ -96,7 +97,7 @@ export default function AdminUsers() {
   if (currentUser?.role !== "super_admin") {
     queryVariables.createdBy = currentUser?.id;
   }
-  const { data, loading, refetch } = useQuery(GET_USERS, {
+  const { data, loading, refetch } = usePaginatedQuery(GET_USERS, {
     variables: queryVariables,
   });
   

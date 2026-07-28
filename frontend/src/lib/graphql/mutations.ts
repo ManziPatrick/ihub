@@ -2586,3 +2586,122 @@ export const VALIDATE_DISCOUNT_CODE = gql`
     }
   }
 `;
+
+// ========== EVENT MUTATIONS ==========
+export const CREATE_EVENT = gql`
+  mutation CreateEvent(
+    $title: String!
+    $description: String!
+    $shortDescription: String
+    $type: String!
+    $startDate: String!
+    $endDate: String!
+    $timezone: String
+    $location: String
+    $isOnline: Boolean
+    $meetingLink: String
+    $image: String
+    $price: Float
+    $currency: String
+    $maxAttendees: Int
+    $organizerName: String
+    $organizerBio: String
+    $organizerPhoto: String
+    $tags: [String!]
+    $status: String
+    $featured: Boolean
+  ) {
+    createEvent(
+      title: $title
+      description: $description
+      shortDescription: $shortDescription
+      type: $type
+      startDate: $startDate
+      endDate: $endDate
+      timezone: $timezone
+      location: $location
+      isOnline: $isOnline
+      meetingLink: $meetingLink
+      image: $image
+      price: $price
+      currency: $currency
+      maxAttendees: $maxAttendees
+      organizerName: $organizerName
+      organizerBio: $organizerBio
+      organizerPhoto: $organizerPhoto
+      tags: $tags
+      status: $status
+      featured: $featured
+    ) {
+      id
+      title
+      type
+      startDate
+      endDate
+      status
+      image
+      featured
+    }
+  }
+`
+
+export const UPDATE_EVENT = gql`
+  mutation UpdateEvent(
+    $id: ID!
+    $title: String
+    $description: String
+    $shortDescription: String
+    $type: String
+    $startDate: String
+    $endDate: String
+    $timezone: String
+    $location: String
+    $isOnline: Boolean
+    $meetingLink: String
+    $image: String
+    $price: Float
+    $currency: String
+    $maxAttendees: Int
+    $organizerName: String
+    $organizerBio: String
+    $organizerPhoto: String
+    $tags: [String!]
+    $status: String
+    $featured: Boolean
+  ) {
+    updateEvent(
+      id: $id
+      title: $title
+      description: $description
+      shortDescription: $shortDescription
+      type: $type
+      startDate: $startDate
+      endDate: $endDate
+      timezone: $timezone
+      location: $location
+      isOnline: $isOnline
+      meetingLink: $meetingLink
+      image: $image
+      price: $price
+      currency: $currency
+      maxAttendees: $maxAttendees
+      organizerName: $organizerName
+      organizerBio: $organizerBio
+      organizerPhoto: $organizerPhoto
+      tags: $tags
+      status: $status
+      featured: $featured
+    ) {
+      id
+      title
+      type
+      status
+    }
+  }
+`
+
+export const DELETE_EVENT = gql`
+  mutation DeleteEvent($id: ID!) {
+    deleteEvent(id: $id)
+  }
+`

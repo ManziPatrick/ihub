@@ -27,7 +27,7 @@ const Index = () => {
         title={t("home.heroTitle")}
         description={desc}
         canonicalUrl="https://bootskills.com"
-        ogImage=""
+        ogImageAlt="Bootskills — Practical Training in Kigali, Rwanda"
         keywords="bootskills, online learning, courses, tech training, internships, Kigali, Rwanda, Africa, software development, AI, data science"
       >
         <script type="application/ld+json">{jsonldGraph}</script>

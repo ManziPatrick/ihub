@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -59,8 +60,30 @@ export function PaginationBar({
   rangeStart,
   rangeEnd,
 }: PaginationBarProps) {
+  // ── Load balancing: debounce rapid page-change clicks ────────────
+  // Prevents multiple rapid network requests when user mashes buttons.
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const debouncedPageChange = useCallback(
+    (page: number) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        onPageChange(page);
+      }, 150); // 150ms debounce = smooth, no perceived lag
+    },
+    [onPageChange],
+  );
+
+  // Cleanup debounce timer on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   // Guard against undefined pagination (e.g., while data is loading)
   if (totalPages === undefined || totalPages === null) {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     return null;
   }
 
@@ -89,6 +112,11 @@ export function PaginationBar({
 
   const handlePageSizeChange = (value: string) => {
     onPageSizeChange?.(Number(value));
+  };
+
+  const handlePageClick = (page: number) => {
+    if (disabled) return;
+    debouncedPageChange(page);
   };
 
   return (
@@ -136,7 +164,8 @@ export function PaginationBar({
             variant="outline"
             size="icon"
             className="h-8 w-8 rounded-lg"
-            onClick={() => onPageChange(1)}
+            aria-label="First page"
+            onClick={() => handlePageClick(1)}
             disabled={firstDisabled}
           >
             <ChevronsLeft className="w-4 h-4" />
@@ -147,7 +176,8 @@ export function PaginationBar({
           variant="outline"
           size="icon"
           className="h-8 w-8 rounded-lg"
-          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          aria-label="Previous page"
+          onClick={() => handlePageClick(Math.max(1, currentPage - 1))}
           disabled={prevDisabled}
         >
           <ChevronLeft className="w-4 h-4" />
@@ -166,7 +196,7 @@ export function PaginationBar({
                   variant={currentPage === p ? "gold" : "outline"}
                   size="sm"
                   className="w-8 h-8 p-0 rounded-lg text-xs font-semibold"
-                  onClick={() => onPageChange(p)}
+                  onClick={() => handlePageClick(p)}
                   disabled={disabled}
                 >
                   {p}
@@ -180,7 +210,8 @@ export function PaginationBar({
           variant="outline"
           size="icon"
           className="h-8 w-8 rounded-lg"
-          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          aria-label="Next page"
+          onClick={() => handlePageClick(Math.min(totalPages, currentPage + 1))}
           disabled={nextDisabled}
         >
           <ChevronRight className="w-4 h-4" />
@@ -191,7 +222,8 @@ export function PaginationBar({
             variant="outline"
             size="icon"
             className="h-8 w-8 rounded-lg"
-            onClick={() => onPageChange(totalPages)}
+            aria-label="Last page"
+            onClick={() => handlePageClick(totalPages)}
             disabled={lastDisabled}
           >
             <ChevronsRight className="w-4 h-4" />

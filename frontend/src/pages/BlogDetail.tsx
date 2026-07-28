@@ -173,8 +173,12 @@ const BlogDetail = () => {
                 description={blog?.content?.substring(0, 160) || "Read the latest tech insights."}
                 canonicalUrl={blog?.slug ? `https://bootskills.com/blog/${blog.slug}` : "https://bootskills.com/blog"}
                 ogImage={blog?.image || undefined}
+                ogImageAlt={blog?.title || "Bootskills Blog"}
+                ogType="article"
                 keywords={`${blog?.category?.name || 'blog'}, ${blog?.tags?.join(', ') || 'tech insights'}, Rwanda technology, digital skills`}
                 author={blog?.authorName || "Bootskills"}
+                publishedTime={blog?.createdAt}
+                updatedTime={blog?.createdAt}
             >
                 <script type="application/ld+json">
                   {JSON.stringify({

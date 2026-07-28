@@ -56,6 +56,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { useQuery, useMutation } from "@apollo/client/react";
+import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
 import { GET_USERS, GET_ANALYTICS, GET_AVAILABLE_ADMINS, GET_ALL_TRAINERS, GET_ALL_STUDENTS } from "@/lib/graphql/queries";
 
 const navigate = (to: string) => {
@@ -102,9 +103,8 @@ export default function SuperAdminUsers() {
     queryVariables.createdBy = adminFilter;
   }
 
-  const { data, loading, refetch } = useQuery(GET_USERS, {
+  const { data, loading, refetch } = usePaginatedQuery(GET_USERS, {
     variables: queryVariables,
-    fetchPolicy: "cache-and-network",
   });
   const { data: analyticsData } = useQuery(GET_ANALYTICS);
   const { data: availableAdminsData } = useQuery(GET_AVAILABLE_ADMINS);
