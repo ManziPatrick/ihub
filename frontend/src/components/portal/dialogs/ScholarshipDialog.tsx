@@ -216,7 +216,7 @@ export function ScholarshipDialog({ open, onOpenChange }: ScholarshipDialogProps
           </DialogTitle>
           <DialogDescription>
             {step === "students" && "Select students to grant scholarships"}
-            {step === "items" && `Select ${scholarshipType === "course" ? "courses" : "internship programs"} to grant`}
+            {step === "items" && `Select ${scholarshipType === "course" ? "courses" : "programs"} to grant`}
             {step === "review" && "Review and confirm scholarship grants"}
           </DialogDescription>
 
@@ -367,7 +367,7 @@ export function ScholarshipDialog({ open, onOpenChange }: ScholarshipDialogProps
                 >
                   <GraduationCap className={`w-5 h-5 ${scholarshipType === "internship" ? "text-accent" : "text-muted-foreground"}`} />
                   <div className="text-left">
-                    <p className="text-sm font-bold">Internship</p>
+                    <p className="text-sm font-bold">Program</p>
                     <p className="text-[10px] text-muted-foreground">Free or partial</p>
                   </div>
                 </button>

@@ -59,7 +59,7 @@ export default function AdminAnalytics() {
   const overviewStats = [
     { label: "Total Students", value: analytics?.roleDistribution?.find((r: any) => r.name === 'Student')?.value || 0, change: "+12%", trend: "up", icon: Users },
     { label: "Active Courses", value: analytics?.courseDistribution?.length || 0, change: "+5%", trend: "up", icon: BookOpen },
-    { label: "Graduated Interns", value: analytics?.internshipStats?.graduated || 0, change: "+2%", trend: "up", icon: CheckCircle },
+    { label: "Completed Programs", value: analytics?.internshipStats?.graduated || 0, change: "+2%", trend: "up", icon: CheckCircle },
     { label: "Pending Reviews", value: analytics?.projectStats?.pendingReview || 0, change: "-8%", trend: "down", icon: Clock },
   ];
 
@@ -276,7 +276,7 @@ export default function AdminAnalytics() {
               <CardHeader>
                 <CardTitle className="text-lg font-heading flex items-center gap-2">
                   <Briefcase className="w-5 h-5 text-accent" />
-                  Internship Funnel
+                  Program Funnel
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">

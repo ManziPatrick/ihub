@@ -19,8 +19,8 @@ const services = [
   },
   {
     icon: Briefcase,
-    title: "Internships & Projects",
-    description: "Gain hands-on experience through supervised internships and industry-based projects.",
+    title: "Programs & Projects",
+    description: "Gain hands-on experience through supervised programs and industry-based projects.",
   },
 ];
 

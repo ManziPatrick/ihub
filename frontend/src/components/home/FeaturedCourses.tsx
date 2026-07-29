@@ -1434,7 +1434,7 @@ export function FeaturedCourses() {
                     <p className="text-sm text-muted-foreground">
                       {debouncedSearchQuery
                         ? `No internships found for "${debouncedSearchQuery}".`
-                        : "No internship programs available right now. Check back soon!"}
+                        : "No programs available right now. Check back soon!"}
                     </p>
                   </div>
                 ) : (
@@ -1469,7 +1469,7 @@ export function FeaturedCourses() {
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                               />
                               <div className="absolute top-3 left-3">
-                                <Badge className="bg-white/90 text-black hover:bg-white border-0 shadow-sm text-[10px] px-2 py-0">{intern.normalizedCategory} Internship</Badge>
+                                <Badge className="bg-white/90 text-black hover:bg-white border-0 shadow-sm text-[10px] px-2 py-0">{intern.normalizedCategory} Program</Badge>
                               </div>
                               <div className={`absolute top-3 right-3 p-1.5 rounded-md ${meta.bg} border ${meta.border} backdrop-blur-sm opacity-90`}>
                                 <Icon className={`w-3 h-3 ${meta.text}`} />
@@ -1555,7 +1555,7 @@ export function FeaturedCourses() {
                                   }
                                   return (
                                     <Button variant="gold" size="sm" className={`w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20 ${!isOpen ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isOpen} onClick={(e) => { e.stopPropagation(); if (isOpen) { navigate(`/internship/${intern.id}`); } }}>
-                                      {isOpen ? "Apply Now" : "Closed"} <ArrowRight className="w-3 h-3 ml-1.5" />
+                                      {isOpen ? "Enroll Now" : "Closed"} <ArrowRight className="w-3 h-3 ml-1.5" />
                                     </Button>
                                   );
                                 })()}

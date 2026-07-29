@@ -68,7 +68,7 @@ export default function AdminDashboard() {
                 {t("portal.adminDashboard") || "Admin Dashboard"}
             </h1>
             <p className="text-muted-foreground mt-1">
-                {t("portal.adminDashboardDesc") || "Platform overview and management"}
+                {t("portal.adminDashboardDesc") || "Overview"}
             </p>
             </div>
             <div className="flex gap-2">
@@ -329,7 +329,7 @@ export default function AdminDashboard() {
                   <Link to="/portal/admin/internships">
                     <Button variant="ghost" className="w-full justify-start">
                       <Briefcase className="w-4 h-4 mr-2 text-accent" />
-                      Manage Internships
+                      Manage Programs
                     </Button>
                   </Link>
                   <Link to="/portal/admin/analytics">

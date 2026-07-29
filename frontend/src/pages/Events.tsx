@@ -29,7 +29,7 @@ const EVENT_TYPES = [
   { value: "webinar", label: "Webinars" },
   { value: "hackathon", label: "Hackathons" },
   { value: "conference", label: "Conferences" },
-  { value: "internship", label: "Internships" },
+  { value: "internship", label: "Programs" },
 ];
 
 const TYPE_ICONS: Record<string, string> = {
@@ -81,8 +81,8 @@ export default function Events() {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Events & Internships"
-        description="Discover bootcamps, workshops, hackathons, webinars, and internship programs at Bootskills Academy."
+        title="Events & Programs"
+        description="Discover bootcamps, workshops, hackathons, webinars, and programs at Bootskills Academy."
         canonicalUrl="https://bootskills.com/events"
       />
       <Header />
@@ -95,10 +95,10 @@ export default function Events() {
                 <Sparkles className="w-3 h-3 mr-1" /> Events & Programs
               </Badge>
               <h1 className="text-3xl lg:text-5xl font-bold font-heading mb-4">
-                Events & Internships
+                Events & Programs
               </h1>
               <p className="text-muted-foreground max-w-2xl mx-auto text-lg mb-8">
-                Browse bootcamps, workshops, hackathons, and internship programs. 
+                Browse bootcamps, workshops, hackathons, and programs. 
                 Find the perfect opportunity to grow your skills and career.
               </p>
 
@@ -107,7 +107,7 @@ export default function Events() {
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
-                    placeholder="Search events, bootcamps, internships..."
+                    placeholder="Search events, bootcamps, programs..."
                     value={search}
                     onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                     className="pl-12 h-12 text-base rounded-xl bg-card border-border/50"
@@ -158,7 +158,7 @@ export default function Events() {
               <p className="text-muted-foreground text-sm">
                 {search || typeFilter || showUpcoming
                   ? "Try adjusting your filters or search terms."
-                  : "No events or internships are currently available."}
+                  : "No events or programs are currently available."}
               </p>
             </div>
           ) : (
@@ -187,7 +187,7 @@ export default function Events() {
                       )}
                       <div className="absolute top-3 left-3 flex gap-2">
                         <Badge className="bg-accent/90 text-accent-foreground border-0 text-[10px] uppercase tracking-wider">
-                          {item.source === "event" ? item.type : "Internship"}
+                          {item.source === "event" ? item.type : "Program"}
                         </Badge>
                         {item.price === 0 && (
                           <Badge variant="secondary" className="bg-green-500/90 text-white border-0 text-[10px]">
@@ -254,7 +254,7 @@ export default function Events() {
                           else navigate(`/internship/${item.id}`);
                         }}
                       >
-                        {item.source === "event" ? "View Event" : "View Internship"}
+                        {item.source === "event" ? "View Event" : "View Program"}
                         <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
                       </Button>
                     </div>

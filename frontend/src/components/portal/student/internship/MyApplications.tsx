@@ -84,7 +84,7 @@ export function MyApplications({ onGoToDashboard }: MyApplicationsProps) {
               <AlertCircle className="w-16 h-16 text-muted-foreground/30 mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Applications Yet</h3>
               <p className="text-muted-foreground text-center max-w-md">
-                You haven't applied to any internship programs. Browse the "Available Tracks" tab to get started!
+                You haven't applied to any programs. Browse the "Available Tracks" tab to get started!
               </p>
             </div>
           ) : (

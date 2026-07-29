@@ -71,10 +71,10 @@ const trainingServices = [
   },
   {
     icon: Briefcase,
-    title: "Career Pathways & Internships",
-    description: "Real internship placements and project guidance for learners ready to move from training to work.",
+    title: "Career Pathways & Programs",
+    description: "Real program placements and project guidance for learners ready to move from training to work.",
     details: [
-      "Industry internship matching",
+      "Industry program matching",
       "Project-based learning support",
       "Mentor-led career coaching",
       "Portfolio and resume preparation",
@@ -161,7 +161,7 @@ const corporateServices = [
 const whyChooseUs = [
   { icon: Award, title: "Industry-Aligned Curriculum", description: "Programs shaped by employers, local market needs, and regional career opportunities" },
   { icon: Users, title: "Expert Instructors", description: "Learn from professionals with real-world industry experience" },
-  { icon: Briefcase, title: "Practical Projects", description: "Build a portfolio with hands-on, real-world projects and internship deliverables" },
+  { icon: Briefcase, title: "Practical Projects", description: "Build a portfolio with hands-on, real-world projects and program deliverables" },
   { icon: Globe, title: "Career Support", description: "Job placement assistance and career guidance for all graduates" },
 ];
 
@@ -170,7 +170,7 @@ const Services = () => {
     <div className="min-h-screen bg-background">
       <SEOHead
         title="Services"
-        description="Bootskills provides practical courses, internships, and project-based learning across tech, business, creative and leadership fields from Kigali, Rwanda to East Africa."
+        description="Bootskills provides practical courses, programs, and project-based learning across tech, business, creative and leadership fields from Kigali, Rwanda to East Africa."
         canonicalUrl="https://bootskills.com/services"
         keywords="bootcamp Rwanda, tech training Kigali, coding courses, data science Rwanda, IoT training, IT services East Africa"
       >
@@ -179,7 +179,7 @@ const Services = () => {
             "@context": "https://schema.org",
             "@graph": [
               organizationLd,
-              webPageLd("Services", "Bootskills provides practical courses, internships, and project-based learning across tech, business, creative and leadership fields.", "https://bootskills.com/services"),
+              webPageLd("Services", "Bootskills provides practical courses, programs, and project-based learning across tech, business, creative and leadership fields.", "https://bootskills.com/services"),
               breadcrumbListLd([
                 { name: "Home", item: "/" },
                 { name: "Services", item: "/services" },
@@ -211,10 +211,10 @@ const Services = () => {
                 Our Services
               </span>
               <h1 className="font-heading text-3xl lg:text-5xl font-medium text-card-foreground mb-6">
-                Practical Courses, Internships & Project-Based Learning
+                Practical Courses, Programs & Project-Based Learning
               </h1>
               <p className="text-card-foreground/80 max-w-3xl mx-auto text-lg leading-relaxed">
-                Bootskills offers career-focused training across tech, business, creative, and leadership areas with internships,
+                Bootskills offers career-focused training across tech, business, creative, and leadership areas with programs,
                 real client projects, and local delivery from Kigali, Rwanda to East Africa.
               </p>
               <div className="flex flex-wrap justify-center gap-4 mt-8">
@@ -240,7 +240,7 @@ const Services = () => {
             >
               <span className="text-accent text-sm font-medium uppercase tracking-wider">For Individuals</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-foreground mt-2 mb-4">
-                Training, Internships & Project Pathways
+                Training, Programs & Project Pathways
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Practical learning designed to make learners industry-ready through hands-on courses,
@@ -341,7 +341,7 @@ const Services = () => {
                 Business Training, Project Support & Talent Development
               </h2>
               <p className="text-card-foreground/80 max-w-2xl mx-auto">
-                Practical services for teams, projects and local businesses that need training, internships, and operational support.
+                Practical services for teams, projects and local businesses that need training, programs, and operational support.
               </p>
             </motion.div>
             <div className="grid sm:grid-cols-2 gap-6">

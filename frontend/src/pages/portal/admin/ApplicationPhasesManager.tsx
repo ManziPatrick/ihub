@@ -34,7 +34,7 @@ export const ApplicationPhasesManager = ({ programId }: { programId: string }) =
       <Card>
         <CardHeader>
           <CardTitle>Create Phase</CardTitle>
-          <CardDescription>Add a new phase to this internship program</CardDescription>
+          <CardDescription>Add a new phase to this program</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input

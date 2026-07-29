@@ -114,7 +114,7 @@ export function GraduationDialog({ open, onOpenChange, internship }: GraduationD
                         </div>
 
                         <div className="pt-4 border-t border-border/50">
-                            <h4 className="text-[10px] font-bold uppercase text-muted-foreground tracking-[0.2em] mb-4">Post-Internship Path</h4>
+                            <h4 className="text-[10px] font-bold uppercase text-muted-foreground tracking-[0.2em] mb-4">Post-Program Path</h4>
                             <div className="grid grid-cols-3 gap-2">
                                 <div className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
                                     <Award className="w-5 h-5 text-accent" />

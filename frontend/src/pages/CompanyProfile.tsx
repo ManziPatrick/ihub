@@ -25,7 +25,7 @@ const values = [
 ];
 
 const achievements = [
-  { number: "250+", label: "Successful Interns", icon: Users },
+  { number: "250+", label: "Successful Graduates", icon: Users },
   { number: "15+", label: "Real Projects Delivered", icon: Briefcase },
   { number: "10+", label: "AI Solutions Built", icon: Cpu },
   { number: "100%", label: "Practical Focus", icon: Target },
@@ -67,9 +67,9 @@ const servicesForIndividuals = [
   },
   {
     icon: Briefcase,
-    title: "Internships & Career Pathways",
-    description: "Structured online internships where you work on real projects under professional mentorship.",
-    features: ["Industry internship matching", "Project-based learning", "Mentor-led career coaching", "Portfolio & resume prep"]
+    title: "Programs & Career Pathways",
+    description: "Structured online programs where you work on real projects under professional mentorship.",
+    features: ["Industry program matching", "Project-based learning", "Mentor-led career coaching", "Portfolio & resume prep"]
   },
   {
     icon: TrendingUp,
@@ -487,7 +487,7 @@ const CompanyProfile = () => {
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {[
                 { icon: GraduationCap, title: "Training & Courses", description: "Practical, market-driven courses across every field — from tech and business to healthcare and creative arts.", color: "from-blue-500/20 to-blue-600/10" },
-                { icon: Briefcase, title: "Internships & Careers", description: "Structured online and in-person internships with real projects, mentorship, and career coaching.", color: "from-emerald-500/20 to-emerald-600/10" },
+                { icon: Briefcase, title: "Programs & Careers", description: "Structured online and in-person internships with real projects, mentorship, and career coaching.", color: "from-emerald-500/20 to-emerald-600/10" },
                 { icon: Laptop, title: "Tech & AI Solutions", description: "Custom software, AI, and IoT solutions for startups, enterprises, and government organizations.", color: "from-purple-500/20 to-purple-600/10" },
                 { icon: FileText, title: "Project & Contract Management", description: "End-to-end project lifecycle management with digital contract scanning and secure document storage.", color: "from-amber-500/20 to-amber-600/10" },
               ].map((pillar, index) => (
@@ -515,7 +515,7 @@ const CompanyProfile = () => {
           <div className="container mx-auto px-4 lg:px-8">
             <SectionHeader
               label="For Individuals"
-              title="Training Programs & Internships"
+              title="Training Programs & Careers"
               description="Learn from anywhere — village, town, or city. All you need is an internet connection."
             />
 
@@ -530,7 +530,7 @@ const CompanyProfile = () => {
                     <h3 className="font-heading font-bold text-foreground text-lg mb-1">Accessible to Everyone, Everywhere</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">
                       All our programs are available online. Whether you're in a rural village with basic internet or 
-                      in downtown Kigali, you can access the same quality training, mentorship, and internship 
+                      in downtown Kigali, you can access the same quality training, mentorship, and career 
                       opportunities. No location barriers. No excuses.
                     </p>
                   </div>

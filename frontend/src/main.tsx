@@ -16,11 +16,15 @@ import { initErrorCapture, setReportClient } from "./lib/errorCapture";
 setReportClient(client);
 initErrorCapture();
 
-// Default 95% zoom — users can adjust via zoom controls in the portal
+// Reset any zoom preference — CSS zoom on <html> breaks fixed-position overlays
+// (dialogs, popovers, Google One Tap) on mobile browsers. It also causes
+// layout reflow bugs when opening/closing modals.
+// Users who need magnification should use browser zoom (Ctrl/Cmd +/+/-).
 if (typeof window !== 'undefined') {
-  const savedZoom = localStorage.getItem('app_zoom');
-  const defaultZoom = '0.87';
-  document.documentElement.style.zoom = savedZoom || defaultZoom;
+  // Clear any previously saved zoom (from before this fix)
+  localStorage.removeItem('app_zoom');
+  // Remove inline zoom style if present
+  document.documentElement.style.removeProperty('zoom');
 }
 
 createRoot(document.getElementById("root")!).render(

@@ -56,7 +56,7 @@ export { StartProjectDialog } from "./StartProjectDialog";
 export { ApproveBookingDialog } from "./ApproveBookingDialog";
 export { GraduationDialog } from "./GraduationDialog";
 export { ExplainTaskDialog } from "./ExplainTaskDialog";
-export { CreateInternshipMeetingDialog } from "./CreateInternshipMeetingDialog";
+export { CreateInternshipMeetingDialog, CreateInternshipMeetingDialog as CreateProgramMeetingDialog } from "./CreateInternshipMeetingDialog";
 export { ManageTeamMembersDialog } from "./ManageTeamMembersDialog";
 export { ManageCodeExercisesDialog } from "./ManageCodeExercisesDialog";
 export { ManageAssignmentQuestionsDialog } from "./ManageAssignmentQuestionsDialog";

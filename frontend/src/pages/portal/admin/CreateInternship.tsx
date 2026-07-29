@@ -183,7 +183,7 @@ export default function CreateInternship() {
             <div className="space-y-2">
               <h2 className="text-xl font-heading text-gradient-gold font-bold">Launchpad</h2>
               <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em]">
-                Internship Creation Engine
+                Program Creation Engine
               </p>
             </div>
 

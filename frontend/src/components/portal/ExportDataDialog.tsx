@@ -112,7 +112,7 @@ export function ExportDataDialog({
     {
       id: "programs",
       label: "Export Programs",
-      description: "Internship programs with spots, dates, and pricing",
+      description: "Programs with spots, dates, and pricing",
       icon: Briefcase,
       endpoint: `/api/export/programs/csv${userId ? `?createdBy=${userId}` : ""}`,
       filename: `programs_report_${Date.now()}.csv`,

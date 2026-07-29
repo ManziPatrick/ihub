@@ -12,7 +12,7 @@ const jsonldGraph = JSON.stringify({
     organizationLd,
     webPageLd(
       "Bootskills - Learn. Build. Grow.",
-      "Bootskills is your all-in-one learning hub — offering courses across every field: tech, business, healthcare, finance, education, AI, project management, and more. Learn with real projects and industry internships.",
+      "Bootskills is your all-in-one learning hub — offering courses across every field: tech, business, healthcare, finance, education, AI, project management, and more. Learn with real projects and industry programs.",
       "https://bootskills.com"
     ),
   ],
@@ -20,7 +20,7 @@ const jsonldGraph = JSON.stringify({
 
 const Index = () => {
   const { t } = useTranslation();
-  const desc = "Bootskills is your all-in-one learning hub — offering courses across every field: tech, business, healthcare, finance, education, AI, project management, and more. Learn with real projects and industry internships.";
+  const desc = "Bootskills is your all-in-one learning hub — offering courses across every field: tech, business, healthcare, finance, education, AI, project management, and more. Learn with real projects and industry programs.";
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
@@ -28,7 +28,7 @@ const Index = () => {
         description={desc}
         canonicalUrl="https://bootskills.com"
         ogImageAlt="Bootskills — Practical Training in Kigali, Rwanda"
-        keywords="bootskills, online learning, courses, tech training, internships, Kigali, Rwanda, Africa, software development, AI, data science"
+        keywords="bootskills, online learning, courses, tech training, programs, Kigali, Rwanda, Africa, software development, AI, data science"
       >
         <script type="application/ld+json">{jsonldGraph}</script>
       </SEOHead>

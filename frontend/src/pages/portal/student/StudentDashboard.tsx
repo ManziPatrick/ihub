@@ -205,8 +205,8 @@ export default function StudentDashboard() {
                 <Trophy className="w-5 h-5 text-gold" />
               </div>
               <div>
-                <h4 className="text-sm font-black uppercase tracking-tight text-foreground">Level {me?.level || 1} Journey</h4>
-                <p className="text-[10px] text-muted-foreground font-bold uppercase">Master more lessons to reach Level {(me?.level || 1) + 1}!</p>
+                <h4 className="text-sm font-black uppercase tracking-tight text-foreground">Level {me?.level || 1}</h4>
+                <p className="text-[10px] text-muted-foreground font-bold uppercase">More to level up!</p>
               </div>
             </div>
             <div className="text-right">
@@ -645,7 +645,7 @@ export default function StudentDashboard() {
                   </Button>
                 </Link>
               </CardHeader>
-              <CardContent className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
+              <CardContent className="space-y-4 max-h-none lg:max-h-[500px] overflow-y-auto custom-scrollbar">
                 {enrolledCourses.length === 0 && myApplications.length === 0 && (
                   <div className="text-center py-6 sm:py-8">
                     <p className="text-muted-foreground mb-4 text-sm sm:text-base">You haven't enrolled in any courses or applied yet.</p>
@@ -738,7 +738,7 @@ export default function StudentDashboard() {
                   </Button>
                 </Link>
               </CardHeader>
-              <CardContent className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar">
+              <CardContent className="space-y-4 max-h-none lg:max-h-[400px] lg:overflow-y-auto lg:custom-scrollbar">
                 {projects.length === 0 && (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground italic">No projects assigned yet.</p>

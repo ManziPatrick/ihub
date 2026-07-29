@@ -82,7 +82,7 @@ export function CreateAgileProjectDialog({ open, onOpenChange, refetch }: Create
           </div>
           
           <div className="space-y-2">
-            <Label>Internship Program</Label>
+            <Label>Program</Label>
             <Select 
               value={formData.internshipProgramId} 
               onValueChange={(val) => setFormData({ ...formData, internshipProgramId: val })}

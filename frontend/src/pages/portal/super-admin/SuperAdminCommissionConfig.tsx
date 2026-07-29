@@ -395,7 +395,7 @@ export default function SuperAdminCommissionConfig() {
 
                     {scope === "internship" && (
                       <div className="space-y-2">
-                        <Label>Internship Program</Label>
+                        <Label>Program</Label>
                         <Select value={scopeId} onValueChange={setScopeId}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select program..." />

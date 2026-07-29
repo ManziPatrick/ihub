@@ -262,7 +262,7 @@ export function CreateProjectDialog({ open, onOpenChange, refetch }: CreateProje
                                 {courses.map((c: any) => (
                                     <SelectItem key={c.id} value={c.title}>{c.title}</SelectItem>
                                 ))}
-                                <SelectItem value="Internship">Internship Program</SelectItem>
+                                <SelectItem value="Internship">Program</SelectItem>
                                 <SelectItem value="Custom">Other / Custom Context</SelectItem>
                             </SelectContent>
                         </Select>
