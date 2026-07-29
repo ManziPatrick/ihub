@@ -26,7 +26,6 @@ import {
   Rocket
 } from "lucide-react";
 import { 
-  ApplyProgramDialog, 
   BookCallDialog, 
   TeamChatDialog, 
   ProjectDetailsDialog, 

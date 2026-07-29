@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AddResourceDialog } from "../dialogs/AddResourceDialog";
 import { useAuth } from "@/contexts/AuthContext";
 
-export function DailyInternshipDashboard({ username }: { username: string }) {
+export function DailyProgramDashboard({ username }: { username: string }) {
     const { data, loading, refetch } = useQuery(GET_DAILY_DASHBOARD);
     const { user } = useAuth();
     const navigate = useNavigate();
