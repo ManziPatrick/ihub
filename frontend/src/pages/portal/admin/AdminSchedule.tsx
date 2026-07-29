@@ -39,7 +39,7 @@ import {
   CalendarCheck,
   Sparkles
 } from "lucide-react";
-import { ViewSessionDialog, CreateProgramMeetingDialog } from "@/components/portal/dialogs";
+import { ViewSessionDialog, CreateInternshipMeetingDialog } from "@/components/portal/dialogs";
 import { toast } from "sonner";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_ALL_BOOKINGS, GET_INTERNSHIP_MEETINGS, GET_MEETING_ATTENDANCE } from "@/lib/graphql/queries";
@@ -590,7 +590,7 @@ export default function AdminSchedule() {
         onMeetingUpdated={() => { refetchProgramMeetings?.(); }}
       />
 
-      <CreateProgramMeetingDialog
+      <CreateInternshipMeetingDialog
         open={scheduleOpen}
         onOpenChange={setScheduleOpen}
       />
