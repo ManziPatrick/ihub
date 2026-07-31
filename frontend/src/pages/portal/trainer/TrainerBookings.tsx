@@ -87,10 +87,10 @@ export default function TrainerBookings() {
                     animate={{ opacity: 1, y: 0 }}
                 >
                     <h1 className="font-heading text-2xl lg:text-3xl font-medium">
-                        All Student Bookings
+                        My Student Bookings
                         <span className="text-sm font-normal text-muted-foreground ml-3">(View Only)</span>
                     </h1>
-                    <p className="text-muted-foreground mt-1">View all mentorship sessions booked by students across the platform.</p>
+                    <p className="text-muted-foreground mt-1">View mentorship sessions booked by your students and sessions where you are the mentor.</p>
                 </motion.div>
 
                 {loading ? (

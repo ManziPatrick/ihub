@@ -171,11 +171,14 @@ const calculateInternshipProgress = async (internship: any) => {
   return Math.min(100, Math.round(baseProgress + stageContribution));
 }
 
-const getAdminStudentIds = async (adminId: string) => {
+// Compute the student IDs a staff member (admin or trainer) has visibility over:
+// students enrolled in courses they instruct/created, students approved into
+// internship programs they created, and students in internships they mentor.
+const getStaffStudentIds = async (staffId: string) => {
   const [courses, internships, applications] = await Promise.all([
-    Course.find({ $or: [{ instructor: adminId }, { createdBy: adminId }] }),
-    InternshipProgram.find({ createdBy: adminId }),
-    Internship.find({ mentorId: adminId })
+    Course.find({ $or: [{ instructor: staffId }, { createdBy: staffId }] }),
+    InternshipProgram.find({ createdBy: staffId }),
+    Internship.find({ mentorId: staffId })
   ]);
 
   const internshipIds = internships.map(i => i._id);
@@ -234,10 +237,20 @@ export const resolvers = {
     myProjectApplications: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
-      // Admins, super_admins, and trainers see all applications; others see only their own.
-      const isAdmin = ['admin', 'super_admin', 'trainer'].includes(context.user.role);
+      // Admins and super_admins see all applications; trainers see applications
+      // from their own students; others see only their own.
+      const role = context.user.role;
       const filter: any = { status: { $ne: 'deleted' } };
-      if (!isAdmin) {
+      if (role === 'trainer') {
+        const studentIds = await getStaffStudentIds(context.user.id);
+        filter.$or = [
+          // Trainer's own applications + applications from their students
+          { clientId: context.user.id },
+          { userId: context.user.id },
+          { clientId: { $in: studentIds } },
+          { userId: { $in: studentIds } },
+        ];
+      } else if (role !== 'admin' && role !== 'super_admin') {
         filter.$or = [
           { clientId: context.user.id },
           { userId: context.user.id },
@@ -800,12 +813,23 @@ export const resolvers = {
     myBookings: async (_: any, { status }: { status?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
-      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const role = context.user.role;
+      const isAdmin = role === 'admin' || role === 'super_admin';
       let filter: any = {};
 
-      if (isAdmin || context.user.role === 'trainer') {
-        // Admins and trainers see all bookings (no user filter)
-        // Trainers get view-only access on the frontend
+      if (isAdmin) {
+        // Admins and super_admins see all bookings
+      } else if (role === 'trainer') {
+        // Trainers see bookings where they are the mentor, plus bookings from
+        // their own students (enrolled in their courses / approved programs).
+        const studentIds = await getStaffStudentIds(context.user.id);
+        filter.$or = [
+          { mentorId: context.user.id },
+          { userId: context.user.id },
+        ];
+        if (studentIds.length > 0) {
+          filter.$or.push({ userId: { $in: studentIds } });
+        }
       } else {
         filter.$or = [{ userId: context.user.id }, { mentorId: context.user.id }];
       }
@@ -1633,7 +1657,7 @@ export const resolvers = {
         internshipApps,
         legacyInternships
       ] = await Promise.all([
-        isSuperAdmin ? User.countDocuments({ isDeleted: { $ne: true } }) : User.countDocuments({ _id: { $in: await getAdminStudentIds(context.user.id) }, isDeleted: { $ne: true } }),
+        isSuperAdmin ? User.countDocuments({ isDeleted: { $ne: true } }) : User.countDocuments({ _id: { $in: await getStaffStudentIds(context.user.id) }, isDeleted: { $ne: true } }),
         Course.countDocuments(adminFilter),
         InternshipProgram.countDocuments(adminFilter),
         Payment.find(paymentFilter),
@@ -1716,9 +1740,9 @@ export const resolvers = {
       if (createdBy) {
         // Filter by specific user if createdBy is provided
         userQuery._id = createdBy;
-      } else if (context.user.role === 'admin') {
-        // Admin only sees activities from their own students
-        const studentIds = await getAdminStudentIds(context.user.id);
+      } else if (context.user.role === 'admin' || context.user.role === 'trainer') {
+        // Admin/trainer only see activities from their own students
+        const studentIds = await getStaffStudentIds(context.user.id);
         userQuery._id = { $in: studentIds };
       }
       // Super admin sees all users — no filter needed
@@ -2932,7 +2956,7 @@ export const resolvers = {
 
       const query: any = { isDeleted: false };
 
-      if (context.user.role === 'admin') {
+      if (context.user.role === 'admin' || context.user.role === 'trainer') {
         const myPrograms = await InternshipProgram.find({ createdBy: context.user.id }).distinct('_id');
         if (programId) {
           if (!myPrograms.map(id => id.toString()).includes(programId.toString())) {

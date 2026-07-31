@@ -3,6 +3,11 @@
  *
  * Tests ErrorCaptureLink (Apollo link), initErrorCapture (event listener setup),
  * reportError (manual reporting), and the batcher flush behaviour.
+ *
+ * NOTE: The batcher deliberately flushes via plain `fetch` (POST to the GraphQL
+ * endpoint) rather than apolloClient.mutate to avoid recursive error reporting
+ * through the Apollo link chain. These tests stub the global `fetch` and assert
+ * on the request body that the batcher sends.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -38,6 +43,25 @@ vi.mock('@apollo/client', () => {
   };
 });
 
+// ─── Mock env ───────────────────────────────────────────────────────────────
+// The real env.ts reads window._env_ at module scope in DEV, which breaks the
+// SSR test that removes `window`. Provide a stable mock instead.
+vi.mock('@/lib/env', () => ({
+  env: {
+    API_URL: '',
+    WS_URL: '',
+    SUPABASE_URL: '',
+    SUPABASE_PUBLISHABLE_KEY: '',
+    PUSHER_KEY: '',
+    PUSHER_CLUSTER: '',
+    GOOGLE_CLIENT_ID: '',
+    PEXELS_API_KEY: '',
+    FREEPIK_API_KEY: '',
+  },
+  getApiBaseUrl: () => 'http://localhost:4000',
+  getGraphqlUrl: () => '/graphql',
+}));
+
 // ═════════════════════════════════════════════════════════════════════════════
 // Helpers
 // ═════════════════════════════════════════════════════════════════════════════
@@ -69,6 +93,25 @@ function makeOperation(overrides: any = {}) {
   };
 }
 
+/** Stub the global fetch and return the mock. */
+function mockFetch() {
+  const mock = vi.fn().mockResolvedValue({ ok: true });
+  vi.stubGlobal('fetch', mock);
+  return mock;
+}
+
+/** Extract the `input` the batcher would POST from the fetch call. */
+function flushedInput(mock: ReturnType<typeof vi.fn>) {
+  const [, init] = mock.mock.calls[0];
+  return JSON.parse(init.body).variables.input;
+}
+
+/** Extract the full parsed request body. */
+function flushedBody(mock: ReturnType<typeof vi.fn>) {
+  const [, init] = mock.mock.calls[0];
+  return JSON.parse(init.body);
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 // Suite
 // ═════════════════════════════════════════════════════════════════════════════
@@ -85,6 +128,7 @@ describe('errorCapture', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   // ─────────────────────────────────────────────────────────────────────
@@ -93,8 +137,7 @@ describe('errorCapture', () => {
 
   describe('ErrorCaptureLink', () => {
     it('captures GraphQL errors from operation response', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       const forward = makeForward({
         next: {
@@ -114,23 +157,16 @@ describe('errorCapture', () => {
 
       // Batcher should have queued the error — advance timer to flush
       vi.advanceTimersByTime(5000);
-      expect(mockMutate).toHaveBeenCalledTimes(1);
-      expect(mockMutate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variables: expect.objectContaining({
-            input: expect.objectContaining({
-              errorType: 'graphql',
-              message: 'Cannot query field',
-              statusCode: 500,
-            }),
-          }),
-        }),
-      );
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      const input = flushedInput(fetchMock);
+      expect(input.errorType).toBe('graphql');
+      expect(input.message).toBe('Cannot query field');
+      expect(input.statusCode).toBe(500);
     });
 
     it('captures network errors from forward observable', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       const networkErr = new Error('Failed to fetch');
       networkErr.stack = 'Error: Failed to fetch\n    at fetch (api.ts:42)';
@@ -143,22 +179,16 @@ describe('errorCapture', () => {
       expect(observer.error).toHaveBeenCalledWith(networkErr);
 
       vi.advanceTimersByTime(5000);
-      expect(mockMutate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variables: expect.objectContaining({
-            input: expect.objectContaining({
-              errorType: 'network',
-              message: 'Failed to fetch',
-              stack: expect.stringContaining('api.ts'),
-            }),
-          }),
-        }),
-      );
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      const input = flushedInput(fetchMock);
+      expect(input.errorType).toBe('network');
+      expect(input.message).toBe('Failed to fetch');
+      expect(input.stack).toContain('api.ts');
     });
 
     it('passes through results without errors unchanged', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       const cleanResult = { data: { users: [] } };
       const forward = makeForward({ next: cleanResult });
@@ -167,7 +197,8 @@ describe('errorCapture', () => {
       result?.subscribe(observer);
 
       expect(observer.next).toHaveBeenCalledWith(cleanResult);
-      expect(mockMutate).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(5000);
+      expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it('returns null when forward is undefined', () => {
@@ -176,8 +207,7 @@ describe('errorCapture', () => {
     });
 
     it('includes operation name in context', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       const forward = makeForward({
         next: { errors: [{ message: 'Error' }] },
@@ -188,20 +218,15 @@ describe('errorCapture', () => {
       result?.subscribe({ next: vi.fn(), error: vi.fn(), complete: vi.fn() });
 
       vi.advanceTimersByTime(5000);
-      expect(mockMutate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variables: expect.objectContaining({
-            input: expect.objectContaining({
-              operationName: 'GetUsers',
-            }),
-          }),
-        }),
-      );
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      const input = flushedInput(fetchMock);
+      expect(input.operationName).toBe('GetUsers');
+      expect(JSON.parse(input.context).operationName).toBe('GetUsers');
     });
 
     it('captures stacktrace from error extensions', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       const forward = makeForward({
         next: {
@@ -221,20 +246,14 @@ describe('errorCapture', () => {
       result?.subscribe({ next: vi.fn(), error: vi.fn(), complete: vi.fn() });
 
       vi.advanceTimersByTime(5000);
-      expect(mockMutate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variables: expect.objectContaining({
-            input: expect.objectContaining({
-              stack: expect.stringContaining('resolvers.ts:42'),
-            }),
-          }),
-        }),
-      );
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      const input = flushedInput(fetchMock);
+      expect(input.stack).toContain('resolvers.ts:42');
     });
 
     it('handles result with empty errors array', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       const forward = makeForward({
         next: { errors: [], data: { ok: true } },
@@ -246,7 +265,7 @@ describe('errorCapture', () => {
 
       expect(observer.next).toHaveBeenCalled();
       vi.advanceTimersByTime(5000);
-      expect(mockMutate).not.toHaveBeenCalled();
+      expect(fetchMock).not.toHaveBeenCalled();
     });
   });
 
@@ -318,9 +337,8 @@ describe('errorCapture', () => {
   // ─────────────────────────────────────────────────────────────────────
 
   describe('reportError', () => {
-    it('queues error and flushes to apollo client after batch interval', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+    it('queues error and flushes to the backend after batch interval', () => {
+      const fetchMock = mockFetch();
 
       errorCapture.reportError({
         errorType: 'payment',
@@ -330,27 +348,20 @@ describe('errorCapture', () => {
       });
 
       // Should not have flushed yet (debounce timer not advanced)
-      expect(mockMutate).not.toHaveBeenCalled();
+      expect(fetchMock).not.toHaveBeenCalled();
 
       // Advance timers to trigger the flush
       vi.advanceTimersByTime(5000);
-      expect(mockMutate).toHaveBeenCalledTimes(1);
-      expect(mockMutate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variables: expect.objectContaining({
-            input: expect.objectContaining({
-              errorType: 'payment',
-              message: 'Payment declined',
-              statusCode: 402,
-            }),
-          }),
-        }),
-      );
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      const input = flushedInput(fetchMock);
+      expect(input.errorType).toBe('payment');
+      expect(input.message).toBe('Payment declined');
+      expect(input.statusCode).toBe(402);
     });
 
     it('stringifies the context field before sending', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       errorCapture.reportError({
         errorType: 'runtime',
@@ -359,7 +370,7 @@ describe('errorCapture', () => {
       });
 
       vi.advanceTimersByTime(5000);
-      const input = mockMutate.mock.calls[0][0].variables.input;
+      const input = flushedInput(fetchMock);
       expect(typeof input.context).toBe('string');
       expect(JSON.parse(input.context)).toEqual({
         url: 'https://example.com',
@@ -368,8 +379,7 @@ describe('errorCapture', () => {
     });
 
     it('sets context to undefined when not provided', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       errorCapture.reportError({
         errorType: 'graphql',
@@ -377,13 +387,12 @@ describe('errorCapture', () => {
       });
 
       vi.advanceTimersByTime(5000);
-      const input = mockMutate.mock.calls[0][0].variables.input;
+      const input = flushedInput(fetchMock);
       expect(input.context).toBeUndefined();
     });
 
     it('flushes immediately when queue reaches maxQueueSize (10)', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       // Push 10 errors
       for (let i = 0; i < 10; i++) {
@@ -394,22 +403,14 @@ describe('errorCapture', () => {
       }
 
       // Should flush immediately at 10 items (no need to advance timer)
-      expect(mockMutate).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
       // First error should be the one sent
-      expect(mockMutate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variables: expect.objectContaining({
-            input: expect.objectContaining({
-              message: 'Error 0',
-            }),
-          }),
-        }),
-      );
+      const input = flushedInput(fetchMock);
+      expect(input.message).toBe('Error 0');
     });
 
     it('batches multiple errors within the same interval', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       errorCapture.reportError({ errorType: 'graphql', message: 'Error A' });
       errorCapture.reportError({ errorType: 'network', message: 'Error B' });
@@ -417,12 +418,11 @@ describe('errorCapture', () => {
 
       // Only one flush should happen at the interval
       vi.advanceTimersByTime(5000);
-      expect(mockMutate).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
     it('flushes remaining errors after a flush completes', async () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       // Push 11 errors (flush at 10, 1 remains)
       for (let i = 0; i < 11; i++) {
@@ -432,27 +432,25 @@ describe('errorCapture', () => {
         });
       }
 
-      // First flush at queue.size >= 10 — mockMutate called synchronously before await
-      expect(mockMutate).toHaveBeenCalledTimes(1);
+      // First flush at queue.size >= 10 — fetch called synchronously before await
+      expect(fetchMock).toHaveBeenCalledTimes(1);
 
       // The first flush's finally block (which checks remaining queue and sets a
       // 1s retry timer) is pending on the microtask queue behind the await.
       // Flush microtasks to let it run, then advance the fake timer.
       await Promise.resolve();
       vi.advanceTimersByTime(1000);
-      expect(mockMutate).toHaveBeenCalledTimes(2);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
-    it('warns when apollo client is not set', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    it('flushes to the default /graphql endpoint when no API URL is configured', () => {
+      const fetchMock = mockFetch();
 
       errorCapture.reportError({ errorType: 'graphql', message: 'Orphan error' });
       vi.advanceTimersByTime(5000);
 
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Apollo client not yet initialized'),
-      );
-      warnSpy.mockRestore();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0]).toBe('/graphql');
     });
   });
 
@@ -461,14 +459,21 @@ describe('errorCapture', () => {
   // ─────────────────────────────────────────────────────────────────────
 
   describe('setReportClient', () => {
-    it('stores the client reference for batcher usage', () => {
+    it('accepts a client reference without affecting fetch-based reporting', () => {
+      const fetchMock = mockFetch();
       const mockClient = { mutate: vi.fn().mockResolvedValue({}) };
       errorCapture.setReportClient(mockClient);
 
       errorCapture.reportError({ errorType: 'graphql', message: 'Test' });
       vi.advanceTimersByTime(5000);
 
-      expect(mockClient.mutate).toHaveBeenCalled();
+      // The batcher flushes via fetch, not client.mutate
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(mockClient.mutate).not.toHaveBeenCalled();
+
+      const body = flushedBody(fetchMock);
+      expect(body.query).toContain('ReportClientError');
+      expect(body.variables.input.message).toBe('Test');
     });
   });
 });
