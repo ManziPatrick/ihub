@@ -171,11 +171,14 @@ const calculateInternshipProgress = async (internship: any) => {
   return Math.min(100, Math.round(baseProgress + stageContribution));
 }
 
-const getAdminStudentIds = async (adminId: string) => {
+// Compute the student IDs a staff member (admin or trainer) has visibility over:
+// students enrolled in courses they instruct/created, students approved into
+// internship programs they created, and students in internships they mentor.
+const getStaffStudentIds = async (staffId: string) => {
   const [courses, internships, applications] = await Promise.all([
-    Course.find({ $or: [{ instructor: adminId }, { createdBy: adminId }] }),
-    InternshipProgram.find({ createdBy: adminId }),
-    Internship.find({ mentorId: adminId })
+    Course.find({ $or: [{ instructor: staffId }, { createdBy: staffId }] }),
+    InternshipProgram.find({ createdBy: staffId }),
+    Internship.find({ mentorId: staffId })
   ]);
 
   const internshipIds = internships.map(i => i._id);
@@ -210,6 +213,7 @@ import { meetingAttendanceResolvers } from './meeting-attendance-resolvers';
 import { errorReportResolvers } from './error-reporting-resolvers';
 import { backupResolvers } from './backup-resolvers';
 import { eventApplicationResolvers } from './event-application-resolvers';
+import { trainerResolvers } from './trainer-resolvers';
 
 export const resolvers = {
   Upload: GraphQLUpload,
@@ -227,15 +231,26 @@ export const resolvers = {
     ...errorReportResolvers.Query,
     ...backupResolvers.Query,
     ...eventApplicationResolvers.Query,
+    ...trainerResolvers.Query,
     // Ensure non-nullability: schema defines [ProjectApplication!]! but missing resolvers can return null.
     // This resolver returns an empty array when the user has no applications.
     myProjectApplications: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
-      // Admins and super_admins see all applications; clients see only their own.
-      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      // Admins and super_admins see all applications; trainers see applications
+      // from their own students; others see only their own.
+      const role = context.user.role;
       const filter: any = { status: { $ne: 'deleted' } };
-      if (!isAdmin) {
+      if (role === 'trainer') {
+        const studentIds = await getStaffStudentIds(context.user.id);
+        filter.$or = [
+          // Trainer's own applications + applications from their students
+          { clientId: context.user.id },
+          { userId: context.user.id },
+          { clientId: { $in: studentIds } },
+          { userId: { $in: studentIds } },
+        ];
+      } else if (role !== 'admin' && role !== 'super_admin') {
         filter.$or = [
           { clientId: context.user.id },
           { userId: context.user.id },
@@ -277,7 +292,7 @@ export const resolvers = {
     },
 
     getCodeExerciseAnswers: async (_: any, { courseId, lessonId, courseTitle }: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
 
@@ -481,7 +496,7 @@ export const resolvers = {
     },
 
     completedUsers: async (_: any, { page = 1, limit = 10, createdBy, courseId, dateFrom, dateTo }: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
 
@@ -720,7 +735,7 @@ export const resolvers = {
 
     myProjects: async (_: any, { status }: { status?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
-      // Admins and super_admins see all projects; others see only their own.
+      // Admins and super_admins see all projects; trainers see only their own (where they are mentor, owner, or team member).
       const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
       
       if (isAdmin) {
@@ -798,27 +813,23 @@ export const resolvers = {
     myBookings: async (_: any, { status }: { status?: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
-      const isAdmin = ['admin', 'super_admin'].includes(context.user.role);
+      const role = context.user.role;
+      const isAdmin = role === 'admin' || role === 'super_admin';
       let filter: any = {};
 
       if (isAdmin) {
-        // Admins see all bookings (no user filter)
-      } else if (context.user.role === 'trainer') {
-        const courses = await Course.find({ instructor: context.user.id });
-        const studentIds = courses.reduce((acc: any[], course: any) => {
-          return [...acc, ...course.studentsEnrolled];
-        }, []);
-
+        // Admins and super_admins see all bookings
+      } else if (role === 'trainer') {
+        // Trainers see bookings where they are the mentor, plus bookings from
+        // their own students (enrolled in their courses / approved programs).
+        const studentIds = await getStaffStudentIds(context.user.id);
         filter.$or = [
+          { mentorId: context.user.id },
           { userId: context.user.id },
-          { mentorId: context.user.id }
         ];
-
         if (studentIds.length > 0) {
-          filter.$or.push({ userId: { $in: studentIds }, mentorId: null });
+          filter.$or.push({ userId: { $in: studentIds } });
         }
-
-        filter.$or.push({ mentorId: null, status: 'pending' });
       } else {
         filter.$or = [{ userId: context.user.id }, { mentorId: context.user.id }];
       }
@@ -840,8 +851,8 @@ export const resolvers = {
         filter.teamIds = { $in: teamIds };
       }
 
-      // Role-based access control — admins see only their own calendar
-      if (context.user.role === 'admin') {
+      // Role-based access control — trainers see the same as admins
+      if (context.user.role === 'admin' || context.user.role === 'trainer') {
         // Admins see:
         // 1. Meetings they host (created)
         // 2. Meetings where they are listed as a mentor
@@ -888,7 +899,7 @@ export const resolvers = {
       const filter: any = { isDeleted: false };
 
       // Role-based access control
-      if (context.user.role === 'admin') {
+      if (context.user.role === 'admin' || context.user.role === 'trainer') {
         // Admins see:
         // 1. Meetings they host
         // 2. Meetings where they are a mentor
@@ -1607,7 +1618,7 @@ export const resolvers = {
     },
 
     stats: async (_: any, __: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
 
@@ -1646,7 +1657,7 @@ export const resolvers = {
         internshipApps,
         legacyInternships
       ] = await Promise.all([
-        isSuperAdmin ? User.countDocuments({ isDeleted: { $ne: true } }) : User.countDocuments({ _id: { $in: await getAdminStudentIds(context.user.id) }, isDeleted: { $ne: true } }),
+        isSuperAdmin ? User.countDocuments({ isDeleted: { $ne: true } }) : User.countDocuments({ _id: { $in: await getStaffStudentIds(context.user.id) }, isDeleted: { $ne: true } }),
         Course.countDocuments(adminFilter),
         InternshipProgram.countDocuments(adminFilter),
         Payment.find(paymentFilter),
@@ -1720,7 +1731,7 @@ export const resolvers = {
       return Array.from(studentsMap.values());
     },
     recentActivity: async (_: any, { createdBy }: any, context: any) => {
-      if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) {
+      if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin' && context.user.role !== 'trainer')) {
         throw new Error('Not authorized');
       }
 
@@ -1729,9 +1740,9 @@ export const resolvers = {
       if (createdBy) {
         // Filter by specific user if createdBy is provided
         userQuery._id = createdBy;
-      } else if (context.user.role === 'admin') {
-        // Admin only sees activities from their own students
-        const studentIds = await getAdminStudentIds(context.user.id);
+      } else if (context.user.role === 'admin' || context.user.role === 'trainer') {
+        // Admin/trainer only see activities from their own students
+        const studentIds = await getStaffStudentIds(context.user.id);
         userQuery._id = { $in: studentIds };
       }
       // Super admin sees all users — no filter needed
@@ -1843,7 +1854,7 @@ export const resolvers = {
 
 
     payments: async (_: any, { page = 1, limit = 10, createdBy }: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
 
@@ -2127,7 +2138,7 @@ export const resolvers = {
       };
     },
     adminDashboardData: async (_: any, { createdBy }: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) throw new Error('Not authorized');
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) throw new Error('Not authorized');
 
       let targetCreatedBy = context.user.role !== 'super_admin' ? context.user.id : createdBy;
       // Use the same user scope as the `users` resolver for consistency
@@ -2281,7 +2292,7 @@ export const resolvers = {
       };
     },
     allUserGradeReports: async (_: any, __: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
       const submissions = await AssignmentSubmission.find().populate(['userId', 'courseId']);
@@ -2309,7 +2320,7 @@ export const resolvers = {
     },
 
     analytics: async (_: any, { createdBy }: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) throw new Error('Not authorized');
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) throw new Error('Not authorized');
 
       let targetCreatedBy = context.user.role !== 'super_admin' ? context.user.id : createdBy;
       // Use the same broader user scope as the `users` resolver for consistency
@@ -2705,7 +2716,7 @@ export const resolvers = {
     // Internship Module Queries
     internshipPrograms: async (_: any, { page = 1, limit = 10, search, category, price, level, school }: any, context: any) => {
       const query: any = { isDeleted: false };
-      if (context.user?.role === 'admin') {
+      if (context.user?.role === 'admin' || context.user?.role === 'trainer') {
         query.createdBy = context.user.id;
       }
 
@@ -2773,11 +2784,22 @@ export const resolvers = {
       }
 
       const skip = (page - 1) * limit;
-      const [items, totalCount] = await Promise.all([
+      const [rawItems, totalCount] = await Promise.all([
         InternshipProgram.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
         InternshipProgram.countDocuments(query)
       ]);
       const totalPages = Math.ceil(totalCount / limit);
+      // Serialize dates to ISO strings for consistent client display
+      const items = rawItems.map((p: any) => {
+        const obj: any = p.toObject();
+        ['startDate', 'endDate', 'applicationDeadline'].forEach((field: string) => {
+          if (obj[field] != null) {
+            const ts = Number(obj[field]);
+            obj[field] = new Date(isNaN(ts) ? obj[field] : ts).toISOString();
+          }
+        });
+        return obj;
+      });
       return {
         items,
         pagination: {
@@ -2916,13 +2938,25 @@ export const resolvers = {
       const skip = (page - 1) * limit;
       return unified.slice(skip, skip + limit);
     },
-    internshipProgram: async (_: any, { id }: { id: string }) => await InternshipProgram.findById(id),
+    internshipProgram: async (_: any, { id }: { id: string }) => {
+      const program = await InternshipProgram.findById(id);
+      if (!program) return null;
+      // Serialize dates to ISO strings for consistent client display
+      const obj: any = program.toObject();
+      ['startDate', 'endDate', 'applicationDeadline'].forEach((field: string) => {
+        if (obj[field] != null) {
+          const ts = Number(obj[field]);
+          obj[field] = new Date(isNaN(ts) ? obj[field] : ts).toISOString();
+        }
+      });
+      return obj;
+    },
     internshipApplications: async (_: any, { programId, status, page = 1, limit = 10 }: any, context: any) => {
       if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
 
       const query: any = { isDeleted: false };
 
-      if (context.user.role === 'admin') {
+      if (context.user.role === 'admin' || context.user.role === 'trainer') {
         const myPrograms = await InternshipProgram.find({ createdBy: context.user.id }).distinct('_id');
         if (programId) {
           if (!myPrograms.map(id => id.toString()).includes(programId.toString())) {
@@ -3177,12 +3211,12 @@ export const resolvers = {
       return await StudentProfile.findOne({ userId });
     },
     studentProfiles: async (_: any, __: any, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
       return await StudentProfile.find({});
     },
 
     studentProjectProgress: async (_: any, __: any, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
 
       const students = await User.find({ role: 'student', isDeleted: { $ne: true } });
       const allProjects = await Project.find({ isArchived: { $ne: true } })
@@ -3249,7 +3283,7 @@ export const resolvers = {
 
     // Payment Queries
     internshipPayments: async (_: any, { programId, status }: { programId?: string, status?: string }, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
       const query: any = { isDeleted: false };
       if (programId) query.internshipProgramId = programId;
       if (status) query.status = status;
@@ -3275,7 +3309,7 @@ export const resolvers = {
 
     // Invoice Queries
     internshipInvoices: async (_: any, { userId }: { userId?: string }, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
       const query: any = { isDeleted: false };
       if (userId) query.userId = userId;
       return await InternshipInvoice.find(query).sort({ issuedAt: -1 });
@@ -3292,7 +3326,7 @@ export const resolvers = {
 
     // Certificate Queries
     internshipCertificates: async (_: any, { programId }: { programId?: string }, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
       const query: any = { isDeleted: false };
       if (programId) query.internshipProgramId = programId;
       return await InternshipCertificate.find(query).sort({ issuedAt: -1 });
@@ -3652,7 +3686,8 @@ export const resolvers = {
           await sendApplicationConfirmation(
             user.email,
             user.fullName || user.username || 'Student',
-            course.title
+            course.title,
+            course.id
           );
         }
       } catch (emailErr) {
@@ -3707,7 +3742,8 @@ export const resolvers = {
             user.fullName || user.username || 'Student',
             course.title,
             status,
-            rejectionReason || undefined
+            rejectionReason || undefined,
+            course.id
           );
 
           // If approved, also send course enrollment confirmation
@@ -3715,7 +3751,8 @@ export const resolvers = {
             await sendCourseEnrollmentConfirmation(
               user.email,
               user.fullName || user.username || 'Student',
-              course.title
+              course.title,
+              course.id
             );
           }
         }
@@ -5439,8 +5476,49 @@ export const resolvers = {
         args.password = await bcrypt.hash(args.password, 12);
       }
 
+      // Handle trainer-profile-public toggle
+      if (args.isProfilePublic !== undefined) {
+        user.isProfilePublic = args.isProfilePublic;
+      }
+
+      // Handle trainer-specific field updates
+      if (user.role === 'trainer' && user.trainerApplication) {
+        const trainerFields = ['specialties', 'qualifications', 'linkedinProfile', 'githubProfile', 'websiteUrl', 'rateHourly', 'experienceYears', 'teachingPhilosophy'] as const;
+        for (const field of trainerFields) {
+          if ((args as any)[field] !== undefined) {
+            (user.trainerApplication as any)[field] = (args as any)[field];
+          }
+        }
+        if (args.specialties && Array.isArray(args.specialties)) {
+          user.trainerApplication.specialties = args.specialties;
+        }
+        if (args.qualifications && Array.isArray(args.qualifications)) {
+          user.trainerApplication.qualifications = args.qualifications;
+        }
+      }
+
       Object.assign(user, args);
       await user.save();
+
+      // Auto-approve pending trainers if they now have both avatar + coverImage
+      if (
+        user.role === 'trainer' &&
+        !user.isTrainerApproved &&
+        user.trainerApplication?.status === 'pending'
+      ) {
+        const hasAvatar = !!(user.avatar && user.avatar.trim());
+        const hasCoverImage = !!(user.coverImage && user.coverImage.trim());
+        if (hasAvatar && hasCoverImage) {
+          user.isTrainerApproved = true;
+          if (user.trainerApplication) {
+            user.trainerApplication.status = 'approved';
+            user.trainerApplication.reviewNote = 'Auto-approved after completing profile';
+          }
+          await user.save();
+          console.log(`[Trainer] Auto-approved pending trainer ${user.username} after profile update`);
+        }
+      }
+
       console.log(`[UserUpdate] Post-save isFirst for ${user.username}: ${user.isFirst}`);
       return user;
     },
@@ -5819,6 +5897,17 @@ export const resolvers = {
         });
 
         await dbUser.save();
+
+        // Check if user has Email 2FA enabled — if so, require OTP even for Google login
+        if ((dbUser as any).twoFactorEnabled) {
+          // Generate and send OTP
+          const otp = Math.floor(100000 + Math.random() * 900000).toString();
+          (dbUser as any).loginOTP = otp;
+          (dbUser as any).loginOTPExpires = new Date(Date.now() + 5 * 60 * 1000);
+          await dbUser.save();
+          await sendLoginOTPEmail(dbUser.email, otp);
+          return { user: dbUser, requires2FA: true };
+        }
 
         const jwtToken = jwt.sign(
           { id: dbUser.id, email: dbUser.email, username: dbUser.username, role: (dbUser as any).role },
@@ -6495,6 +6584,16 @@ export const resolvers = {
     createBooking: async (_: any, args: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
+      // Students must specify a context (course or internship), not general
+      const contextType = args.contextType || 'general';
+      if (context.user.role === 'student' && contextType === 'general') {
+        throw new Error('Students must select a course or internship when booking a session');
+      }
+      // Only super_admin can create general bookings
+      if (contextType === 'general' && context.user.role !== 'super_admin') {
+        throw new Error('Only super admins can create general bookings. Please select a course or internship.');
+      }
+
       const status = (context.user.role === 'trainer' || context.user.role === 'admin' || context.user.role === 'super_admin')
         ? 'confirmed'
         : 'pending';
@@ -6504,6 +6603,8 @@ export const resolvers = {
       const booking = new Booking({
         userId: context.user.id,
         ...args,
+        contextType,
+        contextTitle: args.contextTitle || undefined,
         status,
         meetingLink: link
       });
@@ -7806,7 +7907,7 @@ export const resolvers = {
     // --- Internship Module Mutations (Group 1: Programs, Applications, Projects) ---
 
     createInternshipProgram: async (_: any, args: any, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
       const program = new InternshipProgram({ ...args, createdBy: context.user.id });
       await program.save();
       await logActivity(context.user.id, 'CREATE', 'InternshipProgram', program.id, `Created program: ${program.title}`);
@@ -7814,7 +7915,16 @@ export const resolvers = {
     },
 
     updateInternshipProgram: async (_: any, { id, ...args }: any, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
+
+      // Ownership check: only the creator or super_admin can update
+      if (context.user.role !== 'super_admin') {
+        const existing = await InternshipProgram.findById(id);
+        if (!existing) throw new Error('Program not found');
+        if (existing.createdBy?.toString() !== context.user.id) {
+          throw new Error('Not authorized: you can only edit your own programs');
+        }
+      }
 
       // Parse date strings to Date objects if provided
       const updateData: any = { ...args };
@@ -7831,9 +7941,17 @@ export const resolvers = {
     },
 
     deleteInternshipProgram: async (_: any, { id }: { id: string }, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
       const program = await InternshipProgram.findById(id);
       if (!program) throw new Error('Program not found');
+
+      // Ownership check: only the creator or super_admin can delete
+      if (context.user.role !== 'super_admin') {
+        if (program.createdBy?.toString() !== context.user.id) {
+          throw new Error('Not authorized: you can only delete your own programs');
+        }
+      }
+
       program.isDeleted = true;
       await program.save();
       await logActivity(context.user.id, 'DELETE', 'InternshipProgram', id, `Soft deleted program: ${program.title} `);
@@ -7881,7 +7999,8 @@ export const resolvers = {
           await sendApplicationConfirmation(
             user.email,
             user.fullName || user.username || 'Student',
-            program.title
+            program.title,
+            (program as any)._id?.toString() || program.id
           );
         }
       } catch (emailErr) {
@@ -7970,7 +8089,8 @@ export const resolvers = {
             user.fullName || user.username || 'Student',
             program.title,
             status as any,
-            rejectionReason || undefined
+            rejectionReason || undefined,
+            (program as any)._id?.toString() || program.id
           );
         }
       } catch (emailError) {
@@ -9408,7 +9528,7 @@ export const resolvers = {
     },
     ...applicationPhaseResolvers.Mutation,
     ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,
-    ...eventApplicationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,
+    ...eventApplicationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,    ...trainerResolvers.Mutation,
 
     assignDeveloperToProject: async (_: any, { projectId, developerId, role, checklistTasks }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {

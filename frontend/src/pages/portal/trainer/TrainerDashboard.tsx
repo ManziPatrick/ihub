@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,15 +23,15 @@ import {
   ExternalLink,
   Check,
   X,
-  Loader2
+  Loader2,
+  Award
 } from "lucide-react";
-import { StartLiveSessionDialog, AddSessionDialog, ApproveBookingDialog } from "@/components/portal/dialogs";
+import { StartLiveSessionDialog, AddSessionDialog, ApproveBookingDialog, ScholarshipDialog } from "@/components/portal/dialogs";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_MY_BOOKINGS, GET_TRAINER_STUDENTS, GET_CONVERSATIONS, GET_TRAINER_STATS } from "@/lib/graphql/queries";
+import { GET_MY_BOOKINGS, GET_TRAINER_STUDENTS, GET_CONVERSATIONS, GET_TRAINER_STATS, GET_SCHOLARSHIP_STATS, GET_ALL_SCHOLARSHIPS } from "@/lib/graphql/queries";
 import { UPDATE_BOOKING_STATUS, CREATE_BOOKING } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 import { usePusher } from "@/hooks/use-pusher";
-import { useEffect, useMemo } from "react";
 
 export default function TrainerDashboard() {
   const { t } = useTranslation();
@@ -39,11 +39,16 @@ export default function TrainerDashboard() {
   const [isLiveSessionOpen, setIsLiveSessionOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [approveBooking, setApproveBooking] = useState<any | null>(null);
+  const [showScholarshipDialog, setShowScholarshipDialog] = useState(false);
 
   const { data: bookingsData, loading: bookingsLoading, refetch: refetchBookings } = useQuery(GET_MY_BOOKINGS);
   const { data: studentsData, refetch: refetchStudents } = useQuery(GET_TRAINER_STUDENTS);
   const { data: conversationsData, refetch: refetchConversations } = useQuery(GET_CONVERSATIONS);
   const { data: statsData, refetch: refetchStats } = useQuery(GET_TRAINER_STATS);
+  const { data: schStatsData } = useQuery(GET_SCHOLARSHIP_STATS);
+  const { data: allScholarshipsData } = useQuery(GET_ALL_SCHOLARSHIPS, {
+    variables: { page: 1, limit: 5 },
+  });
 
   const pusher = usePusher();
 
@@ -116,6 +121,9 @@ export default function TrainerDashboard() {
   const students = (studentsData as any)?.trainerStudents || [];
   const trainerStats = (statsData as any)?.trainerStats || { activeCourses: 0, totalStudents: 0, pendingReviews: 0, mentees: 0 };
   const conversations = (conversationsData as any)?.conversations || [];
+  const schStats = (schStatsData as any)?.getScholarshipStats || {};
+  const revokedCount = Math.max(0, (schStats.totalScholarships || 0) - (schStats.pendingScholarships || 0) - (schStats.activeScholarships || 0));
+  const recentScholarships = (allScholarshipsData as any)?.getAllScholarships?.items?.slice(0, 5) || [];
 
   // Aggregate Course Activity
   const recentActivity = useMemo(() => {
@@ -316,6 +324,122 @@ export default function TrainerDashboard() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Scholarship Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-accent" />
+              <h3 className="text-sm font-semibold text-foreground">Scholarship Overview</h3>
+            </div>
+            <Button
+              variant="gold"
+              size="sm"
+              onClick={() => setShowScholarshipDialog(true)}
+              className="h-8 px-3 text-xs gap-1.5"
+            >
+              <Award className="w-3.5 h-3.5" />
+              Grant Scholarship
+            </Button>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <Card className="border-border/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
+                    <GraduationCap className="w-5 h-5 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-card-foreground">{schStats.totalScholarships || 0}</p>
+                    <p className="text-xs text-card-foreground/60">Total Granted</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-border/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-card-foreground">{schStats.activeScholarships || 0}</p>
+                    <p className="text-xs text-card-foreground/60">Active</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-border/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <X className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-card-foreground">{revokedCount}</p>
+                    <p className="text-xs text-card-foreground/60">Revoked</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </motion.div>
+
+        {/* Recent Scholarships */}
+        {recentScholarships.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+          >
+            <Card className="border-border/50">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm font-heading flex items-center gap-2">
+                  <Award className="w-4 h-4 text-accent" />
+                  Recent Scholarships
+                </CardTitle>
+                <Link to="/portal/trainer/scholarships">
+                  <Button variant="ghost" size="sm" className="text-accent h-7 px-2 text-xs">
+                    View All
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  {recentScholarships.map((s: any) => (
+                    <div
+                      key={s.id}
+                      className="flex items-center gap-3 p-2.5 rounded-lg border border-border/20 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                        <Award className="w-3.5 h-3.5 text-accent" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-foreground truncate">
+                          {s.user?.fullName || s.user?.username || 'Student'}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {s.itemTitle} · {s.type}
+                        </p>
+                      </div>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                        s.status === 'active' ? 'bg-green-500/15 text-green-500' :
+                        s.status === 'pending' ? 'bg-yellow-500/15 text-yellow-500' :
+                        'bg-red-500/15 text-red-500'
+                      }`}>
+                        {s.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-6">
@@ -556,6 +680,10 @@ export default function TrainerDashboard() {
       </div>
 
       {/* Dialogs */}
+      <ScholarshipDialog
+        open={showScholarshipDialog}
+        onOpenChange={setShowScholarshipDialog}
+      />
       <StartLiveSessionDialog
         open={isLiveSessionOpen}
         onOpenChange={setIsLiveSessionOpen}

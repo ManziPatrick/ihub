@@ -97,7 +97,7 @@ export class ProjectLifecycleService {
         await sendEmail({
           to: client.email,
           subject: `Action Required: Non-Disclosure Agreement for "${application.title}"`,
-          html: `<h3>Congratulations!</h3><p>Your project proposal "${application.title}" has been approved. Please log in to sign the NDA so we can onboard developers.</p><p><a href="${process.env.CLIENT_ORIGIN}/portal/client/applications">Sign NDA here</a></p>`,
+          html: `<h3>Congratulations!</h3><p>Your project proposal "${application.title}" has been approved. Please log in to sign the NDA so we can onboard developers.</p><p><a href="${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/portal/client/applications">Sign NDA here</a></p>`,
         });
       }
     } else if (status === 'rejected') {
@@ -179,7 +179,7 @@ export class ProjectLifecycleService {
 <p><strong>Limit:</strong> ${DAILY_LIMIT} per day</p>
 <p>The client attempted to sign an NDA but has reached the daily limit.</p>
 <p>You can increase the limit by setting the <code>NDA_DAILY_LIMIT</code> environment variable, or by creating a Config entry with key <code>ndaDailyLimit</code>.</p>
-<p><a href="${process.env.CLIENT_ORIGIN || ''}/portal/admin/applications">View Applications →</a></p>`,
+<p><a href="${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/portal/admin/applications">View Applications →</a></p>`,
               });
             }
           }

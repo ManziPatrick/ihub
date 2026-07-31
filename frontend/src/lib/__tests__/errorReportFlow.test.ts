@@ -7,8 +7,10 @@
  *   3. The mutation input matches the backend's ReportClientErrorInput schema
  *   4. Context is correctly serialized (JSON.stringify) for the GraphQL String type
  *
- * These tests verify that the frontend correctly formats data that the
- * backend resolver can consume — bridging the gap between the two.
+ * The batcher deliberately sends reports via plain `fetch` (POST to the GraphQL
+ * endpoint) rather than apolloClient.mutate to avoid recursive error reporting
+ * through the Apollo link chain. These tests stub global `fetch` and assert on
+ * the request body sent to the backend.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -32,6 +34,23 @@ vi.mock('@apollo/client', () => {
     FetchResult: {},
   };
 });
+
+// ─── Mock env (real env.ts reads window._env_ at module scope in DEV) ────────
+vi.mock('@/lib/env', () => ({
+  env: {
+    API_URL: '',
+    WS_URL: '',
+    SUPABASE_URL: '',
+    SUPABASE_PUBLISHABLE_KEY: '',
+    PUSHER_KEY: '',
+    PUSHER_CLUSTER: '',
+    GOOGLE_CLIENT_ID: '',
+    PEXELS_API_KEY: '',
+    FREEPIK_API_KEY: '',
+  },
+  getApiBaseUrl: () => 'http://localhost:4000',
+  getGraphqlUrl: () => '/graphql',
+}));
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -60,6 +79,30 @@ function makeOperation(overrides = {}) {
   } as any;
 }
 
+/** Stub global fetch and return the mock. */
+function mockFetch() {
+  const mock = vi.fn().mockResolvedValue({ ok: true });
+  vi.stubGlobal('fetch', mock);
+  return mock;
+}
+
+/** Extract the `input` the batcher POSTs from the fetch call at a given index. */
+function flushedInputAt(mock: ReturnType<typeof vi.fn>, index = 0) {
+  const [, init] = mock.mock.calls[index];
+  return JSON.parse(init.body).variables.input;
+}
+
+/** Extract the `input` the batcher POSTs from the first fetch call. */
+function flushedInput(mock: ReturnType<typeof vi.fn>) {
+  return flushedInputAt(mock, 0);
+}
+
+/** Extract the full parsed request body. */
+function flushedBody(mock: ReturnType<typeof vi.fn>) {
+  const [, init] = mock.mock.calls[0];
+  return JSON.parse(init.body);
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
 // Suite
 // ═════════════════════════════════════════════════════════════════════════════
@@ -76,6 +119,7 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   // ─────────────────────────────────────────────────────────────────────
@@ -84,8 +128,7 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
 
   describe('reportError → mutation input matches ReportClientErrorInput schema', () => {
     it('sends a complete mutation with all optional fields filled', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       errorCapture.reportError({
         errorType: 'payment',
@@ -103,14 +146,14 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
 
       vi.advanceTimersByTime(5000);
 
-      expect(mockMutate).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
 
-      // Verify the mutation input matches what the backend expects
-      const mutationCall = mockMutate.mock.calls[0][0];
-      expect(mutationCall.query).toContain('ReportClientErrorInput');
-      expect(mutationCall.fetchPolicy).toBe('no-cache');
+      // Verify the request body matches what the backend expects
+      const body = flushedBody(fetchMock);
+      expect(body.query).toContain('ReportClientErrorInput');
+      expect(body.query).toContain('reportClientError(input: $input)');
 
-      const input = mutationCall.variables.input;
+      const input = body.variables.input;
       // All fields that the backend resolver reads must be present
       expect(input.errorType).toBe('payment');
       expect(input.message).toBe('Payment failed: insufficient funds');
@@ -128,8 +171,7 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
     });
 
     it('sends minimal required fields (no optional)', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       errorCapture.reportError({
         errorType: 'graphql',
@@ -138,7 +180,7 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
 
       vi.advanceTimersByTime(5000);
 
-      const input = mockMutate.mock.calls[0][0].variables.input;
+      const input = flushedInput(fetchMock);
       expect(input.errorType).toBe('graphql');
       expect(input.message).toBe('Field not found on type Query');
       // Optional fields should be undefined (not serialized in the wire)
@@ -149,31 +191,34 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
       expect(input.context).toBeUndefined();
     });
 
-    it('supports all nine error types from the backend schema', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+    it('supports all ten error types from the backend schema', async () => {
+      const fetchMock = mockFetch();
 
       const errorTypes = [
         'graphql', 'network', 'runtime', 'payment', 'auth',
         'upload', 'meeting', 'render', 'timeout', 'unknown',
       ] as const;
 
+      // The batcher only sends the first queued error per flush, so push and
+      // flush one type at a time to verify every type is accepted. flush() is
+      // async, so we must let its finally block run (resetting flushInProgress)
+      // before pushing the next error — otherwise subsequent flushes early-return.
       for (const errorType of errorTypes) {
         errorCapture.reportError({ errorType, message: `Testing ${errorType}` });
+        vi.advanceTimersByTime(5000);
+        await Promise.resolve();
       }
 
-      // Advance to flush all queued errors
-      vi.advanceTimersByTime(5000);
-
-      // All errors were sent (first one sent, but batcher only sends batch[0])
-      expect(mockMutate).toHaveBeenCalledTimes(1);
-      const input = mockMutate.mock.calls[0][0].variables.input;
-      expect(errorTypes).toContain(input.errorType);
+      expect(fetchMock).toHaveBeenCalledTimes(errorTypes.length);
+      for (let i = 0; i < errorTypes.length; i++) {
+        const input = flushedInputAt(fetchMock, i);
+        expect(input.errorType).toBe(errorTypes[i]);
+        expect(input.message).toBe(`Testing ${errorTypes[i]}`);
+      }
     });
 
     it('includes url and userAgent in context for every error type', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       // Use ErrorCaptureLink which automatically adds url + userAgent to context
       const forward = makeForward({
@@ -185,8 +230,8 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
 
       vi.advanceTimersByTime(5000);
 
-      expect(mockMutate).toHaveBeenCalled();
-      const input = mockMutate.mock.calls[0][0].variables.input;
+      expect(fetchMock).toHaveBeenCalled();
+      const input = flushedInput(fetchMock);
       expect(input.operationName).toBe('GetCourse');
 
       const parsedContext = JSON.parse(input.context);
@@ -203,8 +248,7 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
 
   describe('ErrorCaptureLink → batcher → mutation', () => {
     it('captures GraphQL errors and sends context with userAgent and url', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       const forward = makeForward({
         next: {
@@ -233,9 +277,9 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
 
       // Batcher should flush the error
       vi.advanceTimersByTime(5000);
-      expect(mockMutate).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
 
-      const input = mockMutate.mock.calls[0][0].variables.input;
+      const input = flushedInput(fetchMock);
       expect(input.errorType).toBe('graphql');
       expect(input.message).toBe('Cannot return null for non-nullable field');
       expect(input.stack).toContain('resolver.ts:42');
@@ -249,8 +293,7 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
     });
 
     it('captures network errors with correct input shape', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       const networkErr = new Error('Failed to fetch');
       networkErr.stack = 'Error: Failed to fetch\n    at fetch (api.ts:15)';
@@ -265,9 +308,9 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
       expect(observer.error).toHaveBeenCalledWith(networkErr);
 
       vi.advanceTimersByTime(5000);
-      expect(mockMutate).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
 
-      const input = mockMutate.mock.calls[0][0].variables.input;
+      const input = flushedInput(fetchMock);
       expect(input.errorType).toBe('network');
       expect(input.message).toBe('Failed to fetch');
       expect(input.stack).toContain('api.ts:15');
@@ -284,9 +327,38 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
   // ─────────────────────────────────────────────────────────────────────
 
   describe('window error handler → batcher → mutation', () => {
+    // initErrorCapture registers listeners on the window at the module level.
+    // Because beforeEach() re-imports a fresh module (new batcher singleton) while
+    // listeners registered by earlier tests persist on window, dispatching an event
+    // would fire handlers from MULTIPLE module instances and flush multiple batchers.
+    // Capture + remove listeners between tests so events reach only the current module.
+    const registeredListeners: Array<[string, EventListenerOrEventListenerObject]> = [];
+    const originalAddEventListener = window.addEventListener.bind(window);
+    let addEventListenerSpy: any;
+
+    beforeEach(() => {
+      addEventListenerSpy = vi
+        .spyOn(window, 'addEventListener')
+        .mockImplementation(((
+          type: string,
+          handler: EventListenerOrEventListenerObject,
+          options?: boolean | AddEventListenerOptions,
+        ) => {
+          registeredListeners.push([type, handler]);
+          return originalAddEventListener(type, handler, options);
+        }) as any);
+    });
+
+    afterEach(() => {
+      for (const [type, handler] of registeredListeners) {
+        window.removeEventListener(type, handler);
+      }
+      registeredListeners.length = 0;
+      addEventListenerSpy.mockRestore();
+    });
+
     it('captures a runtime window error and sends the correct mutation input', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
       errorCapture.initErrorCapture();
 
       // Simulate a runtime error event
@@ -302,8 +374,8 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
 
       vi.advanceTimersByTime(5000);
 
-      expect(mockMutate).toHaveBeenCalledTimes(1);
-      const input = mockMutate.mock.calls[0][0].variables.input;
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const input = flushedInput(fetchMock);
 
       expect(input.errorType).toBe('runtime');
       expect(input.message).toContain('Cannot read property');
@@ -317,9 +389,12 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
     });
 
     it('captures an unhandled promise rejection', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
       errorCapture.initErrorCapture();
+
+      // Swallow the rejection — we only test that the dispatched event is captured
+      const rejection = Promise.reject(new Error('Network request failed'));
+      rejection.catch(() => {});
 
       // PromiseRejectionEvent may not be available in all environments
       // (JSDOM < 16.7 doesn't support it). Gracefully skip if unavailable.
@@ -329,30 +404,29 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
           detail: { reason: new Error('Network request failed') },
         });
         (event as any).reason = new Error('Network request failed');
-        (event as any).promise = Promise.reject(new Error('Network request failed'));
+        (event as any).promise = rejection;
         window.dispatchEvent(event);
       } else {
         const rejectionEvent = new PromiseRejectionEvent('unhandledrejection', {
           reason: new Error('Network request failed'),
-          promise: Promise.reject(new Error('Network request failed')),
+          promise: rejection,
         });
         window.dispatchEvent(rejectionEvent);
       }
 
       vi.advanceTimersByTime(5000);
 
-      expect(mockMutate).toHaveBeenCalledTimes(1);
-      const input = mockMutate.mock.calls[0][0].variables.input;
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const input = flushedInput(fetchMock);
 
       expect(input.errorType).toBe('runtime');
       expect(input.message).toContain('Network request failed');
       expect(input.stack).toContain('Network request failed');
     });
 
-    it('batcher handles the mutation resolving successfully (no crash)', async () => {
-      // This tests that the async flush doesn't throw when the mutate resolves
-      const mockMutate = vi.fn().mockResolvedValue({ data: { reportClientError: true } });
-      errorCapture.setReportClient({ mutate: mockMutate });
+    it('batcher handles the fetch resolving successfully (no crash)', async () => {
+      // This tests that the async flush doesn't throw when the fetch resolves
+      const fetchMock = mockFetch();
 
       errorCapture.reportError({ errorType: 'graphql', message: 'Test error' });
 
@@ -364,9 +438,9 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
       // The flush is async — flush microtasks to let the finally block run
       await Promise.resolve();
 
-      expect(mockMutate).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
       // Verify the batcher continues working after flush resolves
-      expect(mockMutate.mock.calls[0][0].variables.input.message).toBe('Test error');
+      expect(flushedInput(fetchMock).message).toBe('Test error');
     });
   });
 
@@ -376,13 +450,13 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
 
   describe('mutation string matches backend ReportClientErrorInput schema', () => {
     it('sends the correct mutation string that matches backend typeDefs', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       errorCapture.reportError({ errorType: 'graphql', message: 'Schema test' });
       vi.advanceTimersByTime(5000);
 
-      const mutationString = mockMutate.mock.calls[0][0].query;
+      const body = flushedBody(fetchMock);
+      const mutationString = body.query;
 
       // The mutation must match the backend's typeDefs exactly:
       //   input ReportClientErrorInput {
@@ -398,7 +472,7 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
       expect(mutationString).toContain('reportClientError(input: $input)');
 
       // Verify the variable input shape matches all schema fields
-      const variables = mockMutate.mock.calls[0][0].variables;
+      const variables = body.variables;
       expect(variables).toHaveProperty('input');
       expect(Object.keys(variables.input)).toEqual(
         expect.arrayContaining(['errorType', 'message']),
@@ -406,8 +480,7 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
     });
 
     it('sends statusCode as a number (not string) matching backend Int type', () => {
-      const mockMutate = vi.fn().mockResolvedValue({});
-      errorCapture.setReportClient({ mutate: mockMutate });
+      const fetchMock = mockFetch();
 
       errorCapture.reportError({
         errorType: 'graphql',
@@ -417,8 +490,9 @@ describe('Error Capture Flow — Frontend to Backend Integration', () => {
 
       vi.advanceTimersByTime(5000);
 
-      expect(mockMutate.mock.calls[0][0].variables.input.statusCode).toBe(500);
-      expect(typeof mockMutate.mock.calls[0][0].variables.input.statusCode).toBe('number');
+      const input = flushedInput(fetchMock);
+      expect(input.statusCode).toBe(500);
+      expect(typeof input.statusCode).toBe('number');
     });
   });
 });

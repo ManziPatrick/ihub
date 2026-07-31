@@ -261,8 +261,8 @@ export const CREATE_USER = gql`
 `;
 
 export const UPDATE_USER = gql`
-  mutation UpdateUser($id: ID!, $username: String, $email: String, $password: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $phone: String, $location: String, $title: String, $certificateName: String, $isFirst: Boolean, $school: String) {
-    updateUser(id: $id, username: $username, email: $email, password: $password, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, phone: $phone, location: $location, title: $title, certificateName: $certificateName, isFirst: $isFirst, school: $school) {
+  mutation UpdateUser($id: ID!, $username: String, $email: String, $password: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $coverImage: String, $phone: String, $location: String, $title: String, $certificateName: String, $isFirst: Boolean, $school: String, $isProfilePublic: Boolean, $specialties: [String], $qualifications: [String], $linkedinProfile: String, $githubProfile: String, $websiteUrl: String, $rateHourly: Int, $experienceYears: Int, $teachingPhilosophy: String) {
+    updateUser(id: $id, username: $username, email: $email, password: $password, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, coverImage: $coverImage, phone: $phone, location: $location, title: $title, certificateName: $certificateName, isFirst: $isFirst, school: $school, isProfilePublic: $isProfilePublic, specialties: $specialties, qualifications: $qualifications, linkedinProfile: $linkedinProfile, githubProfile: $githubProfile, websiteUrl: $websiteUrl, rateHourly: $rateHourly, experienceYears: $experienceYears, teachingPhilosophy: $teachingPhilosophy) {
       id
       username
       fullName
@@ -270,6 +270,7 @@ export const UPDATE_USER = gql`
       role
       bio
       avatar
+      coverImage
       phone
       location
       title
@@ -277,6 +278,18 @@ export const UPDATE_USER = gql`
       certificateName
       isFirst
       school
+      isProfilePublic
+      trainerApplication {
+        specialties
+        experienceYears
+        teachingPhilosophy
+        qualifications
+        rateHourly
+        linkedinProfile
+        githubProfile
+        websiteUrl
+        status
+      }
     }
   }
 `;
@@ -422,11 +435,13 @@ export const DELETE_QUESTION = gql`
 `;
 
 export const CREATE_BOOKING = gql`
-  mutation CreateBooking($mentorId: ID, $type: String!, $date: String!, $time: String!, $topic: String, $notes: String, $meetingLink: String) {
-    createBooking(mentorId: $mentorId, type: $type, date: $date, time: $time, topic: $topic, notes: $notes, meetingLink: $meetingLink) {
+  mutation CreateBooking($mentorId: ID, $type: String!, $date: String!, $time: String!, $topic: String, $notes: String, $meetingLink: String, $contextType: String, $contextTitle: String) {
+    createBooking(mentorId: $mentorId, type: $type, date: $date, time: $time, topic: $topic, notes: $notes, meetingLink: $meetingLink, contextType: $contextType, contextTitle: $contextTitle) {
       id
       status
       meetingLink
+      contextType
+      contextTitle
     }
   }
 `;
@@ -1735,6 +1750,58 @@ export const SUBMIT_PAYMENT_PROOF = gql`
       id
       status
       proofOfPaymentUrl
+    }
+  }
+`;
+
+export const BECOME_TRAINER = gql`
+  mutation BecomeTrainer(
+    $avatar: String,
+    $coverImage: String,
+    $specialties: [String],
+    $experienceYears: Int,
+    $teachingPhilosophy: String,
+    $qualifications: [String],
+    $rateHourly: Int,
+    $linkedinProfile: String,
+    $githubProfile: String,
+    $websiteUrl: String
+  ) {
+    becomeTrainer(
+      avatar: $avatar,
+      coverImage: $coverImage,
+      specialties: $specialties,
+      experienceYears: $experienceYears,
+      teachingPhilosophy: $teachingPhilosophy,
+      qualifications: $qualifications,
+      rateHourly: $rateHourly,
+      linkedinProfile: $linkedinProfile,
+      githubProfile: $githubProfile,
+      websiteUrl: $websiteUrl
+    ) {
+      id
+      role
+      isTrainerApproved
+      trainerApplication {
+        specialties
+        experienceYears
+        teachingPhilosophy
+        status
+      }
+    }
+  }
+`;
+
+export const APPROVE_TRAINER = gql`
+  mutation ApproveTrainer($userId: ID!, $approved: Boolean!, $reviewNote: String) {
+    approveTrainer(userId: $userId, approved: $approved, reviewNote: $reviewNote) {
+      id
+      role
+      isTrainerApproved
+      trainerApplication {
+        status
+        reviewNote
+      }
     }
   }
 `;

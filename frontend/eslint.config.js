@@ -22,6 +22,7 @@ export default tseslint.config(
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": "off",
+      "no-duplicate-imports": ["error", { includeExports: true }],
     },
   },
   // Type-aware rules only for src/ files (excludes config files like tailwind.config.ts)

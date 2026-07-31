@@ -26,6 +26,7 @@ import {
   Trophy,
   Activity,
   RefreshCw,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,7 +47,6 @@ import { toast } from "sonner";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { useQuery, useMutation, useApolloClient } from "@apollo/client/react";
 import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
-import { FileSpreadsheet } from "lucide-react";
 import { GET_USERS, GET_TOP_STUDENTS, GET_ANALYTICS_EXPORT } from "@/lib/graphql/queries";
 import { CREATE_USER, UPDATE_USER, DELETE_USER, RESTORE_USER } from "@/lib/graphql/mutations";
 import { useAuth } from "@/contexts/AuthContext";

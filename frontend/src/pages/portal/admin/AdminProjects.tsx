@@ -31,6 +31,7 @@ import {
   GraduationCap,
   TrendingUp,
   Target,
+  ArrowLeft,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -53,7 +54,6 @@ import { TeamChatDialog, ManageProjectTasksDialog, ProjectDetailsDialog, CreateA
 import { Textarea } from "@/components/ui/textarea";
 import { TextEditor } from "@/components/ui/text-editor";
 import { KanbanBoard } from "@/components/portal/KanbanBoard";
-import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import DOMPurify from "dompurify";
 

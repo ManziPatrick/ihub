@@ -241,7 +241,7 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
                   </div>
                   </div>
                 
-                {course.allowedDeliveryModes?.length > 0 && (
+                {course.allowedDeliveryModes?.length > 0 && user?.role === 'student' && (
                   <div className="space-y-3">
                     <p className="text-sm font-semibold text-foreground">Preferred Delivery Mode</p>
                     <div className="grid grid-cols-2 gap-3">

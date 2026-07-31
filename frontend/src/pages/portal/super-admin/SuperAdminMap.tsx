@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { UserMap, UserLocation } from "@/components/portal/UserMap";
-import { useQuery } from "@apollo/client/react";
+import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_USERS_WITH_LOCATION } from "@/lib/graphql/queries";
 import {
   MapPin,
@@ -26,7 +26,6 @@ import {
   Crosshair,
   Check,
 } from "lucide-react";
-import { useMutation } from "@apollo/client/react";
 import { ADMIN_UPDATE_USER_LOCATION } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 

@@ -974,6 +974,16 @@ export function PaymentForm({
               <span> via {currentCountry.flag} {currentCountry.country}</span>
             )}
           </p>
+          {selectedCountry === 'RWA' && !selectedProvider?.toLowerCase().includes('airtel') && (
+            <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+              <p className="text-xs text-muted-foreground">
+                <span className="font-bold text-amber-600">⏳ Not receiving the prompt?</span>{' '}
+                If the USSD prompt doesn't appear, dial{' '}
+                <span className="font-mono font-bold text-foreground bg-background px-2 py-0.5 rounded-md">*182*7*1#</span>{' '}
+                to check your pending transactions and complete the payment.
+              </p>
+            </div>
+          )}
         </div>
         <div className="p-4 bg-muted/30 rounded-xl border border-border/50 w-full max-w-xs">
           <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Reference</p>

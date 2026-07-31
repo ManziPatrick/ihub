@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Step = "info" | "success";
 
@@ -57,6 +58,7 @@ export function ApplyInternshipDialog({
   internshipProgramId,
   onSuccess
 }: ApplyInternshipDialogProps) {
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>("info");
   const [isRestored, setIsRestored] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -287,7 +289,7 @@ export function ApplyInternshipDialog({
                                 </Select>
                             </div>
 
-                            {program?.allowedDeliveryModes?.length > 0 && (
+                            {program?.allowedDeliveryModes?.length > 0 && user?.role === 'student' && (
                                 <div className="space-y-2.5">
                                     <Label className="text-xs font-bold text-foreground/80 flex items-center gap-1.5 leading-relaxed">
                                         Preferred Delivery Mode <span className="text-red-500 font-black">•</span>

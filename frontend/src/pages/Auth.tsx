@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -45,16 +45,25 @@ export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Determine where to redirect after login — check location.state first, then ?redirect= query param (for mobile OAuth)
+  const redirectParam = new URLSearchParams(location.search).get("redirect");
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || redirectParam || "/portal/student";
+
   const [googleLoginMutation] = useMutation(GOOGLE_LOGIN);
   const [verify2FAMutation] = useMutation(VERIFY_2FA);
   const [setup2FAMutation] = useMutation(SETUP_2FA);
   const [requestEmailOTPMutation] = useMutation(REQUEST_EMAIL_OTP);
   const [verifyEmailOTPMutation] = useMutation(VERIFY_EMAIL_OTP);
 
-  if (user) {
-    const roleRedirects = { student: "/portal/student", trainer: "/portal/trainer", admin: "/portal/admin", super_admin: "/portal/super-admin" };
-    navigate(roleRedirects[user.role], { replace: true });
-    return null;
+  if (user && !needsLocation) {
+    // Already logged in and landed on /auth — redirect back (login handlers call their own navigate)
+    const roleRedirects: Record<string, string> = { 
+      student: "/portal/student", 
+      trainer: "/portal/trainer", 
+      admin: "/portal/admin", 
+      super_admin: "/portal/super-admin" 
+    };
+    return <Navigate to={from || roleRedirects[user.role] || "/portal/student"} replace />;
   }
 
   const handleGoogleLogin = async (credentialResponse: any) => {
@@ -63,13 +72,26 @@ export default function Auth() {
       if (!token) throw new Error("No credential received from Google");
       setIsLoading(true);
       const { data } = await googleLoginMutation({ variables: { token } });
-      const { token: backendToken, user: userData } = (data as any).googleLogin;
-      
+      const result = (data as any)?.googleLogin;
+
+      if (!result) {
+        throw new Error("No response from server — please ensure the backend is running");
+      }
+
+      // Check if 2FA is required (Email 2FA enabled)
+      if (result.requires2FA) {
+        setFormData(prev => ({ ...prev, email: result.user.email }));
+        setRequires2FA(true);
+        toast.info("Two-Factor Authentication Required — check your email for the verification code");
+        setIsLoading(false);
+        return;
+      }
+
+      const { token: backendToken, user: userData } = result;
       loginWithToken(backendToken, userData);
 
       // Check if user needs to set their location
       if (!userData?.location || userData.location === "" || userData.location === "null") {
-        const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";
         setPendingRedirect(from);
         setNeedsLocation(true);
         setIsLoading(false);
@@ -77,7 +99,6 @@ export default function Auth() {
       }
 
       toast.success("Successfully signed in with Google!");
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";
       navigate(from, { replace: true });
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in with Google");
@@ -133,8 +154,7 @@ export default function Auth() {
 
         // Check if user needs to set their location
         if (response?.token && (!response.user?.location || response.user.location === "" || response.user.location === "null")) {
-          const redirectTo = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";
-          setPendingRedirect(redirectTo);
+          setPendingRedirect(from);
           setNeedsLocation(true);
           setIsLoading(false);
           return;
@@ -154,14 +174,12 @@ export default function Auth() {
 
         // Check if user needs to set their location (new users won't have one)
         if (response?.token && (!response.user?.location || response.user.location === "" || response.user.location === "null")) {
-          const redirectTo = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";
-          setPendingRedirect(redirectTo);
+          setPendingRedirect(from);
           setNeedsLocation(true);
           setIsLoading(false);
           return;
         }
       }
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";
       navigate(from, { replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Authentication failed");
@@ -186,7 +204,6 @@ export default function Auth() {
       if (response?.token) {
         loginWithToken(response.token, response.user);
         toast.success("Identity verified successfully!");
-        const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/portal/student";
         navigate(from, { replace: true });
       }
     } catch (error: any) {

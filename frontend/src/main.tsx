@@ -27,6 +27,30 @@ if (typeof window !== 'undefined') {
   document.documentElement.style.removeProperty('zoom');
 }
 
+// ---- Stale Service Worker cleanup ----
+// If a Service Worker from a previous build/vite-run cached old pre-bundled
+// chunks (like the lucide-react barrel-export bug in chunk-CMM6OKGN.js),
+// it will keep serving those stale files even after cache clears.
+// Unregister any existing SW + purge its caches so the server sends fresh assets.
+(async function cleanupServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (const reg of registrations) {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames
+          .filter((name) => name.startsWith("bootskills") || name.startsWith("workbox") || name.startsWith("offline"))
+          .map((name) => caches.delete(name))
+      );
+      await reg.unregister();
+      console.log("[SW Cleanup] Unregistered stale Service Worker and cleared caches");
+    }
+  } catch {
+    // Silently ignore — not critical
+  }
+})();
+
 createRoot(document.getElementById("root")!).render(
   <ApolloProvider client={client}>
     <GoogleOAuthProvider clientId={env.GOOGLE_CLIENT_ID || ""}>

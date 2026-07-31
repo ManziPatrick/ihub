@@ -13,7 +13,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { useMutation, useQuery } from "@apollo/client/react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { CHAT_WITH_AI } from '@/lib/graphql/mutations';
 import { GET_CHAT_GREETING } from '@/lib/graphql/queries';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { getGraphqlUrl } from '@/lib/env';
 import remarkGfm from 'remark-gfm';
-import { useNavigate } from 'react-router-dom';
+
 
 
 interface Message {

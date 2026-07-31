@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Download,
   RefreshCw,
+  Star,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -40,7 +41,6 @@ import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
 import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
 import { GET_COURSES_LITE_SUMMARY, GET_STATS, GET_USERS, GET_COURSE, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
 import { UPDATE_COURSE, DELETE_COURSE, RESTORE_COURSE } from "@/lib/graphql/mutations";
-import { Star } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 export default function AdminCourses() {

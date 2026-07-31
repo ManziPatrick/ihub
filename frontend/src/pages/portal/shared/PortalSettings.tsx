@@ -38,8 +38,14 @@ import {
   BookOpen as BookIcon,
   MapPin as MapIcon,
   Shield,
-  ShieldCheck
+  ShieldCheck,
+  GraduationCap,
+  Users,
+  DollarSign,
+  Linkedin,
+  Github,
 } from "lucide-react";
+import { BecomeTrainerDialog } from "@/components/portal/dialogs/BecomeTrainerDialog";
 
 const colorPresets = [
   { name: "Academic Gold", color: "#BC9229" },
@@ -63,7 +69,17 @@ export default function PortalSettings() {
     phone: user?.phone || "",
     location: user?.location || "",
     avatar: user?.avatar || "",
+    coverImage: user?.coverImage || "",
     certificateName: user?.certificateName || "",
+    specialties: user?.trainerApplication?.specialties?.join(", ") || "",
+    experienceYears: user?.trainerApplication?.experienceYears || "",
+    qualifications: user?.trainerApplication?.qualifications?.join(", ") || "",
+    teachingPhilosophy: user?.trainerApplication?.teachingPhilosophy || "",
+    linkedinProfile: user?.trainerApplication?.linkedinProfile || "",
+    githubProfile: user?.trainerApplication?.githubProfile || "",
+    websiteUrl: user?.trainerApplication?.websiteUrl || "",
+    rateHourly: user?.trainerApplication?.rateHourly || "",
+    isProfilePublic: user?.isProfilePublic !== false,
   });
 
   const [studentForm, setStudentForm] = useState({
@@ -109,7 +125,17 @@ export default function PortalSettings() {
         phone: user.phone || "",
         location: user.location || "",
         avatar: user.avatar || "",
+        coverImage: user.coverImage || "",
         certificateName: user.certificateName || "",
+        specialties: user.trainerApplication?.specialties?.join(", ") || "",
+        experienceYears: user.trainerApplication?.experienceYears || "",
+        qualifications: user.trainerApplication?.qualifications?.join(", ") || "",
+        teachingPhilosophy: user.trainerApplication?.teachingPhilosophy || "",
+        linkedinProfile: user.trainerApplication?.linkedinProfile || "",
+        githubProfile: user.trainerApplication?.githubProfile || "",
+        websiteUrl: user.trainerApplication?.websiteUrl || "",
+        rateHourly: user.trainerApplication?.rateHourly || "",
+        isProfilePublic: user.isProfilePublic !== false,
       });
 
       if (user.studentProfile) {
@@ -280,6 +306,7 @@ export default function PortalSettings() {
     }
   };
 
+  const [showBecomeTrainer, setShowBecomeTrainer] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const handleBrandingLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -316,10 +343,48 @@ export default function PortalSettings() {
   };
 
   const handleSaveProfile = () => {
+    // Trainer-only fields are sent via handleSaveTrainerProfile with the correct
+    // GraphQL types (arrays / Int) — exclude them here so the general profile
+    // save never sends incompatible values (e.g. comma-joined strings).
+    const {
+      specialties,
+      qualifications,
+      experienceYears,
+      rateHourly,
+      teachingPhilosophy,
+      linkedinProfile,
+      githubProfile,
+      websiteUrl,
+      isProfilePublic,
+      ...generalProfile
+    } = profileForm;
     updateUserMutation({
       variables: {
         id: user?.id,
-        ...profileForm
+        ...generalProfile
+      }
+    });
+  };
+
+  const handleSaveTrainerProfile = () => {
+    const specialties = (profileForm as any).specialties
+      ? (profileForm as any).specialties.split(',').map((s: string) => s.trim()).filter(Boolean)
+      : undefined;
+    const qualifications = (profileForm as any).qualifications
+      ? (profileForm as any).qualifications.split(',').map((q: string) => q.trim()).filter(Boolean)
+      : undefined;
+
+    updateUserMutation({
+      variables: {
+        id: user?.id,
+        specialties,
+        qualifications,
+        linkedinProfile: (profileForm as any).linkedinProfile || undefined,
+        githubProfile: (profileForm as any).githubProfile || undefined,
+        websiteUrl: (profileForm as any).websiteUrl || undefined,
+        rateHourly: (profileForm as any).rateHourly ? parseInt((profileForm as any).rateHourly) : undefined,
+        experienceYears: (profileForm as any).experienceYears ? parseInt((profileForm as any).experienceYears) : undefined,
+        teachingPhilosophy: (profileForm as any).teachingPhilosophy || undefined,
       }
     });
   };
@@ -388,6 +453,11 @@ export default function PortalSettings() {
                 <Trophy className="w-4 h-4" /> My Achievements
               </TabsTrigger>
             )}
+            {user?.role === 'student' && (
+              <TabsTrigger value="become-trainer" className="flex items-center gap-2 text-accent">
+                <GraduationCap className="w-4 h-4" /> Become a Trainer
+              </TabsTrigger>
+            )}
             <TabsTrigger value="security" className="flex items-center gap-2">
               <Shield className="w-4 h-4" /> Security
             </TabsTrigger>
@@ -441,15 +511,41 @@ export default function PortalSettings() {
                     <div>
                       <h3 className="font-heading text-xl font-semibold">{profileForm.fullName || "Your Name"}</h3>
                       <p className="text-sm text-muted-foreground mb-3">{user?.email}</p>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Items URL for Avatar"
+                      <div className="flex gap-2">                      <Input
+                          placeholder="Avatar URL"
                           value={profileForm.avatar}
                           onChange={(e) => setProfileForm({ ...profileForm, avatar: e.target.value })}
                           className="h-8 text-xs w-64"
                         />
+                    </div>
+                  </div>
+
+                  {/* Cover Image Section */}
+                  <div className="flex items-center gap-6">
+                    <div className="relative group">
+                      <div className="w-full max-w-md h-28 rounded-xl border border-border/30 bg-muted/10 overflow-hidden">
+                        {profileForm.coverImage ? (
+                          <img src={profileForm.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground/40 text-xs">
+                            No Cover Image
+                          </div>
+                        )}
                       </div>
                     </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Cover Image</p>
+                      <Input
+                        placeholder="Cover image URL"
+                        value={profileForm.coverImage}
+                        onChange={(e) => setProfileForm({ ...profileForm, coverImage: e.target.value })}
+                        className="h-8 text-xs w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {user?.role === 'trainer' && !user?.isTrainerApproved ? 'Add a cover image to get your trainer application approved automatically!' : 'A banner image for your profile page'}
+                      </p>
+                    </div>
+                  </div>
                   </div>
 
                   {/* Fields */}
@@ -536,6 +632,148 @@ export default function PortalSettings() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Trainer Profile Section — only for trainers */}
+              {user?.role === 'trainer' && (
+                <Card className="border-accent/20">
+                  <CardHeader className="bg-accent/5">
+                    <CardTitle className="flex items-center gap-2 text-accent">
+                      <GraduationCap className="w-5 h-5" />
+                      Trainer Profile
+                    </CardTitle>
+                    <CardDescription>Manage your public trainer profile and visibility</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6 pt-6">
+                    {/* Public Profile Toggle */}
+                    <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border/50">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-2.5 rounded-full ${user.isProfilePublic !== false ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'}`}>
+                          <Globe className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-sm">
+                            {user.isProfilePublic !== false ? 'Profile is Public' : 'Profile is Hidden'}
+                          </h4>
+                          <p className="text-xs text-muted-foreground">
+                            {user.isProfilePublic !== false
+                              ? 'Your trainer profile appears in the public listings and search'
+                              : 'Your trainer profile is hidden from public listings'}
+                          </p>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={user?.isProfilePublic !== false}
+                          onChange={(e) => {
+                            const newVal = e.target.checked;
+                            setProfileForm(prev => ({ ...prev, isProfilePublic: newVal } as any));
+                            // Also update immediately
+                            updateUserMutation({
+                              variables: {
+                                id: user?.id,
+                                isProfilePublic: newVal
+                              }
+                            });
+                          }}
+                        />
+                        <div className="w-11 h-6 bg-muted-foreground/20 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent/30 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                      </label>
+                    </div>
+
+                    {/* Trainer fields */}
+                    <div className="space-y-6">
+                      <h4 className="text-sm font-bold flex items-center gap-2"><Star className="w-4 h-4 text-accent" /> Expertise & Specialties</h4>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Specialties</label>
+                          <Input
+                            value={profileForm.specialties || user?.trainerApplication?.specialties?.join(', ') || ''}
+                            onChange={(e) => setProfileForm({ ...profileForm, specialties: e.target.value } as any)}
+                            placeholder="e.g. React, Python, Data Science"
+                          />
+                          <p className="text-[10px] text-muted-foreground">Separate with commas</p>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Years of Experience</label>
+                          <Input
+                            type="number"
+                            value={profileForm.experienceYears || user?.trainerApplication?.experienceYears || ''}
+                            onChange={(e) => setProfileForm({ ...profileForm, experienceYears: e.target.value } as any)}
+                            placeholder="e.g. 5"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Qualifications / Certifications</label>
+                        <Input
+                          value={profileForm.qualifications || user?.trainerApplication?.qualifications?.join(', ') || ''}
+                          onChange={(e) => setProfileForm({ ...profileForm, qualifications: e.target.value } as any)}
+                          placeholder="e.g. AWS Certified, Google UX"
+                        />
+                        <p className="text-[10px] text-muted-foreground">Separate with commas</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Teaching Philosophy</label>
+                        <Textarea
+                          rows={3}
+                          value={profileForm.teachingPhilosophy || user?.trainerApplication?.teachingPhilosophy || ''}
+                          onChange={(e) => setProfileForm({ ...profileForm, teachingPhilosophy: e.target.value } as any)}
+                          className="resize-none bg-muted/30"
+                          placeholder="Describe your approach to teaching..."
+                        />
+                      </div>
+
+                      <div className="space-y-3 pt-2">
+                        <h4 className="text-sm font-bold flex items-center gap-2"><LinkIcon className="w-4 h-4" /> Online Presence</h4>
+                        <div className="space-y-2">
+                          <label className="text-xs font-medium flex items-center gap-2">
+                            <Linkedin className="w-3.5 h-3.5 text-blue-500" /> LinkedIn
+                          </label>
+                          <Input
+                            value={profileForm.linkedinProfile || user?.trainerApplication?.linkedinProfile || ''}
+                            onChange={(e) => setProfileForm({ ...profileForm, linkedinProfile: e.target.value } as any)}
+                            placeholder="https://linkedin.com/in/..."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-medium flex items-center gap-2">
+                            <Github className="w-3.5 h-3.5" /> GitHub
+                          </label>
+                          <Input
+                            value={profileForm.githubProfile || user?.trainerApplication?.githubProfile || ''}
+                            onChange={(e) => setProfileForm({ ...profileForm, githubProfile: e.target.value } as any)}
+                            placeholder="https://github.com/..."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-medium flex items-center gap-2">
+                            <Globe className="w-3.5 h-3.5 text-accent" /> Website / Portfolio
+                          </label>
+                          <Input
+                            value={profileForm.websiteUrl || user?.trainerApplication?.websiteUrl || ''}
+                            onChange={(e) => setProfileForm({ ...profileForm, websiteUrl: e.target.value } as any)}
+                            placeholder="https://..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-4 border-t border-border/50">
+                      <Button 
+                        onClick={handleSaveTrainerProfile} 
+                        disabled={savingProfile}
+                        className="bg-accent hover:bg-accent/90 text-accent-foreground min-w-[150px]"
+                      >
+                        {savingProfile ? "Saving..." : "Save Trainer Profile"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </motion.div>
           </TabsContent>
 
@@ -740,24 +978,24 @@ export default function PortalSettings() {
                   {/* 2FA Status */}
                   <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50">
                     <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-full ${(user as any)?.twoFactorEnabled ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'}`}>
-                        {(user as any)?.twoFactorEnabled ? (
+                      <div className={`p-3 rounded-full ${user?.twoFactorEnabled ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'}`}>
+                        {user?.twoFactorEnabled ? (
                           <ShieldCheck className="w-6 h-6" />
                         ) : (
                           <Shield className="w-6 h-6" />
                         )}
                       </div>
                       <div>
-                        <h4 className="font-medium">                              {(user as any)?.twoFactorEnabled ? 'Email 2FA is Active' : 'Email 2FA is Disabled'}
+                        <h4 className="font-medium">                              {user?.twoFactorEnabled ? 'Email 2FA is Active' : 'Email 2FA is Disabled'}
                         </h4>
-                        <p className="text-sm text-muted-foreground">                              {(user as any)?.twoFactorEnabled
+                        <p className="text-sm text-muted-foreground">                              {user?.twoFactorEnabled
                             ? 'You will receive a one-time code via email each time you log in.'
                             : 'Enable 2FA to secure your account with email-based verification.'}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {(user as any)?.twoFactorEnabled ? (
+                      {user?.twoFactorEnabled ? (
                         <Button
                           variant="outline"
                           className="border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-600"
@@ -931,8 +1169,101 @@ export default function PortalSettings() {
             </TabsContent>
           )}
 
+          {/* === BECOME A TRAINER TAB (STUDENT ONLY) === */}
+          {user?.role === 'student' && (
+            <TabsContent value="become-trainer">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <Card className="border-accent/20 overflow-hidden">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-accent/5 to-primary/10" />
+                    <CardHeader className="relative">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg mb-4">
+                        <GraduationCap className="w-8 h-8 text-white" />
+                      </div>
+                      <CardTitle className="text-2xl font-bold">
+                        Become a Trainer & Mentor
+                      </CardTitle>
+                      <CardDescription className="text-base">
+                        Share your knowledge, coach students, and earn from your expertise
+                      </CardDescription>
+                    </CardHeader>
+                  </div>
+                  <CardContent className="space-y-6">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-xl bg-accent/5 border border-accent/10">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                            <BookIcon className="w-5 h-5 text-accent" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm">Create Courses</p>
+                            <p className="text-xs text-muted-foreground">Design and publish courses</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm">Coach Students</p>
+                            <p className="text-xs text-muted-foreground">Mentor and guide learners</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                            <Star className="w-5 h-5 text-green-500" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm">Offer Scholarships</p>
+                            <p className="text-xs text-muted-foreground">Help students financially</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                            <DollarSign className="w-5 h-5 text-blue-500" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm">Earn Income</p>
+                            <p className="text-xs text-muted-foreground">Get paid for teaching</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
+                      <p className="text-sm text-amber-600 dark:text-amber-400">
+                        <strong>Note:</strong> Your application will be reviewed by a super admin.
+                        Once approved, you'll get access to the trainer dashboard where you can
+                        create courses, manage students, schedule meetings, and more.
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={() => setShowBecomeTrainer(true)}
+                      className="w-full h-12 text-base gap-2 bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent"
+                    >
+                      <GraduationCap className="w-5 h-5" />
+                      Apply to Become a Trainer
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
+
+      <BecomeTrainerDialog open={showBecomeTrainer} onOpenChange={setShowBecomeTrainer} />
     </PortalLayout>
   );
 }

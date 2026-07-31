@@ -1594,7 +1594,8 @@ class PaymentController {
               await sendCourseEnrollmentConfirmation(
                 userEmail,
                 studentName,
-                (course as any).title
+                (course as any).title,
+                (course as any)._id.toString()
               );
             }
           }

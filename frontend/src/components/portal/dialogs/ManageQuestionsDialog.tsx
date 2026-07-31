@@ -3,13 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Trash2, CheckCircle2, AlertCircle, Loader2, Pencil, Sparkles, Save, X, ArrowLeft, Settings, Type, Shuffle } from "lucide-react";
+import { Plus, Trash2, CheckCircle2, AlertCircle, Loader2, Pencil, Sparkles, Save, X, ArrowLeft, Settings, Type, Shuffle, Image as ImageIcon, Upload } from "lucide-react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_QUESTIONS, GET_COURSE } from "@/lib/graphql/queries";
 import { CREATE_QUESTION, UPDATE_QUESTION, DELETE_QUESTION, GENERATE_AI_QUIZ, GENERATE_QUESTION_EXPLANATION, UPDATE_QUIZ_CONFIG } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 import { FileUpload } from "@/components/FileUpload";
-import { Image as ImageIcon, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";

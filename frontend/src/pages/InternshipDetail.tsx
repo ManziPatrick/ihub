@@ -10,8 +10,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { SEOHead } from "@/components/SEOHead";
 import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 import { ApplyInternshipDialog } from "@/components/portal/dialogs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { stripHtml } from "@/lib/utils";
+import { useCurrency } from "@/hooks/useCurrency";
+import { useCart } from "@/contexts/CartContext";
 import {
   Briefcase,
   Calendar,
@@ -32,7 +34,9 @@ import {
 export default function InternshipDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  const { addToCart } = useCart();
+  const { formatPrice } = useCurrency();
   const [showApplyDialog, setShowApplyDialog] = useState(false);
 
   const { data, loading, error } = useQuery(GET_INTERNSHIP_PROGRAM, {
@@ -43,6 +47,32 @@ export default function InternshipDetail() {
   const { data: appsData } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS, {
     skip: !isAuthenticated,
   });
+
+  // If user visits a direct link (email, share) while not logged in:
+  // wait for program data to load, add to cart, then redirect to auth
+  const [authRedirecting, setAuthRedirecting] = useState(false);
+  useEffect(() => {
+    if (authRedirecting) return;
+    if (isLoading) return; // auth still loading
+    if (isAuthenticated) return; // already logged in
+    if (!id) return;
+
+    const programData = (data as any)?.internshipProgram;
+    if (loading && !programData) return; // still loading graphql data
+
+    if (programData) {
+      addToCart({
+        id: programData.id || id,
+        title: programData.title || "Internship Program",
+        price: programData.price || 0,
+        discountPrice: programData.discount > 0 ? programData.discount : undefined,
+        type: "internship",
+        image: programData.image || ""
+      });
+    }
+    setAuthRedirecting(true);
+    navigate(`/auth?redirect=/internship/${id}`, { replace: true });
+  }, [authRedirecting, isLoading, isAuthenticated, id, navigate, data, loading, addToCart]);
 
   const program = (data as any)?.internshipProgram;
   const myApplications = (appsData as any)?.myInternshipApplications || [];
@@ -114,6 +144,16 @@ export default function InternshipDetail() {
 
   const handleApply = () => {
     if (!isAuthenticated) {
+      if (program) {
+        addToCart({
+          id: program.id || id || "",
+          title: program.title || "Internship Program",
+          price: program.price || 0,
+          discountPrice: program.discount > 0 ? program.discount : undefined,
+          type: "internship",
+          image: program.image || ""
+        });
+      }
       navigate("/auth", { state: { from: { pathname: `/internship/${id}` } } });
     } else {
       setShowApplyDialog(true);
@@ -188,10 +228,10 @@ export default function InternshipDetail() {
                       <span className="font-medium text-foreground">
                         {program.price === 0
                           ? "Free"
-                          : `${program.price.toLocaleString()} ${program.currency || "RWF"}`}
+                          : formatPrice(program.price)}
                         {program.discount > 0 && (
                           <span className="ml-1.5 text-xs line-through text-muted-foreground/60">
-                            {program.discount.toLocaleString()}
+                            {formatPrice(program.discount)}
                           </span>
                         )}
                       </span>
@@ -349,11 +389,11 @@ export default function InternshipDetail() {
                       <p className="text-2xl font-bold">
                         {program.price === 0 || program.price == null
                           ? "Free"
-                          : `${program.price.toLocaleString()} ${program.currency || "RWF"}`}
+                          : formatPrice(program.price)}
                       </p>
                       {program.discount > 0 && (
                         <p className="text-sm text-muted-foreground line-through">
-                          {program.discount.toLocaleString()} {program.currency || "RWF"}
+                          {formatPrice(program.discount)}
                         </p>
                       )}
                     </div>

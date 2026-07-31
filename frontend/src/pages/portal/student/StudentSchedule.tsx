@@ -41,7 +41,7 @@ import { RESTORE_BOOKING } from "@/lib/graphql/mutations";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { gql } from "@apollo/client";
 import { Calendar as UICalendar } from "@/components/ui/calendar";
-import { GET_MY_BOOKINGS, GET_MY_INTERNSHIP_MEETINGS } from "@/lib/graphql/queries";
+import { GET_MY_BOOKINGS, GET_MY_INTERNSHIP_MEETINGS, GET_ME, GET_MY_INTERNSHIP_APPLICATIONS } from "@/lib/graphql/queries";
 
 const CANCEL_BOOKING = gql`
   mutation CancelStudentBooking($id: ID!) {
@@ -87,9 +87,26 @@ export default function StudentSchedule() {
   const [selectedDay, setSelectedDay] = useState<Date>(startOfToday());
   const { data: bookingsData, loading: bookingsLoading } = useQuery(GET_MY_BOOKINGS);
   const { data: meetingsData, loading: meetingsLoading } = useQuery(GET_MY_INTERNSHIP_MEETINGS);
+  const { data: meData } = useQuery(GET_ME);
+  const { data: internAppsData } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS);
 
+  const me = (meData as any)?.me;
   const bookings = (bookingsData as any)?.myBookings || [];
   const internshipMeetings = (meetingsData as any)?.getMyInternshipMeetings || [];
+  const myInternshipApps = (internAppsData as any)?.myInternshipApplications || [];
+
+  // Context options for booking: enrolled courses + internship programs
+  const enrolledCourses = me?.enrolledCourses?.map((c: any) => ({
+    id: c.id,
+    title: c.title,
+  })) || [];
+  const internshipPrograms = myInternshipApps
+    .filter((app: any) => app.status === 'approved' || app.status === 'active')
+    .map((app: any) => ({
+      id: app.internshipProgram?.id,
+      title: app.internshipProgram?.title || 'Program',
+    }))
+    .filter((p: any) => p.id);
   
   const expandMeeting = (m: any) => {
     const instances: any[] = [];
@@ -548,6 +565,8 @@ export default function StudentSchedule() {
       <BookCallDialog
         open={bookOpen}
         onOpenChange={setBookOpen}
+        enrolledCourses={enrolledCourses}
+        internshipPrograms={internshipPrograms}
       />
     </PortalLayout>
   );

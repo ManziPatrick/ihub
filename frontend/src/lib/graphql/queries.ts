@@ -211,6 +211,96 @@ export const GET_USER_CERTIFICATES = gql`
   }
 `;
 
+export const GET_TRAINERS_PUBLIC = gql`
+  query GetTrainers($page: Int, $limit: Int, $search: String) {
+    trainers(page: $page, limit: $limit, search: $search) {
+      items {
+        id
+        username
+        fullName
+        email
+        avatar
+        coverImage
+        role
+        title
+        bio
+        location
+        isTrainerApproved
+        isProfilePublic
+        trainerApplication {
+          specialties
+          experienceYears
+          teachingPhilosophy
+          rateHourly
+          status
+        }
+      }
+      pagination {
+        totalCount
+        totalPages
+        currentPage
+        pageSize
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;
+
+export const GET_TRAINER_PUBLIC_PROFILE = gql`
+  query GetTrainerPublicProfile($id: ID!) {
+    trainerPublicProfile(id: $id) {
+      id
+      username
+      fullName
+      email
+      avatar
+      coverImage
+      role
+      title
+      bio
+      phone
+      location
+      isTrainerApproved
+      level
+      xp
+      createdAt
+      trainerApplication {
+        specialties
+        experienceYears
+        teachingPhilosophy
+        qualifications
+        rateHourly
+        linkedinProfile
+        githubProfile
+        websiteUrl
+        status
+      }
+      trainerCourses {
+        id
+        title
+        descriptionSnippet
+        thumbnail
+        price
+        discountPrice
+        level
+        category
+        studentsEnrolledCount
+      }
+      trainerPrograms {
+        id
+        title
+        description
+        duration
+        price
+        currency
+        image
+        status
+      }
+    }
+  }
+`;
+
 export const GET_ALL_TRAINERS = gql`
   query GetAllTrainers {
     getAllTrainers {
@@ -704,6 +794,21 @@ export const GET_ME = gql`
         portfolioUrl
         completionPercentage
       }
+      isTrainerApproved
+      isProfilePublic
+      coverImage
+      trainerApplication {
+        specialties
+        experienceYears
+        teachingPhilosophy
+        qualifications
+        rateHourly
+        linkedinProfile
+        githubProfile
+        websiteUrl
+        status
+        appliedAt
+      }
     }
   }
 `;
@@ -839,13 +944,21 @@ export const GET_MY_BOOKINGS = gql`
       notes
       status
       meetingLink
+      contextType
+      contextTitle
       mentor {
         id
         username
+        fullName
+        email
+        avatar
       }
       user {
         id
         username
+        fullName
+        email
+        avatar
       }
       createdAt
     }

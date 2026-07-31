@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@apollo/client/react";
+import { useQuery, useMutation } from "@apollo/client/react";
 import { Button } from "@/components/ui/button";
 import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +42,8 @@ import {
   Heart,
   Sparkles,
   Languages,
-  Building2
+  Building2,
+  MoreHorizontal
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
@@ -61,10 +62,8 @@ import {
 import { ApplyCourseDialog } from "@/components/portal/dialogs";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
-import { useMutation } from "@apollo/client/react";
 import { useToast } from "@/hooks/use-toast";
 import { InterestsOverlay } from "./InterestsOverlay";
-import { MoreHorizontal } from "lucide-react";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 
 // ─── Category normalization ────────────────────────────────────────────────
@@ -1209,7 +1208,7 @@ export function FeaturedCourses() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: Math.min(idx * 0.03, 0.3) }}
                           onClick={() => navigate(`/courses/${course.id || course._id}`)}
-                          className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 group hover:shadow-xl transition-all h-full flex flex-col cursor-pointer"
+                          className="bg-card rounded-2xl overflow-hidden border border-border/30 group transition-all h-full flex flex-col cursor-pointer"
                         >
                           <div className="h-36 relative overflow-hidden">
                             <ImageWithSkeleton
@@ -1460,7 +1459,7 @@ export function FeaturedCourses() {
                             onClick={() => {
                               navigate(`/internship/${intern.id}`);
                             }}
-                            className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 group hover:shadow-xl transition-all h-full flex flex-col cursor-pointer"
+                            className="bg-card rounded-2xl overflow-hidden border border-border/30 group transition-all h-full flex flex-col cursor-pointer"
                           >
                             <div className="h-36 relative overflow-hidden">
                               <ImageWithSkeleton

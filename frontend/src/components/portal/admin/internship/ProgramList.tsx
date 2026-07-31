@@ -63,7 +63,8 @@ export default function ProgramList() {
   const pageSize = 12; // Grid layout usually looks better with 3 or 4 columns, so 12 is a good multiple
 
   const { data, loading, error, refetch } = useQuery(GET_INTERNSHIP_PROGRAMS, {
-    variables: { page: currentPage, limit: pageSize }
+    variables: { page: currentPage, limit: pageSize },
+    fetchPolicy: 'network-only'
   });
 
   const [updateProgram, { loading: isSaving }] = useMutation(UPDATE_INTERNSHIP_PROGRAM_NEW, {
