@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { stripHtml } from "@/lib/utils";
+import { useCurrency } from "@/hooks/useCurrency";
 import {
   Calendar,
   Clock,
@@ -86,6 +87,8 @@ export default function EventDetail() {
       minute: "2-digit",
     });
   };
+
+  const { formatPrice } = useCurrency();
 
   const typeStyle = TYPE_BADGES[event?.type] || TYPE_BADGES.other;
 
@@ -259,7 +262,7 @@ export default function EventDetail() {
                       <p className="text-2xl font-bold">
                         {event.price === 0 || event.price == null
                           ? "Free"
-                          : `${event.price.toLocaleString()} ${event.currency || "RWF"}`}
+                          : formatPrice(event.price)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {event.price === 0 ? "No cost to attend" : "Per person"}

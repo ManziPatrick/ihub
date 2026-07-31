@@ -28,8 +28,8 @@ import {
   createAdminTourSteps,
   createSuperAdminTourSteps,
   tourFactoriesByRole,
+  type StepFactory,
 } from "@/components/portal/onboarding/TourConfig";
-import type { StepFactory } from "@/components/portal/onboarding/TourConfig";
 
 /**
  * Helper: call a step factory with a no-op `t` function so we

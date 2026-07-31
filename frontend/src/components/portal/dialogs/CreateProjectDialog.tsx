@@ -9,10 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { GET_ALL_PROJECTS, GET_USERS, GET_COURSES_SUMMARY } from '@/lib/graphql/queries';
-import { Link as LinkIcon, Plus, Trash2, Book, Box, Layout, X, Check, Search } from 'lucide-react';
+import { Link as LinkIcon, Plus, Trash2, Book, Box, Layout, X, Check, Search, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { FileUpload } from '@/components/FileUpload';
-import { FileText } from 'lucide-react';
+
 
 interface CreateProjectDialogProps {
     open: boolean;

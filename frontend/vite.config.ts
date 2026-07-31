@@ -9,6 +9,12 @@ import sharp from "sharp";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  optimizeDeps: {
+    // Avoid pre-bundling lucide-react to prevent barrel export conflicts with Star icon
+    exclude: ["lucide-react"],
+    // Only scan src/ files for dependencies — avoids esbuild crashing on public/ HTML files
+    entries: ["src/**/*.{tsx,ts,jsx,js}"],
+  },
   server: {
     host: "::",
     port: 8080,

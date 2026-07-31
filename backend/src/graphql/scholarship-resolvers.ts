@@ -10,7 +10,7 @@ import { sendScholarshipRevokedToAdmin, sendScholarshipApprovedToAdmin } from '.
 export const scholarshipResolvers = {
   Query: {
     getAllScholarships: async (_: any, { page = 1, limit = 10, status, type }: any, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) {
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) {
         throw new Error('Not authorized');
       }
 
@@ -18,8 +18,8 @@ export const scholarshipResolvers = {
       if (status) filter.status = status;
       if (type) filter.type = type;
 
-      // Scope admins: they should only see scholarships they granted.
-      if (context.user.role === 'admin') {
+      // Scope admins and trainers: they should only see scholarships they granted.
+      if (context.user.role === 'admin' || context.user.role === 'trainer') {
         filter.grantedBy = context.user.id;
       }
 
@@ -47,7 +47,7 @@ export const scholarshipResolvers = {
     },
 
     getUserScholarships: async (_: any, { userId }: any, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) {
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) {
         throw new Error('Not authorized');
       }
 
@@ -56,13 +56,13 @@ export const scholarshipResolvers = {
     },
 
     getScholarshipStats: async (_: any, __: any, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) {
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) {
         throw new Error('Not authorized');
       }
 
-      // If super_admin, return all stats. If admin, scope to their own granted scholarships
+      // Scope to their own granted scholarships
       const adminFilter: any = {};
-      if (context.user.role === 'admin') {
+      if (context.user.role === 'admin' || context.user.role === 'trainer') {
         adminFilter.grantedBy = context.user.id;
       }
 
@@ -139,7 +139,7 @@ export const scholarshipResolvers = {
 
   Mutation: {
     grantScholarship: async (_: any, { userId, type, itemId, itemTitle, reason, grantedLatitude, grantedLongitude, grantedCity, grantedCountry }: any, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) {
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) {
         throw new Error('Not authorized');
       }
 
@@ -158,9 +158,9 @@ export const scholarshipResolvers = {
         throw new Error('Invalid scholarship type. Must be "course" or "internship"');
       }
 
-      // Determine status based on role: super_admin → active, admin → pending
-      const isSuperAdmin = context.user.role === 'super_admin';
-      const initialStatus = isSuperAdmin ? 'active' : 'pending';
+      // Determine status based on role: super_admin/trainer → active, admin → pending
+      const isInstant = context.user.role === 'super_admin' || context.user.role === 'trainer';
+      const initialStatus = isInstant ? 'active' : 'pending';
 
       // Check for existing active or pending scholarship
       const existing = await Scholarship.findOne({
@@ -203,7 +203,7 @@ export const scholarshipResolvers = {
         grantedCountry: resolvedCountry ?? undefined,
       });
 
-      // Only enroll if immediately active (super_admin granted)
+      // Only enroll if immediately active (super_admin or trainer granted)
       if (initialStatus === 'active' && type === 'course') {
         const course = await Course.findById(itemId);
         if (course) {
@@ -243,12 +243,12 @@ export const scholarshipResolvers = {
     },
 
     grantBatchScholarships: async (_: any, { userIds, type, itemIds, itemTitles, reason, grantedLatitude, grantedLongitude, grantedCity, grantedCountry }: any, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) {
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) {
         throw new Error('Not authorized');
       }
 
-      const isSuperAdmin = context.user.role === 'super_admin';
-      const initialStatus = isSuperAdmin ? 'active' : 'pending';
+      const isInstant = context.user.role === 'super_admin' || context.user.role === 'trainer';
+      const initialStatus = isInstant ? 'active' : 'pending';
       let granted = 0;
 
       // Try to get admin location from IP if browser geolocation not provided
@@ -314,7 +314,7 @@ export const scholarshipResolvers = {
             grantedCountry: resolvedCountry ?? undefined,
           });
 
-          // Only enroll if immediately active (super_admin granted)
+          // Only enroll if immediately active
           if (initialStatus === 'active' && type === 'course') {
             const course = await Course.findById(itemId);
             if (course) {
@@ -425,8 +425,17 @@ export const scholarshipResolvers = {
     },
 
     revokeScholarship: async (_: any, { id, reason }: any, context: any) => {
-      if (!['admin', 'super_admin'].includes(context.user?.role)) {
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) {
         throw new Error('Not authorized');
+      }
+
+      // Trainers can only revoke their own granted scholarships
+      if (context.user.role === 'trainer') {
+        const scholarship = await Scholarship.findById(id);
+        if (!scholarship) throw new Error('Scholarship not found');
+        if (scholarship.grantedBy?.toString() !== context.user.id) {
+          throw new Error('You can only revoke scholarships you granted');
+        }
       }
 
       const scholarship = await Scholarship.findById(id);

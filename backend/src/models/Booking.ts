@@ -13,6 +13,8 @@ const bookingSchema = new mongoose.Schema({
   meetingLink: { type: String }, // For online
   location: { type: String }, // For physical
   isDeleted: { type: Boolean, default: false },
+  contextType: { type: String, enum: ['general', 'course', 'internship', 'event'], default: 'general' },
+  contextTitle: { type: String },
 }, { timestamps: true });
 
 export const Booking = mongoose.model('Booking', bookingSchema);

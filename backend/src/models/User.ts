@@ -94,6 +94,7 @@ const userSchema = new mongoose.Schema({
   fullName: { type: String },
   bio: { type: String },
   avatar: { type: String },
+  coverImage: { type: String },
   phone: { type: String },
   location: { type: String },
   latitude: { type: Number },
@@ -121,6 +122,24 @@ const userSchema = new mongoose.Schema({
   school: { type: String, trim: true },
   isFirst: { type: Boolean, default: true },
   assignedAdmin: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
+  // Trainer-specific fields
+  isTrainerApproved: { type: Boolean, default: false },
+  isProfilePublic: { type: Boolean, default: true },
+  trainerApplication: {
+    specialties: [{ type: String }],
+    experienceYears: { type: Number },
+    teachingPhilosophy: { type: String },
+    qualifications: [{ type: String }],
+    rateHourly: { type: Number },
+    linkedinProfile: { type: String },
+    githubProfile: { type: String },
+    websiteUrl: { type: String },
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    appliedAt: { type: Date },
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    reviewNote: { type: String },
+  },
 }, { timestamps: true });
 
 // Indexes for efficient user queries

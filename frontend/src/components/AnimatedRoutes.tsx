@@ -30,6 +30,7 @@ const Auth = lazy(() => import("@/pages/Auth"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const CoursePage = lazy(() => import("@/pages/CoursePage"));
 const PaymentSuccess = lazy(() => import("@/pages/PaymentSuccess"));
+const TrainerProfile = lazy(() => import("@/pages/TrainerProfile"));
 
 // Student Portal
 const StudentDashboard = lazy(() => import("@/pages/portal/student/StudentDashboard"));
@@ -207,12 +208,16 @@ export function AnimatedRoutes() {
           <Route path="/portal/trainer/internships" element={<ProtectedRoute allowedRoles={["trainer"]}><TrainerInternships /></ProtectedRoute>} />
           <Route path="/portal/trainer/projects" element={<ProtectedRoute allowedRoles={["trainer"]}><TrainerProjects /></ProtectedRoute>} />
           <Route path="/portal/trainer/module-reviews" element={<ProtectedRoute allowedRoles={["trainer"]}><TrainerModuleReviewPanel /></ProtectedRoute>} />
+          <Route path="/portal/trainer/programs" element={<ProtectedRoute allowedRoles={["trainer"]}><AdminInternships /></ProtectedRoute>} />
+          <Route path="/portal/trainer/applicants" element={<ProtectedRoute allowedRoles={["trainer"]}><AdminApplicantHub /></ProtectedRoute>} />
+          <Route path="/portal/trainer/meetings" element={<ProtectedRoute allowedRoles={["trainer", "admin"]}><InternshipMeetings /></ProtectedRoute>} />
+          <Route path="/portal/trainer/scholarships" element={<ProtectedRoute allowedRoles={["trainer"]}><SuperAdminScholarships /></ProtectedRoute>} />
 
           {/* Admin Portal */}
           <Route path="/portal/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/portal/admin/users" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUsers /></ProtectedRoute>} />
           <Route path="/portal/admin/courses" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourses /></ProtectedRoute>} />
-          <Route path="/portal/admin/courses/create" element={<ProtectedRoute allowedRoles={["admin"]}><CreateCourse /></ProtectedRoute>} />
+          <Route path="/portal/admin/courses/create" element={<ProtectedRoute allowedRoles={["admin", "super_admin", "trainer"]}><CreateCourse /></ProtectedRoute>} />
           <Route path="/portal/admin/applications" element={<ProtectedRoute allowedRoles={["admin"]}><AdminApplications /></ProtectedRoute>} />
           <Route path="/portal/admin/applicants" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><AdminApplicantHub /></ProtectedRoute>} />
           <Route path="/portal/admin/internships" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInternships /></ProtectedRoute>} />
@@ -283,6 +288,7 @@ export function AnimatedRoutes() {
           {/* Experimental/Testing */}
           <Route path="/courses/:id" element={<PageTransition><CoursePage /></PageTransition>} />
           <Route path="/internship/:id" element={<PageTransition><InternshipDetail /></PageTransition>} />
+          <Route path="/trainer/:id" element={<PageTransition><TrainerProfile /></PageTransition>} />
           <Route path="/chat" element={<PageTransition><Chat /></PageTransition>} />
           <Route path="/maintenance" element={<Maintenance />} />
 

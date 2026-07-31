@@ -14,7 +14,7 @@ import { CheckCircle, Clock, BookOpen, User, PlayCircle, Lock, Award, ShoppingCa
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { ApplyCourseDialog } from "@/components/portal/dialogs";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { stripHtml, getVideoEmbedUrl, isYouTubeUrl, normalizeContent } from "@/lib/utils";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import ReactMarkdown from "react-markdown";
@@ -26,7 +26,7 @@ const MODULES_PER_PAGE = 5;
 export default function CoursePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const { addToCart, cartItems } = useCart();
   const [applyCourse, setApplyCourse] = useState<any>(null);
@@ -35,15 +35,40 @@ export default function CoursePage() {
   const [loadingLesson, setLoadingLesson] = useState<string | null>(null);
   const [lessonCache, setLessonCache] = useState<Record<string, any>>({});
 
-  const [fetchLessonContent] = useLazyQuery(GET_LESSON_CONTENT, {
-    fetchPolicy: 'no-cache',
-    // onError is handled in the promise chain to keep types compatible
-  });
-
-
   const { data, loading, error, refetch } = useQuery(GET_COURSE_LITE, {
     variables: { id },
     skip: !id
+  });
+
+  // If user visits a direct link (email, share) while not logged in:
+  // wait for course data to load, add to cart, then redirect to auth
+  const [authRedirecting, setAuthRedirecting] = useState(false);
+  useEffect(() => {
+    if (authRedirecting) return;
+    if (isLoading) return; // auth still loading
+    if (isAuthenticated) return; // already logged in
+    if (!id) return;
+
+    const courseData = (data as any)?.course;
+    if (loading && !courseData) return; // still loading graphql data
+
+    if (courseData) {
+      addToCart({
+        id: courseData.id || courseData._id,
+        title: courseData.title,
+        price: courseData.price,
+        discountPrice: courseData.discountPrice,
+        type: "course",
+        image: courseData.thumbnail || courseData.image
+      });
+    }
+    setAuthRedirecting(true);
+    navigate(`/auth?redirect=/courses/${id}`, { replace: true });
+  }, [authRedirecting, isLoading, isAuthenticated, id, navigate, data, loading, addToCart]);
+
+  const [fetchLessonContent] = useLazyQuery(GET_LESSON_CONTENT, {
+    fetchPolicy: 'no-cache',
+    // onError is handled in the promise chain to keep types compatible
   });
 
   const { data: myAppsData } = useQuery(MY_COURSE_APPLICATIONS, {
@@ -519,6 +544,14 @@ export default function CoursePage() {
                       <Button
                         onClick={() => {
                           if (!isAuthenticated) {
+                            addToCart({
+                              id: course.id || course._id,
+                              title: course.title,
+                              price: course.price,
+                              discountPrice: course.discountPrice,
+                              type: "course",
+                              image: course.thumbnail || course.image
+                            });
                             navigate("/auth", { state: { from: { pathname: `/courses/${course.id || course._id}` } } });
                           } else {
                             setApplyCourse(course);
@@ -533,6 +566,14 @@ export default function CoursePage() {
                       <Button
                         onClick={() => {
                           if (!isAuthenticated) {
+                            addToCart({
+                              id: course.id || course._id,
+                              title: course.title,
+                              price: course.price,
+                              discountPrice: course.discountPrice,
+                              type: "course",
+                              image: course.thumbnail || course.image
+                            });
                             navigate("/auth", { state: { from: { pathname: `/courses/${course.id || course._id}` } } });
                           } else {
                             enrollMutation({ variables: { courseId: course.id || course._id } });

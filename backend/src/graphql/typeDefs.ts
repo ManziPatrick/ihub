@@ -67,6 +67,21 @@ export const typeDefs = `#graphql
     createdBy: User
   }
 
+  type TrainerApplication {
+    specialties: [String]
+    experienceYears: Int
+    teachingPhilosophy: String
+    qualifications: [String]
+    rateHourly: Int
+    linkedinProfile: String
+    githubProfile: String
+    websiteUrl: String
+    status: String
+    appliedAt: String
+    reviewedBy: ID
+    reviewNote: String
+  }
+
   type ThemePreference {
     primaryColor: String
     mode: String
@@ -101,6 +116,7 @@ export const typeDefs = `#graphql
     fullName: String
     bio: String
     avatar: String
+    coverImage: String
     phone: String
     location: String
     latitude: Float
@@ -128,6 +144,11 @@ export const typeDefs = `#graphql
     isFirst: Boolean
     certificates: [Certificate]
     createdBy: User
+    isTrainerApproved: Boolean
+    isProfilePublic: Boolean
+    trainerApplication: TrainerApplication
+    trainerCourses: [Course]
+    trainerPrograms: [InternshipProgram]
   }
 
   type PaginationInfo {
@@ -938,6 +959,8 @@ export const typeDefs = `#graphql
     getResource(id: ID!): Resource!
     hello: String
     users(page: Int, limit: Int, createdBy: ID, role: String): UserResponse
+    trainers(page: Int, limit: Int, search: String): UserResponse
+    trainerPublicProfile(id: ID!): User
     conversations: [Conversation]
     messages(conversationId: ID!): [Message]
     courses(page: Int, limit: Int, sortBy: String, featured: Boolean, search: String, category: String, price: String, level: String, school: String, location: String): CourseResponse
@@ -1320,9 +1343,22 @@ export const typeDefs = `#graphql
       modules: [ModuleInput!]
     ): Course
     deleteCourse(id: ID!): Boolean
-    createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String): User
-    updateUser(id: ID!, username: String, email: String, password: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String): User
+    createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, coverImage: String, phone: String, location: String, title: String, school: String): User
+    updateUser(id: ID!, username: String, email: String, password: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, coverImage: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String): User
     markTourCompleted: User
+    becomeTrainer(
+      avatar: String,
+      coverImage: String,
+      specialties: [String],
+      experienceYears: Int,
+      teachingPhilosophy: String,
+      qualifications: [String],
+      rateHourly: Int,
+      linkedinProfile: String,
+      githubProfile: String,
+      websiteUrl: String
+    ): User
+    approveTrainer(userId: ID!, approved: Boolean!, reviewNote: String): User
         updateUserLocation(latitude: Float!, longitude: Float!): User
     adminUpdateUserLocation(userId: ID!, latitude: Float!, longitude: Float!): User
     setUserLocationDenied(userId: ID!, denied: Boolean!): LocationForceResult!

@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SEOHead } from "@/components/SEOHead";
 import { motion } from "framer-motion";
+import { useCurrency } from "@/hooks/useCurrency";
 import {
   Calendar,
   MapPin,
@@ -63,6 +64,8 @@ export default function Events() {
 
   const items = (data as any)?.unifiedEventsAndInternships || [];
 
+  const { formatPrice } = useCurrency();
+
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
     const d = new Date(dateStr);
@@ -73,9 +76,9 @@ export default function Events() {
     });
   };
 
-  const formatPrice = (item: any) => {
+  const formatItemPrice = (item: any) => {
     if (item.price === 0 || item.price == null) return "Free";
-    return `${item.price.toLocaleString()} ${item.currency || "RWF"}`;
+    return formatPrice(item.price);
   };
 
   return (
@@ -232,7 +235,7 @@ export default function Events() {
                         )}
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-semibold text-foreground">
-                            {formatPrice(item)}
+                            {formatItemPrice(item)}
                           </span>
                           {item.tags?.length > 0 && (
                             <div className="flex gap-1">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { Upload, FileText, X, CheckCircle } from "lucide-react";
 import { useMutation } from "@apollo/client/react";
 import { SUBMIT_PROJECT } from "@/lib/graphql/mutations";
-import { useRef } from "react";
 import { getApiBaseUrl } from "@/lib/env";
 
 interface SubmitProjectDialogProps {

@@ -26,10 +26,8 @@ import {
   ExternalLink,
   UserPlus,
   Rocket,
-  Download,
 } from "lucide-react";
 import { EditCourseDialog, ViewCourseDialog, EnrollStudentDialog, CreateProjectDialog, GradeProjectDialog } from "@/components/portal/dialogs";
-import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 import { toast } from "sonner";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_COURSES, GET_ME, GET_ALL_PROJECTS } from "@/lib/graphql/queries";
@@ -44,8 +42,6 @@ export default function TrainerCourses() {
   const [assignProjectOpen, setAssignProjectOpen] = useState(false);
   const [gradeProject, setGradeProject] = useState<any>(null);
   const [gradeOpen, setGradeOpen] = useState(false);
-  const [showExportDialog, setShowExportDialog] = useState(false);
-
   const { data: userData, loading: userLoading } = useQuery(GET_ME);
   const { data: coursesData, loading: coursesLoading, refetch } = useQuery(GET_COURSES);
   const { data: projectsData, refetch: refetchProjects } = useQuery(GET_ALL_PROJECTS);
@@ -148,13 +144,9 @@ export default function TrainerCourses() {
                 className="pl-9 w-64 bg-muted/20 border-none h-11"
               />
             </div>
-            <Button variant="outline" className="h-11" onClick={() => setShowExportDialog(true)}>
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-            <Button variant="gold" className="h-11 shadow-lg shadow-gold/20" onClick={() => toast.info("Contact admin to create a new course")}>
+            <Button variant="gold" className="h-11 shadow-lg shadow-gold/20" onClick={() => window.location.href = '/portal/admin/courses/create'}>
               <Plus className="w-4 h-4 mr-2" />
-              Request New Course
+              Create Course
             </Button>
           </div>
         </motion.div>
@@ -478,13 +470,6 @@ export default function TrainerCourses() {
         refetch={refetchProjects}
       />
 
-      <ExportDataDialog
-        open={showExportDialog}
-        onOpenChange={setShowExportDialog}
-        isTrainer={true}
-        userId={me?.id}
-        userRole={me?.role}
-      />
     </PortalLayout>
   );
 }

@@ -105,7 +105,7 @@ export const sendWelcomeEmail = async (
 ): Promise<boolean> => {
   const config = await getEmailConfig();
   const setPasswordUrl = resetToken
-    ? `${process.env.CLIENT_ORIGIN}/reset-password?token=${resetToken}`
+    ? `${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/reset-password?token=${resetToken}`
     : null;
 
   const html = `
@@ -146,7 +146,7 @@ export const sendWelcomeEmail = async (
             </p>
           ` : `
             <p>You can now access your dashboard to start your learning journey.</p>
-            <a href="${process.env.CLIENT_ORIGIN}/login" class="btn">Access My Dashboard</a>
+            <a href="${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/login" class="btn">Access My Dashboard</a>
           `}
         </div>
         <div class="footer">
@@ -188,7 +188,7 @@ export const sendAdminNewUserNotification = async (
           <li><strong>Date:</strong> ${new Date().toLocaleString()}</li>
         </ul>
         <p>You can manage this user from the Admin Portal.</p>
-        <a href="${process.env.CLIENT_ORIGIN}/portal/admin/users" style="display: inline-block; padding: 10px 20px; background: #333; color: #fff; text-decoration: none; border-radius: 4px;">View User List</a>
+        <a href="${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/portal/admin/users" style="display: inline-block; padding: 10px 20px; background: #333; color: #fff; text-decoration: none; border-radius: 4px;">View User List</a>
       </div>
     </body>
     </html>
@@ -452,9 +452,13 @@ export const sendMeetingInvitation = async (
 export const sendApplicationConfirmation = async (
   email: string,
   studentName: string,
-  programTitle: string
+  programTitle: string,
+  programId?: string
 ): Promise<boolean> => {
   const config = await getEmailConfig();
+  const origin = process.env.CLIENT_ORIGIN || 'https://bootskills.com';
+  const programLink = programId ? `${origin}/internship/${programId}` : `${origin}/portal/student/internships`;
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -475,7 +479,7 @@ export const sendApplicationConfirmation = async (
         </div>
         <div class="content">
           <h2>Hi ${studentName},</h2>
-          <p>Thank you for applying to the <strong>${programTitle}</strong> internship program at Bootskills Academy!</p>
+          <p>Thank you for applying to the <strong>${programTitle}</strong> program at Bootskills Academy!</p>
           <p>Your application has been received and is now under review. Here's what happens next:</p>
           <ol>
             <li>Our team will review your application within 3-5 business days</li>
@@ -483,7 +487,9 @@ export const sendApplicationConfirmation = async (
             <li>If approved, you'll get instructions for the next steps</li>
           </ol>
           <p>In the meantime, make sure your profile is complete and up-to-date.</p>
-          <a href="${process.env.CLIENT_ORIGIN}/portal/student/internships" class="btn">View Application Status</a>
+          <div style="text-align: center;">
+            <a href="${programLink}" class="btn">View Program</a>
+          </div>
         </div>
         <div class="footer">
           <p>© 2026 ${config.siteName}. Building Africa's Tech Talent.</p>
@@ -508,7 +514,8 @@ export const sendApplicationStatusUpdate = async (
   studentName: string,
   programTitle: string,
   status: 'approved' | 'rejected' | 'waitlisted',
-  message?: string
+  message?: string,
+  programId?: string
 ): Promise<boolean> => {
   const config = await getEmailConfig();
   const statusMessages = {
@@ -530,6 +537,8 @@ export const sendApplicationStatusUpdate = async (
   };
 
   const { title, color, text } = statusMessages[status];
+  const origin = process.env.CLIENT_ORIGIN || 'https://bootskills.com';
+  const programLink = programId ? `${origin}/internship/${programId}` : `${origin}/portal/student/internships`;
 
   const html = `
     <!DOCTYPE html>
@@ -561,7 +570,7 @@ export const sendApplicationStatusUpdate = async (
               <li>Complete your onboarding tasks</li>
               <li>Join your assigned team</li>
             </ol>
-            <a href="${process.env.CLIENT_ORIGIN}/portal/student/internships" class="btn">Get Started</a>
+            <a href="${programLink}" class="btn">Go to Program</a>
           ` : ''}
         </div>
         <div class="footer">
@@ -689,7 +698,7 @@ export const sendCertificateIssued = async (
           
           <p>Share your achievement on LinkedIn and with potential employers!</p>
           
-          <a href="${process.env.CLIENT_ORIGIN}/portal/student/certificates" class="btn">Download Certificate</a>
+          <a href="${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/portal/student/certificates" class="btn">Download Certificate</a>
         </div>
         <div class="footer">
           <p>© 2026 ${config.siteName}. Building Africa's Tech Talent.</p>
@@ -712,9 +721,13 @@ export const sendCertificateIssued = async (
 export const sendCourseEnrollmentConfirmation = async (
   email: string,
   studentName: string,
-  courseTitle: string
+  courseTitle: string,
+  courseId?: string
 ): Promise<boolean> => {
   const config = await getEmailConfig();
+  const origin = process.env.CLIENT_ORIGIN || 'https://bootskills.com';
+  const courseLink = courseId ? `${origin}/courses/${courseId}` : `${origin}/portal/student/dashboard`;
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -744,15 +757,10 @@ export const sendCourseEnrollmentConfirmation = async (
             <h3>📚 ${courseTitle}</h3>
           </div>
           
-          <p>Your learning journey starts now! Here's what you can do next:</p>
-          <ol class="steps">
-            <li><strong>Access your dashboard</strong> — Start exploring your course materials</li>
-            <li><strong>Complete your first lesson</strong> — Begin with the first module</li>
-            <li><strong>Track your progress</strong> — Monitor your completion and achievements</li>
-          </ol>
+          <p>Click the button below to start learning right away!</p>
           
           <div style="text-align: center;">
-            <a href="${process.env.CLIENT_ORIGIN}/portal/student/dashboard" class="btn">Go to My Dashboard</a>
+            <a href="${courseLink}" class="btn">Go to Course</a>
           </div>
           
           <p style="margin-top: 20px;">If you have any questions, feel free to reach out to your instructor or our support team.</p>
@@ -804,7 +812,7 @@ export const sendFeedbackNotification = async (
           <h2>Hi ${studentName},</h2>
           <p><strong>${mentorName}</strong> has provided feedback on your work for <strong>${projectTitle}</strong>.</p>
           <p>Log in to view the feedback and continue improving your skills!</p>
-          <a href="${process.env.CLIENT_ORIGIN}/portal/student/internships" class="btn">View Feedback</a>
+          <a href="${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/portal/student/internships" class="btn">View Feedback</a>
         </div>
         <div class="footer">
           <p>© 2026 ${config.siteName}. Building Africa's Tech Talent.</p>
@@ -829,7 +837,7 @@ export const sendPasswordResetEmail = async (
   resetToken: string
 ): Promise<boolean> => {
   const config = await getEmailConfig();
-  const resetUrl = `${process.env.CLIENT_ORIGIN}/reset-password?token=${resetToken}`;
+  const resetUrl = `${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/reset-password?token=${resetToken}`;
 
   const html = `
     <!DOCTYPE html>
@@ -1237,7 +1245,7 @@ export const sendScholarshipRevokedToAdmin = async (
           
           <p>If you believe this decision was made in error, please reach out to the reviewing admin or super admin.</p>
           
-          <a href="${process.env.CLIENT_ORIGIN || ''}/portal/super-admin/scholarships" class="btn">View Scholarships</a>
+          <a href="${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/portal/super-admin/scholarships" class="btn">View Scholarships</a>
         </div>
         <div class="footer">
           <p>© 2026 ${config.siteName}. All rights reserved.</p>
@@ -1298,7 +1306,7 @@ export const sendScholarshipApprovedToAdmin = async (
           
           <p>The student now has full access to the ${scholarshipType === 'course' ? 'course' : 'internship program'}.</p>
           
-          <a href="${process.env.CLIENT_ORIGIN || ''}/portal/super-admin/scholarships" class="btn">View Scholarships</a>
+          <a href="${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/portal/super-admin/scholarships" class="btn">View Scholarships</a>
         </div>
         <div class="footer">
           <p>© 2026 ${config.siteName}. All rights reserved.</p>
@@ -1366,7 +1374,7 @@ export const sendTaskFeedbackEmail = async (
           ${resourcesHtml}
           
           <p>Please review the task status and developer submission in the portal.</p>
-          <a href="${process.env.CLIENT_ORIGIN}/portal/trainer/projects" class="btn">View Project Board</a>
+          <a href="${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/portal/trainer/projects" class="btn">View Project Board</a>
         </div>
         <div class="footer">
           <p>© 2026 ${config.siteName}. All rights reserved.</p>

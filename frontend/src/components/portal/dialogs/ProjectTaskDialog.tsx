@@ -9,9 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { CREATE_PROJECT_TASK, UPDATE_PROJECT_TASK } from "@/lib/graphql/project-tasks";
+import { CREATE_PROJECT_TASK, UPDATE_PROJECT_TASK, GET_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 import { GET_USERS } from "@/lib/graphql/queries";
-import { GET_PROJECT_TASKS } from "@/lib/graphql/project-tasks";
 
 interface ProjectTaskDialogProps {
   open: boolean;

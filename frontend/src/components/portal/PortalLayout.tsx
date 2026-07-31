@@ -4,8 +4,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation, useQuery } from "@apollo/client/react";
-import { TRACK_ACTIVITY } from "@/lib/graphql/mutations";
-import { GET_BRANDING } from "@/lib/graphql/queries";
+import { TRACK_ACTIVITY, MARK_NOTIFICATION_READ, MARK_ALL_NOTIFICATIONS_READ } from "@/lib/graphql/mutations";
+import { GET_BRANDING, GET_NOTIFICATIONS, GET_ME, GET_TRAINER_STATS, GET_ADMIN_DASHBOARD_DATA, GET_STATS, GET_ALL_TRAINERS } from "@/lib/graphql/queries";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -64,7 +64,8 @@ import {
   AlertTriangle,
   Code,
   Database,
-  PlayCircle
+  PlayCircle,
+  Search
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePusher } from "@/hooks/use-pusher";
@@ -120,8 +121,10 @@ const trainerNavItems: NavItem[] = [
     icon: Briefcase,
     children: [
       { label: "Mentorship", href: "/portal/trainer/mentorship", icon: GraduationCap },
-      { label: "Programs", href: "/portal/trainer/internships", icon: Briefcase },
-      { label: "Dev Onboarding", href: "/portal/admin/project-onboarding", icon: UserCog },
+      { label: "Programs", href: "/portal/trainer/programs", icon: Briefcase },
+      { label: "Scholarships", href: "/portal/trainer/scholarships", icon: Award },
+      { label: "Applicants", href: "/portal/trainer/applicants", icon: Users },
+      { label: "Create Course", href: "/portal/admin/courses/create", icon: BookOpen },
     ]
   },
   { label: "Schedule", href: "/portal/trainer/schedule", icon: Calendar },
@@ -265,7 +268,7 @@ interface PortalLayoutProps {
 }
 
 import { useBranding } from "@/components/BrandingProvider";
-import { GET_NOTIFICATIONS, GET_ME, GET_TRAINER_STATS, GET_ADMIN_DASHBOARD_DATA, GET_STATS, GET_ALL_TRAINERS } from "@/lib/graphql/queries";
+
 import { gql } from "@apollo/client";
 
 const GET_ERROR_REPORT_STATS = gql`
@@ -276,7 +279,7 @@ const GET_ERROR_REPORT_STATS = gql`
     }
   }
 `;
-import { MARK_NOTIFICATION_READ, MARK_ALL_NOTIFICATIONS_READ } from "@/lib/graphql/mutations";
+
 import { formatDistanceToNow } from "date-fns";
 import { usePresence } from "@/hooks/use-presence";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
@@ -286,7 +289,7 @@ import {
   CollapsibleContent, 
   CollapsibleTrigger 
 } from "@/components/ui/collapsible";
-import { Search } from "lucide-react";
+
 import { Input } from "@/components/ui/input";
 import { ProfileCompletionGuard } from "./ProfileCompletionGuard";
 import { PlatformTour, restartTour } from "./onboarding/PlatformTour";

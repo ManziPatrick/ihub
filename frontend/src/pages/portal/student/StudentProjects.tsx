@@ -19,6 +19,7 @@ import {
   Layers,
   Box,
   Link as LinkIcon,
+  Sparkles,
 } from "lucide-react";
 import { SubmitProjectDialog, TeamChatDialog, ViewGuidelinesDialog } from "@/components/portal/dialogs";
 import { toast } from "sonner";
@@ -28,7 +29,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectMarketplace } from "@/components/portal/student/ProjectMarketplace";
 import { AIHelper } from "@/components/portal/AIHelper";
-import { Sparkles } from "lucide-react";
 
 interface TeamMember {
   name: string;

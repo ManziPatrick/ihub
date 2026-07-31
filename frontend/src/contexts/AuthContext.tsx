@@ -16,6 +16,21 @@ export type UserRole =
   | "mentor"
   | "client";
 
+export interface TrainerApplication {
+  specialties?: string[];
+  experienceYears?: number;
+  teachingPhilosophy?: string;
+  qualifications?: string[];
+  rateHourly?: number;
+  linkedinProfile?: string;
+  githubProfile?: string;
+  websiteUrl?: string;
+  status?: string;
+  appliedAt?: string;
+  reviewedBy?: string;
+  reviewNote?: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -23,6 +38,7 @@ export interface User {
   fullName: string;
   role: UserRole;
   avatar?: string;
+  coverImage?: string;
   enrolledCourses?: string[];
   completedCourses?: string[];
   school?: string;
@@ -49,8 +65,12 @@ export interface User {
     };
     awardedAt: string;
   }>;
+  twoFactorEnabled?: boolean;
   certificateName?: string;
   isFirst?: boolean;
+  isTrainerApproved?: boolean;
+  isProfilePublic?: boolean;
+  trainerApplication?: TrainerApplication;
   studentProfile?: any;
 }
 

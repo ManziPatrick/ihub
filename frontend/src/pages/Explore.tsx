@@ -4,10 +4,11 @@ import { Footer } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
 import { toast as sonnerToast } from "sonner";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { getApiBaseUrl } from "@/lib/env";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
 import { SEOHead } from "@/components/SEOHead";
 import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
@@ -18,58 +19,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Shield, Building2, Stethoscope, GraduationCap, Landmark, ShoppingBag, Factory, TrendingUp, ChevronRight, User, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye, XCircle, Filter, Search, LayoutGrid, Star, MapPin, Navigation } from "lucide-react";
+import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Building2, TrendingUp, ChevronRight, User, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye, XCircle, Filter, Search, LayoutGrid, Star, MapPin, Navigation, Sparkles, GraduationCap, Globe, Mail, ExternalLink, Loader2 } from "lucide-react";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import aboutImage from "@/assets/about-training.webp";
 import aboutImageMobile from "@/assets/about-training-mobile.webp";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_COURSES_SUMMARY, MY_COURSE_APPLICATIONS, GET_ME } from "@/lib/graphql/queries";
+import { GET_COURSES_SUMMARY, MY_COURSE_APPLICATIONS, GET_ME, GET_TRAINERS_PUBLIC } from "@/lib/graphql/queries";
 import { useAuth } from "@/contexts/AuthContext";
 import { EnrollCourseDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
 import { useToast } from "@/hooks/use-toast";
-import { PriceDisplay } from "@/components/PriceDisplay";
-
-interface AICourse {
-  _id: string;
-  title: string;
-  department: string;
-  duration: string;
-  level: string;
-  description: string;
-  thumbnail: string;
-  price: number;
-  discountPrice: number;
-  instructor?: {
-    username: string;
-  };
-  keyModules: string[];
-  additionalModulesCount: number;
-  slug: string;
-  featured: boolean;
-  enrollmentLink?: string;
-  id?: string;
-  studentsEnrolled?: any[];
-  modules?: any[];
-}
-
-const getDepartmentIcon = (dept: string) => {
-  switch (dept) {
-    case 'HEALTHCARE': return Stethoscope;
-    case 'FINANCE': return Landmark;
-    case 'EDUCATION': return GraduationCap;
-    case 'MARKETING': return ShoppingBag;
-    case 'MANUFACTURING': return Factory;
-    case 'HR': return Users;
-    case 'CYBERSECURITY': return Shield;
-    case 'GENERAL': return Brain;
-    default: return Brain;
-  }
-};
-
-const API_BASE_URL = getApiBaseUrl();
+import { useCurrency } from "@/hooks/useCurrency";
 
 const Explore = () => {
   const { t } = useTranslation();
@@ -78,29 +40,40 @@ const Explore = () => {
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
-  const courseSearchQuery = searchTerm.toLowerCase();
-  const [aiCourses, setAICourses] = useState<AICourse[]>([]);
-  const [aiLoading, setAILoading] = useState(true);
-  const [filter, setFilter] = useState("ALL");
   const [enrollCourse, setEnrollCourse] = useState<any>(null);
   const [applyCourse, setApplyCourse] = useState<any>(null);
   const [sortBy, setSortBy] = useState<string>('latest');
+  const [activeTab, setActiveTab] = useState<'courses' | 'trainers'>('courses');
+  const [trainerFilter, setTrainerFilter] = useState<string>('all');
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [locationFilter, setLocationFilter] = useState<string>("");
+  const [specialtyFilter, setSpecialtyFilter] = useState<string>('all');
   const COURSES_PAGE_SIZE = 9;
 
   const { data, loading: apolloLoading, fetchMore } = useQuery(GET_COURSES_SUMMARY, {
-    variables: { page: 1, limit: COURSES_PAGE_SIZE, sortBy, featured: showFeaturedOnly || undefined, location: locationFilter || undefined },
+    variables: { page: 1, limit: COURSES_PAGE_SIZE, sortBy, featured: showFeaturedOnly || undefined, location: locationFilter || undefined, search: searchTerm || undefined },
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "cache-first",
   });
 
+  const [trainerPage, setTrainerPage] = useState(1);
+  const [trainerLoadingMore, setTrainerLoadingMore] = useState(false);
+  const TRAINERS_PAGE_SIZE = 8;
+
+  const { data: trainersData, loading: trainersLoading, fetchMore: fetchMoreTrainers } = useQuery(GET_TRAINERS_PUBLIC, {
+    variables: { page: 1, limit: TRAINERS_PAGE_SIZE },
+    notifyOnNetworkStatusChange: true,
+  });
+
   const coursesResponse = (data as any)?.courses || { items: [], pagination: { hasNextPage: false, currentPage: 1, totalPages: 1, totalCount: 0 } };
   const loadedCourses = coursesResponse.items || [];
+  const trainersResponse = (trainersData as any)?.trainers || { items: [], pagination: { hasNextPage: false, currentPage: 1, totalPages: 1, totalCount: 0 } };
+  const allTrainers = trainersResponse.items || [];
 
   const { user, isAuthenticated, updateUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { formatPrice } = useCurrency();
 
   const { data: meData } = useQuery(GET_ME, { skip: !isAuthenticated });
   const me = (meData as any)?.me;
@@ -174,6 +147,7 @@ const Explore = () => {
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
+    setCurrentPage(1);
     const params = new URLSearchParams(searchParams.toString());
     if (value.trim()) {
       params.set("q", value);
@@ -183,45 +157,34 @@ const Explore = () => {
     setSearchParams(params, { replace: true });
   };
 
+  const allSpecialties = useMemo(() => {
+    return Array.from(
+      new Set(
+        trainersResponse.items.flatMap((t: any) => t.trainerApplication?.specialties || [])
+      )
+    ).sort() as string[];
+  }, [trainersResponse.items]);
+
+  const filteredTrainers = useMemo(() => {
+    return specialtyFilter === 'all'
+      ? allTrainers
+      : allTrainers.filter((t: any) =>
+          (t.trainerApplication?.specialties || []).some(
+            (s: string) => s.toLowerCase() === specialtyFilter.toLowerCase()
+          )
+        );
+  }, [allTrainers, specialtyFilter]);
+
   const filteredCourses = useMemo(() => {
     return loadedCourses.filter((course: any) => {
-      // Filter out courses without thumbnails
       if (!course.thumbnail || course.thumbnail.trim() === '') return false;
       const matchesSchool = activeSchool === "ALL" || course.school === activeSchool;
-      const matchesSearch = !courseSearchQuery || [
-        course.title,
-        course.category,
-        course.school,
-        course.level,
-        course.instructor?.username,
-      ].some((value) => (value || "").toString().toLowerCase().includes(courseSearchQuery));
-      return matchesSchool && matchesSearch;
+      const matchesTrainer = trainerFilter === 'all' || course.instructor?.id === trainerFilter || course.instructor?.username === trainerFilter;
+      return matchesSchool && matchesTrainer;
     });
-  }, [loadedCourses, activeSchool, courseSearchQuery]);
+  }, [loadedCourses, activeSchool, trainerFilter]);
 
-  const departments = ["ALL", "GENERAL", "HEALTHCARE", "FINANCE", "EDUCATION", "MARKETING", "MANUFACTURING", "HR", "CYBERSECURITY"];
 
-  useEffect(() => {
-    const fetchAICourses = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/ai-courses`);
-        if (response.ok) {
-          const data = await response.json();
-          setAICourses(data);
-        }
-      } catch (error) {
-        console.error("Error fetching AI courses:", error);
-      } finally {
-        setAILoading(false);
-      }
-    };
-
-    fetchAICourses();
-  }, []);
-
-  const filteredAICourses = filter === "ALL"
-    ? aiCourses
-    : aiCourses.filter(course => course.department === filter);
 
   return (
     <div className="min-h-screen bg-background">
@@ -248,7 +211,7 @@ const Explore = () => {
       <Header />
       <main className="pt-20">
         {/* Hero */}
-        <section className="py-16 lg:py-24 bg-card relative overflow-hidden">
+        <section className="py-10 lg:py-14 bg-card relative overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <img
               src={heroImage}
@@ -264,15 +227,42 @@ const Explore = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <span className="inline-block px-4 py-1 bg-accent/20 text-accent text-sm font-medium rounded-full mb-4">
+              <span className="inline-block px-4 py-1 bg-accent/20 text-accent text-sm font-medium rounded-full mb-3">
                 {t("explore.title")}
               </span>
-              <h1 className="font-heading text-3xl lg:text-5xl font-medium text-card-foreground mb-6">
+              <h1 className="font-heading text-2xl lg:text-4xl font-medium text-card-foreground mb-4">
                 {t("explore.heroTitle")}
               </h1>
-              <p className="text-card-foreground/80 max-w-2xl mx-auto text-lg mb-8">
+              <p className="text-card-foreground/80 max-w-2xl mx-auto text-base mb-6">
                 {t("explore.heroDesc")}
               </p>
+
+              {/* Tab Switcher */}
+              <div className="flex items-center justify-center gap-2 bg-background/50 p-1.5 rounded-2xl w-fit mx-auto mb-6 border border-border/30">
+                <button
+                  onClick={() => setActiveTab('courses')}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                    activeTab === 'courses'
+                      ? 'bg-accent text-accent-foreground shadow-lg shadow-accent/20'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4 inline mr-2" />
+                  Courses
+                </button>
+                <button
+                  onClick={() => { setActiveTab('trainers'); setTrainerFilter('all'); }}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                    activeTab === 'trainers'
+                      ? 'bg-accent text-accent-foreground shadow-lg shadow-accent/20'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Users className="w-4 h-4 inline mr-2" />
+                  Trainers
+                </button>
+              </div>
+
               <div className="flex flex-wrap justify-center gap-4 text-sm text-card-foreground/70">
                 <span className="flex items-center gap-2 bg-background/50 px-4 py-2 rounded-full">
                   <Clock className="w-4 h-4 text-accent" /> {t("home.flexibleSchedules")}
@@ -288,7 +278,312 @@ const Explore = () => {
           </div>
         </section>
 
+        {/* ===== TRAINERS SECTION ===== */}
+        {activeTab === 'trainers' && (
+          <section className="py-10 lg:py-14 bg-background">
+            <div className="container mx-auto px-4 lg:px-8">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-10"
+              >
+                <h2 className="font-heading text-2xl lg:text-3xl font-bold text-foreground mb-3">
+                  Meet Our Expert Trainers
+                </h2>
+                <p className="text-muted-foreground max-w-2xl">
+                  Learn from industry professionals with real-world experience. Browse our trainers and discover their courses and programs.
+                </p>
+              </motion.div>
 
+              {/* Specialty Filter */}
+              {allSpecialties.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Star className="w-4 h-4 text-accent" />
+                    <span className="text-sm font-semibold text-foreground">Filter by Specialty</span>
+                    {specialtyFilter !== 'all' && (
+                      <button
+                        onClick={() => setSpecialtyFilter('all')}
+                        className="text-xs text-accent hover:underline ml-1"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => setSpecialtyFilter('all')}
+                      className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                        specialtyFilter === 'all'
+                          ? 'bg-accent text-accent-foreground border-accent shadow-md shadow-accent/20'
+                          : 'bg-card text-muted-foreground border-border/40 hover:border-accent/30 hover:text-foreground hover:bg-accent/5'
+                      }`}
+                    >
+                      All Specialties
+                    </button>
+                    {allSpecialties.map((s: string) => (
+                      <button
+                        key={s}
+                        onClick={() => setSpecialtyFilter(s)}
+                        className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                          specialtyFilter === s
+                            ? 'bg-accent text-accent-foreground border-accent shadow-md shadow-accent/20'
+                            : 'bg-card text-muted-foreground border-border/40 hover:border-accent/30 hover:text-foreground hover:bg-accent/5'
+                        }`}
+                      >
+                        <Star className="w-3 h-3" />
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {trainersLoading ? (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[1,2,3,4,5,6,7,8].map(i => (
+                    <div key={i} className="rounded-2xl border border-border/30 overflow-hidden bg-card animate-pulse">
+                      <div className="h-24 bg-gradient-to-br from-accent/10 to-primary/5" />
+                      <div className="px-6 pb-6 -mt-12 relative">
+                        <div className="w-20 h-20 rounded-2xl bg-muted ring-4 ring-background mx-auto mb-4" />
+                        <div className="space-y-3 mt-4">
+                          <div className="h-5 w-3/4 bg-muted rounded-lg mx-auto" />
+                          <div className="h-3 w-full bg-muted/50 rounded mx-auto" />
+                          <div className="flex gap-2 justify-center">
+                            <div className="h-5 w-16 bg-muted/40 rounded-full" />
+                            <div className="h-5 w-16 bg-muted/40 rounded-full" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : allTrainers.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center py-20"
+                >
+                  <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-accent/10 to-primary/10 flex items-center justify-center mb-6 shadow-xl">
+                    <Users className="w-12 h-12 text-muted-foreground/40" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">No Trainers Yet</h3>
+                  <p className="text-muted-foreground max-w-sm mx-auto text-sm">
+                    Trainers haven't joined the platform yet. Check back soon!
+                  </p>
+                </motion.div>
+              ) : filteredTrainers.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center py-20"
+                >
+                  <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-accent/10 to-primary/10 flex items-center justify-center mb-6 shadow-xl">
+                    <Star className="w-12 h-12 text-muted-foreground/40" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">No Trainers Found</h3>
+                  <p className="text-muted-foreground max-w-sm mx-auto text-sm">
+                    No trainers match the selected specialty. Try a different filter.
+                  </p>
+                  {specialtyFilter !== 'all' && (
+                    <Button
+                      onClick={() => setSpecialtyFilter('all')}
+                      variant="outline"
+                      size="sm"
+                      className="mt-4 rounded-xl border-accent/20"
+                    >
+                      Clear Filter
+                    </Button>
+                  )}
+                </motion.div>
+              ) : (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredTrainers.map((trainer: any, index: number) => {
+                    const initials = trainer.fullName
+                      ? trainer.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase()
+                      : trainer.username?.slice(0, 2).toUpperCase() || "T";
+                    const specialties = trainer.trainerApplication?.specialties || [];
+
+                    return (
+                      <motion.div
+                        key={trainer.id}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05, duration: 0.4 }}
+                        whileHover={{ y: -6 }}
+                      >
+                        <Link to={`/trainer/${trainer.id}`}>
+                          <div className="group relative bg-card rounded-2xl border border-border/30 overflow-hidden hover:border-accent/30 hover:shadow-2xl hover:shadow-accent/5 transition-all duration-500 h-full">
+                            {/* Hover glow */}
+                            <div className="absolute -inset-0.5 bg-gradient-to-r from-accent/0 via-accent/5 to-accent/0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm pointer-events-none" />
+
+                            <div className="relative z-10 bg-card rounded-2xl overflow-hidden h-full">
+                              {/* Gradient top with pattern */}
+                              <div className="h-28 bg-gradient-to-br from-accent/25 via-accent/10 to-primary/15 relative overflow-hidden">
+                                {trainer.coverImage ? (
+                                  <img
+                                    src={trainer.coverImage}
+                                    alt=""
+                                    className="absolute inset-0 w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).style.display = "none";
+                                    }}
+                                  />
+                                ) : (
+                                  <div
+                                    className="absolute inset-0 opacity-[0.08]"
+                                    style={{
+                                      backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
+                                      backgroundSize: '24px 24px',
+                                    }}
+                                  />
+                                )}
+                                {/* Verified badge floating */}
+                                {trainer.isTrainerApproved && (
+                                  <div className="absolute top-3 right-3">
+                                    <Badge className="bg-green-500/80 backdrop-blur-sm text-white border-0 text-[10px] px-2 py-0.5 shadow-lg flex items-center gap-1">
+                                      <CheckCircle className="w-3 h-3" />
+                                      Verified
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="px-5 pb-5 -mt-14 relative">
+                                {/* Avatar with glow */}
+                                <div className="relative w-fit mx-auto mb-4">
+                                  <div className="absolute -inset-1.5 bg-gradient-to-br from-accent/30 via-accent/10 to-transparent rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                  <div className="relative w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-background shadow-2xl">
+                                    <Avatar className="w-full h-full">
+                                      <AvatarImage src={trainer.avatar} className="object-cover" />
+                                      <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-accent to-accent/80 text-white">
+                                        {initials}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  </div>
+                                </div>
+
+                                {/* Name & Title */}
+                                <div className="text-center">
+                                  <h3 className="font-bold text-foreground group-hover:text-accent transition-colors duration-200">
+                                    {trainer.fullName || trainer.username}
+                                  </h3>
+                                  {trainer.title && (
+                                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                                      {trainer.title}
+                                    </p>
+                                  )}
+                                </div>
+
+                                {/* Experience & Students stats */}
+                                <div className="flex items-center justify-center gap-3 mt-3 text-[10px] text-muted-foreground">
+                                  {trainer.trainerApplication?.experienceYears && (
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="w-3 h-3 text-accent" />
+                                      {trainer.trainerApplication.experienceYears}y exp
+                                    </span>
+                                  )}
+                                  {trainer.location && (
+                                    <span className="flex items-center gap-1">
+                                      <MapPin className="w-3 h-3 text-accent" />
+                                      {trainer.location.split(',')[0]}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Bio */}
+                                {trainer.bio && (
+                                  <p className="text-xs text-muted-foreground/70 mt-2 line-clamp-2 leading-relaxed text-center">
+                                    {trainer.bio}
+                                  </p>
+                                )}
+
+                                {/* Specialties */}
+                                {specialties.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 mt-3 justify-center">
+                                    {specialties.slice(0, 3).map((s: string, i: number) => (
+                                      <span
+                                        key={i}
+                                        className="px-2 py-0.5 rounded-full bg-accent/10 text-accent text-[9px] font-bold uppercase tracking-wider hover:bg-accent/20 transition-colors"
+                                      >
+                                        {s}
+                                      </span>
+                                    ))}
+                                    {specialties.length > 3 && (
+                                      <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[9px] font-bold">
+                                        +{specialties.length - 3}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* View Profile CTA */}
+                                <div className="mt-4 pt-3 border-t border-border/20 text-center">
+                                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent group-hover:gap-2.5 transition-all duration-200">
+                                    View Profile <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Load More Trainers */}
+              {trainersResponse.pagination?.hasNextPage && (
+                <div className="flex justify-center mt-10">
+                  <Button
+                    onClick={async () => {
+                      if (trainerLoadingMore || !trainersResponse.pagination?.hasNextPage) return;
+                      const nextPage = trainerPage + 1;
+                      setTrainerLoadingMore(true);
+                      try {
+                        await fetchMoreTrainers({
+                          variables: { page: nextPage, limit: TRAINERS_PAGE_SIZE },
+                          updateQuery: (previousResult: any, { fetchMoreResult }: any) => {
+                            if (!fetchMoreResult?.trainers?.items?.length) {
+                              return previousResult;
+                            }
+                            return {
+                              trainers: {
+                                ...fetchMoreResult.trainers,
+                                items: [
+                                  ...previousResult.trainers.items,
+                                  ...fetchMoreResult.trainers.items,
+                                ],
+                              },
+                            };
+                          },
+                        });
+                        setTrainerPage(nextPage);
+                      } catch (error) {
+                        console.error("Error loading more trainers:", error);
+                      } finally {
+                        setTrainerLoadingMore(false);
+                      }
+                    }}
+                    disabled={trainerLoadingMore}
+                    variant="outline"
+                    className="h-11 px-8 rounded-xl border-accent/20 hover:border-accent/50 hover:bg-accent/5 gap-2"
+                  >
+                    {trainerLoadingMore ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Loading more trainers...</>
+                    ) : (
+                      <><Users className="w-4 h-4" /> Load More Trainers ({trainersResponse.pagination?.totalCount - allTrainers.length} remaining)</>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ===== COURSES SECTION ===== */}
+        {activeTab === 'courses' && (
         <section className="py-16 lg:py-20 bg-background">
           <div className="container mx-auto px-4 lg:px-8">
             <motion.div
@@ -523,9 +818,73 @@ const Explore = () => {
                 <span className="text-xs text-muted-foreground shrink-0">
                   {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
                 </span>
-              </div>
+              </div>              {/* Trainer Filter Chips */}
+              {allTrainers.length > 0 && (
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Users className="w-4 h-4 text-accent" />
+                    <span className="text-xs font-semibold text-foreground">Filter by Trainer</span>
+                    {trainerFilter !== 'all' && (
+                      <button
+                        onClick={() => { setTrainerFilter('all'); setCurrentPage(1); }}
+                        className="text-[10px] text-accent hover:underline ml-1"
+                      >
+                        Clear filter
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1">
+                    <button
+                      onClick={() => { setTrainerFilter('all'); setCurrentPage(1); }}
+                      className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                        trainerFilter === 'all'
+                          ? 'bg-accent text-accent-foreground border-accent shadow-md shadow-accent/20'
+                          : 'bg-card text-muted-foreground border-border/40 hover:border-accent/30 hover:text-foreground hover:bg-accent/5'
+                      }`}
+                    >
+                      <LayoutGrid className="w-3 h-3" />
+                      All
+                    </button>
+                    {allTrainers.map((t: any) => (
+                      <div key={t.id} className="shrink-0 flex items-center gap-0">
+                        <button
+                          onClick={() => { setTrainerFilter(t.id); setCurrentPage(1); }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-l-full text-xs font-medium transition-all border-r-0 ${
+                            trainerFilter === t.id
+                              ? 'bg-accent text-accent-foreground border-accent shadow-md shadow-accent/20 ring-1 ring-accent/20'
+                              : 'bg-card text-muted-foreground border-border/30 hover:border-accent/30 hover:text-foreground hover:bg-accent/5 hover:shadow-sm'
+                          }`}
+                        >
+                          <div className="w-5 h-5 rounded-full overflow-hidden bg-muted shrink-0 ring-1 ring-border/30">
+                            {t.avatar ? (
+                              <img src={t.avatar} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[8px] font-bold bg-gradient-to-br from-accent/30 to-accent/10 text-accent">
+                                {(t.fullName || t.username || 'T').slice(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <span className="whitespace-nowrap">{t.fullName || t.username}</span>
+                        </button>
+                        <Link
+                          to={`/trainer/${t.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className={`flex items-center px-2 py-1.5 rounded-r-full text-xs font-medium transition-all border ${
+                            trainerFilter === t.id
+                              ? 'bg-accent/90 text-accent-foreground border-accent hover:bg-accent'
+                              : 'bg-card text-muted-foreground border-border/30 hover:border-accent/30 hover:text-accent hover:bg-accent/5'
+                          }`}
+                          title={`View ${t.fullName || t.username}'s profile`}
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-      {/* Main Grid */}
+              {/* Main Grid */}
               <div className="flex-1 w-full">
                 {apolloLoading && (
                   <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -558,35 +917,83 @@ const Explore = () => {
               {filteredCourses.map((course: any, index: number) => (
                 <motion.div
                   key={course.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
+                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ delay: index * 0.05, duration: 0.4, ease: "easeOut" }}
                   onClick={() => navigate(`/courses/${course.id}`)}
-                  className="bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 group hover:shadow-xl transition-all h-full flex flex-col cursor-pointer"
+                  className="group relative bg-card rounded-2xl overflow-hidden shadow-sm border border-border/30 hover:shadow-2xl hover:shadow-accent/5 hover:border-accent/40 transition-all duration-500 h-full flex flex-col cursor-pointer"
                 >
+                  {/* Hover glow effect */}
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-accent/0 via-accent/5 to-accent/0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm pointer-events-none" />
+
+                  <div className="relative z-10 bg-card rounded-2xl overflow-hidden h-full flex flex-col transition-all duration-300 group-hover:bg-card/80 group-hover:backdrop-blur-sm">
                   <div className="aspect-video relative overflow-hidden">
                     <img
                       src={course.thumbnail || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600"}
                       loading="lazy"
                       onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600"; }}
                       alt={course.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
-                    <div className="absolute top-4 left-4 flex gap-2">
-                      <Badge className="bg-white/90 text-black hover:bg-white border-0 shadow-sm">{course.category}</Badge>
-                      {course.isFeatured && (
-                        <Badge className="bg-amber-500 text-white border-0 shadow-lg flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-white" />
-                          Featured
-                        </Badge>
+                    {/* Gradient overlay on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    
+                    <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2 z-10">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge className="bg-white/90 text-black hover:bg-white border-0 shadow-sm backdrop-blur-sm">{course.category}</Badge>
+                        {course.isFeatured && (
+                          <Badge className="bg-amber-500 text-white border-0 shadow-lg flex items-center gap-1">
+                            <Star className="w-3 h-3 fill-white" />
+                            Featured
+                          </Badge>
+                        )}
+                      </div>
+                      {/* Trainer badge - clickable to profile */}
+                      {course.instructor?.id && (
+                        <Link
+                          to={`/trainer/${course.instructor.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="shrink-0"
+                        >
+                          <Badge
+                            variant="secondary"
+                            className="bg-black/50 hover:bg-black/70 text-white border-0 backdrop-blur-sm flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium transition-all hover:scale-105 cursor-pointer"
+                          >
+                            <div className="w-4 h-4 rounded-full overflow-hidden bg-white/20 shrink-0">
+                              {course.instructor.avatar ? (
+                                <img src={course.instructor.avatar} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-[6px] font-bold text-white">
+                                  {(course.instructor.username || 'T').slice(0, 1).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+                            <span className="max-w-[80px] truncate">{course.instructor.username || 'Trainer'}</span>
+                            <ExternalLink className="w-2.5 h-2.5 opacity-70" />
+                          </Badge>
+                        </Link>
                       )}
+                    </div>
+
+                    {/* Hover overlay info */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                      <div className="flex items-center gap-3 text-white/90 text-xs">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {course.duration || "Self-paced"}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          {course.studentsEnrolledCount || course.studentsEnrolled?.length || 0} enrolled
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="p-6 flex-1 flex flex-col">
+                  <div className="p-5 flex-1 flex flex-col">
                     <div className="flex items-center justify-between gap-2 mb-3">
-                      <span className="flex items-center gap-1 bg-accent/5 px-2.5 py-1 rounded-full text-accent text-[10px] font-bold uppercase tracking-widest">{course.level}</span>
+                      <span className="flex items-center gap-1 bg-accent/10 px-2.5 py-1 rounded-full text-accent text-[10px] font-bold uppercase tracking-widest group-hover:bg-accent/20 transition-colors">{course.level}</span>
                       {course.school && (
                         <span className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                           <Building2 className="w-3 h-3 text-accent/70" />
@@ -594,7 +1001,7 @@ const Explore = () => {
                         </span>
                       )}
                     </div>
-                    <h3 className="font-heading text-xl font-bold text-card-foreground mb-2 line-clamp-2">
+                    <h3 className="font-heading text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-accent transition-colors duration-300">
                       {course.title}
                     </h3>
 
@@ -602,31 +1009,65 @@ const Explore = () => {
                       <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-2" dangerouslySetInnerHTML={{ __html: course.descriptionSnippet }} />
                     )}
 
-                    <div className="mt-auto pt-6 border-t border-border/30 flex flex-col gap-3">
+                    {/* Instructor row with avatar */}
+                    {course.instructor?.id ? (
+                      <Link
+                        to={`/trainer/${course.instructor.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-2 mb-3 group/instructor"
+                      >
+                        <div className="w-6 h-6 rounded-full overflow-hidden bg-accent/10 shrink-0 ring-1 ring-border/30 group-hover/instructor:ring-accent/50 transition-all">
+                          {course.instructor?.avatar ? (
+                            <img src={course.instructor.avatar} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[8px] font-bold text-accent bg-accent/10">
+                              {(course.instructor?.username || 'E').slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs font-semibold text-muted-foreground group-hover/instructor:text-accent group-hover:underline transition-colors">
+                          {course.instructor?.username || 'Expert Instructor'}
+                        </span>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-6 h-6 rounded-full overflow-hidden bg-accent/10 shrink-0 ring-1 ring-border/30">
+                          <div className="w-full h-full flex items-center justify-center text-[8px] font-bold text-accent bg-accent/10">
+                            E
+                          </div>
+                        </div>
+                        <span className="text-xs font-semibold text-muted-foreground">
+                          {course.instructor?.username || 'Expert Instructor'}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="mt-auto pt-4 border-t border-border/20 flex flex-col gap-3">
                       <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                          <span className="text-[10px] text-muted-foreground uppercase font-medium">Investment</span>
-                          <div className="flex items-baseline gap-2">
+                          <span className="text-[9px] text-muted-foreground uppercase font-medium tracking-wider">Investment</span>
+                          <div className="flex items-baseline gap-2 mt-0.5">
                             {course.discountPrice > 0 ? (
                               <>
-                                <PriceDisplay price={course.price} discountPrice={course.discountPrice} size="md" row />
+                                <span className="text-lg font-bold bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent">
+                                  {formatPrice(course.discountPrice)}
+                                </span>
+                                <span className="text-xs text-muted-foreground/50 line-through">
+                                  {formatPrice(course.price)}
+                                </span>
                               </>
                             ) : (
-                              <PriceDisplay price={course.price} size="md" />
+                              <span className="text-lg font-bold text-foreground">
+                                {course.price > 0 ? formatPrice(course.price) : 'Free'}
+                              </span>
                             )}
                           </div>
                         </div>
                         <Link to={`/courses/${course.id}`}>
-                          <Button variant="outline" size="sm" className="rounded-full h-8 px-4 text-xs font-bold border-accent/20 hover:border-accent/50">
+                          <Button variant="outline" size="sm" className="rounded-full h-8 px-4 text-xs font-bold border-accent/20 hover:border-accent/50 hover:bg-accent hover:text-accent-foreground transition-all duration-300">
                             Details
                           </Button>
                         </Link>
-                      </div>
-                      <div className="flex items-center justify-between pt-2 border-t border-border/10">
-                         <div className="flex flex-col">
-                          <span className="text-[9px] text-muted-foreground uppercase">Instructor</span>
-                          <span className="text-xs font-semibold">{course.instructor?.username || 'Expert'}</span>
-                        </div>
                       </div>
 
                       {(() => {
@@ -696,7 +1137,8 @@ const Explore = () => {
                       })()}
                     </div>
                   </div>
-                </motion.div>
+                </div>
+              </motion.div>
               ))}
               </div>
 
@@ -744,6 +1186,7 @@ const Explore = () => {
             </div>
           </div>
         </section>
+        )}
 
       </main>
         <EnrollCourseDialog 

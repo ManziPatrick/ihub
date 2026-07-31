@@ -26,7 +26,7 @@ import {
   Youtube,
   BrainCircuit,
   Plus,
-  Link as LinkIcon
+  Link as LinkIcon, Sparkles
 } from "lucide-react";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { UPDATE_TASK_PROGRESS } from "@/lib/graphql/mutations";
@@ -34,7 +34,7 @@ import { GET_RESOURCES } from "@/lib/graphql/queries";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { AIHelper } from "../AIHelper";
-import { Sparkles } from "lucide-react";
+
 import { AddResourceDialog } from "./AddResourceDialog";
 import { useAuth } from "@/contexts/AuthContext";
 

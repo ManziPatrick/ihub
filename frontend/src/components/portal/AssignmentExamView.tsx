@@ -23,6 +23,12 @@ import {
   RefreshCcw,
   Sparkles,
   Save,
+  LayoutGrid,
+  Volume2,
+  VolumeX,
+  Pause,
+  Play,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -35,7 +41,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { LayoutGrid, Volume2, VolumeX, Pause, Play, RotateCcw } from "lucide-react";
 import { tts } from "@/lib/tts";
 
 

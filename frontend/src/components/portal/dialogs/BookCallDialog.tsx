@@ -12,11 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Video, Calendar, Clock, Loader2 } from "lucide-react";
+import { Video, Calendar, Clock, Loader2, BookOpen, Briefcase, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { useMutation } from "@apollo/client/react";
 import { CREATE_BOOKING } from "@/lib/graphql/mutations";
 import { GET_MY_BOOKINGS } from "@/lib/graphql/queries";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface BookCallDialogProps {
   open: boolean;
@@ -24,6 +25,8 @@ interface BookCallDialogProps {
   mentorName?: string;
   mentorId?: string;
   purpose?: string;
+  enrolledCourses?: { id: string; title: string }[];
+  internshipPrograms?: { id: string; title: string }[];
 }
 
 const timeSlots = [
@@ -49,8 +52,11 @@ export function BookCallDialog({
   onOpenChange,
   mentorName,
   mentorId,
-  purpose
+  purpose,
+  enrolledCourses = [],
+  internshipPrograms = [],
 }: BookCallDialogProps) {
+  const { user } = useAuth();
   const [isBooking, setIsBooking] = useState(false);
   const [formData, setFormData] = useState({
     date: "",
@@ -58,13 +64,15 @@ export function BookCallDialog({
     callType: purpose || "",
     topic: "",
     notes: "",
+    contextType: "",
+    contextTitle: "",
   });
 
   const [createBooking] = useMutation(CREATE_BOOKING, {
     refetchQueries: [{ query: GET_MY_BOOKINGS }],
     onCompleted: () => {
       toast.success("Call booked successfully!");
-      setFormData({ date: "", time: "", callType: "", topic: "", notes: "" });
+      setFormData({ date: "", time: "", callType: "", topic: "", notes: "", contextType: "", contextTitle: "" });
       onOpenChange(false);
     },
     onError: (err) => {
@@ -78,6 +86,11 @@ export function BookCallDialog({
       return;
     }
 
+    if (user?.role === 'student' && !formData.contextType) {
+      toast.error("Please select a course or internship program for this booking");
+      return;
+    }
+
     setIsBooking(true);
     try {
       await createBooking({
@@ -87,7 +100,9 @@ export function BookCallDialog({
           date: formData.date,
           time: formData.time,
           topic: formData.topic,
-          notes: formData.notes
+          notes: formData.notes,
+          contextType: formData.contextType || 'general',
+          contextTitle: formData.contextTitle || undefined,
         }
       });
     } finally {
@@ -111,6 +126,18 @@ export function BookCallDialog({
     }
     return dates;
   };
+
+  // Build context options based on user role
+  const contextOptions: { value: string; label: string; icon: any }[] = [];
+  if (user?.role === 'super_admin') {
+    contextOptions.push({ value: 'general', label: 'General (no specific context)', icon: Globe });
+  }
+  enrolledCourses.forEach((c: any) => {
+    contextOptions.push({ value: `course:${c.id}`, label: `📚 Course: ${c.title}`, icon: BookOpen });
+  });
+  internshipPrograms.forEach((p: any) => {
+    contextOptions.push({ value: `internship:${p.id}`, label: `💼 Program: ${p.title}`, icon: Briefcase });
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -139,6 +166,48 @@ export function BookCallDialog({
                       {type.label}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Context Selection — required for students, optional for others */}
+            <div>
+              <Label htmlFor="contextType">
+                Related To *
+                {user?.role === 'student' && <span className="text-xs text-muted-foreground ml-1">(select a course or internship)</span>}
+              </Label>
+              <Select
+                value={formData.contextType}
+                onValueChange={(value) => {
+                  const [type, ...idParts] = value.split(':');
+                  const id = idParts.join(':');
+                  const title = type === 'course'
+                    ? enrolledCourses.find((c: any) => c.id === id)?.title || ''
+                    : type === 'internship'
+                      ? internshipPrograms.find((p: any) => p.id === id)?.title || ''
+                      : '';
+                  setFormData({
+                    ...formData,
+                    contextType: type,
+                    contextTitle: title,
+                  });
+                }}
+              >
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Select course or program" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contextOptions.length === 0 ? (
+                    <SelectItem value="_none" disabled>
+                      {user?.role === 'student' ? "No courses or programs found. Enroll first!" : "No options available"}
+                    </SelectItem>
+                  ) : (
+                    contextOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>

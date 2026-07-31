@@ -9,6 +9,7 @@ import { APPLY_TO_COURSE } from "@/lib/graphql/mutations";
 import { MY_COURSE_APPLICATIONS } from "@/lib/graphql/queries";
 import { toast } from "sonner";
 import { Loader2, HelpCircle, CheckCircle, Clock, XCircle, ChevronRight } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ApplyCourseDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface ApplyCourseDialogProps {
 }
 
 export function ApplyCourseDialog({ open, onOpenChange, course, onSuccess }: ApplyCourseDialogProps) {
+  const { user } = useAuth();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [selectedDeliveryMode, setSelectedDeliveryMode] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -167,7 +169,7 @@ export function ApplyCourseDialog({ open, onOpenChange, course, onSuccess }: App
                   </div>
                 ))}
 
-                {course.allowedDeliveryModes?.length > 0 && (
+                {course.allowedDeliveryModes?.length > 0 && user?.role === 'student' && (
                   <div className="space-y-2">
                     <Label className="text-xs font-bold text-muted-foreground uppercase">Preferred Delivery Mode <span className="text-red-500">*</span></Label>
                     <div className="flex flex-wrap gap-2">

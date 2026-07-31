@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
 import { SEOHead } from "@/components/SEOHead";
@@ -10,7 +10,7 @@ import testimonialEmmanuel from "@/assets/testimonial-emmanuel.webp";
 import testimonialMarie from "@/assets/testimonial-marie.webp";
 import testimonialJean from "@/assets/testimonial-jean.webp";
 import testimonialSarah from "@/assets/testimonial-sarah.webp";
-import { Briefcase, Code, Database, Wifi, Award, FolderOpen, Users, Clock, CheckCircle, ArrowRight, Target, Calendar, Globe } from "lucide-react";
+import { Briefcase, Code, Database, Wifi, Award, FolderOpen, Users, Clock, CheckCircle, ArrowRight, Target, Calendar, Globe, Clock as ClockIcon, Users as UsersIcon, Calendar as CalendarIcon, CheckCircle as CheckCircleIcon, ArrowRight as ArrowRightIcon } from "lucide-react";
 import internshipImage from "@/assets/internship-work.webp";
 import internshipImageMobile from "@/assets/internship-work-mobile.webp";
 import heroImage from "@/assets/hero-training.webp";
@@ -18,8 +18,8 @@ import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import { useQuery } from "@apollo/client/react";
 import { GET_INTERNSHIP_PROGRAMS, GET_MY_INTERNSHIP_APPLICATIONS, GET_ME } from "@/lib/graphql/queries";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { Clock as ClockIcon, Users as UsersIcon, Calendar as CalendarIcon, CheckCircle as CheckCircleIcon, ArrowRight as ArrowRightIcon } from "lucide-react";
+
+
 
 
 const benefits = [

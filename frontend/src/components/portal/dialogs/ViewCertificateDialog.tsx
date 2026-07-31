@@ -1,18 +1,18 @@
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Download, Printer, Award, ShieldCheck, MapPin, Globe, Mail, Phone, Calendar, User as UserIcon } from "lucide-react";
+import { Download, Printer, Award, ShieldCheck, MapPin, Globe, Mail, Phone, Calendar, User as UserIcon, Check, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 import { useBranding } from "@/components/BrandingProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { CertificateTemplate } from "../CertificateTemplate";
 import { useMutation } from "@apollo/client/react";
 import { UPDATE_CERTIFICATE_NAME } from "@/lib/graphql/mutations";
-import { useState, useEffect } from "react";
+
 import { Input } from "@/components/ui/input";
-import { Check, Edit2 } from "lucide-react";
+
 
 interface Certificate {
   id: string;
