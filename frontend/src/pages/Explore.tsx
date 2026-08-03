@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
 import { SEOHead } from "@/components/SEOHead";
-import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
+import { organizationLd, webPageLd, breadcrumbListLd, itemListLd } from "@/lib/jsonld";
 import {
   Sheet,
   SheetContent,
@@ -204,6 +204,19 @@ const Explore = () => {
                 { name: "Home", item: "/" },
                 { name: "Explore", item: "/explore" },
               ]),
+              ...(activeTab === "trainers" && allTrainers.length > 0
+                ? [itemListLd(
+                    allTrainers.map((tr: any) => ({
+                      name: tr.fullName || tr.username,
+                      url: `https://bootskills.com/trainer/${tr.id}`,
+                      image: tr.avatar || undefined,
+                    })),
+                    {
+                      name: "Bootskills Trainers & Teachers",
+                      description: "Meet the verified trainers, teachers and mentors on Bootskills.",
+                    }
+                  )]
+                : []),
             ]
           })}
         </script>

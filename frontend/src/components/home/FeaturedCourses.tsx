@@ -248,14 +248,13 @@ export function FeaturedCourses() {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
   }, [searchQuery]);
-  // ── Search cache: avoid re-fetching previously searched queries ──
+  // ── Search cache: avoid re-fetching previously searched queries (in-memory only — no localStorage) ──
   interface SearchCacheEntry {
     courses: any[];
     internships: any[];
   }
   const searchCacheRef = useRef<Map<string, SearchCacheEntry>>(new Map());
   const MAX_CACHE_ENTRIES = 80;
-  const CACHE_STORAGE_KEY = 'ihub_search_cache';
 
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestionIdx, setSelectedSuggestionIdx] = useState(-1);
@@ -429,43 +428,13 @@ export function FeaturedCourses() {
     [rawInternships]
   );
 
-  // ── Restore search cache from localStorage on mount ──
+  // ── Search cache is kept in-memory only (no localStorage persistence) to avoid storage overload ──
+  // One-time cleanup: remove the stale localStorage search cache left by previous app versions
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(CACHE_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          const restored = new Map<string, SearchCacheEntry>(parsed);
-          searchCacheRef.current = restored;
-        }
-      }
-    } catch {
-      // Corrupted cache — silently ignore
-      localStorage.removeItem(CACHE_STORAGE_KEY);
-    }
+      localStorage.removeItem('ihub_search_cache');
+    } catch { /* storage unavailable — ignore */ }
   }, []);
-
-  // ── Persist search cache to localStorage whenever it changes ──
-  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
-    persistTimerRef.current = setTimeout(() => {
-      try {
-        const entries = Array.from(searchCacheRef.current.entries());
-        localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(entries));
-      } catch {
-        // localStorage full or unavailable — ignore
-      }
-    }, 2000); // debounced 2s so we don't write on every keystroke
-    return () => {
-      if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
-      // Flush latest cache on unmount so refresh doesn't lose pending entries
-      try {
-        localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(Array.from(searchCacheRef.current.entries())));
-      } catch { /* ignore */ }
-    };
-  }, [debouncedSearchQuery, section, rawCourses, rawInternships]);
 
   // ── Populate search cache whenever fresh data arrives ──
   useEffect(() => {

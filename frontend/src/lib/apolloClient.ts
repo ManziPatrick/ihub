@@ -93,16 +93,19 @@ const client = new ApolloClient({
       },
     },
   }),
-  // Reduce aggressive network usage by deduplicating identical in-flight queries
-  // and using cache-first as the default fetch policy for watchQuery/query.
+  // Reduce aggressive network usage by deduplicating identical in-flight queries.
+  // Default fetch policies never serve stale data while online: watchQuery uses
+  // cache-and-network (cached paint + background refresh) and one-off client.query
+  // calls use network-only — so logged-in users never keep seeing stale course
+  // data from previous sessions. Offline fallback is handled by the app shell.
   queryDeduplication: true,
   defaultOptions: {
     watchQuery: {
-      fetchPolicy: 'cache-first',
+      fetchPolicy: 'cache-and-network',
       errorPolicy: 'all' as any,
     },
     query: {
-      fetchPolicy: 'cache-first',
+      fetchPolicy: 'network-only',
       errorPolicy: 'all' as any,
     },
     mutate: {

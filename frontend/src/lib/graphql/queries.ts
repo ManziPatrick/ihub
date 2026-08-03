@@ -231,7 +231,9 @@ export const GET_TRAINERS_PUBLIC = gql`
           specialties
           experienceYears
           teachingPhilosophy
+          qualifications
           rateHourly
+          linkedinProfile
           status
         }
       }
