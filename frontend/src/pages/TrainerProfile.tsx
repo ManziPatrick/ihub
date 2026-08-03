@@ -64,7 +64,8 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Helmet } from "react-helmet-async";
+import { SEOHead } from "@/components/SEOHead";
+import { personLd, breadcrumbListLd } from "@/lib/jsonld";
 import { toast } from "sonner";
 import { FileUpload } from "@/components/FileUpload";
 import { useAuth } from "@/contexts/AuthContext";
@@ -458,21 +459,46 @@ export default function TrainerProfile() {
   return (
     <div className="min-h-screen bg-[#F3F2F0] dark:bg-background">
       {/* LinkedIn-style background: subtle warm gray */}
-      <Helmet>
-        <title>{trainer.fullName || trainer.username} — Trainer Profile | Bootskills</title>
-        <meta name="description" content={trainer.bio || `Learn from ${trainer.fullName || trainer.username}`} />
-        <meta property="og:title" content={`${trainer.fullName || trainer.username} — Expert Trainer at Bootskills`} />
-        <meta property="og:description" content={trainer.bio?.slice(0, 200) || `Expert trainer specializing in ${specialties.slice(0, 3).join(", ")}. `} />
-        <meta property="og:type" content="profile" />
-        <meta property="og:url" content={profileUrl} />
-        {trainer.avatar && <meta property="og:image" content={trainer.avatar} />}
-        {trainer.avatar && <meta property="og:image:width" content="400" />}
-        {trainer.avatar && <meta property="og:image:height" content="400" />}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${trainer.fullName || trainer.username} — Expert Trainer at Bootskills`} />
-        <meta name="twitter:description" content={trainer.bio?.slice(0, 200) || `Learn from an industry expert.`} />
-        {trainer.avatar && <meta name="twitter:image" content={trainer.avatar} />}
-      </Helmet>
+      <SEOHead
+        title={`${trainer.fullName || trainer.username}${trainer.title ? ` — ${trainer.title}` : ""}`}
+        description={
+          trainer.bio?.slice(0, 160) ||
+          `Learn from ${trainer.fullName || trainer.username}, a verified ${trainer.title || "trainer"} on Bootskills specializing in ${specialties.slice(0, 3).join(", ")}.`
+        }
+        canonicalUrl={`https://bootskills.com/trainer/${trainer.id}`}
+        ogImage={trainer.avatar || undefined}
+        ogImageAlt={`${trainer.fullName || trainer.username} profile photo`}
+        ogType="profile"
+        keywords={[...specialties, ...qualifications].slice(0, 12).join(", ")}
+        twitterCard="summary"
+      >
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              personLd(trainer.fullName || trainer.username, `https://bootskills.com/trainer/${trainer.id}`, {
+                image: trainer.avatar || undefined,
+                jobTitle: trainer.title || undefined,
+                description: trainer.bio || undefined,
+                knowsAbout: specialties.length ? specialties : undefined,
+                sameAs: [
+                  trainer.trainerApplication?.linkedinProfile,
+                  trainer.trainerApplication?.githubProfile,
+                  trainer.trainerApplication?.websiteUrl,
+                ].filter(Boolean),
+                location: trainer.location || undefined,
+                worksForName: "Bootskills",
+                awards: qualifications.length ? qualifications : undefined,
+              }),
+              breadcrumbListLd([
+                { name: "Home", item: "/" },
+                { name: "Trainers", item: "/explore" },
+                { name: trainer.fullName || trainer.username, item: `/trainer/${trainer.id}` },
+              ]),
+            ],
+          })}
+        </script>
+      </SEOHead>
 
       <Header />
 

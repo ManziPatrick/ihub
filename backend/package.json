@@ -21,6 +21,8 @@
     "seed:project-tasks": "ts-node src/seedProjectTasks.ts",
     "seed:ds-course": "ts-node src/seedDataStructuresCourse.ts",
     "seed:admin-everything": "ts-node src/seedAdminEverything.ts",
+    "seed:teachers": "ts-node src/seedRealTeachers.ts",
+    "seed:teacher-programs": "ts-node src/seedTeacherPrograms.ts",
     "check:config-sync": "node ../scripts/check-language-config-sync.js"
   },
   "keywords": [],

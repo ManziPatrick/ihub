@@ -76,7 +76,7 @@ const trainersData = [
     title: 'Senior Full-Stack Developer & Cloud Architect',
     bio: 'With over 8 years of experience building scalable web applications, Alice specializes in React, Node.js, and cloud infrastructure on AWS. She has trained 500+ developers across East Africa and is passionate about bridging the tech skills gap. Her teaching approach combines real-world projects with structured theory.',
     location: 'Kigali, Rwanda',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice&backgroundColor=b6e3f4',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80',
     coverImage: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&h=400&fit=crop',
     avatarFallback: 'AM',
     trainerApplication: {
@@ -196,7 +196,7 @@ const trainersData = [
     title: 'Data Science & Machine Learning Engineer',
     bio: 'Jean Pierre is a data scientist with 6 years of experience in machine learning, statistical modeling, and data engineering. He has worked with fintech startups and NGOs across Africa to build data-driven solutions.',
     location: 'Kigali, Rwanda',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jean&backgroundColor=d1d4f9',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
     coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=400&fit=crop',
     avatarFallback: 'JH',
     trainerApplication: {
@@ -285,7 +285,7 @@ const trainersData = [
     title: 'UX/UI Designer & Frontend Developer',
     bio: 'Grace is a creative designer and frontend developer with 5 years of experience crafting beautiful, user-centered digital products. She has designed interfaces for e-commerce, edtech, and healthcare platforms.',
     location: 'Kigali, Rwanda',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Grace&backgroundColor=c0aede',
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=400&q=80',
     coverImage: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=1200&h=400&fit=crop',
     avatarFallback: 'GU',
     trainerApplication: {
@@ -374,7 +374,7 @@ const trainersData = [
     title: 'Mobile App Developer (Flutter & React Native)',
     bio: 'Patrick is a mobile development expert who has built and published 15+ apps on both iOS and Android stores. He specializes in cross-platform development with Flutter and React Native.',
     location: 'Kigali, Rwanda',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Patrick&backgroundColor=ffd5dc',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80',
     coverImage: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=1200&h=400&fit=crop',
     avatarFallback: 'PN',
     trainerApplication: {
@@ -462,7 +462,7 @@ const trainersData = [
     title: 'Cybersecurity Analyst & Ethical Hacker',
     bio: 'Diane is a cybersecurity professional with 5 years of experience in penetration testing, security auditing, and incident response. She has helped organizations across East Africa strengthen their security posture.',
     location: 'Kigali, Rwanda',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Diane&backgroundColor=c0aede',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
     coverImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&h=400&fit=crop',
     avatarFallback: 'DI',
     trainerApplication: {
@@ -540,7 +540,7 @@ const trainersData = [
     title: 'DevOps Engineer & Cloud Infrastructure Specialist',
     bio: 'Samuel has 7 years of experience in DevOps, CI/CD pipelines, containerization with Docker and Kubernetes, and cloud infrastructure management on AWS and Azure.',
     location: 'Kigali, Rwanda',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Samuel&backgroundColor=b6e3f4',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
     coverImage: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=1200&h=400&fit=crop',
     avatarFallback: 'SK',
     trainerApplication: {
@@ -627,7 +627,7 @@ const trainersData = [
     title: 'AI & Deep Learning Researcher',
     bio: 'Faith is an AI researcher with a focus on natural language processing and computer vision. She has published 3 papers in top AI conferences and built AI solutions for agriculture and healthcare in Africa.',
     location: 'Kigali, Rwanda',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Faith&backgroundColor=d1d4f9',
+    avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=400&q=80',
     coverImage: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=400&fit=crop',
     avatarFallback: 'FN',
     trainerApplication: {
@@ -716,7 +716,7 @@ const trainersData = [
     title: 'Backend Developer & API Architect',
     bio: 'Emmanuel specializes in building robust backend systems, RESTful APIs, and microservices architecture. With 6 years of experience, he has architected systems serving millions of users across fintech and logistics.',
     location: 'Kigali, Rwanda',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emmanuel&backgroundColor=ffd5dc',
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80',
     coverImage: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&h=400&fit=crop',
     avatarFallback: 'EB',
     trainerApplication: {
@@ -804,7 +804,7 @@ const trainersData = [
     title: 'Product Manager & Agile Coach',
     bio: 'Clarisse is a certified product manager with 8 years of experience leading cross-functional teams. She has launched 10+ digital products from concept to market in fintech, edtech, and e-commerce.',
     location: 'Kigali, Rwanda',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Clarisse&backgroundColor=b6e3f4',
+    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
     coverImage: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=400&fit=crop',
     avatarFallback: 'CM',
     trainerApplication: {
@@ -892,7 +892,7 @@ const trainersData = [
     title: 'Blockchain Developer & Web3 Engineer',
     bio: 'David is a blockchain developer with 4 years of experience building smart contracts, dApps, and DeFi protocols on Ethereum and Solana. He is passionate about decentralized technology for financial inclusion.',
     location: 'Kigali, Rwanda',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=David&backgroundColor=d1d4f9',
+    avatar: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=400&q=80',
     coverImage: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=1200&h=400&fit=crop',
     avatarFallback: 'DH',
     trainerApplication: {
@@ -1022,7 +1022,7 @@ async function seedTrainersFull() {
         role: 'student',
         isVerified: true,
         isFirst: true,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${sd.fullName.split(' ')[0]}&backgroundColor=b6e3f4`,
+        avatar: '',
       }).save();
       console.log(`   ✅ Created student: ${sd.fullName}`);
       students.push(student);

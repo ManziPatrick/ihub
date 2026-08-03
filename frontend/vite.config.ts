@@ -1,3 +1,6 @@
+/// <reference lib="webworker" />
+// Provides Service Worker globals (caches, Response, fetch) used by the
+// offline-only runtime caching handlers below.
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -115,39 +118,84 @@ export default defineConfig(({ mode }) => ({
         sourcemap: false,
         runtimeCaching: [
           {
-            // GraphQL API: network-first with 5s timeout
-            // Falls back to cached response when offline
+            // GraphQL API: offline-only caching.
+            // While ONLINE we always hit the network — no stale, laggy course data
+            // from previous sessions (Apollo also sends POST, which we never cache).
+            // Cached responses are only served when the network is actually down.
             urlPattern: ({ url }) => url.pathname === "/graphql",
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "graphql-cache",
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
-              },
-              networkTimeoutSeconds: 5,
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
+            handler: async ({ request }) => {
+              const cacheName = "graphql-cache";
+              const offlineResponse = () =>
+                new Response(JSON.stringify({ errors: [{ message: "You are offline" }] }), {
+                  status: 503,
+                  headers: { "Content-Type": "application/json" },
+                });
+              // POST (Apollo's default): never cache; fail fast when offline.
+              if (request.method !== "GET") {
+                return fetch(request).catch(offlineResponse);
+              }
+              let response;
+              try {
+                response = await fetch(request);
+              } catch {
+                // Offline / network failure — fall back to the last known good response.
+                const cache = await caches.open(cacheName);
+                const cached = await cache.match(request);
+                return cached || offlineResponse();
+              }
+              // Best-effort offline backup only — never let cache failures (e.g. quota
+              // exceeded) block or replace the fresh network response.
+              if (response && (response.status === 200 || response.type === "basic" || response.type === "cors")) {
+                try {
+                  const cache = await caches.open(cacheName);
+                  const keys = await cache.keys();
+                  if (keys.length >= 40) await cache.delete(keys[0]);
+                  cache.put(request, response.clone());
+                } catch {
+                  // ignore cache errors — the network response still wins
+                }
+              }
+              return response;
             },
           },
           {
-            // Other API endpoints: network-first with 5s timeout
+            // Other API endpoints: same offline-only policy — fresh data while
+            // online, cached fallback only when the network is unavailable.
             urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "api-cache",
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24, // 1 day
-              },
-              networkTimeoutSeconds: 5,
+            handler: async ({ request }) => {
+              const cacheName = "api-cache";
+              if (request.method !== "GET") {
+                return fetch(request).catch(() => new Response("", { status: 503 }));
+              }
+              let response;
+              try {
+                response = await fetch(request);
+              } catch {
+                // Offline / network failure — fall back to the last known good response.
+                const cache = await caches.open(cacheName);
+                const cached = await cache.match(request);
+                return cached || new Response("", { status: 503 });
+              }
+              // Best-effort offline backup only.
+              if (response && response.ok) {
+                try {
+                  const cache = await caches.open(cacheName);
+                  const keys = await cache.keys();
+                  if (keys.length >= 30) await cache.delete(keys[0]);
+                  cache.put(request, response.clone());
+                } catch {
+                  // ignore cache errors — the network response still wins
+                }
+              }
+              return response;
             },
           },
           {
-            // Images: cache-first with background refresh
+            // Images: stale-while-revalidate — course thumbnails show instantly
+            // from cache but refresh in the background, so updated images appear
+            // without waiting for a long-lived cache to expire.
             urlPattern: /(?:\.(?:png|jpg|jpeg|svg|gif|webp|avif))$|\/images\//,
-            handler: "CacheFirst",
+            handler: "StaleWhileRevalidate",
             options: {
               cacheName: "image-cache",
               expiration: {

@@ -113,6 +113,94 @@ export function breadcrumbListLd(items: BreadcrumbItem[]): BreadcrumbListLD {
   };
 }
 
+// ─── Person (Trainer / Teacher / Mentor) Schema ───────────────────────────
+
+export interface PersonLD {
+  "@context": "https://schema.org";
+  "@type": "Person";
+  name: string;
+  url: string;
+  image?: string;
+  jobTitle?: string;
+  description?: string;
+  knowsAbout?: string[];
+  sameAs?: string[];
+  address?: { "@type": "PostalAddress"; addressLocality?: string; addressCountry: string };
+  worksFor?: { "@type": "Organization"; name: string; sameAs: string };
+  award?: string[];
+}
+
+export function personLd(
+  name: string,
+  url: string,
+  options: {
+    image?: string;
+    jobTitle?: string;
+    description?: string;
+    knowsAbout?: string[];
+    sameAs?: string[];
+    location?: string;
+    worksForName?: string;
+    awards?: string[];
+  }
+): PersonLD {
+  const sameAs = (options.sameAs || []).filter(Boolean);
+  const person: PersonLD = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name,
+    url,
+    ...(options.image ? { image: options.image } : {}),
+    ...(options.jobTitle ? { jobTitle: options.jobTitle } : {}),
+    ...(options.description ? { description: options.description.substring(0, 250) } : {}),
+    ...(options.knowsAbout?.length ? { knowsAbout: options.knowsAbout } : {}),
+    ...(sameAs.length ? { sameAs } : {}),
+    ...(options.location
+      ? {
+          address: {
+            "@type": "PostalAddress" as const,
+            addressLocality: options.location.split(",")[0].trim(),
+            addressCountry: "RW",
+          },
+        }
+      : {}),
+    ...(options.worksForName
+      ? { worksFor: { "@type": "Organization" as const, name: options.worksForName, sameAs: BASE_URL } }
+      : {}),
+    ...(options.awards?.length ? { award: options.awards } : {}),
+  };
+  return person;
+}
+
+// ─── ItemList (e.g. trainers/teachers listing) Schema ──────────────────────
+
+export interface ItemListLD {
+  "@context": "https://schema.org";
+  "@type": "ItemList";
+  name?: string;
+  description?: string;
+  itemListElement: Array<{ "@type": "ListItem"; position: number; name: string; url?: string; image?: string }>;
+}
+
+export function itemListLd(
+  items: Array<{ name: string; url?: string; image?: string }>,
+  options?: { name?: string; description?: string }
+): ItemListLD {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: options?.name,
+    description: options?.description,
+    itemListElement: items.slice(0, 50).map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      url: item.url,
+      image: item.image,
+    })),
+  };
+}
+
 // ─── Course Schema ───────────────────────────────────────────────────────
 
 export interface CourseLD {

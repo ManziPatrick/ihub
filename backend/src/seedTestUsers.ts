@@ -14,7 +14,7 @@ const users = [
     role: 'trainer',
     fullName: 'Lead Instructor',
     bio: 'Expert in software architecture and AI.',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
+    avatar: 'https://images.unsplash.com/photo-1463453091185-61582044d556?auto=format&fit=crop&w=400&q=80'
   },
   {
     username: 'StudentOne',
@@ -23,7 +23,7 @@ const users = [
     role: 'student',
     fullName: 'Alex Student',
     bio: 'Passionate learner exploring AI and Web3.',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex'
+    avatar: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&w=400&q=80'
   },
   {
     username: 'WorkshopAsst',
@@ -32,7 +32,7 @@ const users = [
     role: 'trainer',
     fullName: 'Sarah Assistant',
     bio: 'Specialist in frontend development and UX.',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah'
+    avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=400&q=80'
   }
 ];
 

@@ -10143,7 +10143,7 @@ export const resolvers = {
           username: 'globel trainer',
           fullName: 'Global Trainer',
           role: 'trainer',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=global'
+          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80'
         };
       }
 
