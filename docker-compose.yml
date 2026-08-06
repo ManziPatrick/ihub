@@ -12,6 +12,9 @@ services:
     restart: unless-stopped
     ports:
       - "${BACKEND_PORT:-4000}:4000"
+    depends_on:
+      mongo:
+        condition: service_healthy
     volumes:
       - uploads_data:/app/uploads
     environment:
@@ -20,8 +23,8 @@ services:
       PORT: 4000
       HOST: "::"
 
-      # Database
-      MONGO_URI: ${MONGO_URI}
+      # Database — local MongoDB by default; override MONGO_URI for remote/prod
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/bootskills}
       BACKUP_MONGO_URI: ${BACKUP_MONGO_URI}
 
       # Auth / JWT
@@ -134,6 +137,25 @@ services:
     networks:
       - ihub_network
   # ─────────────────────────────────────────
+  #  MONGODB  (Local database)
+  # ─────────────────────────────────────────
+  mongo:
+    image: mongo:6.0
+    container_name: ihub_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - ihub_network
+  # ─────────────────────────────────────────
   #  OLLAMA (Local LLM service)
   # ─────────────────────────────────────────
   ollama:
@@ -223,6 +245,10 @@ services:
 # ─────────────────────────────────────────
 volumes:
   uploads_data:
+    driver: local
+  ollama_data:
+    driver: local
+  mongo_data:
     driver: local
 
 # ─────────────────────────────────────────

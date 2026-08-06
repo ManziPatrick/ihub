@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { itemListLd } from "@/lib/jsonld";
 import { GET_TRAINERS_PUBLIC } from "@/lib/graphql/queries";
 
-const TEACHERS_PAGE_SIZE = 12;
+const TRAINERS_PAGE_SIZE = 4;
 
 function initialsOf(name?: string, username?: string) {
   if (name) {
@@ -33,16 +33,16 @@ function initialsOf(name?: string, username?: string) {
   return (username || "T").slice(0, 2).toUpperCase();
 }
 
-export function MeetOurTeachers() {
+export function MeetOurTrainers() {
   const { data, loading } = useQuery(GET_TRAINERS_PUBLIC, {
-    variables: { page: 1, limit: TEACHERS_PAGE_SIZE },
+    variables: { page: 1, limit: TRAINERS_PAGE_SIZE },
     notifyOnNetworkStatusChange: true,
   });
 
-  const teachers = useMemo(() => (data as any)?.trainers?.items || [], [data]);
+  const trainers = useMemo(() => (data as any)?.trainers?.items || [], [data]);
 
   return (
-    <section id="meet-our-teachers" className="relative py-16 lg:py-24 bg-background overflow-hidden">
+    <section id="meet-our-trainers" className="relative py-12 lg:py-16 bg-background overflow-hidden">
       {/* Ambient background accents */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse_at_top,rgba(120,119,198,0.08),transparent_70%)]" />
@@ -50,19 +50,19 @@ export function MeetOurTeachers() {
         <div className="absolute bottom-0 -left-24 w-80 h-80 rounded-full bg-purple-500/5 blur-3xl" />
       </div>
 
-      {/* Structured data — ItemList of teachers for rich search results */}
-      {teachers.length > 0 && (
+      {/* Structured data — ItemList of trainers for rich search results */}
+      {trainers.length > 0 && (
         <script type="application/ld+json">
           {JSON.stringify(
             itemListLd(
-              teachers.map((t: any) => ({
+              trainers.map((t: any) => ({
                 name: t.fullName || t.username,
                 url: `https://bootskills.com/trainer/${t.id}`,
                 image: t.avatar || undefined,
               })),
               {
-                name: "Bootskills Teachers",
-                description: "Meet our verified teachers, trainers and mentors on Bootskills.",
+                name: "Bootskills Trainers",
+                description: "Meet our verified trainers and mentors on Bootskills.",
               }
             )
           )}
@@ -76,32 +76,22 @@ export function MeetOurTeachers() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.5 }}
-          className="text-center max-w-3xl mx-auto mb-12 lg:mb-16"
+          className="text-center max-w-3xl mx-auto mb-10 lg:mb-12"
         >
-          <motion.div
-            initial={{ scale: 0.9 }}
-            whileInView={{ scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/25 backdrop-blur-sm mb-5"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-accent" />
-            <span className="text-sm font-semibold text-accent">Our Teachers</span>
-          </motion.div>
+        
 
-          <h2 className="font-heading text-3xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-            Meet Our Teachers
+          <h2 className="font-heading text-3xl lg:text-4xl font-bold mb-3 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
+            Meet Our Trainers
           </h2>
-          <p className="text-muted-foreground text-base lg:text-lg leading-relaxed">
-            Learn from passionate, fully-qualified educators — from primary classrooms to national exam
-            coaching and vocational training. Every teacher is verified, experienced, and ready to guide you.
+          <p className="text-muted-foreground text-base lg:text-lg">
+            Verified, experienced trainers ready to guide you.
           </p>
         </motion.div>
 
         {/* ── Loading Skeletons ── */}
-        {loading && teachers.length === 0 && (
+        {loading && trainers.length === 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 12 }, (_, i) => (
+            {Array.from({ length: 4 }, (_, i) => (
               <div key={i} className="rounded-2xl border border-border/30 overflow-hidden bg-card animate-pulse">
                 <div className="h-24 bg-gradient-to-br from-accent/10 to-primary/5" />
                 <div className="px-5 pb-6 -mt-12 relative">
@@ -121,7 +111,7 @@ export function MeetOurTeachers() {
         )}
 
         {/* ── Empty State ── */}
-        {!loading && teachers.length === 0 && (
+        {!loading && trainers.length === 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -130,22 +120,22 @@ export function MeetOurTeachers() {
             <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-accent/10 to-primary/10 flex items-center justify-center mb-5">
               <Users className="w-10 h-10 text-muted-foreground/40" />
             </div>
-            <h3 className="text-lg font-bold mb-1">Our teachers are on their way</h3>
+            <h3 className="text-lg font-bold mb-1">Our trainers are on their way</h3>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              Teacher profiles will appear here soon. Check back shortly!
+              Trainer profiles will appear here soon. Check back shortly!
             </p>
           </motion.div>
         )}
 
-        {/* ── Teachers Grid ── */}
-        {teachers.length > 0 && (
+        {/* ── Trainers Grid ── */}
+        {trainers.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
           >
-            {teachers.map((trainer: any, index: number) => {
+            {trainers.map((trainer: any, index: number) => {
               const specialties = trainer.trainerApplication?.specialties || [];
               const qualifications = trainer.trainerApplication?.qualifications || [];
               const linkedin = trainer.trainerApplication?.linkedinProfile;
@@ -308,21 +298,21 @@ export function MeetOurTeachers() {
         )}
 
         {/* ── View All CTA ── */}
-        {teachers.length > 0 && (
+        {trainers.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="text-center mt-12"
+            className="text-center mt-10"
           >
             <Button
               asChild
               variant="gold"
               className="h-12 px-8 rounded-full font-bold shadow-lg shadow-gold/20 hover:shadow-gold/40 transition-all"
             >
-              <Link to="/explore">
-                Meet All Our Teachers <ArrowRight className="w-4 h-4 ml-2" />
+              <Link to="/explore?tab=trainers">
+                View All Trainers <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
           </motion.div>

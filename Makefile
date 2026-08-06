@@ -33,6 +33,12 @@ up-frontend:
 up-backend:
 	docker-compose up --build -d backend
 
+# ── Run on alternate local ports (4100/8090) to avoid conflicts ─────
+# Use when port 4000/8080 are already taken by another project on this machine.
+.PHONY: up-local
+up-local:
+	BACKEND_PORT=4100 FRONTEND_PORT=8090 VITE_API_URL=http://localhost:4100/graphql VITE_WS_URL=ws://localhost:4100/graphql CLIENT_ORIGIN=http://localhost:8090 CLIENT_URL=http://localhost:8090 CORS_ORIGIN=http://localhost:8090 ALLOWED_ORIGINS=http://localhost:8090 BACKEND_URL=http://localhost:4100 CACHE_BUST=$(GIT_HASH)-$(NOW) docker-compose up --build -d
+
 # ── Start containers (no rebuild, uses existing image) ─────────────
 .PHONY: start
 start:
