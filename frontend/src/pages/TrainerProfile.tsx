@@ -47,6 +47,7 @@ import {
   CheckCircle,
   Calendar,
   ArrowLeft,
+  ArrowRight,
   Loader2,
   Check,
   Trophy,
@@ -69,6 +70,7 @@ import { personLd, breadcrumbListLd } from "@/lib/jsonld";
 import { toast } from "sonner";
 import { FileUpload } from "@/components/FileUpload";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCurrency } from "@/hooks/useCurrency";
 import html2canvas from "html2canvas";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -306,6 +308,7 @@ export default function TrainerProfile() {
 
   const { user } = useAuth();
   const isOwnProfile = user?.id === id;
+  const { formatPrice } = useCurrency();
 
   const { data, loading, error, refetch } = useQuery(GET_TRAINER_PUBLIC_PROFILE, {
     variables: { id },
@@ -439,8 +442,10 @@ export default function TrainerProfile() {
   const qualifications = trainer.trainerApplication?.qualifications || [];
   const courses = trainer.trainerCourses || [];
   const programs = trainer.trainerPrograms || [];
+  const totalStudents = courses.reduce((s: number, c: any) => s + (c.studentsEnrolledCount || 0), 0);
   const coverGrad = getCoverGradient(trainer.fullName || trainer.username);
   const coverImage = trainer.coverImage;
+  const coverSrc = trainer.coverImage || trainer.avatar;
 
   // ─── Profile Completion Check ───────────────────────────────────
   const missingFields = [
@@ -466,7 +471,7 @@ export default function TrainerProfile() {
           `Learn from ${trainer.fullName || trainer.username}, a verified ${trainer.title || "trainer"} on Bootskills specializing in ${specialties.slice(0, 3).join(", ")}.`
         }
         canonicalUrl={`https://bootskills.com/trainer/${trainer.id}`}
-        ogImage={trainer.avatar || undefined}
+        ogImage={trainer.avatar || trainer.coverImage || undefined}
         ogImageAlt={`${trainer.fullName || trainer.username} profile photo`}
         ogType="profile"
         keywords={[...specialties, ...qualifications].slice(0, 12).join(", ")}
@@ -514,17 +519,18 @@ export default function TrainerProfile() {
       <div ref={profileRef} className="bg-[#F3F2F0] dark:bg-background">
         {/* ===== COVER SECTION (LinkedIn style) ===== */}
         <div className="relative w-full h-48 md:h-64 lg:h-72 overflow-hidden bg-gradient-to-r from-accent/5 to-primary/5">
-          {coverImage ? (
+          {coverSrc ? (
             <>
               <img
-                src={coverImage}
+                src={coverSrc}
                 alt="Cover"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
-              <div className={`absolute inset-0 bg-gradient-to-r ${coverGrad}`} />
+              {/* Subtle overlay — keeps the cover photo prominent */}
+              <div className={`absolute inset-0 bg-gradient-to-r ${coverGrad} opacity-40`} />
             </>
           ) : (
             <div className={`w-full h-full bg-gradient-to-r ${coverGrad}`} />
@@ -614,6 +620,12 @@ export default function TrainerProfile() {
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-muted-foreground/60" />
                         {trainer.trainerApplication.experienceYears}+ years
+                      </span>
+                    )}
+                    {totalStudents > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3 text-muted-foreground/60" />
+                        {totalStudents}+ students
                       </span>
                     )}
                     {courses.length > 0 && (
@@ -889,6 +901,51 @@ export default function TrainerProfile() {
                     </CardContent>
                   </Card>
 
+                  {/* Courses preview — puts courses front and centre on landing */}
+                  {courses.length > 0 && (
+                    <Card className="border border-border bg-card rounded-lg">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-bold text-card-foreground text-sm flex items-center gap-2">
+                            <BookOpen className="w-4 h-4 text-accent" /> Courses
+                          </h3>
+                          <button
+                            onClick={() => setActiveSection("courses")}
+                            className="text-[11px] font-semibold text-accent hover:underline flex items-center gap-1"
+                          >
+                            View all ({courses.length}) <ArrowRight className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          {courses.slice(0, 2).map((course: any) => (
+                            <Link
+                              key={course.id}
+                              to={`/courses/${course.id}`}
+                              className="group flex items-center gap-3 rounded-lg border border-border/60 hover:border-accent/40 hover:bg-accent/5 transition-all p-2"
+                            >
+                              <div className="w-16 h-12 rounded-md overflow-hidden bg-gradient-to-br from-accent/10 to-primary/10 shrink-0">
+                                {course.thumbnail ? (
+                                  <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <BookOpen className="w-4 h-4 text-muted-foreground/40" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-semibold line-clamp-1 group-hover:text-accent transition-colors">{course.title}</p>
+                                <p className="text-[10px] font-bold text-accent mt-0.5">
+                                  {course.price > 0 ? formatPrice(course.price) : "Free"}
+                                </p>
+                              </div>
+                              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-accent group-hover:translate-x-0.5 transition-all shrink-0" />
+                            </Link>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Credentials (mobile only — sidebar handles desktop) */}
                   {qualifications.length > 0 && (
                     <Card className="border border-border bg-card rounded-lg md:hidden">
@@ -966,6 +1023,23 @@ export default function TrainerProfile() {
                                 <span className="flex items-center gap-1"><Users className="w-2.5 h-2.5" />{course.studentsEnrolledCount || 0}</span>
                                 <span className="capitalize">{course.category}</span>
                               </div>
+                              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/30">
+                                <span className="text-xs font-bold text-accent">
+                                  {course.discountPrice > 0 ? (
+                                    <>
+                                      {formatPrice(course.discountPrice)}{" "}
+                                      <span className="line-through text-muted-foreground/50 font-medium">{formatPrice(course.price)}</span>
+                                    </>
+                                  ) : course.price > 0 ? (
+                                    formatPrice(course.price)
+                                  ) : (
+                                    "Free"
+                                  )}
+                                </span>
+                                <span className="text-[10px] font-semibold text-muted-foreground group-hover:text-accent transition-colors">
+                                  View course <ChevronRight className="w-3 h-3 inline" />
+                                </span>
+                              </div>
                             </CardContent>
                           </Card>
                         </Link>
@@ -1000,9 +1074,18 @@ export default function TrainerProfile() {
                         <Link to={`/internship/${program.id}`} className="block group">
                           <Card className="border border-border bg-card rounded-lg hover:border-accent/40 transition-all duration-200 group-hover:border-accent/40 cursor-pointer">
                             <CardContent className="p-3.5 flex items-start gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent/10 to-primary/10 flex items-center justify-center shrink-0">
-                                <GraduationCap className="w-5 h-5 text-accent" />
-                              </div>
+                              {program.image ? (
+                                <img
+                                  src={program.image}
+                                  alt={program.title}
+                                  className="w-10 h-10 rounded-lg object-cover shrink-0"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent/10 to-primary/10 flex items-center justify-center shrink-0">
+                                  <GraduationCap className="w-5 h-5 text-accent" />
+                                </div>
+                              )}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 mb-0.5">
                                   <h4 className="font-semibold text-sm group-hover:text-accent transition-colors">{program.title}</h4>
@@ -1013,6 +1096,9 @@ export default function TrainerProfile() {
                                 <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">{program.description}</p>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   <span className="flex items-center gap-1"><Calendar className="w-3 h-3 text-accent" />{program.duration}</span>
+                                  {program.price > 0 && (
+                                    <span className="font-bold text-accent">{formatPrice(program.price)}</span>
+                                  )}
                                 </div>
                               </div>
                               <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-accent group-hover:translate-x-0.5 transition-all self-center shrink-0" />

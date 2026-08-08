@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
 import { SEOHead } from "@/components/SEOHead";
@@ -10,7 +10,9 @@ import testimonialEmmanuel from "@/assets/testimonial-emmanuel.webp";
 import testimonialMarie from "@/assets/testimonial-marie.webp";
 import testimonialJean from "@/assets/testimonial-jean.webp";
 import testimonialSarah from "@/assets/testimonial-sarah.webp";
-import { Briefcase, Code, Database, Wifi, Award, FolderOpen, Users, Clock, CheckCircle, ArrowRight, Target, Calendar, Globe, Clock as ClockIcon, Users as UsersIcon, Calendar as CalendarIcon, CheckCircle as CheckCircleIcon, ArrowRight as ArrowRightIcon } from "lucide-react";
+import { Briefcase, Code, Database, Wifi, Award, FolderOpen, Users, Clock, CheckCircle, ArrowRight, Target, Calendar, Globe, Search, Clock as ClockIcon, Users as UsersIcon, Calendar as CalendarIcon, CheckCircle as CheckCircleIcon, ArrowRight as ArrowRightIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useEffect, useState } from "react";
 import internshipImage from "@/assets/internship-work.webp";
 import internshipImageMobile from "@/assets/internship-work-mobile.webp";
 import heroImage from "@/assets/hero-training.webp";
@@ -56,8 +58,30 @@ const testimonials = [
 const Internships = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get("q") || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(() => searchParams.get("q") || "");
 
-  const { data: internsData, loading: internsLoading } = useQuery(GET_INTERNSHIP_PROGRAMS);
+  // Debounce the search term so the query fires only after the user stops typing
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  const { data: internsData, loading: internsLoading } = useQuery(GET_INTERNSHIP_PROGRAMS, {
+    variables: { search: debouncedSearch.trim() || undefined },
+  });
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    const params = new URLSearchParams(searchParams.toString());
+    if (value.trim()) {
+      params.set("q", value);
+    } else {
+      params.delete("q");
+    }
+    setSearchParams(params, { replace: true });
+  };
   const { data: appsData } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS, {
     skip: !isAuthenticated
   });
@@ -220,6 +244,18 @@ const Internships = () => {
                 Available Programs
               </h2>
             </motion.div>
+
+            {/* Program search — matches titles, descriptions, eligibility and more */}
+            <div className="relative max-w-md mx-auto mb-10">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Search programs, fields, eligibility..."
+                className="pl-10 rounded-xl bg-background border-border/40"
+              />
+            </div>
+
             <div className="grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
               {internshipPrograms.length === 0 && !internsLoading ? (
                 <div className="col-span-full text-center py-12">

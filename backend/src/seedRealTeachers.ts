@@ -17,6 +17,7 @@ const teachers = [
     bio: 'Nigena Umuhire Pacifique is a dedicated educator who holds a Bachelor of Education in History and Geography and is currently pursuing a Master\u2019s degree in Environment and Sustainable Development. With a strong foundation in pedagogy, she teaches all primary subjects (P1\u2013P6) and specializes in coaching learners through the national examination pathway from P6 to S6, including TVET and vocational training programs. She is passionate about environmental education, integrating sustainability themes into everyday lessons, and mentoring students to build confidence, critical thinking, and a lifelong love of learning. Nigena teaches in Kinyarwanda, English, and French, making her accessible to students and families across Rwanda.',
     location: 'Kigali, Rwanda',
     avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=400&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=800&q=80',
     isTrainerApproved: true,
     trainerApplication: {
       specialties: [
@@ -49,6 +50,7 @@ const teachers = [
     bio: 'Chantal Mukeshimana is a passionate primary school teacher with a Bachelor of Education in Primary Education from the University of Rwanda. With 7 years of classroom experience teaching P1 to P6, she specializes in early literacy, numeracy, and foundational sciences. She has trained over 400 young learners in Kinyarwanda and English literacy programs and works closely with parents to support children with learning difficulties. Chantal believes that strong foundations in primary school determine a child\u2019s future success and brings energy, patience, and creativity to every lesson.',
     location: 'Huye, Rwanda',
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80',
     isTrainerApproved: true,
     trainerApplication: {
       specialties: [
@@ -80,6 +82,7 @@ const teachers = [
     bio: 'Eric Nsengiyumva is a mathematics and physics educator with a Bachelor of Science in Mathematics and Physics and 6 years of teaching experience at both O-Level and A-Level (S1\u2013S6). He has consistently helped his students achieve top marks in national examinations, with several of his coaching students ranked among the best in their districts. Eric uses step-by-step problem-solving approaches, past-paper practice, and interactive demonstrations to make abstract concepts accessible. He is also a trained STEM mentor who encourages young people, especially girls, to pursue science careers.',
     location: 'Musanze, Rwanda',
     avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=800&q=80',
     isTrainerApproved: true,
     trainerApplication: {
       specialties: [
@@ -111,6 +114,7 @@ const teachers = [
     bio: 'Josiane Uwera is a multilingual language educator holding a Bachelor of Arts in English and French Linguistics. Over 8 years she has taught language and communication skills from primary through secondary level and to adult learners in professional training programs. Josiane is an experienced IELTS and TOEFL preparation coach and has designed communication modules for hospitality, ICT, and business trainees across Rwanda. Her dynamic, conversation-first teaching style helps learners speak with confidence from the very first lesson.',
     location: 'Kigali, Rwanda',
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=800&q=80',
     isTrainerApproved: true,
     trainerApplication: {
       specialties: [
@@ -142,6 +146,7 @@ const teachers = [
     bio: 'Thierry Mugisha is a TVET and vocational training specialist with a Bachelor of Science in Computer Science and a National TVET Trainer Certificate. For 6 years he has designed and delivered hands-on training programs in computer literacy, digital skills, and entrepreneurship for secondary students and young adults entering the workforce. Thierry has partnered with TVET schools to build practical curricula aligned to the Rwandan National TVET qualification levels (N1 and above), helping hundreds of graduates secure internships and start small businesses. He is a firm believer that practical, skills-based training transforms lives.',
     location: 'Kigali, Rwanda',
     avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
     isTrainerApproved: true,
     trainerApplication: {
       specialties: [
@@ -173,6 +178,7 @@ const teachers = [
     bio: 'Sandrine Ingabire is a science educator with a Bachelor of Science in Chemistry and Biology and 5 years of teaching experience across O-Level and A-Level (S1\u2013S6). She specializes in national examination preparation in the natural sciences and has led science clubs that produced regional and national science fair winners. Sandrine is passionate about girls\u2019 education in STEM and about connecting classroom science to environmental and health issues facing Rwandan communities. Her laboratory-based, inquiry-driven lessons make biology and chemistry come alive for students.',
     location: 'Rubavu, Rwanda',
     avatar: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=400&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80',
     isTrainerApproved: true,
     trainerApplication: {
       specialties: [
@@ -204,6 +210,7 @@ const teachers = [
     bio: 'Aline Uwimana is a primary education specialist with a Bachelor of Education in Early Childhood and Primary Education and a certificate in Inclusive Education and Special Needs. With 6 years of experience teaching P1 to P4, she works with young learners and children with learning difficulties, adapting lessons so every child can progress at their own pace. Aline is trained in play-based and Montessori-inspired methods and regularly runs parent workshops on early learning. She teaches in Kinyarwanda, English, and French and is deeply committed to making the early years joyful, safe, and full of curiosity.',
     location: 'Kigali, Rwanda',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1587654780291-39c9404d746b?auto=format&fit=crop&w=800&q=80',
     isTrainerApproved: true,
     trainerApplication: {
       specialties: [
@@ -235,6 +242,7 @@ const teachers = [
     bio: 'Marie Claudine Mukandayisenga is an early-grade learning specialist with a Bachelor of Education in Primary Education and advanced training in Early Grade Reading Assessment (EGRA) and Early Grade Mathematics Assessment (EGMA) methodologies. Over 5 years she has coached teachers and supported hundreds of P1–P6 pupils to master foundational reading and mathematics, working closely with the national curriculum. Her lively, story-based literacy sessions and hands-on numeracy activities have helped struggling learners catch up and confident learners excel. She is also a trained school mentor for continuous professional development.',
     location: 'Huye, Rwanda',
     avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=400&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=800&q=80',
     isTrainerApproved: true,
     trainerApplication: {
       specialties: [
@@ -266,6 +274,7 @@ const teachers = [
     bio: 'Patrick Nzabonimpa is a TVET and vocational trainer specializing in electrical installation, solar energy systems, and renewable energy technologies. He holds a Higher Diploma in Electrical Engineering and a National TVET Trainer Certificate, with 7 years of experience teaching in TVET schools and training young technicians across Rwanda. Patrick has led solar installation projects for schools and health centres, giving his students real, job-ready skills. He prepares learners for national TVET certification levels (N1 and above) and links his best graduates to internships and work placement opportunities in the energy sector.',
     location: 'Musanze, Rwanda',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=800&q=80',
     isTrainerApproved: true,
     trainerApplication: {
       specialties: [
@@ -297,6 +306,7 @@ const teachers = [
     bio: 'Olivier Twagirimana is a TVET trainer and agribusiness coach with a Bachelor of Science in Agriculture and a National TVET Trainer Certificate. With 6 years of experience, he has trained farmers, cooperatives, and young agripreneurs in modern farming techniques, crop and animal husbandry, and small-business management. Olivier has designed practical TVET curricula aligned to national qualification levels (N1 and above) and helped hundreds of graduates start or grow their own agribusinesses. He combines classroom theory with real farm work, teaching soil care, irrigation, agri-marketing, and financial planning that learners can apply immediately.',
     location: 'Rubavu, Rwanda',
     avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=800&q=80',
     isTrainerApproved: true,
     trainerApplication: {
       specialties: [
@@ -348,6 +358,7 @@ const seedTeachers = async () => {
         bio: teacherData.bio,
         location: teacherData.location,
         avatar: teacherData.avatar,
+        coverImage: teacherData.coverImage,
         isTrainerApproved: true,
         isProfilePublic: true,
         isEmailVerified: true,

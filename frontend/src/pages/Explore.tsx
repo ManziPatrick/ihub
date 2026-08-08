@@ -26,7 +26,7 @@ import aboutImage from "@/assets/about-training.webp";
 import aboutImageMobile from "@/assets/about-training-mobile.webp";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
-import { GET_COURSES_SUMMARY, MY_COURSE_APPLICATIONS, GET_ME, GET_TRAINERS_PUBLIC } from "@/lib/graphql/queries";
+import { GET_COURSES_SUMMARY, MY_COURSE_APPLICATIONS, GET_ME, GET_TRAINERS_PUBLIC, GET_INTERNSHIP_PROGRAMS } from "@/lib/graphql/queries";
 import { useAuth } from "@/contexts/AuthContext";
 import { EnrollCourseDialog, ApplyCourseDialog } from "@/components/portal/dialogs";
 import { ENROLL_COURSE } from "@/lib/graphql/mutations";
@@ -39,6 +39,7 @@ const Explore = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const [enrollCourse, setEnrollCourse] = useState<any>(null);
   const [applyCourse, setApplyCourse] = useState<any>(null);
@@ -47,11 +48,16 @@ const Explore = () => {
   const [trainerFilter, setTrainerFilter] = useState<string>('all');
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [locationFilter, setLocationFilter] = useState<string>("");
-  const [specialtyFilter, setSpecialtyFilter] = useState<string>('all');
   const COURSES_PAGE_SIZE = 9;
 
+  // Debounce the search term so queries fire only after the user stops typing
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
   const { data, loading: apolloLoading, fetchMore } = useQuery(GET_COURSES_SUMMARY, {
-    variables: { page: 1, limit: COURSES_PAGE_SIZE, sortBy, featured: showFeaturedOnly || undefined, location: locationFilter || undefined, search: searchTerm || undefined },
+    variables: { page: 1, limit: COURSES_PAGE_SIZE, sortBy, featured: showFeaturedOnly || undefined, location: locationFilter || undefined, search: debouncedSearch || undefined },
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "cache-first",
   });
@@ -61,9 +67,16 @@ const Explore = () => {
   const TRAINERS_PAGE_SIZE = 8;
 
   const { data: trainersData, loading: trainersLoading, fetchMore: fetchMoreTrainers } = useQuery(GET_TRAINERS_PUBLIC, {
-    variables: { page: 1, limit: TRAINERS_PAGE_SIZE },
+    variables: { page: 1, limit: TRAINERS_PAGE_SIZE, search: debouncedSearch || undefined },
     notifyOnNetworkStatusChange: true,
   });
+
+  // Programs & internships matching the search — shown on the courses tab
+  const { data: internshipSearchData } = useQuery(GET_INTERNSHIP_PROGRAMS, {
+    variables: { search: debouncedSearch.trim() || undefined, limit: 3 },
+    skip: !debouncedSearch.trim(),
+  });
+  const matchedPrograms = (internshipSearchData as any)?.internshipPrograms?.items || [];
 
   const coursesResponse = (data as any)?.courses || { items: [], pagination: { hasNextPage: false, currentPage: 1, totalPages: 1, totalCount: 0 } };
   const loadedCourses = coursesResponse.items || [];
@@ -148,6 +161,8 @@ const Explore = () => {
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
+    // Reset the per-trainer chip filter so a search never leaves a stale filter active
+    setTrainerFilter('all');
     const params = new URLSearchParams(searchParams.toString());
     if (value.trim()) {
       params.set("q", value);
@@ -157,27 +172,13 @@ const Explore = () => {
     setSearchParams(params, { replace: true });
   };
 
-  const allSpecialties = useMemo(() => {
-    return Array.from(
-      new Set(
-        trainersResponse.items.flatMap((t: any) => t.trainerApplication?.specialties || [])
-      )
-    ).sort() as string[];
-  }, [trainersResponse.items]);
-
-  const filteredTrainers = useMemo(() => {
-    return specialtyFilter === 'all'
-      ? allTrainers
-      : allTrainers.filter((t: any) =>
-          (t.trainerApplication?.specialties || []).some(
-            (s: string) => s.toLowerCase() === specialtyFilter.toLowerCase()
-          )
-        );
-  }, [allTrainers, specialtyFilter]);
-
+  // Only ever show published, ready-to-enroll courses on the public Explore page
+  // (draft/closed/archived courses are hidden even for admin/trainer sessions).
   const filteredCourses = useMemo(() => {
     return loadedCourses.filter((course: any) => {
       if (!course.thumbnail || course.thumbnail.trim() === '') return false;
+      const status = (course.status || 'published').toLowerCase();
+      if (['draft', 'closed', 'archived'].includes(status)) return false;
       const matchesSchool = activeSchool === "ALL" || course.school === activeSchool;
       const matchesTrainer = trainerFilter === 'all' || course.instructor?.id === trainerFilter || course.instructor?.username === trainerFilter;
       return matchesSchool && matchesTrainer;
@@ -308,49 +309,18 @@ const Explore = () => {
                 </p>
               </motion.div>
 
-              {/* Specialty Filter */}
-              {allSpecialties.length > 0 && (
-                <div className="mb-8">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Star className="w-4 h-4 text-accent" />
-                    <span className="text-sm font-semibold text-foreground">Filter by Specialty</span>
-                    {specialtyFilter !== 'all' && (
-                      <button
-                        onClick={() => setSpecialtyFilter('all')}
-                        className="text-xs text-accent hover:underline ml-1"
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <button
-                      onClick={() => setSpecialtyFilter('all')}
-                      className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
-                        specialtyFilter === 'all'
-                          ? 'bg-accent text-accent-foreground border-accent shadow-md shadow-accent/20'
-                          : 'bg-card text-muted-foreground border-border/40 hover:border-accent/30 hover:text-foreground hover:bg-accent/5'
-                      }`}
-                    >
-                      All Specialties
-                    </button>
-                    {allSpecialties.map((s: string) => (
-                      <button
-                        key={s}
-                        onClick={() => setSpecialtyFilter(s)}
-                        className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
-                          specialtyFilter === s
-                            ? 'bg-accent text-accent-foreground border-accent shadow-md shadow-accent/20'
-                            : 'bg-card text-muted-foreground border-border/40 hover:border-accent/30 hover:text-foreground hover:bg-accent/5'
-                        }`}
-                      >
-                        <Star className="w-3 h-3" />
-                        {s}
-                      </button>
-                    ))}
-                  </div>
+              {/* Trainer search — searches names, subjects, specialties, bio and more */}
+              <div className="mb-8">
+                <div className="relative max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={searchTerm}
+                    onChange={(event) => handleSearchChange(event.target.value)}
+                    placeholder="Search teachers, subjects, specialties..."
+                    className="pl-10 rounded-xl bg-card border-border/40"
+                  />
                 </div>
-              )}
+              </div>
 
               {trainersLoading ? (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -371,7 +341,7 @@ const Explore = () => {
                     </div>
                   ))}
                 </div>
-              ) : allTrainers.length === 0 ? (
+              ) : allTrainers.length === 0 && !searchTerm.trim() ? (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -385,33 +355,31 @@ const Explore = () => {
                     Trainers haven't joined the platform yet. Check back soon!
                   </p>
                 </motion.div>
-              ) : filteredTrainers.length === 0 ? (
+              ) : allTrainers.length === 0 && searchTerm.trim() ? (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-center py-20"
                 >
                   <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-accent/10 to-primary/10 flex items-center justify-center mb-6 shadow-xl">
-                    <Star className="w-12 h-12 text-muted-foreground/40" />
+                    <Search className="w-12 h-12 text-muted-foreground/40" />
                   </div>
                   <h3 className="text-lg font-bold mb-2">No Trainers Found</h3>
                   <p className="text-muted-foreground max-w-sm mx-auto text-sm">
-                    No trainers match the selected specialty. Try a different filter.
+                    No trainers match your search. Try a different name, subject or specialty.
                   </p>
-                  {specialtyFilter !== 'all' && (
-                    <Button
-                      onClick={() => setSpecialtyFilter('all')}
-                      variant="outline"
-                      size="sm"
-                      className="mt-4 rounded-xl border-accent/20"
-                    >
-                      Clear Filter
-                    </Button>
-                  )}
+                  <Button
+                    onClick={() => handleSearchChange("")}
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 rounded-xl border-accent/20"
+                  >
+                    Clear Search
+                  </Button>
                 </motion.div>
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredTrainers.map((trainer: any, index: number) => {
+                  {allTrainers.map((trainer: any, index: number) => {
                     const initials = trainer.fullName
                       ? trainer.fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase()
                       : trainer.username?.slice(0, 2).toUpperCase() || "T";
@@ -433,11 +401,12 @@ const Explore = () => {
                             <div className="relative z-10 bg-card rounded-2xl overflow-hidden h-full">
                               {/* Gradient top with pattern */}
                               <div className="h-28 bg-gradient-to-br from-accent/25 via-accent/10 to-primary/15 relative overflow-hidden">
-                                {trainer.coverImage ? (
+                                {/* Cover image always fills the rounded border — falls back to the avatar photo */}
+                                {(trainer.coverImage || trainer.avatar) ? (
                                   <img
-                                    src={trainer.coverImage}
+                                    src={trainer.coverImage || trainer.avatar}
                                     alt=""
-                                    className="absolute inset-0 w-full h-full object-cover"
+                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                     onError={(e) => {
                                       (e.target as HTMLImageElement).style.display = "none";
                                     }}
@@ -468,8 +437,8 @@ const Explore = () => {
                                   <div className="absolute -inset-1.5 bg-gradient-to-br from-accent/30 via-accent/10 to-transparent rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                   <div className="relative w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-background shadow-2xl">
                                     <Avatar className="w-full h-full">
-                                      <AvatarImage src={trainer.avatar} className="object-cover" />
-                                      <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-accent to-accent/80 text-white">
+                                      <AvatarImage src={trainer.avatar} className="w-full h-full object-cover" />
+                                      <AvatarFallback className="w-full h-full text-xl font-bold bg-gradient-to-br from-accent to-accent/80 text-white">
                                         {initials}
                                       </AvatarFallback>
                                     </Avatar>
@@ -530,11 +499,17 @@ const Explore = () => {
                                   </div>
                                 )}
 
-                                {/* View Profile CTA */}
-                                <div className="mt-4 pt-3 border-t border-border/20 text-center">
+                                {/* View Profile CTA + hourly rate */}
+                                <div className="mt-4 pt-3 border-t border-border/20 flex items-center justify-between">
                                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent group-hover:gap-2.5 transition-all duration-200">
                                     View Profile <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5" />
                                   </span>
+                                  {trainer.trainerApplication?.rateHourly ? (
+                                    <span className="flex items-center gap-1 text-[11px] font-bold text-foreground">
+                                      <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                      {formatPrice(trainer.trainerApplication.rateHourly)}/hr
+                                    </span>
+                                  ) : null}
                                 </div>
                               </div>
                             </div>
@@ -892,6 +867,55 @@ const Explore = () => {
                           <ExternalLink className="w-3 h-3" />
                         </Link>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Programs & Internships matching the search */}
+              {debouncedSearch.trim() && matchedPrograms.length > 0 && (
+                <div className="mb-6 rounded-2xl border border-border/30 bg-card overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border/20">
+                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-accent" />
+                      Programs &amp; Internships
+                    </h3>
+                    <Link
+                      to={`/internships?q=${encodeURIComponent(debouncedSearch.trim())}`}
+                      className="text-xs font-semibold text-accent hover:underline flex items-center gap-1"
+                    >
+                      View all <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                  <div className="divide-y divide-border/20">
+                    {matchedPrograms.map((p: any) => (
+                      <Link
+                        key={p.id}
+                        to={`/internship/${p.id}`}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-accent/5 transition-colors group"
+                      >
+                        {p.image ? (
+                          <img
+                            src={p.image}
+                            alt=""
+                            className="w-14 h-14 rounded-xl object-cover shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                          />
+                        ) : (
+                          <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                            <Briefcase className="w-5 h-5 text-accent" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-foreground truncate group-hover:text-accent transition-colors">
+                            {p.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">
+                            {p.description}
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-bold text-muted-foreground shrink-0">{p.duration}</span>
+                      </Link>
                     ))}
                   </div>
                 </div>

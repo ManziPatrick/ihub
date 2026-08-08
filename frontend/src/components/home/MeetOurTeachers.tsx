@@ -178,14 +178,25 @@ export function MeetOurTeachers() {
                       {/* Hover glow */}
                       <div className="absolute -inset-0.5 bg-gradient-to-r from-accent/0 via-accent/10 to-accent/0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm pointer-events-none" />
 
-                      {/* Top gradient band */}
+                      {/* Top gradient band — cover image fills the rounded border (avatar as fallback) */}
                       <div className="h-28 bg-gradient-to-br from-accent/25 via-accent/10 to-primary/15 relative overflow-hidden">
-                        <div className="absolute inset-0 opacity-[0.08]"
-                          style={{
-                            backgroundImage: "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)",
-                            backgroundSize: "24px 24px",
-                          }}
-                        />
+                        {(trainer.coverImage || trainer.avatar) ? (
+                          <img
+                            src={trainer.coverImage || trainer.avatar}
+                            alt=""
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div className="absolute inset-0 opacity-[0.08]"
+                            style={{
+                              backgroundImage: "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)",
+                              backgroundSize: "24px 24px",
+                            }}
+                          />
+                        )}
                         {trainer.isTrainerApproved && (
                           <div className="absolute top-3 right-3">
                             <Badge className="bg-green-500/80 backdrop-blur-sm text-white border-0 text-[10px] px-2 py-0.5 shadow-lg flex items-center gap-1">
@@ -203,8 +214,8 @@ export function MeetOurTeachers() {
                           <div className="absolute -inset-1.5 bg-gradient-to-br from-accent/40 via-accent/10 to-transparent rounded-2xl blur-md opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
                           <div className="relative w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-background shadow-2xl">
                             <Avatar className="w-full h-full">
-                              <AvatarImage src={trainer.avatar} className="object-cover" />
-                              <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-accent to-accent/80 text-white">
+                              <AvatarImage src={trainer.avatar} className="w-full h-full object-cover" />
+                              <AvatarFallback className="w-full h-full text-xl font-bold bg-gradient-to-br from-accent to-accent/80 text-white">
                                 {initials}
                               </AvatarFallback>
                             </Avatar>

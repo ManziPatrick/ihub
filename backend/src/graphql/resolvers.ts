@@ -1276,6 +1276,11 @@ export const resolvers = {
           { school: searchRegex },
           { level: searchRegex },
           { description: searchRegex },
+          // Deep search: match text inside modules and lessons (titles + content)
+          { 'modules.title': searchRegex },
+          { 'modules.lessons.title': searchRegex },
+          { 'modules.lessons.content': searchRegex },
+          { 'modules.lessons.videoTitle': searchRegex },
         ]};
 
         if (query.$or) {
@@ -2727,6 +2732,10 @@ export const resolvers = {
         query.$or = [
           { title: searchRegex },
           { description: searchRegex },
+          { eligibility: searchRegex },
+          { rules: searchRegex },
+          // Deep search: match text inside application questions too
+          { 'applicationQuestions.label': searchRegex },
         ];
       }
 

@@ -18,9 +18,13 @@ export const trainerResolvers = {
         query.$or = [
           { fullName: searchRegex },
           { username: searchRegex },
+          { email: searchRegex },
           { 'trainerApplication.specialties': searchRegex },
+          { 'trainerApplication.qualifications': searchRegex },
+          { 'trainerApplication.teachingPhilosophy': searchRegex },
           { title: searchRegex },
           { bio: searchRegex },
+          { location: searchRegex },
         ];
       }
 
