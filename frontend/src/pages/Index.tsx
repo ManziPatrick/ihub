@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { FeaturedCourses } from "@/components/home/FeaturedCourses";
-import { MeetOurTeachers } from "@/components/home/MeetOurTeachers";
+import { MeetOurTrainers } from "@/components/home/MeetOurTrainers";
 import { CTASection } from "@/components/home/CTASection";
 import { SEOHead } from "@/components/SEOHead";
 import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
@@ -36,7 +36,7 @@ const Index = () => {
       <Header />
       <main>
         <FeaturedCourses />
-        <MeetOurTeachers />
+        <MeetOurTrainers />
         <CTASection />
       </main>
       <Footer />

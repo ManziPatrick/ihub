@@ -44,7 +44,7 @@ const Explore = () => {
   const [enrollCourse, setEnrollCourse] = useState<any>(null);
   const [applyCourse, setApplyCourse] = useState<any>(null);
   const [sortBy, setSortBy] = useState<string>('latest');
-  const [activeTab, setActiveTab] = useState<'courses' | 'trainers'>('courses');
+  const [activeTab, setActiveTab] = useState<'courses' | 'trainers'>(searchParams.get("tab") === "trainers" ? "trainers" : "courses");
   const [trainerFilter, setTrainerFilter] = useState<string>('all');
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [locationFilter, setLocationFilter] = useState<string>("");
@@ -158,6 +158,22 @@ const Explore = () => {
     setSearchTerm(searchParams.get("q") || "");
   }, [searchParams]);
 
+  // Keep the active tab in sync with the ?tab= URL param (deep links, back/forward)
+  useEffect(() => {
+    setActiveTab(searchParams.get("tab") === "trainers" ? "trainers" : "courses");
+  }, [searchParams]);
+
+  const handleTabChange = (tab: 'courses' | 'trainers') => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'trainers') {
+      params.set('tab', 'trainers');
+    } else {
+      params.delete('tab');
+    }
+    setSearchParams(params, { replace: true });
+  };
+
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
@@ -225,7 +241,7 @@ const Explore = () => {
       <Header />
       <main className="pt-20">
         {/* Hero */}
-        <section className="py-10 lg:py-14 bg-card relative overflow-hidden">
+        <section className="py-8 lg:py-10 bg-card relative overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <img
               src={heroImage}
@@ -244,17 +260,17 @@ const Explore = () => {
               <span className="inline-block px-4 py-1 bg-accent/20 text-accent text-sm font-medium rounded-full mb-3">
                 {t("explore.title")}
               </span>
-              <h1 className="font-heading text-2xl lg:text-4xl font-medium text-card-foreground mb-4">
+              <h1 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mb-3">
                 {t("explore.heroTitle")}
               </h1>
-              <p className="text-card-foreground/80 max-w-2xl mx-auto text-base mb-6">
+              <p className="text-card-foreground/80 max-w-2xl mx-auto text-base mb-5">
                 {t("explore.heroDesc")}
               </p>
 
               {/* Tab Switcher */}
-              <div className="flex items-center justify-center gap-2 bg-background/50 p-1.5 rounded-2xl w-fit mx-auto mb-6 border border-border/30">
+              <div className="flex items-center justify-center gap-2 bg-background/50 p-1.5 rounded-2xl w-fit mx-auto mb-5 border border-border/30">
                 <button
-                  onClick={() => setActiveTab('courses')}
+                  onClick={() => handleTabChange('courses')}
                   className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
                     activeTab === 'courses'
                       ? 'bg-accent text-accent-foreground shadow-lg shadow-accent/20'
@@ -265,7 +281,7 @@ const Explore = () => {
                   Courses
                 </button>
                 <button
-                  onClick={() => { setActiveTab('trainers'); setTrainerFilter('all'); }}
+                  onClick={() => { handleTabChange('trainers'); setTrainerFilter('all'); }}
                   className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
                     activeTab === 'trainers'
                       ? 'bg-accent text-accent-foreground shadow-lg shadow-accent/20'
@@ -572,13 +588,13 @@ const Explore = () => {
 
         {/* ===== COURSES SECTION ===== */}
         {activeTab === 'courses' && (
-        <section className="py-16 lg:py-20 bg-background">
+        <section className="py-12 lg:py-16 bg-background">
           <div className="container mx-auto px-4 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-center mb-12"
+              className="text-center mb-8"
             >
               <span className="text-accent text-sm font-medium uppercase tracking-wider">{t("explore.ourPrograms")}</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-foreground mt-2 mb-4">
