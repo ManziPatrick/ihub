@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Loading...",
+    "searching": "Searching...",
     "error": "Error",
     "notFound": "Page not found",
     "back": "Back",
@@ -46,6 +47,12 @@
     "home": "Home",
     "explore": "Explore",
     "searchCourses": "Search courses, providers, skills...",
+    "searchHint": "Search across courses, trainers, teachers, programs & internships",
+    "noResults": "No results found",
+    "courses": "Courses",
+    "trainers": "Trainers",
+    "programs": "Programs",
+    "viewAllResults": "View all results",
     "notifications": "Notifications",
     "cart": "Cart",
     "login": "Log in",

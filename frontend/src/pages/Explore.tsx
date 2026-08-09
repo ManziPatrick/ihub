@@ -57,10 +57,20 @@ const Explore = () => {
   }, [searchTerm]);
 
   const { data, loading: apolloLoading, fetchMore } = useQuery(GET_COURSES_SUMMARY, {
-    variables: { page: 1, limit: COURSES_PAGE_SIZE, sortBy, featured: showFeaturedOnly || undefined, location: locationFilter || undefined, search: debouncedSearch || undefined },
+    variables: {
+      page: 1,
+      limit: COURSES_PAGE_SIZE,
+      sortBy,
+      // While searching, drop the Featured / Near-Me toggles so universal results are never silently filtered by invisible state
+      featured: debouncedSearch.trim() ? undefined : (showFeaturedOnly || undefined),
+      location: debouncedSearch.trim() ? undefined : (locationFilter || undefined),
+      search: debouncedSearch || undefined,
+    },
     notifyOnNetworkStatusChange: true,
     fetchPolicy: "cache-first",
   });
+  const coursesResponse = (data as any)?.courses || { items: [], pagination: { hasNextPage: false, currentPage: 1, totalPages: 1, totalCount: 0 } };
+  const loadedCourses = coursesResponse.items || [];
 
   const [trainerPage, setTrainerPage] = useState(1);
   const [trainerLoadingMore, setTrainerLoadingMore] = useState(false);
@@ -71,15 +81,13 @@ const Explore = () => {
     notifyOnNetworkStatusChange: true,
   });
 
-  // Programs & internships matching the search — shown on the courses tab
-  const { data: internshipSearchData } = useQuery(GET_INTERNSHIP_PROGRAMS, {
+  // Programs & internships matching the search — shown across all tabs
+  const { data: internshipSearchData, loading: programsLoading } = useQuery(GET_INTERNSHIP_PROGRAMS, {
     variables: { search: debouncedSearch.trim() || undefined, limit: 3 },
     skip: !debouncedSearch.trim(),
   });
   const matchedPrograms = (internshipSearchData as any)?.internshipPrograms?.items || [];
 
-  const coursesResponse = (data as any)?.courses || { items: [], pagination: { hasNextPage: false, currentPage: 1, totalPages: 1, totalCount: 0 } };
-  const loadedCourses = coursesResponse.items || [];
   const trainersResponse = (trainersData as any)?.trainers || { items: [], pagination: { hasNextPage: false, currentPage: 1, totalPages: 1, totalCount: 0 } };
   const allTrainers = trainersResponse.items || [];
 
@@ -177,8 +185,12 @@ const Explore = () => {
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
-    // Reset the per-trainer chip filter so a search never leaves a stale filter active
+    // Reset per-trainer chip / Featured / Near-Me filters so a search never leaves a stale filter active
     setTrainerFilter('all');
+    if (value.trim()) {
+      setShowFeaturedOnly(false);
+      setLocationFilter("");
+    }
     const params = new URLSearchParams(searchParams.toString());
     if (value.trim()) {
       params.set("q", value);
@@ -308,8 +320,293 @@ const Explore = () => {
           </div>
         </section>
 
+        {/* ===== UNIVERSAL SEARCH RESULTS — all types in one view, no tab switching ===== */}
+        {debouncedSearch.trim() && (
+          <section className="py-10 lg:py-14 bg-background">
+            <div className="container mx-auto px-4 lg:px-8">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
+                  <div className="min-w-0">
+                    <h2 className="font-heading text-2xl lg:text-3xl font-bold text-foreground flex items-center gap-3">
+                      <Search className="w-7 h-7 text-accent" />
+                      Results for “{debouncedSearch.trim()}”
+                    </h2>
+                    <div className="relative mt-3 max-w-md">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={searchTerm}
+                        onChange={(event) => handleSearchChange(event.target.value)}
+                        placeholder="Search courses, teachers, skills, programs..."
+                        className="pl-10 rounded-xl bg-background border-border/40"
+                      />
+                      {searchTerm && (
+                        <button
+                          onClick={() => handleSearchChange("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          aria-label="Clear search"
+                        >
+                          <XCircle className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      to={`/explore?q=${encodeURIComponent(debouncedSearch.trim())}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-bold hover:bg-accent/20 transition-colors"
+                    >
+                      <BookOpen className="w-3.5 h-3.5" /> {loadedCourses.length} Courses
+                    </Link>
+                    <Link
+                      to={`/explore?q=${encodeURIComponent(debouncedSearch.trim())}&tab=trainers`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-bold hover:bg-accent/20 transition-colors"
+                    >
+                      <Users className="w-3.5 h-3.5" /> {allTrainers.length} Trainers
+                    </Link>
+                    <Link
+                      to={`/internships?q=${encodeURIComponent(debouncedSearch.trim())}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-bold hover:bg-accent/20 transition-colors"
+                    >
+                      <Briefcase className="w-3.5 h-3.5" /> {matchedPrograms.length} Programs
+                    </Link>
+                  </div>
+                </div>
+                <p className="text-muted-foreground max-w-2xl">
+                  Everything matching your search — courses, teachers &amp; trainers, and programs &amp; internships — all in one place.
+                </p>
+              </motion.div>
+
+              <div className="grid lg:grid-cols-3 gap-6 items-start">
+                {/* Courses */}
+                <div className="rounded-2xl border border-border/30 bg-card overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border/20">
+                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-accent" />
+                      Courses
+                      <span className="text-[10px] font-bold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full">{loadedCourses.length}</span>
+                    </h3>
+                    <Link
+                      to={`/explore?q=${encodeURIComponent(debouncedSearch.trim())}`}
+                      className="text-xs font-semibold text-accent hover:underline flex items-center gap-1"
+                    >
+                      View all <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                  {apolloLoading ? (
+                    <div className="p-4 space-y-3">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="flex gap-3 animate-pulse">
+                          <div className="w-14 h-14 rounded-xl bg-muted/60" />
+                          <div className="flex-1 space-y-2 py-1">
+                            <div className="h-4 w-4/5 bg-muted/60 rounded" />
+                            <div className="h-3 w-2/3 bg-muted/40 rounded" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : loadedCourses.length > 0 ? (
+                    <div className="divide-y divide-border/20">
+                      {loadedCourses.slice(0, 4).map((c: any) => (
+                        <Link
+                          key={c.id}
+                          to={`/courses/${c.id}`}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-accent/5 transition-colors group"
+                        >
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-muted shrink-0">
+                            {c.thumbnail ? (
+                              <img src={c.thumbnail} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <BookOpen className="w-5 h-5 text-muted-foreground/40" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-foreground truncate group-hover:text-accent transition-colors">
+                              {c.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {c.category}
+                              {c.instructor?.username ? ` · ${c.instructor.username}` : ""}
+                            </p>
+                          </div>
+                          <span className="text-[10px] font-bold text-muted-foreground shrink-0">
+                            {c.price > 0 ? formatPrice(c.price) : "Free"}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-10 px-4">
+                      <BookOpen className="w-8 h-8 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">No courses match “{debouncedSearch.trim()}”.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Trainers & Teachers */}
+                <div className="rounded-2xl border border-border/30 bg-card overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border/20">
+                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <Users className="w-4 h-4 text-accent" />
+                      Trainers &amp; Teachers
+                      <span className="text-[10px] font-bold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full">{allTrainers.length}</span>
+                    </h3>
+                    <Link
+                      to={`/explore?q=${encodeURIComponent(debouncedSearch.trim())}&tab=trainers`}
+                      className="text-xs font-semibold text-accent hover:underline flex items-center gap-1"
+                    >
+                      View all <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                  {trainersLoading ? (
+                    <div className="p-4 space-y-3">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="flex gap-3 animate-pulse">
+                          <div className="w-14 h-14 rounded-full bg-muted/60" />
+                          <div className="flex-1 space-y-2 py-1">
+                            <div className="h-4 w-4/5 bg-muted/60 rounded" />
+                            <div className="h-3 w-2/3 bg-muted/40 rounded" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : allTrainers.length > 0 ? (
+                    <div className="divide-y divide-border/20">
+                      {allTrainers.slice(0, 4).map((tr: any) => (
+                        <Link
+                          key={tr.id}
+                          to={`/trainer/${tr.id}`}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-accent/5 transition-colors group"
+                        >
+                          <Avatar className="w-12 h-12 rounded-full shrink-0 ring-2 ring-border/30">
+                            <AvatarImage src={tr.avatar} className="w-full h-full object-cover" />
+                            <AvatarFallback className="bg-gradient-to-br from-accent to-accent/80 text-white text-sm font-bold">
+                              {(tr.fullName || tr.username || "T").slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-foreground truncate group-hover:text-accent transition-colors">
+                              {tr.fullName || tr.username}
+                            </p>
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {tr.title || (tr.trainerApplication?.specialties || []).slice(0, 2).join(", ") || tr.bio || ""}
+                            </p>
+                          </div>
+                          {tr.location && (
+                            <span className="text-[10px] font-bold text-muted-foreground shrink-0">
+                              {tr.location.split(",")[0]}
+                            </span>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-10 px-4">
+                      <Users className="w-8 h-8 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">No trainers match “{debouncedSearch.trim()}”.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Programs & Internships */}
+                <div className="rounded-2xl border border-border/30 bg-card overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border/20">
+                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-accent" />
+                      Programs &amp; Internships
+                      <span className="text-[10px] font-bold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full">{matchedPrograms.length}</span>
+                    </h3>
+                    <Link
+                      to={`/internships?q=${encodeURIComponent(debouncedSearch.trim())}`}
+                      className="text-xs font-semibold text-accent hover:underline flex items-center gap-1"
+                    >
+                      View all <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                  {programsLoading ? (
+                    <div className="p-4 space-y-3">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="flex gap-3 animate-pulse">
+                          <div className="w-14 h-14 rounded-xl bg-muted/60" />
+                          <div className="flex-1 space-y-2 py-1">
+                            <div className="h-4 w-4/5 bg-muted/60 rounded" />
+                            <div className="h-3 w-2/3 bg-muted/40 rounded" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : matchedPrograms.length > 0 ? (
+                    <div className="divide-y divide-border/20">
+                      {matchedPrograms.map((p: any) => (
+                        <Link
+                          key={p.id}
+                          to={`/internship/${p.id}`}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-accent/5 transition-colors group"
+                        >
+                          {p.image ? (
+                            <img
+                              src={p.image}
+                              alt=""
+                              className="w-14 h-14 rounded-xl object-cover shrink-0"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                              <Briefcase className="w-5 h-5 text-accent" />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-foreground truncate group-hover:text-accent transition-colors">
+                              {p.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {p.description}
+                            </p>
+                          </div>
+                          <span className="text-[10px] font-bold text-muted-foreground shrink-0">{p.duration}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-10 px-4">
+                      <Briefcase className="w-8 h-8 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">No programs match “{debouncedSearch.trim()}”.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Nothing at all found */}
+              {!apolloLoading && !trainersLoading && !programsLoading && loadedCourses.length === 0 && allTrainers.length === 0 && matchedPrograms.length === 0 && (
+                <div className="text-center py-14 mt-4">
+                  <div className="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-accent/10 to-primary/10 flex items-center justify-center mb-6 shadow-xl">
+                    <Search className="w-12 h-12 text-muted-foreground/40" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">No results found</h3>
+                  <p className="text-muted-foreground max-w-sm mx-auto text-sm">
+                    Nothing matches “{debouncedSearch.trim()}”. Try a different keyword — course names, teacher skills, subjects or programs.
+                  </p>
+                  <Button
+                    onClick={() => handleSearchChange("")}
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 rounded-xl border-accent/20"
+                  >
+                    Clear Search
+                  </Button>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* ===== TRAINERS SECTION ===== */}
-        {activeTab === 'trainers' && (
+        {activeTab === 'trainers' && !debouncedSearch.trim() && (
           <section className="py-10 lg:py-14 bg-background">
             <div className="container mx-auto px-4 lg:px-8">
               <motion.div
@@ -332,7 +629,7 @@ const Explore = () => {
                   <Input
                     value={searchTerm}
                     onChange={(event) => handleSearchChange(event.target.value)}
-                    placeholder="Search teachers, subjects, specialties..."
+                    placeholder="Search teachers, skills, courses, programs..."
                     className="pl-10 rounded-xl bg-card border-border/40"
                   />
                 </div>
@@ -452,7 +749,7 @@ const Explore = () => {
                                 <div className="relative w-fit mx-auto mb-4">
                                   <div className="absolute -inset-1.5 bg-gradient-to-br from-accent/30 via-accent/10 to-transparent rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                   <div className="relative w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-background shadow-2xl">
-                                    <Avatar className="w-full h-full">
+                                    <Avatar className="w-full h-full rounded-2xl">
                                       <AvatarImage src={trainer.avatar} className="w-full h-full object-cover" />
                                       <AvatarFallback className="w-full h-full text-xl font-bold bg-gradient-to-br from-accent to-accent/80 text-white">
                                         {initials}
@@ -515,17 +812,11 @@ const Explore = () => {
                                   </div>
                                 )}
 
-                                {/* View Profile CTA + hourly rate */}
-                                <div className="mt-4 pt-3 border-t border-border/20 flex items-center justify-between">
+                                {/* View Profile CTA */}
+                                <div className="mt-4 pt-3 border-t border-border/20 flex items-center justify-center">
                                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent group-hover:gap-2.5 transition-all duration-200">
                                     View Profile <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5" />
                                   </span>
-                                  {trainer.trainerApplication?.rateHourly ? (
-                                    <span className="flex items-center gap-1 text-[11px] font-bold text-foreground">
-                                      <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                                      {formatPrice(trainer.trainerApplication.rateHourly)}/hr
-                                    </span>
-                                  ) : null}
                                 </div>
                               </div>
                             </div>
@@ -587,7 +878,7 @@ const Explore = () => {
         )}
 
         {/* ===== COURSES SECTION ===== */}
-        {activeTab === 'courses' && (
+        {activeTab === 'courses' && !debouncedSearch.trim() && (
         <section className="py-12 lg:py-16 bg-background">
           <div className="container mx-auto px-4 lg:px-8">
             <motion.div
@@ -670,7 +961,7 @@ const Explore = () => {
                     <Input
                       value={searchTerm}
                       onChange={(event) => handleSearchChange(event.target.value)}
-                      placeholder="Search courses, providers, skills..."
+                      placeholder="Search courses, teachers, skills, programs..."
                       className="pl-10"
                     />
                   </div>
@@ -883,55 +1174,6 @@ const Explore = () => {
                           <ExternalLink className="w-3 h-3" />
                         </Link>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Programs & Internships matching the search */}
-              {debouncedSearch.trim() && matchedPrograms.length > 0 && (
-                <div className="mb-6 rounded-2xl border border-border/30 bg-card overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-border/20">
-                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                      <Briefcase className="w-4 h-4 text-accent" />
-                      Programs &amp; Internships
-                    </h3>
-                    <Link
-                      to={`/internships?q=${encodeURIComponent(debouncedSearch.trim())}`}
-                      className="text-xs font-semibold text-accent hover:underline flex items-center gap-1"
-                    >
-                      View all <ArrowRight className="w-3 h-3" />
-                    </Link>
-                  </div>
-                  <div className="divide-y divide-border/20">
-                    {matchedPrograms.map((p: any) => (
-                      <Link
-                        key={p.id}
-                        to={`/internship/${p.id}`}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-accent/5 transition-colors group"
-                      >
-                        {p.image ? (
-                          <img
-                            src={p.image}
-                            alt=""
-                            className="w-14 h-14 rounded-xl object-cover shrink-0"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                          />
-                        ) : (
-                          <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                            <Briefcase className="w-5 h-5 text-accent" />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-bold text-foreground truncate group-hover:text-accent transition-colors">
-                            {p.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground line-clamp-1">
-                            {p.description}
-                          </p>
-                        </div>
-                        <span className="text-[10px] font-bold text-muted-foreground shrink-0">{p.duration}</span>
-                      </Link>
                     ))}
                   </div>
                 </div>

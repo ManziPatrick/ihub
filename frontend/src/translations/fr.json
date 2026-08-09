@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Chargement...",
+    "searching": "Recherche...",
     "error": "Erreur",
     "notFound": "Page non trouvée",
     "back": "Retour",
@@ -46,6 +47,12 @@
     "home": "Accueil",
     "explore": "Explorer",
     "searchCourses": "Rechercher des cours, fournisseurs, compétences...",
+    "searchHint": "Recherchez parmi les cours, formateurs, programmes et stages",
+    "noResults": "Aucun résultat trouvé",
+    "courses": "Cours",
+    "trainers": "Formateurs",
+    "programs": "Programmes",
+    "viewAllResults": "Voir tous les résultats",
     "notifications": "Notifications",
     "cart": "Panier",
     "login": "Connexion",

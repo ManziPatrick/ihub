@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, User, LogOut, Bell, ShoppingCart, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -12,6 +11,7 @@ import { GET_UNREAD_NOTIFICATIONS } from "@/lib/graphql/queries";
 import { useBranding } from "@/components/BrandingProvider";
 import { useTranslation } from "react-i18next";
 import { Logo } from "@/components/Logo";
+import { GlobalSearchDialog } from "@/components/search/GlobalSearchDialog";
 
 // Reference image nav: Home + Applications only shown in desktop
 const navLinks = [
@@ -34,7 +34,25 @@ export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const { cartItems, setIsCartOpen } = useCart();
   const { branding } = useBranding();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Ctrl/Cmd + K opens the global site search (ignored while typing in inputs)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k")) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
+      ) {
+        return;
+      }
+      e.preventDefault();
+      setSearchOpen(true);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const { data: notificationData } = useQuery<{ unreadNotificationCount: number }>(
     GET_UNREAD_NOTIFICATIONS,
@@ -63,15 +81,6 @@ export function Header() {
       : user?.role === "admin" || user?.role === "super_admin"
       ? "/portal/admin"
       : "/portal/student";
-
-  const handleHeaderSearch = () => {
-    const trimmed = searchQuery.trim();
-    if (trimmed) {
-      navigate(`/explore?q=${encodeURIComponent(trimmed)}`);
-    } else {
-      navigate("/explore");
-    }
-  };
 
   return (
     <header
@@ -124,26 +133,27 @@ export function Header() {
 
           {/* ── Right side actions ── */}
           <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-2 border border-border/30 rounded-full px-3 py-1 bg-background">
-              <Search size={16} className="text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") handleHeaderSearch();
-                }}
-                placeholder={t("nav.searchCourses")}
-                className="h-9 w-48 rounded-full border-0 bg-transparent focus:ring-0"
-              />
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hidden md:inline-flex h-9 px-3 rounded-full"
-              onClick={handleHeaderSearch}
+            {/* Desktop search — opens global site search (courses, trainers, programs) */}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="hidden md:flex items-center gap-2 border border-border/30 rounded-full px-3 py-1 bg-background hover:border-accent/40 hover:bg-muted/30 transition-colors"
+              aria-label={t("common.search")}
             >
-              {t("common.search")}
-            </Button>
+              <Search size={16} className="text-muted-foreground" />
+              <span className="text-sm text-muted-foreground max-w-[200px] truncate">{t("nav.searchCourses")}</span>
+              <kbd className="hidden lg:inline-flex items-center gap-0.5 rounded border border-border/50 bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                Ctrl K
+              </kbd>
+            </button>
+
+            {/* Mobile search icon — opens global site search */}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="md:hidden p-2 rounded-lg text-foreground/70 hover:text-foreground hover:bg-muted/50 transition-colors"
+              aria-label={t("common.search")}
+            >
+              <Search size={18} />
+            </button>
             <ThemeToggle />
 
             {/* Notification bell */}
@@ -227,6 +237,9 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      {/* ── Global site search (⌘K / Ctrl+K) ── */}
+      <GlobalSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
 
       {/* ── Mobile menu ── */}
       <AnimatePresence>

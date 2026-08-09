@@ -559,7 +559,7 @@ export default function TrainerProfile() {
                 <div className="relative shrink-0 self-center md:self-start -mt-14 md:-mt-20">
 <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full ring-4 ring-background dark:ring-card">
                     <Avatar className="w-full h-full">
-                      <AvatarImage src={trainer.avatar} className="object-contain" />
+                      <AvatarImage src={trainer.avatar} className="object-cover" />
                       <AvatarFallback className="text-3xl font-bold bg-gradient-to-br from-accent to-accent/80 text-white">
                         {initials}
                       </AvatarFallback>
