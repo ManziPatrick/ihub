@@ -11,7 +11,6 @@ import {
   Users,
   Sparkles,
   CheckCircle,
-  Star,
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -203,7 +202,7 @@ export function MeetOurTrainers() {
                         <div className="relative w-fit mx-auto mb-4">
                           <div className="absolute -inset-1.5 bg-gradient-to-br from-accent/40 via-accent/10 to-transparent rounded-2xl blur-md opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
                           <div className="relative w-20 h-20 rounded-2xl overflow-hidden ring-4 ring-background shadow-2xl">
-                            <Avatar className="w-full h-full">
+                            <Avatar className="w-full h-full rounded-2xl">
                               <AvatarImage src={trainer.avatar} className="w-full h-full object-cover" />
                               <AvatarFallback className="w-full h-full text-xl font-bold bg-gradient-to-br from-accent to-accent/80 text-white">
                                 {initials}
@@ -287,17 +286,11 @@ export function MeetOurTrainers() {
                         )}
 
                         {/* CTA */}
-                        <div className="mt-4 pt-3 border-t border-border/20 flex items-center justify-between">
+                        <div className="mt-4 pt-3 border-t border-border/20 flex items-center justify-center">
                           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent">
                             View Profile
                             <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover:translate-x-0.5" />
                           </span>
-                          {trainer.trainerApplication?.rateHourly ? (
-                            <span className="flex items-center gap-1 text-[10px] font-bold text-foreground">
-                              <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                              {trainer.trainerApplication.rateHourly}RWF/hr
-                            </span>
-                          ) : null}
                         </div>
                       </div>
                     </div>

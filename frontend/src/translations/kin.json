@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Birimo gutwara...",
+    "searching": "Irimo gushaka...",
     "error": "Ikosa",
     "notFound": "Paji ntibonetse",
     "back": "Gusubira inyuma",
@@ -46,6 +47,12 @@
     "home": "Ahabanza",
     "explore": "Gutozera",
     "searchCourses": "Shakisha amasomo, amashuri, ubuhanga...",
+    "searchHint": "Shakisha amasomo, abatoza, gahunda n'imyitozo",
+    "noResults": "Nta bisubizo bibonetse",
+    "courses": "Amasomo",
+    "trainers": "Abatoza",
+    "programs": "Gahunda",
+    "viewAllResults": "Reba ibisubizo byose",
     "notifications": "Amatangazo",
     "cart": "Igikapu",
     "login": "Injira",
