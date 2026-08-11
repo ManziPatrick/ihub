@@ -593,6 +593,7 @@ export function FeaturedCourses() {
     return Array.from(map.entries())
       .map(([name, items]) => ({
         name,
+        logo: items[0]?.organizationLogo || null,
         items: items.sort((a, b) => (a.title || "").localeCompare(b.title || "")),
       }))
       .sort((a, b) => b.items.length - a.items.length || a.name.localeCompare(b.name));
@@ -1458,8 +1459,12 @@ export function FeaturedCourses() {
                               className="w-full flex items-center gap-4 p-5 text-left hover:bg-muted/10 transition-colors"
                               aria-expanded={isExpanded}
                             >
-                              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg shrink-0">
-                                <Building2 className="w-6 h-6 text-white" strokeWidth={1.75} />
+                              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg shrink-0 overflow-hidden">
+                                {org.logo ? (
+                                  <img src={org.logo} alt={org.name} className="w-full h-full object-contain p-0.5 bg-white" />
+                                ) : (
+                                  <Building2 className="w-6 h-6 text-white" strokeWidth={1.75} />
+                                )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h3 className="font-heading font-semibold text-lg text-foreground truncate">{org.name}</h3>

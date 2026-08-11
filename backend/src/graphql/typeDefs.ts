@@ -1542,8 +1542,8 @@ export const typeDefs = `#graphql
 
 
     # New Internship Module Mutations
-    createInternshipProgram(title: String!, organization: String, description: String!, duration: String!, startDate: String!, endDate: String!, applicationDeadline: String!, eligibility: String, rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
-    updateInternshipProgram(id: ID!, title: String, organization: String, description: String, duration: String, startDate: String, endDate: String, applicationDeadline: String, status: String, eligibility: String, rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
+    createInternshipProgram(title: String!, organization: String, organizationLogo: String, description: String!, duration: String!, startDate: String!, endDate: String!, applicationDeadline: String!, eligibility: String, rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
+    updateInternshipProgram(id: ID!, title: String, organization: String, organizationLogo: String, description: String, duration: String, startDate: String, endDate: String, applicationDeadline: String, status: String, eligibility: String, rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
     deleteInternshipProgram(id: ID!): Boolean
 
     applyToInternshipProgram(internshipProgramId: ID!, skills: [String]!, portfolioUrl: String, resumeUrl: String, availability: String!, applicationAnswers: [ApplicationAnswerInput]): InternshipApplication
@@ -1666,6 +1666,7 @@ export const typeDefs = `#graphql
     id: ID!
     title: String!
     organization: String
+    organizationLogo: String
     description: String!
     duration: String!
     startDate: String!

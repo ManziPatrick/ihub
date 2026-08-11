@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IInternshipProgram extends Document {
   title: string;
   organization?: string; // Company or school that owns this opportunity, e.g. "Google", "University of Rwanda"
+  organizationLogo?: string; // Logo or image for the company/school — shown on opportunity cards
   description: string;
   duration: string;
   startDate: Date;
@@ -47,6 +48,7 @@ const InternshipProgramSchema: Schema = new Schema(
   {
     title: { type: String, required: true, index: true },
     organization: { type: String, index: true, trim: true },
+    organizationLogo: { type: String, trim: true },
     description: { type: String, required: true },
     duration: { type: String, required: true }, // e.g., "3 Months"
     startDate: { type: Date, required: true },

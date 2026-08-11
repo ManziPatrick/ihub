@@ -19,6 +19,7 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
   const [formData, setFormData] = useState({
     title: '',
     organization: '',
+    organizationLogo: '',
     description: '',
     duration: '3 Months',
     startDate: '',
@@ -41,6 +42,7 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
       setFormData({
         title: '',
         organization: '',
+        organizationLogo: '',
         description: '',
         duration: '3 Months',
         startDate: '',
@@ -119,6 +121,32 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
             />
             <p className="text-[11px] text-muted-foreground">
               Opportunities from the same organization are grouped together on the Opportunities page.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label>Organization Logo</Label>
+            {formData.organizationLogo ? (
+              <div className="relative w-20 h-20 rounded-xl overflow-hidden border bg-card p-1">
+                <img src={formData.organizationLogo} alt="Organization logo" className="w-full h-full object-contain" />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute -top-1 -right-1 h-6 px-1.5 text-[9px] rounded-full"
+                  onClick={() => setFormData({ ...formData, organizationLogo: '' })}
+                >
+                  ×
+                </Button>
+              </div>
+            ) : (
+              <FileUpload
+                folder="organizations"
+                label="Upload Organization Logo"
+                onUploadComplete={(url) => setFormData({ ...formData, organizationLogo: url })}
+              />
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              Optional — shown on the opportunity card so learners recognize the company or school.
             </p>
           </div>
           <div className="space-y-2">

@@ -1025,8 +1025,8 @@ export const SEND_MESSAGE_TO_PROJECT = gql`
 // --- New Internship Module Mutations ---
 
 export const CREATE_INTERNSHIP_PROGRAM = gql`
-  mutation CreateInternshipProgram($title: String!, $organization: String, $description: String!, $duration: String!, $startDate: String!, $endDate: String!, $applicationDeadline: String!, $eligibility: String, $rules: String, $price: Float, $currency: String, $image: String, $applicationQuestions: [ApplicationQuestionInput], $signerName: String, $signerSignature: String, $maxSpots: Int, $discount: Float) {
-    createInternshipProgram(title: $title, organization: $organization, description: $description, duration: $duration, startDate: $startDate, endDate: $endDate, applicationDeadline: $applicationDeadline, eligibility: $eligibility, rules: $rules, price: $price, currency: $currency, image: $image, applicationQuestions: $applicationQuestions, signerName: $signerName, signerSignature: $signerSignature, maxSpots: $maxSpots, discount: $discount) {
+  mutation CreateInternshipProgram($title: String!, $organization: String, $organizationLogo: String, $description: String!, $duration: String!, $startDate: String!, $endDate: String!, $applicationDeadline: String!, $eligibility: String, $rules: String, $price: Float, $currency: String, $image: String, $applicationQuestions: [ApplicationQuestionInput], $signerName: String, $signerSignature: String, $maxSpots: Int, $discount: Float) {
+    createInternshipProgram(title: $title, organization: $organization, organizationLogo: $organizationLogo, description: $description, duration: $duration, startDate: $startDate, endDate: $endDate, applicationDeadline: $applicationDeadline, eligibility: $eligibility, rules: $rules, price: $price, currency: $currency, image: $image, applicationQuestions: $applicationQuestions, signerName: $signerName, signerSignature: $signerSignature, maxSpots: $maxSpots, discount: $discount) {
       id
       title
       image
@@ -1047,8 +1047,8 @@ export const CREATE_INTERNSHIP_PROGRAM = gql`
 `;
 
 export const UPDATE_INTERNSHIP_PROGRAM_NEW = gql`
-  mutation UpdateInternshipProgram($id: ID!, $title: String, $organization: String, $description: String, $duration: String, $startDate: String, $endDate: String, $applicationDeadline: String, $status: String, $eligibility: String, $rules: String, $price: Float, $discount: Float, $currency: String, $image: String, $maxSpots: Int, $applicationQuestions: [ApplicationQuestionInput]) {
-    updateInternshipProgram(id: $id, title: $title, organization: $organization, description: $description, duration: $duration, startDate: $startDate, endDate: $endDate, applicationDeadline: $applicationDeadline, status: $status, eligibility: $eligibility, rules: $rules, price: $price, discount: $discount, currency: $currency, image: $image, maxSpots: $maxSpots, applicationQuestions: $applicationQuestions) {
+  mutation UpdateInternshipProgram($id: ID!, $title: String, $organization: String, $organizationLogo: String, $description: String, $duration: String, $startDate: String, $endDate: String, $applicationDeadline: String, $status: String, $eligibility: String, $rules: String, $price: Float, $discount: Float, $currency: String, $image: String, $maxSpots: Int, $applicationQuestions: [ApplicationQuestionInput]) {
+    updateInternshipProgram(id: $id, title: $title, organization: $organization, organizationLogo: $organizationLogo, description: $description, duration: $duration, startDate: $startDate, endDate: $endDate, applicationDeadline: $applicationDeadline, status: $status, eligibility: $eligibility, rules: $rules, price: $price, discount: $discount, currency: $currency, image: $image, maxSpots: $maxSpots, applicationQuestions: $applicationQuestions) {
       id
       title
       status

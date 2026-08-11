@@ -1734,6 +1734,7 @@ export const GET_INTERNSHIP_PROGRAMS = gql`
         id
         title
         organization
+        organizationLogo
         description
         duration
         startDate
@@ -1762,6 +1763,7 @@ export const GET_INTERNSHIP_PROGRAM = gql`
       id
       title
       organization
+      organizationLogo
       description
       duration
       startDate
@@ -2637,6 +2639,7 @@ export const GET_INTERNSHIP_PROGRAM_FOR_APPLY = gql`
       id
       title
       organization
+      organizationLogo
       description
       price
       currency

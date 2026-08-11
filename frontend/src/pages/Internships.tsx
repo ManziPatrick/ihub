@@ -24,6 +24,8 @@ import {
   UsersIcon,
   ArrowRightIcon,
   MapPin,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +81,27 @@ const Opportunities = () => {
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get("q") || "");
   const [debouncedSearch, setDebouncedSearch] = useState(() => searchParams.get("q") || "");
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    try {
+      return localStorage.getItem('ihub-opp-view') === 'list' ? 'list' : 'grid';
+    } catch {
+      return 'grid';
+    }
+  });
+
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('ihub-opp-view', mode);
+    } catch {
+      // storage unavailable — fine, view resets to grid on reload
+    }
+  };
+
+  // Organization helpers used by both views
+  const orgNameFor = (p: any) => p?.organization?.trim() || DEFAULT_ORG;
+  const orgInitials = (name: string) =>
+    name.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
   // Debounce the search term so the query fires only after the user stops typing
   useEffect(() => {
@@ -302,6 +325,34 @@ const Opportunities = () => {
               />
             </div>
 
+            {/* View toggle — Grid (default) or List */}
+            <div className="flex items-center justify-center gap-2 mb-10">
+              <div className="inline-flex items-center gap-1 p-1 bg-background border border-border/40 rounded-xl shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('grid')}
+                  className={cn(
+                    "flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold transition-all",
+                    viewMode === 'grid' ? "bg-accent text-accent-foreground shadow" : "text-muted-foreground hover:text-foreground"
+                  )}
+                  aria-pressed={viewMode === 'grid'}
+                >
+                  <LayoutGrid className="w-4 h-4" /> Grid
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('list')}
+                  className={cn(
+                    "flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold transition-all",
+                    viewMode === 'list' ? "bg-accent text-accent-foreground shadow" : "text-muted-foreground hover:text-foreground"
+                  )}
+                  aria-pressed={viewMode === 'list'}
+                >
+                  <List className="w-4 h-4" /> List
+                </button>
+              </div>
+            </div>
+
             {internshipPrograms.length === 0 && !internsLoading ? (
               <div className="text-center py-12">
                 <Briefcase className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
@@ -311,11 +362,105 @@ const Opportunities = () => {
                     : "No opportunities available at the moment."}
                 </p>
               </div>
+            ) : viewMode === 'grid' ? (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl mx-auto">
+                {internshipPrograms.map((intern: any) => {
+                  const orgName = orgNameFor(intern);
+                  const logo = intern.organizationLogo || null;
+                  const status = getApplicationStatus(intern.id || intern._id);
+                  const isFree = intern.price === 0 || intern.price == null;
+                  return (
+                    <motion.div
+                      key={intern.id || intern._id}
+                      initial={{ opacity: 0, y: 16 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      className="group bg-background rounded-2xl border border-border/30 shadow-card overflow-hidden hover:shadow-card-hover hover:border-accent/30 hover:-translate-y-1 transition-all flex flex-col"
+                    >
+                      {/* Banner — program image or organization gradient (clipped by the card's own overflow-hidden) */}
+                      <Link
+                        to={`/opportunity/${intern.id || intern._id}`}
+                        className="relative block aspect-[16/9]"
+                      >
+                        {intern.image ? (
+                          <img
+                            src={intern.image}
+                            alt={intern.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-accent via-accent/80 to-accent/40 flex items-center justify-center">
+                            <span className="font-heading text-4xl font-black text-white/90">{orgInitials(orgName)}</span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+                        <span className={cn(
+                          "absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full shadow",
+                          isFree ? "bg-green-500 text-white" : "bg-gold text-black"
+                        )}>
+                          {isFree ? "FREE" : formatPrice(intern.price)}
+                        </span>
+                      </Link>
+                      {/* Organization logo badge — overlaps the banner bottom edge */}
+                      <div className="relative -mt-5 ml-4 w-12 h-12 rounded-xl bg-card p-1 shadow-lg ring-1 ring-border/40 overflow-hidden z-10">
+                        {logo ? (
+                          <img src={logo} alt={orgName} className="w-full h-full object-contain rounded-[9px]" />
+                        ) : (
+                          <div className="w-full h-full rounded-[9px] bg-accent/10 flex items-center justify-center">
+                            <Building2 className="w-6 h-6 text-accent" />
+                          </div>
+                        )}
+                      </div>
+                      {/* Card body */}
+                      <div className="flex-1 flex flex-col p-4 pt-2 gap-2">
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-accent min-w-0">
+                          <Building2 className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">{orgName}</span>
+                        </div>
+                        <Link
+                          to={`/opportunity/${intern.id || intern._id}`}
+                          className="font-heading font-semibold text-foreground leading-snug line-clamp-2 hover:text-accent transition-colors"
+                        >
+                          {intern.title}
+                        </Link>
+                        <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
+                          {intern.duration && (
+                            <span className="text-[10px] bg-card px-2 py-0.5 rounded text-muted-foreground border border-border/50">{intern.duration}</span>
+                          )}
+                          <span className="text-[10px] bg-card px-2 py-0.5 rounded text-muted-foreground border border-border/50 capitalize">{intern.type || "Remote"}</span>
+                          {intern.maxSpots > 0 && (
+                            <span className="text-[10px] bg-card px-2 py-0.5 rounded text-muted-foreground border border-border/50">{intern.maxSpots} spots</span>
+                          )}
+                        </div>
+                        <div className="pt-3">
+                          {status === "approved" ? (
+                            <Button className="w-full bg-green-600 hover:bg-green-700 rounded-xl font-bold text-sm h-9" onClick={() => navigate('/portal/student/internship')}>
+                              Continue <ArrowRightIcon className="w-4 h-4 ml-1.5" />
+                            </Button>
+                          ) : status === "pending" ? (
+                            <Button disabled className="w-full bg-amber-500 rounded-xl font-bold text-sm h-9">
+                              Pending <ClockIcon className="w-4 h-4 ml-1.5" />
+                            </Button>
+                          ) : status === "rejected" ? (
+                            <Button disabled className="w-full bg-red-500 rounded-xl font-bold text-sm h-9">Rejected</Button>
+                          ) : (
+                            <Button variant="gold" className="w-full rounded-xl h-9" onClick={() => navigate(`/opportunity/${intern.id || intern._id}`)}>
+                              Apply Now <ArrowRightIcon className="w-4 h-4 ml-1.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
             ) : (
               <div className="max-w-4xl mx-auto space-y-6">
                 {organizations.map((org, orgIndex) => {
                   const isExpanded = expandedOrg === org.name;
                   const Icon = Building2;
+                  const orgLogo = org.items[0]?.organizationLogo || null;
                   return (
                     <motion.div
                       key={org.name}
@@ -335,8 +480,12 @@ const Opportunities = () => {
                         className="w-full flex items-center gap-4 p-5 text-left hover:bg-muted/10 transition-colors"
                         aria-expanded={isExpanded}
                       >
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg shrink-0">
-                          <Icon className="w-7 h-7 text-white" strokeWidth={1.75} />
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg shrink-0 overflow-hidden">
+                          {orgLogo ? (
+                            <img src={orgLogo} alt={org.name} className="w-full h-full object-contain p-1 bg-white" />
+                          ) : (
+                            <Icon className="w-7 h-7 text-white" strokeWidth={1.75} />
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
