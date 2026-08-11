@@ -1,5 +1,7 @@
 import { User } from '../models/User';
 import { Course } from '../models/Course';
+import { InternshipProgram } from '../models/internship/InternshipProgram';
+import { InternshipApplication } from '../models/internship/InternshipApplication';
 import { lookupRequestGeoLocation } from '../services/geoip.service';
 
 export const locationResolvers = {
@@ -42,17 +44,28 @@ export const locationResolvers = {
       };
       if (role) filter.role = role;
 
-      // Scope: regular admins can only track users enrolled in THEIR courses
-      // (courses they created or instruct). Super admins see everyone.
+      // Scope: regular admins can only track users in THEIR courses (created/
+      // instructed) or users who applied to THEIR internship/opportunity
+      // programs. Super admins see everyone.
       if (context.user.role === 'admin') {
         const courseIds = await Course.find({
           isDeleted: { $ne: true },
           $or: [{ createdBy: context.user.id }, { instructor: context.user.id }],
         }).distinct('_id');
+
+        const programIds = await InternshipProgram.find({
+          isDeleted: { $ne: true },
+          createdBy: context.user.id,
+        }).distinct('_id');
+        const programUserIds = await InternshipApplication.find({
+          internshipProgramId: { $in: programIds },
+        }).distinct('userId');
+
         filter.$or = [
           { enrolledCourses: { $in: courseIds } },
           { createdBy: context.user.id },
           { _id: context.user.id },
+          { _id: { $in: programUserIds } },
         ];
       }
 

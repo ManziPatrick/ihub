@@ -732,7 +732,7 @@ export default function SuperAdminMap() {
                   </p>
                   {!isSuperAdmin && (
                     <p className="text-[11px] text-accent font-semibold mt-0.5">
-                      You see users enrolled in your courses only
+                      You see users in your courses and programs only
                     </p>
                   )}
                 </div>
