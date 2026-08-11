@@ -36,6 +36,7 @@ export const LOGIN_USER = gql`
         username
         email
         role
+        permissions
         fullName
         avatar
         title
@@ -64,6 +65,7 @@ export const GOOGLE_LOGIN = gql`
         username
         email
         role
+        permissions
         fullName
         avatar
         title
@@ -92,6 +94,7 @@ export const REGISTER_USER = gql`
         username
         email
         role
+        permissions
         fullName
         avatar
         title

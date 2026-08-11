@@ -731,6 +731,7 @@ export const GET_ME = gql`
       username
       email
       role
+      permissions
       status
       fullName
       avatar

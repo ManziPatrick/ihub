@@ -76,10 +76,14 @@ export const locationResolvers = {
         .populate('enrolledCourses', 'title');
       return users.map((u: any) => ({
         id: u._id.toString(),
-        username: u.username,
-        email: u.email,
-        role: u.role,
-        fullName: u.fullName,
+        // Some legacy/Google-created users have a null username or email —
+        // the User GraphQL type declares them non-nullable, so coerce to a
+        // safe fallback instead of crashing the whole map with
+        // "Cannot return null for non-nullable field User.username".
+        username: u.username || u.fullName || u.email || 'Unknown User',
+        email: u.email || '',
+        role: u.role || 'student',
+        fullName: u.fullName || u.username || '',
         avatar: u.avatar,
         phone: u.phone,
         location: u.location,
@@ -112,7 +116,17 @@ export const locationResolvers = {
         },
         { new: true }
       );
-      return user;
+      if (!user) throw new Error('User not found');
+      return {
+        id: user._id.toString(),
+        username: user.username || user.fullName || user.email || 'Unknown User',
+        email: user.email || '',
+        role: user.role || 'student',
+        latitude: user.latitude ?? null,
+        longitude: user.longitude ?? null,
+        locationUpdatedAt: user.locationUpdatedAt?.toISOString() || null,
+        locationShared: user.locationShared ?? false,
+      };
     },
     adminUpdateUserLocation: async (_: any, { userId, latitude, longitude }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
@@ -128,7 +142,17 @@ export const locationResolvers = {
         },
         { new: true }
       );
-      return user;
+      if (!user) throw new Error('User not found');
+      return {
+        id: user._id.toString(),
+        username: user.username || user.fullName || user.email || 'Unknown User',
+        email: user.email || '',
+        role: user.role || 'student',
+        latitude: user.latitude ?? null,
+        longitude: user.longitude ?? null,
+        locationUpdatedAt: user.locationUpdatedAt?.toISOString() || null,
+        locationShared: user.locationShared ?? false,
+      };
     },
 
     /** Admin can mark a user as having denied location sharing */

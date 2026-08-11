@@ -38,6 +38,7 @@ export interface User {
   fullName: string;
   role: UserRole;
   status?: string;
+  permissions?: string[];
   avatar?: string;
   coverImage?: string;
   enrolledCourses?: string[];
@@ -212,6 +213,7 @@ export function AuthProvider({
         fullName:
           userData.username || userData.fullName,
         role: userData.role || "student",
+        permissions: userData.permissions || [],
         createdAt:
           userData.createdAt ||
           new Date().toISOString(),
@@ -418,6 +420,7 @@ export function AuthProvider({
         userData.fullName,
 
       role: userData.role || "student",
+      permissions: userData.permissions || [],
 
       createdAt:
         userData.createdAt ||

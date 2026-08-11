@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { requirePermission } from './permissions';
 import { User } from '../models/User';
 import Notification from '../models/Notification';
 import { Resource } from '../models/Resource';
@@ -974,6 +975,7 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
+      if (context.user.role === 'admin') requirePermission(context, 'analytics');
       const [
         totalUsers,
         students,
@@ -1199,6 +1201,10 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
+      // NOTE: no `users` permission gate here on purpose — this shared list is
+      // also consumed by course/project pages (instructor pickers, student
+      // lists). The dedicated User Management pages enforce the permission at
+      // the route level (ProtectedRoute requiredPermission="users").
 
       const query: any = { isDeleted: { $ne: true } };
 
@@ -1943,6 +1949,7 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
+      if (context.user.role === 'admin') requirePermission(context, 'payments');
 
       const isSuperAdmin = context.user.role === 'super_admin';
       let adminCourseIds: any[] = [];
@@ -2407,6 +2414,7 @@ export const resolvers = {
 
     analytics: async (_: any, { createdBy }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) throw new Error('Not authorized');
+      if (context.user.role === 'admin') requirePermission(context, 'analytics');
 
       let targetCreatedBy = context.user.role !== 'super_admin' ? context.user.id : createdBy;
       // Use the same broader user scope as the `users` resolver for consistency
@@ -4861,6 +4869,7 @@ export const resolvers = {
       if (context.user.role !== 'trainer' && context.user.role !== 'super_admin' && context.user.role !== 'admin') {
         throw new Error('Not authorized');
       }
+      if (context.user.role === 'admin') requirePermission(context, 'courses');
 
       // Phone validation: if publishing, instructor must have a valid phone number for commission payouts
       if ((args.status || 'published') === 'published') {
@@ -4898,6 +4907,7 @@ export const resolvers = {
 
     updateCourse: async (_: any, { id, instructorId, ...args }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
+      if (context.user.role === 'admin') requirePermission(context, 'courses');
 
       if (!id || id === "") throw new Error("Course ID is required");
       const course = await Course.findById(id);
@@ -5160,6 +5170,7 @@ export const resolvers = {
 
     deleteCourse: async (_: any, { id }: { id: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
+      if (context.user.role === 'admin') requirePermission(context, 'courses');
 
       if (!id || id === "") throw new Error("Course ID is required");
       const course = await Course.findById(id);
@@ -5482,6 +5493,7 @@ export const resolvers = {
       if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) {
         throw new Error('Not authorized');
       }
+      if (context.user.role === 'admin') requirePermission(context, 'users');
 
       if (context.user.role === 'admin' && (args.role === 'admin' || args.role === 'super_admin')) {
         throw new Error('Admins cannot create admin or super_admin users');
@@ -5541,6 +5553,7 @@ export const resolvers = {
       if (!isSelf && !isAdmin) {
         throw new Error('Not authorized');
       }
+      if (!isSelf && context.user.role === 'admin') requirePermission(context, 'users');
 
       const user = await User.findById(id);
       if (!user) throw new Error('User not found');
@@ -8016,6 +8029,7 @@ export const resolvers = {
 
     createInternshipProgram: async (_: any, args: any, context: any) => {
       if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (context.user?.role === 'admin') requirePermission(context, 'internships');
       const program = new InternshipProgram({ ...args, createdBy: context.user.id });
       await program.save();
       await logActivity(context.user.id, 'CREATE', 'InternshipProgram', program.id, `Created program: ${program.title}`);
@@ -8024,6 +8038,7 @@ export const resolvers = {
 
     updateInternshipProgram: async (_: any, { id, ...args }: any, context: any) => {
       if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (context.user?.role === 'admin') requirePermission(context, 'internships');
 
       // Ownership check: only the creator or super_admin can update
       if (context.user.role !== 'super_admin') {
@@ -8050,6 +8065,7 @@ export const resolvers = {
 
     deleteInternshipProgram: async (_: any, { id }: { id: string }, context: any) => {
       if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (context.user?.role === 'admin') requirePermission(context, 'internships');
       const program = await InternshipProgram.findById(id);
       if (!program) throw new Error('Program not found');
 

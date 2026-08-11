@@ -248,6 +248,59 @@ const clientNavItems: NavItem[] = [
   { label: "Messages", href: "/chat", icon: MessageSquare },
 ];
 
+/* Admin module permissions — matches the keys saved when a super admin
+   creates an admin account (SuperAdminAdmins.tsx). Admins only see the
+   nav sections they have been granted; super admins see everything. */
+const ADMIN_NAV_PERMISSIONS: Record<string, string> = {
+  "/portal/admin/users": "users",
+  "/portal/admin/completed-users": "users",
+  "/portal/super-admin/user-map": "users",
+  "/portal/admin/courses": "courses",
+  "/portal/admin/course-preview": "courses",
+  "/portal/admin/assignment-reviews": "courses",
+  "/portal/super-admin/code-answers": "courses",
+  "/portal/admin/payments": "payments",
+  "/portal/admin/commissions": "payments",
+  "/portal/admin/refunds": "payments",
+  "/portal/super-admin/discount-codes": "payments",
+  "/portal/admin/applications": "internships",
+  "/portal/admin/applicants": "internships",
+  "/portal/admin/internships": "internships",
+  "/portal/admin/scholarships": "internships",
+  "/portal/admin/projects": "students",
+  "/portal/admin/project-applications": "students",
+  "/portal/admin/project-onboarding": "students",
+  "/portal/admin/analytics": "analytics",
+};
+
+function hasNavPermission(href: string | undefined, permissions: string[]): boolean {
+  if (!href) return true;
+  const required = ADMIN_NAV_PERMISSIONS[href];
+  if (!required) return true; // un-gated links (Schedule, Messages) stay visible
+  return permissions.includes(required);
+}
+
+function filterNavByPermissions(items: NavItem[], permissions: string[]): NavItem[] {
+  const filtered: NavItem[] = [];
+  for (const item of items) {
+    if (item.children) {
+      const children = item.children
+        .map((child): NavItem | null => {
+          if (child.children) {
+            const nested = child.children.filter((gc) => hasNavPermission(gc.href, permissions));
+            return nested.length > 0 ? { ...child, children: nested } : null;
+          }
+          return hasNavPermission(child.href, permissions) ? child : null;
+        })
+        .filter((c): c is NavItem => c !== null);
+      if (children.length > 0) filtered.push({ ...item, children });
+    } else if (hasNavPermission(item.href, permissions)) {
+      filtered.push(item);
+    }
+  }
+  return filtered;
+}
+
 const navItemsByRole: Record<UserRole, NavItem[]> = {
   student: studentNavItems,
   trainer: trainerNavItems,
@@ -500,7 +553,10 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
   if (!user) return null;
 
-  const navItems = navItemsByRole[user.role] || studentNavItems;
+  const navItems =
+    user.role === "admin"
+      ? filterNavByPermissions(adminNavItems, user.permissions || [])
+      : navItemsByRole[user.role] || studentNavItems;
   const roleLabel = roleLabels[user.role];
 
   const handleLogout = () => {
@@ -945,23 +1001,33 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
           {user.role === 'admin' && (
             <div className="hidden lg:flex items-center gap-3 px-3 h-10 bg-background/50 border border-border/50 rounded-xl">
-              <Link to="/portal/admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
-                <Users className="w-3.5 h-3.5 text-primary" />
-                <span className="text-xs font-bold text-foreground">{adminStats?.totalUsers || 0}</span>
-                <span className="text-[10px] text-muted-foreground hidden xl:inline">Users</span>
-              </Link>
-              <div className="w-px h-4 bg-border/50" />
-              <Link to="/portal/admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
-                <GraduationCap className="w-3.5 h-3.5 text-blue-400" />
-                <span className="text-xs font-bold text-foreground">{adminStats?.totalStudents || 0}</span>
-                <span className="text-[10px] text-muted-foreground hidden xl:inline">Students</span>
-              </Link>
-              <div className="w-px h-4 bg-border/50" />
-              <Link to="/portal/admin/courses" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
-                <BookOpen className="w-3.5 h-3.5 text-green-400" />
-                <span className="text-xs font-bold text-foreground">{adminStats?.totalCourses || 0}</span>
-                <span className="text-[10px] text-muted-foreground hidden xl:inline">Courses</span>
-              </Link>
+              {hasNavPermission("/portal/admin/users", user.permissions || []) && (
+                <Link to="/portal/admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                  <Users className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-xs font-bold text-foreground">{adminStats?.totalUsers || 0}</span>
+                  <span className="text-[10px] text-muted-foreground hidden xl:inline">Users</span>
+                </Link>
+              )}
+              {hasNavPermission("/portal/admin/users", user.permissions || []) && (
+                <>
+                  <div className="w-px h-4 bg-border/50" />
+                  <Link to="/portal/admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                    <GraduationCap className="w-3.5 h-3.5 text-blue-400" />
+                    <span className="text-xs font-bold text-foreground">{adminStats?.totalStudents || 0}</span>
+                    <span className="text-[10px] text-muted-foreground hidden xl:inline">Students</span>
+                  </Link>
+                </>
+              )}
+              {hasNavPermission("/portal/admin/courses", user.permissions || []) && (
+                <>
+                  <div className="w-px h-4 bg-border/50" />
+                  <Link to="/portal/admin/courses" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                    <BookOpen className="w-3.5 h-3.5 text-green-400" />
+                    <span className="text-xs font-bold text-foreground">{adminStats?.totalCourses || 0}</span>
+                    <span className="text-[10px] text-muted-foreground hidden xl:inline">Courses</span>
+                  </Link>
+                </>
+              )}
             </div>
           )}
 

@@ -5,9 +5,15 @@ import { Loader2 } from "lucide-react";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: UserRole[];
+  /**
+   * Admin module permission required to view this page
+   * (users | courses | payments | internships | analytics | students).
+   * Super admins implicitly hold every permission.
+   */
+  requiredPermission?: string;
 }
 
-export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, allowedRoles, requiredPermission }: ProtectedRouteProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
@@ -38,6 +44,14 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     };
 
     return <Navigate to={roleRedirects[user.role]} replace />;
+  }
+
+  // Permission gate: only enforced for regular admins. Super admins pass.
+  if (user && user.role === "admin" && requiredPermission) {
+    const hasPermission = (user.permissions || []).includes(requiredPermission);
+    if (!hasPermission) {
+      return <Navigate to="/portal/admin" replace />;
+    }
   }
 
   return <>{children}</>;

@@ -196,9 +196,9 @@ const startServer = async () => {
                     const userId = decoded?.id || decoded?._id || decoded?.userId;
                     if (userId) {
                         // Re-validate status so suspended/deactivated accounts can't subscribe
-                        const dbUser = await User.findById(userId).select('status isDeleted').lean();
+                        const dbUser = await User.findById(userId).select('status isDeleted permissions').lean();
                         if (dbUser && !dbUser.isDeleted && (dbUser.status || 'active') === 'active') {
-                            user = { ...decoded, role: dbUser.role };
+                            user = { ...decoded, role: dbUser.role, permissions: dbUser.permissions || [] };
                         }
                     }
                 } catch (e) {

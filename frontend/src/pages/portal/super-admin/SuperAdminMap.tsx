@@ -27,8 +27,10 @@ import {
   Check,
   BookOpen,
   GraduationCap,
+  Users,
 } from "lucide-react";
 import { PaginationBar } from "@/components/ui/pagination-bar";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { cn } from "@/lib/utils";
 import { ADMIN_UPDATE_USER_LOCATION } from "@/lib/graphql/mutations";
@@ -182,6 +184,7 @@ export default function SuperAdminMap() {
   // Users table state
   const [tablePage, setTablePage] = useState(1);
   const [tablePageSize, setTablePageSize] = useState(10);
+  const [activeTab, setActiveTab] = useState<"map" | "users">("map");
 
   const { data, loading, refetch } = useQuery(GET_USERS_WITH_LOCATION);
   const [adminUpdateLocation] = useMutation(ADMIN_UPDATE_USER_LOCATION);
@@ -310,6 +313,8 @@ export default function SuperAdminMap() {
     setEditMode(false);
     setPendingCoords(null);
     setPendingAddress(null);
+    // Switch to the Map tab so the user flies into view
+    setActiveTab("map");
     // FlyToUser (inside UserMap) flies the map to the selection automatically
   };
 
@@ -468,7 +473,22 @@ export default function SuperAdminMap() {
           </div>
         </motion.div>
 
-        {/* ── Map + User detail sidebar ── */}
+        {/* ── Map / Users tabs ── */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "map" | "users")}>
+          <TabsList className="h-10">
+            <TabsTrigger value="map" className="gap-1.5">
+              <MapIcon className="w-4 h-4" /> Map View
+            </TabsTrigger>
+            <TabsTrigger value="users" className="gap-1.5">
+              <Users className="w-4 h-4" /> Users List
+              <span className="text-[10px] font-bold bg-foreground/10 rounded-full px-1.5 py-0.5">
+                {filteredUsers.length}
+              </span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Map View */}
+          <TabsContent value="map" className="mt-3">
         <div className="flex gap-4">
           {/* Map */}
           <motion.div
@@ -712,7 +732,10 @@ export default function SuperAdminMap() {
             )}
           </AnimatePresence>
         </div>
+          </TabsContent>
 
+          {/* Users List */}
+          <TabsContent value="users" className="mt-3">
         {/* ── All Users Table — click a row to view on the map ── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -877,6 +900,8 @@ export default function SuperAdminMap() {
             </CardContent>
           </Card>
         </motion.div>
+          </TabsContent>
+        </Tabs>
 
         {/* ── Legend footer ── */}
         <motion.div

@@ -33,7 +33,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
             return next();
         }
 
-        const dbUser = await User.findById(userId).select('role status isDeleted').lean();
+        const dbUser = await User.findById(userId).select('role status isDeleted permissions').lean();
 
         if (!dbUser || dbUser.isDeleted) {
             (req as any).accountBlockedReason = 'deleted';
@@ -49,8 +49,9 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
             return next();
         }
 
-        // Attach token claims but refresh the role from the DB
-        (req as any).user = { ...decoded, role: dbUser.role };
+        // Attach token claims but refresh role + permissions from the DB so
+        // permission changes apply immediately (no need to re-login).
+        (req as any).user = { ...decoded, role: dbUser.role, permissions: dbUser.permissions || [] };
         next();
     } catch (error) {
         next(); // Proceed without user even on error
