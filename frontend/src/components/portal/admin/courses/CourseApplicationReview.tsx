@@ -22,6 +22,10 @@ import {
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from "framer-motion";
 import { UserDetailsSheet } from '@/components/portal/dialogs/UserDetailsSheet';
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
+import { cn } from "@/lib/utils";
+import { usePageFetching } from "@/lib/hooks/usePageFetching";
 
 export default function CourseApplicationReview() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,7 +36,6 @@ export default function CourseApplicationReview() {
   
   const { data, loading, error, refetch } = useQuery(GET_COURSE_APPLICATIONS, {
     variables: { status: filter, page: currentPage, limit: pageSize },
-    pollInterval: 30000 
   });
   
   const [updateStatus] = useMutation(UPDATE_COURSE_APPLICATION_STATUS, {
@@ -73,10 +76,9 @@ export default function CourseApplicationReview() {
     }
   };
 
+  const { fetchingPage, startPageFetch } = usePageFetching(loading, data);
   if (loading) return (
-    <div className="flex items-center justify-center py-20">
-      <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-    </div>
+    <ListSkeleton count={6} />
   );
   if (error) return (
     <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
@@ -116,7 +118,7 @@ export default function CourseApplicationReview() {
         </div>
       </div>
 
-      <div className="grid gap-4">
+      <div className={cn("grid gap-4 transition-opacity duration-300", fetchingPage && "opacity-40")}>
         {applications.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border/50">
             <Clock className="w-10 h-10 text-muted-foreground/30 mb-3" />
@@ -257,34 +259,15 @@ export default function CourseApplicationReview() {
         ))}
       </div>
 
-      {/* Pagination */}
-      {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between px-2 py-4">
-          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
-            Page {pagination.currentPage} of {pagination.totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={!pagination.hasPreviousPage}
-              className="h-9 rounded-xl"
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-              disabled={!pagination.hasNextPage}
-              className="h-9 rounded-xl"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      <PaginationBar
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        totalCount={pagination.totalCount}
+        hasPreviousPage={pagination.hasPreviousPage}
+        hasNextPage={pagination.hasNextPage}
+        onPageChange={(p) => { startPageFetch(); setCurrentPage(p); }}
+        isLoading={loading || fetchingPage}
+      />
       {/* Profile Detail Sheet */}
       <UserDetailsSheet
         open={!!selectedUser}

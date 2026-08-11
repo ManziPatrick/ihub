@@ -305,6 +305,98 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
         doc.y += 10;
       });
 
+      // ── Assessments: Quizzes & Exams (questions only, NO answers) ──
+      // Lets teachers print the outline as a test paper for students.
+      const assessmentLessons = modules.flatMap((mod: any, mIdx: number) =>
+        (mod.lessons || [])
+          .filter((l: any) => l.type === 'quiz' || l.type === 'assignment')
+          .map((l: any) => ({ ...l, moduleIndex: mIdx, moduleTitle: mod.title }))
+      );
+
+      if (assessmentLessons.length > 0) {
+        const assessmentHeader = () => {
+          doc.addPage();
+          doc.rect(0, 0, pageWidth, 8).fill('#1a365d');
+          doc.fontSize(7).font('Helvetica').fillColor('#ffffff')
+            .text((course as any).title, margin, 1, { width: contentWidth, align: 'center' });
+        };
+
+        assessmentHeader();
+        doc.fontSize(15)
+          .font('Helvetica-Bold')
+          .fillColor('#1a365d')
+          .text('Quizzes & Exams', margin, doc.y + 24);
+        doc.fontSize(9)
+          .font('Helvetica')
+          .fillColor('#888888')
+          .text(
+            'Questions only — answers are intentionally not included so you can print this as a test paper.',
+            margin, doc.y + 8,
+            { width: contentWidth }
+          );
+        doc.y += 14;
+
+        for (const lesson of assessmentLessons) {
+          if (doc.y > doc.page.height - 160) assessmentHeader();
+
+          const headerY = doc.y + 12;
+          const isExam = lesson.type === 'assignment';
+          const badgeColor = isExam ? '#8b5cf6' : '#eab308';
+
+          doc.rect(margin, headerY, contentWidth, 30).fill(isExam ? '#f6f2ff' : '#fffbe6');
+          doc.rect(margin, headerY, 6, 30).fill(badgeColor);
+          doc.fontSize(11)
+            .font('Helvetica-Bold')
+            .fillColor('#333333')
+            .text(
+              `${isExam ? 'EXAM' : 'QUIZ'} — Module ${lesson.moduleIndex + 1}: ${cleanRichText(lesson.title) || 'Untitled'}`,
+              margin + 16, headerY + 9,
+              { width: contentWidth - 32 }
+            );
+          doc.y = headerY + 38;
+
+          const questions = lesson.quizQuestions || [];
+          if (questions.length === 0) {
+            doc.fontSize(9).font('Helvetica').fillColor('#888888')
+              .text('No questions available for this assessment.', margin, doc.y + 6, { width: contentWidth });
+            doc.y += 16;
+            continue;
+          }
+
+          questions.forEach((q: any, qi: number) => {
+            if (doc.y > doc.page.height - 130) assessmentHeader();
+
+            doc.fontSize(10)
+              .font('Helvetica-Bold')
+              .fillColor('#1a365d')
+              .text(`${qi + 1}. ${cleanRichText(q.questionText) || 'Question'}`, margin, doc.y + 10, {
+                width: contentWidth,
+                lineGap: 2,
+              });
+
+            const options = q.options || [];
+            if (options.length > 0) {
+              options.forEach((opt: string, oi: number) => {
+                if (doc.y > doc.page.height - 110) assessmentHeader();
+                doc.fontSize(9)
+                  .font('Helvetica')
+                  .fillColor('#555555')
+                  .text(
+                    `   ${String.fromCharCode(65 + oi)}. ${cleanRichText(opt)}`,
+                    margin, doc.y + 3,
+                    { width: contentWidth - 30, lineGap: 1 }
+                  );
+              });
+            } else {
+              // Open-ended question → leave writing space for the printed test
+              doc.fontSize(9).font('Helvetica').fillColor('#bbbbbb')
+                .text('..............................................................................', margin, doc.y + 6, { width: contentWidth });
+            }
+            doc.y += 10;
+          });
+        }
+      }
+
       // Footer
       doc.fontSize(8)
         .font('Helvetica')

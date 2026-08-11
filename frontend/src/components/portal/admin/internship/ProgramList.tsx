@@ -11,6 +11,10 @@ import {
   ChevronRight, Clock, CheckCircle, AlertCircle, Lock, Percent
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
+import { cn } from "@/lib/utils";
+import { usePageFetching } from "@/lib/hooks/usePageFetching";
 
 // Robust date formatter that handles both ISO strings and timestamps
 const formatDate = (raw: any) => {
@@ -84,10 +88,9 @@ export default function ProgramList() {
     onError: (err) => toast.error(err.message),
   });
 
+  const { fetchingPage, startPageFetch } = usePageFetching(loading, data);
   if (loading) return (
-    <div className="flex items-center justify-center py-20">
-      <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-    </div>
+    <ListSkeleton count={6} />
   );
   if (error) return <div className="text-destructive p-4">Error loading programs: {error.message}</div>;
 
@@ -142,7 +145,7 @@ export default function ProgramList() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className={cn("grid gap-6 md:grid-cols-2 lg:grid-cols-3 transition-opacity duration-300", fetchingPage && "opacity-40")}>
         {programs.map((program: any) => {
           const statusCfg = STATUS_CONFIG[program.status] || STATUS_CONFIG.active;
           const isEditing = editingId === program.id;
@@ -371,54 +374,15 @@ export default function ProgramList() {
         })}
       </div>
 
-      {/* Pagination UI */}
-      {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between px-2 py-4">
-          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-2">
-            Page {pagination.currentPage} of {pagination.totalPages} ({pagination.totalCount} programs)
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={!pagination.hasPreviousPage}
-              className="h-9 w-9 p-0 rounded-xl"
-            >
-              <ChevronRight className="w-4 h-4 rotate-180" />
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === pagination.totalPages || Math.abs(p - currentPage) <= 1)
-                .map((p, i, arr) => {
-                  const showEllipsis = i > 0 && p - arr[i - 1] > 1;
-                  return (
-                    <div key={p} className="flex items-center">
-                      {showEllipsis && <span className="px-1 text-muted-foreground">...</span>}
-                      <Button
-                        variant={currentPage === p ? 'gold' : 'outline'}
-                        size="sm"
-                        onClick={() => setCurrentPage(p)}
-                        className={`h-9 w-9 p-0 rounded-xl ${currentPage === p ? 'pointer-events-none' : ''}`}
-                      >
-                        {p}
-                      </Button>
-                    </div>
-                  );
-                })}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-              disabled={!pagination.hasNextPage}
-              className="h-9 w-9 p-0 rounded-xl"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <PaginationBar
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        totalCount={pagination.totalCount}
+        hasPreviousPage={pagination.hasPreviousPage}
+        hasNextPage={pagination.hasNextPage}
+        onPageChange={(p) => { startPageFetch(); setCurrentPage(p); }}
+        isLoading={loading || fetchingPage}
+      />
 
       {programs.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border/50 rounded-3xl">

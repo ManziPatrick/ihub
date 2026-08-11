@@ -67,6 +67,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
+import { cn } from "@/lib/utils";
+import { usePageFetching } from "@/lib/hooks/usePageFetching";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   active: { label: 'Active', color: 'bg-green-500/10 text-green-600 border-green-500/20', icon: CheckCircle },
@@ -137,6 +141,8 @@ export default function TeamManagement() {
     },
     onError: (err) => toast.error(err.message)
   });
+
+  const { fetchingPage, startPageFetch } = usePageFetching(teamsLoading, teamsData);
 
   // Open project board for a team
   if (boardTeam) {
@@ -284,7 +290,7 @@ export default function TeamManagement() {
       </div>
 
       {/* Teams Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className={cn("grid gap-6 md:grid-cols-2 lg:grid-cols-3 transition-opacity duration-300", fetchingPage && "opacity-40")}>
         {filteredTeams.map((team: any) => {
           const StatusIcon = STATUS_CONFIG[team.status]?.icon || AlertCircle;
           const isIndividual = team.type === 'individual';
@@ -485,54 +491,15 @@ export default function TeamManagement() {
         })}
       </div>
 
-      {/* Pagination UI */}
-      {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between px-2 py-4">
-          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-2">
-            Page {pagination.currentPage} of {pagination.totalPages} ({pagination.totalCount} tracks)
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={!pagination.hasPreviousPage}
-              className="h-9 w-9 p-0 rounded-xl"
-            >
-              <ArrowRight className="h-4 w-4 rotate-180" />
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === pagination.totalPages || Math.abs(p - currentPage) <= 1)
-                .map((p, i, arr) => {
-                  const showEllipsis = i > 0 && p - arr[i - 1] > 1;
-                  return (
-                    <div key={p} className="flex items-center">
-                      {showEllipsis && <span className="px-1 text-muted-foreground">...</span>}
-                      <Button
-                        variant={currentPage === p ? 'gold' : 'outline'}
-                        size="sm"
-                        onClick={() => setCurrentPage(p)}
-                        className={`h-9 w-9 p-0 rounded-xl ${currentPage === p ? 'pointer-events-none' : ''}`}
-                      >
-                        {p}
-                      </Button>
-                    </div>
-                  );
-                })}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-              disabled={!pagination.hasNextPage}
-              className="h-9 w-9 p-0 rounded-xl"
-            >
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <PaginationBar
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        totalCount={pagination.totalCount}
+        hasPreviousPage={pagination.hasPreviousPage}
+        hasNextPage={pagination.hasNextPage}
+        onPageChange={(p) => { startPageFetch(); setCurrentPage(p); }}
+        isLoading={teamsLoading || fetchingPage}
+      />
 
       {filteredTeams.length === 0 && !teamsLoading && (
         <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-border/50 rounded-[40px] bg-muted/5">

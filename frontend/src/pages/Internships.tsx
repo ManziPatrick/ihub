@@ -39,6 +39,8 @@ import { GET_INTERNSHIP_PROGRAMS, GET_MY_INTERNSHIP_APPLICATIONS, GET_ME } from 
 import { useAuth } from "@/contexts/AuthContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { cn } from "@/lib/utils";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
+import { usePageFetching } from "@/lib/hooks/usePageFetching";
 
 const benefits = [
   { icon: FolderOpen, title: "Real Projects", description: "Work on actual client projects and products, not simulated exercises. Your work will have real impact." },
@@ -130,6 +132,9 @@ const Opportunities = () => {
 
   const internshipPrograms = (internsData as any)?.internshipPrograms?.items || [];
   const myApplications = (appsData as any)?.myInternshipApplications || [];
+
+  // Fade the existing cards while a search/debounce refetch is in flight
+  const { fetchingPage } = usePageFetching(internsLoading, internsData);
 
   // Group opportunities by organization (company or school)
   const organizations = useMemo(() => {
@@ -353,7 +358,9 @@ const Opportunities = () => {
               </div>
             </div>
 
-            {internshipPrograms.length === 0 && !internsLoading ? (
+            {internshipPrograms.length === 0 && internsLoading ? (
+              <ListSkeleton count={6} />
+            ) : internshipPrograms.length === 0 && !internsLoading ? (
               <div className="text-center py-12">
                 <Briefcase className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-muted-foreground">
@@ -363,7 +370,7 @@ const Opportunities = () => {
                 </p>
               </div>
             ) : viewMode === 'grid' ? (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl mx-auto">
+              <div className={cn("grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl mx-auto transition-opacity duration-300", fetchingPage && "opacity-40")}>
                 {internshipPrograms.map((intern: any) => {
                   const orgName = orgNameFor(intern);
                   const logo = intern.organizationLogo || null;
@@ -456,7 +463,7 @@ const Opportunities = () => {
                 })}
               </div>
             ) : (
-              <div className="max-w-4xl mx-auto space-y-6">
+              <div className={cn("max-w-4xl mx-auto space-y-6 transition-opacity duration-300", fetchingPage && "opacity-40")}>
                 {organizations.map((org, orgIndex) => {
                   const isExpanded = expandedOrg === org.name;
                   const Icon = Building2;

@@ -56,7 +56,7 @@ export function Header() {
 
   const { data: notificationData } = useQuery<{ unreadNotificationCount: number }>(
     GET_UNREAD_NOTIFICATIONS,
-    { skip: !isAuthenticated, pollInterval: isAuthenticated ? 60000 : 0, fetchPolicy: 'cache-first' }
+    { skip: !isAuthenticated, fetchPolicy: 'cache-first' }
   );
   const unreadCount = notificationData?.unreadNotificationCount || 0;
 

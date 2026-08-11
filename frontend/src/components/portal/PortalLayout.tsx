@@ -191,6 +191,7 @@ const superAdminNavItems: NavItem[] = [
     icon: Shield,
     children: [
       { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },
+      { label: "Courses Manager", href: "/portal/super-admin/courses", icon: BookOpen },
       { label: "User Management", href: "/portal/admin/users", icon: UserCog },
       { label: "All Users", href: "/portal/super-admin/users", icon: Users },
       { label: "Completed Users", href: "/portal/super-admin/completed-users", icon: GraduationCap },
@@ -314,7 +315,6 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
   const { data: notifData } = useQuery<{ notifications: any[] }>(GET_NOTIFICATIONS, {
     skip: !user,
-    pollInterval: 60000,
   });
 
   const { data: meData } = useQuery(GET_ME, {
@@ -323,17 +323,14 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
   const { data: trainerStatsData } = useQuery(GET_TRAINER_STATS, {
     skip: !user || (user.role !== 'trainer' && user.role !== 'mentor'),
-    pollInterval: 60000,
   });
 
   const { data: adminDashboardData } = useQuery(GET_ADMIN_DASHBOARD_DATA, {
     skip: !user || user.role !== 'admin',
-    pollInterval: 60000,
   });
 
   const { data: globalStatsData } = useQuery(GET_STATS, {
     skip: !user || user.role !== 'super_admin',
-    pollInterval: 60000,
   });
 
   const { data: allTrainersData } = useQuery(GET_ALL_TRAINERS, {
@@ -342,7 +339,6 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
   const { data: errorStatsData } = useQuery(GET_ERROR_REPORT_STATS, {
     skip: !user || user.role !== 'super_admin',
-    pollInterval: 60000,
     fetchPolicy: "network-only",
   });
 

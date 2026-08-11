@@ -86,6 +86,7 @@ const AdminStudentView = lazy(() => import("@/pages/portal/admin/AdminStudentVie
 // Super Admin Portal
 const SuperAdminDashboard = lazy(() => import("@/pages/portal/super-admin/SuperAdminDashboard"));
 const SuperAdminAdmins = lazy(() => import("@/pages/portal/super-admin/SuperAdminAdmins"));
+const SuperAdminCourses = lazy(() => import("@/pages/portal/super-admin/SuperAdminCourses"));
 const SuperAdminUsers = lazy(() => import("@/pages/portal/super-admin/SuperAdminUsers").then(m => ({ default: m.default })));
 const SuperAdminConfig = lazy(() => import("@/pages/portal/super-admin/SuperAdminConfig"));
 const SuperAdminAnalytics = lazy(() => import("@/pages/portal/super-admin/SuperAdminAnalytics"));
@@ -253,6 +254,7 @@ export function AnimatedRoutes() {
           {/* Super Admin Portal */}
           <Route path="/portal/super-admin" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminDashboard /></ProtectedRoute>} />
           <Route path="/portal/super-admin/admins" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminAdmins /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/courses" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminCourses /></ProtectedRoute>} />
           <Route path="/portal/super-admin/users" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminUsers /></ProtectedRoute>} />
           <Route path="/portal/super-admin/config" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminConfig /></ProtectedRoute>} />
           <Route path="/portal/super-admin/analytics" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminAnalytics /></ProtectedRoute>} />
