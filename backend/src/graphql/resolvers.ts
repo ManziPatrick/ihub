@@ -1208,7 +1208,9 @@ export const resolvers = {
 
       const query: any = { isDeleted: { $ne: true } };
 
-      if (context.user.role === 'admin' || context.user.role === 'trainer') {
+      // Trainers stay scoped to their own students/instructors; admins and
+      // super admins see every platform user.
+      if (context.user.role === 'trainer') {
         const courses = await Course.find({
           $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
         });
@@ -1247,14 +1249,9 @@ export const resolvers = {
         } else {
           query.$or = orConditions;
         }
-      } else if (context.user.role === 'super_admin') {
-        // Super admin sees all users regardless of createdBy filter
+      } else {
+        // Admin / super admin sees all users regardless of createdBy filter
         if (role) query.role = role;
-      } else if (createdBy) {
-        query.createdBy = createdBy;
-        if (role) query.role = role;
-      } else if (role) {
-        query.role = role;
       }
 
       const skip = (page - 1) * limit;
