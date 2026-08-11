@@ -91,6 +91,95 @@ export function truncateAtWordBoundary(text: string, maxChars: number): string {
   return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + '…';
 }
 
+/** Draw multi-paragraph text with clear vertical space between paragraphs. */
+function writeParagraphs(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  x: number,
+  y: number,
+  opts: { width?: number; lineGap?: number; align?: 'left' | 'center' | 'right' | 'justify' } = {},
+  paragraphGap = 9
+): number {
+  const paragraphs = text
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  let yy = y;
+  for (let i = 0; i < paragraphs.length; i++) {
+    if (i > 0) yy += paragraphGap;
+    doc.text(paragraphs[i], x, yy, { lineGap: opts.lineGap ?? 3, width: opts.width, align: opts.align });
+    yy = doc.y + 2;
+  }
+  doc.y = yy - 2;
+  return doc.y;
+}
+
+/** Download an image (remote URL, data URI, or local path) into a Buffer for pdfkit. */
+async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+  try {
+    if (url.startsWith('data:')) {
+      const comma = url.indexOf(',');
+      return comma > -1 ? Buffer.from(url.slice(comma + 1), 'base64') : null;
+    }
+    if (/^https?:\/\//i.test(url)) {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return Buffer.from(await res.arrayBuffer());
+    }
+    // Local file (e.g. /uploads/thumb.jpg) — resolve against the backend root
+    const localPath = path.join(__dirname, '../../', url.replace(/^\/+/, ''));
+    if (fs.existsSync(localPath)) return fs.readFileSync(localPath);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Draw a lesson thumbnail — the real image when available, else a styled placeholder. */
+function drawVideoThumb(
+  doc: PDFKit.PDFDocument,
+  buf: Buffer | null,
+  x: number,
+  y: number,
+  w: number,
+  h: number
+): void {
+  if (buf) {
+    try {
+      doc.image(buf, x, y, { width: w, height: h });
+    } catch {
+      // corrupted image buffer — fall through to the placeholder below
+      buf = null;
+    }
+  }
+  if (!buf) {
+    doc.rect(x, y, w, h).fill('#dbe4ff');
+    doc.rect(x, y, w, h).strokeColor('#c7d2fe').lineWidth(0.6).stroke();
+    // Play triangle
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    doc
+      .moveTo(cx - 5, cy - 7)
+      .lineTo(cx - 5, cy + 7)
+      .lineTo(cx + 7, cy)
+      .closePath()
+      .fill('#667eea');
+  } else {
+    doc.rect(x, y, w, h).strokeColor('#c7d2fe').lineWidth(0.6).stroke();
+    // Play triangle overlay (semi-transparent white)
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    doc
+      .moveTo(cx - 5, cy - 7)
+      .lineTo(cx - 5, cy + 7)
+      .lineTo(cx + 7, cy)
+      .closePath()
+      .opacity(0.85)
+      .fill('#ffffff');
+    doc.opacity(1);
+  }
+}
+
 /**
  * Generate a PDF export of a full course — title, description, all modules & lessons
  */
@@ -108,6 +197,28 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
   const filename = `course_${slug}_${Date.now()}.pdf`;
   const filepath = path.join(exportsDir, filename);
 
+  const courseTitle = (course as any).title || 'Course';
+  const modules = (course as any).modules || [];
+
+  // Pre-fetch video thumbnails so doc.image() can render them synchronously
+  const thumbCache = new Map<string, Buffer | null>();
+  const fetchThumb = async (url?: string): Promise<Buffer | null> => {
+    if (!url) return null;
+    if (thumbCache.has(url)) return thumbCache.get(url) || null;
+    const buf = await fetchImageBuffer(url);
+    thumbCache.set(url, buf);
+    return buf;
+  };
+  await Promise.all(
+    modules.flatMap((mod: any) =>
+      (mod.lessons || [])
+        .filter((l: any) => l.type === 'video')
+        .map((l: any) => l.videoThumbnail || (course as any).thumbnail)
+        .filter(Boolean)
+        .map((u: string) => fetchThumb(u))
+    )
+  );
+
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -118,8 +229,17 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
       const margin = 50;
       const contentWidth = pageWidth - 2 * margin;
 
+      // Page header — tall enough to hold the (ellipsized) course title on one line
+      // so it can never overlap the content below it.
+      const pageHeader = (title: string = courseTitle) => {
+        doc.rect(0, 0, pageWidth, 24).fill('#1a365d');
+        doc.fontSize(8)
+          .font('Helvetica-Bold')
+          .fillColor('#ffffff')
+          .text(title, margin, 7, { width: contentWidth, align: 'center', height: 13, ellipsis: true });
+      };
+
       // ── Cover Page ──
-      // Top accent bar
       doc.rect(0, 0, pageWidth, 12).fill('#1a365d');
 
       doc.fontSize(32)
@@ -132,11 +252,11 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
         .lineWidth(2)
         .stroke('#667eea');
 
-      // Title
+      // Title (single line, ellipsized so it can never collide with the divider/description)
       doc.fontSize(26)
         .font('Helvetica-Bold')
         .fillColor('#333333')
-        .text((course as any).title, margin, 130, { width: contentWidth, align: 'center' });
+        .text(courseTitle, margin, 130, { width: contentWidth, align: 'center', height: 34, ellipsis: true });
 
       // Description (cleaned — no markdown/HTML leaks). Capped on the cover
       // so it can never collide with the metadata block below.
@@ -158,7 +278,7 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
         { label: 'Category', value: (course as any).category },
         { label: 'Level', value: (course as any).level },
         { label: 'Instructor', value: (course as any).instructor?.username || 'N/A' },
-        { label: 'Modules', value: ((course as any).modules?.length || 0).toString() },
+        { label: 'Modules', value: modules.length.toString() },
         { label: 'Status', value: (course as any).status },
       ];
 
@@ -175,7 +295,7 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
         doc.fontSize(8).font('Helvetica-Bold').fillColor('#999999')
           .text(item.label.toUpperCase(), x, y);
         doc.fontSize(11).font('Helvetica').fillColor('#333333')
-          .text(item.value, x, y + 12);
+          .text(String(item.value ?? ''), x, y + 12);
       });
 
       // Bottom accent bar
@@ -185,68 +305,54 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
       // Full cleaned description (bullets + tables) belongs here, not truncated
       if (description) {
         doc.addPage();
-        doc.rect(0, 0, pageWidth, 8).fill('#1a365d');
-        doc.fontSize(7).font('Helvetica').fillColor('#ffffff')
-          .text((course as any).title, margin, 1, { width: contentWidth, align: 'center' });
+        pageHeader();
         doc.fontSize(13)
           .font('Helvetica-Bold')
           .fillColor('#1a365d')
           .text('Course Overview', margin, doc.y + 24);
-        doc.fontSize(9.5)
-          .font('Helvetica')
-          .fillColor('#444444')
-          .text(description, margin, doc.y + 8, {
-            width: contentWidth,
-            lineGap: 3,
-          });
+        doc.fontSize(9.5).font('Helvetica').fillColor('#444444');
+        writeParagraphs(doc, description, margin, doc.y + 8, { width: contentWidth });
         doc.y += 14;
       }
-
-      const modules = (course as any).modules || [];
 
       modules.forEach((mod: any, mIdx: number) => {
         // Check if we need a new page
         if (doc.y > doc.page.height - 120 || mIdx === 0) {
           doc.addPage();
-          // Page header
-          doc.rect(0, 0, pageWidth, 8).fill('#1a365d');
-          doc.fontSize(7).font('Helvetica').fillColor('#ffffff')
-            .text((course as any).title, margin, 1, { width: contentWidth, align: 'center' });
+          pageHeader();
         }
 
         const startY = doc.y + 20;
 
-        // Module header
-        doc.rect(margin, startY, contentWidth, 32).fill('#f0f4ff');
-        doc.rect(margin, startY, 6, 32).fill('#667eea');
-
-        // Strip a leading "Module N:" from the title so we never print it twice
+        // Module title — strip a leading "Module N:" so it's never printed twice
         const modTitle = (mod.title || '').replace(/^module\s+\d+\s*[:.]?\s*/i, '');
+        const modTitleText = `Module ${mIdx + 1}: ${modTitle}`;
+        // Size the header box to the (possibly wrapped) title so text never overlaps.
+        // Set the draw font FIRST — heightOfString measures with the current font.
+        doc.fontSize(14).font('Helvetica-Bold');
+        const titleH = doc.heightOfString(modTitleText, { width: contentWidth - 32 });
+        const boxH = Math.max(32, titleH + 16);
+
+        doc.rect(margin, startY, contentWidth, boxH).fill('#f0f4ff');
+        doc.rect(margin, startY, 6, boxH).fill('#667eea');
         doc.fontSize(14)
           .font('Helvetica-Bold')
           .fillColor('#1a365d')
-          .text(`Module ${mIdx + 1}: ${modTitle}`, margin + 16, startY + 8);
+          .text(modTitleText, margin + 16, startY + 8, { width: contentWidth - 32 });
 
         if (mod.description) {
           const modDesc = cleanRichText(mod.description);
-          doc.fontSize(9)
-            .font('Helvetica')
-            .fillColor('#666666')
-            .text(modDesc, margin + 16, startY + 38, {
-              width: contentWidth - 32,
-              lineGap: 2,
-            });
+          doc.fontSize(9).font('Helvetica').fillColor('#666666');
+          writeParagraphs(doc, modDesc, margin + 16, startY + boxH + 8, { width: contentWidth - 32 });
         }
 
         // Lessons
         const lessons = mod.lessons || [];
         lessons.forEach((lesson: any) => {
-          // Check page break
-          if (doc.y > doc.page.height - 90) {
+          // Check page break (generous margin — video rows are taller)
+          if (doc.y > doc.page.height - 140) {
             doc.addPage();
-            doc.rect(0, 0, pageWidth, 8).fill('#1a365d');
-            doc.fontSize(7).font('Helvetica').fillColor('#ffffff')
-              .text((course as any).title, margin, 1, { width: contentWidth, align: 'center' });
+            pageHeader();
           }
 
           const lessonY = doc.y + 12;
@@ -263,15 +369,28 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
           const typeLabel = (lesson.type || 'video').toUpperCase();
           const badgeWidth = Math.max(50, typeLabel.length * 5.2 + 18);
 
-          doc.roundedRect(margin + 12, lessonY + 2, badgeWidth, 14, 3).fill(typeColor);
+          const isVideo = lesson.type === 'video';
+          const thumbX = margin + 12;
+          const thumbW = isVideo ? 64 : 0;
+          const contentStartX = thumbX + thumbW + (isVideo ? 12 : 0);
+
+          // Video thumbnail (image when available, placeholder otherwise)
+          if (isVideo) {
+            const thumbUrl = lesson.videoThumbnail || (course as any).thumbnail;
+            const thumbBuf = thumbUrl ? thumbCache.get(thumbUrl) || null : null;
+            drawVideoThumb(doc, thumbBuf, thumbX, lessonY + 2, thumbW, 38);
+          }
+
+          // Type badge
+          doc.roundedRect(contentStartX, lessonY + 2, badgeWidth, 14, 3).fill(typeColor);
           doc.fontSize(7)
             .font('Helvetica-Bold')
             .fillColor('#ffffff')
-            .text(typeLabel, margin + 15, lessonY + 4, { width: badgeWidth - 6, align: 'center' });
+            .text(typeLabel, contentStartX + 3, lessonY + 4, { width: badgeWidth - 6, align: 'center' });
 
           // Lesson title & duration
-          const titleX = margin + badgeWidth + 22;
-          const titleWidth = contentWidth - badgeWidth - 92;
+          const titleX = contentStartX + badgeWidth + 10;
+          const titleWidth = contentWidth - (contentStartX - margin) - badgeWidth - 92;
           doc.fontSize(10)
             .font('Helvetica-Bold')
             .fillColor('#333333')
@@ -285,20 +404,47 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
             .fillColor('#999999')
             .text(`${lesson.duration || 0} min`, margin + contentWidth - 70, lessonY + 3, { width: 58, align: 'right' });
 
+          // Availability + resources line
+          let infoY = Math.max(titleBottomY, lessonY + 18);
+          const infoParts: { text: string; color: string }[] = [];
+          if (isVideo) {
+            if (lesson.videoUrl && String(lesson.videoUrl).trim()) {
+              infoParts.push({ text: '✓ Video available', color: '#22c55e' });
+            } else {
+              infoParts.push({ text: 'No video available', color: '#ef4444' });
+            }
+          }
+          const resourceCount = (lesson.resources || []).length;
+          if (resourceCount > 0) {
+            infoParts.push({ text: `${resourceCount} resource${resourceCount > 1 ? 's' : ''}`, color: '#667eea' });
+          } else if (lesson.fileUrl && String(lesson.fileUrl).trim()) {
+            infoParts.push({ text: 'Resource file attached', color: '#667eea' });
+          }
+          if (infoParts.length > 0) {
+            doc.fontSize(7.5).font('Helvetica-Bold');
+            let infoX = titleX;
+            infoParts.forEach((part) => {
+              doc.fillColor(part.color).text(part.text, infoX, infoY);
+              infoX += doc.widthOfString(part.text) + 12;
+            });
+            doc.y = Math.max(infoY + 8, doc.y + 4);
+          } else {
+            doc.y = Math.max(titleBottomY, lessonY + 18);
+          }
+
           // Content snippet — clean text, truncated at a word boundary
           if (lesson.content) {
             const snippet = truncateAtWordBoundary(cleanRichText(lesson.content), 320);
-            const snippetY = Math.max(titleBottomY, lessonY + 18);
             doc.fontSize(8)
               .font('Helvetica')
               .fillColor('#888888')
-              .text(snippet, titleX, snippetY, {
-                width: contentWidth - badgeWidth - 100,
+              .text(snippet, titleX, doc.y + 2, {
+                width: contentWidth - (contentStartX - margin) - badgeWidth - 100,
                 lineGap: 1,
               });
             doc.y += 6;
           } else {
-            doc.y = Math.max(titleBottomY, lessonY + 18);
+            doc.y += 4;
           }
         });
 
@@ -316,9 +462,7 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
       if (assessmentLessons.length > 0) {
         const assessmentHeader = () => {
           doc.addPage();
-          doc.rect(0, 0, pageWidth, 8).fill('#1a365d');
-          doc.fontSize(7).font('Helvetica').fillColor('#ffffff')
-            .text((course as any).title, margin, 1, { width: contentWidth, align: 'center' });
+          pageHeader();
         };
 
         assessmentHeader();
@@ -337,23 +481,24 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
         doc.y += 14;
 
         for (const lesson of assessmentLessons) {
-          if (doc.y > doc.page.height - 160) assessmentHeader();
+          if (doc.y > doc.page.height - 170) assessmentHeader();
 
           const headerY = doc.y + 12;
           const isExam = lesson.type === 'assignment';
           const badgeColor = isExam ? '#8b5cf6' : '#eab308';
+          const qTitle = `${isExam ? 'EXAM' : 'QUIZ'} — Module ${lesson.moduleIndex + 1}: ${cleanRichText(lesson.title) || 'Untitled'}`;
+          // Size the assessment header to the (possibly wrapped) title —
+          // set the draw font FIRST so heightOfString measures correctly.
+          doc.fontSize(11).font('Helvetica-Bold');
+          const qH = Math.max(30, doc.heightOfString(qTitle, { width: contentWidth - 32 }) + 18);
 
-          doc.rect(margin, headerY, contentWidth, 30).fill(isExam ? '#f6f2ff' : '#fffbe6');
-          doc.rect(margin, headerY, 6, 30).fill(badgeColor);
+          doc.rect(margin, headerY, contentWidth, qH).fill(isExam ? '#f6f2ff' : '#fffbe6');
+          doc.rect(margin, headerY, 6, qH).fill(badgeColor);
           doc.fontSize(11)
             .font('Helvetica-Bold')
             .fillColor('#333333')
-            .text(
-              `${isExam ? 'EXAM' : 'QUIZ'} — Module ${lesson.moduleIndex + 1}: ${cleanRichText(lesson.title) || 'Untitled'}`,
-              margin + 16, headerY + 9,
-              { width: contentWidth - 32 }
-            );
-          doc.y = headerY + 38;
+            .text(qTitle, margin + 16, headerY + 9, { width: contentWidth - 32 });
+          doc.y = headerY + qH + 8;
 
           const questions = lesson.quizQuestions || [];
           if (questions.length === 0) {
@@ -418,6 +563,7 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
     }
   });
 }
+
 
 /**
  * Generate a CSV string of users report
