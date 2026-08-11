@@ -62,11 +62,7 @@ import {
   Tag,
   DollarSign,
   AlertTriangle,
-  Code,
-  Database,
-  PlayCircle,
-  Search
-} from "lucide-react";
+  Code,  Database,  PlayCircle,  Search,  MessageCircleHeart,  MessageSquareHeart} from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePusher } from "@/hooks/use-pusher";
 import { toast } from "sonner";
@@ -78,10 +74,7 @@ interface NavItem {
   href?: string;
   icon: React.ElementType;
   children?: NavItem[];
-}
-
-const studentNavItems: NavItem[] = [
-  { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },
+}const studentNavItems: NavItem[] = [  { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },  { label: "Share Story", href: "/portal/student/testimonial", icon: MessageCircleHeart },
   { label: "Projects", href: "/portal/student/projects", icon: FolderOpen },
   { label: "My Tasks", href: "/portal/student/my-tasks", icon: ClipboardList },
   { 
@@ -136,9 +129,7 @@ const adminNavItems: NavItem[] = [
   { 
     label: "Management", 
     icon: Cog,
-    children: [
-      { label: "Users", href: "/portal/admin/users", icon: Users },
-      { label: "Completed Users", href: "/portal/admin/completed-users", icon: GraduationCap },
+    children: [      { label: "Users", href: "/portal/admin/users", icon: Users },      { label: "Testimonials", href: "/portal/admin/testimonials", icon: MessageSquareHeart },      { label: "Completed Users", href: "/portal/admin/completed-users", icon: GraduationCap },
       { label: "Courses", href: "/portal/admin/courses", icon: BookOpen },
       { label: "Course Preview", href: "/portal/admin/course-preview", icon: Eye },
       { label: "User Map", href: "/portal/super-admin/user-map", icon: MapPin },
@@ -190,9 +181,7 @@ const superAdminNavItems: NavItem[] = [
   { 
     label: "System", 
     icon: Shield,
-    children: [
-      { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },
-      { label: "Courses Manager", href: "/portal/super-admin/courses", icon: BookOpen },
+    children: [      { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },      { label: "Testimonials", href: "/portal/admin/testimonials", icon: MessageSquareHeart },      { label: "Courses Manager", href: "/portal/super-admin/courses", icon: BookOpen },
       { label: "User Management", href: "/portal/admin/users", icon: UserCog },
       { label: "All Users", href: "/portal/super-admin/users", icon: Users },
       { label: "Completed Users", href: "/portal/super-admin/completed-users", icon: GraduationCap },

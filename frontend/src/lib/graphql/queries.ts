@@ -3730,3 +3730,79 @@ export const GET_UNIFIED_EVENTS = gql`
     }
   }
 `
+export const GET_PUBLIC_TESTIMONIALS = gql`
+  query GetPublicTestimonials {
+    publicTestimonials {
+      id
+      quote
+      authorName
+      authorRole
+      authorCompany
+      authorAvatar
+      rating
+      status
+      createdAt
+    }
+  }
+`;
+
+export const GET_MY_TESTIMONIALS = gql`
+  query GetMyTestimonials {
+    myTestimonials {
+      id
+      quote
+      authorName
+      authorRole
+      authorCompany
+      rating
+      status
+      reviewNote
+      createdAt
+      author {
+        id
+        fullName
+      }
+    }
+  }
+`;
+
+export const GET_TESTIMONIALS = gql`
+  query GetTestimonials($page: Int, $limit: Int, $status: String) {
+    testimonials(page: $page, limit: $limit, status: $status) {
+      items {
+        id
+        quote
+        authorName
+        authorRole
+        authorCompany
+        authorAvatar
+        rating
+        status
+        reviewNote
+        createdAt
+        author {
+          id
+          fullName
+          username
+          email
+          avatar
+          school
+        }
+        submittedBy {
+          id
+          fullName
+          username
+          email
+        }
+      }
+      pagination {
+        totalCount
+        totalPages
+        currentPage
+        pageSize
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;

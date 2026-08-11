@@ -214,7 +214,7 @@ import { meetingAttendanceResolvers } from './meeting-attendance-resolvers';
 import { errorReportResolvers } from './error-reporting-resolvers';
 import { backupResolvers } from './backup-resolvers';
 import { eventApplicationResolvers } from './event-application-resolvers';
-import { trainerResolvers } from './trainer-resolvers';
+import { trainerResolvers } from './trainer-resolvers';import { testimonialResolvers } from './testimonial-resolvers';
 
 export const resolvers = {
   Upload: GraphQLUpload,
@@ -228,8 +228,7 @@ export const resolvers = {
     ...applicationPhaseResolvers.Query,
     ...projectTaskResolvers.Query,    ...locationResolvers.Query,
     ...commissionResolvers.Query,    ...disbursementResolvers.Query,    ...scholarshipResolvers.Query,    ...userReportResolvers.Query,    ...refundResolvers.Query,
-    ...meetingAttendanceResolvers.Query,
-    ...errorReportResolvers.Query,
+    ...meetingAttendanceResolvers.Query,    ...errorReportResolvers.Query,    ...testimonialResolvers.Query,
     ...backupResolvers.Query,
     ...eventApplicationResolvers.Query,
     ...trainerResolvers.Query,
@@ -9649,7 +9648,7 @@ export const resolvers = {
     },
     ...applicationPhaseResolvers.Mutation,
     ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,
-    ...eventApplicationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,    ...trainerResolvers.Mutation,
+    ...eventApplicationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,    ...trainerResolvers.Mutation,    ...testimonialResolvers.Mutation,
 
     assignDeveloperToProject: async (_: any, { projectId, developerId, role, checklistTasks }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {

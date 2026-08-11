@@ -155,9 +155,12 @@ export default function SuperAdminAdmins() {
     role: "admin",
     permissions: [] as string[]
   });
-  const [selectedAdminId, setSelectedAdminId] = useState<string | null>(null);
-
-  const { data, loading, refetch } = useQuery(GET_USERS);
+  const [selectedAdminId, setSelectedAdminId] = useState<string | null>(null);  // Fetch every platform user so admins show up regardless of who created them.
+  // (The `users` resolver returns all users for super admins — no createdBy scoping.)
+  const { data, loading, refetch } = useQuery(GET_USERS, {
+    variables: { page: 1, limit: 1000 },
+    fetchPolicy: "network-only",
+  });
   const [createUserMutation] = useMutation(CREATE_USER);
   const [deleteUserMutation] = useMutation(DELETE_USER);
 

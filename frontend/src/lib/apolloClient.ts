@@ -4,7 +4,6 @@ import { ErrorLink } from '@apollo/client/link/error';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
-// @ts-ignore
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { createClient } from 'graphql-ws';
 import { env } from './env';
@@ -55,21 +54,39 @@ let blockedAccountRedirectInFlight = false;
  * Fresh login attempts (no token yet) are left to the Auth page, which already
  * redirects with the account email for a nicer message.
  */
-const blockedAccountLink = new ErrorLink(({ error }) => {
+const blockedAccountLink = new ErrorLink(({ operation, error }) => {
   if (blockedAccountRedirectInFlight) return;
   // Only hijack sessions that already hold a token (previously logged in).
   if (!localStorage.getItem('ihub_token')) return;
 
+  // Never hijack a fresh login / registration attempt — those are handled
+  // by the Auth page so the user can see the actual error (e.g. wrong password).
+  const opName = operation?.operationName || '';
+  if (opName === 'Login' || opName === 'Register') return;
+
   let codes: string[] = [];
+  let messages: string[] = [];
   if (CombinedGraphQLErrors.is(error)) {
     codes = error.errors
       .map((e) => (e as any)?.extensions?.code)
       .filter(Boolean);
+    messages = error.errors.map((e) => e.message).filter(Boolean);
   }
   const isSuspended = codes.includes('ACCOUNT_SUSPENDED');
   const isDeactivated =
     codes.includes('ACCOUNT_DEACTIVATED') || codes.includes('ACCOUNT_BLOCKED');
-  if (!isSuspended && !isDeactivated) return;
+
+  // Generic session expiry: the stored token is invalid, expired, or the
+  // account no longer resolves (deleted). Previously this surfaced as raw
+  // "Not authenticated" errors on every page — now it cleanly logs the user
+  // out and sends them to the login screen.
+  const isSessionExpired =
+    !isSuspended &&
+    !isDeactivated &&
+    (codes.includes('UNAUTHENTICATED') ||
+      messages.some((m) => /not authenticated/i.test(m)));
+
+  if (!isSuspended && !isDeactivated && !isSessionExpired) return;
 
   blockedAccountRedirectInFlight = true;
   localStorage.removeItem('ihub_token');
@@ -80,7 +97,7 @@ const blockedAccountLink = new ErrorLink(({ error }) => {
       window.location.assign('/account-suspended');
     }
   } else if (window.location.pathname !== '/auth') {
-    window.location.assign('/auth');
+    window.location.assign('/auth?session=expired');
   }
 });
 

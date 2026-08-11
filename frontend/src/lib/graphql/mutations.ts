@@ -2810,3 +2810,43 @@ export const DELETE_EVENT = gql`
     deleteEvent(id: $id)
   }
 `
+export const SUBMIT_TESTIMONIAL = gql`
+  mutation SubmitTestimonial($quote: String!, $authorRole: String, $authorCompany: String, $rating: Int) {
+    submitTestimonial(quote: $quote, authorRole: $authorRole, authorCompany: $authorCompany, rating: $rating) {
+      id
+      quote
+      authorName
+      authorRole
+      authorCompany
+      rating
+      status
+    }
+  }
+`;
+
+export const ADMIN_SUBMIT_TESTIMONIAL = gql`
+  mutation AdminSubmitTestimonial($userId: ID!, $quote: String!, $authorRole: String, $authorCompany: String, $rating: Int) {
+    adminSubmitTestimonial(userId: $userId, quote: $quote, authorRole: $authorRole, authorCompany: $authorCompany, rating: $rating) {
+      id
+      quote
+      authorName
+      status
+    }
+  }
+`;
+
+export const REVIEW_TESTIMONIAL = gql`
+  mutation ReviewTestimonial($id: ID!, $status: String!, $note: String) {
+    reviewTestimonial(id: $id, status: $status, note: $note) {
+      id
+      status
+      reviewNote
+    }
+  }
+`;
+
+export const DELETE_TESTIMONIAL = gql`
+  mutation DeleteTestimonial($id: ID!) {
+    deleteTestimonial(id: $id)
+  }
+`;

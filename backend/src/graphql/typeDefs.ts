@@ -4075,8 +4075,40 @@ export const typeDefs = `#graphql
       isActive: Boolean
       expiresAt: String
       description: String
-    ): DiscountCode
-    deleteDiscountCode(id: ID!): Boolean
+    ): DiscountCode    deleteDiscountCode(id: ID!): Boolean
     validateDiscountCode(code: String!, courseId: ID): ValidateDiscountResult
+  }
+
+  # ---------- Testimonials ----------
+  type Testimonial {
+    id: ID!
+    quote: String!
+    author: User
+    authorName: String
+    authorRole: String
+    authorCompany: String
+    authorAvatar: String
+    rating: Int
+    status: String!
+    reviewNote: String
+    submittedBy: User
+    createdAt: String
+  }
+
+  type TestimonialResponse {
+    items: [Testimonial!]
+    pagination: PaginationInfo
+  }
+
+  extend type Query {    # Approved testimonials only - shown on the public site, no auth required.    publicTestimonials: [Testimonial!]!    # All testimonials with moderation status - admin / super admin only.    testimonials(page: Int, limit: Int, status: String): TestimonialResponse    # A student's own testimonial submissions.    myTestimonials: [Testimonial!]!  }
+
+  extend type Mutation {
+    # A student submits their own success story (goes to pending).
+    submitTestimonial(quote: String!, authorRole: String, authorCompany: String, rating: Int): Testimonial!
+    # An admin submits a testimonial on behalf of a student (goes to pending).
+    adminSubmitTestimonial(userId: ID!, quote: String!, authorRole: String, authorCompany: String, rating: Int): Testimonial!
+    # Super admin approves / rejects a testimonial so it appears on the public site.
+    reviewTestimonial(id: ID!, status: String!, note: String): Testimonial!
+    deleteTestimonial(id: ID!): Boolean!
   }
 `;

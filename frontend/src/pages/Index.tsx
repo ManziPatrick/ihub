@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { FeaturedCourses } from "@/components/home/FeaturedCourses";
-import { MeetOurTrainers } from "@/components/home/MeetOurTrainers";
+import { MeetOurTrainers } from "@/components/home/MeetOurTrainers";import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { CTASection } from "@/components/home/CTASection";
 import { SEOHead } from "@/components/SEOHead";
 import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
@@ -34,10 +34,7 @@ const Index = () => {
         <script type="application/ld+json">{jsonldGraph}</script>
       </SEOHead>
       <Header />
-      <main>
-        <FeaturedCourses />
-        <MeetOurTrainers />
-        <CTASection />
+      <main>        <FeaturedCourses />        <MeetOurTrainers />        <TestimonialsSection />        <CTASection />
       </main>
       <Footer />
     </div>

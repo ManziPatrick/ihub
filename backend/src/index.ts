@@ -195,10 +195,17 @@ const startServer = async () => {
                     );
                     const userId = decoded?.id || decoded?._id || decoded?.userId;
                     if (userId) {
-                        // Re-validate status so suspended/deactivated accounts can't subscribe
-                        const dbUser = await User.findById(userId).select('status isDeleted permissions').lean();
-                        if (dbUser && !dbUser.isDeleted && (dbUser.status || 'active') === 'active') {
-                            user = { ...decoded, role: dbUser.role, permissions: dbUser.permissions || [] };
+                        // Re-validate status so suspended/deactivated accounts can't subscribe.
+                        // Fail OPEN on DB lookup errors so a DB blip doesn't break
+                        // real-time subscriptions for everyone.
+                        try {
+                            const dbUser = await User.findById(userId).select('status isDeleted permissions').lean();
+                            if (dbUser && !dbUser.isDeleted && (dbUser.status || 'active') === 'active') {
+                                user = { ...decoded, role: dbUser.role, permissions: dbUser.permissions || [] };
+                            }
+                        } catch (e) {
+                            console.warn('[WS] DB lookup failed, proceeding with token claims:', (e as Error).message);
+                            user = { ...decoded, role: decoded.role, permissions: decoded.permissions || [] };
                         }
                     }
                 } catch (e) {

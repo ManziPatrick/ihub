@@ -167,7 +167,6 @@ function useReverseGeocode(lat: number | null, lon: number | null) {
 
 /* ─── Page ─── */
 export default function SuperAdminMap() {
-  const { user } = useAuth();
   const [activeRole, setActiveRole] = useState<RoleKey>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserLocation | null>(null);
