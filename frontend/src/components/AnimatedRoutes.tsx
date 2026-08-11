@@ -25,7 +25,6 @@ const Contact = lazy(() => import("@/pages/Contact"));
 const InternshipDetail = lazy(() => import("@/pages/InternshipDetail"));
 const Events = lazy(() => import("@/pages/Events"));
 const EventDetail = lazy(() => import("@/pages/EventDetail"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
 const AccountSuspended = lazy(() => import("@/pages/AccountSuspended"));
 const Auth = lazy(() => import("@/pages/Auth"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
@@ -298,8 +297,8 @@ export function AnimatedRoutes() {
           <Route path="/chat" element={<PageTransition><Chat /></PageTransition>} />
           <Route path="/maintenance" element={<Maintenance />} />
 
-          {/* Catch-all */}
-          <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+          {/* Catch-all — no more "page not found": unknown routes redirect home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </AnimatePresence>

@@ -39,9 +39,11 @@ export const locationResolvers = {
         isDeleted: { $ne: true },
       };
       if (role) filter.role = role;
-      const users = await User.find(filter).select(
-        'id username email role fullName avatar phone location latitude longitude locationUpdatedAt locationShared locationDenied title'
-      );
+      const users = await User.find(filter)
+        .select(
+          'id username email role fullName avatar phone location latitude longitude locationUpdatedAt locationShared locationDenied title isOnline lastActive'
+        )
+        .populate('enrolledCourses', 'title');
       return users.map((u: any) => ({
         id: u._id.toString(),
         username: u.username,
@@ -57,6 +59,13 @@ export const locationResolvers = {
         locationShared: u.locationShared ?? false,
         locationDenied: u.locationDenied ?? false,
         title: u.title,
+        isOnline: u.isOnline ?? false,
+        lastActive: u.lastActive?.toISOString(),
+        // Track which course(s) each user is taking
+        enrolledCourses: (u.enrolledCourses || []).map((c: any) => ({
+          id: (c._id || c.id)?.toString(),
+          title: c.title,
+        })),
       }));
     },
   },

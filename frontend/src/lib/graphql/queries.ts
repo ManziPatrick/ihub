@@ -2785,6 +2785,12 @@ export const GET_USERS_WITH_LOCATION = gql`
       locationShared
       locationDenied
       title
+      isOnline
+      lastActive
+      enrolledCourses {
+        id
+        title
+      }
     }
   }
 `;

@@ -285,6 +285,7 @@ const GET_ERROR_REPORT_STATS = gql`
 import { formatDistanceToNow } from "date-fns";
 import { usePresence } from "@/hooks/use-presence";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
+import { useAutoLocation } from "@/lib/hooks/useAutoLocation";
 import { Switch } from "@/components/ui/switch";
 import { 
   Collapsible, 
@@ -306,6 +307,10 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
   // Start presence tracking
   usePresence();
+
+  // Silently track real GPS location (refreshed periodically) so admins can
+  // see every user's latest location on the User Location Map.
+  useAutoLocation();
 
   // Offline sync
   const { isOffline, isManualOffline, isSyncing, queue, queueCount, toggleOffline, syncQueue } = useOfflineSync();
