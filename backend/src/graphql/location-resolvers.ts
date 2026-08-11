@@ -1,4 +1,5 @@
 import { User } from '../models/User';
+import { Course } from '../models/Course';
 import { lookupRequestGeoLocation } from '../services/geoip.service';
 
 export const locationResolvers = {
@@ -16,7 +17,8 @@ export const locationResolvers = {
             longitude: result.longitude,
             location: [result.city, result.country].filter(Boolean).join(', '),
             locationUpdatedAt: new Date(),
-            locationShared: false, // IP-detected, not user-confirmed
+            // Tracking is on by default — IP-based location counts as tracked
+            locationShared: true,
           });
         } catch (saveErr) {
           console.debug('[getMyIpGeolocation] Failed to save location:', saveErr);
@@ -39,6 +41,21 @@ export const locationResolvers = {
         isDeleted: { $ne: true },
       };
       if (role) filter.role = role;
+
+      // Scope: regular admins can only track users enrolled in THEIR courses
+      // (courses they created or instruct). Super admins see everyone.
+      if (context.user.role === 'admin') {
+        const courseIds = await Course.find({
+          isDeleted: { $ne: true },
+          $or: [{ createdBy: context.user.id }, { instructor: context.user.id }],
+        }).distinct('_id');
+        filter.$or = [
+          { enrolledCourses: { $in: courseIds } },
+          { createdBy: context.user.id },
+          { _id: context.user.id },
+        ];
+      }
+
       const users = await User.find(filter)
         .select(
           'id username email role fullName avatar phone location latitude longitude locationUpdatedAt locationShared locationDenied title isOnline lastActive'

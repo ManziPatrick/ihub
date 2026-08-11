@@ -141,6 +141,7 @@ const adminNavItems: NavItem[] = [
       { label: "Completed Users", href: "/portal/admin/completed-users", icon: GraduationCap },
       { label: "Courses", href: "/portal/admin/courses", icon: BookOpen },
       { label: "Course Preview", href: "/portal/admin/course-preview", icon: Eye },
+      { label: "User Map", href: "/portal/super-admin/user-map", icon: MapPin },
       { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
       { label: "Applicant Hub", href: "/portal/admin/applicants", icon: Users },
       { label: "Opportunities", href: "/portal/admin/internships", icon: Briefcase },

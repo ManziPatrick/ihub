@@ -32,6 +32,7 @@ import { PaginationBar } from "@/components/ui/pagination-bar";
 import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { cn } from "@/lib/utils";
 import { ADMIN_UPDATE_USER_LOCATION } from "@/lib/graphql/mutations";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 type RoleKey = "all" | "student" | "trainer" | "admin" | "super_admin";
@@ -165,6 +166,8 @@ function useReverseGeocode(lat: number | null, lon: number | null) {
 
 /* ─── Page ─── */
 export default function SuperAdminMap() {
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === "super_admin";
   const [activeRole, setActiveRole] = useState<RoleKey>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserLocation | null>(null);
@@ -337,7 +340,9 @@ export default function SuperAdminMap() {
                   User Location Map
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Real-time geographic presence of your platform users
+                  {isSuperAdmin
+                    ? "Real-time geographic presence of every platform user"
+                    : "Real-time location of users enrolled in your courses"}
                 </p>
               </div>
             </div>
@@ -725,6 +730,11 @@ export default function SuperAdminMap() {
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {filteredUsers.length} user{filteredUsers.length !== 1 ? "s" : ""} — click a row to locate them on the map
                   </p>
+                  {!isSuperAdmin && (
+                    <p className="text-[11px] text-accent font-semibold mt-0.5">
+                      You see users enrolled in your courses only
+                    </p>
+                  )}
                 </div>
                 <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground border-border/40">
                   {filteredUsers.filter((u) => u.latitude != null).length} with coordinates

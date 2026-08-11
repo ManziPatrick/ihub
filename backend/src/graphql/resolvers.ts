@@ -5882,12 +5882,12 @@ export const resolvers = {
             sendSuspiciousLoginAlert
           );
 
-          // Only overwrite if not locationShared
-          if (!(user as any).locationShared) {
+          // Always seed IP-based coordinates when the user has none yet, so
+          // even users who disabled GPS on their phone/browser are tracked.
+          if ((user as any).latitude == null || (user as any).longitude == null) {
             (user as any).latitude = ipLocation.latitude;
             (user as any).longitude = ipLocation.longitude;
             (user as any).locationUpdatedAt = new Date();
-            (user as any).locationShared = false; // IP-based, not user-confirmed
           }
         }
       } catch (err) {
