@@ -23,6 +23,7 @@ import {
   Calendar,
   Clock,
   Users,
+  UserPlus,
   X,
   Filter,
   ShoppingCart,
@@ -1074,6 +1075,17 @@ export function FeaturedCourses() {
                   >
                     <TrendingUp className="w-3 h-3" />
                     Trending
+                  </button>
+                  <button
+                    onClick={() => handleSortChange('createdBy')}
+                    className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      sortBy === 'createdBy'
+                        ? "bg-foreground text-background shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <UserPlus className="w-3 h-3" />
+                    Created By
                   </button>
                 </div>
               )}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,7 @@ import {
   Lock,
   FileSpreadsheet,
   Award,
+  ArrowUpDown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -75,6 +76,8 @@ export default function SuperAdminUsers() {
   const [showScholarshipDialog, setShowScholarshipDialog] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
   const [adminFilter, setAdminFilter] = useState("all");
+  const [sortField, setSortField] = useState<"joined" | "createdBy" | "user">("joined");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
@@ -132,17 +135,51 @@ export default function SuperAdminUsers() {
       .join("")
       .toUpperCase();
 
-  const filteredUsers = allUsers.filter((user: any) => {
-    const matchesSearch =
-      (user.username || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      (user.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (user.fullName || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  const filteredUsers = useMemo(() => {
+    const filtered = allUsers.filter((user: any) => {
+      const matchesSearch =
+        (user.username || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        (user.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (user.fullName || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+      return matchesSearch;
+    });
+
+    const dir = sortDir === "asc" ? 1 : -1;
+    return filtered.sort((a: any, b: any) => {
+      if (sortField === "user") {
+        const nameA = (a.fullName || a.username || "").toLowerCase();
+        const nameB = (b.fullName || b.username || "").toLowerCase();
+        return nameA.localeCompare(nameB) * dir;
+      }
+      if (sortField === "createdBy") {
+        const nameA = (a.createdBy?.fullName || a.createdBy?.username || "").toLowerCase();
+        const nameB = (b.createdBy?.fullName || b.createdBy?.username || "").toLowerCase();
+        // Users without a creator sort to the bottom regardless of direction
+        if (!nameA && !nameB) return 0;
+        if (!nameA) return 1;
+        if (!nameB) return -1;
+        return nameA.localeCompare(nameB) * dir;
+      }
+      // Default: joined date
+      const timeA = new Date(Number(a.createdAt) || a.createdAt || 0).getTime();
+      const timeB = new Date(Number(b.createdAt) || b.createdAt || 0).getTime();
+      return (timeB - timeA) * dir;
+    });
+  }, [allUsers, searchQuery, sortField, sortDir]);
+
+  const handleSortToggle = (field: "joined" | "createdBy" | "user") => {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir(field === "createdBy" ? "asc" : "desc");
+    }
+    setCurrentPage(1);
+  };
 
   const handleDeleteUser = async (id: string) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
@@ -412,8 +449,16 @@ export default function SuperAdminUsers() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border/50">
-                        <th className="text-left p-4 text-sm font-medium text-card-foreground/70">
-                          User
+                        <th
+                          className="text-left p-4 text-sm font-medium text-card-foreground/70 cursor-pointer select-none hover:text-accent transition-colors"
+                          onClick={() => handleSortToggle("user")}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            User
+                            {sortField === "user" && (
+                              <ArrowUpDown className="w-3 h-3" />
+                            )}
+                          </span>
                         </th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
                           Role
@@ -424,11 +469,27 @@ export default function SuperAdminUsers() {
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
                           Status
                         </th>
-                        <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
-                          Created By
+                        <th
+                          className="text-center p-4 text-sm font-medium text-card-foreground/70 cursor-pointer select-none hover:text-accent transition-colors"
+                          onClick={() => handleSortToggle("createdBy")}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            Created By
+                            {sortField === "createdBy" && (
+                              <ArrowUpDown className="w-3 h-3" />
+                            )}
+                          </span>
                         </th>
-                        <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
-                          Joined
+                        <th
+                          className="text-center p-4 text-sm font-medium text-card-foreground/70 cursor-pointer select-none hover:text-accent transition-colors"
+                          onClick={() => handleSortToggle("joined")}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            Joined
+                            {sortField === "joined" && (
+                              <ArrowUpDown className="w-3 h-3" />
+                            )}
+                          </span>
                         </th>
                         <th className="text-right p-4 text-sm font-medium text-card-foreground/70">
                           Actions

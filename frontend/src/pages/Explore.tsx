@@ -19,7 +19,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Building2, TrendingUp, ChevronRight, User, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye, XCircle, Filter, Search, LayoutGrid, Star, MapPin, Navigation, Sparkles, GraduationCap, Globe, Mail, ExternalLink, Loader2 } from "lucide-react";
+import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Building2, TrendingUp, ChevronRight, User, UserPlus, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye, XCircle, Filter, Search, LayoutGrid, Star, MapPin, Navigation, Sparkles, GraduationCap, Globe, Mail, ExternalLink, Loader2 } from "lucide-react";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import aboutImage from "@/assets/about-training.webp";
@@ -1072,6 +1072,17 @@ const Explore = () => {
                     >
                       <TrendingUp className="w-3.5 h-3.5" />
                       Trending
+                    </button>
+                    <button
+                      onClick={() => handleSortChange('createdBy')}
+                      className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        sortBy === 'createdBy'
+                          ? "bg-foreground text-background shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      Created By
                     </button>
                   </div>
                   <button

@@ -24,6 +24,7 @@ import {
   Star,
   Users,
   ExternalLink,
+  ArrowUpDown,
 } from "lucide-react";
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600";
@@ -43,6 +44,8 @@ function statusKey(s?: string) {
 export default function SuperAdminCourses() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortField, setSortField] = useState<"course" | "instructor" | "students">("course");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
 
@@ -58,20 +61,46 @@ export default function SuperAdminCourses() {
   // Client-side filtering across the full fetched set (server fetches all for monitoring)
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return allCourses.filter((c: any) => {
-      if (statusFilter !== "all" && statusKey(c.status) !== statusFilter) return false;
-      if (!q) return true;
-      return [
-        c.title,
-        c.category,
-        c.school,
-        c.level,
-        c.instructor?.username,
-      ]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q));
-    });
-  }, [allCourses, search, statusFilter]);
+    const dir = sortDir === "asc" ? 1 : -1;
+    return allCourses
+      .filter((c: any) => {
+        if (statusFilter !== "all" && statusKey(c.status) !== statusFilter) return false;
+        if (!q) return true;
+        return [
+          c.title,
+          c.category,
+          c.school,
+          c.level,
+          c.instructor?.username,
+        ]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q));
+      })
+      .sort((a: any, b: any) => {
+        if (sortField === "instructor") {
+          const nameA = (a.instructor?.username || "").toLowerCase();
+          const nameB = (b.instructor?.username || "").toLowerCase();
+          if (!nameA && !nameB) return 0;
+          if (!nameA) return 1;
+          if (!nameB) return -1;
+          return nameA.localeCompare(nameB) * dir;
+        }
+        if (sortField === "students") {
+          return ((b.studentsEnrolledCount || 0) - (a.studentsEnrolledCount || 0)) * dir;
+        }
+        return a.title.localeCompare(b.title) * dir;
+      });
+  }, [allCourses, search, statusFilter, sortField, sortDir]);
+
+  const handleSortToggle = (field: "course" | "instructor" | "students") => {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir(field === "course" ? "asc" : "desc");
+    }
+    setPage(1);
+  };
 
   const stats = useMemo(() => {
     const published = allCourses.filter((c: any) => statusKey(c.status) === "published").length;
@@ -212,11 +241,32 @@ export default function SuperAdminCourses() {
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-border/40 bg-muted/20 text-[10px] uppercase font-black text-muted-foreground tracking-widest">
-                      <th className="px-4 py-3">Course</th>
-                      <th className="px-4 py-3">Instructor</th>
+                      <th
+                        className="px-4 py-3 cursor-pointer select-none hover:text-accent transition-colors"
+                        onClick={() => handleSortToggle("course")}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          Course {sortField === "course" && <ArrowUpDown className="w-3 h-3" />}
+                        </span>
+                      </th>
+                      <th
+                        className="px-4 py-3 cursor-pointer select-none hover:text-accent transition-colors"
+                        onClick={() => handleSortToggle("instructor")}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          Created By {sortField === "instructor" && <ArrowUpDown className="w-3 h-3" />}
+                        </span>
+                      </th>
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3 text-center">Structure</th>
-                      <th className="px-4 py-3 text-center">Students</th>
+                      <th
+                        className="px-4 py-3 text-center cursor-pointer select-none hover:text-accent transition-colors"
+                        onClick={() => handleSortToggle("students")}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          Students {sortField === "students" && <ArrowUpDown className="w-3 h-3" />}
+                        </span>
+                      </th>
                       <th className="px-4 py-3 text-right">Price</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>

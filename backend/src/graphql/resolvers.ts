@@ -1249,8 +1249,11 @@ export const resolvers = {
           query.$or = orConditions;
         }
       } else {
-        // Admin / super admin sees all users regardless of createdBy filter
+        // Admin / super admin sees all users by default, but honor an
+        // explicit createdBy filter when the UI asks for it (e.g. the
+        // "Filter by creator" dropdown on the Super Admin Users page).
         if (role) query.role = role;
+        if (createdBy) query.createdBy = createdBy;
       }
 
       const skip = (page - 1) * limit;
@@ -1491,11 +1494,13 @@ export const resolvers = {
 
       let items;
 
-      // For popular and trending, fetch all matching courses and sort in-memory
-      // Uses studentsEnrolledCount (pre-computed) instead of expensive populate of all students
-      if (sortBy === 'popular' || sortBy === 'trending') {
+      // For popular, trending, and createdBy, fetch all matching courses and
+      // sort in-memory (the sort key is a related doc, not a simple field).
+      // Uses studentsEnrolledCount (pre-computed) instead of expensive populate of all students.
+      if (sortBy === 'popular' || sortBy === 'trending' || sortBy === 'createdBy') {
         const allItems = await Course.find(query)
           .populate('instructor')
+          .populate('createdBy')
           .sort({ createdAt: -1 })
           .lean({ virtuals: true });
 
@@ -1512,6 +1517,19 @@ export const resolvers = {
             const scoreA = trendingScores.get((a as any)._id.toString()) || 0;
             const scoreB = trendingScores.get((b as any)._id.toString()) || 0;
             return scoreB - scoreA;
+          });
+        } else if (sortBy === 'createdBy') {
+          // Sort alphabetically by the creator's name, courses without a
+          // known creator fall to the bottom.
+          const creatorName = (c: any) =>
+            (c.createdBy?.fullName || c.createdBy?.username || '').toString().toLowerCase();
+          allItems.sort((a: any, b: any) => {
+            const nameA = creatorName(a);
+            const nameB = creatorName(b);
+            if (!nameA && !nameB) return 0;
+            if (!nameA) return 1;
+            if (!nameB) return -1;
+            return nameA.localeCompare(nameB);
           });
         }
 
