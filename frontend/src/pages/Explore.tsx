@@ -44,6 +44,14 @@ const Explore = () => {
   const [enrollCourse, setEnrollCourse] = useState<any>(null);
   const [applyCourse, setApplyCourse] = useState<any>(null);
   const [sortBy, setSortBy] = useState<string>('latest');
+
+  // Changing sort must reset pagination — otherwise the accumulated
+  // "load more" items from the previous sort order get mixed with the
+  // new order (stale page counter skips pages of the fresh sort).
+  const handleSortChange = (next: string) => {
+    setSortBy(next);
+    setCurrentPage(1);
+  };
   const [activeTab, setActiveTab] = useState<'courses' | 'trainers'>(searchParams.get("tab") === "trainers" ? "trainers" : "courses");
   const [trainerFilter, setTrainerFilter] = useState<string>('all');
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
@@ -1033,7 +1041,7 @@ const Explore = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex bg-muted/40 p-1 rounded-xl border border-border/50">
                     <button
-                      onClick={() => setSortBy('latest')}
+                      onClick={() => handleSortChange('latest')}
                       className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         sortBy === 'latest'
                           ? "bg-foreground text-background shadow-sm"
@@ -1044,7 +1052,7 @@ const Explore = () => {
                       Latest
                     </button>
                     <button
-                      onClick={() => setSortBy('popular')}
+                      onClick={() => handleSortChange('popular')}
                       className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         sortBy === 'popular'
                           ? "bg-foreground text-background shadow-sm"
@@ -1055,7 +1063,7 @@ const Explore = () => {
                       Popular
                     </button>
                     <button
-                      onClick={() => setSortBy('trending')}
+                      onClick={() => handleSortChange('trending')}
                       className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         sortBy === 'trending'
                           ? "bg-foreground text-background shadow-sm"

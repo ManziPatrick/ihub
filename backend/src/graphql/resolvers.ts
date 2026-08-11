@@ -1500,7 +1500,13 @@ export const resolvers = {
           .lean({ virtuals: true });
 
         if (sortBy === 'popular') {
-          allItems.sort((a: any, b: any) => (b.studentsEnrolledCount || 0) - (a.studentsEnrolledCount || 0));
+          // Prefer the stored count, but fall back to the real array length so
+          // legacy courses (created before the count field existed) sort correctly.
+          const enrollmentCount = (c: any) =>
+            Number.isFinite(c.studentsEnrolledCount)
+              ? c.studentsEnrolledCount
+              : (c.studentsEnrolled?.length || 0);
+          allItems.sort((a: any, b: any) => enrollmentCount(b) - enrollmentCount(a));
         } else if (sortBy === 'trending') {
           allItems.sort((a: any, b: any) => {
             const scoreA = trendingScores.get((a as any)._id.toString()) || 0;

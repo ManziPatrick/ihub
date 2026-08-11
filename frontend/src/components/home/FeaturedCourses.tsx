@@ -626,6 +626,14 @@ export function FeaturedCourses() {
     setFilterSchool("all");
   };
 
+  // Changing the sort order must also reset pagination so the accumulated
+  // "load more" items from the previous order don't get mixed with the new one.
+  const handleSortChange = (next: string) => {
+    setSortBy(next);
+    setCurrentPage(1);
+    setInternshipPage(1);
+  };
+
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1); // Reset courses page on new search
@@ -1035,7 +1043,7 @@ export function FeaturedCourses() {
               {section === 'programs' && (
                 <div className="flex bg-muted/40 p-1 rounded-xl border border-border/50">
                   <button
-                    onClick={() => setSortBy('latest')}
+                    onClick={() => handleSortChange('latest')}
                     className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
                       sortBy === 'latest'
                         ? "bg-foreground text-background shadow-sm"
@@ -1046,7 +1054,7 @@ export function FeaturedCourses() {
                     Latest
                   </button>
                   <button
-                    onClick={() => setSortBy('popular')}
+                    onClick={() => handleSortChange('popular')}
                     className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
                       sortBy === 'popular'
                         ? "bg-foreground text-background shadow-sm"
@@ -1057,7 +1065,7 @@ export function FeaturedCourses() {
                     Popular
                   </button>
                   <button
-                    onClick={() => setSortBy('trending')}
+                    onClick={() => handleSortChange('trending')}
                     className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
                       sortBy === 'trending'
                         ? "bg-foreground text-background shadow-sm"
