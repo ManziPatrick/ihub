@@ -47,7 +47,7 @@
     "home": "Ahabanza",
     "explore": "Gutozera",
     "searchCourses": "Shakisha amasomo, amashuri, ubuhanga...",
-    "searchHint": "Shakisha amasomo, abatoza, gahunda n'imyitozo",
+    "searchHint": "Shakisha amasomo, abatoza, gahunda n'amahirwe",
     "noResults": "Nta bisubizo bibonetse",
     "courses": "Amasomo",
     "trainers": "Abatoza",
@@ -123,8 +123,8 @@
     "agreedToTerms": "Ukomeza, wemera Amategeko n'Ubuziranenge bwacu."
   },
   "home": {
-    "heroTitle": "Ahantu hawe h'imyigishirize yose",
-    "heroSubtitle": "Amasomo mu nzego zose hamwe n'imishinga nyayo n'imyitozo mu ruganda.",
+    "heroTitle": "Amasomo y'igikorwa, Amahirwe n'Imyigishirize ishingiye ku mishinga",
+    "heroSubtitle": "Amasomo mu nzego zose hamwe n'imishinga nyayo n'amahirwe mu ruganda.",
     "featuredCourses": "Amasomo y'Umwihariko",
     "startLearning": "Tangira Kwiga",
     "talkToUs": "Vugana Natwe",
@@ -132,7 +132,7 @@
     "explore": "Gutozera",
     "programsForFuture": "Gahunda z'ibigwi byawe",
     "searchPrograms": "Shakisha gahunda, ishuri, aho uri...",
-    "searchInternships": "Shakisha porogaramu...",
+    "searchInternships": "Shakisha amahirwe...",
     "flexibleSchedules": "Gahunda zoroshye",
     "expertTrainers": "Abatoza babahanga",
     "certifiedPrograms": "Gahunda zemejwe",
@@ -141,9 +141,9 @@
     "resultsFor": "Ibisubizo bya",
     "found": "bibonetse",
     "courses": "Amasomo",
-    "internships": "Porogaramu",
+    "internships": "Amahirwe",
     "noProgramsFound": "Nta gahunda ibonetse",
-    "noInternshipsFound": "Nta porogaramu ibonetse ubu.",
+    "noInternshipsFound": "Nta mahirwe abonetse ubu.",
     "pageOf": "Paji {current} ya {total}",
     "totalCourses": "{count} amasomo yose",
     "joinFuture": "Injira mu kibazo cy'ikoranabuhanga mu Africa",
@@ -157,7 +157,7 @@
     "dedicatedMentorshipTitle": "Ubuyobozi bwihariye",
     "dedicatedMentorshipDesc": "Ubuyobozi n'ukurikiranwa bihoraho",
     "realWorldProjectsTitle": "Imishinga nyayo",
-    "realWorldProjectsDesc": "Imyitozo n'imishinga bifatika",
+    "realWorldProjectsDesc": "Hands-on opportunities and projects",
     "flexibleLearningTitle": "Kwiga kworoshye",
     "flexibleLearningDesc": "Amasomo ya interineti n'ahantu",
     "careerOrientedTitle": "Byibanda ku mirimo",
@@ -167,7 +167,7 @@
     "searchPlaceholder": "Shakisha gahunda, ingingo, aho uri...",
     "checkExpertTrainers": "Abatoza babahanga bafite uburambe mu nganda",
     "checkDedicatedMentorship": "Ubuyobozi bwihariye n'ukurikiranwa",
-    "checkRealWorldProjects": "Imishinga nyayo n'imyitozo",
+    "checkRealWorldProjects": "Real-world projects and opportunities",
     "checkOnlinePhysical": "Amasomo ya interineti n'ahantu",
     "checkCareerOriented": "Gahunda z'amahugurwa zibanda ku mirimo",
     "checkPracticalSkills": "Kwibanda cyane ku buhanga bufatika",
@@ -180,7 +180,7 @@
   "about": {
     "whoWeAre": "Turinde",
     "empoweringAfrica": "Guteza imbere Afurika binyuze mu buhanga n'ubuhirwe",
-    "bootskillsDesc": "Bootskills ihuza abiga n'amasomo, imyitozo, n'ubunararibonye mu by'ikoranabuhanga, ubucuruzi n'inganda.",
+    "bootskillsDesc": "Bootskills connects learners with career-ready courses, opportunities, and project-based experiences across technology, business, and creative industries.",
     "removingBarrier": "Gukuraho imbogamizi y'ahantu",
     "ourVision": "Icyerekezo Cyacu",
     "visionText": "Kuba urubuga rw'ibanze rw'imyigishirize ifatika mu Africa, dutangirira mu Rwanda.",
@@ -198,7 +198,7 @@
     "whatWeDo": "Ibyo dukora",
     "trainingCourses": "Amahugurwa n'Amasomo",
     "trainingCoursesDesc": "Amasomo afatika yibanda ku isoko mu koranabuhanga, AI, siyanse y'amakuru n'ubuhanga bwa digitale.",
-    "structuredInternships": "Porogaramu itunganijwe",
+    "structuredInternships": "Amahirwe atunganijwe",
     "structuredInternshipsDesc": "Ahantu ho gukora hagereranywa hakoreshwa imishinga nyayo n'ubuyobozi bw'abahanga.",
     "softwareAIDev": "Guteza imbere software na AI",
     "softwareAIDevDesc": "Ibisubizo byihariye bya web, mobile, na AI kuri startup n'ibigo.",
@@ -211,8 +211,8 @@
     "heroDesc": "Waba ushaka kwiyandikisha, kuba mufatanyabikorwa, cyangwa gusobanukirwa n'ibyo dukora, turi kumwe.",
     "trainingPrograms": "Gahunda z'amahugurwa",
     "trainingProgramsDesc": "Ibibazo bijyanye n'amasomo, kwiyandikisha na gahunda",
-    "internships": "Porogaramu",
-    "internshipsDesc": "Ibibazo bijyanye n'imyitozo n'ubusabe",
+    "internships": "Amahirwe",
+    "internshipsDesc": "Ibibazo bijyanye n'umwanya n'ubusabe",
     "corporateSolutions": "Ibisubizo by'ibigo",
     "corporateSolutionsDesc": "Serivisi zihariye z'amahugurwa n'ikoranabuhanga",
     "generalInquiry": "Ikibazo rusange",
@@ -253,7 +253,7 @@
     "faq4a": "Rwose! Dushyiraho gahunda z'amahugurwa zihariye ku bigo.",
     "phonePlaceholder": "+250 790 706 170",
     "optionTraining": "Gahunda z'amahugurwa",
-    "optionInternship": "Porogaramu",
+    "optionInternship": "Opportunities",
     "optionCorporate": "Ibisubizo by'ibigo",
     "optionPartnership": "Ubufatanye",
     "optionGeneral": "Ikibazo rusange",
@@ -262,16 +262,16 @@
   },
   "services": {
     "ourServices": "Serivisi Zacu",
-    "heroTitle": "Amasomo afatika, imyitozo n'imyigishirize ishingiye ku mushinga",
-    "heroDesc": "Bootskills itanga amahugurwa yibanda ku mirimo mu by'ikoranabuhanga, ubucuruzi, guhanga no buyobozi.",
+    "heroTitle": "Practical Courses, Opportunities & Project-Based Learning",
+    "heroDesc": "Bootskills offers career-focused training across tech, business, creative, and leadership areas with opportunities, real client projects, and local delivery from Kigali, Rwanda to East Africa.",
     "viewPrograms": "Reba gahunda z'amahugurwa",
     "requestConsultation": "Saba inama",
     "forIndividuals": "Ku bantu",
-    "individualsTitle": "Amahugurwa, imyitozo n'inzira z'imishinga",
-    "individualsDesc": "Kwiga bifatika bigenewe gutegura abiga kuba bashoboye mu nganda.",
+    "individualsTitle": "Training, Opportunities & Project Pathways",
+    "individualsDesc": "Practical learning designed to make learners industry-ready through hands-on courses, opportunity placements, and live projects.",
     "forOrganizations": "Ku bigo",
     "organizationsTitle": "Amahugurwa y'akazi, inkunga y'imishinga n'iterambere ry'abahanga",
-    "organizationsDesc": "Serivisi zifatika ku itsinda, imishinga n'ibigo.",
+    "organizationsDesc": "Practical services for teams, projects and local businesses that need training, opportunities, and operational support.",
     "enterpriseSolutions": "Ibisubizo by'ibigo",
     "enterpriseTitle": "Amahugurwa y'ibigo no guteza imbere ubuhanga",
     "bootskillsAdvantage": "Akarusho ka Bootskills",
@@ -285,7 +285,7 @@
     "expertInstructors": "Abigisha babahanga",
     "expertInstructorsDesc": "Wige ku bahanga bafite uburambe nyayo",
     "practicalProjects": "Imishinga ifatika",
-    "practicalProjectsDesc": "Ubake portfolio ukoresheje imishinga nyayo",
+    "practicalProjectsDesc": "Build a portfolio with hands-on, real-world projects and opportunity deliverables",
     "careerSupport": "Inkunga y'umwuga",
     "careerSupportDesc": "Ubufasha mu gushaka akazi n'inama z'umwuga"
   },
@@ -360,28 +360,28 @@
     "haveProjectDesc": "Tuganire ku buryo dushobora kugufasha."
   },
   "internships": {
-    "programs": "Gahunda z'imyitozo",
+    "programs": "Gahunda z'amahirwe",
     "heroTitle": "Gira ubunararibonye nyayo bukomeye",
-    "heroDesc": "Funga icyuho hagati y'uburezi n'akazi ukoresheje gahunda zacu z'imyitozo.",
-    "applyNow": "Saba imyitozo",
+    "heroDesc": "Combler le fossé entre l'apprentissage et l'emploi avec nos programmes d'opportunités structurés.",
+    "applyNow": "Saba amahirwe",
     "viewTrainingFirst": "Banza urebe amahugurwa",
-    "whyInternWithUs": "Kuki ukora imyitozo iduhereye",
+    "whyInternWithUs": "Pourquoi choisir nos opportunités",
     "whatYoullGain": "Ibyo uzabona",
-    "internshipDesc": "Imyitozo yacu igenewe kuguha ubunararibonye abakoresha bashaka.",
+    "internshipDesc": "Nos opportunités sont conçues pour vous donner l'expérience pratique que recherchent les employeurs.",
     "realProjects": "Imishinga nyayo",
     "realProjectsDesc": "Kora ku mishyingo nyayo y'abakiriya.",
     "mentorship": "Ubuyobozi",
     "mentorshipDesc": "Ubuyobozi bwihariye n'abahanga bafite uburambe.",
     "certification": "Impamyashahembo",
-    "certificationDesc": "Habwa impamyashahembo y'imyitozo yemewe n'abakoresha.",
+    "certificationDesc": "Recevez un certificat d'opportunité reconnu par les employeurs.",
     "flexibleSchedule": "Gahunda yoroshye",
-    "flexibleScheduleDesc": "Uzirikane imyitozo yawe n'izindi nshingano.",
+    "flexibleScheduleDesc": "Conciliez votre opportunité avec d'autres engagements.",
     "remoteFriendly": "Kure kure",
     "remoteFriendlyDesc": "Ushobora kwitabira uva aho uri hose.",
     "careerPathway": "Inzira y'umwuga",
     "careerPathwayDesc": "Umunota mwiza abona akazi k'igihe cyose.",
     "openPositions": "Myanya ifunguye",
-    "availableInternships": "Imyitozo iboneka",
+    "availableInternships": "Amahirwe aboneka",
     "noInternships": "Nta myitozo iboneka ubu.",
     "howToApply": "Uko usaba",
     "applicationProcess": "Inzira yo gusaba",
@@ -394,8 +394,8 @@
     "onboarding": "Kwinjizwa mu bikorwa",
     "onboardingDesc": "Shyiraho ibikoresho, hura n'umutoza wawe.",
     "successStories": "Inkuru z'intsinzi",
-    "whatInternsSay": "Ibyo abakozi bacu b'imyitozo bavuga",
-    "readyToStart": "Uteguriye gutangira imyitozo?",
+    "whatInternsSay": "Iby'abanyeshuri bacu bavuga",
+    "readyToStart": "Uteguranye gutangiza amahirwe?",
     "readyDesc": "Ubusaba busuzumwa butsya.",
     "applyNowBtn": "Saba Nonaha",
     "exploreTrainingFirst": "Banza urebe amahugurwa",
@@ -494,7 +494,7 @@
     "billing": "Kwishyuza",
     "grades": "Amanota",
     "certificates": "Impamyashahembo",
-    "internships": "Porogaramu",
+    "internships": "Opportunities",
     "projects": "Imishinga",
     "applications": "Gusaba",
     "settings": "Igenamiterere rya konti",
@@ -549,62 +549,203 @@
     },
     "student": {
       "title": "Ururendo mu Irembo ry'Umuntu wiga",
-      "welcome": {"title": "👋 Murakaza neza, Munyeshuri!", "content": "Murakaza neza kuri Bootskills Student Portal! 🎉 Uru rugendo rw'ihuse ruzakwereka uko ukora utangira kwiga, gukora code, no kubaka umwuga wawe wizewe."},
-      "sidebar": {"title": "📋 Kugenda ku rubande", "content": "Uyu ni **urubande rwawe rwo kugendamo**. Ukoresha urugenda mu nzego zose z'irembo ryawe — ikibaho, amasomo, imishinga, kwishyura, n'ibindi."},
-      "dashboard": {"title": "📊 Ikibaho", "content": "**Ikibaho cyawe** kiguha incamake ya byose: XP, urutonde rwawe, urwego, amasomo wanditsemo, ibikorwa biheruka, n'ibigomba kurangira."},
-      "projects": {"title": "💼 Imishinga", "content": "Rebe kandi usabe **Imushinga nyayo** itanzwe n'abakiriya. Wubake portfolio yawe ugiye kubona uburambe."},
-      "courses": {"title": "📚 Amasomo Yange", "content": "Icyiciro cya **Amasomo** — togera amasomo wanditsemo, ukomeze amasomo, ukurikire iterambere, ukore ibihembwe byose ahantu hamwe."},
-      "internship": {"title": "🏢 Imyitozo", "content": "Umariza amasomo yawe, saba **Imyitozo** hano. Uzabona uburambe nyabwo bw'akazi mu nzego zawe."},
-      "schedule": {"title": "📅 Gahunda", "content": "**Gahunda yawe** — reba amasomo azaza, guhamagara abatoza, ibigomba kurangira, n'amasomo ku mbonera mu karemano kamwe."},
-      "billing": {"title": "💳 Kwishyuza n'Amafaranga", "content": "Icyiciro cya **Kwishyuza** niho ugobora amafaranga. Iyandikishe mu masomo yishyurwa, ube amakusanyirizo, ukurikire amateka yo kwishyura. Ushobora kwishyura ukoresheje mobile money cyangwa karta."},
-      "certificates": {"title": "🎓 Impamyashahembo", "content": "Umariza amasomo yawe yose, **Impamyashahembo** yawe izagaragara hano. Manura kandi usangize ahantu hose."},
-      "header": {"title": "🔝 Umurongo wo hejuru", "content": "**Umurongo wo hejuru** uguha uburyo bwihuse bwo gushaka, XP/urutonde/urwego (ku banyeshuri), amatangazo, impinduka y'ibara, na porofile yawe."},
-      "notifications": {"title": "🔔 Amatangazo", "content": "Komeza kumenya! **Inzogera y'amatangazo** irabura iyo ubonye ubutumwa, ibitekerezo ku bihembwe, cyangwa ibintu by'ingenzi bishya."},
-      "userMenu": {"title": "👤 Porofile yawe", "content": "Kanda kuri **Avatar** yawe kugirango ugere kuri genamiterere, usubire ku rubuga, cyangwa usohoke. Ushobora no gutangiza uru rugendo uwo ari wo wese mumenya."},
-      "ready": {"title": "🎉 Uteguriye! 🚀", "content": "**Uteguriye!** 🚀 Tangira ukoresheje Ikibaho cyawe, iyandikishe mu masomo, utangire urugendo rwo kwiga. Ukeneye ubufasha? Kanda ku nzogera cyangwa sura paji y'ubufasha."}
+      "welcome": {
+        "title": "👋 Murakaza neza, Munyeshuri!",
+        "content": "Murakaza neza kuri Bootskills Student Portal! 🎉 Uru rugendo rw'ihuse ruzakwereka uko ukora utangira kwiga, gukora code, no kubaka umwuga wawe wizewe."
+      },
+      "sidebar": {
+        "title": "📋 Kugenda ku rubande",
+        "content": "Uyu ni **urubande rwawe rwo kugendamo**. Ukoresha urugenda mu nzego zose z'irembo ryawe — ikibaho, amasomo, imishinga, kwishyura, n'ibindi."
+      },
+      "dashboard": {
+        "title": "📊 Ikibaho",
+        "content": "**Ikibaho cyawe** kiguha incamake ya byose: XP, urutonde rwawe, urwego, amasomo wanditsemo, ibikorwa biheruka, n'ibigomba kurangira."
+      },
+      "projects": {
+        "title": "💼 Imishinga",
+        "content": "Rebe kandi usabe **Imushinga nyayo** itanzwe n'abakiriya. Wubake portfolio yawe ugiye kubona uburambe."
+      },
+      "courses": {
+        "title": "📚 Amasomo Yange",
+        "content": "Icyiciro cya **Amasomo** — togera amasomo wanditsemo, ukomeze amasomo, ukurikire iterambere, ukore ibihembwe byose ahantu hamwe."
+      },
+      "internship": {
+        "title": "🏢 Imyitozo",
+        "content": "Umariza amasomo yawe, saba **Imyitozo** hano. Uzabona uburambe nyabwo bw'akazi mu nzego zawe."
+      },
+      "schedule": {
+        "title": "📅 Gahunda",
+        "content": "**Gahunda yawe** — reba amasomo azaza, guhamagara abatoza, ibigomba kurangira, n'amasomo ku mbonera mu karemano kamwe."
+      },
+      "billing": {
+        "title": "💳 Kwishyuza n'Amafaranga",
+        "content": "Icyiciro cya **Kwishyuza** niho ugobora amafaranga. Iyandikishe mu masomo yishyurwa, ube amakusanyirizo, ukurikire amateka yo kwishyura. Ushobora kwishyura ukoresheje mobile money cyangwa karta."
+      },
+      "certificates": {
+        "title": "🎓 Impamyashahembo",
+        "content": "Umariza amasomo yawe yose, **Impamyashahembo** yawe izagaragara hano. Manura kandi usangize ahantu hose."
+      },
+      "header": {
+        "title": "🔝 Umurongo wo hejuru",
+        "content": "**Umurongo wo hejuru** uguha uburyo bwihuse bwo gushaka, XP/urutonde/urwego (ku banyeshuri), amatangazo, impinduka y'ibara, na porofile yawe."
+      },
+      "notifications": {
+        "title": "🔔 Amatangazo",
+        "content": "Komeza kumenya! **Inzogera y'amatangazo** irabura iyo ubonye ubutumwa, ibitekerezo ku bihembwe, cyangwa ibintu by'ingenzi bishya."
+      },
+      "userMenu": {
+        "title": "👤 Porofile yawe",
+        "content": "Kanda kuri **Avatar** yawe kugirango ugere kuri genamiterere, usubire ku rubuga, cyangwa usohoke. Ushobora no gutangiza uru rugendo uwo ari wo wese mumenya."
+      },
+      "ready": {
+        "title": "🎉 Uteguriye! 🚀",
+        "content": "**Uteguriye!** 🚀 Tangira ukoresheje Ikibaho cyawe, iyandikishe mu masomo, utangire urugendo rwo kwiga. Ukeneye ubufasha? Kanda ku nzogera cyangwa sura paji y'ubufasha."
+      }
     },
     "trainer": {
       "title": "Ururendo mu Irembo ry'Umwarimu",
-      "welcome": {"title": "👋 Murakaza neza, Mwarimu!", "content": "Murakaza neza kuri Bootskills Trainer Portal! 🎓 Uru rugendo ruzakuyobora mu gukora abanyeshuri, amasomo, ibihembwe, n'ibikorwa byawe by'umwuga."},
-      "sidebar": {"title": "📋 Kugenda ku rubande", "content": "**Urubande rwawe rwo kugendamo** ni icyicaro cyawe cy'ubuyobozi. Uhindura hagati y'amasomo, abanyeshuri, ubuyobozi, gahunda, n'ibindi."},
-      "dashboard": {"title": "📊 Ikibaho", "content": "**Ikibaho** kiguha incamake y'abanyeshuri bawe, ibisubirwamo bitegereje, amasomo akora, n'ibikorwa biheruka."},
-      "courses": {"title": "📚 Amasomo Yange", "content": "Genzura **Amasomo yawe** — kora amasomo mashya, ukurikire iterambere ry'abanyeshuri, uvugurure ibirimo, ukurikire igipimo cy'urangiza."},
-      "students": {"title": "👥 Abanyeshuri", "content": "Reba **Abanyeshuri bawe** — reba abiyandikishije, ukurikire iterambere ryabo, amanota, ubasabe ubufasha."},
-      "mentorship": {"title": "🤝 Ubuyobozi", "content": "Icyiciro cya **Ubuyobozi** — gahunda za sessiyo ku giti cyawe, ukurikire amasaha y'ubuyobozi, ugobore abo uyobora."},
-      "internships": {"title": "🏢 Imyitozo", "content": "Genzura **Imyitozo** — reba iterambere ry'abanyeshuri b'imyitozo, shyiramo inshingano, utange ibitekerezo ku mishyingo nyayo."},
-      "schedule": {"title": "📅 Gahunda", "content": "**Gahunda yawe** — genzura amahirwe yawe, reba sessiyo zizaza, ugene igihe cyo kwigisha."},
-      "header": {"title": "🔝 Umurongo wo hejuru", "content": "**Umurongo wo hejuru** werekana umubare w'abanyeshuri, amasomo akora, ibisubirwamo bitegereje, kandi uguha uburyo bwihuse bwo kugera ku matangazo na porofile yawe."},
-      "userMenu": {"title": "👤 Porofile yawe", "content": "**Porofile yawe** — ubeza genamiterere, usubire ku rubuga, cyangwa usohoke. Ushobora gutangiza uru rugendo uwo ari wo wese."},
-      "ready": {"title": "🎉 Uteguriye!", "content": "**Uteguriye!** 🚀 Tangira ukoresheje ikibaho cyawe, ukurikire abanyeshuri, ukore amasomo yawe. Ukeneye ubufasha? Inzogera irahari. Ushobora gutangiza uru rugendo uwo ari wo wese."}
+      "welcome": {
+        "title": "👋 Murakaza neza, Mwarimu!",
+        "content": "Murakaza neza kuri Bootskills Trainer Portal! 🎓 Uru rugendo ruzakuyobora mu gukora abanyeshuri, amasomo, ibihembwe, n'ibikorwa byawe by'umwuga."
+      },
+      "sidebar": {
+        "title": "📋 Kugenda ku rubande",
+        "content": "**Urubande rwawe rwo kugendamo** ni icyicaro cyawe cy'ubuyobozi. Uhindura hagati y'amasomo, abanyeshuri, ubuyobozi, gahunda, n'ibindi."
+      },
+      "dashboard": {
+        "title": "📊 Ikibaho",
+        "content": "**Ikibaho** kiguha incamake y'abanyeshuri bawe, ibisubirwamo bitegereje, amasomo akora, n'ibikorwa biheruka."
+      },
+      "courses": {
+        "title": "📚 Amasomo Yange",
+        "content": "Genzura **Amasomo yawe** — kora amasomo mashya, ukurikire iterambere ry'abanyeshuri, uvugurure ibirimo, ukurikire igipimo cy'urangiza."
+      },
+      "students": {
+        "title": "👥 Abanyeshuri",
+        "content": "Reba **Abanyeshuri bawe** — reba abiyandikishije, ukurikire iterambere ryabo, amanota, ubasabe ubufasha."
+      },
+      "mentorship": {
+        "title": "🤝 Ubuyobozi",
+        "content": "Icyiciro cya **Ubuyobozi** — gahunda za sessiyo ku giti cyawe, ukurikire amasaha y'ubuyobozi, ugobore abo uyobora."
+      },
+      "internships": {
+        "title": "🏢 Imyitozo",
+        "content": "Genzura **Imyitozo** — reba iterambere ry'abanyeshuri b'imyitozo, shyiramo inshingano, utange ibitekerezo ku mishyingo nyayo."
+      },
+      "schedule": {
+        "title": "📅 Gahunda",
+        "content": "**Gahunda yawe** — genzura amahirwe yawe, reba sessiyo zizaza, ugene igihe cyo kwigisha."
+      },
+      "header": {
+        "title": "🔝 Umurongo wo hejuru",
+        "content": "**Umurongo wo hejuru** werekana umubare w'abanyeshuri, amasomo akora, ibisubirwamo bitegereje, kandi uguha uburyo bwihuse bwo kugera ku matangazo na porofile yawe."
+      },
+      "userMenu": {
+        "title": "👤 Porofile yawe",
+        "content": "**Porofile yawe** — ubeza genamiterere, usubire ku rubuga, cyangwa usohoke. Ushobora gutangiza uru rugendo uwo ari wo wese."
+      },
+      "ready": {
+        "title": "🎉 Uteguriye!",
+        "content": "**Uteguriye!** 🚀 Tangira ukoresheje ikibaho cyawe, ukurikire abanyeshuri, ukore amasomo yawe. Ukeneye ubufasha? Inzogera irahari. Ushobora gutangiza uru rugendo uwo ari wo wese."
+      }
     },
     "admin": {
       "title": "Ururendo mu Ikibaho ry'Ubuyobozi",
-      "welcome": {"title": "👋 Murakaza neza, Muyobozi!", "content": "Murakaza neza kuri Bootskills Admin Dashboard! 🛠️ Uru rugendo ruzakuyobora mu gukora abakoresha, amasomo, amafaranga, imishinga, n'ibikorwa bya porogaramu."},
-      "sidebar": {"title": "📋 Kugenda ku rubande", "content": "**Urubande rwawe** ni icyicaro cy'ubuyobozi. Koresha Gucunga, Imishinga, Ibigize, Ibikorwa, n'ibindi."},
-      "dashboard": {"title": "📊 Ikibaho", "content": "**Ikibaho** kiguha ibipimo by'ingenzi — umubare w'abakoresha, abanyeshuri, amasomo, amafaranga yinjira, n'ibikorwa bya porogaramu."},
-      "users": {"title": "👥 Abakoresha", "content": "Genzura **Abakoresha bose** — reba, hindura, shyiramo inshingano, ukurikire ibikorwa, ugobore konti z'abanyeshuri/abatoza ahantu hamwe."},
-      "courses": {"title": "📚 Amasomo", "content": "Ucunga **Amasomo** — kora, hindura, shyira ahagaragara, ugene amasomo. Shyiramo abatoza, shyiraho ibiciro, ugobore module."},
-      "payments": {"title": "💳 Kwishyura na Kwishyuza", "content": "Icyiciro cya **Kwishyura** — reba ibikorwa byose, ukurikire amafaranga yinjira, ugobore gusubiza amafaranga, ugenzure ukwishyura."},
-      "internships": {"title": "🏢 Imyitozo", "content": "Genzura **Gahunda z'Imyitozo** — kora gahunda, ukurikire iterambere ry'abanyeshuri b'imyitozo, ugobore gushyirwa."},
-      "analytics": {"title": "📈 Isesengura", "content": "**Isesengura** — jinjira mu bipimo bya porogaramu, imikorere y'abanyeshuri, igipimo cy'urangiza amasomo, n'uburyo amafaranga yinjira."},
-      "header": {"title": "🔝 Umurongo wo hejuru", "content": "**Umurongo wo hejuru** werekana ibipimo by'ingenzi — abakoresha bose, abanyeshuri, n'amasomo. Ubona amatangazo, guhindura ibara, na porofile yawe."},
-      "userMenu": {"title": "👤 Porofile yawe", "content": "**Porofile yawe** — ubeza genamiterere, usubire ku rubuga, cyangwa usohoke. Ushobora gutangiza uru rugendo uwo ari wo wese."},
-      "ready": {"title": "🎉 Uteguriye!", "content": "**Uteguriye!** 🚀 Tangira ucunga porogaramu yawe ukoresheje Ikibaho. Urubande rufite ibyo ukeneye byose. Subiramo uru rugendo uwo ari wo wese kuri porofile yawe."}
+      "welcome": {
+        "title": "👋 Murakaza neza, Muyobozi!",
+        "content": "Murakaza neza kuri Bootskills Admin Dashboard! 🛠️ Uru rugendo ruzakuyobora mu gukora abakoresha, amasomo, amafaranga, imishinga, n'ibikorwa bya porogaramu."
+      },
+      "sidebar": {
+        "title": "📋 Kugenda ku rubande",
+        "content": "**Urubande rwawe** ni icyicaro cy'ubuyobozi. Koresha Gucunga, Imishinga, Ibigize, Ibikorwa, n'ibindi."
+      },
+      "dashboard": {
+        "title": "📊 Ikibaho",
+        "content": "**Ikibaho** kiguha ibipimo by'ingenzi — umubare w'abakoresha, abanyeshuri, amasomo, amafaranga yinjira, n'ibikorwa bya porogaramu."
+      },
+      "users": {
+        "title": "👥 Abakoresha",
+        "content": "Genzura **Abakoresha bose** — reba, hindura, shyiramo inshingano, ukurikire ibikorwa, ugobore konti z'abanyeshuri/abatoza ahantu hamwe."
+      },
+      "courses": {
+        "title": "📚 Amasomo",
+        "content": "Ucunga **Amasomo** — kora, hindura, shyira ahagaragara, ugene amasomo. Shyiramo abatoza, shyiraho ibiciro, ugobore module."
+      },
+      "payments": {
+        "title": "💳 Kwishyura na Kwishyuza",
+        "content": "Icyiciro cya **Kwishyura** — reba ibikorwa byose, ukurikire amafaranga yinjira, ugobore gusubiza amafaranga, ugenzure ukwishyura."
+      },
+      "internships": {
+        "title": "🏢 Imyitozo",
+        "content": "Genzura **Gahunda z'Imyitozo** — kora gahunda, ukurikire iterambere ry'abanyeshuri b'imyitozo, ugobore gushyirwa."
+      },
+      "analytics": {
+        "title": "📈 Isesengura",
+        "content": "**Isesengura** — jinjira mu bipimo bya porogaramu, imikorere y'abanyeshuri, igipimo cy'urangiza amasomo, n'uburyo amafaranga yinjira."
+      },
+      "header": {
+        "title": "🔝 Umurongo wo hejuru",
+        "content": "**Umurongo wo hejuru** werekana ibipimo by'ingenzi — abakoresha bose, abanyeshuri, n'amasomo. Ubona amatangazo, guhindura ibara, na porofile yawe."
+      },
+      "userMenu": {
+        "title": "👤 Porofile yawe",
+        "content": "**Porofile yawe** — ubeza genamiterere, usubire ku rubuga, cyangwa usohoke. Ushobora gutangiza uru rugendo uwo ari wo wese."
+      },
+      "ready": {
+        "title": "🎉 Uteguriye!",
+        "content": "**Uteguriye!** 🚀 Tangira ucunga porogaramu yawe ukoresheje Ikibaho. Urubande rufite ibyo ukeneye byose. Subiramo uru rugendo uwo ari wo wese kuri porofile yawe."
+      }
     },
     "superAdmin": {
       "title": "Ururundo rwa Super Admin",
-      "welcome": {"title": "👋 Murakaza neza, Super Admin!", "content": "Murakaza neza kuri Bootskills Super Admin Panel! 🔐 Uru rugendo rugizweho ruzibanda ku gahunda ya sisitemu, gukora abakoresha, ibikorwa by'amafaranga, n'ibindi."},
-      "sidebar": {"title": "📋 Kugenda ku rubande", "content": "**Urubande rwawe** rufite byose — Gucunga sisitemu, Marketing, Isesengura, Ikarte y'abakoresha, n'ibindi. Buri gice gifite amateka arambuye."},
-      "dashboard": {"title": "📊 Ikibaho", "content": "**Ikibaho** kiguha ishusho nini — abakoresha bose, abanyeshuri, abatoza, amafaranga yinjira, n'ubuzima bwa porogaramu."},
-      "users": {"title": "👥 Abakoresha BOSE", "content": "**Abakoresha bose** — ugenga konti zose. Tobanya, shaka, hindura inshingano, ucunge urutonde rwose rw'abakoresha."},
-      "config": {"title": "⚙️ Igenamiterere", "content": "**Igenamiterere** — shyiraho imitwarire rusange ya porogaramu, ibiciro, ibiranga, n'amahitamo rusange."},
-      "commissions": {"title": "💰 Komisiyo", "content": "**Igenamiterere rya komisiyo** — shyiraho igipimo cya komisiyo ku batoza, bonus yo kureferra, n'uburyo bwo kwishyura."},
-      "disbursements": {"title": "💸 Kwishyura", "content": "**Kwishyura** — ugobore kwishyura abatoza n'abafatanyabikorwa. Reba amateka yo kwishyura utangire kohereza."},
-      "discountCodes": {"title": "🏷️ Kode z'igabanyirizo", "content": "**Kode z'igabanyirizo** — kora ugobore kode z'igabanyirizo, ukurikire isesengura ry'imikoreshereze, ushyireho ingamba z'igabanyirizo."},
-      "refunds": {"title": "🔄 Gusubiza amafaranga", "content": "**Gusubiza amafaranga** — ukore ubusabe bwo gusubiza amafaranga ku banyeshuri, ube amakimbirane, ukore uruziga rwo gusubiza."},
-      "header": {"title": "🔝 Umurongo wo hejuru", "content": "**Umurongo wo hejuru** werekana ibipimo by'igihe — abakoresha bose, abanyeshuri, n'abatoza. Ugenzura amatangazo na porofile yawe byihuse."},
-      "userMenu": {"title": "👤 Porofile yawe", "content": "**Porofile yawe** — genamiterere, usubire ku rubuga, cyangwa usohoke. Subiramo uru rugendo uwo ari wo wese."},
-      "ready": {"title": "🎉 Uteguriye!", "content": "**Uteguriye!** 🚀 Ubu uzi ibice by'ingenzi bya porogaramu ya Super Admin. Tangira ukoresheje Ikibaho ukore buri gice. Subiramo uru rugendo uwo ari wo wese kuri porofile yawe."}
+      "welcome": {
+        "title": "👋 Murakaza neza, Super Admin!",
+        "content": "Murakaza neza kuri Bootskills Super Admin Panel! 🔐 Uru rugendo rugizweho ruzibanda ku gahunda ya sisitemu, gukora abakoresha, ibikorwa by'amafaranga, n'ibindi."
+      },
+      "sidebar": {
+        "title": "📋 Kugenda ku rubande",
+        "content": "**Urubande rwawe** rufite byose — Gucunga sisitemu, Marketing, Isesengura, Ikarte y'abakoresha, n'ibindi. Buri gice gifite amateka arambuye."
+      },
+      "dashboard": {
+        "title": "📊 Ikibaho",
+        "content": "**Ikibaho** kiguha ishusho nini — abakoresha bose, abanyeshuri, abatoza, amafaranga yinjira, n'ubuzima bwa porogaramu."
+      },
+      "users": {
+        "title": "👥 Abakoresha BOSE",
+        "content": "**Abakoresha bose** — ugenga konti zose. Tobanya, shaka, hindura inshingano, ucunge urutonde rwose rw'abakoresha."
+      },
+      "config": {
+        "title": "⚙️ Igenamiterere",
+        "content": "**Igenamiterere** — shyiraho imitwarire rusange ya porogaramu, ibiciro, ibiranga, n'amahitamo rusange."
+      },
+      "commissions": {
+        "title": "💰 Komisiyo",
+        "content": "**Igenamiterere rya komisiyo** — shyiraho igipimo cya komisiyo ku batoza, bonus yo kureferra, n'uburyo bwo kwishyura."
+      },
+      "disbursements": {
+        "title": "💸 Kwishyura",
+        "content": "**Kwishyura** — ugobore kwishyura abatoza n'abafatanyabikorwa. Reba amateka yo kwishyura utangire kohereza."
+      },
+      "discountCodes": {
+        "title": "🏷️ Kode z'igabanyirizo",
+        "content": "**Kode z'igabanyirizo** — kora ugobore kode z'igabanyirizo, ukurikire isesengura ry'imikoreshereze, ushyireho ingamba z'igabanyirizo."
+      },
+      "refunds": {
+        "title": "🔄 Gusubiza amafaranga",
+        "content": "**Gusubiza amafaranga** — ukore ubusabe bwo gusubiza amafaranga ku banyeshuri, ube amakimbirane, ukore uruziga rwo gusubiza."
+      },
+      "header": {
+        "title": "🔝 Umurongo wo hejuru",
+        "content": "**Umurongo wo hejuru** werekana ibipimo by'igihe — abakoresha bose, abanyeshuri, n'abatoza. Ugenzura amatangazo na porofile yawe byihuse."
+      },
+      "userMenu": {
+        "title": "👤 Porofile yawe",
+        "content": "**Porofile yawe** — genamiterere, usubire ku rubuga, cyangwa usohoke. Subiramo uru rugendo uwo ari wo wese."
+      },
+      "ready": {
+        "title": "🎉 Uteguriye!",
+        "content": "**Uteguriye!** 🚀 Ubu uzi ibice by'ingenzi bya porogaramu ya Super Admin. Tangira ukoresheje Ikibaho ukore buri gice. Subiramo uru rugendo uwo ari wo wese kuri porofile yawe."
+      }
     }
   },
   "guide": {

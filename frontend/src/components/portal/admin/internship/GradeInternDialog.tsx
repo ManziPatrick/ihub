@@ -104,7 +104,7 @@ export function GradeInternDialog({ open, onOpenChange, internship, onGraded }: 
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold truncate">{studentName}</p>
             <p className="text-[11px] text-muted-foreground truncate">
-              {internship?.stage || `Stage ${internship?.currentStage || 1}`} · {internship?.title || 'Internship Program'}
+              {internship?.stage || `Stage ${internship?.currentStage || 1}`} · {internship?.title || 'Opportunity Program'}
             </p>
           </div>
           {avg !== null && (

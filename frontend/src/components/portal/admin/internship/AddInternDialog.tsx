@@ -20,7 +20,7 @@ const STAGES = [
   { id: 1, title: 'Stage 1: Orientation & Onboarding' },
   { id: 2, title: 'Stage 2: Foundation Skills Training' },
   { id: 3, title: 'Stage 3: Guided Practical Projects' },
-  { id: 4, title: 'Stage 4: Industry Internship / Work Simulation' },
+  { id: 4, title: 'Stage 4: Industry Placement / Work Simulation' },
   { id: 5, title: 'Stage 5: Evaluation & Certification' },
   { id: 6, title: 'Stage 6: Career Transition & Placement Support' },
 ];
@@ -96,7 +96,7 @@ export function AddInternDialog({
       await createInternship({
         variables: {
           userId: student.id,
-          title: `${student.fullName || student.username} — Internship Program`,
+          title: `${student.fullName || student.username} — Opportunity Program`,
           organization: 'Ihub Academy',
           duration: '6 Months',
           type: 'Online',

@@ -110,7 +110,7 @@ export default function AdminPayments() {
     { label: "Total Revenue", value: `${totalRevenue.toLocaleString()} RWF`, change: "Overall", trend: "up", icon: DollarSign },
     { label: "This Month", value: `${thisMonthRevenue.toLocaleString()} RWF`, change: "Current Period", trend: "up", icon: TrendingUp },
     { label: "Pending", value: `${pendingValue.toLocaleString()} RWF`, change: `${pendingPayments.length} payments`, trend: "neutral", icon: Clock },
-    { label: "Internship Fees", value: `${internshipRevenue.toLocaleString()} RWF`, change: "Total", trend: "up", icon: CreditCard },
+    { label: "Opportunity Fees", value: `${internshipRevenue.toLocaleString()} RWF`, change: "Total", trend: "up", icon: CreditCard },
   ];
 
   const filteredPayments = payments.filter((payment: any) =>
@@ -132,7 +132,7 @@ export default function AdminPayments() {
               Payments
             </h1>
             <p className="text-muted-foreground mt-1">
-              Track course enrollments and internship fee payments
+              Track course enrollments and opportunity fee payments
             </p>
           </div>
           <div className="flex gap-2">

@@ -32,7 +32,7 @@ const partnerTypes = [
     benefits: [
       "Joint certification programs",
       "Guest industry speakers",
-      "Student internship placements",
+      "Student opportunity placements",
       "Lab & resource sharing"
     ]
   },

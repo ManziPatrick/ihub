@@ -31,7 +31,7 @@ export default function StudentInternships() {
     <PortalLayout>
       <div className="space-y-6 pb-10">
         <div className="pt-4">
-          <h1 className="text-3xl font-heading font-black text-foreground tracking-tight">Internship Portal</h1>
+          <h1 className="text-3xl font-heading font-black text-foreground tracking-tight">Opportunities Portal</h1>
           <p className="text-muted-foreground mt-2 text-sm">Manage your track, applications, and team collaborations.</p>
         </div>
 
@@ -43,7 +43,7 @@ export default function StudentInternships() {
             </TabsTrigger>
             <TabsTrigger value="dashboard" className="gap-2 relative">
               <Target className="w-4 h-4" />
-              My Internship
+              My Opportunity
               {hasTeam && (
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full" />
               )}

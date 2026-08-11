@@ -6686,7 +6686,7 @@ export const resolvers = {
       // Students must specify a context (course or internship), not general
       const contextType = args.contextType || 'general';
       if (context.user.role === 'student' && contextType === 'general') {
-        throw new Error('Students must select a course or internship when booking a session');
+        throw new Error('Students must select a course or program when booking a session');
       }
       // Only super_admin can create general bookings
       if (contextType === 'general' && context.user.role !== 'super_admin') {
@@ -8184,7 +8184,7 @@ export const resolvers = {
         applicationId: id,
         message: status === 'approved'
           ? `Your application has been approved! Please log in to complete your enrollment payment.`
-          : `Your internship application status has been updated to: ${status}`
+          : `Your program application status has been updated to: ${status}`
       });
 
       // Notify via Email
@@ -8329,7 +8329,7 @@ export const resolvers = {
         type: 'TEAM_ASSIGNMENT',
         title: 'New Team Assignment',
         teamId,
-        message: `You have been assigned to a new internship team.`,
+        message: `You have been assigned to a new program team.`,
         link: '/portal/student/internship'
       });
 
@@ -9251,7 +9251,7 @@ export const resolvers = {
         currency: payment.currency,
         message: args.paymentMethod === 'manual_transfer'
           ? `A student submitted payment proof for ${payment.amount} ${payment.currency}`
-          : `New internship payment received — enrollment confirmed`
+          : `New program payment received — enrollment confirmed`
       });
 
       // Notify student about proof submission (manual transfer)
@@ -9284,7 +9284,7 @@ export const resolvers = {
       sendNotification(payment.userId.toString(), {
         type: 'PAYMENT_WAIVED',
         title: 'Payment Waived',
-        message: `Your internship payment has been waived.You can now proceed with the program.`
+        message: `Your program payment has been waived.You can now proceed with the program.`
       });
 
       return payment;
@@ -9309,7 +9309,7 @@ export const resolvers = {
         title: 'Payment Refunded',
         amount: payment.amount,
         currency: payment.currency,
-        message: `Your internship payment has been refunded.`
+        message: `Your program payment has been refunded.`
       });
 
       return payment;

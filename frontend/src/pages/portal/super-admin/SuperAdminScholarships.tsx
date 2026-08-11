@@ -272,7 +272,7 @@ export default function SuperAdminScholarships() {
               Scholarship Management
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Grant, manage, and revoke course and internship scholarships
+              Grant, manage, and revoke course and opportunity scholarships
             </p>
           </div>
           <Button variant="gold" onClick={() => setShowGrantDialog(true)}>
@@ -345,7 +345,7 @@ export default function SuperAdminScholarships() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-purple-500">{stats.internshipScholarships}</p>
-                    <p className="text-xs text-muted-foreground">Internship Scholarships</p>
+                    <p className="text-xs text-muted-foreground">Opportunity Scholarships</p>
                   </div>
                 </CardContent>
               </Card>
@@ -438,7 +438,7 @@ export default function SuperAdminScholarships() {
                   <SelectContent>
                     <SelectItem value="__all__">All Types</SelectItem>
                     <SelectItem value="course">Course</SelectItem>
-                    <SelectItem value="internship">Internship</SelectItem>
+                    <SelectItem value="internship">Opportunity</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

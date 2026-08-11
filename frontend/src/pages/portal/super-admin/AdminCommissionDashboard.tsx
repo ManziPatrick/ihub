@@ -87,7 +87,7 @@ export default function AdminCommissionDashboard() {
     switch (s) {
       case "global": return <Badge variant="outline" className="text-xs flex items-center gap-1"><Globe className="w-3 h-3" /> Global</Badge>;
       case "course": return <Badge variant="outline" className="text-xs flex items-center gap-1"><BookOpen className="w-3 h-3" /> Course</Badge>;
-      case "internship": return <Badge variant="outline" className="text-xs flex items-center gap-1"><Briefcase className="w-3 h-3" /> Internship</Badge>;
+      case "internship": return <Badge variant="outline" className="text-xs flex items-center gap-1"><Briefcase className="w-3 h-3" /> Opportunity</Badge>;
       default: return null;
     }
   };

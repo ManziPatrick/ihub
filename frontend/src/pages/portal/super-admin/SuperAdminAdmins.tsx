@@ -58,7 +58,7 @@ const permissionsList = [
   { key: "users", label: "User Management" },
   { key: "courses", label: "Course Management" },
   { key: "payments", label: "Payment Management" },
-  { key: "internships", label: "Internship Management" },
+  { key: "internships", label: "Opportunity Management" },
   { key: "analytics", label: "Analytics Access" },
   { key: "students", label: "Student Management" },
 ];
@@ -96,10 +96,10 @@ function AdminPerformanceStats({ adminId }: { adminId: string }) {
       <Card className="border-border/50 bg-accent/5">
         <CardContent className="p-4">
           <h4 className="font-semibold text-accent mb-2 flex items-center gap-2">
-            <Briefcase className="w-4 h-4" /> Internship Tracking
+            <Briefcase className="w-4 h-4" /> Opportunity Tracking
           </h4>
           <p className="text-sm text-muted-foreground mb-4">
-            Total internships managed and tracked by this admin.
+            Total opportunities managed and tracked by this admin.
           </p>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div className="flex justify-between border-b border-border/50 pb-1">

@@ -137,7 +137,7 @@ export default function ApplicationReview() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-xl font-black text-foreground">Application Management</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Review and respond to internship candidates</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Review and respond to opportunity candidates</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex gap-1 bg-muted/50 p-1 rounded-xl border border-border/50">

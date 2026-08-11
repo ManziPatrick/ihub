@@ -24,7 +24,7 @@ const STAGES = [
   { id: 1, title: 'Stage 1: Orientation & Onboarding', theme: 'sky' },
   { id: 2, title: 'Stage 2: Foundation Skills Training', theme: 'cyan' },
   { id: 3, title: 'Stage 3: Guided Practical Projects', theme: 'purple' },
-  { id: 4, title: 'Stage 4: Industry Internship / Work Simulation', theme: 'amber' },
+  { id: 4, title: 'Stage 4: Industry Opportunity / Work Simulation', theme: 'amber' },
   { id: 5, title: 'Stage 5: Evaluation & Certification', theme: 'emerald' },
   { id: 6, title: 'Stage 6: Career Transition & Placement Support', theme: 'gold' }
 ];
@@ -135,7 +135,7 @@ export default function WorkflowBoard() {
 
   const handleRemove = async (intern: any) => {
     const name = intern.user?.fullName || intern.user?.username || 'this intern';
-    if (!window.confirm(`Remove ${name} from the program board? This deletes their internship record.`)) return;
+    if (!window.confirm(`Remove ${name} from the program board? This deletes their placement record.`)) return;
     try {
       await deleteInternship({ variables: { id: intern.id } });
     } catch (e) {

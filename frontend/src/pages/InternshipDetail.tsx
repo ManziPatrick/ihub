@@ -63,7 +63,7 @@ export default function InternshipDetail() {
     if (programData) {
       addToCart({
         id: programData.id || id,
-        title: programData.title || "Internship Program",
+        title: programData.title || "Opportunity Program",
         price: programData.price || 0,
         discountPrice: programData.discount > 0 ? programData.discount : undefined,
         type: "internship",
@@ -147,7 +147,7 @@ export default function InternshipDetail() {
       if (program) {
         addToCart({
           id: program.id || id || "",
-          title: program.title || "Internship Program",
+          title: program.title || "Opportunity Program",
           price: program.price || 0,
           discountPrice: program.discount > 0 ? program.discount : undefined,
           type: "internship",
@@ -167,7 +167,7 @@ export default function InternshipDetail() {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title={program.title || "Internship Program"}
+        title={program.title || "Opportunity Program"}
         description={stripHtml(program.description)?.substring(0, 160) || "Apply for this program at Bootskills."}
         canonicalUrl={program.id ? `https://bootskills.com/opportunity/${program.id}` : "https://bootskills.com/opportunities"}
         ogImage={program.image || undefined}

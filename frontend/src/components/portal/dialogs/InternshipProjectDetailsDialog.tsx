@@ -38,7 +38,7 @@ export function InternshipProjectDetailsDialog({ open, onOpenChange, project }: 
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <Badge variant="outline" className="text-[10px] uppercase font-bold text-primary border-primary/30 bg-primary/5">
-                                    Internship Project
+                                    Opportunity Project
                                 </Badge>
                                 <Badge variant="outline" className="text-[10px] uppercase font-bold">
                                     {project.internshipProgram?.title}

@@ -129,7 +129,7 @@ export default function StudentProgram() {
               </div>
               <h2 className="font-heading text-3xl font-bold mb-4">Initialize Your Journey</h2>
               <p className="text-muted-foreground mb-8 max-w-md mx-auto leading-relaxed">
-                You don't have an active internship track yet. Browse our professional tracks and apply to start gaining hands-on experience.
+                You don't have an active opportunity track yet. Browse our professional tracks and apply to start gaining hands-on experience.
               </p>
               <Link to="/portal/student/internships">
                 <Button variant="gold" size="lg" className="h-14 px-10 rounded-2xl shadow-premium hover:-translate-y-1 transition-all">

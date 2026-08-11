@@ -449,7 +449,7 @@ export default function UserReportPage() {
                 <BookOpen className="w-4 h-4 mr-2" /> Courses ({courses.length})
               </TabsTrigger>
               <TabsTrigger value="internships" className="text-xs data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
-                <Briefcase className="w-4 h-4 mr-2" /> Internships ({internships.length})
+                <Briefcase className="w-4 h-4 mr-2" /> Opportunities ({internships.length})
               </TabsTrigger>
               <TabsTrigger value="projects" className="text-xs data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
                 <FileText className="w-4 h-4 mr-2" /> Projects ({projects.length})

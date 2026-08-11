@@ -42,7 +42,7 @@ export function ViewInternshipDialog({ open, onOpenChange, internship, showTrain
         <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6">
           <DialogTitle className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-accent" />
-            Internship Details
+            Opportunity Details
           </DialogTitle>
         </DialogHeader>
         <ScrollArea className="flex-1 px-4 pb-4 sm:px-6 sm:pb-6">

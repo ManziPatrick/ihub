@@ -99,7 +99,7 @@ export default function CreateInternship() {
       { query: GET_ADMIN_DASHBOARD_DATA },
     ],
     onCompleted: () => {
-      toast.success("Internship program launched successfully!");
+      toast.success("Opportunity program launched successfully!");
       navigate("/portal/admin/internships");
     },
     onError: (err) => {
@@ -767,7 +767,7 @@ export default function CreateInternship() {
                         </div>
                         <h2 className="text-4xl font-heading font-black">Ready for Launch</h2>
                         <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-                          Your internship program is fully configured. Review the summary below and launch when ready.
+                          Your program is fully configured. Review the summary below and launch when ready.
                         </p>
                       </div>
 
@@ -890,7 +890,7 @@ export default function CreateInternship() {
 
                 <div className="flex-1 p-8 flex flex-col justify-between">
                   <div className="space-y-3">
-                    <p className="text-[10px] font-black uppercase text-accent tracking-widest">Internship Program</p>
+                    <p className="text-[10px] font-black uppercase text-accent tracking-widest">Opportunity Program</p>
                     <h3 className="text-2xl font-heading font-black tracking-tight leading-none line-clamp-2 italic">
                       {formData.title || "Untitled Program"}
                     </h3>

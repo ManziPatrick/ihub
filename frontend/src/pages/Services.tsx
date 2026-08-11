@@ -244,7 +244,7 @@ const Services = () => {
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Practical learning designed to make learners industry-ready through hands-on courses,
-                internship placements, and live project experience across multiple sectors.
+                opportunity placements, and live project experience across multiple sectors.
               </p>
             </motion.div>
             <div className="grid md:grid-cols-2 gap-8">

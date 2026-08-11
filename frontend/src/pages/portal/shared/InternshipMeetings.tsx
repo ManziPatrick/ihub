@@ -172,7 +172,7 @@ export default function InternshipMeetings() {
         >
           <div>
             <h1 className="font-heading text-2xl lg:text-3xl font-medium text-foreground">
-              Internship Meetings
+              Opportunity Meetings
             </h1>
             <p className="text-muted-foreground mt-1">
               Stay in sync with your program syncs and team meetings.
@@ -218,7 +218,7 @@ export default function InternshipMeetings() {
                 No Meetings Scheduled
               </h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                There are no upcoming internship meetings or sync sessions at the moment.
+                There are no upcoming program meetings or sync sessions at the moment.
               </p>
             </CardContent>
           </Card>
@@ -326,7 +326,7 @@ export default function InternshipMeetings() {
           instructor: viewSession?.host?.fullName || viewSession?.host?.username || 'TBD',
           date: viewSession?.date,
           time: viewSession?.time,
-          course: viewSession?.description || "Internship Sync",
+          course: viewSession?.description || "Program Sync",
           type: 'internship',
           link: viewSession?.meetLink
         }}

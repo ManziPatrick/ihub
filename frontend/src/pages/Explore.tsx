@@ -513,7 +513,7 @@ const Explore = () => {
                   )}
                 </div>
 
-                {/* Programs & Internships */}
+                {/* Opportunities */}
                 <div className="rounded-2xl border border-border/30 bg-card overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border/20">
                     <h3 className="text-sm font-bold text-foreground flex items-center gap-2">

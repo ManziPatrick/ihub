@@ -227,7 +227,7 @@ export const sendMeetingInvitation = async (
     course: { icon: '📚', label: 'Course Session' },
     event: { icon: '🎪', label: 'Event' },
     session: { icon: '🔴', label: 'Live Session' },
-    internship: { icon: '💼', label: 'Internship Program' },
+    internship: { icon: '💼', label: 'Opportunity Program' },
     project: { icon: '📋', label: 'Project Meeting' },
     client: { icon: '🤝', label: 'Client Meeting' },
     general: { icon: '📅', label: 'General Meeting' },
@@ -635,7 +635,7 @@ export const sendPaymentConfirmation = async (
             <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
           </div>
           
-          <p>You now have full access to the internship program. Log in to your portal to start your journey!</p>
+          <p>You now have full access to the opportunity program. Log in to your portal to start your journey!</p>
         </div>
         <div class="footer">
           <p>© 2026 ${config.siteName}. Building Africa's Tech Talent.</p>
@@ -684,7 +684,7 @@ export const sendCertificateIssued = async (
         </div>
         <div class="content">
           <h2>Congratulations, ${studentName}! 🎉</h2>
-          <p>You have successfully completed the <strong>${programTitle}</strong> internship program!</p>
+          <p>You have successfully completed the <strong>${programTitle}</strong> opportunity program!</p>
           
           <div class="certificate-box">
             <h3>🎓 Your Certificate</h3>
@@ -1304,7 +1304,7 @@ export const sendScholarshipApprovedToAdmin = async (
             <p><strong>Status:</strong> Active ✅</p>
           </div>
           
-          <p>The student now has full access to the ${scholarshipType === 'course' ? 'course' : 'internship program'}.</p>
+          <p>The student now has full access to the ${scholarshipType === 'course' ? 'course' : 'opportunity program'}.</p>
           
           <a href="${process.env.CLIENT_ORIGIN || 'https://bootskills.com'}/portal/super-admin/scholarships" class="btn">View Scholarships</a>
         </div>

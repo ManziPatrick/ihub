@@ -50,10 +50,10 @@ export default function InternshipProjectList() {
                 <div>
                     <h2 className="text-xl font-semibold flex items-center gap-2">
                         <Code className="w-5 h-5 text-primary" />
-                        Internship Project Pool
+                        Opportunity Project Pool
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                        Manage projects that can be assigned to internship teams.
+                        Manage projects that can be assigned to opportunity teams.
                     </p>
                 </div>
                 <Button onClick={() => setCreateOpen(true)} className="gap-2">

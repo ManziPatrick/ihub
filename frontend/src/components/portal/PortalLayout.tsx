@@ -94,7 +94,7 @@ const studentNavItems: NavItem[] = [
     ]
   },
   { 
-    label: "Program", 
+    label: "Opportunities", 
     href: "/portal/student/internship", 
     icon: Briefcase 
   },
@@ -121,7 +121,7 @@ const trainerNavItems: NavItem[] = [
     icon: Briefcase,
     children: [
       { label: "Mentorship", href: "/portal/trainer/mentorship", icon: GraduationCap },
-      { label: "Programs", href: "/portal/trainer/programs", icon: Briefcase },
+      { label: "Opportunities", href: "/portal/trainer/programs", icon: Briefcase },
       { label: "Scholarships", href: "/portal/trainer/scholarships", icon: Award },
       { label: "Applicants", href: "/portal/trainer/applicants", icon: Users },
       { label: "Create Course", href: "/portal/admin/courses/create", icon: BookOpen },
@@ -143,7 +143,7 @@ const adminNavItems: NavItem[] = [
       { label: "Course Preview", href: "/portal/admin/course-preview", icon: Eye },
       { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
       { label: "Applicant Hub", href: "/portal/admin/applicants", icon: Users },
-      { label: "Programs", href: "/portal/admin/internships", icon: Briefcase },
+      { label: "Opportunities", href: "/portal/admin/internships", icon: Briefcase },
       { label: "Scholarships", href: "/portal/admin/scholarships", icon: Award },
       { label: "Discount Codes", href: "/portal/super-admin/discount-codes", icon: Tag },
       { label: "Code Answers", href: "/portal/super-admin/code-answers", icon: Code },

@@ -157,7 +157,7 @@ export function MyApplications({ onGoToDashboard }: MyApplicationsProps) {
                               onClick={onGoToDashboard}
                             >
                               <Star className="w-3.5 h-3.5" />
-                              View My Internship
+                              View My Opportunity
                             </Button>
                           )}
                         </div>

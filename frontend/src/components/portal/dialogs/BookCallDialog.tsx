@@ -174,7 +174,7 @@ export function BookCallDialog({
             <div>
               <Label htmlFor="contextType">
                 Related To *
-                {user?.role === 'student' && <span className="text-xs text-muted-foreground ml-1">(select a course or internship)</span>}
+                {user?.role === 'student' && <span className="text-xs text-muted-foreground ml-1">(select a course or opportunity)</span>}
               </Label>
               <Select
                 value={formData.contextType}

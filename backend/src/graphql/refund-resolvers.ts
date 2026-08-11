@@ -440,7 +440,7 @@ export const refundResolvers = {
       await sendNotification(refund.userId.toString(), {
         type: 'refund_approved',
         title: 'Refund Approved',
-        message: `Your refund of ${refund.amount} RWF has been approved. All course/internship access has been cancelled.`,
+        message: `Your refund of ${refund.amount} RWF has been approved. All course/program access has been cancelled.`,
         link: '/portal/my-payments',
       });
 

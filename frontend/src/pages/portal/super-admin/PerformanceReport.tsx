@@ -160,7 +160,7 @@ export default function PerformanceReport() {
           {/* Program Funnel */}
           <Card className="border-border/50">
             <CardHeader>
-              <CardTitle className="text-lg font-heading">Internship Success Funnel</CardTitle>
+              <CardTitle className="text-lg font-heading">Opportunity Success Funnel</CardTitle>
               <CardDescription>Conversion from eligibility to graduation</CardDescription>
             </CardHeader>
             <CardContent>

@@ -144,7 +144,7 @@ const Opportunities = () => {
     <div className="min-h-screen bg-background">
       <SEOHead
         title="Opportunities"
-        description="Explore career opportunities at top companies and schools — internships, trainee programs and practical work experience in Rwanda and beyond. Apply directly to the organization that fits you."
+        description="Explore career opportunities at top companies and schools — opportunities, trainee programs and practical work experience in Rwanda and beyond. Apply directly to the organization that fits you."
         canonicalUrl="https://bootskills.com/opportunities"
         keywords="opportunities Rwanda, internships Kigali, company internships, school programs, software internship Africa, data science internship, IoT internship, career development"
         ogImage="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1200&h=630"
@@ -154,7 +154,7 @@ const Opportunities = () => {
             "@context": "https://schema.org",
             "@graph": [
               organizationLd,
-              webPageLd("Opportunities", "Explore career opportunities at top companies and schools — internships and practical work experience.", "https://bootskills.com/opportunities"),
+              webPageLd("Opportunities", "Explore career opportunities at top companies and schools — opportunities and practical work experience.", "https://bootskills.com/opportunities"),
               breadcrumbListLd([
                 { name: "Home", item: "/" },
                 { name: "Opportunities", item: "/opportunities" },

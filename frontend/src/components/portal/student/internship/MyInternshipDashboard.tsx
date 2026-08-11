@@ -157,7 +157,7 @@ export function MyInternshipDashboard({ team, loading, enrolledCount = 0, onBrow
           </div>
           <h3 className="text-2xl font-black mb-2 tracking-tight">Access Locked</h3>
           <p className="text-muted-foreground text-center max-w-md mb-8 font-medium">
-            You don't have an active internship assignment yet. Choose from our world-class tracks to begin your professional journey.
+            You don't have an active opportunity assignment yet. Choose from our world-class tracks to begin your professional journey.
           </p>
           {onBrowseClick ? (
             <Button variant="gold" size="lg" className="px-10 h-14 rounded-2xl shadow-premium font-black gap-2" onClick={onBrowseClick}>

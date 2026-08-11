@@ -596,7 +596,7 @@ function BroadcastComposer() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Title <span className="text-destructive">*</span></Label>
-              <Input id="title" placeholder="e.g., New Internship Program Launch" value={title} onChange={(e) => setTitle(e.target.value)} />
+              <Input id="title" placeholder="e.g., New Opportunity Program Launch" value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="message">Message <span className="text-destructive">*</span></Label>
