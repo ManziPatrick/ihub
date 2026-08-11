@@ -227,6 +227,42 @@ const startServer = async () => {
             ApolloServerPluginDrainHttpServer({ httpServer }),
             ApolloServerPluginLandingPageLocalDefault({ footer: false }),
             {
+                // Every resolver that guards with `throw new Error('Not authenticated')`
+                // (140+ sites) or `throw new Error('Not authorized'/'Unauthorized')`
+                // (250+ sites) would otherwise surface to clients as
+                // INTERNAL_SERVER_ERROR (HTTP 500). Classify them centrally on the
+                // raw GraphQLErrors so auth failures return proper 401/403 codes
+                // AND real HTTP statuses, and never appear as 500s in error
+                // reports / monitoring. Apollo picks `extensions.http` up from the
+                // raw error before formatting, which formatError alone cannot do.
+                async requestDidStart() {
+                    return {
+                        async didEncounterErrors(requestContext: any) {
+                            for (const err of requestContext.errors || []) {
+                                if (!err?.message) continue;
+                                // Never clobber an explicit GraphQL error code
+                                // (e.g. ACCOUNT_SUSPENDED, GRAPHQL_VALIDATION_FAILED).
+                                const existingCode = err.extensions?.code;
+                                if (existingCode && existingCode !== 'INTERNAL_SERVER_ERROR') continue;
+                                if (/not authenticated/i.test(err.message)) {
+                                    err.extensions = {
+                                        ...err.extensions,
+                                        code: 'UNAUTHENTICATED',
+                                        http: { status: 401 },
+                                    };
+                                } else if (/unauthorized|not authorized|access denied|forbidden/i.test(err.message)) {
+                                    err.extensions = {
+                                        ...err.extensions,
+                                        code: 'FORBIDDEN',
+                                        http: { status: 403 },
+                                    };
+                                }
+                            }
+                        },
+                    };
+                },
+            },
+            {
                 async serverWillStart() {
                     return {
                         async drainServer() {

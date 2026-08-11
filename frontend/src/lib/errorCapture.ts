@@ -158,6 +158,18 @@ function getBatcher(config?: Partial<ErrorCaptureConfig>): ErrorBatcher {
 
 // ─── Apollo Link for GraphQL Error Capture ───────────────────────────────────
 
+// Auth-classified errors (401/403) are expected states — an expired session or
+// missing permission is not a server bug. Skip them so they never appear as
+// 500s on the Error Reports page (the backend classifies these centrally via
+// Apollo's formatError).
+const SKIP_REPORT_CODES = [
+  'UNAUTHENTICATED',
+  'FORBIDDEN',
+  'ACCOUNT_SUSPENDED',
+  'ACCOUNT_DEACTIVATED',
+  'ACCOUNT_BLOCKED',
+];
+
 export const ErrorCaptureLink = new ApolloLink((operation, forward) => {
   if (!forward) return null;
 
@@ -166,20 +178,26 @@ export const ErrorCaptureLink = new ApolloLink((operation, forward) => {
       next: (result) => {
         if (result.errors && result.errors.length > 0) {
           const error = result.errors[0];
-          const batcher = getBatcher();
-          batcher.push({
-            errorType: 'graphql',
-            message: error.message || 'Unknown GraphQL error',
-            stack: (error.extensions?.stacktrace as string[])?.join('\n') || undefined,
-            operationName: operation.operationName || undefined,
-            statusCode: error.extensions?.code === 'INTERNAL_SERVER_ERROR' ? 500 : 400,
-            context: {
-              url: typeof window !== 'undefined' ? window.location.href : '',
-              operationName: operation.operationName,
-              errorCode: error.extensions?.code,
-              userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
-            },
-          });
+          const errorCode = error.extensions?.code as string | undefined;
+          const isAuthClassified =
+            SKIP_REPORT_CODES.includes(errorCode) ||
+            /not authenticated/i.test(error.message || '');
+          if (!isAuthClassified) {
+            const batcher = getBatcher();
+            batcher.push({
+              errorType: 'graphql',
+              message: error.message || 'Unknown GraphQL error',
+              stack: (error.extensions?.stacktrace as string[])?.join('\n') || undefined,
+              operationName: operation.operationName || undefined,
+              statusCode: error.extensions?.code === 'INTERNAL_SERVER_ERROR' ? 500 : 400,
+              context: {
+                url: typeof window !== 'undefined' ? window.location.href : '',
+                operationName: operation.operationName,
+                errorCode: error.extensions?.code,
+                userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+              },
+            });
+          }
         }
         observer.next?.(result);
       },
