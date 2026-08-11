@@ -50,6 +50,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; next: string
 };
 
 interface EditState {
+  organization: string;
   price: string;
   discount: string;
   maxSpots: string;
@@ -58,7 +59,7 @@ interface EditState {
 export default function ProgramList() {
   const navigate = useNavigate();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editState, setEditState] = useState<EditState>({ price: '', discount: '', maxSpots: '' });
+  const [editState, setEditState] = useState<EditState>({ organization: '', price: '', discount: '', maxSpots: '' });
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12; // Grid layout usually looks better with 3 or 4 columns, so 12 is a good multiple
 
@@ -101,6 +102,7 @@ export default function ProgramList() {
   const startEdit = (program: any) => {
     setEditingId(program.id);
     setEditState({
+      organization: String(program.organization ?? ''),
       price: String(program.price ?? 0),
       discount: String(program.discount ?? 0),
       maxSpots: String(program.maxSpots ?? 0),
@@ -111,6 +113,7 @@ export default function ProgramList() {
     updateProgram({
       variables: {
         id: programId,
+        organization: editState.organization.trim(),
         price: parseFloat(editState.price) || 0,
         discount: parseFloat(editState.discount) || 0,
         maxSpots: parseInt(editState.maxSpots) || 0,
@@ -192,7 +195,13 @@ export default function ProgramList() {
               <div className="flex flex-col flex-1 p-5 space-y-4">
                 <div>
                   <h3 className="font-black text-base leading-tight text-foreground line-clamp-2">{program.title}</h3>
-                  <p className="text-[11px] text-muted-foreground font-medium mt-1">{program.duration}</p>
+                  {program.organization && (
+                    <span className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-full bg-accent/10 border border-accent/20 text-[10px] font-black uppercase tracking-wider text-accent">
+                      <Tag className="w-3 h-3" />
+                      {program.organization}
+                    </span>
+                  )}
+                  <p className="text-[11px] text-muted-foreground font-medium mt-1.5">{program.duration}</p>
                 </div>
 
                 {/* Dates */}
@@ -226,7 +235,19 @@ export default function ProgramList() {
                 {/* Price / Discount display or edit */}
                 {isEditing ? (
                   <div className="space-y-3 bg-muted/20 rounded-2xl p-4 border border-border/40">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Edit Pricing & Spots</p>
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Edit Program Details</p>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                        <Tag className="w-2.5 h-2.5" /> Organization / Company / School
+                      </label>
+                      <Input
+                        type="text"
+                        value={editState.organization}
+                        onChange={(e) => setEditState(s => ({ ...s, organization: e.target.value }))}
+                        placeholder="e.g. Google, University of Rwanda"
+                        className="h-9 text-sm bg-background border-border/40 rounded-xl"
+                      />
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
                         <label className="text-[9px] font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1">
@@ -315,7 +336,7 @@ export default function ProgramList() {
                     <button
                       onClick={() => startEdit(program)}
                       className="p-2 rounded-xl text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors"
-                      title="Edit price, discount & spots"
+                      title="Edit details, price, discount & spots"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>

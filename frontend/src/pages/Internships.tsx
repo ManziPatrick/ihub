@@ -1,18 +1,33 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthAwareLink } from "@/components/AuthAwareLink";
 import { SEOHead } from "@/components/SEOHead";
 import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
-import testimonialEmmanuel from "@/assets/testimonial-emmanuel.webp";
-import testimonialMarie from "@/assets/testimonial-marie.webp";
-import testimonialJean from "@/assets/testimonial-jean.webp";
-import testimonialSarah from "@/assets/testimonial-sarah.webp";
-import { Briefcase, Code, Database, Wifi, Award, FolderOpen, Users, Clock, CheckCircle, ArrowRight, Target, Calendar, Globe, Search, Clock as ClockIcon, Users as UsersIcon, Calendar as CalendarIcon, CheckCircle as CheckCircleIcon, ArrowRight as ArrowRightIcon } from "lucide-react";
+import {
+  Briefcase,
+  Code,
+  Database,
+  Wifi,
+  Award,
+  FolderOpen,
+  Users,
+  Clock,
+  Target,
+  Globe,
+  Search,
+  Building2,
+  ChevronDown,
+  ClockIcon,
+  UsersIcon,
+  ArrowRightIcon,
+  MapPin,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { useEffect, useMemo, useState } from "react";
 import internshipImage from "@/assets/internship-work.webp";
 import internshipImageMobile from "@/assets/internship-work-mobile.webp";
 import heroImage from "@/assets/hero-training.webp";
@@ -20,24 +35,23 @@ import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import { useQuery } from "@apollo/client/react";
 import { GET_INTERNSHIP_PROGRAMS, GET_MY_INTERNSHIP_APPLICATIONS, GET_ME } from "@/lib/graphql/queries";
 import { useAuth } from "@/contexts/AuthContext";
-
-
-
+import { useCurrency } from "@/hooks/useCurrency";
+import { cn } from "@/lib/utils";
 
 const benefits = [
   { icon: FolderOpen, title: "Real Projects", description: "Work on actual client projects and products, not simulated exercises. Your work will have real impact." },
   { icon: Users, title: "Mentorship", description: "One-on-one guidance from experienced professionals who are invested in your growth and success." },
-  { icon: Award, title: "Certification", description: "Receive a recognized internship certificate that validates your experience to future employers." },
-  { icon: Clock, title: "Flexible Schedule", description: "Balance your internship with other commitments. We offer part-time and flexible arrangements." },
-  { icon: Globe, title: "Remote-Friendly", description: "Participate from anywhere with our online and hybrid internship options." },
+  { icon: Award, title: "Certification", description: "Receive a recognized certificate that validates your experience to future employers." },
+  { icon: Clock, title: "Flexible Schedule", description: "Balance your opportunity with other commitments. We offer part-time and flexible arrangements." },
+  { icon: Globe, title: "Remote-Friendly", description: "Participate from anywhere with our online and hybrid options." },
   { icon: Target, title: "Career Pathway", description: "Top performers get priority access to full-time positions and advanced opportunities." },
 ];
 
 const process = [
   { step: "1", title: "Apply Online", description: "Submit your application with resume and a brief statement of interest." },
   { step: "2", title: "Skills Assessment", description: "Complete a short technical assessment relevant to your chosen track." },
-  { step: "3", title: "Interview", description: "Meet with our team to discuss your goals and expectations." },
-  { step: "4", title: "Onboarding", description: "Get set up with tools, meet your mentor, and start your internship journey." },
+  { step: "3", title: "Interview", description: "Meet with the team to discuss your goals and expectations." },
+  { step: "4", title: "Onboarding", description: "Get set up with tools, meet your mentor, and start your journey." },
 ];
 
 const testimonials = [
@@ -45,7 +59,7 @@ const testimonials = [
     name: "Emmanuel R.",
     role: "Former Software Intern",
     current: "Now Junior Developer at TechCorp",
-    quote: "The internship gave me real project experience that made all the difference in my job interviews. The mentorship was invaluable."
+    quote: "The program gave me real project experience that made all the difference in my job interviews. The mentorship was invaluable."
   },
   {
     name: "Grace M.",
@@ -55,12 +69,16 @@ const testimonials = [
   },
 ];
 
-const Internships = () => {
+const DEFAULT_ORG = "Bootskills Academy";
+
+const Opportunities = () => {
   const { isAuthenticated } = useAuth();
+  const { formatPrice } = useCurrency();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get("q") || "");
   const [debouncedSearch, setDebouncedSearch] = useState(() => searchParams.get("q") || "");
+  const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
 
   // Debounce the search term so the query fires only after the user stops typing
   useEffect(() => {
@@ -82,12 +100,36 @@ const Internships = () => {
     }
     setSearchParams(params, { replace: true });
   };
+
   const { data: appsData } = useQuery(GET_MY_INTERNSHIP_APPLICATIONS, {
     skip: !isAuthenticated
   });
 
   const internshipPrograms = (internsData as any)?.internshipPrograms?.items || [];
   const myApplications = (appsData as any)?.myInternshipApplications || [];
+
+  // Group opportunities by organization (company or school)
+  const organizations = useMemo(() => {
+    const map = new Map<string, any[]>();
+    for (const program of internshipPrograms) {
+      const org = program.organization?.trim() || DEFAULT_ORG;
+      if (!map.has(org)) map.set(org, []);
+      map.get(org)!.push(program);
+    }
+    // Sort by number of opportunities (desc), then alphabetically
+    return Array.from(map.entries())
+      .map(([name, items]) => ({
+        name,
+        items: items.sort((a, b) => (a.title || "").localeCompare(b.title || "")),
+      }))
+      .sort((a, b) => b.items.length - a.items.length || a.name.localeCompare(b.name));
+  }, [internshipPrograms]);
+
+  const getApplicationStatus = (programId: string) => {
+    if (!isAuthenticated) return null;
+    const app = myApplications.find((a: any) => a.internshipProgram?.id === programId || a.internshipProgramId === programId);
+    return app?.status || null;
+  };
 
   const getCategoryIcon = (category: string) => {
     switch (category?.toLowerCase()) {
@@ -97,13 +139,14 @@ const Internships = () => {
       default: return Briefcase;
     }
   };
+
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Internships"
-        description="Gain real-world experience with Bootskills internships in Kigali, Rwanda. Work on real projects, get mentored by experts, and build a portfolio that stands out."
-        canonicalUrl="https://bootskills.com/internships"
-        keywords="internships Rwanda, tech internships Kigali, software internship Africa, data science internship, IoT internship, career development"
+        title="Opportunities"
+        description="Explore career opportunities at top companies and schools — internships, trainee programs and practical work experience in Rwanda and beyond. Apply directly to the organization that fits you."
+        canonicalUrl="https://bootskills.com/opportunities"
+        keywords="opportunities Rwanda, internships Kigali, company internships, school programs, software internship Africa, data science internship, IoT internship, career development"
         ogImage="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1200&h=630"
       >
         <script type="application/ld+json">
@@ -111,10 +154,10 @@ const Internships = () => {
             "@context": "https://schema.org",
             "@graph": [
               organizationLd,
-              webPageLd("Internships", "Gain real-world experience with Bootskills internships. Work on real projects, get mentored by experts, and build a portfolio that stands out.", "https://bootskills.com/internships"),
+              webPageLd("Opportunities", "Explore career opportunities at top companies and schools — internships and practical work experience.", "https://bootskills.com/opportunities"),
               breadcrumbListLd([
                 { name: "Home", item: "/" },
-                { name: "Internships", item: "/internships" },
+                { name: "Opportunities", item: "/opportunities" },
               ]),
             ]
           })}
@@ -140,17 +183,17 @@ const Internships = () => {
               animate={{ opacity: 1, y: 0 }}
             >
               <span className="inline-block px-4 py-1 bg-accent/20 text-accent text-sm font-medium rounded-full mb-4">
-                Program Programs
+                Explore Opportunities
               </span>
               <h1 className="font-heading text-3xl lg:text-5xl font-medium text-card-foreground mb-6">
-                Gain Real-World Experience That Matters
+                Discover Opportunities at Companies &amp; Schools
               </h1>
               <p className="text-card-foreground/80 max-w-2xl mx-auto text-lg">
-                Bridge the gap between learning and employment with our structured programs.
-                Work on real projects, get mentored by experts, and build a portfolio that stands out.
+                Browse open positions grouped by organization — from Google to local universities.
+                Open an organization card to see every opportunity they offer and apply in one click.
               </p>
               <div className="flex flex-wrap justify-center gap-4 mt-8">
-                <AuthAwareLink variant="gold" size="lg" to="/portal/student/internship">Apply for Program</AuthAwareLink>
+                <AuthAwareLink variant="gold" size="lg" to="/portal/student/internship">Apply for an Opportunity</AuthAwareLink>
                 <Link to="/explore">
                   <Button variant="outline" size="lg">View Training First</Button>
                 </Link>
@@ -211,7 +254,7 @@ const Internships = () => {
                 src={internshipImage}
                 srcSet={`${internshipImageMobile} 600w, ${internshipImage} 1280w`}
                 sizes="(max-width: 1024px) 100vw, 80vw"
-                alt="Interns collaborating on a project"
+                alt="Professionals collaborating on a project"
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
               />
@@ -230,7 +273,7 @@ const Internships = () => {
           </div>
         </section>
 
-        {/* Available Programs */}
+        {/* Open Opportunities grouped by organization */}
         <section className="py-16 lg:py-20 bg-card">
           <div className="container mx-auto px-4 lg:px-8">
             <motion.div
@@ -241,119 +284,167 @@ const Internships = () => {
             >
               <span className="text-accent text-sm font-medium uppercase tracking-wider">Open Positions</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mt-2">
-                Available Programs
+                Browse Opportunities by Organization
               </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto mt-3">
+                Tap a company or school to see all their open opportunities — then apply directly.
+              </p>
             </motion.div>
 
-            {/* Program search — matches titles, descriptions, eligibility and more */}
+            {/* Opportunity search — matches titles, organizations, descriptions and more */}
             <div className="relative max-w-md mx-auto mb-10">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Search programs, fields, eligibility..."
+                placeholder="Search opportunities, organizations, fields..."
                 className="pl-10 rounded-xl bg-background border-border/40"
               />
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              {internshipPrograms.length === 0 && !internsLoading ? (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">No programs available at the moment.</p>
-                </div>
-              ) : (
-                internshipPrograms.map((intern: any, index: number) => {
-                  const Icon = getCategoryIcon(intern.normalizedCategory);
-                  const application = myApplications.find((app: any) => app.internshipProgram?.id === (intern.id || intern._id));
-                  const appStatus = application?.status;
-
+            {internshipPrograms.length === 0 && !internsLoading ? (
+              <div className="text-center py-12">
+                <Briefcase className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground">
+                  {debouncedSearch.trim()
+                    ? `No opportunities match "${debouncedSearch.trim()}". Try a different keyword or organization.`
+                    : "No opportunities available at the moment."}
+                </p>
+              </div>
+            ) : (
+              <div className="max-w-4xl mx-auto space-y-6">
+                {organizations.map((org, orgIndex) => {
+                  const isExpanded = expandedOrg === org.name;
+                  const Icon = Building2;
                   return (
                     <motion.div
-                      key={intern.id}
+                      key={org.name}
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      transition={{ delay: index * 0.1 }}
-                      className="bg-background p-6 rounded-xl shadow-card border border-border/30 group hover:shadow-card-hover transition-all flex flex-col"
+                      transition={{ delay: Math.min(orgIndex * 0.05, 0.3) }}
+                      className={cn(
+                        "bg-background rounded-2xl border shadow-card overflow-hidden transition-all",
+                        isExpanded ? "border-accent/40 shadow-card-hover" : "border-border/30 hover:shadow-card-hover"
+                      )}
                     >
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="w-14 h-14 rounded-full bg-card flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                          <Icon className="w-7 h-7 text-accent" strokeWidth={1.5} />
+                      {/* Organization header — click to expand */}
+                      <button
+                        type="button"
+                        onClick={() => setExpandedOrg(isExpanded ? null : org.name)}
+                        className="w-full flex items-center gap-4 p-5 text-left hover:bg-muted/10 transition-colors"
+                        aria-expanded={isExpanded}
+                      >
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg shrink-0">
+                          <Icon className="w-7 h-7 text-white" strokeWidth={1.75} />
                         </div>
-                        <div>
-                          <h3 className="font-heading font-semibold text-foreground">{intern.title}</h3>
-                          <p className="text-xs text-muted-foreground">{intern.duration} • {intern.type || 'Remote'}</p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-heading font-semibold text-lg text-foreground">{org.name}</h3>
+                            {org.name === DEFAULT_ORG && (
+                              <Badge variant="outline" className="text-[10px] border-border/40 text-muted-foreground">In-house</Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                            <UsersIcon className="w-3.5 h-3.5 text-accent" />
+                            {org.items.length} open {org.items.length === 1 ? "opportunity" : "opportunities"}
+                            {org.items[0]?.location && (
+                              <span className="inline-flex items-center gap-1 ml-2">
+                                <MapPin className="w-3.5 h-3.5 text-accent" /> {org.items[0].location}
+                              </span>
+                            )}
+                          </p>
                         </div>
-                      </div>
-
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3">{intern.description}</p>
-
-                      <div className="mb-6">
-                        <p className="text-xs font-medium text-foreground mb-2 flex items-center gap-2">
-                          <Target className="w-3 h-3 text-accent" /> Highlights:
-                        </p>
-                        <div className="flex flex-wrap gap-1">
-                          <span className="text-[10px] bg-card px-2 py-0.5 rounded text-muted-foreground border border-border/50">
-                            {intern.normalizedCategory}
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-accent">
+                            {isExpanded ? "Hide" : "View"}
                           </span>
-                          <span className="text-[10px] bg-card px-2 py-0.5 rounded text-muted-foreground border border-border/50">
-                            {intern.maxSpots} Spots
-                          </span>
+                          <ChevronDown className={cn("w-5 h-5 text-muted-foreground transition-transform duration-300", isExpanded && "rotate-180 text-accent")} />
                         </div>
-                      </div>
+                      </button>
 
-                      <div className="mt-auto">
-                        {(() => {
-                          if (appStatus === 'approved') {
-                            return (
-                              <Button 
-                                className="w-full bg-green-600 hover:bg-green-700 rounded-xl font-bold"
-                                onClick={() => navigate('/portal/student/internship')}
-                              >
-                                Continue <ArrowRightIcon className="w-4 h-4 ml-2" />
-                              </Button>
-                            );
-                          }
-
-                          if (appStatus === 'pending') {
-                            return (
-                              <Button 
-                                disabled
-                                className="w-full bg-amber-500 rounded-xl font-bold"
-                              >
-                                Pending <ClockIcon className="w-4 h-4 ml-2" />
-                              </Button>
-                            );
-                          }
-
-                          if (appStatus === 'rejected') {
-                            return (
-                              <Button 
-                                disabled
-                                className="w-full bg-red-500 rounded-xl font-bold"
-                              >
-                                Rejected <CheckCircleIcon className="w-4 h-4 ml-2" />
-                              </Button>
-                            );
-                          }
-
-                          return (
-                            <Button
-                              variant="gold"
-                              size="sm"
-                              className="w-full"
-                              onClick={() => navigate(`/internship/${intern.id || intern._id}`)}
-                            >
-                              Apply Now <ArrowRightIcon className="w-4 h-4 ml-2" />
-                            </Button>
-                          );
-                        })()}
-                      </div>
+                      {/* Expanded opportunity list */}
+                      <AnimatePresence initial={false}>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="divide-y divide-border/20 border-t border-border/30">
+                              {org.items.map((intern: any) => {
+                                const Icon2 = getCategoryIcon(intern.normalizedCategory || intern.category);
+                                const status = getApplicationStatus(intern.id || intern._id);
+                                return (
+                                  <div key={intern.id || intern._id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-5 hover:bg-muted/10 transition-colors">
+                                    <div className="w-11 h-11 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                                      <Icon2 className="w-5 h-5 text-accent" strokeWidth={1.5} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <Link
+                                        to={`/opportunity/${intern.id || intern._id}`}
+                                        className="font-heading font-semibold text-foreground hover:text-accent transition-colors line-clamp-1"
+                                      >
+                                        {intern.title}
+                                      </Link>
+                                      <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                        <span className="text-[10px] bg-card px-2 py-0.5 rounded text-muted-foreground border border-border/50">
+                                          {intern.duration}
+                                        </span>
+                                        {intern.maxSpots > 0 && (
+                                          <span className="text-[10px] bg-card px-2 py-0.5 rounded text-muted-foreground border border-border/50">
+                                            {intern.maxSpots} spots
+                                          </span>
+                                        )}
+                                        <span className="text-[10px] bg-card px-2 py-0.5 rounded text-muted-foreground border border-border/50 capitalize">
+                                          {intern.type || "Remote"}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-accent bg-accent/10 px-2 py-0.5 rounded">
+                                          {intern.price === 0 || intern.price == null ? "Free" : formatPrice(intern.price)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="shrink-0">
+                                      {status === "approved" ? (
+                                        <Button
+                                          className="bg-green-600 hover:bg-green-700 rounded-xl font-bold text-sm h-9"
+                                          onClick={() => navigate('/portal/student/internship')}
+                                        >
+                                          Continue <ArrowRightIcon className="w-4 h-4 ml-1.5" />
+                                        </Button>
+                                      ) : status === "pending" ? (
+                                        <Button disabled className="bg-amber-500 rounded-xl font-bold text-sm h-9">
+                                          Pending <ClockIcon className="w-4 h-4 ml-1.5" />
+                                        </Button>
+                                      ) : status === "rejected" ? (
+                                        <Button disabled className="bg-red-500 rounded-xl font-bold text-sm h-9">
+                                          Rejected
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          variant="gold"
+                                          size="sm"
+                                          className="rounded-xl h-9"
+                                          onClick={() => navigate(`/opportunity/${intern.id || intern._id}`)}
+                                        >
+                                          Apply Now <ArrowRightIcon className="w-4 h-4 ml-1.5" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </motion.div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         </section>
 
@@ -403,7 +494,7 @@ const Internships = () => {
             >
               <span className="text-accent text-sm font-medium uppercase tracking-wider">Success Stories</span>
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mt-2">
-                What Our Interns Say
+                What Our Alumni Say
               </h2>
             </motion.div>
             <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -442,11 +533,11 @@ const Internships = () => {
               viewport={{ once: true }}
             >
               <h2 className="font-heading text-2xl lg:text-3xl font-medium text-foreground mb-4">
-                Ready to Start Your Program?
+                Ready to Find Your Opportunity?
               </h2>
               <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
                 Applications are reviewed on a rolling basis. Apply early to secure your spot
-                in our next cohort of interns.
+                in our next cohort.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <AuthAwareLink variant="gold" size="lg" to="/portal/student/internship">Apply Now</AuthAwareLink>
@@ -463,4 +554,4 @@ const Internships = () => {
   );
 };
 
-export default Internships;
+export default Opportunities;

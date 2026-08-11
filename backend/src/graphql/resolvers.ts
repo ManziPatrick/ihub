@@ -968,6 +968,72 @@ export const resolvers = {
       return await User.find({ role: { $in: ['admin', 'super_admin'] }, isDeleted: { $ne: true } });
     },
 
+    // CSV of platform analytics — powers the "Export CSV Analytics" button on admin pages.
+    // Returns a compact metric/value CSV so it can be opened in Excel/Sheets.
+    getAnalyticsExport: async (_: any, __: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      const [
+        totalUsers,
+        students,
+        trainers,
+        admins,
+        totalCourses,
+        publishedCourses,
+        enrollmentAgg,
+        paymentAgg,
+        internshipPaymentAgg,
+        totalPrograms,
+        internships,
+      ] = await Promise.all([
+        User.countDocuments({ isDeleted: { $ne: true } } as any),
+        User.countDocuments({ role: 'student', isDeleted: { $ne: true } } as any),
+        User.countDocuments({ role: 'trainer', isDeleted: { $ne: true } } as any),
+        User.countDocuments({ role: { $in: ['admin', 'super_admin'] }, isDeleted: { $ne: true } } as any),
+        Course.countDocuments({ isDeleted: { $ne: true } } as any),
+        Course.countDocuments({ isDeleted: { $ne: true }, status: { $regex: new RegExp('^published$', 'i') } } as any),
+        Course.aggregate([
+          { $project: { size: { $size: { $ifNull: ['$studentsEnrolled', []] } } } },
+          { $group: { _id: null, total: { $sum: '$size' } } },
+        ]),
+        // Same revenue definition as the `analytics` resolver: standard payments
+        // (completed/paid/successful) + internship payments (paid).
+        Payment.aggregate([
+          { $match: { status: { $in: ['completed', 'paid', 'successful'] } } },
+          { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } },
+        ]),
+        InternshipPayment.aggregate([
+          { $match: { status: 'paid', isDeleted: false } },
+          { $group: { _id: null, total: { $sum: '$amount' } } },
+        ]),
+        InternshipProgram.countDocuments({ isDeleted: false } as any),
+        Internship.countDocuments(),
+      ]);
+
+      const totalRevenue = (paymentAgg[0]?.total || 0) + (internshipPaymentAgg[0]?.total || 0);
+
+      const rows: string[][] = [
+        ['Metric', 'Value'],
+        ['Total Users', String(totalUsers)],
+        ['Students', String(students)],
+        ['Trainers', String(trainers)],
+        ['Admins', String(admins)],
+        ['Total Courses', String(totalCourses)],
+        ['Published Courses', String(publishedCourses)],
+        ['Total Enrollments', String(enrollmentAgg[0]?.total || 0)],
+        ['Completed Payments', String(paymentAgg[0]?.count || 0)],
+        ['Total Revenue (courses + internships)', String(totalRevenue)],
+        ['Internship Programs', String(totalPrograms)],
+        ['Active Internships', String(internships)],
+        ['Generated At', new Date().toISOString()],
+      ];
+
+      return rows
+        .map((r) => r.map((v) => `"${(v || '').toString().replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+    },
+
     getRegisteredCompanies: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
       const companies = await User.distinct('company', { company: { $ne: '', $exists: true } });
@@ -1693,6 +1759,21 @@ export const resolvers = {
       };
     },
     me: async (_: any, __: any, context: any) => {
+      // A blocked account holds a valid JWT but the middleware has flagged it:
+      // surface a precise error code so the frontend can show the right screen.
+      if (context.accountBlockedReason) {
+        const reason: string = context.accountBlockedReason;
+        const code = reason === 'suspended' ? 'ACCOUNT_SUSPENDED' : reason === 'deactivated' ? 'ACCOUNT_DEACTIVATED' : 'ACCOUNT_BLOCKED';
+        const messages: Record<string, string> = {
+          suspended: 'Account is suspended. Contact support.',
+          deactivated: 'Account is deactivated.',
+          deleted: 'Account is no longer available.',
+        };
+        throw new GraphQLError(
+          messages[reason] || 'Account access has been restricted.',
+          { extensions: { code } }
+        );
+      }
       if (!context.user) return null;
       return await User.findById(context.user.id)
         .populate({ path: 'enrolledCourses', select: 'id title thumbnail price discountPrice level category school modulesCount totalLessonsCount status isFeatured' })
@@ -2731,6 +2812,7 @@ export const resolvers = {
         const searchRegex = new RegExp(q, 'i');
         query.$or = [
           { title: searchRegex },
+          { organization: searchRegex },
           { description: searchRegex },
           { eligibility: searchRegex },
           { rules: searchRegex },
@@ -2778,9 +2860,10 @@ export const resolvers = {
         }
       }
 
-      // Server-side school filter (searches description as proxy, since InternshipProgram has no dedicated school field)
+      // Server-side school/organization filter (matches the dedicated organization field, with description as fallback)
       if (school && school !== 'all') {
-        const schoolCondition = { description: new RegExp(school.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') };
+        const schoolRegex = new RegExp(school.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        const schoolCondition = { $or: [{ organization: schoolRegex }, { description: schoolRegex }] };
         if (query.$and) {
           query.$and.push(schoolCondition);
         } else if (query.$or) {
@@ -5464,6 +5547,7 @@ export const resolvers = {
 
       if (context.user.role === 'admin') {
         if (user.role === 'super_admin') throw new Error('Admins cannot modify super admin users');
+        if (user.role === 'admin' && !isSelf) throw new Error('Admins cannot modify other admin accounts');
         if (args.role === 'super_admin' || args.role === 'admin') {
           throw new Error('Admins cannot assign admin or super_admin roles');
         }
@@ -5696,7 +5780,9 @@ export const resolvers = {
         email,
         password: hashedPassword,
         fullName: fullName || username,
-        role: role || 'student',
+        // Public self-registration always creates students.
+        // Trainer accounts can ONLY be created by an admin or super_admin via createUser.
+        role: 'student',
       });
       await user.save();
 
@@ -5737,12 +5823,12 @@ export const resolvers = {
       // Check Account Status
       if ((user as any).status === 'suspended') {
         throw new GraphQLError('Account is suspended. Contact support.', {
-          extensions: { code: 'FORBIDDEN' }
+          extensions: { code: 'ACCOUNT_SUSPENDED' }
         });
       }
       if ((user as any).status === 'deactivated') {
         throw new GraphQLError('Account is deactivated.', {
-          extensions: { code: 'FORBIDDEN' }
+          extensions: { code: 'ACCOUNT_DEACTIVATED' }
         });
       }
       if ((user as any).isDeleted) {
@@ -5871,7 +5957,11 @@ export const resolvers = {
         }
 
         // Check Account Status
-        if ((dbUser as any).status === 'suspended') throw new Error('Account is suspended. Contact support.');
+        if ((dbUser as any).status === 'suspended') {
+          throw new GraphQLError('Account is suspended. Contact support.', {
+            extensions: { code: 'ACCOUNT_SUSPENDED' }
+          });
+        }
         if ((dbUser as any).isDeleted) throw new Error('User not found');
 
         // Update Presence
@@ -6792,8 +6882,17 @@ export const resolvers = {
           throw new Error('Not authorized to create internship for another user');
         }
       }
+      // Payment is optional for admins placing students on the board directly.
+      const payment = args.payment || {
+        amount: 0,
+        currency: 'RWF',
+        status: 'pending',
+        isPaidProgram: false,
+      };
+
       const internship = new Internship({
         ...args,
+        payment,
         organization: args.organization || 'Ihub Academy',
         mentors: mentorIds || (args.mentorId ? [args.mentorId] : []),
         status: 'eligible',

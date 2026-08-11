@@ -525,7 +525,8 @@
     "send": "Envoyer le message",
     "supportEmail": "support@bootskills.com",
     "supportPhone": "+250 790 706 170",
-    "supportHours": "Lun-Ven, 8h-18h CAT"
+    "supportHours": "Lun-Ven, 8h-18h CAT",
+    "welcomeTrainer": "Bon retour, {{name}} !"
   },
   "errors": {
     "pageNotFound": "La page que vous recherchez n'existe pas.",
@@ -643,5 +644,17 @@
         "marketing": "📢 Communication et marketing"
       }
     }
+  },
+  "suspendedAccount": {
+    "title": "Votre compte a été suspendu",
+    "message": "Nous sommes désolés, mais votre compte a été suspendu. Vous ne pourrez pas vous connecter tant que ce problème n'est pas résolu.",
+    "accountLabel": "Compte",
+    "whatNow": "Que se passe-t-il maintenant ?",
+    "whatNowDesc": "Votre accès a été restreint. Si vous pensez qu'il s'agit d'une erreur, contactez notre équipe de support et nous examinerons votre compte.",
+    "contactSupport": "Contacter le support",
+    "contactInfo": "Équipe de support",
+    "contactPage": "Page de contact",
+    "tryAgain": "Réessayer de se connecter",
+    "backHome": "Retour à l'accueil"
   }
 }

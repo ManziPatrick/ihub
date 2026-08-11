@@ -78,54 +78,10 @@ export const trainerResolvers = {
   },
 
   Mutation: {
-    becomeTrainer: async (_: any, args: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
-
-      const user = await User.findById(context.user.id);
-      if (!user) throw new Error('User not found');
-
-      // If already pending, auto-approve (images are now provided via the media step)
-      // This must come BEFORE the role check, since role was already changed to 'trainer' on first apply
-      if (user.trainerApplication?.status === 'pending') {
-        user.isTrainerApproved = true;
-        user.trainerApplication.status = 'approved';
-        if (args.avatar) user.avatar = args.avatar;
-        if (args.coverImage) user.coverImage = args.coverImage;
-        await user.save();
-        const { password, ...safeUser } = user.toObject();
-        return safeUser;
-      }
-
-      if (user.role !== 'student') throw new Error('Only students can become trainers');
-
-      // Accept avatar + coverImage from args (uploaded during application)
-      if (args.avatar) user.avatar = args.avatar;
-      if (args.coverImage) user.coverImage = args.coverImage;
-
-      // Check if user has both avatar AND coverImage → auto-approve; otherwise set pending
-      const hasAvatar = !!(user.avatar && user.avatar.trim());
-      const hasCoverImage = !!(user.coverImage && user.coverImage.trim());
-      const shouldAutoApprove = hasAvatar && hasCoverImage;
-
-      user.role = 'trainer';
-      user.isTrainerApproved = shouldAutoApprove;
-      user.trainerApplication = {
-        specialties: args.specialties || [],
-        experienceYears: args.experienceYears,
-        teachingPhilosophy: args.teachingPhilosophy,
-        qualifications: args.qualifications || [],
-        rateHourly: args.rateHourly,
-        linkedinProfile: args.linkedinProfile,
-        githubProfile: args.githubProfile,
-        websiteUrl: args.websiteUrl,
-        status: shouldAutoApprove ? 'approved' : 'pending',
-        appliedAt: new Date(),
-      };
-
-      await user.save();
-
-      const { password, ...safeUser } = user.toObject();
-      return safeUser;
+    becomeTrainer: async () => {
+      // Teacher accounts can only be created by an admin or super_admin.
+      // Self-service trainer promotion is disabled on purpose.
+      throw new Error('Trainer accounts can only be created by an administrator. Please contact support or ask an admin to create your trainer account.');
     },
 
     approveTrainer: async (_: any, { userId, approved, reviewNote }: any, context: any) => {

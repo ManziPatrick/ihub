@@ -81,6 +81,7 @@ export const GET_USERS = gql`
         role
         permissions
         school
+        status
         createdAt
         isExternal
         isDeleted
@@ -730,6 +731,7 @@ export const GET_ME = gql`
       username
       email
       role
+      status
       fullName
       avatar
       title
@@ -1625,6 +1627,8 @@ export const GET_ALL_INTERNSHIPS = gql`
         user {
           id
           username
+          fullName
+          avatar
         }
         mentor {
           id
@@ -1636,6 +1640,11 @@ export const GET_ALL_INTERNSHIPS = gql`
         }
         progress
         currentStage
+        sprintReviews {
+          week
+          grade
+          feedback
+        }
         tasks {
           id
           title
@@ -1724,6 +1733,7 @@ export const GET_INTERNSHIP_PROGRAMS = gql`
       items {
         id
         title
+        organization
         description
         duration
         startDate
@@ -1751,6 +1761,7 @@ export const GET_INTERNSHIP_PROGRAM = gql`
     internshipProgram(id: $id) {
       id
       title
+      organization
       description
       duration
       startDate
@@ -2625,6 +2636,7 @@ export const GET_INTERNSHIP_PROGRAM_FOR_APPLY = gql`
     internshipProgram(id: $id) {
       id
       title
+      organization
       description
       price
       currency

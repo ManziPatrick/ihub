@@ -35,6 +35,7 @@ import diagnosticsRoutes from './routes/DiagnosticsRoutes';
 import exportRoutes from './routes/ExportRoutes';
 import { Course } from './models/Course';
 import Blog from './models/Blog';
+import { User } from './models/User';
 import { authMiddleware } from './middleware/auth';
 import { maintenanceMiddleware } from './middleware/maintenance';
 import { compileCode } from './services/compiler.service';
@@ -188,10 +189,18 @@ const startServer = async () => {
 
             if (token) {
                 try {
-                    user = jwt.verify(
+                    const decoded: any = jwt.verify(
                         token.replace('Bearer ', ''),
                         process.env.JWT_SECRET || 'secret'
                     );
+                    const userId = decoded?.id || decoded?._id || decoded?.userId;
+                    if (userId) {
+                        // Re-validate status so suspended/deactivated accounts can't subscribe
+                        const dbUser = await User.findById(userId).select('status isDeleted').lean();
+                        if (dbUser && !dbUser.isDeleted && (dbUser.status || 'active') === 'active') {
+                            user = { ...decoded, role: dbUser.role };
+                        }
+                    }
                 } catch (e) {
                     console.warn('Invalid WS Token');
                 }
@@ -239,7 +248,9 @@ const startServer = async () => {
         expressMiddleware(server, {
             context: async ({ req }: any) => ({
                 user: req.user,
-                req
+                req,
+                // Populated by authMiddleware when the token belongs to a blocked account
+                accountBlockedReason: (req as any).accountBlockedReason,
             }),
         }) as unknown as express.RequestHandler
     );

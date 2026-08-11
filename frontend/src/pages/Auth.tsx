@@ -18,6 +18,29 @@ import { LocationSetupDialog } from "@/components/auth/LocationSetupDialog";
 
 type AuthMode = "login" | "signup";
 
+// Detect an "account suspended" rejection from the backend (GraphQL extension code or message)
+const isAccountSuspendedError = (error: any): boolean => {
+  const gqlErrors = error?.graphQLErrors;
+  if (Array.isArray(gqlErrors)) {
+    return gqlErrors.some(
+      (e: any) =>
+        e?.extensions?.code === "ACCOUNT_SUSPENDED" ||
+        (typeof e?.message === "string" && e.message.toLowerCase().includes("suspended"))
+    );
+  }
+  return typeof error?.message === "string" && error.message.toLowerCase().includes("suspended");
+};
+
+// Best-effort email extraction from a Google ID token payload (for the suspended screen)
+const emailFromGoogleToken = (token: string): string => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload?.email || "";
+  } catch {
+    return "";
+  }
+};
+
 export default function Auth() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<AuthMode>("login");
@@ -101,6 +124,13 @@ export default function Auth() {
       toast.success("Successfully signed in with Google!");
       navigate(from, { replace: true });
     } catch (error: any) {
+      if (isAccountSuspendedError(error)) {
+        navigate("/account-suspended", {
+          state: { email: emailFromGoogleToken(credentialResponse?.credential || "") },
+          replace: true,
+        });
+        return;
+      }
       toast.error(error.message || "Failed to sign in with Google");
     } finally {
       setIsLoading(false);
@@ -182,6 +212,13 @@ export default function Auth() {
       }
       navigate(from, { replace: true });
     } catch (error) {
+      if (isAccountSuspendedError(error)) {
+        navigate("/account-suspended", {
+          state: { email: formData.email },
+          replace: true,
+        });
+        return;
+      }
       toast.error(error instanceof Error ? error.message : "Authentication failed");
     } finally {
       setIsLoading(false);

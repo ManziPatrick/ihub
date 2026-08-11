@@ -191,6 +191,7 @@ const superAdminNavItems: NavItem[] = [
     icon: Shield,
     children: [
       { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },
+      { label: "User Management", href: "/portal/admin/users", icon: UserCog },
       { label: "All Users", href: "/portal/super-admin/users", icon: Users },
       { label: "Completed Users", href: "/portal/super-admin/completed-users", icon: GraduationCap },
       { label: "Configuration", href: "/portal/super-admin/config", icon: Cog },

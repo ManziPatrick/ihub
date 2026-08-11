@@ -18,6 +18,7 @@ interface CreateInternshipProgramDialogProps {
 export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInternshipProgramDialogProps) {
   const [formData, setFormData] = useState({
     title: '',
+    organization: '',
     description: '',
     duration: '3 Months',
     startDate: '',
@@ -39,6 +40,7 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
       onOpenChange(false);
       setFormData({
         title: '',
+        organization: '',
         description: '',
         duration: '3 Months',
         startDate: '',
@@ -98,7 +100,7 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="title">Program Program Title</Label>
+            <Label htmlFor="title">Opportunity Title</Label>
             <Input
               id="title"
               value={formData.title}
@@ -106,6 +108,18 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
               placeholder="e.g. Graphic Design or Web Development"
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="organization">Organization / Company / School</Label>
+            <Input
+              id="organization"
+              value={formData.organization}
+              onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+              placeholder="e.g. Google, University of Rwanda, Bank of Kigali"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Opportunities from the same organization are grouped together on the Opportunities page.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>

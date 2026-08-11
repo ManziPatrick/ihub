@@ -488,7 +488,7 @@
     "dashboard": "Ikibaho",
     "profile": "Ibirambuye",
     "students": "Abanyeshuri",
-    "assignments": "Ibihembwe",
+    "assignments": "umukoro",
     "schedule": "Gahunda",
     "payments": "Kwishyura",
     "billing": "Kwishyuza",
@@ -525,7 +525,8 @@
     "send": "Ohereza ubutumwa",
     "supportEmail": "support@bootskills.com",
     "supportPhone": "+250 790 706 170",
-    "supportHours": "Mbere-Gatanu, 8h-18h CAT"
+    "supportHours": "Mbere-Gatanu, 8h-18h CAT",
+    "welcomeTrainer": "Murakaza neza, {{name}}!"
   },
   "errors": {
     "pageNotFound": "Paji ushaka ntabonetse.",
@@ -643,5 +644,17 @@
         "marketing": "📢 Itumanaho na Marketing"
       }
     }
+  },
+  "suspendedAccount": {
+    "title": "Konti yawe yahagaritswe",
+    "message": "Tubabariye, ariko konti yawe yahagaritswe. Ntuzashobora kwinjira kugeza igihe iki kibazo gikemutse.",
+    "accountLabel": "Konti",
+    "whatNow": "Biki bikurikira?",
+    "whatNowDesc": "Uburenganzira bwawe bwagarukijwe. Niba utekereza ko ari amakosa, twandikire itsinda ryacu ry'ubufasha ngo dusuzume konti yawe.",
+    "contactSupport": "Twandikire",
+    "contactInfo": "Itsinda ry'ubufasha",
+    "contactPage": "Urutonde rwo kuvugana",
+    "tryAgain": "Ongera ugerageze kwinjira",
+    "backHome": "Subira ku mbere"
   }
 }

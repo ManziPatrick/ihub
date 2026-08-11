@@ -37,6 +37,7 @@ export interface User {
   username?: string;
   fullName: string;
   role: UserRole;
+  status?: string;
   avatar?: string;
   coverImage?: string;
   enrolledCourses?: string[];

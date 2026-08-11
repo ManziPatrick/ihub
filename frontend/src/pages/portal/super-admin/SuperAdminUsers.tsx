@@ -88,6 +88,7 @@ export default function SuperAdminUsers() {
     email: "",
     fullName: "",
     role: "",
+    status: "",
     phone: "",
     location: "",
     title: "",
@@ -154,6 +155,26 @@ export default function SuperAdminUsers() {
     }
   };
 
+  const handleToggleStatus = async (user: any) => {
+    const isSuspended = user.status === "suspended";
+    const action = isSuspended ? "unblock" : "block";
+    const message = isSuspended
+      ? `${user.fullName || user.username} will regain access to the platform.`
+      : `${user.fullName || user.username} will be blocked from logging in and accessing classes immediately.`;
+    if (!confirm(`Are you sure you want to ${action} ${user.fullName || user.username}? ${message}`)) return;
+    try {
+      const newStatus = isSuspended ? "active" : "suspended";
+      await updateUserMutation({
+        variables: { id: user.id, status: newStatus },
+      });
+      toast.success(isSuspended ? "User unblocked successfully" : "User blocked successfully");
+      setSelectedUser((prev: any) => (prev && prev.id === user.id ? { ...prev, status: newStatus } : prev));
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || `Failed to ${action} user`);
+    }
+  };
+
   const openEditSheet = (user: any) => {
     setEditingUser(user);
     setEditForm({
@@ -161,6 +182,7 @@ export default function SuperAdminUsers() {
       email: user.email || "",
       fullName: user.fullName || "",
       role: user.role || "student",
+      status: user.status || "active",
       phone: user.phone || "",
       location: user.location || "",
       title: user.title || "",
@@ -194,6 +216,7 @@ export default function SuperAdminUsers() {
       if (editForm.fullName !== (editingUser.fullName || ""))
         variables.fullName = editForm.fullName;
       if (editForm.role !== editingUser.role) variables.role = editForm.role;
+      if (editForm.status !== (editingUser.status || "active")) variables.status = editForm.status;
       if (editForm.phone !== (editingUser.phone || ""))
         variables.phone = editForm.phone;
       if (editForm.location !== (editingUser.location || ""))
@@ -454,11 +477,21 @@ export default function SuperAdminUsers() {
                               variant="outline"
                               className={
                                 user.isDeleted
+                                  ? "bg-gray-500/20 text-gray-400"
+                                  : user.status === "suspended"
                                   ? "bg-red-500/20 text-red-400"
+                                  : user.status === "deactivated"
+                                  ? "bg-amber-500/20 text-amber-400"
                                   : "bg-green-500/20 text-green-400"
                               }
                             >
-                              {user.isDeleted ? "deleted" : "active"}
+                              {user.isDeleted
+                                ? "deleted"
+                                : user.status === "suspended"
+                                ? "blocked"
+                                : user.status === "deactivated"
+                                ? "deactivated"
+                                : "active"}
                             </Badge>
                           </td>
                           <td className="p-4 text-center text-sm">
@@ -509,6 +542,25 @@ export default function SuperAdminUsers() {
                                 >
                                   <Pencil className="w-4 h-4 mr-2" /> Edit
                                 </DropdownMenuItem>
+                                {user.role !== "super_admin" && user.role !== "admin" && (
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleToggleStatus(user);
+                                    }}
+                                    className={
+                                      user.status === "suspended"
+                                        ? "text-green-600"
+                                        : "text-destructive"
+                                    }
+                                  >
+                                    {user.status === "suspended" ? (
+                                      <><UserCheck className="w-4 h-4 mr-2" /> Unblock User</>
+                                    ) : (
+                                      <><Lock className="w-4 h-4 mr-2" /> Block User</>
+                                    )}
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -581,6 +633,21 @@ export default function SuperAdminUsers() {
                   <div className="flex gap-2 mt-2 flex-wrap">
                     <Badge className={roleColors[selectedUser.role]}>
                       {selectedUser.role.replace("_", " ")}
+                    </Badge>
+                    <Badge
+                      className={
+                        selectedUser.status === "suspended"
+                          ? "bg-red-500/20 text-red-400"
+                          : selectedUser.status === "deactivated"
+                          ? "bg-amber-500/20 text-amber-400"
+                          : "bg-green-500/20 text-green-400"
+                      }
+                    >
+                      {selectedUser.status === "suspended"
+                        ? "Blocked"
+                        : selectedUser.status === "deactivated"
+                        ? "Deactivated"
+                        : "Active"}
                     </Badge>
                     {selectedUser.school && (
                       <Badge variant="outline">
@@ -762,7 +829,24 @@ export default function SuperAdminUsers() {
                   </div>
                 )}
 
-              <div className="flex justify-end pt-2">
+              <div className="flex justify-end gap-2 pt-2">
+                {selectedUser.role !== "super_admin" && selectedUser.role !== "admin" && (
+                  <Button
+                    variant={selectedUser.status === "suspended" ? "outline" : "destructive"}
+                    onClick={() => handleToggleStatus(selectedUser)}
+                    className={
+                      selectedUser.status === "suspended"
+                        ? "border-green-600/40 text-green-600 hover:bg-green-600/10"
+                        : ""
+                    }
+                  >
+                    {selectedUser.status === "suspended" ? (
+                      <><UserCheck className="w-4 h-4 mr-2" /> Unblock User</>
+                    ) : (
+                      <><Lock className="w-4 h-4 mr-2" /> Block User</>
+                    )}
+                  </Button>
+                )}
                 <Button
                   variant="gold"
                   onClick={() => {
@@ -875,19 +959,38 @@ export default function SuperAdminUsers() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-school">School</Label>
-                      <Input
-                        id="edit-school"
-                        value={editForm.school}
-                        onChange={(e) =>
-                          setEditForm((f) => ({
-                            ...f,
-                            school: e.target.value,
-                          }))
+                      <Label htmlFor="edit-status">Account Status</Label>
+                      <Select
+                        value={editForm.status}
+                        onValueChange={(val) =>
+                          setEditForm((f) => ({ ...f, status: val }))
                         }
-                        placeholder="e.g. UR, CMHS"
-                      />
+                      >
+                        <SelectTrigger id="edit-status">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="suspended">Blocked / Suspended</SelectItem>
+                          <SelectItem value="deactivated">Deactivated</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-school">School</Label>
+                    <Input
+                      id="edit-school"
+                      value={editForm.school}
+                      onChange={(e) =>
+                        setEditForm((f) => ({
+                          ...f,
+                          school: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g. UR, CMHS"
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

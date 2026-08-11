@@ -1,7 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { User } from '../models/User';
 
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+/**
+ * Attaches the authenticated user to req.user for every request carrying a
+ * valid Bearer token.
+ *
+ * The account's status is re-validated against the database on EVERY request
+ * so that suspended / deactivated / deleted accounts lose access immediately
+ * (not only at their next login attempt). When an account is blocked, the
+ * user context is left unset and `req.accountBlockedReason` records why, so
+ * GraphQL resolvers can return a precise error code to the client.
+ */
+export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -15,8 +26,31 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-        (req as any).user = decoded;
+        const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+        const userId = decoded?.id || decoded?._id || decoded?.userId;
+
+        if (!userId) {
+            return next();
+        }
+
+        const dbUser = await User.findById(userId).select('role status isDeleted').lean();
+
+        if (!dbUser || dbUser.isDeleted) {
+            (req as any).accountBlockedReason = 'deleted';
+            return next();
+        }
+
+        // Legacy users created before the status field existed have no status —
+        // treat them as active rather than blocking them accidentally.
+        const status = dbUser.status || 'active';
+
+        if (status !== 'active') {
+            (req as any).accountBlockedReason = status; // 'suspended' | 'deactivated'
+            return next();
+        }
+
+        // Attach token claims but refresh the role from the DB
+        (req as any).user = { ...decoded, role: dbUser.role };
         next();
     } catch (error) {
         next(); // Proceed without user even on error

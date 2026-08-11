@@ -184,7 +184,7 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
               <CommandItem
                 key={p.id}
                 value={`program-${p.title}`}
-                onSelect={() => go(`/internship/${p.id}`)}
+                onSelect={() => go(`/opportunity/${p.id}`)}
                 className="gap-3"
               >
                 <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-muted">

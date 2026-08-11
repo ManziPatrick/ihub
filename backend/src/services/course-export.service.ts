@@ -246,7 +246,7 @@ export async function generateUsersCSV(
     u.fullName || '',
     u.phone || '',
     u.school || '',
-    (u.enrolledCourses || []).map((c: any) => c.title).join('; '),
+    (u.enrolledCourses || []).map((c: any) => (c ? c.title : '')).join('; '),
     u.xp || 0,
     u.level || 1,
     u.academicStatus || 'active',
@@ -454,6 +454,8 @@ export async function generateEnrollmentsCSV(courseId?: string, instructorId?: s
   const rows: string[][] = [];
   courses.forEach((c: any) => {
     (c.studentsEnrolled || []).forEach((s: any) => {
+      // Populate can yield null for orphaned refs (student no longer exists) — skip them.
+      if (!s) return;
       rows.push([
         c.title || '',
         s.fullName || s.username || '',

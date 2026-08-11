@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IInternshipProgram extends Document {
   title: string;
+  organization?: string; // Company or school that owns this opportunity, e.g. "Google", "University of Rwanda"
   description: string;
   duration: string;
   startDate: Date;
@@ -45,6 +46,7 @@ export interface IInternshipProgram extends Document {
 const InternshipProgramSchema: Schema = new Schema(
   {
     title: { type: String, required: true, index: true },
+    organization: { type: String, index: true, trim: true },
     description: { type: String, required: true },
     duration: { type: String, required: true }, // e.g., "3 Months"
     startDate: { type: Date, required: true },

@@ -261,8 +261,8 @@ export const CREATE_USER = gql`
 `;
 
 export const UPDATE_USER = gql`
-  mutation UpdateUser($id: ID!, $username: String, $email: String, $password: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $coverImage: String, $phone: String, $location: String, $title: String, $certificateName: String, $isFirst: Boolean, $school: String, $isProfilePublic: Boolean, $specialties: [String], $qualifications: [String], $linkedinProfile: String, $githubProfile: String, $websiteUrl: String, $rateHourly: Int, $experienceYears: Int, $teachingPhilosophy: String) {
-    updateUser(id: $id, username: $username, email: $email, password: $password, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, coverImage: $coverImage, phone: $phone, location: $location, title: $title, certificateName: $certificateName, isFirst: $isFirst, school: $school, isProfilePublic: $isProfilePublic, specialties: $specialties, qualifications: $qualifications, linkedinProfile: $linkedinProfile, githubProfile: $githubProfile, websiteUrl: $websiteUrl, rateHourly: $rateHourly, experienceYears: $experienceYears, teachingPhilosophy: $teachingPhilosophy) {
+  mutation UpdateUser($id: ID!, $username: String, $email: String, $password: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $coverImage: String, $phone: String, $location: String, $title: String, $certificateName: String, $isFirst: Boolean, $school: String, $status: String, $isProfilePublic: Boolean, $specialties: [String], $qualifications: [String], $linkedinProfile: String, $githubProfile: String, $websiteUrl: String, $rateHourly: Int, $experienceYears: Int, $teachingPhilosophy: String) {
+    updateUser(id: $id, username: $username, email: $email, password: $password, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, coverImage: $coverImage, phone: $phone, location: $location, title: $title, certificateName: $certificateName, isFirst: $isFirst, school: $school, status: $status, isProfilePublic: $isProfilePublic, specialties: $specialties, qualifications: $qualifications, linkedinProfile: $linkedinProfile, githubProfile: $githubProfile, websiteUrl: $websiteUrl, rateHourly: $rateHourly, experienceYears: $experienceYears, teachingPhilosophy: $teachingPhilosophy) {
       id
       username
       fullName
@@ -773,7 +773,7 @@ export const CREATE_INTERNSHIP = gql`
     $company: String
     $duration: String!
     $type: String!
-    $payment: PaymentInput!
+    $payment: PaymentInput
     $startDate: String
     $endDate: String
     $mentorId: ID
@@ -1025,8 +1025,8 @@ export const SEND_MESSAGE_TO_PROJECT = gql`
 // --- New Internship Module Mutations ---
 
 export const CREATE_INTERNSHIP_PROGRAM = gql`
-  mutation CreateInternshipProgram($title: String!, $description: String!, $duration: String!, $startDate: String!, $endDate: String!, $applicationDeadline: String!, $eligibility: String, $rules: String, $price: Float, $currency: String, $image: String, $applicationQuestions: [ApplicationQuestionInput], $signerName: String, $signerSignature: String, $maxSpots: Int, $discount: Float) {
-    createInternshipProgram(title: $title, description: $description, duration: $duration, startDate: $startDate, endDate: $endDate, applicationDeadline: $applicationDeadline, eligibility: $eligibility, rules: $rules, price: $price, currency: $currency, image: $image, applicationQuestions: $applicationQuestions, signerName: $signerName, signerSignature: $signerSignature, maxSpots: $maxSpots, discount: $discount) {
+  mutation CreateInternshipProgram($title: String!, $organization: String, $description: String!, $duration: String!, $startDate: String!, $endDate: String!, $applicationDeadline: String!, $eligibility: String, $rules: String, $price: Float, $currency: String, $image: String, $applicationQuestions: [ApplicationQuestionInput], $signerName: String, $signerSignature: String, $maxSpots: Int, $discount: Float) {
+    createInternshipProgram(title: $title, organization: $organization, description: $description, duration: $duration, startDate: $startDate, endDate: $endDate, applicationDeadline: $applicationDeadline, eligibility: $eligibility, rules: $rules, price: $price, currency: $currency, image: $image, applicationQuestions: $applicationQuestions, signerName: $signerName, signerSignature: $signerSignature, maxSpots: $maxSpots, discount: $discount) {
       id
       title
       image
@@ -1047,8 +1047,8 @@ export const CREATE_INTERNSHIP_PROGRAM = gql`
 `;
 
 export const UPDATE_INTERNSHIP_PROGRAM_NEW = gql`
-  mutation UpdateInternshipProgram($id: ID!, $title: String, $description: String, $duration: String, $startDate: String, $endDate: String, $applicationDeadline: String, $status: String, $eligibility: String, $rules: String, $price: Float, $discount: Float, $currency: String, $image: String, $maxSpots: Int, $applicationQuestions: [ApplicationQuestionInput]) {
-    updateInternshipProgram(id: $id, title: $title, description: $description, duration: $duration, startDate: $startDate, endDate: $endDate, applicationDeadline: $applicationDeadline, status: $status, eligibility: $eligibility, rules: $rules, price: $price, discount: $discount, currency: $currency, image: $image, maxSpots: $maxSpots, applicationQuestions: $applicationQuestions) {
+  mutation UpdateInternshipProgram($id: ID!, $title: String, $organization: String, $description: String, $duration: String, $startDate: String, $endDate: String, $applicationDeadline: String, $status: String, $eligibility: String, $rules: String, $price: Float, $discount: Float, $currency: String, $image: String, $maxSpots: Int, $applicationQuestions: [ApplicationQuestionInput]) {
+    updateInternshipProgram(id: $id, title: $title, organization: $organization, description: $description, duration: $duration, startDate: $startDate, endDate: $endDate, applicationDeadline: $applicationDeadline, status: $status, eligibility: $eligibility, rules: $rules, price: $price, discount: $discount, currency: $currency, image: $image, maxSpots: $maxSpots, applicationQuestions: $applicationQuestions) {
       id
       title
       status

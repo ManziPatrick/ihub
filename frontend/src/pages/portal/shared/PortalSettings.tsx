@@ -35,17 +35,13 @@ import {
   Star,
   Link as LinkIcon,
   GraduationCap as GradIcon,
-  BookOpen as BookIcon,
   MapPin as MapIcon,
   Shield,
   ShieldCheck,
   GraduationCap,
-  Users,
-  DollarSign,
   Linkedin,
   Github,
 } from "lucide-react";
-import { BecomeTrainerDialog } from "@/components/portal/dialogs/BecomeTrainerDialog";
 
 const colorPresets = [
   { name: "Academic Gold", color: "#BC9229" },
@@ -306,7 +302,6 @@ export default function PortalSettings() {
     }
   };
 
-  const [showBecomeTrainer, setShowBecomeTrainer] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const handleBrandingLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -451,11 +446,6 @@ export default function PortalSettings() {
             {user?.role === 'student' && (
               <TabsTrigger value="achievements" className="flex items-center gap-2">
                 <Trophy className="w-4 h-4" /> My Achievements
-              </TabsTrigger>
-            )}
-            {user?.role === 'student' && (
-              <TabsTrigger value="become-trainer" className="flex items-center gap-2 text-accent">
-                <GraduationCap className="w-4 h-4" /> Become a Trainer
               </TabsTrigger>
             )}
             <TabsTrigger value="security" className="flex items-center gap-2">
@@ -1169,101 +1159,9 @@ export default function PortalSettings() {
             </TabsContent>
           )}
 
-          {/* === BECOME A TRAINER TAB (STUDENT ONLY) === */}
-          {user?.role === 'student' && (
-            <TabsContent value="become-trainer">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                <Card className="border-accent/20 overflow-hidden">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-accent/5 to-primary/10" />
-                    <CardHeader className="relative">
-                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg mb-4">
-                        <GraduationCap className="w-8 h-8 text-white" />
-                      </div>
-                      <CardTitle className="text-2xl font-bold">
-                        Become a Trainer & Mentor
-                      </CardTitle>
-                      <CardDescription className="text-base">
-                        Share your knowledge, coach students, and earn from your expertise
-                      </CardDescription>
-                    </CardHeader>
-                  </div>
-                  <CardContent className="space-y-6">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="p-4 rounded-xl bg-accent/5 border border-accent/10">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                            <BookIcon className="w-5 h-5 text-accent" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm">Create Courses</p>
-                            <p className="text-xs text-muted-foreground">Design and publish courses</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm">Coach Students</p>
-                            <p className="text-xs text-muted-foreground">Mentor and guide learners</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-                            <Star className="w-5 h-5 text-green-500" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm">Offer Scholarships</p>
-                            <p className="text-xs text-muted-foreground">Help students financially</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                            <DollarSign className="w-5 h-5 text-blue-500" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm">Earn Income</p>
-                            <p className="text-xs text-muted-foreground">Get paid for teaching</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
-                      <p className="text-sm text-amber-600 dark:text-amber-400">
-                        <strong>Note:</strong> Your application will be reviewed by a super admin.
-                        Once approved, you'll get access to the trainer dashboard where you can
-                        create courses, manage students, schedule meetings, and more.
-                      </p>
-                    </div>
-
-                    <Button
-                      onClick={() => setShowBecomeTrainer(true)}
-                      className="w-full h-12 text-base gap-2 bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent"
-                    >
-                      <GraduationCap className="w-5 h-5" />
-                      Apply to Become a Trainer
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </TabsContent>
-          )}
         </Tabs>
       </div>
 
-      <BecomeTrainerDialog open={showBecomeTrainer} onOpenChange={setShowBecomeTrainer} />
     </PortalLayout>
   );
 }

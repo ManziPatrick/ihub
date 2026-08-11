@@ -457,7 +457,7 @@ export const sendApplicationConfirmation = async (
 ): Promise<boolean> => {
   const config = await getEmailConfig();
   const origin = process.env.CLIENT_ORIGIN || 'https://bootskills.com';
-  const programLink = programId ? `${origin}/internship/${programId}` : `${origin}/portal/student/internships`;
+  const programLink = programId ? `${origin}/opportunity/${programId}` : `${origin}/portal/student/internships`;
 
   const html = `
     <!DOCTYPE html>
@@ -538,7 +538,7 @@ export const sendApplicationStatusUpdate = async (
 
   const { title, color, text } = statusMessages[status];
   const origin = process.env.CLIENT_ORIGIN || 'https://bootskills.com';
-  const programLink = programId ? `${origin}/internship/${programId}` : `${origin}/portal/student/internships`;
+  const programLink = programId ? `${origin}/opportunity/${programId}` : `${origin}/portal/student/internships`;
 
   const html = `
     <!DOCTYPE html>

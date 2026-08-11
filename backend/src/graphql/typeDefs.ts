@@ -100,6 +100,7 @@ export const typeDefs = `#graphql
     username: String!
     email: String!
     role: String!
+    status: String
     enrolledCourses: [Course]
     completedLessons: [CompletedLesson]
     courseProgress: [CourseProgressSnapshot]
@@ -1344,7 +1345,7 @@ export const typeDefs = `#graphql
     ): Course
     deleteCourse(id: ID!): Boolean
     createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, coverImage: String, phone: String, location: String, title: String, school: String): User
-    updateUser(id: ID!, username: String, email: String, password: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, coverImage: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String): User
+    updateUser(id: ID!, username: String, email: String, password: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, coverImage: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String, status: String): User
     markTourCompleted: User
     becomeTrainer(
       avatar: String,
@@ -1471,7 +1472,7 @@ export const typeDefs = `#graphql
       cohort: String
       duration: String!
       type: String!
-      payment: PaymentInput!
+      payment: PaymentInput
       startDate: String
       endDate: String
       mentorId: ID
@@ -1541,8 +1542,8 @@ export const typeDefs = `#graphql
 
 
     # New Internship Module Mutations
-    createInternshipProgram(title: String!, description: String!, duration: String!, startDate: String!, endDate: String!, applicationDeadline: String!, eligibility: String, rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
-    updateInternshipProgram(id: ID!, title: String, description: String, duration: String, startDate: String, endDate: String, applicationDeadline: String, status: String, eligibility: String, rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
+    createInternshipProgram(title: String!, organization: String, description: String!, duration: String!, startDate: String!, endDate: String!, applicationDeadline: String!, eligibility: String, rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
+    updateInternshipProgram(id: ID!, title: String, organization: String, description: String, duration: String, startDate: String, endDate: String, applicationDeadline: String, status: String, eligibility: String, rules: String, price: Float, discount: Float, currency: String, image: String, maxSpots: Int, applicationQuestions: [ApplicationQuestionInput], signerName: String, signerSignature: String): InternshipProgram
     deleteInternshipProgram(id: ID!): Boolean
 
     applyToInternshipProgram(internshipProgramId: ID!, skills: [String]!, portfolioUrl: String, resumeUrl: String, availability: String!, applicationAnswers: [ApplicationAnswerInput]): InternshipApplication
@@ -1664,6 +1665,7 @@ export const typeDefs = `#graphql
   type InternshipProgram {
     id: ID!
     title: String!
+    organization: String
     description: String!
     duration: String!
     startDate: String!

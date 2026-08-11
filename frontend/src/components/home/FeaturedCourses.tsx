@@ -514,7 +514,7 @@ export function FeaturedCourses() {
     if (item.type === 'course') {
       navigate(`/courses/${item.id}`);
     } else if (item.type === 'internship') {
-      navigate(`/internship/${item.id}`);
+      navigate(`/opportunity/${item.id}`);
     }
   }, [navigate]);
 
@@ -1426,7 +1426,7 @@ export function FeaturedCourses() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: Math.min(idx * 0.03, 0.3) }}
                             onClick={() => {
-                              navigate(`/internship/${intern.id}`);
+                              navigate(`/opportunity/${intern.id}`);
                             }}
                             className="bg-card rounded-2xl overflow-hidden border border-border/30 group transition-all h-full flex flex-col cursor-pointer"
                           >
@@ -1521,8 +1521,7 @@ export function FeaturedCourses() {
                                       </Button>
                                     );
                                   }
-                                  return (
-                                    <Button variant="gold" size="sm" className={`w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20 ${!isOpen ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isOpen} onClick={(e) => { e.stopPropagation(); if (isOpen) { navigate(`/internship/${intern.id}`); } }}>
+                                  return (                                            <Button variant="gold" size="sm" className={`w-full rounded-xl font-bold h-8 text-[11px] shadow-md shadow-gold/20 ${!isOpen ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={!isOpen} onClick={(e) => { e.stopPropagation(); if (isOpen) { navigate(`/opportunity/${intern.id}`); } }}>
                                       {isOpen ? "Enroll Now" : "Closed"} <ArrowRight className="w-3 h-3 ml-1.5" />
                                     </Button>
                                   );

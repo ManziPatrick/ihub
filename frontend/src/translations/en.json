@@ -590,7 +590,8 @@
     "send": "Send Message",
     "supportEmail": "support@bootskills.com",
     "supportPhone": "+250 790 706 170",
-    "supportHours": "Mon-Fri, 8AM-6PM CAT"
+    "supportHours": "Mon-Fri, 8AM-6PM CAT",
+    "welcomeTrainer": "Welcome back, {{name}}!"
   },
   "errors": {
     "pageNotFound": "The page you're looking for doesn't exist.",
@@ -708,5 +709,17 @@
         "marketing": "📢 Communication & Marketing"
       }
     }
+  },
+  "suspendedAccount": {
+    "title": "Your Account Has Been Suspended",
+    "message": "We're sorry, but your account has been suspended. You will not be able to sign in until this is resolved.",
+    "accountLabel": "Account",
+    "whatNow": "What happens now?",
+    "whatNowDesc": "Your access has been restricted. If you believe this is a mistake, please contact our support team and we will review your account.",
+    "contactSupport": "Contact Support",
+    "contactInfo": "Support Team",
+    "contactPage": "Visit Contact Page",
+    "tryAgain": "Try Signing In Again",
+    "backHome": "Back to Home"
   }
 }

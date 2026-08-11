@@ -1,5 +1,7 @@
 import { ApolloClient, InMemoryCache, split, from } from "@apollo/client";
 import { setContext } from '@apollo/client/link/context';
+import { ErrorLink } from '@apollo/client/link/error';
+import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 // @ts-ignore
@@ -37,6 +39,51 @@ const authLink = setContext((_, { headers }) => {
   }
 });
 
+// Guard against a storm of parallel queries firing the same redirect
+let blockedAccountRedirectInFlight = false;
+
+/**
+ * Global guard for blocked accounts.
+ *
+ * The backend now rejects suspended / deactivated accounts at the middleware
+ * level, and the `me` resolver returns a precise error code. When a logged-in
+ * session is blocked mid-use, every GET_ME / authed query would otherwise fail
+ * with a generic auth error and the user would be stuck. This link detects the
+ * specific codes, clears the stale session, and routes the user to the right
+ * screen immediately.
+ *
+ * Fresh login attempts (no token yet) are left to the Auth page, which already
+ * redirects with the account email for a nicer message.
+ */
+const blockedAccountLink = new ErrorLink(({ error }) => {
+  if (blockedAccountRedirectInFlight) return;
+  // Only hijack sessions that already hold a token (previously logged in).
+  if (!localStorage.getItem('ihub_token')) return;
+
+  let codes: string[] = [];
+  if (CombinedGraphQLErrors.is(error)) {
+    codes = error.errors
+      .map((e) => (e as any)?.extensions?.code)
+      .filter(Boolean);
+  }
+  const isSuspended = codes.includes('ACCOUNT_SUSPENDED');
+  const isDeactivated =
+    codes.includes('ACCOUNT_DEACTIVATED') || codes.includes('ACCOUNT_BLOCKED');
+  if (!isSuspended && !isDeactivated) return;
+
+  blockedAccountRedirectInFlight = true;
+  localStorage.removeItem('ihub_token');
+  localStorage.removeItem('ihub_user');
+
+  if (isSuspended) {
+    if (window.location.pathname !== '/account-suspended' && window.location.pathname !== '/auth') {
+      window.location.assign('/account-suspended');
+    }
+  } else if (window.location.pathname !== '/auth') {
+    window.location.assign('/auth');
+  }
+});
+
 // Monitoring link — tracks query response times and payload sizes
 // Only tracks operations matching tracked patterns
 const monitoringLink = createMonitoringLink({
@@ -68,7 +115,7 @@ const link = split(
     );
   },
   wsLink,
-  monitoringLink.concat(authLink.concat(httpLink)),
+  blockedAccountLink.concat(monitoringLink.concat(authLink.concat(httpLink))),
 );
 
 const client = new ApolloClient({
