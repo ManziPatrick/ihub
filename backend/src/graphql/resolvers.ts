@@ -963,6 +963,26 @@ export const resolvers = {
       return await User.find({ role: { $in: ['trainer', 'admin', 'super_admin'] }, isDeleted: { $ne: true } });
     },
 
+    // Highest-performing students by XP (optionally scoped to one course).
+    // Powers the "Top Students" leaderboards on admin/analytics pages.
+    getTopStudents: async (_: any, { courseId, limit }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      const filter: any = { role: 'student', isDeleted: { $ne: true } };
+      // Guard against malformed courseId — an uncastable string would throw a
+      // Mongoose CastError (500) instead of returning an empty list.
+      if (courseId && mongoose.Types.ObjectId.isValid(courseId)) {
+        filter.enrolledCourses = courseId;
+      }
+      // Populate so the User.enrolledCourses sub-resolver short-circuits
+      // instead of issuing one extra query per student (N+1).
+      return await User.find(filter)
+        .populate('enrolledCourses')
+        .sort({ xp: -1, level: -1 })
+        .limit(Math.min(Math.max(Number(limit) || 10, 1), 100));
+    },
+
     getAvailableAdmins: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
       return await User.find({ role: { $in: ['admin', 'super_admin'] }, isDeleted: { $ne: true } });
