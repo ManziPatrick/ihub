@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,6 +27,7 @@ import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_TESTIMONIALS, GET_USERS } from "@/lib/graphql/queries";
 import { ADMIN_SUBMIT_TESTIMONIAL, REVIEW_TESTIMONIAL, DELETE_TESTIMONIAL } from "@/lib/graphql/mutations";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatDate, cleanLabelParts } from "@/lib/format";
 import { toast } from "sonner";
 import {
   Clock,
@@ -56,6 +58,7 @@ const tabs = [
 ];
 
 export default function AdminTestimonials() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isSuperAdmin = user?.role === "super_admin";
   const [status, setStatus] = useState("");
@@ -252,25 +255,49 @@ export default function AdminTestimonials() {
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-2 flex-wrap">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent/60 to-accent/30 flex items-center justify-center text-foreground font-heading font-bold text-sm shrink-0">
-                            {t.authorAvatar ? (
-                              <img src={t.authorAvatar} alt={t.authorName} className="w-full h-full object-cover rounded-full" />
-                            ) : (
-                              (t.authorName || "S").charAt(0).toUpperCase()
-                            )}
+                        {/* Compact author row — neutral colors, clickable to the user report */}
+                        {t.author?.id ? (
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/portal/admin/user-report/${t.author.id}`)}
+                            className="flex items-center gap-2 mb-2 group/author text-left"
+                            title={`View ${t.authorName || "student"}'s profile`}
+                          >
+                            <span className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-[11px] font-semibold shrink-0 group-hover/author:bg-foreground/10 transition-colors">
+                              {t.authorAvatar ? (
+                                <img src={t.authorAvatar} alt={t.authorName} className="w-full h-full object-cover rounded-full" />
+                              ) : (
+                                (t.authorName || "S").charAt(0).toUpperCase()
+                              )}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="text-xs font-medium text-card-foreground/90 truncate block leading-tight group-hover/author:underline underline-offset-2 decoration-foreground/30">
+                                {t.authorName || "Unknown student"}
+                                {t.status === "approved" && <BadgeCheck className="w-3 h-3 text-foreground/40 inline ml-1" />}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground/80 block truncate leading-tight">
+                                {cleanLabelParts(t.authorRole, t.authorCompany).join(" · ") || "Student"}
+                                {t.submittedBy && ` · submitted by ${t.submittedBy.fullName || t.submittedBy.username || "admin"}`}
+                              </span>
+                            </span>
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-[11px] font-semibold shrink-0">
+                              {(t.authorName || "S").charAt(0).toUpperCase()}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="text-xs font-medium text-card-foreground/90 truncate block leading-tight">
+                                {t.authorName || "Unknown student"}
+                                {t.status === "approved" && <BadgeCheck className="w-3 h-3 text-foreground/40 inline ml-1" />}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground/80 block truncate leading-tight">
+                                {cleanLabelParts(t.authorRole, t.authorCompany).join(" · ") || "Student"}
+                                {t.submittedBy && ` · submitted by ${t.submittedBy.fullName || t.submittedBy.username || "admin"}`}
+                              </span>
+                            </span>
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-card-foreground text-sm truncate flex items-center gap-1.5">
-                              {t.authorName || "Unknown student"}
-                              {t.status === "approved" && <BadgeCheck className="w-4 h-4 text-accent" />}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {[t.authorRole, t.authorCompany].filter(Boolean).join(" · ") || "Student"}
-                              {t.submittedBy && ` · submitted by ${t.submittedBy.fullName || t.submittedBy.username || "admin"}`}
-                            </p>
-                          </div>
-                        </div>
+                        )}
 
                         <p className="text-sm text-card-foreground/90 leading-relaxed italic">
                           "{t.quote}"
@@ -284,7 +311,7 @@ export default function AdminTestimonials() {
                             />
                           ))}
                           <span className="text-[11px] text-muted-foreground ml-2">
-                            {new Date(t.createdAt).toLocaleDateString()}
+                            {formatDate(t.createdAt)}
                           </span>
                         </div>
 

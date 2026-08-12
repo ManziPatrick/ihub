@@ -15,6 +15,11 @@ const safeUserSub = (u: any) => {
   };
 };
 
+// A value of 'N/A' / '' means "not provided" — normalize so UIs never render
+// a literal "N/A" in the role · company line.
+const cleanLabel = (v: any) =>
+  typeof v === 'string' && v.trim() && v.trim().toLowerCase() !== 'n/a' ? v.trim() : '';
+
 const safeUserShape = (t: any) => {
   const obj = t.toObject ? t.toObject() : t;
   return {
@@ -23,9 +28,13 @@ const safeUserShape = (t: any) => {
     _id: (t._id || t.id).toString(),
     author: safeUserSub(obj.author),
     authorName: obj.authorName || obj.author?.fullName || obj.author?.username || '',
+    authorRole: cleanLabel(obj.authorRole),
+    authorCompany: cleanLabel(obj.authorCompany),
     authorAvatar: obj.authorAvatar || obj.author?.avatar || null,
     submittedBy: safeUserSub(obj.submittedBy),
     status: obj.status || 'pending',
+    // Some records (legacy/seed) lack timestamps — fall back to review time.
+    createdAt: obj.createdAt || obj.reviewedAt || null,
   };
 };
 

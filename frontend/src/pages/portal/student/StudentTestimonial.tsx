@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_MY_TESTIMONIALS } from "@/lib/graphql/queries";
 import { SUBMIT_TESTIMONIAL } from "@/lib/graphql/mutations";
+import { formatDate } from "@/lib/format";
 import { toast } from "sonner";
 import { Quote, Star, Send, Clock, CheckCircle2, XCircle, MessageCircleHeart, Sparkles } from "lucide-react";
 
@@ -236,7 +237,7 @@ export default function StudentTestimonial() {
                               {meta.label}
                             </Badge>
                             <span className="text-[10px] text-muted-foreground">
-                              {new Date(t.createdAt).toLocaleDateString()}
+                              {formatDate(t.createdAt)}
                             </span>
                           </div>
                           {t.reviewNote && t.status === "rejected" && (
