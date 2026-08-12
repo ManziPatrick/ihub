@@ -1227,7 +1227,7 @@ export const resolvers = {
       return questions;
     },
 
-    users: async (_: any, { page = 1, limit = 10, createdBy, role }: any, context: any) => {
+    users: async (_: any, { page = 1, limit = 10, createdBy, role, sortBy = 'activity' }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
@@ -1289,8 +1289,41 @@ export const resolvers = {
 
       const skip = (page - 1) * limit;
 
+      // Default sort ranks users by activity (enrolled courses + completed
+      // lessons + tracked progress) so the most engaged users surface first.
+      // Explicit 'joined' / 'user' sorts are still available for the admin UIs.
+      const isActivitySort = sortBy === 'activity';
+      const sortSpec: Record<string, any> =
+        sortBy === 'user' ? { username: 1 } : { createdAt: -1 };
+
       const [items, totalCount] = await Promise.all([
-        User.find(query).populate('createdBy', 'username email fullName').sort({ createdAt: -1 }).skip(skip).limit(limit),
+        isActivitySort
+          ? (async () => {
+              const pageRows = await User.aggregate([
+                { $match: query },
+                {
+                  $addFields: {
+                    _activityScore: {
+                      $add: [
+                        { $size: { $ifNull: ['$enrolledCourses', []] } },
+                        { $size: { $ifNull: ['$completedLessons', []] } },
+                        { $size: { $ifNull: ['$courseProgress', []] } },
+                      ],
+                    },
+                  },
+                },
+                { $sort: { _activityScore: -1, createdAt: -1 } },
+                { $skip: skip },
+                { $limit: limit },
+                { $project: { _activityScore: 0 } },
+              ]);
+              const ids = pageRows.map((r: any) => r._id);
+              if (!ids.length) return [];
+              const docs = await User.find({ _id: { $in: ids } }).populate('createdBy', 'username email fullName');
+              const docMap = new Map(docs.map((d: any) => [d._id.toString(), d]));
+              return pageRows.map((r: any) => docMap.get(r._id.toString()) || r);
+            })()
+          : User.find(query).populate('createdBy', 'username email fullName').sort(sortSpec).skip(skip).limit(limit),
         User.countDocuments(query)
       ]);
 

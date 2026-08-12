@@ -8,6 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Users,
   Search,
   Plus,
@@ -80,6 +87,7 @@ export default function AdminUsers() {
   const { user: currentUser } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("all");
+  const [sortBy, setSortBy] = useState("activity"); // Most Active by default
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -98,7 +106,7 @@ export default function AdminUsers() {
   // Admins and super admins both see every platform user — the backend `users`
   // resolver scopes only trainers. (A `createdBy` filter here would hide users
   // the admin didn't personally create, which breaks the User Management page.)
-  const queryVariables: any = { page: currentPage, limit: pageSize };
+  const queryVariables: any = { page: currentPage, limit: pageSize, sortBy };
   // Role filtering happens server-side (not on the current page) so selecting
   // e.g. "admin" or "client" returns ALL matching users across pages.
   if (filterRole !== "all") {
@@ -389,6 +397,22 @@ export default function AdminUsers() {
                 {role.replace("_", " ")}
               </Button>
             ))}
+            <Select
+              value={sortBy}
+              onValueChange={(val) => {
+                setSortBy(val);
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-44 shrink-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="activity">Most Active</SelectItem>
+                <SelectItem value="joined">Newest</SelectItem>
+                <SelectItem value="user">Name A–Z</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </motion.div>
 
