@@ -545,7 +545,7 @@ export default function StudentDashboard() {
                 <Briefcase className="w-5 h-5 text-accent" />
                 Available Internships
               </CardTitle>
-              <Link to="/internships">
+              <Link to="/opportunities">
                 <Button variant="ghost" size="sm" className="text-accent hover:bg-accent/5">
                   View All <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -569,25 +569,28 @@ export default function StudentDashboard() {
                       const alreadyApplied = myInternApplications.some(
                         (app: any) => app.internshipProgram?.id === (intern.id || intern._id)
                       );
+                      const orgName = intern.organization?.trim() || "Bootskills Academy";
+                      const orgInitials = orgName.split(/\s+/).filter(Boolean).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
                       return (
-                        <div
+                        <Link
                           key={intern.id || intern._id}
-                          className="group block p-3 bg-background/50 rounded-xl border border-border/30 hover:border-accent/30 hover:bg-accent/5 transition-all cursor-pointer"
-                          onClick={() =>
-                            alreadyApplied
-                              ? null
-                              : setSelectedInternshipId(intern.id || intern._id)
-                          }
+                          to={`/opportunity/${intern.id || intern._id}`}
+                          className="group block p-3 bg-background/50 rounded-xl border border-border/30 hover:border-accent/30 hover:bg-accent/5 transition-all"
                         >
                           <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                              <Briefcase className="w-5 h-5 text-accent" />
+                            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-border/30">
+                              {intern.organizationLogo ? (
+                                <img src={intern.organizationLogo} alt={orgName} className="w-full h-full object-contain p-0.5" />
+                              ) : (
+                                <span className="text-[10px] font-black text-accent">{orgInitials}</span>
+                              )}
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-semibold text-foreground line-clamp-1 group-hover:text-accent transition-colors">
                                 {intern.title}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] text-muted-foreground truncate max-w-[110px]" title={orgName}>{orgName}</span>
                                 <span className="text-[10px] text-muted-foreground">{intern.duration}</span>
                                 {intern.price > 0 ? (
                                   <span className="text-[10px] font-bold text-accent">
@@ -604,7 +607,7 @@ export default function StudentDashboard() {
                               </div>
                             </div>
                           </div>
-                        </div>
+                        </Link>
                       );
                     })}
                   </div>

@@ -9,6 +9,7 @@ import { GET_BRANDING } from "@/lib/graphql/queries";
 import { UPDATE_BRANDING } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 import { Palette, Save, Layout, Type, Image as ImageIcon, Globe, Sparkles, Eye, RotateCcw, Award } from "lucide-react";
+import { getApiBaseUrl } from "@/lib/env";
 
 export default function AdminBranding() {
   const { data, loading } = useQuery(GET_BRANDING);
@@ -44,7 +45,7 @@ export default function AdminBranding() {
     }
     
     // Fetch certificate signer settings via REST
-    fetch('/api/certificates/signer-settings', {
+    fetch(`${getApiBaseUrl()}/api/certificates/signer-settings`, {
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -76,7 +77,7 @@ export default function AdminBranding() {
       });
       
       // Save signer settings via REST
-      await fetch('/api/certificates/signer-settings', {
+      await fetch(`${getApiBaseUrl()}/api/certificates/signer-settings`, {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',

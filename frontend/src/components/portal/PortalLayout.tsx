@@ -220,7 +220,7 @@ const superAdminNavItems: NavItem[] = [
     icon: Palette,
     children: [
       { label: "Social Posts", href: "/portal/super-admin/social-posts", icon: Camera },
-      { label: "Branding", href: "/portal/admin/branding", icon: Palette },
+      { label: "Branding", href: "/portal/super-admin/branding", icon: Palette },
     ]
   },
   { label: "Analytics", href: "/portal/super-admin/analytics", icon: BarChart3 },

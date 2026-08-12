@@ -3046,6 +3046,32 @@ export const resolvers = {
         }
       }
 
+      // Students/guests only see programs that are actually available:
+      // status 'active' (or 'upcoming' with a future deadline) and never past
+      // their application deadline. Admins/trainers/super admins keep full
+      // visibility for management (their scoped query above bypasses this).
+      const isStaff =
+        context.user &&
+        ['admin', 'trainer', 'super_admin'].includes(context.user.role);
+      if (!isStaff) {
+        const now = new Date();
+        query.status = { $in: ['active', 'upcoming'] };
+        const deadlineOr = [
+          { applicationDeadline: { $gte: now } },
+          { applicationDeadline: { $exists: false } },
+          { applicationDeadline: null },
+        ];
+        if (query.$and) {
+          query.$and.push({ $or: deadlineOr });
+        } else if (query.$or) {
+          const existingOr = query.$or;
+          delete query.$or;
+          query.$and = [{ $or: existingOr }, { $or: deadlineOr }];
+        } else {
+          query.$and = [{ $or: deadlineOr }];
+        }
+      }
+
       const skip = (page - 1) * limit;
       const [rawItems, totalCount] = await Promise.all([
         InternshipProgram.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
