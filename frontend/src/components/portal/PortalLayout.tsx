@@ -72,6 +72,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePusher } from "@/hooks/use-pusher";
 import { toast } from "sonner";
 import { FloatingChat } from "@/components/chat/FloatingChat";
+import { GlobalSearchDialog } from "@/components/search/GlobalSearchDialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface NavItem {
@@ -275,6 +276,34 @@ function hasNavPermission(href: string | undefined, permissions: string[]): bool
   return permissions.includes(required);
 }
 
+// Filters nav items by the sidebar search term. Parent groups are kept when a
+// child (or grandchild) matches so the user can still see the section context.
+function filterNavBySearch(items: NavItem[], q: string): NavItem[] {
+  const term = q.trim().toLowerCase();
+  if (!term) return items;
+  const matches = (label: string) => label.toLowerCase().includes(term);
+  const out: NavItem[] = [];
+  for (const item of items) {
+    if (item.children) {
+      const children = item.children
+        .map((child): NavItem | null => {
+          if (child.children) {
+            const nested = child.children.filter((gc) => matches(gc.label));
+            return nested.length > 0 ? { ...child, children: nested } : null;
+          }
+          return matches(child.label) ? child : null;
+        })
+        .filter((c): c is NavItem => c !== null);
+      if (children.length > 0 || matches(item.label)) {
+        out.push({ ...item, children: children.length ? children : item.children });
+      }
+    } else if (matches(item.label)) {
+      out.push(item);
+    }
+  }
+  return out;
+}
+
 function filterNavByPermissions(items: NavItem[], permissions: string[]): NavItem[] {
   const filtered: NavItem[] = [];
   for (const item of items) {
@@ -352,6 +381,8 @@ export function PortalLayout({ children }: PortalLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [navSearch, setNavSearch] = useState("");
+  const [headerSearchOpen, setHeaderSearchOpen] = useState(false);
   const pusher = usePusher();
 
   // Start presence tracking
@@ -515,6 +546,12 @@ export function PortalLayout({ children }: PortalLayoutProps) {
     };
   }, [pusher, user]);
 
+  // Reset the sidebar page filter when the user navigates so the sidebar is
+  // never left in a partially-filtered state on the destination page.
+  useEffect(() => {
+    setNavSearch("");
+  }, [location.pathname]);
+
   useEffect(() => {
     if (user) {
       trackActivity({
@@ -533,6 +570,8 @@ export function PortalLayout({ children }: PortalLayoutProps) {
       ? filterNavByPermissions(adminNavItems, user.permissions || [])
       : navItemsByRole[user.role] || studentNavItems;
   const roleLabel = roleLabels[user.role];
+  const visibleNavItems = filterNavBySearch(navItems, navSearch);
+  const navSearchActive = navSearch.trim().length > 0;
 
   const handleLogout = () => {
     localStorage.removeItem(`portal_mode_${user?.id}`);
@@ -569,10 +608,21 @@ export function PortalLayout({ children }: PortalLayoutProps) {
             <div className="px-4 py-3">
               <div className="relative group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                <Input 
-                  placeholder="Search here..." 
-                  className="h-10 pl-9 bg-background/50 border-border/50 focus-visible:ring-1 focus-visible:ring-accent rounded-xl text-xs"
+                <Input
+                  placeholder="Search pages..."
+                  value={navSearch}
+                  onChange={(e) => setNavSearch(e.target.value)}
+                  className="h-10 pl-9 pr-8 bg-background/50 border-border/50 focus-visible:ring-1 focus-visible:ring-accent rounded-xl text-xs"
                 />
+                {navSearch && (
+                  <button
+                    onClick={() => setNavSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -590,12 +640,12 @@ export function PortalLayout({ children }: PortalLayoutProps) {
         {/* Navigation */}
         <nav className={`flex-1 overflow-y-auto py-4 ${isSidebarMinimized ? 'px-2' : 'px-3'} custom-scrollbar`}>
           <ul className="space-y-1.5">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               if (item.children && !isSidebarMinimized) {
                 const isAnyChildActive = item.children.some(child => location.pathname === child.href);
                 return (
                   <li key={item.label}>
-                    <Collapsible defaultOpen={isAnyChildActive}>
+                    <Collapsible key={navSearchActive ? `s-${item.label}` : item.label} defaultOpen={isAnyChildActive || navSearchActive}>
                       <div className="flex items-center w-full px-1">
                         <Link
                           to={item.children?.[0]?.href || '#'}
@@ -622,7 +672,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                             const nestedChild = child as NavItem;
                             const anyNestedActive = nestedChild.children!.some(c => location.pathname === c.href);
                             return (
-                              <Collapsible key={nestedChild.label} defaultOpen={anyNestedActive}>
+                              <Collapsible key={navSearchActive ? `s-${nestedChild.label}` : nestedChild.label} defaultOpen={anyNestedActive || navSearchActive}>
                                 <div className="flex items-center w-full">
                                   <Link
                                     to={nestedChild.children![0]?.href || '#'}
@@ -717,6 +767,11 @@ export function PortalLayout({ children }: PortalLayoutProps) {
               );
             })}
           </ul>
+          {navSearchActive && visibleNavItems.length === 0 && (
+            <p className="px-3 py-6 text-center text-xs text-muted-foreground">
+              No pages match &ldquo;{navSearch.trim()}&rdquo;
+            </p>
+          )}
         </nav>
       </aside>
 
@@ -770,15 +825,37 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                 </span>
               </div>
 
+              {/* Navigation search */}
+              <div className="px-4 py-2 border-b border-border/50 shrink-0">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search pages..."
+                    value={navSearch}
+                    onChange={(e) => setNavSearch(e.target.value)}
+                    className="h-9 pl-9 pr-8 bg-background/50 border-border/50 rounded-xl text-xs"
+                  />
+                  {navSearch && (
+                    <button
+                      onClick={() => setNavSearch("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {/* Navigation */}
               <nav className="flex-1 overflow-y-auto py-4 px-3 custom-scrollbar">
                 <ul className="space-y-1">
-                  {navItems.map((item) => {
+                  {visibleNavItems.map((item) => {
                     if (item.children) {
                       const isAnyChildActive = item.children.some(child => location.pathname === child.href);
                       return (
                         <li key={item.label}>
-                          <Collapsible defaultOpen={isAnyChildActive}>
+                          <Collapsible key={navSearchActive ? `s-${item.label}` : item.label} defaultOpen={isAnyChildActive || navSearchActive}>
                             <div className="flex items-center w-full px-1">
                               <Link
                                 to={item.children?.[0]?.href || '#'}
@@ -806,7 +883,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                                   const nestedChild = child as NavItem;
                                   const anyNestedActive = nestedChild.children!.some(c => location.pathname === c.href);
                                   return (
-                                    <Collapsible key={nestedChild.label} defaultOpen={anyNestedActive}>
+                                    <Collapsible key={navSearchActive ? `s-${nestedChild.label}` : nestedChild.label} defaultOpen={anyNestedActive || navSearchActive}>
                                       <div className="flex items-center w-full">
                                         <Link
                                           to={nestedChild.children![0]?.href || '#'}
@@ -906,6 +983,11 @@ export function PortalLayout({ children }: PortalLayoutProps) {
                     );
                   })}
                 </ul>
+                {navSearchActive && visibleNavItems.length === 0 && (
+                  <p className="px-3 py-6 text-center text-xs text-muted-foreground">
+                    No pages match &ldquo;{navSearch.trim()}&rdquo;
+                  </p>
+                )}
               </nav>
             </motion.aside>
           </>
@@ -940,13 +1022,17 @@ export function PortalLayout({ children }: PortalLayoutProps) {
             </span>
           </div>
 
-          {/* Search - Desktop */}
+          {/* Search - Desktop (opens the global course/project search dialog) */}
           <div className="hidden lg:block flex-1 max-w-md">
             <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <input
                 type="search"
                 placeholder="Search courses, projects..."
-                className="w-full h-10 pl-4 pr-10 rounded-lg bg-background border border-border text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                readOnly
+                onFocus={() => setHeaderSearchOpen(true)}
+                onClick={() => setHeaderSearchOpen(true)}
+                className="w-full h-10 pl-9 pr-10 rounded-lg bg-background border border-border text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent cursor-pointer"
               />
             </div>
           </div>
@@ -1244,6 +1330,9 @@ export function PortalLayout({ children }: PortalLayoutProps) {
             </DropdownMenu>
           </div>
         </header>
+
+        {/* Global site search dialog (opened from the header search box) */}
+        <GlobalSearchDialog open={headerSearchOpen} onOpenChange={setHeaderSearchOpen} />
 
         {/* Platform Tour - auto-triggers on first login */}
         <PlatformTour />
