@@ -2842,6 +2842,11 @@ export const GET_USER_FULL_REPORT = gql`
         activeInternships
         totalSubmissions
         passedSubmissions
+        totalCreatedCourses
+        totalCreatedPrograms
+        totalManagedStudents
+        totalApplications
+        revenue
       }
       courses {
         courseId
@@ -2957,6 +2962,51 @@ export const GET_USER_FULL_REPORT = gql`
           current
           total
         }
+      }
+      createdCourses {
+        id
+        title
+        category
+        level
+        price
+        status
+        thumbnail
+        studentsEnrolledCount
+        modulesCount
+        createdAt
+        instructor {
+          id
+          username
+          fullName
+        }
+      }
+      createdPrograms {
+        id
+        title
+        organization
+        status
+        price
+        duration
+        startDate
+        endDate
+        createdAt
+      }
+      managedStudents {
+        id
+        username
+        fullName
+        email
+        avatar
+        school
+        createdAt
+      }
+      applications {
+        id
+        type
+        title
+        organization
+        status
+        appliedAt
       }
     }
   }

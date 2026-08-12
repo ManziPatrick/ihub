@@ -5,6 +5,12 @@ import { AssignmentSubmission } from '../models/AssignmentSubmission';
 import { Project } from '../models/Project';
 import { Internship } from '../models/Internship';
 import { Certificate } from '../models/Certificate';
+import { Course } from '../models/Course';
+import { InternshipProgram } from '../models/internship/InternshipProgram';
+import { InternshipApplication } from '../models/internship/InternshipApplication';
+import { CourseApplication } from '../models/CourseApplication';
+import { Payment } from '../models/Payment';
+import { InternshipPayment } from '../models/internship/Payment';
 import { reportCache } from '../lib/reportCache';
 
 const notProvided = 'Not provided';
@@ -119,6 +125,182 @@ export const userReportResolvers = {
       // ── Grades aggregation ──
       const allGrades: any[] = (user as any).grades || [];
 
+      // ── Role-specific content ──
+      // The report adapts to the user's role:
+      //   • admin / trainer → courses & programs they created, their students, revenue
+      //   • super_admin     → platform-wide totals (all courses, programs, students, revenue)
+      //   • student         → internship + course applications
+      const isStaff = ['admin', 'trainer', 'super_admin'].includes(user.role);
+      let createdCourses: any[] = [];
+      let createdPrograms: any[] = [];
+      let managedStudents: any[] = [];
+      let revenue = 0;
+      let applications: any[] = [];
+
+      // Wrap the role-specific fetches in try/catch (matching the file's
+      // defensive pattern) so one failing collection never breaks the report.
+      try {
+      if (user.role === 'super_admin') {
+        // ── Platform-wide overview ──
+        const [allCourses, allPrograms, allStudents, paymentsAgg, internshipPaymentsAgg] = await Promise.all([
+          Course.find({ isDeleted: { $ne: true } }).populate('instructor', 'username fullName email').sort({ createdAt: -1 }),
+          InternshipProgram.find({ isDeleted: false }).sort({ createdAt: -1 }),
+          User.find({ role: 'student', isDeleted: { $ne: true } }).select('username fullName email avatar school createdAt').sort({ createdAt: -1 }),
+          Payment.aggregate([
+            { $match: { status: { $in: ['completed', 'paid', 'successful'] } } },
+            { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } },
+          ]),
+          InternshipPayment.aggregate([
+            { $match: { status: 'paid', isDeleted: false } },
+            { $group: { _id: null, total: { $sum: '$amount' } } },
+          ]),
+        ]);
+        createdCourses = allCourses.map((c: any) => ({
+          id: c._id.toString(),
+          title: c.title,
+          category: c.category,
+          level: c.level,
+          price: c.price || 0,
+          status: c.status,
+          thumbnail: c.thumbnail || null,
+          studentsEnrolledCount: c.studentsEnrolledCount ?? (c.studentsEnrolled?.length || 0),
+          modulesCount: c.modulesCount ?? (c.modules?.length || 0),
+          createdAt: c.createdAt?.toISOString?.() || null,
+          instructor: c.instructor ? { id: c.instructor._id.toString(), username: c.instructor.username, fullName: c.instructor.fullName } : null,
+        }));
+        createdPrograms = allPrograms.map((p: any) => ({
+          id: p._id.toString(),
+          title: p.title,
+          organization: p.organization || 'Ihub Academy',
+          status: p.status || 'active',
+          price: p.price || 0,
+          duration: p.duration,
+          startDate: p.startDate?.toISOString?.() || null,
+          endDate: p.endDate?.toISOString?.() || null,
+          createdAt: p.createdAt?.toISOString?.() || null,
+        }));
+        managedStudents = allStudents.map((s: any) => ({
+          id: s._id.toString(),
+          username: s.username,
+          fullName: s.fullName,
+          email: s.email,
+          avatar: s.avatar || null,
+          school: s.school || null,
+          createdAt: s.createdAt?.toISOString?.() || null,
+        }));
+        revenue = (paymentsAgg[0]?.total || 0) + (internshipPaymentsAgg[0]?.total || 0);
+      } else if (user.role === 'admin' || user.role === 'trainer') {
+        // ── Staff scope: their own courses, programs, students, revenue ──
+        const staffCourses = await Course.find({
+          $or: [{ createdBy: userId }, { instructor: userId }],
+          isDeleted: { $ne: true },
+        }).populate('instructor', 'username fullName email').sort({ createdAt: -1 });
+        createdCourses = staffCourses.map((c: any) => ({
+          id: c._id.toString(),
+          title: c.title,
+          category: c.category,
+          level: c.level,
+          price: c.price || 0,
+          status: c.status,
+          thumbnail: c.thumbnail || null,
+          studentsEnrolledCount: c.studentsEnrolledCount ?? (c.studentsEnrolled?.length || 0),
+          modulesCount: c.modulesCount ?? (c.modules?.length || 0),
+          createdAt: c.createdAt?.toISOString?.() || null,
+          instructor: c.instructor ? { id: c.instructor._id.toString(), username: c.instructor.username, fullName: c.instructor.fullName } : null,
+        }));
+
+        const staffCourseIds = staffCourses.map((c: any) => c._id);
+        createdPrograms = (await InternshipProgram.find({ createdBy: userId, isDeleted: false }).sort({ createdAt: -1 }))
+          .map((p: any) => ({
+            id: p._id.toString(),
+            title: p.title,
+            organization: p.organization || 'Ihub Academy',
+            status: p.status || 'active',
+            price: p.price || 0,
+            duration: p.duration,
+            startDate: p.startDate?.toISOString?.() || null,
+            endDate: p.endDate?.toISOString?.() || null,
+            createdAt: p.createdAt?.toISOString?.() || null,
+          }));
+
+        // Students enrolled in their courses + approved into their programs
+        const studentIdSet = new Set<string>();
+        staffCourses.forEach((c: any) => (c.studentsEnrolled || []).forEach((sid: any) => studentIdSet.add(sid.toString())));
+        const staffProgramIds = createdPrograms.map((p: any) => p.id);
+        if (staffProgramIds.length > 0) {
+          const approved = await InternshipApplication.find({ internshipProgramId: { $in: staffProgramIds }, status: 'approved' });
+          approved.forEach((a: any) => studentIdSet.add(a.userId.toString()));
+        }
+        if (studentIdSet.size > 0) {
+          managedStudents = (await User.find({ _id: { $in: Array.from(studentIdSet) }, isDeleted: { $ne: true } })
+            .select('username fullName email avatar school createdAt')
+            .sort({ createdAt: -1 }))
+            .map((s: any) => ({
+              id: s._id.toString(),
+              username: s.username,
+              fullName: s.fullName,
+              email: s.email,
+              avatar: s.avatar || null,
+              school: s.school || null,
+              createdAt: s.createdAt?.toISOString?.() || null,
+            }));
+        }
+
+        // Revenue from their courses (standard payments) + internship fees (their programs)
+        // Matches both plural `courseIds` and legacy singular `courseId` payment fields.
+        const [standardRev, internshipRev] = await Promise.all([
+          staffCourseIds.length > 0
+            ? Payment.aggregate([
+                { $match: { $or: [{ courseIds: { $in: staffCourseIds } }, { courseId: { $in: staffCourseIds } }], status: { $in: ['completed', 'paid', 'successful'] } } },
+                { $group: { _id: null, total: { $sum: '$amount' } } },
+              ])
+            : Promise.resolve([]),
+          staffProgramIds.length > 0
+            ? InternshipPayment.aggregate([
+                { $match: { internshipProgramId: { $in: staffProgramIds }, status: 'paid', isDeleted: false } },
+                { $group: { _id: null, total: { $sum: '$amount' } } },
+              ])
+            : Promise.resolve([]),
+        ]);
+        revenue = (standardRev[0]?.total || 0) + (internshipRev[0]?.total || 0);
+      }
+      } catch (err: any) {
+        console.error(`[UserReport] Error fetching role-specific data for ${userId}:`, err?.message || err);
+        // Non-blocking — keep empty arrays / zero revenue so the report still renders
+      }
+
+      // ── Applications (student view + staff program applications) ──
+      if (user.role === 'student') {
+        let internshipApps: any[] = [];
+        let courseApps: any[] = [];
+        try {
+          [internshipApps, courseApps] = await Promise.all([
+            InternshipApplication.find({ userId }).populate('internshipProgramId', 'title organization').sort({ createdAt: -1 }),
+            CourseApplication.find({ userId }).populate('courseId', 'title category').sort({ createdAt: -1 }),
+          ]);
+        } catch (err: any) {
+          console.error(`[UserReport] Error fetching applications for ${userId}:`, err?.message || err);
+        }
+        applications = [
+          ...internshipApps.map((a: any) => ({
+            id: a._id.toString(),
+            type: 'opportunity',
+            title: (a.internshipProgramId as any)?.title || 'Opportunity',
+            organization: (a.internshipProgramId as any)?.organization || null,
+            status: a.status,
+            appliedAt: a.createdAt?.toISOString?.() || null,
+          })),
+          ...courseApps.map((a: any) => ({
+            id: a._id.toString(),
+            type: 'course',
+            title: (a.courseId as any)?.title || 'Course',
+            organization: null,
+            status: a.status,
+            appliedAt: a.createdAt?.toISOString?.() || null,
+          })),
+        ];
+      }
+
       // ── Course progress with details (derive from submissions/course documents for reliable printing) ──
       const uniqueCourseIds = Array.from(
         new Set(
@@ -132,7 +314,7 @@ export const userReportResolvers = {
       let coursesById: Record<string, any> = {};
       try {
         const loadedCourses = uniqueCourseIds.length
-          ? await require('../models/Course').Course.find({ _id: { $in: uniqueCourseIds } })
+          ? await Course.find({ _id: { $in: uniqueCourseIds } })
               .populate('modules')
           : [];
 
@@ -256,6 +438,11 @@ export const userReportResolvers = {
           passedSubmissions: submissions.filter(
             (s: any) => s.status === 'approved' || (s.grade && s.grade >= 70)
           ).length,
+          totalCreatedCourses: createdCourses.length,
+          totalCreatedPrograms: createdPrograms.length,
+          totalManagedStudents: managedStudents.length,
+          totalApplications: applications.length,
+          revenue,
         },
         courses: coursesWithProgress,
         submissions: submissions.map((s: any) => ({
@@ -297,6 +484,10 @@ export const userReportResolvers = {
             approved: t.approved,
           })),
         })),
+        createdCourses,
+        createdPrograms,
+        managedStudents,
+        applications,
         internships: internships.map((internship: any) => {
           const mentorData = internship.mentorId
             ? { id: internship.mentorId._id.toString(), username: internship.mentorId.username, fullName: internship.mentorId.fullName }
