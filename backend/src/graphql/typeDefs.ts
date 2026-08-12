@@ -575,6 +575,8 @@ export const typeDefs = `#graphql
     status: String
     meetingLink: String
     deliveryMode: String
+    contextType: String
+    contextTitle: String
     createdAt: String
   }
 
