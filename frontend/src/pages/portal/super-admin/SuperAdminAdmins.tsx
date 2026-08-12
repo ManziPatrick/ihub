@@ -36,7 +36,6 @@ import {
   MoreVertical,
   CheckCircle,
   XCircle,
-  Key,
   Loader2,
   Eye,
   BookOpen,
@@ -62,6 +61,40 @@ const permissionsList = [
   { key: "analytics", label: "Analytics Access" },
   { key: "students", label: "Student Management" },
 ];
+
+// Shared checkbox grid used by both the Create and Edit admin dialogs.
+// Super admins bypass permission gating, so the boxes are disabled for that role.
+function PermissionsGrid({
+  selected,
+  onToggle,
+  disabled,
+}: {
+  selected: string[];
+  onToggle: (key: string) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {permissionsList.map((perm) => (
+        <label
+          key={perm.key}
+          className={`flex items-center gap-2 p-2 bg-background/50 rounded cursor-pointer hover:bg-background ${
+            disabled ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+        >
+          <input
+            type="checkbox"
+            className="rounded border-border"
+            checked={selected.includes(perm.key)}
+            disabled={disabled}
+            onChange={() => !disabled && onToggle(perm.key)}
+          />
+          <span className="text-sm">{perm.label}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
 
 function AdminPerformanceStats({ adminId }: { adminId: string }) {
   const { data, loading, error } = useQuery(GET_ADMIN_DASHBOARD_DATA, {
@@ -155,7 +188,16 @@ export default function SuperAdminAdmins() {
     role: "admin",
     permissions: [] as string[]
   });
-  const [selectedAdminId, setSelectedAdminId] = useState<string | null>(null);  // Fetch every platform user so admins show up regardless of who created them.
+  const [selectedAdminId, setSelectedAdminId] = useState<string | null>(null);
+  const [editAdmin, setEditAdmin] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    role: "admin",
+    permissions: [] as string[]
+  });
+  // Fetch every platform user so admins show up regardless of who created them.
   // (The `users` resolver returns all users for super admins — no createdBy scoping.)
   const { data, loading, refetch } = useQuery(GET_USERS, {
     variables: { page: 1, limit: 1000 },
@@ -163,6 +205,7 @@ export default function SuperAdminAdmins() {
   });
   const [createUserMutation] = useMutation(CREATE_USER);
   const [deleteUserMutation] = useMutation(DELETE_USER);
+  const [updateUserMutation] = useMutation(UPDATE_USER);
 
   const allAdmins = ((data as any)?.users?.items || []).filter((u: any) => u.role === "admin" || u.role === "super_admin");
 
@@ -202,6 +245,47 @@ export default function SuperAdminAdmins() {
             ? prev.permissions.filter(p => p !== key)
             : [...prev.permissions, key]
     }));
+  };
+
+  const openEditAdmin = (admin: any) => {
+    setEditForm({
+      username: admin.username || "",
+      email: admin.email || "",
+      password: "",
+      role: admin.role || "admin",
+      permissions: [...(admin.permissions || [])]
+    });
+    setEditAdmin(admin);
+  };
+
+  const toggleEditPermission = (key: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      permissions: prev.permissions.includes(key)
+        ? prev.permissions.filter(p => p !== key)
+        : [...prev.permissions, key]
+    }));
+  };
+
+  const handleSaveAdmin = async () => {
+    if (!editAdmin) return;
+    try {
+      await updateUserMutation({
+        variables: {
+          id: editAdmin.id,
+          username: editForm.username,
+          email: editForm.email,
+          role: editForm.role,
+          permissions: editForm.permissions,
+          ...(editForm.password ? { password: editForm.password } : {})
+        }
+      });
+      toast.success("Admin updated successfully");
+      setEditAdmin(null);
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   return (
@@ -272,19 +356,11 @@ export default function SuperAdminAdmins() {
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block">Permissions</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {permissionsList.map((perm) => (
-                      <label key={perm.key} className="flex items-center gap-2 p-2 bg-background/50 rounded cursor-pointer hover:bg-background">
-                        <input 
-                            type="checkbox" 
-                            className="rounded border-border" 
-                            checked={formData.permissions.includes(perm.key)}
-                            onChange={() => togglePermission(perm.key)}
-                        />
-                        <span className="text-sm">{perm.label}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <PermissionsGrid
+                    selected={formData.permissions}
+                    onToggle={togglePermission}
+                    disabled={formData.role === "super_admin"}
+                  />
                 </div>
                 <div className="flex gap-2 pt-2">
                   <Button variant="outline" className="flex-1" onClick={() => setIsCreateOpen(false)}>
@@ -351,12 +427,11 @@ export default function SuperAdminAdmins() {
                           <DropdownMenuItem onClick={() => setSelectedAdminId(admin.id)}>
                             <Eye className="w-4 h-4 mr-2" /> View Performance Stats
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="w-4 h-4 mr-2" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Key className="w-4 h-4 mr-2" /> Reset Password
-                          </DropdownMenuItem>
+                          {admin.role !== "super_admin" && (
+                            <DropdownMenuItem onClick={() => openEditAdmin(admin)}>
+                              <Edit className="w-4 h-4 mr-2" /> Edit
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => handleDeleteAdmin(admin.id)} className="text-destructive">
                             <Trash2 className="w-4 h-4 mr-2" /> Remove
                           </DropdownMenuItem>
@@ -405,6 +480,75 @@ export default function SuperAdminAdmins() {
           )}
         </motion.div>
       </div>
+
+      {/* Edit Admin dialog — grant/revoke feature permissions, change role, or reset password */}
+      <Dialog open={!!editAdmin} onOpenChange={(open) => !open && setEditAdmin(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Admin — {editAdmin?.username}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Username</label>
+              <Input
+                value={editForm.username}
+                onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Email</label>
+              <Input
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                New Password <span className="text-muted-foreground font-normal">(optional — leave blank to keep current)</span>
+              </label>
+              <PasswordInput
+                placeholder="••••••••"
+                value={editForm.password}
+                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Role</label>
+              <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Feature Access</label>
+              <PermissionsGrid
+                selected={editForm.permissions}
+                onToggle={toggleEditPermission}
+                disabled={editForm.role === "super_admin"}
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                {editForm.role === "super_admin"
+                  ? "Super admins see everything — permissions don't apply."
+                  : "Admins only see the sections they have access to. Grant or revoke anytime."}
+              </p>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setEditAdmin(null)}>
+                Cancel
+              </Button>
+              <Button variant="gold" className="flex-1" onClick={handleSaveAdmin}>
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Sheet open={!!selectedAdminId} onOpenChange={(open) => !open && setSelectedAdminId(null)}>
         <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
