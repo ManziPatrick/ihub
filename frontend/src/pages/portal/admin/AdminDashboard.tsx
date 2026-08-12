@@ -9,19 +9,15 @@ import { Button } from "@/components/ui/button";
 import {
   Users,
   BookOpen,
-  Briefcase,
-  TrendingUp,
-  ArrowRight,
-  Activity,
   DollarSign,
   GraduationCap,
-  MessageSquare,
+  ArrowRight,
   Download,
   RefreshCw,
 } from "lucide-react";
 
 import { useQuery } from "@apollo/client/react";
-import { GET_ADMIN_DASHBOARD_DATA, GET_RECENT_ACTIVITY, GET_CONVERSATIONS } from "@/lib/graphql/queries";
+import { GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
 import { ExportDataDialog } from "@/components/portal/ExportDataDialog";
 import { toast } from "sonner";
 
@@ -30,28 +26,25 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const { data, loading, refetch: refetchDashboard } = useQuery(GET_ADMIN_DASHBOARD_DATA, {
+  const { data, refetch: refetchDashboard } = useQuery(GET_ADMIN_DASHBOARD_DATA, {
     variables: { createdBy: user?.id },
   });
-  const { data: activityData, loading: recentActivityLoading, refetch: refetchActivity } = useQuery(GET_RECENT_ACTIVITY);
-  const { data: conversationsData, refetch: refetchConversations } = useQuery(GET_CONVERSATIONS);
 
-  const dashboardData = (data as any)?.adminDashboardData || { 
+  const dashboardData = (data as any)?.adminDashboardData || {
       stats: { totalUsers: 0, totalCourses: 0, totalStudents: 0, totalRevenue: 0 },
       recentEnrollments: [],
       coursePerformance: []
   };
-  
+
   const liveStats = dashboardData.stats;
   const recentEnrollments = dashboardData.recentEnrollments;
   const coursePerformance = dashboardData.coursePerformance;
-  const recentActivity = (activityData as any)?.recentActivity || [];
 
   const stats = [
-    { label: t("portal.totalUsers") || "Total Users", value: liveStats.totalUsers.toString(), change: "+0%", trend: "up", icon: Users },
-    { label: t("portal.activeCourses") || "Active Courses", value: liveStats.totalCourses.toString(), change: "+0%", trend: "up", icon: BookOpen },
-    { label: t("portal.students") || "Students", value: liveStats.totalStudents.toString(), change: "+0%", trend: "up", icon: GraduationCap },
-    { label: t("portal.revenue") || "Revenue ($)", value: liveStats.totalRevenue.toLocaleString(), change: "+0%", trend: "up", icon: DollarSign },
+    { label: t("portal.totalUsers") || "Total Users", value: liveStats.totalUsers.toString(), icon: Users },
+    { label: t("portal.activeCourses") || "Active Courses", value: liveStats.totalCourses.toString(), icon: BookOpen },
+    { label: t("portal.students") || "Students", value: liveStats.totalStudents.toString(), icon: GraduationCap },
+    { label: t("portal.revenue") || "Revenue ($)", value: liveStats.totalRevenue.toLocaleString(), icon: DollarSign },
   ];
 
   return (
@@ -75,7 +68,7 @@ export default function AdminDashboard() {
             <Button variant="outline" onClick={async () => {
                 setIsRefreshing(true);
                 try {
-                  await Promise.all([refetchDashboard(), refetchActivity(), refetchConversations()]);
+                  await refetchDashboard();
                   toast.success('Dashboard refreshed!');
                 } catch {
                   toast.error('Failed to refresh dashboard');
@@ -106,7 +99,7 @@ export default function AdminDashboard() {
             transition={{ delay: 0.1 }}
             className="grid grid-cols-2 lg:grid-cols-4 gap-4"
         >
-            {stats.map((stat, index) => (
+            {stats.map((stat) => (
             <Card key={stat.label} className="border-border/50">
                 <CardContent className="p-4">
                 <div className="flex items-start justify-between">
@@ -124,15 +117,14 @@ export default function AdminDashboard() {
         </motion.div>
 
         {/* Main Content */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-2 gap-6">
             {/* Recent Enrollments */}
             <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="lg:col-span-2"
             >
-            <Card className="border-border/50">
+            <Card className="border-border/50 h-full">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-heading">Recent Enrollments</CardTitle>
                 <Link to="/portal/admin/payments">
@@ -169,9 +161,15 @@ export default function AdminDashboard() {
                 </div>
                 </CardContent>
             </Card>
+            </motion.div>
 
             {/* Course Performance */}
-            <Card className="border-border/50 mt-6">
+            <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            >
+            <Card className="border-border/50 h-full">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-lg font-heading">Course Performance</CardTitle>
                 <Link to="/portal/admin/courses">
@@ -213,137 +211,9 @@ export default function AdminDashboard() {
                 </CardContent>
             </Card>
             </motion.div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Live Activity Feed */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Card className="border-border/50">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-heading flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-accent" />
-                    Live Activity
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 max-h-[400px] overflow-y-auto">
-                  {recentActivityLoading ? (
-                    <div className="text-center py-4 text-xs text-muted-foreground animate-pulse">Loading updates...</div>
-                  ) : recentActivity.length === 0 ? (
-                    <div className="text-center py-4 text-xs text-muted-foreground">No recent activity.</div>
-                  ) : (
-                    recentActivity.map((log: any, i: number) => (
-                      <div key={i} className="flex flex-col p-2 bg-background/30 rounded-md gap-1 border-l-2 border-accent/30">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-card-foreground font-semibold uppercase tracking-wider">{log.username}</span>
-                          <span className="text-card-foreground/40">
-                            {new Date(parseInt(log.timestamp) || log.timestamp).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <p className="text-xs text-card-foreground/80 font-medium">
-                          {log.action.replace('_', ' ')}
-                        </p>
-                        {log.details && (
-                          <p className="text-[10px] text-card-foreground/50 truncate italic">{log.details}</p>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Recent Conversations */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-            >
-              <Card className="border-border/50">
-                <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg font-heading flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-accent" />
-                    Recent Chats
-                  </CardTitle>
-                  <Link to="/chat">
-                    <Button variant="ghost" size="sm" className="text-accent h-7 px-2">
-                       View All
-                    </Button>
-                  </Link>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {!(conversationsData as any)?.conversations?.length ? (
-                    <div className="text-center py-6 border border-dashed rounded-lg">
-                      <p className="text-xs text-muted-foreground">No recent messages</p>
-                    </div>
-                  ) : (
-                    ((conversationsData as any).conversations as any[]).slice(0, 3).map((conv: any) => {
-                      const otherParticipant = conv.participants.find((p: any) => p.id !== user?.id);
-                      return (
-                        <Link to="/chat" key={conv.id}>
-                          <div className="p-2 transition-colors hover:bg-accent/5 rounded-lg border border-transparent hover:border-accent/10">
-                            <div className="flex justify-between items-start">
-                              <p className="font-medium text-xs text-card-foreground">{otherParticipant?.username || 'Chat'}</p>
-                              <span className="text-[10px] text-muted-foreground">
-                                {conv.lastMessage ? new Date(parseInt(conv.lastMessage.createdAt)).toLocaleDateString() : ''}
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-card-foreground/60 mt-0.5 line-clamp-1">
-                              {conv.lastMessage?.content || 'No messages yet'}
-                            </p>
-                          </div>
-                        </Link>
-                      );
-                    })
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Quick Actions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <Card className="border-border/50">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-heading">Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Link to="/portal/admin/courses">
-                    <Button variant="ghost" className="w-full justify-start">
-                      <BookOpen className="w-4 h-4 mr-2 text-accent" />
-                      Create New Course
-                    </Button>
-                  </Link>
-                  <Link to="/portal/admin/assignment-reviews">
-                    <Button variant="ghost" className="w-full justify-start">
-                      <GraduationCap className="w-4 h-4 mr-2 text-accent" />
-                      Review Assignments
-                    </Button>
-                  </Link>
-                  <Link to="/portal/admin/internships">
-                    <Button variant="ghost" className="w-full justify-start">
-                      <Briefcase className="w-4 h-4 mr-2 text-accent" />
-                      Manage Programs
-                    </Button>
-                  </Link>
-                  <Link to="/portal/admin/analytics">
-                    <Button variant="ghost" className="w-full justify-start">
-                      <TrendingUp className="w-4 h-4 mr-2 text-accent" />
-                      View Analytics
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
         </div>
       </div>
+      <ExportDataDialog open={showExportDialog} onOpenChange={setShowExportDialog} />
     </PortalLayout>
   );
 }
