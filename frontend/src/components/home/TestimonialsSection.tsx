@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
@@ -93,6 +93,7 @@ export function TestimonialsSection() {
     nextFetchPolicy: "cache-first",
   });
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   const testimonials = useMemo<TestimonialItem[]>(() => {
     const apiItems: TestimonialItem[] = ((data as any)?.publicTestimonials || [])
@@ -106,8 +107,16 @@ export function TestimonialsSection() {
         authorAvatar: t.authorAvatar || null,
         rating: t.rating,
       }));
-    if (apiItems.length > 0) return apiItems;
-    return FALLBACK_TESTIMONIALS;
+    // Always keep at least 2 entries so the carousel auto-slides even when few
+    // (or zero) approved testimonials exist yet — approved ones come first.
+    const merged = [...apiItems];
+    if (merged.length < 2) {
+      for (const fb of FALLBACK_TESTIMONIALS) {
+        if (!merged.some((m) => m.id === fb.id)) merged.push(fb);
+        if (merged.length >= 3) break;
+      }
+    }
+    return merged;
   }, [data]);
 
   const isLoading = loading && testimonials.length === 0;
@@ -116,32 +125,45 @@ export function TestimonialsSection() {
   const prev = () => setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   const currentTestimonial = testimonials[currentIndex % testimonials.length];
 
+  // Auto-slide every 5s, paused while the user hovers the carousel
+  useEffect(() => {
+    if (paused || testimonials.length < 2) return;
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [paused, testimonials.length, currentIndex]);
+
   return (
-    <section className="py-16 lg:py-20 bg-secondary/30">
+    <section className="py-8 bg-transparent">
       <div className="container mx-auto px-4 lg:px-8">
         {/* Section Header */}
-        <div className="flex items-center justify-center gap-4 mb-10">
+        <div className="flex items-center justify-center gap-4 mb-6">
           <div className="flex-1 h-px bg-gradient-to-r from-transparent to-accent/50" />
-          <h2 className="font-heading text-2xl lg:text-3xl font-medium text-foreground text-center">
+          <h2 className="font-heading text-lg lg:text-xl font-medium text-foreground text-center">
             Success Stories
           </h2>
           <div className="flex-1 h-px bg-gradient-to-l from-transparent to-accent/50" />
         </div>
 
         {/* Testimonial Carousel */}
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-4 lg:gap-8">
+        <div
+          className="max-w-2xl mx-auto"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          <div className="flex items-center gap-3 lg:gap-5">
             {/* Prev Button */}
             <button
               onClick={prev}
-              className="w-10 h-10 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/60 hover:text-accent hover:border-accent transition-all duration-300 flex-shrink-0"
+              className="w-8 h-8 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/60 hover:text-accent hover:border-accent transition-all duration-300 flex-shrink-0"
               aria-label="Previous testimonial"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={16} />
             </button>
 
             {/* Testimonial Content */}
-            <div className="flex-1 relative min-h-[200px]">
+            <div className="flex-1 relative min-h-[120px]">
               <AnimatePresence mode="wait">
                 {isLoading ? (
                   <motion.div
@@ -149,14 +171,14 @@ export function TestimonialsSection() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="bg-background rounded-xl p-6 lg:p-8 shadow-card"
+                    className="bg-background rounded-xl p-4 lg:p-5 shadow-sm border border-border/30"
                   >
-                    <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
-                      <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-muted animate-pulse flex-shrink-0" />
-                      <div className="flex-1 w-full space-y-3">
-                        <div className="h-4 bg-muted animate-pulse rounded w-full" />
-                        <div className="h-4 bg-muted animate-pulse rounded w-5/6" />
-                        <div className="h-3 bg-muted animate-pulse rounded w-1/3 mt-4" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-muted animate-pulse flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 bg-muted animate-pulse rounded w-full" />
+                        <div className="h-3 bg-muted animate-pulse rounded w-3/4" />
+                        <div className="h-2 bg-muted animate-pulse rounded w-1/3" />
                       </div>
                     </div>
                   </motion.div>
@@ -167,49 +189,40 @@ export function TestimonialsSection() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.4 }}
-                    className="bg-background rounded-xl p-6 lg:p-8 shadow-card"
+                    className="bg-background rounded-xl p-4 lg:p-5 shadow-sm border border-border/30"
                   >
-                    <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
-                      {/* Avatar with hover effect */}
+                    <div className="flex items-center gap-4">
+                      {/* Avatar */}
                       <motion.div
                         className="flex-shrink-0"
                         whileHover={{ scale: 1.05 }}
                         transition={{ duration: 0.3 }}
                       >
-                        <TestimonialAvatar item={currentTestimonial} className="w-20 h-20 lg:w-24 lg:h-24" />
+                        <TestimonialAvatar item={currentTestimonial} className="w-12 h-12 lg:w-14 lg:h-14" />
                       </motion.div>
 
                       {/* Quote and Info */}
-                      <div className="flex-1 text-center lg:text-left">
-                        <div className="flex items-center justify-center lg:justify-start">
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
                           <Stars rating={currentTestimonial.rating} />
+                          <Quote className="w-4 h-4 text-accent/40 flex-shrink-0" />
                         </div>
-                        <div className="flex items-start gap-2 mb-4">
-                          <Quote className="w-6 h-6 text-accent flex-shrink-0 transform rotate-180 hidden lg:block" />
-                          <p className="text-foreground leading-relaxed font-heading italic text-base lg:text-lg">
-                            "{currentTestimonial.quote}"
-                          </p>
-                          <Quote className="w-6 h-6 text-accent flex-shrink-0 self-end hidden lg:block" />
-                        </div>
-                        <div className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2">
-                          <span className="font-semibold text-foreground">
+                        <p className="text-foreground leading-snug font-heading italic text-sm line-clamp-3">
+                          "{currentTestimonial.quote}"
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <span className="font-semibold text-foreground text-sm">
                             {currentTestimonial.authorName}
                           </span>
                           {currentTestimonial.authorRole && (
-                            <>
-                              <span className="hidden lg:inline text-accent">•</span>
-                              <span className="text-muted-foreground text-sm">
-                                {currentTestimonial.authorRole}
-                              </span>
-                            </>
+                            <span className="text-muted-foreground text-xs">
+                              {currentTestimonial.authorRole}
+                            </span>
                           )}
                           {currentTestimonial.authorCompany && (
-                            <>
-                              <span className="hidden lg:inline text-muted-foreground/50">|</span>
-                              <span className="text-accent text-sm">
-                                {currentTestimonial.authorCompany}
-                              </span>
-                            </>
+                            <span className="text-accent text-xs">
+                              · {currentTestimonial.authorCompany}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -222,46 +235,27 @@ export function TestimonialsSection() {
             {/* Next Button */}
             <button
               onClick={next}
-              className="w-10 h-10 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/60 hover:text-accent hover:border-accent transition-all duration-300 flex-shrink-0"
+              className="w-8 h-8 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/60 hover:text-accent hover:border-accent transition-all duration-300 flex-shrink-0"
               aria-label="Next testimonial"
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={16} />
             </button>
           </div>
 
           {/* Dots Indicator */}
-          <div className="flex items-center justify-center gap-2 mt-6">
+          <div className="flex items-center justify-center gap-2 mt-4">
             {testimonials.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
-                className={`h-2 rounded-full transition-all duration-300 ${index === currentIndex
-                    ? "bg-accent w-8"
-                    : "bg-foreground/20 hover:bg-foreground/40 w-2"
+                className={`h-1.5 rounded-full transition-all duration-300 ${index === currentIndex
+                    ? "bg-accent w-6"
+                    : "bg-foreground/20 hover:bg-foreground/40 w-1.5"
                   }`}
                 aria-label={`Go to testimonial ${index + 1}`}
               />
             ))}
           </div>
-
-          {/* Thumbnail Previews */}
-          {!isLoading && (
-            <div className="flex items-center justify-center gap-4 mt-8">
-              {testimonials.map((testimonial, index) => (
-                <motion.button
-                  key={testimonial.id}
-                  onClick={() => setCurrentIndex(index)}
-                  whileHover={{ scale: 1.1, y: -4 }}
-                  className={`w-12 h-12 rounded-full overflow-hidden transition-all duration-300 ${index === currentIndex
-                      ? "ring-2 ring-accent ring-offset-2 ring-offset-background"
-                      : "opacity-50 hover:opacity-100"
-                    }`}
-                >
-                  <TestimonialAvatar item={testimonial} className="w-full h-full" />
-                </motion.button>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </section>
