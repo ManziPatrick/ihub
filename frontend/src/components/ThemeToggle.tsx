@@ -1,22 +1,23 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
-export function ThemeToggle() {
-  const { setTheme, theme, resolvedTheme } = useTheme();
+export function ThemeToggle({ className }: { className?: string }) {
+  const { setTheme, resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   return (
-    <div className="flex items-center space-x-2 bg-background/50 backdrop-blur-sm border border-border/50 rounded-full px-3 py-1.5 shadow-sm transition-all hover:bg-background/80">
-      <Sun className="h-4 w-4 text-orange-500 animate-pulse-slow" />
-      <Switch
-        id="theme-mode"
-        checked={resolvedTheme === "dark"}
-        onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-        className="data-[state=checked]:bg-accent data-[state=unchecked]:bg-accent/40"
-      />
-      <Moon className="h-4 w-4 text-blue-400" />
-      <Label htmlFor="theme-mode" className="sr-only">Toggle theme</Label>
-    </div>
+    <button
+      type="button"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? "Light mode" : "Dark mode"}
+      className={cn(
+        "inline-flex items-center justify-center w-9 h-9 rounded-lg text-card-foreground/70 hover:text-card-foreground hover:bg-background/60 transition-colors",
+        className
+      )}
+    >
+      {isDark ? <Moon className="w-[18px] h-[18px]" /> : <Sun className="w-[18px] h-[18px]" />}
+    </button>
   );
 }

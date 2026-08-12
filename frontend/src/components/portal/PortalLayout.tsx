@@ -970,19 +970,16 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
           {/* Right Actions */}
           <div className="flex items-center gap-1 sm:gap-3">
-            {/* Offline/Online Toggle with Queue Popover — students only (admin/trainer headers stay lean) */}
+            {/* Offline/Online Status — students only, compact dot + switch (admin/trainer headers stay lean) */}
             {user.role === 'student' && (
-            <div className="flex sm:flex items-center gap-0.5 h-8 border border-border/40 rounded-xl bg-background/50">
+            <div className="flex sm:flex items-center gap-1 h-8 pl-2 pr-1.5 border border-border/40 rounded-xl bg-background/50">
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-1.5 pl-2 pr-1 h-full rounded-l-xl hover:bg-background/80 transition-colors">
+                  <button className="flex items-center h-full rounded-l-xl hover:bg-background/80 transition-colors" aria-label="Connection status">
                     <div className={`w-2 h-2 rounded-full ${isOffline ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      {isOffline ? 'Offline' : 'Online'}
-                    </span>
                     {queueCount > 0 && (
-                      <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-amber-500/15 text-amber-500 text-[10px] font-black rounded-full px-1.5 leading-none">
+                      <span className="ml-1.5 min-w-[16px] h-[16px] flex items-center justify-center bg-amber-500/15 text-amber-500 text-[10px] font-black rounded-full px-1 leading-none">
                         {queueCount}
                       </span>
                     )}
@@ -1188,20 +1185,16 @@ export function PortalLayout({ children }: PortalLayoutProps) {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* User Menu */}
+            {/* User Menu — avatar only; click opens profile actions */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button data-tour="user-menu" className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-background/50 transition-colors">
-                  <Avatar className="h-8 w-8">
+                <button data-tour="user-menu" className="flex items-center p-1.5 rounded-lg hover:bg-background/50 transition-colors" aria-label="Account menu">
+                  <Avatar className="h-8 w-8 ring-1 ring-border/50">
                     <AvatarImage src={user.avatar} />
                     <AvatarFallback className="bg-accent text-accent-foreground text-xs">
                       {getInitials(user.fullName)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden sm:block text-sm font-medium text-card-foreground truncate max-w-[100px]">
-                    {user.fullName}
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-card-foreground/50 hidden sm:block" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" sideOffset={8} className="w-56" side="bottom">
