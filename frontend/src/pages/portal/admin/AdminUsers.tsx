@@ -103,9 +103,10 @@ export default function AdminUsers() {
 
   // Queries & Mutations
   const client = useApolloClient();
-  // Admins and super admins both see every platform user — the backend `users`
-  // resolver scopes only trainers. (A `createdBy` filter here would hide users
-  // the admin didn't personally create, which breaks the User Management page.)
+  // The backend `users` resolver scopes the list server-side: super admins see
+  // every platform user, while admins see only users they created or who are
+  // enrolled in their courses / internship programs. No client-side createdBy
+  // filter is sent, so the server scope is authoritative.
   const queryVariables: any = { page: currentPage, limit: pageSize, sortBy };
   // Role filtering happens server-side (not on the current page) so selecting
   // e.g. "admin" or "client" returns ALL matching users across pages.

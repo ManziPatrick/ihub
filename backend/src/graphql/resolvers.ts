@@ -1238,9 +1238,72 @@ export const resolvers = {
 
       const query: any = { isDeleted: { $ne: true } };
 
-      // Trainers stay scoped to their own students/instructors; admins and
-      // super admins see every platform user.
-      if (context.user.role === 'trainer') {
+      // Trainers stay scoped to their own students/instructors; admins see
+      // only the users they are responsible for (created by them, enrolled in
+      // their courses, or enrolled in their internship programs); super admins
+      // see every platform user.
+      if (context.user.role === 'admin') {
+        const [courses, programStudentIds] = await Promise.all([
+          Course.find({
+            $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
+          }),
+          getStaffStudentIds(context.user.id),
+        ]);
+        const enrolledStudentIds = courses.reduce((acc: any[], course: any) => {
+          return [...acc, ...course.studentsEnrolled];
+        }, []);
+
+        // Trainers assigned as instructors on the admin's courses
+        const instructorIds = [...new Set(
+          courses
+            .map(c => c.instructor?.toString())
+            .filter(Boolean)
+        )];
+
+        // Users the admin personally created (students, trainers, staff)
+        const createdByIds = await User.distinct('_id', {
+          createdBy: context.user.id,
+          isDeleted: { $ne: true },
+        });
+
+        const visibleIds = new Set<string>([
+          context.user.id, // admins always see themselves
+          ...enrolledStudentIds.map((s: any) => s?._id?.toString?.() || s?.toString?.() || s),
+          ...programStudentIds,
+          ...createdByIds.map((id: any) => id.toString()),
+          ...instructorIds,
+        ]);
+
+        // Same-school students — ONLY when the admin actually has a school set
+        // (an empty school filter must never expand to "all students").
+        if (context.user.school?.trim()) {
+          const schoolStudents = await User.find({
+            school: context.user.school,
+            role: 'student',
+            isDeleted: { $ne: true },
+          }).distinct('_id');
+          schoolStudents.forEach((id: any) => visibleIds.add(id.toString()));
+        }
+
+        // Trainers are always visible to admins so course-instructor assignment
+        // (instructor pickers use this same list) keeps working — the admin
+        // can assign any platform trainer to their courses.
+        const allTrainerIds = await User.distinct('_id', {
+          role: 'trainer',
+          isDeleted: { $ne: true },
+        });
+        allTrainerIds.forEach((id: any) => visibleIds.add(id.toString()));
+
+        // Convert to real ObjectIds so both the aggregation ($match on _id)
+        // and the find path match correctly — Mongo never coerces strings
+        // to ObjectId inside $in.
+        const visibleObjectIds = Array.from(visibleIds)
+          .filter((id: string) => mongoose.Types.ObjectId.isValid(id))
+          .map((id: string) => new mongoose.Types.ObjectId(id));
+
+        query.$and = [{ _id: { $in: visibleObjectIds } }];
+        if (role) query.$and.push({ role });
+      } else if (context.user.role === 'trainer') {
         const courses = await Course.find({
           $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
         });
@@ -1248,7 +1311,11 @@ export const resolvers = {
           return [...acc, ...course.studentsEnrolled];
         }, []);
 
-        const schoolFilter = context.user.school ? { school: context.user.school } : {};
+        // Same-school students — ONLY when the trainer actually has a school set
+        // (an empty school filter must never expand to "all students").
+        const schoolCondition = context.user.school?.trim()
+          ? { school: context.user.school, role: 'student' }
+          : null;
 
         // Collect unique instructor IDs from all courses (trainers assigned to admin's courses)
         const instructorIds = [...new Set(
@@ -1261,8 +1328,8 @@ export const resolvers = {
         const orConditions: any[] = [
           { _id: { $in: enrolledStudentIds } },
           { createdBy: context.user.id, role: 'trainer' },
-          { ...schoolFilter, role: 'student' }
         ];
+        if (schoolCondition) orConditions.push(schoolCondition);
 
         // Also include trainers assigned as instructors on courses this admin created/instructs
         if (instructorIds.length > 0) {
@@ -1280,9 +1347,9 @@ export const resolvers = {
           query.$or = orConditions;
         }
       } else {
-        // Admin / super admin sees all users by default, but honor an
-        // explicit createdBy filter when the UI asks for it (e.g. the
-        // "Filter by creator" dropdown on the Super Admin Users page).
+        // Super admin sees every platform user, but honor an explicit
+        // createdBy filter when the UI asks for it (e.g. the "Filter by
+        // creator" dropdown on the Super Admin Users page).
         if (role) query.role = role;
         if (createdBy) query.createdBy = createdBy;
       }
