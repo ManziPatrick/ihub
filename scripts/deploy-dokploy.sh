@@ -11,9 +11,11 @@
 #         DOKPLOY_APP_IDS=appid1,appid2        # optional — comma separated
 #
 #  Usage:
-#    scripts/deploy-dokploy.sh list                    # show apps + IDs
+#    scripts/deploy-dokploy.sh list                    # show apps + IDs (+ build type)
 #    scripts/deploy-dokploy.sh deploy                  # redeploy ALL configured apps
 #    scripts/deploy-dokploy.sh deploy <appId>          # redeploy one app
+#    scripts/deploy-dokploy.sh set-dockerfile <appId> [redeploy]
+#                                                      # switch app to Dockerfile build (fixes slow Nixpacks)
 #    scripts/deploy-dokploy.sh health                  # smoke-test api.bootskills.com
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -88,7 +90,7 @@ cmd_list() {
     echo "───────────────────────────────────────────────────────────────────"
     printf "%-28s %-8s %s\n" "APPLICATION ID" "STATUS" "NAME"
     echo "───────────────────────────────────────────────────────────────────"
-    echo "$data" | jq -r '.[] | . as $p | (.applications // [])[] | "\(.applicationId)\t\(.applicationStatus // "?")  \(.name // "?")  [project: \($p.name)]"'
+    echo "$data" | jq -r '.[] | . as $p | (.applications // [])[] | "\(.applicationId)\t\(.applicationStatus // "?")  \(.buildType // "?")\t\(.name // "?")  [project: \($p.name)]"'
   else
     echo "ℹ️  jq not installed — showing IDs/names from raw response:"
     echo "$data" | grep -oE '"applicationId":"[^"]+"' | sort -u
@@ -122,6 +124,33 @@ cmd_deploy() {
   done
 }
 
+cmd_set_dockerfile() {
+  require_key
+  local app_id="${1:-}"
+  local do_redeploy="${2:-}"
+  if [ -z "$app_id" ]; then
+    echo "❌ Usage: $0 set-dockerfile <appId> [redeploy]" >&2
+    exit 1
+  fi
+  echo "🔧 Switching application $app_id to Dockerfile build ..."
+  local resp
+  resp="$(curl_json POST /api/application.update "{\"applicationId\":\"$app_id\",\"buildType\":\"dockerfile\",\"dockerfile\":\"Dockerfile\"}")"
+  check_response "$resp"
+  echo "$resp" | head -c 300
+  echo
+  if echo "$resp" | grep -qiE 'true|success'; then
+    echo "✅ Build type set to Dockerfile (root dir must be \"frontend\" so it uses frontend/Dockerfile)."
+    if [ "$do_redeploy" = "redeploy" ]; then
+      echo
+      cmd_deploy "$app_id"
+    else
+      echo "   Next: redeploy with  scripts/deploy-dokploy.sh deploy $app_id"
+    fi
+  else
+    echo "⚠️  Response did not confirm success — check the output above." >&2
+  fi
+}
+
 cmd_health() {
   echo "🔎 Checking https://api.bootskills.com/health ..."
   curl -sS --max-time 20 https://api.bootskills.com/health | head -c 600
@@ -129,11 +158,12 @@ cmd_health() {
 }
 
 case "${1:-}" in
-  list)   cmd_list ;;
-  deploy) cmd_deploy "${2:-}" ;;
-  health) cmd_health ;;
+  list)            cmd_list ;;
+  deploy)          cmd_deploy "${2:-}" ;;
+  set-dockerfile)  cmd_set_dockerfile "${2:-}" "${3:-}" ;;
+  health)          cmd_health ;;
   *)
-    echo "Usage: $0 {list|deploy [appId]|health}" >&2
+    echo "Usage: $0 {list|deploy [appId]|set-dockerfile <appId> [redeploy]|health}" >&2
     exit 1
     ;;
 esac
