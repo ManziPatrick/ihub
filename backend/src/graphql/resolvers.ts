@@ -2396,7 +2396,15 @@ export const resolvers = {
     adminDashboardData: async (_: any, { createdBy }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) throw new Error('Not authorized');
 
-      let targetCreatedBy = context.user.role !== 'super_admin' ? context.user.id : createdBy;
+      // Super admins always see platform-wide stats. Admins/trainers are
+      // always scoped to their own responsibility (their created/instructed
+      // courses, their enrolled students, their trainers). The `createdBy`
+      // arg is ignored for regular roles — it's only meaningful for a super
+      // admin viewing a specific admin's scope.
+      let targetCreatedBy = context.user.role === 'super_admin' ? undefined : context.user.id;
+      if (context.user.role === 'super_admin' && createdBy && createdBy !== context.user.id) {
+        targetCreatedBy = createdBy;
+      }
       // Use the same user scope as the `users` resolver for consistency
       // (enrolled students + trainers created by admin + same-school students + trainer instructors)
       const userFilter = targetCreatedBy ? await (async () => {
@@ -2415,13 +2423,18 @@ export const resolvers = {
         )];
 
         const adminUser = await User.findById(targetCreatedBy).select('school').lean();
-        const schoolFilter = adminUser?.school ? { school: adminUser.school } : {};
-
+        const school = adminUser?.school?.trim();
+        // IMPORTANT: only scope to same-school students when the admin actually
+        // has a school set. An empty schoolFilter previously spread to
+        // `{ role: 'student' }` and counted EVERY student on the platform.
         const orConditions: any[] = [
           { _id: { $in: enrolledStudentIds } },
           { createdBy: targetCreatedBy, role: 'trainer' },
-          { ...schoolFilter, role: 'student' }
         ];
+
+        if (school) {
+          orConditions.push({ school, role: 'student' });
+        }
 
         // Also include trainers assigned as instructors on courses
         if (instructorIds.length > 0) {
@@ -2478,18 +2491,71 @@ export const resolvers = {
       const studentIds = new Set();
       const performanceData = [];
 
+      // Real per-course revenue from actual completed payments (same source as
+      // stats.totalRevenue so the two numbers never contradict each other).
+      const revenueByCourse = new Map<string, number>();
+      for (const p of standardPayments) {
+        const cid = String(p.courseId || '');
+        if (!cid || cid === 'undefined' || cid === 'null') continue;
+        revenueByCourse.set(cid, (revenueByCourse.get(cid) || 0) + (p.amount || 0));
+      }
+
       // Process standard courses
+      const courseLessonTotals = new Map<string, number>();
       for (const c of standardCourses) {
-        c.studentsEnrolled.forEach((s: any) => studentIds.add(s.toString()));
-        const revenue = (c.price || 0) * c.studentsEnrolled.length;
+        // studentsEnrolled is populated, so extract the real _id from each doc
+        // (fall back to the raw value for unpopulated refs).
+        (c.studentsEnrolled || []).forEach((s: any) => {
+          const sid =
+            (s && typeof s === 'object' && (s as any)._id)?.toString() ||
+            (typeof s === 'string' ? s : s?.toString());
+          if (sid && sid !== 'undefined' && sid !== 'null') studentIds.add(sid);
+        });
+        const totalLessons =
+          c.totalLessonsCount ||
+          (c.modules || []).reduce((sum: number, m: any) => sum + (m.lessons?.length || 0), 0) ||
+          0;
+        courseLessonTotals.set(c._id.toString(), totalLessons);
+      }
+
+      // Real completion: count completedLessons entries per course across all
+      // enrolled students, then average against total lessons × student count.
+      const completedByCourse = new Map<string, number>();
+      if (studentIds.size > 0) {
+        const enrolledDocs = await User.find({ _id: { $in: [...studentIds] } })
+          .select('completedLessons')
+          .lean();
+        for (const s of enrolledDocs) {
+          for (const cl of (s as any).completedLessons || []) {
+            const cid = (cl.courseId || '').toString();
+            if (!cid) continue;
+            completedByCourse.set(cid, (completedByCourse.get(cid) || 0) + 1);
+          }
+        }
+      }
+
+      for (const c of standardCourses) {
+        const cid = c._id.toString();
+        const studentCount = c.studentsEnrolled.length;
+        const totalLessons = courseLessonTotals.get(cid) || 0;
+        const done = completedByCourse.get(cid) || 0;
+        const avgCompletion =
+          studentCount && totalLessons
+            ? Math.min(100, Math.round((done / (studentCount * totalLessons)) * 100))
+            : 0;
 
         performanceData.push({
           courseTitle: c.title,
-          studentCount: c.studentsEnrolled.length,
-          revenue,
-          avgCompletion: Math.floor(Math.random() * 40) + 40
+          studentCount,
+          revenue: revenueByCourse.get(cid) || 0,
+          avgCompletion
         });
       }
+
+      // Show the most relevant courses first (most enrolled) and cap the list
+      // so the dashboard stays light for admins with many courses.
+      performanceData.sort((a: any, b: any) => b.studentCount - a.studentCount || b.revenue - a.revenue);
+      const coursePerformance = performanceData.slice(0, 10);
 
       // Add internship students to unique count
       internshipApps.forEach(app => studentIds.add(app.userId.toString()));
@@ -2544,7 +2610,7 @@ export const resolvers = {
           totalRevenue
         },
         recentEnrollments,
-        coursePerformance: performanceData
+        coursePerformance
       };
     },
     allUserGradeReports: async (_: any, __: any, context: any) => {
