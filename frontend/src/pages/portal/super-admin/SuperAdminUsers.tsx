@@ -76,7 +76,7 @@ export default function SuperAdminUsers() {
   const [showScholarshipDialog, setShowScholarshipDialog] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
   const [adminFilter, setAdminFilter] = useState("all");
-  const [sortField, setSortField] = useState<"joined" | "createdBy" | "user">("joined");
+  const [sortField, setSortField] = useState<"activity" | "joined" | "createdBy" | "user">("activity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
@@ -99,7 +99,12 @@ export default function SuperAdminUsers() {
     school: "",
   });
 
-  const queryVariables: any = { page: currentPage, limit: pageSize };
+  // Server sort mirrors the active sort column ('createdBy' stays client-side,
+  // so the server keeps the default activity order for it).
+  const sortBy =
+    sortField === "user" ? "user" : sortField === "joined" ? "joined" : "activity";
+
+  const queryVariables: any = { page: currentPage, limit: pageSize, sortBy };
   if (roleFilter !== "all") {
     queryVariables.role = roleFilter;
   }
@@ -148,6 +153,14 @@ export default function SuperAdminUsers() {
       .join("")
       .toUpperCase();
 
+  // Engagement score = enrolled courses + completed lessons + tracked progress.
+  // Uses the same 1:1:1 weights as the backend's default 'activity' sort so the
+  // visible order matches what the server returns across pages.
+  const activityScore = (u: any) =>
+    (u.enrolledCourses?.length || 0) +
+    (u.completedLessons?.length || 0) +
+    (u.courseProgress?.length || 0);
+
   const filteredUsers = useMemo(() => {
     const filtered = allUsers.filter((user: any) => {
       const matchesSearch =
@@ -163,6 +176,14 @@ export default function SuperAdminUsers() {
 
     const dir = sortDir === "asc" ? 1 : -1;
     return filtered.sort((a: any, b: any) => {
+      if (sortField === "activity") {
+        const diff = activityScore(b) - activityScore(a);
+        if (diff !== 0) return diff * dir;
+        // Tie-break on newest join date
+        const timeA = new Date(Number(a.createdAt) || a.createdAt || 0).getTime();
+        const timeB = new Date(Number(b.createdAt) || b.createdAt || 0).getTime();
+        return (timeB - timeA) * dir;
+      }
       if (sortField === "user") {
         const nameA = (a.fullName || a.username || "").toLowerCase();
         const nameB = (b.fullName || b.username || "").toLowerCase();
@@ -184,7 +205,7 @@ export default function SuperAdminUsers() {
     });
   }, [allUsers, searchQuery, sortField, sortDir]);
 
-  const handleSortToggle = (field: "joined" | "createdBy" | "user") => {
+  const handleSortToggle = (field: "activity" | "joined" | "createdBy" | "user") => {
     if (sortField === field) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
@@ -475,8 +496,17 @@ export default function SuperAdminUsers() {
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
                           Role
                         </th>
-                        <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
-                          Courses
+                        <th
+                          className="text-center p-4 text-sm font-medium text-card-foreground/70 cursor-pointer select-none hover:text-accent transition-colors"
+                          onClick={() => handleSortToggle("activity")}
+                          title="Sort by activity (courses, lessons, progress)"
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            Courses
+                            {sortField === "activity" && (
+                              <ArrowUpDown className="w-3 h-3" />
+                            )}
+                          </span>
                         </th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
                           Status
