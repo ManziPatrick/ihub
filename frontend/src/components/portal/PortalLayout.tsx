@@ -79,7 +79,7 @@ interface NavItem {
   href?: string;
   icon: React.ElementType;
   children?: NavItem[];
-}const studentNavItems: NavItem[] = [  { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },  { label: "Share Story", href: "/portal/student/testimonial", icon: MessageCircleHeart },
+}const studentNavItems: NavItem[] = [  { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },
   { label: "Projects", href: "/portal/student/projects", icon: FolderOpen },
   { label: "My Tasks", href: "/portal/student/my-tasks", icon: ClipboardList },
   { 
@@ -99,6 +99,7 @@ interface NavItem {
   { label: "Schedule", href: "/portal/student/schedule", icon: Calendar },
   { label: "Billing", href: "/portal/student/billing", icon: CreditCard },
   { label: "Messages", href: "/chat", icon: MessageSquare },
+  { label: "Share Story", href: "/portal/student/testimonial", icon: MessageCircleHeart },
   { label: "Profile", href: "/portal/student/profile", icon: UserCog },
 ];
 
