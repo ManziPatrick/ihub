@@ -20,7 +20,6 @@ import {
   Globe,
   Layers,
   Zap,
-  Calendar,
   Clock,
   Users,
   UserPlus,
@@ -30,7 +29,6 @@ import {
   CheckCircle,
   ArrowRight,
   XCircle,
-  ChevronDown,
   Music,
   Palette,
   Trophy,
@@ -357,7 +355,6 @@ export function FeaturedCourses() {
     const val = searchParams.get("internPage");
     return val ? parseInt(val, 10) : 1;
   });
-  const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
   const internshipQueryVariables = useMemo(() => ({
     page: internshipPage,
     limit: pageSize,
@@ -582,35 +579,6 @@ export function FeaturedCourses() {
       return isOpen;
     });
   }, [internships]);
-
-  // Group open opportunities by organization (company / school / provider)
-  const groupedInternships = useMemo(() => {
-    const map = new Map<string, any[]>();
-    for (const intern of filteredInternships) {
-      const org = intern.organization?.trim() || "Bootskills Academy";
-      if (!map.has(org)) map.set(org, []);
-      map.get(org)!.push(intern);
-    }
-    return Array.from(map.entries())
-      .map(([name, items]) => ({
-        name,
-        logo: items[0]?.organizationLogo || null,
-        items: items.sort((a, b) => (a.title || "").localeCompare(b.title || "")),
-      }))
-      .sort((a, b) => b.items.length - a.items.length || a.name.localeCompare(b.name));
-  }, [filteredInternships]);
-
-  // Auto-expand the first organization whenever fresh opportunities arrive;
-  // keep the user's current selection when it still exists, otherwise fall back to the first.
-  useEffect(() => {
-    if (groupedInternships.length > 0) {
-      setExpandedOrg((prev) =>
-        prev && groupedInternships.some((g) => g.name === prev)
-          ? prev
-          : groupedInternships[0].name
-      );
-    }
-  }, [groupedInternships]);
 
   const scrollTabs = (dir: "left" | "right") => {
     tabScrollRef.current?.scrollBy({ left: dir === "left" ? -220 : 220, behavior: "smooth" });
@@ -1158,7 +1126,7 @@ export function FeaturedCourses() {
           </motion.div>
 
           {/* Loading — animated skeleton grid, only when there's truly no data to display */}
-          {loading && rawCourses.length === 0 && (
+          {(loading && rawCourses.length === 0) || (section === "internships" && internLoading && rawInternships.length === 0) ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {Array.from({ length: pageSize > 12 ? 12 : pageSize }, (_, i) => (
                 <div key={i} className="bg-card rounded-2xl border border-border/30 overflow-hidden">
@@ -1190,7 +1158,7 @@ export function FeaturedCourses() {
                 </div>
               ))}
             </div>
-          )}
+          ) : null}
 
           {/* COURSES listing — visible during loading if any data exists (current, previous, or cached) */}
           {(!loading || rawCourses.length > 0) && section === "programs" && (
@@ -1446,7 +1414,7 @@ export function FeaturedCourses() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
               >
-                                {groupedInternships.length === 0 ? (
+                {filteredInternships.length === 0 ? (
                   <div className="text-center py-20">
                     <Briefcase className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">
@@ -1457,133 +1425,99 @@ export function FeaturedCourses() {
                   </div>
                 ) : (
                   <>
-                    {/* Opportunities grouped by organization (company / school / provider) */}
-                    <div className="max-w-4xl mx-auto space-y-4">
-                      {groupedInternships.map((org, orgIndex) => {
-                        const isExpanded = expandedOrg === org.name;
+                    {/* Opportunities as cards — same style as the Opportunities page */}
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {filteredInternships.map((intern: any, idx: number) => {
+                        const orgName = intern.organization?.trim() || "Bootskills Academy";
+                        const orgInitials = orgName
+                          .split(/\s+/).filter(Boolean).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+                        const logo = intern.organizationLogo || null;
+                        const isFree = intern.price === 0 || intern.price == null;
+                        const application = myInternApplications.find(
+                          (app: any) =>
+                            app.internshipProgram?.id === (intern.id || intern._id) ||
+                            app.internshipProgramId === (intern.id || intern._id)
+                        );
+                        const appStatus = application?.status;
                         return (
                           <motion.div
-                            key={org.name}
-                            initial={{ opacity: 0, y: 14 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: Math.min(orgIndex * 0.04, 0.25) }}
-                            className={`bg-card rounded-2xl border shadow-card overflow-hidden transition-all ${
-                              isExpanded ? "border-accent/40 shadow-card-hover" : "border-border/30 hover:shadow-card-hover"
-                            }`}
+                            key={intern.id || intern._id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: Math.min(idx * 0.03, 0.3) }}
+                            className="group bg-card rounded-2xl border border-border/30 shadow-card overflow-hidden hover:shadow-card-hover hover:border-accent/30 hover:-translate-y-1 transition-all flex flex-col"
                           >
-                            {/* Organization header — click to expand */}
-                            <button
-                              type="button"
-                              onClick={() => setExpandedOrg(isExpanded ? null : org.name)}
-                              className="w-full flex items-center gap-4 p-5 text-left hover:bg-muted/10 transition-colors"
-                              aria-expanded={isExpanded}
+                            {/* Banner — program image or organization gradient */}
+                            <Link
+                              to={`/opportunity/${intern.id || intern._id}`}
+                              className="relative block aspect-[16/9]"
                             >
-                              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg shrink-0 overflow-hidden">
-                                {org.logo ? (
-                                  <img src={org.logo} alt={org.name} className="w-full h-full object-contain p-0.5 bg-white" />
-                                ) : (
-                                  <Building2 className="w-6 h-6 text-white" strokeWidth={1.75} />
+                              {intern.image ? (
+                                <img
+                                  src={intern.image}
+                                  alt={intern.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-accent via-accent/80 to-accent/40 flex items-center justify-center">
+                                  <span className="font-heading text-4xl font-black text-white/90">{orgInitials}</span>
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+                              <span className={`absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full shadow ${isFree ? "bg-green-500 text-white" : "bg-gold text-black"}`}>
+                                {isFree ? "FREE" : `${intern.price?.toLocaleString()} ${intern.currency || "RWF"}`}
+                              </span>
+                            </Link>
+                            {/* Organization logo badge */}
+                            <div className="relative -mt-5 ml-4 w-12 h-12 rounded-xl bg-card p-1 shadow-lg ring-1 ring-border/40 overflow-hidden z-10">
+                              {logo ? (
+                                <img src={logo} alt={orgName} className="w-full h-full object-contain rounded-[9px]" />
+                              ) : (
+                                <div className="w-full h-full rounded-[9px] bg-accent/10 flex items-center justify-center">
+                                  <Building2 className="w-6 h-6 text-accent" />
+                                </div>
+                              )}
+                            </div>
+                            {/* Card body */}
+                            <div className="flex-1 flex flex-col p-4 pt-2 gap-2">
+                              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-accent min-w-0">
+                                <Building2 className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate">{orgName}</span>
+                              </div>
+                              <Link
+                                to={`/opportunity/${intern.id || intern._id}`}
+                                className="font-heading font-semibold text-foreground leading-snug line-clamp-2 hover:text-accent transition-colors"
+                              >
+                                {intern.title}
+                              </Link>
+                              <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
+                                {intern.duration && (
+                                  <span className="text-[10px] bg-background px-2 py-0.5 rounded text-muted-foreground border border-border/50">{intern.duration}</span>
+                                )}
+                                <span className="text-[10px] bg-background px-2 py-0.5 rounded text-muted-foreground border border-border/50 capitalize">{intern.type || "Remote"}</span>
+                                {intern.maxSpots > 0 && (
+                                  <span className="text-[10px] bg-background px-2 py-0.5 rounded text-muted-foreground border border-border/50">{intern.maxSpots} spots</span>
                                 )}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-heading font-semibold text-lg text-foreground truncate">{org.name}</h3>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  {org.items.length} open {org.items.length === 1 ? "opportunity" : "opportunities"}
-                                </p>
+                              <div className="pt-3">
+                                {appStatus === "approved" ? (
+                                  <Button variant="outline" size="sm" className="w-full rounded-xl font-bold h-9 border-green-500 text-green-500 hover:bg-green-50" onClick={() => navigate(`/portal/student/internship`)}>
+                                    Continue <ArrowRight className="w-4 h-4 ml-1.5" />
+                                  </Button>
+                                ) : appStatus === "pending" ? (
+                                  <Button disabled className="w-full bg-amber-500 rounded-xl font-bold text-sm h-9">
+                                    Pending <Clock className="w-4 h-4 ml-1.5" />
+                                  </Button>
+                                ) : appStatus === "rejected" ? (
+                                  <Button disabled className="w-full bg-red-500 rounded-xl font-bold text-sm h-9">Rejected</Button>
+                                ) : (
+                                  <Button variant="gold" className="w-full rounded-xl h-9" onClick={() => navigate(`/opportunity/${intern.id || intern._id}`)}>
+                                    Apply Now <ArrowRight className="w-4 h-4 ml-1.5" />
+                                  </Button>
+                                )}
                               </div>
-                              <div className="flex items-center gap-3 shrink-0">
-                                <span className="hidden sm:inline-flex text-xs font-bold text-accent">
-                                  {isExpanded ? "Hide" : "View"}
-                                </span>
-                                <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${isExpanded ? "rotate-180 text-accent" : ""}`} />
-                              </div>
-                            </button>
-
-                            {/* Expanded opportunity list */}
-                            <AnimatePresence initial={false}>
-                              {isExpanded && (
-                                <motion.div
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: "auto", opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ duration: 0.25 }}
-                                  className="overflow-hidden"
-                                >
-                                  <div className="divide-y divide-border/20 border-t border-border/30">
-                                    {org.items.map((intern: any) => {
-                                      const deadline = intern.applicationDeadline
-                                        ? new Date(intern.applicationDeadline)
-                                        : null;
-                                      const deadlineLabel =
-                                        deadline && !isNaN(deadline.getTime())
-                                          ? deadline.toLocaleDateString("en-GB", {
-                                              day: "2-digit",
-                                              month: "short",
-                                              year: "numeric",
-                                            })
-                                          : null;
-                                      const application = myInternApplications.find((app: any) => app.internshipProgram?.id === intern.id);
-                                      const appStatus = application?.status;
-                                      return (
-                                        <div key={intern.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-5 hover:bg-muted/10 transition-colors">
-                                          <div className="flex-1 min-w-0">
-                                            <Link
-                                              to={`/opportunity/${intern.id}`}
-                                              className="font-heading font-semibold text-foreground hover:text-accent transition-colors line-clamp-1"
-                                            >
-                                              {intern.title}
-                                            </Link>
-                                            <div className="flex flex-wrap items-center gap-2 mt-2">
-                                              <span className="text-[10px] bg-background px-2 py-0.5 rounded text-muted-foreground border border-border/50">
-                                                <Clock className="w-2.5 h-2.5 inline mr-1 -mt-px" /> {intern.duration || "Flexible"}
-                                              </span>
-                                              <span className="text-[10px] bg-background px-2 py-0.5 rounded text-muted-foreground border border-border/50 capitalize">
-                                                {intern.type || "Remote"}
-                                              </span>
-                                              <span className="text-[10px] font-bold text-accent bg-accent/10 px-2 py-0.5 rounded">
-                                                {intern.price === 0 || intern.price == null
-                                                  ? "Free"
-                                                  : `${intern.price.toLocaleString()} ${intern.currency || "RWF"}`}
-                                              </span>
-                                              {deadlineLabel && (
-                                                <span className="text-[10px] bg-background px-2 py-0.5 rounded text-muted-foreground border border-border/50">
-                                                  <Calendar className="w-2.5 h-2.5 inline mr-1 -mt-px" /> {deadlineLabel}
-                                                </span>
-                                              )}
-                                            </div>
-                                          </div>
-                                          <div className="shrink-0">
-                                            {appStatus === "approved" ? (
-                                              <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 border-green-500 text-green-500 hover:bg-green-50" onClick={() => navigate(`/portal/student/internship`)}>
-                                                Continue <ArrowRight className="w-4 h-4 ml-1.5" />
-                                              </Button>
-                                            ) : appStatus === "pending" ? (
-                                              <Button disabled className="bg-amber-500 rounded-xl font-bold text-sm h-9">
-                                                Pending <Clock className="w-4 h-4 ml-1.5" />
-                                              </Button>
-                                            ) : appStatus === "rejected" ? (
-                                              <Button disabled className="bg-red-500 rounded-xl font-bold text-sm h-9">
-                                                Rejected
-                                              </Button>
-                                            ) : (
-                                              <Button
-                                                variant="gold"
-                                                size="sm"
-                                                className="rounded-xl h-9"
-                                                onClick={() => navigate(`/opportunity/${intern.id}`)}
-                                              >
-                                                Apply Now <ArrowRight className="w-4 h-4 ml-1.5" />
-                                              </Button>
-                                            )}
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
+                            </div>
                           </motion.div>
                         );
                       })}
