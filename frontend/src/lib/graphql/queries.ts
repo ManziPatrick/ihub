@@ -1309,8 +1309,8 @@ export const GET_CERTIFICATE = gql`
 `;
 
 export const GET_COMPLETED_USERS = gql`
-  query GetCompletedUsers($page: Int, $limit: Int, $createdBy: ID, $courseId: ID) {
-    completedUsers(page: $page, limit: $limit, createdBy: $createdBy, courseId: $courseId) {
+  query GetCompletedUsers($page: Int, $limit: Int, $createdBy: ID, $courseId: ID, $search: String) {
+    completedUsers(page: $page, limit: $limit, createdBy: $createdBy, courseId: $courseId, search: $search) {
       items {
         id
         user {
@@ -1698,9 +1698,21 @@ export const GET_ADMIN_DASHBOARD_DATA = gql`
   }
 `;
 
+export const GET_PAYMENT_STATS = gql`
+  query GetPaymentStats {
+    paymentStats {
+      totalRevenue
+      thisMonthRevenue
+      pendingValue
+      pendingCount
+      internshipRevenue
+    }
+  }
+`;
+
 export const GET_PAYMENTS = gql`
-  query GetPayments($page: Int, $limit: Int, $createdBy: ID) {
-    payments(page: $page, limit: $limit, createdBy: $createdBy) {
+  query GetPayments($page: Int, $limit: Int, $createdBy: ID, $search: String, $status: String) {
+    payments(page: $page, limit: $limit, createdBy: $createdBy, search: $search, status: $status) {
       items {
         id
         studentName

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@apollo/client/react";
 import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
-import { GET_PAYMENTS, GET_ALL_DISBURSEMENTS, GET_DISBURSEMENT_STATS } from "@/lib/graphql/queries";
+import { GET_PAYMENTS, GET_ALL_DISBURSEMENTS, GET_DISBURSEMENT_STATS, GET_PAYMENT_STATS } from "@/lib/graphql/queries";
 import { toast } from "sonner";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { VerifyPaymentDialog } from "@/components/portal/dialogs";
@@ -60,12 +60,34 @@ const statusIcons: Record<string, React.ElementType> = {
 export default function AdminPayments() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [verifyingPayment, setVerifyingPayment] = useState<any | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [activeTab, setActiveTab] = useState("all");
+
+  // Debounce the search box and reset to page 1 — the filter itself runs
+  // server-side (see the payments resolver) so results stay correct across pages.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
   const { data, loading, refetch: refetchPayments } = usePaginatedQuery(GET_PAYMENTS, {
-    variables: { page: currentPage, limit: pageSize },
+    variables: {
+      page: currentPage,
+      limit: pageSize,
+      search: debouncedSearch || undefined,
+      status: activeTab === "pending" ? "pending" : undefined,
+    },
   });
+
+  // Dedicated stats query — computed server-side across ALL payments so the
+  // header cards stay accurate even when the list is filtered (search/tab).
+  const { data: statsData, refetch: refetchStats } = useQuery(GET_PAYMENT_STATS);
 
   // Disbursement queries — admins can now see their scoped disbursements
   const [disbPage, setDisbPage] = useState(1);
@@ -87,39 +109,23 @@ export default function AdminPayments() {
   const payments = (data as any)?.payments?.items || [];
   const pagination = (data as any)?.payments?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
 
-  // Calculate stats
-  const totalRevenue = payments
-    .filter((p: any) => p.status === 'completed' || p.status === 'paid')
-    .reduce((acc: number, curr: any) => acc + curr.amount, 0);
-
-  const now = new Date();
-  const thisMonthRevenue = payments
-    .filter((p: any) => {
-      const pDate = new Date(p.date);
-      return (p.status === 'completed' || p.status === 'paid') &&
-        pDate.getMonth() === now.getMonth() &&
-        pDate.getFullYear() === now.getFullYear();
-    })
-    .reduce((acc: number, curr: any) => acc + curr.amount, 0);
-
-  const pendingPayments = payments.filter((p: any) => p.status === 'pending');
-  const pendingValue = pendingPayments.reduce((acc: number, curr: any) => acc + curr.amount, 0);
-
-  const internshipRevenue = payments
-    .filter((p: any) => (p.status === 'completed' || p.status === 'paid') && p.type === 'Internship Fee')
-    .reduce((acc: number, curr: any) => acc + curr.amount, 0);
+  // Stats come from the dedicated server-side query (never from the filtered
+  // list) so the cards show platform totals on every tab/search state.
+  const paymentStatsData = (statsData as any)?.paymentStats || {};
+  const totalRevenue = paymentStatsData.totalRevenue || 0;
+  const thisMonthRevenue = paymentStatsData.thisMonthRevenue || 0;
+  const pendingValue = paymentStatsData.pendingValue || 0;
+  const pendingCount = paymentStatsData.pendingCount || 0;
+  const internshipRevenue = paymentStatsData.internshipRevenue || 0;
 
   const paymentStats = [
     { label: "Total Revenue", value: `${totalRevenue.toLocaleString()} RWF`, change: "Overall", trend: "up", icon: DollarSign },
     { label: "This Month", value: `${thisMonthRevenue.toLocaleString()} RWF`, change: "Current Period", trend: "up", icon: TrendingUp },
-    { label: "Pending", value: `${pendingValue.toLocaleString()} RWF`, change: `${pendingPayments.length} payments`, trend: "neutral", icon: Clock },
+    { label: "Pending", value: `${pendingValue.toLocaleString()} RWF`, change: `${pendingCount} payments`, trend: "neutral", icon: Clock },
     { label: "Opportunity Fees", value: `${internshipRevenue.toLocaleString()} RWF`, change: "Total", trend: "up", icon: CreditCard },
   ];
 
-  const filteredPayments = payments.filter((payment: any) =>
-    (payment.studentName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-    (payment.itemTitle?.toLowerCase() || "").includes(searchQuery.toLowerCase())
-  );
+
 
   return (
     <PortalLayout>
@@ -142,7 +148,7 @@ export default function AdminPayments() {
             <Button variant="outline" onClick={async () => {
                 setIsRefreshing(true);
                 try {
-                  await Promise.all([refetchPayments(), refetchDisb(), refetchDisbStats()]);
+                  await Promise.all([refetchPayments(), refetchDisb(), refetchDisbStats(), refetchStats()]);
                   toast.success('Payments refreshed!');
                 } catch {
                   toast.error('Failed to refresh payments');
@@ -187,7 +193,7 @@ export default function AdminPayments() {
           ))}
         </motion.div>
 
-        <Tabs defaultValue="all" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setCurrentPage(1); }} className="space-y-6">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <TabsList>
               <TabsTrigger value="all">All Transactions</TabsTrigger>
@@ -199,13 +205,12 @@ export default function AdminPayments() {
             </TabsList>
             <div className="flex gap-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 w-48"
-                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />                  <Input
+                    placeholder="Search student or item..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 w-48"
+                  />
               </div>
               <Button variant="outline" size="icon">
                 <Filter className="w-4 h-4" />
@@ -237,10 +242,10 @@ export default function AdminPayments() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredPayments.length === 0 ? (
+                        {payments.length === 0 ? (
                           <tr><td colSpan={8} className="p-4 text-center text-muted-foreground">No payments found.</td></tr>
                         ) : (
-                          filteredPayments.map((payment: any) => (
+                          payments.map((payment: any) => (
                             <AdminPaymentRow 
                               key={payment.id} 
                               payment={payment} 
@@ -283,10 +288,10 @@ export default function AdminPayments() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {payments.filter((p: any) => p.status === 'pending').length === 0 ? (
+                  {                    payments.length === 0 ? (
                     <div className="text-center py-6 text-muted-foreground">No pending payments.</div>
                   ) : (
-                    payments.filter((p: any) => p.status === 'pending').map((payment: any) => (
+                    payments.map((payment: any) => (
                       <div
                         key={payment.id}
                         className="flex items-center justify-between p-4 bg-background/50 rounded-lg border border-border/30"
@@ -316,6 +321,18 @@ export default function AdminPayments() {
                     )))}
                 </CardContent>
               </Card>
+
+              <PaginationBar
+                currentPage={currentPage}
+                totalPages={pagination.totalPages}
+                totalCount={pagination.totalCount}
+                onPageChange={setCurrentPage}
+                hasPreviousPage={pagination.hasPreviousPage}
+                hasNextPage={pagination.hasNextPage}
+                pageSize={pageSize}
+                onPageSizeChange={(v) => { setPageSize(v); setCurrentPage(1); }}
+                pageSizeOptions={[10, 25, 50, 100]}
+              />
             </motion.div>
           </TabsContent>
           {/* Disbursements Tab */}
