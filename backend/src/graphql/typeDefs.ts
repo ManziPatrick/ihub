@@ -3169,6 +3169,64 @@ export const typeDefs = `#graphql
     activeInternships: Int!
     totalSubmissions: Int!
     passedSubmissions: Int!
+    totalCreatedCourses: Int!
+    totalCreatedPrograms: Int!
+    totalManagedStudents: Int!
+    totalApplications: Int!
+    revenue: Float!
+  }
+
+  # Role-specific report content — populated based on the report user's role:
+  # admin/trainer see their own creations, super_admin sees platform-wide, students see applications.
+  type ReportCreatedCourse {
+    id: ID!
+    title: String!
+    category: String
+    level: String
+    price: Float
+    status: String
+    thumbnail: String
+    studentsEnrolledCount: Int!
+    modulesCount: Int!
+    createdAt: String
+    instructor: UserRef
+  }
+
+  type ReportCreatedProgram {
+    id: ID!
+    title: String!
+    organization: String
+    status: String
+    price: Float
+    duration: String
+    startDate: String
+    endDate: String
+    createdAt: String
+  }
+
+  type ReportManagedStudent {
+    id: ID!
+    username: String!
+    fullName: String
+    email: String
+    avatar: String
+    school: String
+    createdAt: String
+  }
+
+  type ReportApplication {
+    id: ID!
+    type: String!
+    title: String!
+    organization: String
+    status: String!
+    appliedAt: String
+  }
+
+  type UserRef {
+    id: ID!
+    username: String!
+    fullName: String
   }
 
   type ReportCourseProgress {
@@ -3290,6 +3348,10 @@ export const typeDefs = `#graphql
     projects: [ReportProject!]!
     internships: [ReportInternship!]!
     certificates: [ReportCertificate!]!
+    createdCourses: [ReportCreatedCourse!]!
+    createdPrograms: [ReportCreatedProgram!]!
+    managedStudents: [ReportManagedStudent!]!
+    applications: [ReportApplication!]!
   }
 
   type ReportCertificate {

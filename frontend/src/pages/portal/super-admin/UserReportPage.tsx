@@ -30,10 +30,14 @@ import {
   MapPin,
   Phone,
   User,
+  Users,
   CalendarDays,
   Activity,
   Loader2,
   Printer,
+  DollarSign,
+  Building2,
+  Send,
 } from "lucide-react";
 
 /* ─── Helper ─── */
@@ -198,6 +202,150 @@ function InternshipCard({ internship }: { internship: any }) {
   );
 }
 
+/* ─── Role-specific cards ─── */
+
+function CreatedCourseCard({ course }: { course: any }) {
+  const statusColor = course.status === "published" || course.status === "Published"
+    ? "bg-green-500/20 text-green-500"
+    : course.status === "draft" || course.status === "Draft"
+    ? "bg-amber-500/20 text-amber-500"
+    : "bg-muted text-muted-foreground";
+  return (
+    <Card className="border-border/50 overflow-hidden hover:border-accent/30 transition-all">
+      <CardContent className="p-0">
+        <div className="relative h-24 bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center">
+          {course.thumbnail ? (
+            <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+          ) : (
+            <BookOpen className="w-9 h-9 text-accent/60" />
+          )}
+          <Badge variant="outline" className={`absolute top-2 right-2 text-[9px] font-black uppercase ${statusColor}`}>
+            {course.status}
+          </Badge>
+        </div>
+        <div className="p-4 space-y-3">
+          <div>
+            <p className="font-bold text-sm text-foreground truncate">{course.title}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {[course.category, course.level].filter(Boolean).join(" · ") || "—"}
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div>
+              <p className="text-sm font-black text-foreground">{course.studentsEnrolledCount}</p>
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Students</p>
+            </div>
+            <div>
+              <p className="text-sm font-black text-foreground">{course.modulesCount}</p>
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Modules</p>
+            </div>
+            <div>
+              <p className="text-sm font-black text-foreground">
+                {course.price ? `${course.price.toLocaleString()} RWF` : "Free"}
+              </p>
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Price</p>
+            </div>
+          </div>
+          <p className="text-[10px] text-muted-foreground pt-1 border-t border-border/30">
+            Created {formatDate(course.createdAt)}
+            {course.instructor?.fullName ? ` · by ${course.instructor.fullName}` : ""}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CreatedProgramCard({ program }: { program: any }) {
+  const statusColor = program.status === "published" || program.status === "active"
+    ? "bg-green-500/20 text-green-500"
+    : program.status === "draft"
+    ? "bg-amber-500/20 text-amber-500"
+    : "bg-muted text-muted-foreground";
+  return (
+    <Card className="border-border/50 overflow-hidden hover:border-accent/30 transition-all">
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5 text-purple-500" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-sm text-foreground truncate">{program.title}</p>
+              <p className="text-xs text-muted-foreground truncate">{program.organization}</p>
+            </div>
+          </div>
+          <Badge variant="outline" className={`text-[9px] font-black uppercase ${statusColor}`}>
+            {program.status}
+          </Badge>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div>
+            <p className="text-sm font-black text-foreground">{program.duration || "—"}</p>
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Duration</p>
+          </div>
+          <div>
+            <p className="text-sm font-black text-foreground">{formatDate(program.startDate)}</p>
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Starts</p>
+          </div>
+          <div>
+            <p className="text-sm font-black text-foreground">
+              {program.price ? `${program.price.toLocaleString()} RWF` : "Free"}
+            </p>
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Price</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ManagedStudentRow({ student }: { student: any }) {
+  return (
+    <div className="flex items-center gap-3 p-3 hover:bg-muted/20 transition-colors rounded-lg">
+      <Avatar className="w-9 h-9 border border-border/50">
+        <AvatarImage src={student.avatar} />
+        <AvatarFallback className="text-xs bg-accent/10 text-accent">
+          {getInitials(student.fullName || student.username)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-sm truncate">{student.fullName || student.username}</p>
+        <p className="text-xs text-muted-foreground truncate">
+          {[student.email, student.school].filter(Boolean).join(" · ") || "—"}
+        </p>
+      </div>
+      <span className="text-[10px] text-muted-foreground shrink-0">Joined {formatDate(student.createdAt)}</span>
+    </div>
+  );
+}
+
+function ApplicationCard({ application }: { application: any }) {
+  const statusColor = application.status === "approved" ? "bg-green-500/20 text-green-500" :
+    application.status === "rejected" ? "bg-red-500/20 text-red-500" :
+    application.status === "pending" ? "bg-amber-500/20 text-amber-500" :
+    "bg-muted text-muted-foreground";
+  return (
+    <div className="flex items-center gap-3 p-3 hover:bg-muted/20 transition-colors rounded-lg border border-border/30">
+      <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+        <Send className="w-5 h-5 text-blue-500" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-sm truncate">{application.title}</p>
+        <p className="text-xs text-muted-foreground truncate">
+          {application.organization || (application.type === "course" ? "Course Application" : "Opportunity Application")}
+        </p>
+      </div>
+      <Badge variant="outline" className={`text-[9px] font-black uppercase ${statusColor}`}>
+        {application.status}
+      </Badge>
+      <span className="text-[10px] text-muted-foreground shrink-0 hidden sm:block">
+        {formatDate(application.appliedAt)}
+      </span>
+    </div>
+  );
+}
+
 function ProjectCard({ project }: { project: any }) {
   const statusColor = project.status === "completed" ? "bg-green-500/20 text-green-500" :
     project.status === "in_progress" || project.status === "active" ? "bg-blue-500/20 text-blue-500" :
@@ -327,7 +475,9 @@ export default function UserReportPage() {
     );
   }
 
-  const { user, stats, courses, submissions, grades, projects, internships } = report;
+  const { user, stats, courses, submissions, grades, projects, internships, createdCourses, createdPrograms, managedStudents, applications } = report;
+  const isStaff = user.role === "admin" || user.role === "trainer" || user.role === "super_admin";
+  const isStudent = user.role === "student";
 
   return (
     <PortalLayout>
@@ -387,12 +537,29 @@ export default function UserReportPage() {
           transition={{ delay: 0.05 }}
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"
         >
-          <StatCard icon={GraduationCap} label="Courses" value={stats.totalCourses} sub={`${stats.totalCoursesCompleted} completed`} color="bg-accent/10" />
-          <StatCard icon={Star} label="Avg Grade" value={stats.averageGrade ?? "—"} sub={`${stats.totalGrades} graded`} color="bg-amber-500/10" />
-          <StatCard icon={BookOpen} label="Lessons Done" value={stats.totalLessonsCompleted} sub={`${stats.courseCompletionRate}% rate`} color="bg-blue-500/10" />
-          <StatCard icon={Briefcase} label="Programs" value={stats.totalInternships} sub={`${stats.activeInternships} active`} color="bg-purple-500/10" />
-          <StatCard icon={FileText} label="Projects" value={stats.totalProjects} sub={`${stats.completedProjects} done`} color="bg-green-500/10" />
-          <StatCard icon={Activity} label="Submissions" value={stats.totalSubmissions} sub={`${stats.passedSubmissions} passed`} color="bg-rose-500/10" />
+          {isStaff ? (
+            <>
+              <StatCard icon={GraduationCap} label="Created Courses" value={stats.totalCreatedCourses} sub={`${stats.totalCourses} enrolled overall`} color="bg-accent/10" />
+              <StatCard icon={Building2} label="Programs Created" value={stats.totalCreatedPrograms} sub={`${stats.totalInternships} internships`} color="bg-purple-500/10" />
+              <StatCard icon={Users} label="Students" value={stats.totalManagedStudents} sub="managed" color="bg-blue-500/10" />
+              <StatCard icon={DollarSign} label="Revenue" value={`${(stats.revenue || 0).toLocaleString()} RWF`} sub="from their courses" color="bg-green-500/10" />
+              <StatCard icon={Star} label="Avg Grade" value={stats.averageGrade ?? "—"} sub={`${stats.totalGrades} graded`} color="bg-amber-500/10" />
+              <StatCard icon={Activity} label="Submissions" value={stats.totalSubmissions} sub={`${stats.passedSubmissions} passed`} color="bg-rose-500/10" />
+            </>
+          ) : (
+            <>
+              <StatCard icon={GraduationCap} label="Courses" value={stats.totalCourses} sub={`${stats.totalCoursesCompleted} completed`} color="bg-accent/10" />
+              <StatCard icon={Star} label="Avg Grade" value={stats.averageGrade ?? "—"} sub={`${stats.totalGrades} graded`} color="bg-amber-500/10" />
+              <StatCard icon={BookOpen} label="Lessons Done" value={stats.totalLessonsCompleted} sub={`${stats.courseCompletionRate}% rate`} color="bg-blue-500/10" />
+              <StatCard icon={Briefcase} label="Programs" value={stats.totalInternships} sub={`${stats.activeInternships} active`} color="bg-purple-500/10" />
+              <StatCard icon={FileText} label="Projects" value={stats.totalProjects} sub={`${stats.completedProjects} done`} color="bg-green-500/10" />
+              {isStudent ? (
+                <StatCard icon={Send} label="Applications" value={stats.totalApplications} sub="submitted" color="bg-rose-500/10" />
+              ) : (
+                <StatCard icon={Activity} label="Submissions" value={stats.totalSubmissions} sub={`${stats.passedSubmissions} passed`} color="bg-rose-500/10" />
+              )}
+            </>
+          )}
         </motion.div>
 
         {/* ── XP / Level / Streak ── */}
@@ -443,11 +610,31 @@ export default function UserReportPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Tabs defaultValue="courses" className="w-full">
+          <Tabs defaultValue={isStaff ? "createdCourses" : isStudent ? "courses" : "courses"} className="w-full">
             <TabsList className="mb-4 border-border/50 bg-card flex-wrap h-auto">
-              <TabsTrigger value="courses" className="text-xs data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
-                <BookOpen className="w-4 h-4 mr-2" /> Courses ({courses.length})
-              </TabsTrigger>
+              {isStaff && (
+                <>
+                  <TabsTrigger value="createdCourses" className="text-xs data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
+                    <BookOpen className="w-4 h-4 mr-2" /> Created Courses ({createdCourses.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="createdPrograms" className="text-xs data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
+                    <Building2 className="w-4 h-4 mr-2" /> Programs ({createdPrograms.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="students" className="text-xs data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
+                    <Users className="w-4 h-4 mr-2" /> Students ({managedStudents.length})
+                  </TabsTrigger>
+                </>
+              )}
+              {isStudent && (
+                <TabsTrigger value="applications" className="text-xs data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
+                  <Send className="w-4 h-4 mr-2" /> Applications ({applications.length})
+                </TabsTrigger>
+              )}
+              {!isStaff && (
+                <TabsTrigger value="courses" className="text-xs data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
+                  <BookOpen className="w-4 h-4 mr-2" /> Courses ({courses.length})
+                </TabsTrigger>
+              )}
               <TabsTrigger value="internships" className="text-xs data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
                 <Briefcase className="w-4 h-4 mr-2" /> Opportunities ({internships.length})
               </TabsTrigger>
@@ -464,6 +651,88 @@ export default function UserReportPage() {
                 <Award className="w-4 h-4 mr-2" /> Certificates ({report.certificates?.length || 0})
               </TabsTrigger>
             </TabsList>
+
+            {/* ── Created Courses Tab (staff) ── */}
+            {isStaff && (
+              <TabsContent value="createdCourses" className="mt-0">
+                {createdCourses.length === 0 ? (
+                  <Card className="border-border/50">
+                    <CardContent className="p-12 text-center">
+                      <BookOpen className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">No courses created</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {createdCourses.map((course: any) => (
+                      <CreatedCourseCard key={course.id} course={course} />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            )}
+
+            {/* ── Created Programs Tab (staff) ── */}
+            {isStaff && (
+              <TabsContent value="createdPrograms" className="mt-0">
+                {createdPrograms.length === 0 ? (
+                  <Card className="border-border/50">
+                    <CardContent className="p-12 text-center">
+                      <Building2 className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">No internship programs created</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {createdPrograms.map((program: any) => (
+                      <CreatedProgramCard key={program.id} program={program} />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            )}
+
+            {/* ── Students Tab (staff) ── */}
+            {isStaff && (
+              <TabsContent value="students" className="mt-0">
+                {managedStudents.length === 0 ? (
+                  <Card className="border-border/50">
+                    <CardContent className="p-12 text-center">
+                      <Users className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">No students managed</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="border-border/50 overflow-hidden">
+                    <div className="divide-y divide-border/20">
+                      {managedStudents.map((student: any) => (
+                        <ManagedStudentRow key={student.id} student={student} />
+                      ))}
+                    </div>
+                  </Card>
+                )}
+              </TabsContent>
+            )}
+
+            {/* ── Applications Tab (student) ── */}
+            {isStudent && (
+              <TabsContent value="applications" className="mt-0">
+                {applications.length === 0 ? (
+                  <Card className="border-border/50">
+                    <CardContent className="p-12 text-center">
+                      <Send className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">No applications yet</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-2">
+                    {applications.map((app: any) => (
+                      <ApplicationCard key={app.id} application={app} />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            )}
 
             {/* ── Courses Tab ── */}
             <TabsContent value="courses" className="mt-0">
