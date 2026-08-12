@@ -95,10 +95,10 @@ export default function AdminUsers() {
 
   // Queries & Mutations
   const client = useApolloClient();
+  // Admins and super admins both see every platform user — the backend `users`
+  // resolver scopes only trainers. (A `createdBy` filter here would hide users
+  // the admin didn't personally create, which breaks the User Management page.)
   const queryVariables: any = { page: currentPage, limit: pageSize };
-  if (currentUser?.role !== "super_admin") {
-    queryVariables.createdBy = currentUser?.id;
-  }
   const { data, loading, refetch } = usePaginatedQuery(GET_USERS, {
     variables: queryVariables,
   });

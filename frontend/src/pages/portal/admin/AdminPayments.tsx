@@ -78,7 +78,10 @@ export default function AdminPayments() {
   const { data: disbStatsData, loading: disbStatsLoading, refetch: refetchDisbStats } = useQuery(GET_DISBURSEMENT_STATS);
 
   const disbursements: any[] = (disbData as any)?.getAllDisbursements?.items || [];
-  const disbPagination = (disbData as any)?.getAllDisbursements?.pagination;
+  // Guard: the disbursements query can fail or return null for admins without
+  // disbursement access — fall back to an empty pagination object so the page
+  // never crashes on `disbPagination.totalPages`.
+  const disbPagination = (disbData as any)?.getAllDisbursements?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
   const disbStats = (disbStatsData as any)?.getDisbursementStats;
 
   const payments = (data as any)?.payments?.items || [];
@@ -470,17 +473,19 @@ export default function AdminPayments() {
                     </Table>
                   )}
 
-                  <PaginationBar
-                    currentPage={disbPage}
-                    totalPages={disbPagination.totalPages}
-                    totalCount={disbPagination.totalCount}
-                    onPageChange={setDisbPage}
-                    hasPreviousPage={disbPage > 1}
-                    hasNextPage={disbPage < disbPagination.totalPages}
-                    showPageNumbers={false}
-                    showFirstLast={false}
-                    showRange={false}
-                  />
+                  {disbPagination.totalPages > 0 && (
+                    <PaginationBar
+                      currentPage={disbPage}
+                      totalPages={disbPagination.totalPages}
+                      totalCount={disbPagination.totalCount}
+                      onPageChange={setDisbPage}
+                      hasPreviousPage={disbPage > 1}
+                      hasNextPage={disbPage < disbPagination.totalPages}
+                      showPageNumbers={false}
+                      showFirstLast={false}
+                      showRange={false}
+                    />
+                  )}
                 </CardContent>
               </Card>
 
