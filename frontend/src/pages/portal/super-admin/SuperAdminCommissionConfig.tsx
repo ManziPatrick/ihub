@@ -370,7 +370,7 @@ export default function SuperAdminCommissionConfig() {
                             <span className="flex items-center gap-2"><BookOpen className="w-4 h-4" /> Per Course</span>
                           </SelectItem>
                           <SelectItem value="internship">
-                            <span className="flex items-center gap-2"><Briefcase className="w-4 h-4" /> Per Internship</span>
+                            <span className="flex items-center gap-2"><Briefcase className="w-4 h-4" /> Per Opportunity</span>
                           </SelectItem>
                         </SelectContent>
                       </Select>

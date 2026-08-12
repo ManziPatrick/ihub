@@ -7,6 +7,179 @@ import { Internship } from '../models/Internship';
 import { InternshipProgram } from '../models/internship/InternshipProgram';
 import { InternshipApplication } from '../models/internship/InternshipApplication';
 
+// ─── Rich-text → plain-text helpers (markdown + HTML) ────────────────────
+
+const HTML_ENTITIES: Record<string, string> = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&apos;': "'",
+  '&nbsp;': ' ',
+  '&hellip;': '…',
+  '&mdash;': '—',
+  '&ndash;': '–',
+  '&rsquo;': '’',
+  '&lsquo;': '‘',
+  '&ldquo;': '“',
+  '&rdquo;': '”',
+};
+
+/**
+ * Strip HTML tags (keeping table cells readable) and decode common entities
+ * so exported documents never print raw markup.
+ */
+export function stripHtml(text: string): string {
+  if (!text) return '';
+  let t = text;
+  // Block tags → line breaks; table rows/cells → readable rows
+  t = t
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|h[1-6]|li|ul|ol)>/gi, '\n')
+    .replace(/<\/tr>/gi, '\n')
+    .replace(/<\/t[dh]>/gi, ' | ')
+    .replace(/<t[dh][^>]*>/gi, ' ');
+  // Remove all remaining tags
+  t = t.replace(/<[^>]+>/g, '');
+  // Drop trailing table-cell separators left by row conversion
+  t = t.replace(/\s*\|\s*(?=\n|$)/g, '');
+  // Decode entities
+  t = t.replace(/&[a-zA-Z#0-9]+;/g, (m) => HTML_ENTITIES[m.toLowerCase()] || m);
+  return t;
+}
+
+/**
+ * Strip markdown syntax so course content prints as clean plain text.
+ */
+export function stripMarkdown(text: string): string {
+  if (!text) return '';
+  let t = text;
+  // Images → alt text; links → link text
+  t = t.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1');
+  t = t.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+  // Bold / italic / strike / inline code
+  t = t
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1$2')
+    .replace(/~~([^~]+)~~/g, '$1')
+    .replace(/`([^`]+)`/g, '$1');
+  // Headings → plain text line
+  t = t.replace(/^#{1,6}\s*/gm, '');
+  // Bullets → • bullets
+  t = t.replace(/^\s*[-*+]\s+/gm, '• ');
+  // Blockquotes and horizontal rules
+  t = t.replace(/^\s*>\s?/gm, '');
+  t = t.replace(/^\s*[-=]{3,}\s*$/gm, '');
+  // Collapse repeated blank lines
+  t = t.replace(/\n{3,}/g, '\n\n');
+  return t.trim();
+}
+
+/** Convert markdown/HTML course content into clean printable text. */
+export function cleanRichText(text: string): string {
+  return stripMarkdown(stripHtml(text));
+}
+
+/** Truncate text at a word boundary — never mid-word. */
+export function truncateAtWordBoundary(text: string, maxChars: number): string {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (clean.length <= maxChars) return clean;
+  const cut = clean.slice(0, maxChars);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + '…';
+}
+
+/** Draw multi-paragraph text with clear vertical space between paragraphs. */
+function writeParagraphs(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  x: number,
+  y: number,
+  opts: { width?: number; lineGap?: number; align?: 'left' | 'center' | 'right' | 'justify' } = {},
+  paragraphGap = 9
+): number {
+  const paragraphs = text
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  let yy = y;
+  for (let i = 0; i < paragraphs.length; i++) {
+    if (i > 0) yy += paragraphGap;
+    doc.text(paragraphs[i], x, yy, { lineGap: opts.lineGap ?? 3, width: opts.width, align: opts.align });
+    yy = doc.y + 2;
+  }
+  doc.y = yy - 2;
+  return doc.y;
+}
+
+/** Download an image (remote URL, data URI, or local path) into a Buffer for pdfkit. */
+async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+  try {
+    if (url.startsWith('data:')) {
+      const comma = url.indexOf(',');
+      return comma > -1 ? Buffer.from(url.slice(comma + 1), 'base64') : null;
+    }
+    if (/^https?:\/\//i.test(url)) {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return Buffer.from(await res.arrayBuffer());
+    }
+    // Local file (e.g. /uploads/thumb.jpg) — resolve against the backend root
+    const localPath = path.join(__dirname, '../../', url.replace(/^\/+/, ''));
+    if (fs.existsSync(localPath)) return fs.readFileSync(localPath);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Draw a lesson thumbnail — the real image when available, else a styled placeholder. */
+function drawVideoThumb(
+  doc: PDFKit.PDFDocument,
+  buf: Buffer | null,
+  x: number,
+  y: number,
+  w: number,
+  h: number
+): void {
+  if (buf) {
+    try {
+      doc.image(buf, x, y, { width: w, height: h });
+    } catch {
+      // corrupted image buffer — fall through to the placeholder below
+      buf = null;
+    }
+  }
+  if (!buf) {
+    doc.rect(x, y, w, h).fill('#dbe4ff');
+    doc.rect(x, y, w, h).strokeColor('#c7d2fe').lineWidth(0.6).stroke();
+    // Play triangle
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    doc
+      .moveTo(cx - 5, cy - 7)
+      .lineTo(cx - 5, cy + 7)
+      .lineTo(cx + 7, cy)
+      .closePath()
+      .fill('#667eea');
+  } else {
+    doc.rect(x, y, w, h).strokeColor('#c7d2fe').lineWidth(0.6).stroke();
+    // Play triangle overlay (semi-transparent white)
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    doc
+      .moveTo(cx - 5, cy - 7)
+      .lineTo(cx - 5, cy + 7)
+      .lineTo(cx + 7, cy)
+      .closePath()
+      .opacity(0.85)
+      .fill('#ffffff');
+    doc.opacity(1);
+  }
+}
+
 /**
  * Generate a PDF export of a full course — title, description, all modules & lessons
  */
@@ -24,6 +197,28 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
   const filename = `course_${slug}_${Date.now()}.pdf`;
   const filepath = path.join(exportsDir, filename);
 
+  const courseTitle = (course as any).title || 'Course';
+  const modules = (course as any).modules || [];
+
+  // Pre-fetch video thumbnails so doc.image() can render them synchronously
+  const thumbCache = new Map<string, Buffer | null>();
+  const fetchThumb = async (url?: string): Promise<Buffer | null> => {
+    if (!url) return null;
+    if (thumbCache.has(url)) return thumbCache.get(url) || null;
+    const buf = await fetchImageBuffer(url);
+    thumbCache.set(url, buf);
+    return buf;
+  };
+  await Promise.all(
+    modules.flatMap((mod: any) =>
+      (mod.lessons || [])
+        .filter((l: any) => l.type === 'video')
+        .map((l: any) => l.videoThumbnail || (course as any).thumbnail)
+        .filter(Boolean)
+        .map((u: string) => fetchThumb(u))
+    )
+  );
+
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -34,8 +229,17 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
       const margin = 50;
       const contentWidth = pageWidth - 2 * margin;
 
+      // Page header — tall enough to hold the (ellipsized) course title on one line
+      // so it can never overlap the content below it.
+      const pageHeader = (title: string = courseTitle) => {
+        doc.rect(0, 0, pageWidth, 24).fill('#1a365d');
+        doc.fontSize(8)
+          .font('Helvetica-Bold')
+          .fillColor('#ffffff')
+          .text(title, margin, 7, { width: contentWidth, align: 'center', height: 13, ellipsis: true });
+      };
+
       // ── Cover Page ──
-      // Top accent bar
       doc.rect(0, 0, pageWidth, 12).fill('#1a365d');
 
       doc.fontSize(32)
@@ -48,29 +252,33 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
         .lineWidth(2)
         .stroke('#667eea');
 
-      // Title
+      // Title (single line, ellipsized so it can never collide with the divider/description)
       doc.fontSize(26)
         .font('Helvetica-Bold')
         .fillColor('#333333')
-        .text((course as any).title, margin, 130, { width: contentWidth, align: 'center' });
+        .text(courseTitle, margin, 130, { width: contentWidth, align: 'center', height: 34, ellipsis: true });
 
-      // Description
+      // Description (cleaned — no markdown/HTML leaks). Capped on the cover
+      // so it can never collide with the metadata block below.
+      const description = cleanRichText((course as any).description || '');
       doc.fontSize(11)
         .font('Helvetica')
         .fillColor('#555555')
-        .text((course as any).description || '', margin, 175, {
+        .text(description || '', margin, 175, {
           width: contentWidth,
           align: 'center',
           lineGap: 4,
+          height: 78,
+          ellipsis: true,
         });
 
-      // Metadata
-      const metaY = 240;
+      // Metadata — placed after the description so long descriptions never overlap
+      const metaY = Math.max(240, doc.y + 24);
       const metaItems = [
         { label: 'Category', value: (course as any).category },
         { label: 'Level', value: (course as any).level },
         { label: 'Instructor', value: (course as any).instructor?.username || 'N/A' },
-        { label: 'Modules', value: ((course as any).modules?.length || 0).toString() },
+        { label: 'Modules', value: modules.length.toString() },
         { label: 'Status', value: (course as any).status },
       ];
 
@@ -87,106 +295,252 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
         doc.fontSize(8).font('Helvetica-Bold').fillColor('#999999')
           .text(item.label.toUpperCase(), x, y);
         doc.fontSize(11).font('Helvetica').fillColor('#333333')
-          .text(item.value, x, y + 12);
+          .text(String(item.value ?? ''), x, y + 12);
       });
 
       // Bottom accent bar
       doc.rect(0, doc.page.height - 12, pageWidth, 12).fill('#1a365d');
 
       // ── Content Pages: Modules & Lessons ──
-      const modules = (course as any).modules || [];
+      // Full cleaned description (bullets + tables) belongs here, not truncated
+      if (description) {
+        doc.addPage();
+        pageHeader();
+        doc.fontSize(13)
+          .font('Helvetica-Bold')
+          .fillColor('#1a365d')
+          .text('Course Overview', margin, doc.y + 24);
+        doc.fontSize(9.5).font('Helvetica').fillColor('#444444');
+        writeParagraphs(doc, description, margin, doc.y + 8, { width: contentWidth });
+        doc.y += 14;
+      }
 
       modules.forEach((mod: any, mIdx: number) => {
         // Check if we need a new page
         if (doc.y > doc.page.height - 120 || mIdx === 0) {
           doc.addPage();
-          // Page header
-          doc.rect(0, 0, pageWidth, 8).fill('#1a365d');
-          doc.fontSize(7).font('Helvetica').fillColor('#ffffff')
-            .text((course as any).title, margin, 1, { width: contentWidth, align: 'center' });
+          pageHeader();
         }
 
         const startY = doc.y + 20;
 
-        // Module header
-        doc.rect(margin, startY, contentWidth, 32).fill('#f0f4ff');
-        doc.rect(margin, startY, 6, 32).fill('#667eea');
+        // Module title — strip a leading "Module N:" so it's never printed twice
+        const modTitle = (mod.title || '').replace(/^module\s+\d+\s*[:.]?\s*/i, '');
+        const modTitleText = `Module ${mIdx + 1}: ${modTitle}`;
+        // Size the header box to the (possibly wrapped) title so text never overlaps.
+        // Set the draw font FIRST — heightOfString measures with the current font.
+        doc.fontSize(14).font('Helvetica-Bold');
+        const titleH = doc.heightOfString(modTitleText, { width: contentWidth - 32 });
+        const boxH = Math.max(32, titleH + 16);
 
+        doc.rect(margin, startY, contentWidth, boxH).fill('#f0f4ff');
+        doc.rect(margin, startY, 6, boxH).fill('#667eea');
         doc.fontSize(14)
           .font('Helvetica-Bold')
           .fillColor('#1a365d')
-          .text(`Module ${mIdx + 1}: ${mod.title}`, margin + 16, startY + 8);
+          .text(modTitleText, margin + 16, startY + 8, { width: contentWidth - 32 });
 
         if (mod.description) {
-          doc.fontSize(9)
-            .font('Helvetica')
-            .fillColor('#666666')
-            .text(mod.description, margin + 16, startY + 38, {
-              width: contentWidth - 32,
-              lineGap: 2,
-            });
+          const modDesc = cleanRichText(mod.description);
+          doc.fontSize(9).font('Helvetica').fillColor('#666666');
+          writeParagraphs(doc, modDesc, margin + 16, startY + boxH + 8, { width: contentWidth - 32 });
         }
 
         // Lessons
         const lessons = mod.lessons || [];
-        lessons.forEach((lesson: any, lIdx: number) => {
-          const ly = doc.y + 12;
-
-          // Check page break
-          if (ly > doc.page.height - 80) {
+        lessons.forEach((lesson: any) => {
+          // Check page break (generous margin — video rows are taller)
+          if (doc.y > doc.page.height - 140) {
             doc.addPage();
-            doc.rect(0, 0, pageWidth, 8).fill('#1a365d');
-            doc.fontSize(7).font('Helvetica').fillColor('#ffffff')
-              .text((course as any).title, margin, 1, { width: contentWidth, align: 'center' });
+            pageHeader();
           }
 
           const lessonY = doc.y + 12;
 
-          // Lesson row background
+          // Lesson row separator
           doc.rect(margin + 6, lessonY, contentWidth - 6, 1).fill('#eeeeee');
 
-          // Type badge
+          // Type badge — width sized to the label so ASSIGNMENT never wraps
           const typeColors: Record<string, string> = {
             video: '#3b82f6', pdf: '#22c55e', ppt: '#f97316',
             quiz: '#eab308', assignment: '#8b5cf6', book: '#a855f7', article: '#06b6d4',
           };
           const typeColor = typeColors[lesson.type] || '#888888';
+          const typeLabel = (lesson.type || 'video').toUpperCase();
+          const badgeWidth = Math.max(50, typeLabel.length * 5.2 + 18);
 
-          doc.roundedRect(margin + 12, lessonY + 2, 50, 14, 3)
-            .fill(typeColor);
+          const isVideo = lesson.type === 'video';
+          const thumbX = margin + 12;
+          const thumbW = isVideo ? 64 : 0;
+          const contentStartX = thumbX + thumbW + (isVideo ? 12 : 0);
+
+          // Video thumbnail (image when available, placeholder otherwise)
+          if (isVideo) {
+            const thumbUrl = lesson.videoThumbnail || (course as any).thumbnail;
+            const thumbBuf = thumbUrl ? thumbCache.get(thumbUrl) || null : null;
+            drawVideoThumb(doc, thumbBuf, thumbX, lessonY + 2, thumbW, 38);
+          }
+
+          // Type badge
+          doc.roundedRect(contentStartX, lessonY + 2, badgeWidth, 14, 3).fill(typeColor);
           doc.fontSize(7)
             .font('Helvetica-Bold')
             .fillColor('#ffffff')
-            .text(lesson.type?.toUpperCase() || 'VIDEO', margin + 15, lessonY + 4, { width: 44, align: 'center' });
+            .text(typeLabel, contentStartX + 3, lessonY + 4, { width: badgeWidth - 6, align: 'center' });
 
           // Lesson title & duration
+          const titleX = contentStartX + badgeWidth + 10;
+          const titleWidth = contentWidth - (contentStartX - margin) - badgeWidth - 92;
           doc.fontSize(10)
             .font('Helvetica-Bold')
             .fillColor('#333333')
-            .text(lesson.title || 'Untitled Lesson', margin + 70, lessonY + 2);
+            .text(cleanRichText(lesson.title) || 'Untitled Lesson', titleX, lessonY + 2, { width: titleWidth });
+          // Capture the bottom of the title block BEFORE the duration call
+          // (drawing duration at an absolute y resets doc.y back up).
+          const titleBottomY = doc.y;
 
           doc.fontSize(8)
             .font('Helvetica')
             .fillColor('#999999')
-            .text(`${lesson.duration || 0} min`, margin + contentWidth - 70, lessonY + 3, { width: 50, align: 'right' });
+            .text(`${lesson.duration || 0} min`, margin + contentWidth - 70, lessonY + 3, { width: 58, align: 'right' });
 
-          // Content snippet
+          // Availability + resources line
+          let infoY = Math.max(titleBottomY, lessonY + 18);
+          const infoParts: { text: string; color: string }[] = [];
+          if (isVideo) {
+            if (lesson.videoUrl && String(lesson.videoUrl).trim()) {
+              infoParts.push({ text: '✓ Video available', color: '#22c55e' });
+            } else {
+              infoParts.push({ text: 'No video available', color: '#ef4444' });
+            }
+          }
+          const resourceCount = (lesson.resources || []).length;
+          if (resourceCount > 0) {
+            infoParts.push({ text: `${resourceCount} resource${resourceCount > 1 ? 's' : ''}`, color: '#667eea' });
+          } else if (lesson.fileUrl && String(lesson.fileUrl).trim()) {
+            infoParts.push({ text: 'Resource file attached', color: '#667eea' });
+          }
+          if (infoParts.length > 0) {
+            doc.fontSize(7.5).font('Helvetica-Bold');
+            let infoX = titleX;
+            infoParts.forEach((part) => {
+              doc.fillColor(part.color).text(part.text, infoX, infoY);
+              infoX += doc.widthOfString(part.text) + 12;
+            });
+            doc.y = Math.max(infoY + 8, doc.y + 4);
+          } else {
+            doc.y = Math.max(titleBottomY, lessonY + 18);
+          }
+
+          // Content snippet — clean text, truncated at a word boundary
           if (lesson.content) {
+            const snippet = truncateAtWordBoundary(cleanRichText(lesson.content), 320);
             doc.fontSize(8)
               .font('Helvetica')
               .fillColor('#888888')
-              .text(lesson.content.substring(0, 200), margin + 70, lessonY + 16, {
-                width: contentWidth - 100,
+              .text(snippet, titleX, doc.y + 2, {
+                width: contentWidth - (contentStartX - margin) - badgeWidth - 100,
                 lineGap: 1,
               });
-            doc.y += 28;
+            doc.y += 6;
           } else {
-            doc.y += 18;
+            doc.y += 4;
           }
         });
 
         doc.y += 10;
       });
+
+      // ── Assessments: Quizzes & Exams (questions only, NO answers) ──
+      // Lets teachers print the outline as a test paper for students.
+      const assessmentLessons = modules.flatMap((mod: any, mIdx: number) =>
+        (mod.lessons || [])
+          .filter((l: any) => l.type === 'quiz' || l.type === 'assignment')
+          .map((l: any) => ({ ...l, moduleIndex: mIdx, moduleTitle: mod.title }))
+      );
+
+      if (assessmentLessons.length > 0) {
+        const assessmentHeader = () => {
+          doc.addPage();
+          pageHeader();
+        };
+
+        assessmentHeader();
+        doc.fontSize(15)
+          .font('Helvetica-Bold')
+          .fillColor('#1a365d')
+          .text('Quizzes & Exams', margin, doc.y + 24);
+        doc.fontSize(9)
+          .font('Helvetica')
+          .fillColor('#888888')
+          .text(
+            'Questions only — answers are intentionally not included so you can print this as a test paper.',
+            margin, doc.y + 8,
+            { width: contentWidth }
+          );
+        doc.y += 14;
+
+        for (const lesson of assessmentLessons) {
+          if (doc.y > doc.page.height - 170) assessmentHeader();
+
+          const headerY = doc.y + 12;
+          const isExam = lesson.type === 'assignment';
+          const badgeColor = isExam ? '#8b5cf6' : '#eab308';
+          const qTitle = `${isExam ? 'EXAM' : 'QUIZ'} — Module ${lesson.moduleIndex + 1}: ${cleanRichText(lesson.title) || 'Untitled'}`;
+          // Size the assessment header to the (possibly wrapped) title —
+          // set the draw font FIRST so heightOfString measures correctly.
+          doc.fontSize(11).font('Helvetica-Bold');
+          const qH = Math.max(30, doc.heightOfString(qTitle, { width: contentWidth - 32 }) + 18);
+
+          doc.rect(margin, headerY, contentWidth, qH).fill(isExam ? '#f6f2ff' : '#fffbe6');
+          doc.rect(margin, headerY, 6, qH).fill(badgeColor);
+          doc.fontSize(11)
+            .font('Helvetica-Bold')
+            .fillColor('#333333')
+            .text(qTitle, margin + 16, headerY + 9, { width: contentWidth - 32 });
+          doc.y = headerY + qH + 8;
+
+          const questions = lesson.quizQuestions || [];
+          if (questions.length === 0) {
+            doc.fontSize(9).font('Helvetica').fillColor('#888888')
+              .text('No questions available for this assessment.', margin, doc.y + 6, { width: contentWidth });
+            doc.y += 16;
+            continue;
+          }
+
+          questions.forEach((q: any, qi: number) => {
+            if (doc.y > doc.page.height - 130) assessmentHeader();
+
+            doc.fontSize(10)
+              .font('Helvetica-Bold')
+              .fillColor('#1a365d')
+              .text(`${qi + 1}. ${cleanRichText(q.questionText) || 'Question'}`, margin, doc.y + 10, {
+                width: contentWidth,
+                lineGap: 2,
+              });
+
+            const options = q.options || [];
+            if (options.length > 0) {
+              options.forEach((opt: string, oi: number) => {
+                if (doc.y > doc.page.height - 110) assessmentHeader();
+                doc.fontSize(9)
+                  .font('Helvetica')
+                  .fillColor('#555555')
+                  .text(
+                    `   ${String.fromCharCode(65 + oi)}. ${cleanRichText(opt)}`,
+                    margin, doc.y + 3,
+                    { width: contentWidth - 30, lineGap: 1 }
+                  );
+              });
+            } else {
+              // Open-ended question → leave writing space for the printed test
+              doc.fontSize(9).font('Helvetica').fillColor('#bbbbbb')
+                .text('..............................................................................', margin, doc.y + 6, { width: contentWidth });
+            }
+            doc.y += 10;
+          });
+        }
+      }
 
       // Footer
       doc.fontSize(8)
@@ -209,6 +563,7 @@ export async function generateCoursePDF(courseId: string): Promise<{ filepath: s
     }
   });
 }
+
 
 /**
  * Generate a CSV string of users report
@@ -246,7 +601,7 @@ export async function generateUsersCSV(
     u.fullName || '',
     u.phone || '',
     u.school || '',
-    (u.enrolledCourses || []).map((c: any) => c.title).join('; '),
+    (u.enrolledCourses || []).map((c: any) => (c ? c.title : '')).join('; '),
     u.xp || 0,
     u.level || 1,
     u.academicStatus || 'active',
@@ -454,6 +809,8 @@ export async function generateEnrollmentsCSV(courseId?: string, instructorId?: s
   const rows: string[][] = [];
   courses.forEach((c: any) => {
     (c.studentsEnrolled || []).forEach((s: any) => {
+      // Populate can yield null for orphaned refs (student no longer exists) — skip them.
+      if (!s) return;
       rows.push([
         c.title || '',
         s.fullName || s.username || '',

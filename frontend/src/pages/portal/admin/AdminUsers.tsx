@@ -27,6 +27,8 @@ import {
   Activity,
   RefreshCw,
   FileSpreadsheet,
+  Lock,
+  UserCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -171,6 +173,25 @@ export default function AdminUsers() {
       toast.success("User updated successfully!");
       refetch();
       setEditUser(null);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleToggleStatus = async (user: any) => {
+    const isSuspended = user.status === "suspended";
+    const action = isSuspended ? "unblock" : "block";
+    const message = isSuspended
+      ? `${user.fullName || user.username} will regain access to the platform.`
+      : `${user.fullName || user.username} will be blocked from logging in and accessing classes immediately.`;
+    if (!confirm(`Are you sure you want to ${action} ${user.fullName || user.username}? ${message}`)) return;
+    try {
+      const newStatus = isSuspended ? "active" : "suspended";
+      await updateUserMutation({
+        variables: { id: user.id, status: newStatus },
+      });
+      toast.success(isSuspended ? "User unblocked successfully" : "User blocked successfully");
+      refetch();
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -403,11 +424,23 @@ export default function AdminUsers() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <div className="flex items-center gap-2 group-hover:opacity-80 transition-opacity">
+                          <div className="flex items-center gap-2 group-hover:opacity-80 transition-opacity flex-wrap">
                             {getRoleBadge(user.role)}
                             {user.isExternal && (
                               <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 text-[10px]">
                                 External
+                              </Badge>
+                            )}
+                            {user.status && user.status !== "active" && (
+                              <Badge
+                                variant="outline"
+                                className={
+                                  user.status === "suspended"
+                                    ? "bg-red-500/10 text-red-500 border-red-500/30 text-[10px]"
+                                    : "bg-amber-500/10 text-amber-500 border-amber-500/30 text-[10px]"
+                                }
+                              >
+                                {user.status === "suspended" ? "Blocked" : "Deactivated"}
                               </Badge>
                             )}
                           </div>
@@ -448,6 +481,25 @@ export default function AdminUsers() {
                               <DropdownMenuItem onClick={() => setEmailUser(user)}>
                                 <Mail className="w-4 h-4 mr-2" /> Send Email
                               </DropdownMenuItem>
+                              {user.role !== "super_admin" && user.role !== "admin" && (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleStatus(user);
+                                  }}
+                                  className={
+                                    user.status === "suspended"
+                                      ? "text-green-600 focus:bg-green-600/10 focus:text-green-600"
+                                      : "text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                  }
+                                >
+                                  {user.status === "suspended" ? (
+                                    <><UserCheck className="w-4 h-4 mr-2" /> Unblock User</>
+                                  ) : (
+                                    <><Lock className="w-4 h-4 mr-2" /> Block User</>
+                                  )}
+                                </DropdownMenuItem>
+                              )}
                               {currentUser?.role === 'super_admin' && (
                                 <>
                                   <div className="h-px bg-border/50 my-1" />

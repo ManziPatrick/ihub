@@ -125,6 +125,10 @@ import {
   generateProgramsCSV,
   generateInternsCSV,
   generateEnrollmentsCSV,
+  stripHtml,
+  stripMarkdown,
+  cleanRichText,
+  truncateAtWordBoundary,
 } from '../services/course-export.service';
 
 // ─── Test Data ────────────────────────────────────────────────────────────────
@@ -240,6 +244,67 @@ describe('course-export service', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  // ─── Rich-text cleaning ───────────────────────────────────────────────────
+  describe('cleanRichText / markdown & HTML cleaning', () => {
+    it('strips markdown headings, bold, italic, bullets and links', () => {
+      const input = `## Understanding Your Money Mindset\n\n**Bold** and *italic* text with a [link](https://example.com).\n- Item one\n- Item two\n\n### Options:\n1. First\n2. Second`;
+      const out = cleanRichText(input);
+      expect(out).not.toContain('##');
+      expect(out).not.toContain('**');
+      expect(out).not.toContain('*italic*');
+      expect(out).not.toContain('[link](https://example.com)');
+      expect(out).toContain('Understanding Your Money Mindset');
+      expect(out).toContain('Bold and italic text with a link.');
+      expect(out).toContain('• Item one');
+      expect(out).toContain('Options:');
+    });
+
+    it('strips HTML tables, headings and anchors', () => {
+      const input = `<h3>Your Toolbox</h3>\n<table><thead><tr><th>Tool</th><th>Cost</th></tr></thead><tbody><tr><td>Ejo Heza</td><td>From 500 RWF/month</td></tr></tbody></table>\n<p>See <a href="https://www.ejoheza.rw">www.ejoheza.rw</a>.</p>`;
+      const out = cleanRichText(input);
+      expect(out).not.toContain('<');
+      expect(out).not.toContain('>');
+      expect(out).not.toContain('</td>');
+      expect(out).toContain('Your Toolbox');
+      expect(out).toContain('Ejo Heza');
+      expect(out).toContain('www.ejoheza.rw');
+    });
+
+    it('decodes common HTML entities', () => {
+      const out = stripHtml('Tom &amp; Jerry &lt;b&gt; &nbsp; &quot;quoted&quot; &#39;apos&#39;');
+      expect(out).toContain('&');
+      expect(out).toContain('<b>');
+      expect(out).toContain('"quoted"');
+      expect(out).toContain("'apos'");
+    });
+
+    it('handles empty input gracefully', () => {
+      expect(cleanRichText('')).toBe('');
+      expect(cleanRichText(undefined as any)).toBe('');
+      expect(stripMarkdown(null as any)).toBe('');
+    });
+  });
+
+  // ─── Word-boundary truncation ─────────────────────────────────────────────
+  describe('truncateAtWordBoundary', () => {
+    it('keeps short text unchanged', () => {
+      expect(truncateAtWordBoundary('short text', 100)).toBe('short text');
+    });
+
+    it('never cuts mid-word and appends ellipsis', () => {
+      const out = truncateAtWordBoundary('The quick brown fox jumps over the lazy dog', 20);
+      expect(out.endsWith('…')).toBe(true);
+      const body = out.slice(0, -1);
+      expect(body.endsWith(' ')).toBe(false);
+      expect(body.split(' ').every((w) => w.length > 0)).toBe(true);
+    });
+
+    it('collapses whitespace before truncating', () => {
+      const out = truncateAtWordBoundary('  one    two   three four five six seven  ', 15);
+      expect(out).not.toContain('  ');
+    });
   });
 
   // ─── PDF Generation ───────────────────────────────────────────────────────

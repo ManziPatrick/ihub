@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
 import { useQuery } from "@apollo/client/react";
 import { GET_COURSE, GET_COURSES_LITE_SUMMARY } from "@/lib/graphql/queries";
 import {
@@ -76,7 +78,11 @@ function getLessonLabel(type: LessonType): string {
 function CourseSelector() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  // Independent client-side pagination — decoupled from the main courses pagination elsewhere.
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(8);
   const { data, loading } = useQuery(GET_COURSES_LITE_SUMMARY, {
+    variables: { page: 1, limit: 200 },
     fetchPolicy: "cache-first",
   });
   const courses = (data as any)?.courses?.items || [];
@@ -85,6 +91,14 @@ function CourseSelector() {
     c.title?.toLowerCase().includes(search.toLowerCase()) ||
     c.category?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pagedItems = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setPage(1); // new search → back to page 1
+  };
 
   const handleSelect = (id: string) => {
     navigate(`/portal/admin/course-preview/${id}`);
@@ -112,26 +126,23 @@ function CourseSelector() {
             <Input
               placeholder="Search courses..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className="pl-9 h-10"
             />
           </div>
         </motion.div>
 
         {loading ? (
-          <div className="grid md:grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-28 bg-muted/20 rounded-xl animate-pulse" />
-            ))}
-          </div>
+          <ListSkeleton count={4} className="md:grid-cols-2 lg:grid-cols-2" />
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
             <BookOpen className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-muted-foreground">No courses found</p>
           </div>
         ) : (
+          <>
           <div className="grid md:grid-cols-2 gap-4">
-            {filtered.map((course: any, idx: number) => {
+            {pagedItems.map((course: any, idx: number) => {
               const totalMods = course.modulesCount || 0;
               const totalLessons = course.totalLessonsCount || 0;
               return (
@@ -192,6 +203,23 @@ function CourseSelector() {
               );
             })}
           </div>
+          {filtered.length > 0 && (
+            <PaginationBar
+              currentPage={page}
+              totalPages={totalPages}
+              totalCount={filtered.length}
+              onPageChange={setPage}
+              hasPreviousPage={page > 1}
+              hasNextPage={page < totalPages}
+              pageSize={pageSize}
+              onPageSizeChange={(n) => {
+                setPageSize(n);
+                setPage(1);
+              }}
+              showRange={false}
+            />
+          )}
+          </>
         )}
       </div>
     </PortalLayout>

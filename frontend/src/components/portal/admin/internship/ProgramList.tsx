@@ -11,6 +11,10 @@ import {
   ChevronRight, Clock, CheckCircle, AlertCircle, Lock, Percent
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
+import { cn } from "@/lib/utils";
+import { usePageFetching } from "@/lib/hooks/usePageFetching";
 
 // Robust date formatter that handles both ISO strings and timestamps
 const formatDate = (raw: any) => {
@@ -50,6 +54,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; next: string
 };
 
 interface EditState {
+  organization: string;
   price: string;
   discount: string;
   maxSpots: string;
@@ -58,7 +63,7 @@ interface EditState {
 export default function ProgramList() {
   const navigate = useNavigate();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editState, setEditState] = useState<EditState>({ price: '', discount: '', maxSpots: '' });
+  const [editState, setEditState] = useState<EditState>({ organization: '', price: '', discount: '', maxSpots: '' });
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12; // Grid layout usually looks better with 3 or 4 columns, so 12 is a good multiple
 
@@ -83,10 +88,9 @@ export default function ProgramList() {
     onError: (err) => toast.error(err.message),
   });
 
+  const { fetchingPage, startPageFetch } = usePageFetching(loading, data);
   if (loading) return (
-    <div className="flex items-center justify-center py-20">
-      <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-    </div>
+    <ListSkeleton count={6} />
   );
   if (error) return <div className="text-destructive p-4">Error loading programs: {error.message}</div>;
 
@@ -101,6 +105,7 @@ export default function ProgramList() {
   const startEdit = (program: any) => {
     setEditingId(program.id);
     setEditState({
+      organization: String(program.organization ?? ''),
       price: String(program.price ?? 0),
       discount: String(program.discount ?? 0),
       maxSpots: String(program.maxSpots ?? 0),
@@ -111,6 +116,7 @@ export default function ProgramList() {
     updateProgram({
       variables: {
         id: programId,
+        organization: editState.organization.trim(),
         price: parseFloat(editState.price) || 0,
         discount: parseFloat(editState.discount) || 0,
         maxSpots: parseInt(editState.maxSpots) || 0,
@@ -139,7 +145,7 @@ export default function ProgramList() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className={cn("grid gap-6 md:grid-cols-2 lg:grid-cols-3 transition-opacity duration-300", fetchingPage && "opacity-40")}>
         {programs.map((program: any) => {
           const statusCfg = STATUS_CONFIG[program.status] || STATUS_CONFIG.active;
           const isEditing = editingId === program.id;
@@ -192,7 +198,13 @@ export default function ProgramList() {
               <div className="flex flex-col flex-1 p-5 space-y-4">
                 <div>
                   <h3 className="font-black text-base leading-tight text-foreground line-clamp-2">{program.title}</h3>
-                  <p className="text-[11px] text-muted-foreground font-medium mt-1">{program.duration}</p>
+                  {program.organization && (
+                    <span className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-full bg-accent/10 border border-accent/20 text-[10px] font-black uppercase tracking-wider text-accent">
+                      <Tag className="w-3 h-3" />
+                      {program.organization}
+                    </span>
+                  )}
+                  <p className="text-[11px] text-muted-foreground font-medium mt-1.5">{program.duration}</p>
                 </div>
 
                 {/* Dates */}
@@ -226,7 +238,19 @@ export default function ProgramList() {
                 {/* Price / Discount display or edit */}
                 {isEditing ? (
                   <div className="space-y-3 bg-muted/20 rounded-2xl p-4 border border-border/40">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Edit Pricing & Spots</p>
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Edit Program Details</p>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                        <Tag className="w-2.5 h-2.5" /> Organization / Company / School
+                      </label>
+                      <Input
+                        type="text"
+                        value={editState.organization}
+                        onChange={(e) => setEditState(s => ({ ...s, organization: e.target.value }))}
+                        placeholder="e.g. Google, University of Rwanda"
+                        className="h-9 text-sm bg-background border-border/40 rounded-xl"
+                      />
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
                         <label className="text-[9px] font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1">
@@ -315,7 +339,7 @@ export default function ProgramList() {
                     <button
                       onClick={() => startEdit(program)}
                       className="p-2 rounded-xl text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors"
-                      title="Edit price, discount & spots"
+                      title="Edit details, price, discount & spots"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
@@ -350,54 +374,15 @@ export default function ProgramList() {
         })}
       </div>
 
-      {/* Pagination UI */}
-      {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between px-2 py-4">
-          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-2">
-            Page {pagination.currentPage} of {pagination.totalPages} ({pagination.totalCount} programs)
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={!pagination.hasPreviousPage}
-              className="h-9 w-9 p-0 rounded-xl"
-            >
-              <ChevronRight className="w-4 h-4 rotate-180" />
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === pagination.totalPages || Math.abs(p - currentPage) <= 1)
-                .map((p, i, arr) => {
-                  const showEllipsis = i > 0 && p - arr[i - 1] > 1;
-                  return (
-                    <div key={p} className="flex items-center">
-                      {showEllipsis && <span className="px-1 text-muted-foreground">...</span>}
-                      <Button
-                        variant={currentPage === p ? 'gold' : 'outline'}
-                        size="sm"
-                        onClick={() => setCurrentPage(p)}
-                        className={`h-9 w-9 p-0 rounded-xl ${currentPage === p ? 'pointer-events-none' : ''}`}
-                      >
-                        {p}
-                      </Button>
-                    </div>
-                  );
-                })}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-              disabled={!pagination.hasNextPage}
-              className="h-9 w-9 p-0 rounded-xl"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <PaginationBar
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        totalCount={pagination.totalCount}
+        hasPreviousPage={pagination.hasPreviousPage}
+        hasNextPage={pagination.hasNextPage}
+        onPageChange={(p) => { startPageFetch(); setCurrentPage(p); }}
+        isLoading={loading || fetchingPage}
+      />
 
       {programs.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border/50 rounded-3xl">

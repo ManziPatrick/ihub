@@ -89,7 +89,7 @@ export default function TrainerInternships() {
                                     Workflow Management
                                 </h3>
                                 <p className="text-sm text-indigo-600 dark:text-indigo-400 mt-1">
-                                    Drag and drop interns across different stages of their internship to update their progression.
+                                    Drag and drop interns across different stages of their opportunity to update their progression.
                                 </p>
                             </div>
                             <WorkflowBoard />
@@ -104,8 +104,8 @@ export default function TrainerInternships() {
                                     Trainer View
                                 </h3>
                                 <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                                    You can review applications for internship programs you are assigned to.
-                                    Approving an application will create an internship record for the student.
+                                    You can review applications for opportunity programs you are assigned to.
+                                    Approving an application will create an opportunity record for the student.
                                 </p>
                             </div>
                             <ApplicationReview />
@@ -150,7 +150,7 @@ export default function TrainerInternships() {
                                     Programs Directory
                                 </h3>
                                 <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                                    View available internship programs. Only administrators can create or edit program details.
+                                    View available opportunity programs. Only administrators can create or edit program details.
                                 </p>
                             </div>
                             {/* Pass readOnly prop if ProgramList supports it, or it will just show programs and edit buttons might be disabled by backend auth */}

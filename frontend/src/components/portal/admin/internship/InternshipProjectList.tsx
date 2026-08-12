@@ -9,7 +9,10 @@ import { Plus, Code, Trash2, Edit, ExternalLink, Users, Layers, Eye } from 'luci
 import { toast } from 'sonner';
 import { CreateInternshipProjectDialog, InternshipProjectDetailsDialog, CreateInternshipTeamDialog, EditInternshipProjectDialog, AssignProjectDialog } from '@/components/portal/dialogs';
 import ReactMarkdown from 'react-markdown';
-import { normalizeContent } from "@/lib/utils";
+import { normalizeContent, cn } from "@/lib/utils";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
+import { usePageFetching } from "@/lib/hooks/usePageFetching";
 
 export default function InternshipProjectList() {
     const [selectedProject, setSelectedProject] = useState<any>(null);
@@ -33,7 +36,8 @@ export default function InternshipProjectList() {
         onError: (err) => toast.error(err.message)
     });
 
-    if (projectsLoading) return <div className="p-8 text-center">Loading projects...</div>;
+    const { fetchingPage, startPageFetch } = usePageFetching(projectsLoading, projectsData);
+    if (projectsLoading) return <div className="p-4"><ListSkeleton count={6} /></div>;
 
     const projects = (projectsData as any)?.internshipProjects?.items || [];
     const pagination = (projectsData as any)?.internshipProjects?.pagination;
@@ -50,10 +54,10 @@ export default function InternshipProjectList() {
                 <div>
                     <h2 className="text-xl font-semibold flex items-center gap-2">
                         <Code className="w-5 h-5 text-primary" />
-                        Internship Project Pool
+                        Opportunity Project Pool
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                        Manage projects that can be assigned to internship teams.
+                        Manage projects that can be assigned to opportunity teams.
                     </p>
                 </div>
                 <Button onClick={() => setCreateOpen(true)} className="gap-2">
@@ -107,7 +111,7 @@ export default function InternshipProjectList() {
                     </CardContent>
                 </Card>
             ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className={cn("grid gap-6 md:grid-cols-2 lg:grid-cols-3 transition-opacity duration-300", fetchingPage && "opacity-40")}>
                     {projects.map((project: any) => (
                         <Card key={project.id} className="flex flex-col h-full hover:border-primary/50 transition-colors">
                             <CardHeader className="pb-3">
@@ -193,54 +197,15 @@ export default function InternshipProjectList() {
                 </div>
             )}
 
-            {/* Pagination UI */}
-            {pagination && pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between px-2 py-4 border-t border-border/50">
-                    <p className="text-sm text-muted-foreground font-medium">
-                        Page {pagination.currentPage} of {pagination.totalPages} ({pagination.totalCount} projects)
-                    </p>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                            disabled={!pagination.hasPreviousPage}
-                            className="rounded-xl"
-                        >
-                            Previous
-                        </Button>
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                                .filter(p => p === 1 || p === pagination.totalPages || Math.abs(p - currentPage) <= 1)
-                                .map((p, i, arr) => {
-                                    const showEllipsis = i > 0 && p - arr[i-1] > 1;
-                                    return (
-                                        <div key={p} className="flex items-center">
-                                            {showEllipsis && <span className="px-2 text-muted-foreground">...</span>}
-                                            <Button
-                                                variant={currentPage === p ? 'default' : 'outline'}
-                                                size="sm"
-                                                onClick={() => setCurrentPage(p)}
-                                                className={`h-9 w-9 p-0 rounded-xl ${currentPage === p ? 'bg-primary text-primary-foreground pointer-events-none' : ''}`}
-                                            >
-                                                {p}
-                                            </Button>
-                                        </div>
-                                    );
-                                })}
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-                            disabled={!pagination.hasNextPage}
-                            className="rounded-xl"
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </div>
-            )}
+      <PaginationBar
+        currentPage={pagination.currentPage}
+        totalPages={pagination.totalPages}
+        totalCount={pagination.totalCount}
+        hasPreviousPage={pagination.hasPreviousPage}
+        hasNextPage={pagination.hasNextPage}
+        onPageChange={(p) => { startPageFetch(); setCurrentPage(p); }}
+        isLoading={projectsLoading || fetchingPage}
+      />
         </div>
     );
 }

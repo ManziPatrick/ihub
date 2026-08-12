@@ -47,7 +47,7 @@
     "home": "Home",
     "explore": "Explore",
     "searchCourses": "Search courses, providers, skills...",
-    "searchHint": "Search across courses, trainers, teachers, programs & internships",
+    "searchHint": "Search across courses, trainers, teachers, programs & opportunities",
     "noResults": "No results found",
     "courses": "Courses",
     "trainers": "Trainers",
@@ -123,8 +123,8 @@
     "agreedToTerms": "By continuing, you agree to our Terms and Privacy Policy."
   },
   "home": {
-    "heroTitle": "Your All-in-One Learning Hub",
-    "heroSubtitle": "Courses across every field with real projects and industry internships.",
+    "heroTitle": "Practical Courses, Opportunities & Project-Based Learning",
+    "heroSubtitle": "Courses across every field with real projects and industry opportunities.",
     "featuredCourses": "Featured Courses",
     "startLearning": "Start Learning",
     "talkToUs": "Talk to Us",
@@ -132,7 +132,7 @@
     "explore": "Explore",
     "programsForFuture": "Programs for Your Future",
     "searchPrograms": "Search by program, school, or location...",
-    "searchInternships": "Search internships...",
+    "searchInternships": "Search opportunities...",
     "flexibleSchedules": "Flexible schedules",
     "expertTrainers": "Expert trainers",
     "certifiedPrograms": "Certified programs",
@@ -141,9 +141,9 @@
     "resultsFor": "Results for",
     "found": "found",
     "courses": "Courses",
-    "internships": "Internships",
+    "internships": "Opportunities",
     "noProgramsFound": "No programs found",
-    "noInternshipsFound": "No programs available at the moment.",
+    "noInternshipsFound": "No opportunities available at the moment.",
     "pageOf": "Page {current} of {total}",
     "totalCourses": "{count} total courses",
     "joinFuture": "Join the Future of Technology in Africa",
@@ -157,7 +157,7 @@
     "dedicatedMentorshipTitle": "Dedicated Mentorship",
     "dedicatedMentorshipDesc": "Continuous guidance and follow-up",
     "realWorldProjectsTitle": "Real-World Projects",
-    "realWorldProjectsDesc": "Hands-on internships and projects",
+    "realWorldProjectsDesc": "Hands-on opportunities and projects",
     "flexibleLearningTitle": "Flexible Learning",
     "flexibleLearningDesc": "Online and physical classes",
     "careerOrientedTitle": "Career-Oriented",
@@ -167,7 +167,7 @@
     "searchPlaceholder": "Search by program, topic, or location...",
     "checkExpertTrainers": "Expert trainers with industry experience",
     "checkDedicatedMentorship": "Dedicated mentorship and follow-up",
-    "checkRealWorldProjects": "Real-world projects and internships",
+    "checkRealWorldProjects": "Real-world projects and opportunities",
     "checkOnlinePhysical": "Online and physical classes",
     "checkCareerOriented": "Career-oriented training programs",
     "checkPracticalSkills": "Strong focus on practical skills",
@@ -178,7 +178,7 @@
     "whatWeDo": "What We Do",
     "featureExpertTraining": "Expert Training",
     "featureExpertTrainingDesc": "Learn from skilled instructors.",
-    "featureHandsOnInternships": "Hands-On Internships",
+    "featureHandsOnInternships": "Hands-On Opportunities",
     "featureHandsOnInternshipsDesc": "Gain real-world experience.",
     "featureInnovativeProjects": "Innovative Projects",
     "featureInnovativeProjectsDesc": "Work on cutting-edge solutions.",
@@ -188,8 +188,8 @@
     "serviceDataScienceAIDesc": "Learn data analysis, machine learning, model training, and intelligent systems development.",
     "serviceIoT": "Internet of Things (IoT)",
     "serviceIoTDesc": "Develop smart, connected systems using sensors, devices, and automation.",
-    "serviceInternshipsProjects": "Internships & Projects",
-    "serviceInternshipsProjectsDesc": "Gain hands-on experience through supervised internships and industry-based projects.",
+    "serviceInternshipsProjects": "Opportunities & Projects",
+    "serviceInternshipsProjectsDesc": "Gain hands-on experience through supervised opportunities and industry-based projects.",
     "trainingHowItWorks": "How Our Training Works",
     "trainingSubtitle": "From Learning to Industry — Your journey with Bootskills",
     "stepEnroll": "Enroll",
@@ -201,7 +201,7 @@
     "stepBuild": "Build",
     "stepBuildDesc": "Real projects",
     "stepExperience": "Experience",
-    "stepExperienceDesc": "Internship",
+    "stepExperienceDesc": "Opportunity",
     "stepGraduate": "Graduate",
     "stepGraduateDesc": "Certification",
     "whoWeServe": "Who We Serve",
@@ -222,7 +222,7 @@
   "about": {
     "whoWeAre": "Who We Are",
     "empoweringAfrica": "Empowering Africa through Practical Skills & Excellence",
-    "bootskillsDesc": "Bootskills connects learners with career-ready courses, internships, and project-based experiences across technology, business, and creative industries.",
+    "bootskillsDesc": "Bootskills connects learners with career-ready courses, opportunities, and project-based experiences across technology, business, and creative industries.",
     "removingBarrier": "Removing the Barrier of Location",
     "ourVision": "Our Vision",
     "visionText": "To become Africa's leading practical learning and professional growth platform, starting from Rwanda and expanding globally.",
@@ -240,14 +240,14 @@
     "whatWeDo": "What We Do",
     "trainingCourses": "Training & Courses",
     "trainingCoursesDesc": "Practical, market-driven courses in Software Development, AI, Data Science, and Digital Skills.",
-    "structuredInternships": "Structured Internships",
+    "structuredInternships": "Structured Opportunities",
     "structuredInternshipsDesc": "Simulated workplace environments working on real projects with professional mentorship.",
     "softwareAIDev": "Software & AI Development",
     "softwareAIDevDesc": "Custom web, mobile, and AI-powered solutions for startups and enterprise systems.",
     "innovationPlatform": "Innovation Platform",
     "innovationPlatformDesc": "Open ecosystem for trainers, professionals, and companies to collaborate and innovate.",
     "beliefText": "We believe opportunity should not depend on location. Bootskills uses online and in-person delivery, remote collaboration, and affordable internet access to serve learners beyond major cities.",
-    "founderJoined": "He was later joined by <1>KALISA Jonathan</1>, Co-Founder, who brought operational and technical leadership to help scale training programs, internships, and software delivery.",
+    "founderJoined": "He was later joined by <1>KALISA Jonathan</1>, Co-Founder, who brought operational and technical leadership to help scale training programs, opportunities, and software delivery.",
     "valueExcellence": "Excellence",
     "valueExcellenceDesc": "We deliver the highest quality in all our training programs and technology solutions",
     "valueIntegrity": "Integrity",
@@ -275,8 +275,8 @@
     "heroDesc": "Whether you're interested in enrolling, partnering, or just want to learn more about what we do, we're here to help. Reach out and let's start a conversation.",
     "trainingPrograms": "Training Programs",
     "trainingProgramsDesc": "Questions about our courses, enrollment, and curriculum",
-    "internships": "Internships",
-    "internshipsDesc": "Inquire about internship opportunities and applications",
+    "internships": "Opportunities",
+    "internshipsDesc": "Inquire about opportunity placements and applications",
     "corporateSolutions": "Corporate Solutions",
     "corporateSolutionsDesc": "Custom training and technology services for organizations",
     "generalInquiry": "General Inquiry",
@@ -317,7 +317,7 @@
     "faq4a": "Absolutely! We design tailored training programs for organizations. Contact us with your requirements for a custom proposal.",
     "phonePlaceholder": "+250 790 706 170",
     "optionTraining": "Training Programs",
-    "optionInternship": "Internships",
+    "optionInternship": "Opportunities",
     "optionCorporate": "Corporate Solutions",
     "optionPartnership": "Partnership",
     "optionGeneral": "General Inquiry",
@@ -326,16 +326,16 @@
   },
   "services": {
     "ourServices": "Our Services",
-    "heroTitle": "Practical Courses, Internships & Project-Based Learning",
-    "heroDesc": "Bootskills offers career-focused training across tech, business, creative, and leadership areas with internships, real client projects, and local delivery from Kigali, Rwanda to East Africa.",
+    "heroTitle": "Practical Courses, Opportunities & Project-Based Learning",
+    "heroDesc": "Bootskills offers career-focused training across tech, business, creative, and leadership areas with opportunities, real client projects, and local delivery from Kigali, Rwanda to East Africa.",
     "viewPrograms": "View Training Programs",
     "requestConsultation": "Request Consultation",
     "forIndividuals": "For Individuals",
-    "individualsTitle": "Training, Internships & Project Pathways",
-    "individualsDesc": "Practical learning designed to make learners industry-ready through hands-on courses, internship placements, and live project experience across multiple sectors.",
+    "individualsTitle": "Training, Opportunities & Project Pathways",
+    "individualsDesc": "Practical learning designed to make learners industry-ready through hands-on courses, opportunity placements, and live projects.",
     "forOrganizations": "For Organizations",
     "organizationsTitle": "Business Training, Project Support & Talent Development",
-    "organizationsDesc": "Practical services for teams, projects and local businesses that need training, internships, and operational support.",
+    "organizationsDesc": "Practical services for teams, projects and local businesses that need training, opportunities, and operational support.",
     "enterpriseSolutions": "Enterprise Solutions",
     "enterpriseTitle": "Corporate Training & Upskilling",
     "bootskillsAdvantage": "The Bootskills Advantage",
@@ -349,7 +349,7 @@
     "expertInstructors": "Expert Instructors",
     "expertInstructorsDesc": "Learn from professionals with real-world industry experience",
     "practicalProjects": "Practical Projects",
-    "practicalProjectsDesc": "Build a portfolio with hands-on, real-world projects and internship deliverables",
+    "practicalProjectsDesc": "Build a portfolio with hands-on, real-world projects and opportunity deliverables",
     "careerSupport": "Career Support",
     "careerSupportDesc": "Job placement assistance and career guidance for all graduates"
   },
@@ -424,28 +424,28 @@
     "haveProjectDesc": "Let's discuss how we can help bring your ideas to life with our technology expertise and experienced development team."
   },
   "internships": {
-    "programs": "Internship Programs",
+    "programs": "Opportunity Programs",
     "heroTitle": "Gain Real-World Experience That Matters",
-    "heroDesc": "Bridge the gap between learning and employment with our structured internship programs. Work on real projects, get mentored by experts, and build a portfolio that stands out.",
-    "applyNow": "Apply for Internship",
+    "heroDesc": "Combler le fossé entre l'apprentissage et l'emploi avec nos programmes d'opportunités structurés.",
+    "applyNow": "Apply for Opportunity",
     "viewTrainingFirst": "View Training First",
-    "whyInternWithUs": "Why Intern With Us",
+    "whyInternWithUs": "Pourquoi choisir nos opportunités",
     "whatYoullGain": "What You'll Gain",
-    "internshipDesc": "Our internships are designed to give you the practical experience employers want to see, combined with the support you need to succeed.",
+    "internshipDesc": "Nos opportunités sont conçues pour vous donner l'expérience pratique que recherchent les employeurs.",
     "realProjects": "Real Projects",
     "realProjectsDesc": "Work on actual client projects and products, not simulated exercises. Your work will have real impact.",
     "mentorship": "Mentorship",
     "mentorshipDesc": "One-on-one guidance from experienced professionals who are invested in your growth and success.",
     "certification": "Certification",
-    "certificationDesc": "Receive a recognized internship certificate that validates your experience to future employers.",
+    "certificationDesc": "Recevez un certificat d'opportunité reconnu par les employeurs.",
     "flexibleSchedule": "Flexible Schedule",
-    "flexibleScheduleDesc": "Balance your internship with other commitments. We offer part-time and flexible arrangements.",
+    "flexibleScheduleDesc": "Conciliez votre opportunité avec d'autres engagements.",
     "remoteFriendly": "Remote-Friendly",
-    "remoteFriendlyDesc": "Participate from anywhere with our online and hybrid internship options.",
+    "remoteFriendlyDesc": "Participate from anywhere with our online and hybrid opportunity options.",
     "careerPathway": "Career Pathway",
     "careerPathwayDesc": "Top performers get priority access to full-time positions and advanced opportunities.",
     "openPositions": "Open Positions",
-    "availableInternships": "Available Internships",
+    "availableInternships": "Available Opportunities",
     "noInternships": "No programs available at the moment.",
     "howToApply": "How to Apply",
     "applicationProcess": "Application Process",
@@ -456,11 +456,11 @@
     "interview": "Interview",
     "interviewDesc": "Meet with our team to discuss your goals and expectations.",
     "onboarding": "Onboarding",
-    "onboardingDesc": "Get set up with tools, meet your mentor, and start your internship journey.",
+    "onboardingDesc": "Get set up with tools, meet your mentor, and start your opportunity journey.",
     "successStories": "Success Stories",
-    "whatInternsSay": "What Our Interns Say",
-    "readyToStart": "Ready to Start Your Internship?",
-    "readyDesc": "Applications are reviewed on a rolling basis. Apply early to secure your spot in our next cohort of interns.",
+    "whatInternsSay": "What Our Alumni Say",
+    "readyToStart": "Ready to Start Your Opportunity?",
+    "readyDesc": "Applications are reviewed on a rolling basis. Apply early to secure your spot in our next cohort.",
     "applyNowBtn": "Apply Now",
     "exploreTrainingFirst": "Explore Training First",
     "collaborateCreateGrow": "Collaborate. Create. Grow.",
@@ -546,7 +546,6 @@
     "progress": "Progress",
     "priceFree": "Free",
     "investment": "Investment",
-    "instructor": "Instructor",
     "expert": "Expert"
   },
   "portal": {
@@ -559,7 +558,7 @@
     "billing": "Billing",
     "grades": "Grades",
     "certificates": "Certificates",
-    "internships": "Internships",
+    "internships": "Opportunities",
     "projects": "Projects",
     "applications": "Applications",
     "settings": "Account Interface",
@@ -590,7 +589,8 @@
     "send": "Send Message",
     "supportEmail": "support@bootskills.com",
     "supportPhone": "+250 790 706 170",
-    "supportHours": "Mon-Fri, 8AM-6PM CAT"
+    "supportHours": "Mon-Fri, 8AM-6PM CAT",
+    "welcomeTrainer": "Welcome back, {{name}}!"
   },
   "errors": {
     "pageNotFound": "The page you're looking for doesn't exist.",
@@ -613,67 +613,208 @@
     },
     "student": {
       "title": "Student Portal Tour",
-      "welcome": {"title": "👋 Welcome, Student!", "content": "Welcome to the Bootskills Student Portal! 🎉 This quick tour will show you around so you can start learning, coding, and building your career with confidence."},
-      "sidebar": {"title": "📋 Sidebar Navigation", "content": "This is your **navigation sidebar**. Use it to jump between all sections of your portal — dashboard, courses, projects, billing, and more."},
-      "dashboard": {"title": "📊 Dashboard", "content": "Your **Dashboard** gives you a snapshot of everything: your XP, streak, level, enrolled courses, recent activity, and upcoming deadlines."},
-      "projects": {"title": "💼 Projects", "content": "View and apply for **real-world Projects** posted by clients. Build your portfolio while earning experience."},
-      "courses": {"title": "📚 My Courses", "content": "Your **Courses** section — browse enrolled courses, continue lessons, track progress, and complete assignments all in one place."},
-      "internship": {"title": "🏢 Internship", "content": "Once you complete your courses, apply for **Internships** here. You'll get real work experience in your field."},
-      "schedule": {"title": "📅 Schedule", "content": "Your **Schedule** — view upcoming sessions, mentor calls, deadlines, and live classes in one calendar view."},
-      "billing": {"title": "💳 Billing & Payments", "content": "The **Billing** section is where you manage payments. Enroll in paid courses, view your receipts, and track payment history. You can pay using mobile money or card."},
-      "certificates": {"title": "🎓 Certificates", "content": "Once you pass all your courses, your **Certificates** will appear here. Download and share them anywhere."},
-      "header": {"title": "🔝 Top Header Bar", "content": "The **top bar** gives you quick access to search, your XP/streak/level (for students), notifications, theme toggle, and your profile menu."},
-      "notifications": {"title": "🔔 Notifications", "content": "Stay updated! Your **Notification Bell** lights up when you get messages, assignment feedback, or important updates."},
-      "userMenu": {"title": "👤 Your Profile Menu", "content": "Click your **Avatar** to access Settings, go back to the website, or Log Out. You can also restart this tour anytime from here."},
-      "ready": {"title": "🎉 You're Ready!", "content": "**You're all set!** 🚀 Start by exploring your Dashboard, enroll in courses, and begin your learning journey. Need help? Click the chat bubble or visit the Help page. You can restart this tour anytime from your profile menu."}
+      "welcome": {
+        "title": "👋 Welcome, Student!",
+        "content": "Welcome to the Bootskills Student Portal! 🎉 This quick tour will show you around so you can start learning, coding, and building your career with confidence."
+      },
+      "sidebar": {
+        "title": "📋 Sidebar Navigation",
+        "content": "This is your **navigation sidebar**. Use it to jump between all sections of your portal — dashboard, courses, projects, billing, and more."
+      },
+      "dashboard": {
+        "title": "📊 Dashboard",
+        "content": "Your **Dashboard** gives you a snapshot of everything: your XP, streak, level, enrolled courses, recent activity, and upcoming deadlines."
+      },
+      "projects": {
+        "title": "💼 Projects",
+        "content": "View and apply for **real-world Projects** posted by clients. Build your portfolio while earning experience."
+      },
+      "courses": {
+        "title": "📚 My Courses",
+        "content": "Your **Courses** section — browse enrolled courses, continue lessons, track progress, and complete assignments all in one place."
+      },
+      "internship": {
+        "title": "🏢 Opportunity",
+        "content": "Once you complete your courses, apply for **Opportunities** here. You’ll get real work experience in your field."
+      },
+      "schedule": {
+        "title": "📅 Schedule",
+        "content": "Your **Schedule** — view upcoming sessions, mentor calls, deadlines, and live classes in one calendar view."
+      },
+      "billing": {
+        "title": "💳 Billing & Payments",
+        "content": "The **Billing** section is where you manage payments. Enroll in paid courses, view your receipts, and track payment history. You can pay using mobile money or card."
+      },
+      "certificates": {
+        "title": "🎓 Certificates",
+        "content": "Once you pass all your courses, your **Certificates** will appear here. Download and share them anywhere."
+      },
+      "header": {
+        "title": "🔝 Top Header Bar",
+        "content": "The **top bar** gives you quick access to search, your XP/streak/level (for students), notifications, theme toggle, and your profile menu."
+      },
+      "notifications": {
+        "title": "🔔 Notifications",
+        "content": "Stay updated! Your **Notification Bell** lights up when you get messages, assignment feedback, or important updates."
+      },
+      "userMenu": {
+        "title": "👤 Your Profile Menu",
+        "content": "Click your **Avatar** to access Settings, go back to the website, or Log Out. You can also restart this tour anytime from here."
+      },
+      "ready": {
+        "title": "🎉 You're Ready!",
+        "content": "**You're all set!** 🚀 Start by exploring your Dashboard, enroll in courses, and begin your learning journey. Need help? Click the chat bubble or visit the Help page. You can restart this tour anytime from your profile menu."
+      }
     },
     "trainer": {
       "title": "Trainer Portal Tour",
-      "welcome": {"title": "👋 Welcome, Trainer!", "content": "Welcome to the Bootskills Trainer Portal! 🎓 This tour will guide you through managing students, courses, assignments, and your professional activities."},
-      "sidebar": {"title": "📋 Sidebar Navigation", "content": "Your **navigation sidebar** is your command center. Jump between courses, students, mentorship, schedule, and more from here."},
-      "dashboard": {"title": "📊 Dashboard", "content": "The **Dashboard** gives you an overview of your students, pending reviews, active courses, and recent activity at a glance."},
-      "courses": {"title": "📚 My Courses", "content": "Manage your **Courses** — create new lessons, track student progress, update content, and monitor completion rates."},
-      "students": {"title": "👥 Students", "content": "View your **Students** — see who's enrolled, check their progress, grades, and reach out to support them."},
-      "mentorship": {"title": "🤝 Mentorship", "content": "Your **Mentorship** section — schedule 1-on-1 sessions, track mentoring hours, and manage your mentees."},
-      "internships": {"title": "🏢 Internships", "content": "Supervise **Internships** — review intern progress, assign tasks, and provide feedback on real projects."},
-      "schedule": {"title": "📅 Schedule", "content": "Your **Schedule** — manage your availability, view upcoming sessions, and plan your teaching time."},
-      "header": {"title": "🔝 Top Header Bar", "content": "The **top header** shows your student count, active courses, pending reviews, and gives you quick access to notifications and your profile."},
-      "userMenu": {"title": "👤 Profile Menu", "content": "Your **profile menu** — access settings, switch back to the website, or log out. You can restart this tour anytime from here."},
-      "ready": {"title": "🎉 You're Ready!", "content": "**You're all set!** 🚀 Start exploring your dashboard, check your students, and manage your courses. Need help? The chat bubble is always there. You can restart this tour from your profile menu."}
+      "welcome": {
+        "title": "👋 Welcome, Trainer!",
+        "content": "Welcome to the Bootskills Trainer Portal! 🎓 This tour will guide you through managing students, courses, assignments, and your professional activities."
+      },
+      "sidebar": {
+        "title": "📋 Sidebar Navigation",
+        "content": "Your **navigation sidebar** is your command center. Jump between courses, students, mentorship, schedule, and more from here."
+      },
+      "dashboard": {
+        "title": "📊 Dashboard",
+        "content": "The **Dashboard** gives you an overview of your students, pending reviews, active courses, and recent activity at a glance."
+      },
+      "courses": {
+        "title": "📚 My Courses",
+        "content": "Manage your **Courses** — create new lessons, track student progress, update content, and monitor completion rates."
+      },
+      "students": {
+        "title": "👥 Students",
+        "content": "View your **Students** — see who's enrolled, check their progress, grades, and reach out to support them."
+      },
+      "mentorship": {
+        "title": "🤝 Mentorship",
+        "content": "Your **Mentorship** section — schedule 1-on-1 sessions, track mentoring hours, and manage your mentees."
+      },
+      "internships": {
+        "title": "🏢 Opportunities",
+        "content": "Supervise **Opportunities** — review participant progress, assign tasks, and provide feedback on real projects."
+      },
+      "schedule": {
+        "title": "📅 Schedule",
+        "content": "Your **Schedule** — manage your availability, view upcoming sessions, and plan your teaching time."
+      },
+      "header": {
+        "title": "🔝 Top Header Bar",
+        "content": "The **top header** shows your student count, active courses, pending reviews, and gives you quick access to notifications and your profile."
+      },
+      "userMenu": {
+        "title": "👤 Profile Menu",
+        "content": "Your **profile menu** — access settings, switch back to the website, or log out. You can restart this tour anytime from here."
+      },
+      "ready": {
+        "title": "🎉 You're Ready!",
+        "content": "**You're all set!** 🚀 Start exploring your dashboard, check your students, and manage your courses. Need help? The chat bubble is always there. You can restart this tour from your profile menu."
+      }
     },
     "admin": {
       "title": "Admin Dashboard Tour",
-      "welcome": {"title": "👋 Welcome, Admin!", "content": "Welcome to the Bootskills Admin Dashboard! 🛠️ This tour will walk you through managing users, courses, payments, projects, and the platform operations."},
-      "sidebar": {"title": "📋 Sidebar Navigation", "content": "Your **sidebar** is the admin command center. Navigate Management, Projects, Content, Operations, and more from here."},
-      "dashboard": {"title": "📊 Dashboard", "content": "The **Dashboard** gives you key metrics — total users, students, courses, revenue, and platform activity at a glance."},
-      "users": {"title": "👥 Users", "content": "Manage all **Users** — view, edit, assign roles, track activity, and handle student/trainer accounts from one place."},
-      "courses": {"title": "📚 Courses", "content": "The **Courses** manager — create, edit, publish, and organize courses. Assign trainers, set pricing, and manage modules."},
-      "payments": {"title": "💳 Payments & Billing", "content": "The **Payments** section — view all transactions, track revenue, manage refunds, and monitor payment statuses."},
-      "internships": {"title": "🏢 Internships", "content": "Manage **Internship Programs** — create programs, track intern progress, and manage placements."},
-      "analytics": {"title": "📈 Analytics", "content": "**Analytics** — deep dive into platform metrics, student performance, course completion rates, and revenue trends."},
-      "header": {"title": "🔝 Top Header Bar", "content": "The **top header** shows key stats — total users, students, and courses. You also get notifications, theme toggle, and your profile menu here."},
-      "userMenu": {"title": "👤 Profile Menu", "content": "Your **profile menu** — access settings, go back to the website, or log out. You can restart this tour anytime from here."},
-      "ready": {"title": "🎉 You're Ready!", "content": "**You're all set!** 🚀 Start managing your platform from the Dashboard. The sidebar has everything you need. Replay this tour anytime from your profile menu."}
+      "welcome": {
+        "title": "👋 Welcome, Admin!",
+        "content": "Welcome to the Bootskills Admin Dashboard! 🛠️ This tour will walk you through managing users, courses, payments, projects, and the platform operations."
+      },
+      "sidebar": {
+        "title": "📋 Sidebar Navigation",
+        "content": "Your **sidebar** is the admin command center. Navigate Management, Projects, Content, Operations, and more from here."
+      },
+      "dashboard": {
+        "title": "📊 Dashboard",
+        "content": "The **Dashboard** gives you key metrics — total users, students, courses, revenue, and platform activity at a glance."
+      },
+      "users": {
+        "title": "👥 Users",
+        "content": "Manage all **Users** — view, edit, assign roles, track activity, and handle student/trainer accounts from one place."
+      },
+      "courses": {
+        "title": "📚 Courses",
+        "content": "The **Courses** manager — create, edit, publish, and organize courses. Assign trainers, set pricing, and manage modules."
+      },
+      "payments": {
+        "title": "💳 Payments & Billing",
+        "content": "The **Payments** section — view all transactions, track revenue, manage refunds, and monitor payment statuses."
+      },
+      "internships": {
+        "title": "🏢 Opportunities",
+        "content": "Manage **Opportunity Programs** — create programs, track participant progress, and manage placements."
+      },
+      "analytics": {
+        "title": "📈 Analytics",
+        "content": "**Analytics** — deep dive into platform metrics, student performance, course completion rates, and revenue trends."
+      },
+      "header": {
+        "title": "🔝 Top Header Bar",
+        "content": "The **top header** shows key stats — total users, students, and courses. You also get notifications, theme toggle, and your profile menu here."
+      },
+      "userMenu": {
+        "title": "👤 Profile Menu",
+        "content": "Your **profile menu** — access settings, go back to the website, or log out. You can restart this tour anytime from here."
+      },
+      "ready": {
+        "title": "🎉 You're Ready!",
+        "content": "**You're all set!** 🚀 Start managing your platform from the Dashboard. The sidebar has everything you need. Replay this tour anytime from your profile menu."
+      }
     },
     "superAdmin": {
       "title": "Super Admin Tour",
-      "welcome": {"title": "👋 Welcome, Super Admin!", "content": "Welcome to the Bootskills Super Admin Panel! 🔐 This comprehensive tour covers system configuration, user management, financial operations, and more."},
-      "sidebar": {"title": "📋 Sidebar Navigation", "content": "Your **sidebar** has everything — System management, Marketing, Analytics, User Map, and more. Each section has detailed sub-menus."},
-      "dashboard": {"title": "📊 Dashboard", "content": "The **Dashboard** gives you the big picture — total users, students, trainers, revenue, and platform health."},
-      "users": {"title": "👥 All Users", "content": "**All Users** — full control over every account. Filter, search, edit roles, and manage the entire user base."},
-      "config": {"title": "⚙️ Configuration", "content": "**Configuration** — set platform-wide settings, pricing, feature flags, and global preferences."},
-      "commissions": {"title": "💰 Commissions", "content": "**Commission Config** — set commission rates for trainers, referral bonuses, and payout structures."},
-      "disbursements": {"title": "💸 Disbursements", "content": "**Disbursements** — manage payouts to trainers and partners. View payment history and initiate transfers."},
-      "discountCodes": {"title": "🏷️ Discount Codes", "content": "**Discount Codes** — create and manage promotional codes, track usage analytics, and set discount campaigns."},
-      "refunds": {"title": "🔄 Refunds", "content": "**Refunds** — process student refund requests, review disputes, and manage the refund lifecycle."},
-      "header": {"title": "🔝 Top Header Bar", "content": "The **top header** shows real-time stats — total users, students, and trainers. Quick access to notifications and your profile."},
-      "userMenu": {"title": "👤 Profile Menu", "content": "Your **profile menu** — settings, back to website, or log out. Restart this tour anytime from here."},
-      "ready": {"title": "🎉 You're Ready!", "content": "**You're all set!** 🚀 You now know the key areas of the Super Admin panel. Start from the Dashboard and explore each section. Restart this tour anytime from your profile menu."}
+      "welcome": {
+        "title": "👋 Welcome, Super Admin!",
+        "content": "Welcome to the Bootskills Super Admin Panel! 🔐 This comprehensive tour covers system configuration, user management, financial operations, and more."
+      },
+      "sidebar": {
+        "title": "📋 Sidebar Navigation",
+        "content": "Your **sidebar** has everything — System management, Marketing, Analytics, User Map, and more. Each section has detailed sub-menus."
+      },
+      "dashboard": {
+        "title": "📊 Dashboard",
+        "content": "The **Dashboard** gives you the big picture — total users, students, trainers, revenue, and platform health."
+      },
+      "users": {
+        "title": "👥 All Users",
+        "content": "**All Users** — full control over every account. Filter, search, edit roles, and manage the entire user base."
+      },
+      "config": {
+        "title": "⚙️ Configuration",
+        "content": "**Configuration** — set platform-wide settings, pricing, feature flags, and global preferences."
+      },
+      "commissions": {
+        "title": "💰 Commissions",
+        "content": "**Commission Config** — set commission rates for trainers, referral bonuses, and payout structures."
+      },
+      "disbursements": {
+        "title": "💸 Disbursements",
+        "content": "**Disbursements** — manage payouts to trainers and partners. View payment history and initiate transfers."
+      },
+      "discountCodes": {
+        "title": "🏷️ Discount Codes",
+        "content": "**Discount Codes** — create and manage promotional codes, track usage analytics, and set discount campaigns."
+      },
+      "refunds": {
+        "title": "🔄 Refunds",
+        "content": "**Refunds** — process student refund requests, review disputes, and manage the refund lifecycle."
+      },
+      "header": {
+        "title": "🔝 Top Header Bar",
+        "content": "The **top header** shows real-time stats — total users, students, and trainers. Quick access to notifications and your profile."
+      },
+      "userMenu": {
+        "title": "👤 Profile Menu",
+        "content": "Your **profile menu** — settings, back to website, or log out. Restart this tour anytime from here."
+      },
+      "ready": {
+        "title": "🎉 You're Ready!",
+        "content": "**You're all set!** 🚀 You now know the key areas of the Super Admin panel. Start from the Dashboard and explore each section. Restart this tour anytime from your profile menu."
+      }
     }
   },
   "guide": {
     "student": {
-      "overview": "The Student Portal is your learning command center. Here you'll access courses, track progress, manage payments, apply for internships, and earn certificates. Everything you need to go from beginner to job-ready professional.",
+      "overview": "The Student Portal is your learning command center. Here you'll access courses, track progress, manage payments, apply for opportunities, and earn certificates. Everything you need to go from beginner to job-ready professional.",
       "sections": {
         "coreNav": "🎯 Core Navigation",
         "academics": "📚 Academics & Learning",
@@ -690,7 +831,7 @@
       }
     },
     "admin": {
-      "overview": "The Admin Dashboard is your platform management center. Here you control users, courses, payments, projects, internships, and platform analytics. Everything runs through here.",
+      "overview": "The Admin Dashboard is your platform management center. Here you control users, courses, payments, projects, opportunities, and platform analytics. Everything runs through here.",
       "sections": {
         "coreNav": "🎯 Overview & Navigation",
         "management": "👥 Management",
@@ -708,5 +849,17 @@
         "marketing": "📢 Communication & Marketing"
       }
     }
+  },
+  "suspendedAccount": {
+    "title": "Your Account Has Been Suspended",
+    "message": "We're sorry, but your account has been suspended. You will not be able to sign in until this is resolved.",
+    "accountLabel": "Account",
+    "whatNow": "What happens now?",
+    "whatNowDesc": "Your access has been restricted. If you believe this is a mistake, please contact our support team and we will review your account.",
+    "contactSupport": "Contact Support",
+    "contactInfo": "Support Team",
+    "contactPage": "Visit Contact Page",
+    "tryAgain": "Try Signing In Again",
+    "backHome": "Back to Home"
   }
 }

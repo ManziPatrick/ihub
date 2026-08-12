@@ -246,7 +246,7 @@ export default function TrainerDashboard() {
         >
           <div>
             <h1 className="font-heading text-2xl lg:text-3xl font-medium text-foreground">
-              {t("portal.welcomeTrainer") || "Welcome, " + user?.fullName?.split(" ")[0] + "!"}
+              {t("portal.welcomeTrainer", { name: user?.fullName?.split(" ")[0] || "Trainer" }) || "Welcome, " + user?.fullName?.split(" ")[0] + "!"}
             </h1>
             <div className="flex items-center gap-2 mt-1">
               <span className="relative flex h-2 w-2">

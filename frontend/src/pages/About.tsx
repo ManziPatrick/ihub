@@ -121,7 +121,7 @@ const About = () => {
                 Empowering Africa through Practical Skills & Excellence
               </h1>
               <p className="text-card-foreground/80 text-lg leading-relaxed">
-                Bootskills connects learners with career-ready courses, internships, and project-based experiences across technology, business, and creative industries.
+                Bootskills connects learners with career-ready courses, opportunities, and project-based experiences across technology, business, and creative industries.
               </p>
             </motion.div>
           </div>
@@ -198,7 +198,7 @@ const About = () => {
               </p>
               <p className="text-card-foreground/80 text-lg leading-relaxed mt-4">
                 He was later joined by <strong>KALISA Jonathan</strong>, Co-Founder, who brought operational and technical
-                leadership to help scale training programs, internships, and software delivery.
+                leadership to help scale training programs, opportunities, and software delivery.
               </p>
             </div>
           </div>

@@ -204,7 +204,7 @@ export function ViewReceiptDialog({
                               <h5 className="font-heading font-bold text-sm text-foreground leading-tight">
                                 {internship.title}
                               </h5>
-                              <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest">Internship Fee</p>
+                              <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest">Opportunity Fee</p>
                             </div>
                             <span className="text-xs font-bold text-foreground">
                               {internship.price?.toLocaleString() || '---'} RWF

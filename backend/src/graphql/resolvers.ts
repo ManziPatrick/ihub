@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { requirePermission } from './permissions';
 import { User } from '../models/User';
 import Notification from '../models/Notification';
 import { Resource } from '../models/Resource';
@@ -213,7 +214,7 @@ import { meetingAttendanceResolvers } from './meeting-attendance-resolvers';
 import { errorReportResolvers } from './error-reporting-resolvers';
 import { backupResolvers } from './backup-resolvers';
 import { eventApplicationResolvers } from './event-application-resolvers';
-import { trainerResolvers } from './trainer-resolvers';
+import { trainerResolvers } from './trainer-resolvers';import { testimonialResolvers } from './testimonial-resolvers';
 
 export const resolvers = {
   Upload: GraphQLUpload,
@@ -227,8 +228,7 @@ export const resolvers = {
     ...applicationPhaseResolvers.Query,
     ...projectTaskResolvers.Query,    ...locationResolvers.Query,
     ...commissionResolvers.Query,    ...disbursementResolvers.Query,    ...scholarshipResolvers.Query,    ...userReportResolvers.Query,    ...refundResolvers.Query,
-    ...meetingAttendanceResolvers.Query,
-    ...errorReportResolvers.Query,
+    ...meetingAttendanceResolvers.Query,    ...errorReportResolvers.Query,    ...testimonialResolvers.Query,
     ...backupResolvers.Query,
     ...eventApplicationResolvers.Query,
     ...trainerResolvers.Query,
@@ -963,9 +963,96 @@ export const resolvers = {
       return await User.find({ role: { $in: ['trainer', 'admin', 'super_admin'] }, isDeleted: { $ne: true } });
     },
 
+    // Highest-performing students by XP (optionally scoped to one course).
+    // Powers the "Top Students" leaderboards on admin/analytics pages.
+    getTopStudents: async (_: any, { courseId, limit }: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
+        throw new Error('Unauthorized');
+      }
+      const filter: any = { role: 'student', isDeleted: { $ne: true } };
+      // Guard against malformed courseId — an uncastable string would throw a
+      // Mongoose CastError (500) instead of returning an empty list.
+      if (courseId && mongoose.Types.ObjectId.isValid(courseId)) {
+        filter.enrolledCourses = courseId;
+      }
+      // Populate so the User.enrolledCourses sub-resolver short-circuits
+      // instead of issuing one extra query per student (N+1).
+      return await User.find(filter)
+        .populate('enrolledCourses')
+        .sort({ xp: -1, level: -1 })
+        .limit(Math.min(Math.max(Number(limit) || 10, 1), 100));
+    },
+
     getAvailableAdmins: async (_: any, __: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
       return await User.find({ role: { $in: ['admin', 'super_admin'] }, isDeleted: { $ne: true } });
+    },
+
+    // CSV of platform analytics — powers the "Export CSV Analytics" button on admin pages.
+    // Returns a compact metric/value CSV so it can be opened in Excel/Sheets.
+    getAnalyticsExport: async (_: any, __: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      if (context.user.role === 'admin') requirePermission(context, 'analytics');
+      const [
+        totalUsers,
+        students,
+        trainers,
+        admins,
+        totalCourses,
+        publishedCourses,
+        enrollmentAgg,
+        paymentAgg,
+        internshipPaymentAgg,
+        totalPrograms,
+        internships,
+      ] = await Promise.all([
+        User.countDocuments({ isDeleted: { $ne: true } } as any),
+        User.countDocuments({ role: 'student', isDeleted: { $ne: true } } as any),
+        User.countDocuments({ role: 'trainer', isDeleted: { $ne: true } } as any),
+        User.countDocuments({ role: { $in: ['admin', 'super_admin'] }, isDeleted: { $ne: true } } as any),
+        Course.countDocuments({ isDeleted: { $ne: true } } as any),
+        Course.countDocuments({ isDeleted: { $ne: true }, status: { $regex: new RegExp('^published$', 'i') } } as any),
+        Course.aggregate([
+          { $project: { size: { $size: { $ifNull: ['$studentsEnrolled', []] } } } },
+          { $group: { _id: null, total: { $sum: '$size' } } },
+        ]),
+        // Same revenue definition as the `analytics` resolver: standard payments
+        // (completed/paid/successful) + internship payments (paid).
+        Payment.aggregate([
+          { $match: { status: { $in: ['completed', 'paid', 'successful'] } } },
+          { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } },
+        ]),
+        InternshipPayment.aggregate([
+          { $match: { status: 'paid', isDeleted: false } },
+          { $group: { _id: null, total: { $sum: '$amount' } } },
+        ]),
+        InternshipProgram.countDocuments({ isDeleted: false } as any),
+        Internship.countDocuments(),
+      ]);
+
+      const totalRevenue = (paymentAgg[0]?.total || 0) + (internshipPaymentAgg[0]?.total || 0);
+
+      const rows: string[][] = [
+        ['Metric', 'Value'],
+        ['Total Users', String(totalUsers)],
+        ['Students', String(students)],
+        ['Trainers', String(trainers)],
+        ['Admins', String(admins)],
+        ['Total Courses', String(totalCourses)],
+        ['Published Courses', String(publishedCourses)],
+        ['Total Enrollments', String(enrollmentAgg[0]?.total || 0)],
+        ['Completed Payments', String(paymentAgg[0]?.count || 0)],
+        ['Total Revenue (courses + internships)', String(totalRevenue)],
+        ['Internship Programs', String(totalPrograms)],
+        ['Active Internships', String(internships)],
+        ['Generated At', new Date().toISOString()],
+      ];
+
+      return rows
+        .map((r) => r.map((v) => `"${(v || '').toString().replace(/"/g, '""')}"`).join(','))
+        .join('\n');
     },
 
     getRegisteredCompanies: async (_: any, __: any, context: any) => {
@@ -1133,10 +1220,16 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
+      // NOTE: no `users` permission gate here on purpose — this shared list is
+      // also consumed by course/project pages (instructor pickers, student
+      // lists). The dedicated User Management pages enforce the permission at
+      // the route level (ProtectedRoute requiredPermission="users").
 
       const query: any = { isDeleted: { $ne: true } };
 
-      if (context.user.role === 'admin' || context.user.role === 'trainer') {
+      // Trainers stay scoped to their own students/instructors; admins and
+      // super admins see every platform user.
+      if (context.user.role === 'trainer') {
         const courses = await Course.find({
           $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
         });
@@ -1175,14 +1268,12 @@ export const resolvers = {
         } else {
           query.$or = orConditions;
         }
-      } else if (context.user.role === 'super_admin') {
-        // Super admin sees all users regardless of createdBy filter
+      } else {
+        // Admin / super admin sees all users by default, but honor an
+        // explicit createdBy filter when the UI asks for it (e.g. the
+        // "Filter by creator" dropdown on the Super Admin Users page).
         if (role) query.role = role;
-      } else if (createdBy) {
-        query.createdBy = createdBy;
-        if (role) query.role = role;
-      } else if (role) {
-        query.role = role;
+        if (createdBy) query.createdBy = createdBy;
       }
 
       const skip = (page - 1) * limit;
@@ -1423,21 +1514,42 @@ export const resolvers = {
 
       let items;
 
-      // For popular and trending, fetch all matching courses and sort in-memory
-      // Uses studentsEnrolledCount (pre-computed) instead of expensive populate of all students
-      if (sortBy === 'popular' || sortBy === 'trending') {
+      // For popular, trending, and createdBy, fetch all matching courses and
+      // sort in-memory (the sort key is a related doc, not a simple field).
+      // Uses studentsEnrolledCount (pre-computed) instead of expensive populate of all students.
+      if (sortBy === 'popular' || sortBy === 'trending' || sortBy === 'createdBy') {
         const allItems = await Course.find(query)
           .populate('instructor')
+          .populate('createdBy')
           .sort({ createdAt: -1 })
           .lean({ virtuals: true });
 
         if (sortBy === 'popular') {
-          allItems.sort((a: any, b: any) => (b.studentsEnrolledCount || 0) - (a.studentsEnrolledCount || 0));
+          // Prefer the stored count, but fall back to the real array length so
+          // legacy courses (created before the count field existed) sort correctly.
+          const enrollmentCount = (c: any) =>
+            Number.isFinite(c.studentsEnrolledCount)
+              ? c.studentsEnrolledCount
+              : (c.studentsEnrolled?.length || 0);
+          allItems.sort((a: any, b: any) => enrollmentCount(b) - enrollmentCount(a));
         } else if (sortBy === 'trending') {
           allItems.sort((a: any, b: any) => {
             const scoreA = trendingScores.get((a as any)._id.toString()) || 0;
             const scoreB = trendingScores.get((b as any)._id.toString()) || 0;
             return scoreB - scoreA;
+          });
+        } else if (sortBy === 'createdBy') {
+          // Sort alphabetically by the creator's name, courses without a
+          // known creator fall to the bottom.
+          const creatorName = (c: any) =>
+            (c.createdBy?.fullName || c.createdBy?.username || '').toString().toLowerCase();
+          allItems.sort((a: any, b: any) => {
+            const nameA = creatorName(a);
+            const nameB = creatorName(b);
+            if (!nameA && !nameB) return 0;
+            if (!nameA) return 1;
+            if (!nameB) return -1;
+            return nameA.localeCompare(nameB);
           });
         }
 
@@ -1693,6 +1805,21 @@ export const resolvers = {
       };
     },
     me: async (_: any, __: any, context: any) => {
+      // A blocked account holds a valid JWT but the middleware has flagged it:
+      // surface a precise error code so the frontend can show the right screen.
+      if (context.accountBlockedReason) {
+        const reason: string = context.accountBlockedReason;
+        const code = reason === 'suspended' ? 'ACCOUNT_SUSPENDED' : reason === 'deactivated' ? 'ACCOUNT_DEACTIVATED' : 'ACCOUNT_BLOCKED';
+        const messages: Record<string, string> = {
+          suspended: 'Account is suspended. Contact support.',
+          deactivated: 'Account is deactivated.',
+          deleted: 'Account is no longer available.',
+        };
+        throw new GraphQLError(
+          messages[reason] || 'Account access has been restricted.',
+          { extensions: { code } }
+        );
+      }
       if (!context.user) return null;
       return await User.findById(context.user.id)
         .populate({ path: 'enrolledCourses', select: 'id title thumbnail price discountPrice level category school modulesCount totalLessonsCount status isFeatured' })
@@ -1862,6 +1989,7 @@ export const resolvers = {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
+      if (context.user.role === 'admin') requirePermission(context, 'payments');
 
       const isSuperAdmin = context.user.role === 'super_admin';
       let adminCourseIds: any[] = [];
@@ -2326,6 +2454,7 @@ export const resolvers = {
 
     analytics: async (_: any, { createdBy }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) throw new Error('Not authorized');
+      if (context.user.role === 'admin') requirePermission(context, 'analytics');
 
       let targetCreatedBy = context.user.role !== 'super_admin' ? context.user.id : createdBy;
       // Use the same broader user scope as the `users` resolver for consistency
@@ -2731,6 +2860,7 @@ export const resolvers = {
         const searchRegex = new RegExp(q, 'i');
         query.$or = [
           { title: searchRegex },
+          { organization: searchRegex },
           { description: searchRegex },
           { eligibility: searchRegex },
           { rules: searchRegex },
@@ -2778,9 +2908,10 @@ export const resolvers = {
         }
       }
 
-      // Server-side school filter (searches description as proxy, since InternshipProgram has no dedicated school field)
+      // Server-side school/organization filter (matches the dedicated organization field, with description as fallback)
       if (school && school !== 'all') {
-        const schoolCondition = { description: new RegExp(school.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') };
+        const schoolRegex = new RegExp(school.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        const schoolCondition = { $or: [{ organization: schoolRegex }, { description: schoolRegex }] };
         if (query.$and) {
           query.$and.push(schoolCondition);
         } else if (query.$or) {
@@ -4778,6 +4909,7 @@ export const resolvers = {
       if (context.user.role !== 'trainer' && context.user.role !== 'super_admin' && context.user.role !== 'admin') {
         throw new Error('Not authorized');
       }
+      if (context.user.role === 'admin') requirePermission(context, 'courses');
 
       // Phone validation: if publishing, instructor must have a valid phone number for commission payouts
       if ((args.status || 'published') === 'published') {
@@ -4815,6 +4947,7 @@ export const resolvers = {
 
     updateCourse: async (_: any, { id, instructorId, ...args }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
+      if (context.user.role === 'admin') requirePermission(context, 'courses');
 
       if (!id || id === "") throw new Error("Course ID is required");
       const course = await Course.findById(id);
@@ -5077,6 +5210,7 @@ export const resolvers = {
 
     deleteCourse: async (_: any, { id }: { id: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
+      if (context.user.role === 'admin') requirePermission(context, 'courses');
 
       if (!id || id === "") throw new Error("Course ID is required");
       const course = await Course.findById(id);
@@ -5399,6 +5533,7 @@ export const resolvers = {
       if (!context.user || (context.user.role !== 'super_admin' && context.user.role !== 'admin')) {
         throw new Error('Not authorized');
       }
+      if (context.user.role === 'admin') requirePermission(context, 'users');
 
       if (context.user.role === 'admin' && (args.role === 'admin' || args.role === 'super_admin')) {
         throw new Error('Admins cannot create admin or super_admin users');
@@ -5458,12 +5593,14 @@ export const resolvers = {
       if (!isSelf && !isAdmin) {
         throw new Error('Not authorized');
       }
+      if (!isSelf && context.user.role === 'admin') requirePermission(context, 'users');
 
       const user = await User.findById(id);
       if (!user) throw new Error('User not found');
 
       if (context.user.role === 'admin') {
         if (user.role === 'super_admin') throw new Error('Admins cannot modify super admin users');
+        if (user.role === 'admin' && !isSelf) throw new Error('Admins cannot modify other admin accounts');
         if (args.role === 'super_admin' || args.role === 'admin') {
           throw new Error('Admins cannot assign admin or super_admin roles');
         }
@@ -5696,7 +5833,9 @@ export const resolvers = {
         email,
         password: hashedPassword,
         fullName: fullName || username,
-        role: role || 'student',
+        // Public self-registration always creates students.
+        // Trainer accounts can ONLY be created by an admin or super_admin via createUser.
+        role: 'student',
       });
       await user.save();
 
@@ -5737,12 +5876,12 @@ export const resolvers = {
       // Check Account Status
       if ((user as any).status === 'suspended') {
         throw new GraphQLError('Account is suspended. Contact support.', {
-          extensions: { code: 'FORBIDDEN' }
+          extensions: { code: 'ACCOUNT_SUSPENDED' }
         });
       }
       if ((user as any).status === 'deactivated') {
         throw new GraphQLError('Account is deactivated.', {
-          extensions: { code: 'FORBIDDEN' }
+          extensions: { code: 'ACCOUNT_DEACTIVATED' }
         });
       }
       if ((user as any).isDeleted) {
@@ -5796,12 +5935,12 @@ export const resolvers = {
             sendSuspiciousLoginAlert
           );
 
-          // Only overwrite if not locationShared
-          if (!(user as any).locationShared) {
+          // Always seed IP-based coordinates when the user has none yet, so
+          // even users who disabled GPS on their phone/browser are tracked.
+          if ((user as any).latitude == null || (user as any).longitude == null) {
             (user as any).latitude = ipLocation.latitude;
             (user as any).longitude = ipLocation.longitude;
             (user as any).locationUpdatedAt = new Date();
-            (user as any).locationShared = false; // IP-based, not user-confirmed
           }
         }
       } catch (err) {
@@ -5871,7 +6010,11 @@ export const resolvers = {
         }
 
         // Check Account Status
-        if ((dbUser as any).status === 'suspended') throw new Error('Account is suspended. Contact support.');
+        if ((dbUser as any).status === 'suspended') {
+          throw new GraphQLError('Account is suspended. Contact support.', {
+            extensions: { code: 'ACCOUNT_SUSPENDED' }
+          });
+        }
         if ((dbUser as any).isDeleted) throw new Error('User not found');
 
         // Update Presence
@@ -6596,7 +6739,7 @@ export const resolvers = {
       // Students must specify a context (course or internship), not general
       const contextType = args.contextType || 'general';
       if (context.user.role === 'student' && contextType === 'general') {
-        throw new Error('Students must select a course or internship when booking a session');
+        throw new Error('Students must select a course or program when booking a session');
       }
       // Only super_admin can create general bookings
       if (contextType === 'general' && context.user.role !== 'super_admin') {
@@ -6792,8 +6935,17 @@ export const resolvers = {
           throw new Error('Not authorized to create internship for another user');
         }
       }
+      // Payment is optional for admins placing students on the board directly.
+      const payment = args.payment || {
+        amount: 0,
+        currency: 'RWF',
+        status: 'pending',
+        isPaidProgram: false,
+      };
+
       const internship = new Internship({
         ...args,
+        payment,
         organization: args.organization || 'Ihub Academy',
         mentors: mentorIds || (args.mentorId ? [args.mentorId] : []),
         status: 'eligible',
@@ -7917,6 +8069,7 @@ export const resolvers = {
 
     createInternshipProgram: async (_: any, args: any, context: any) => {
       if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (context.user?.role === 'admin') requirePermission(context, 'internships');
       const program = new InternshipProgram({ ...args, createdBy: context.user.id });
       await program.save();
       await logActivity(context.user.id, 'CREATE', 'InternshipProgram', program.id, `Created program: ${program.title}`);
@@ -7925,6 +8078,7 @@ export const resolvers = {
 
     updateInternshipProgram: async (_: any, { id, ...args }: any, context: any) => {
       if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (context.user?.role === 'admin') requirePermission(context, 'internships');
 
       // Ownership check: only the creator or super_admin can update
       if (context.user.role !== 'super_admin') {
@@ -7951,6 +8105,7 @@ export const resolvers = {
 
     deleteInternshipProgram: async (_: any, { id }: { id: string }, context: any) => {
       if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (context.user?.role === 'admin') requirePermission(context, 'internships');
       const program = await InternshipProgram.findById(id);
       if (!program) throw new Error('Program not found');
 
@@ -8085,7 +8240,7 @@ export const resolvers = {
         applicationId: id,
         message: status === 'approved'
           ? `Your application has been approved! Please log in to complete your enrollment payment.`
-          : `Your internship application status has been updated to: ${status}`
+          : `Your program application status has been updated to: ${status}`
       });
 
       // Notify via Email
@@ -8230,7 +8385,7 @@ export const resolvers = {
         type: 'TEAM_ASSIGNMENT',
         title: 'New Team Assignment',
         teamId,
-        message: `You have been assigned to a new internship team.`,
+        message: `You have been assigned to a new program team.`,
         link: '/portal/student/internship'
       });
 
@@ -9152,7 +9307,7 @@ export const resolvers = {
         currency: payment.currency,
         message: args.paymentMethod === 'manual_transfer'
           ? `A student submitted payment proof for ${payment.amount} ${payment.currency}`
-          : `New internship payment received — enrollment confirmed`
+          : `New program payment received — enrollment confirmed`
       });
 
       // Notify student about proof submission (manual transfer)
@@ -9185,7 +9340,7 @@ export const resolvers = {
       sendNotification(payment.userId.toString(), {
         type: 'PAYMENT_WAIVED',
         title: 'Payment Waived',
-        message: `Your internship payment has been waived.You can now proceed with the program.`
+        message: `Your program payment has been waived.You can now proceed with the program.`
       });
 
       return payment;
@@ -9210,7 +9365,7 @@ export const resolvers = {
         title: 'Payment Refunded',
         amount: payment.amount,
         currency: payment.currency,
-        message: `Your internship payment has been refunded.`
+        message: `Your program payment has been refunded.`
       });
 
       return payment;
@@ -9537,7 +9692,7 @@ export const resolvers = {
     },
     ...applicationPhaseResolvers.Mutation,
     ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,
-    ...eventApplicationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,    ...trainerResolvers.Mutation,
+    ...eventApplicationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,    ...trainerResolvers.Mutation,    ...testimonialResolvers.Mutation,
 
     assignDeveloperToProject: async (_: any, { projectId, developerId, role, checklistTasks }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {

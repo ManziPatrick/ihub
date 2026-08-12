@@ -16,7 +16,8 @@ export const locationResolvers = {
             longitude: result.longitude,
             location: [result.city, result.country].filter(Boolean).join(', '),
             locationUpdatedAt: new Date(),
-            locationShared: false, // IP-detected, not user-confirmed
+            // Tracking is on by default — IP-based location counts as tracked
+            locationShared: true,
           });
         } catch (saveErr) {
           console.debug('[getMyIpGeolocation] Failed to save location:', saveErr);
@@ -34,20 +35,28 @@ export const locationResolvers = {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
-      // Return ALL users (not just those with coordinates)
+      // Return ALL platform users (not just those with coordinates) — both
+      // admins and super admins see every user on the map.
       const filter: any = {
         isDeleted: { $ne: true },
       };
       if (role) filter.role = role;
-      const users = await User.find(filter).select(
-        'id username email role fullName avatar phone location latitude longitude locationUpdatedAt locationShared locationDenied title'
-      );
+
+      const users = await User.find(filter)
+        .select(
+          'id username email role fullName avatar phone location latitude longitude locationUpdatedAt locationShared locationDenied title isOnline lastActive'
+        )
+        .populate('enrolledCourses', 'title');
       return users.map((u: any) => ({
         id: u._id.toString(),
-        username: u.username,
-        email: u.email,
-        role: u.role,
-        fullName: u.fullName,
+        // Some legacy/Google-created users have a null username or email —
+        // the User GraphQL type declares them non-nullable, so coerce to a
+        // safe fallback instead of crashing the whole map with
+        // "Cannot return null for non-nullable field User.username".
+        username: u.username || u.fullName || u.email || 'Unknown User',
+        email: u.email || '',
+        role: u.role || 'student',
+        fullName: u.fullName || u.username || '',
         avatar: u.avatar,
         phone: u.phone,
         location: u.location,
@@ -57,6 +66,13 @@ export const locationResolvers = {
         locationShared: u.locationShared ?? false,
         locationDenied: u.locationDenied ?? false,
         title: u.title,
+        isOnline: u.isOnline ?? false,
+        lastActive: u.lastActive?.toISOString(),
+        // Track which course(s) each user is taking
+        enrolledCourses: (u.enrolledCourses || []).map((c: any) => ({
+          id: (c._id || c.id)?.toString(),
+          title: c.title,
+        })),
       }));
     },
   },
@@ -73,7 +89,17 @@ export const locationResolvers = {
         },
         { new: true }
       );
-      return user;
+      if (!user) throw new Error('User not found');
+      return {
+        id: user._id.toString(),
+        username: user.username || user.fullName || user.email || 'Unknown User',
+        email: user.email || '',
+        role: user.role || 'student',
+        latitude: user.latitude ?? null,
+        longitude: user.longitude ?? null,
+        locationUpdatedAt: user.locationUpdatedAt?.toISOString() || null,
+        locationShared: user.locationShared ?? false,
+      };
     },
     adminUpdateUserLocation: async (_: any, { userId, latitude, longitude }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
@@ -89,7 +115,17 @@ export const locationResolvers = {
         },
         { new: true }
       );
-      return user;
+      if (!user) throw new Error('User not found');
+      return {
+        id: user._id.toString(),
+        username: user.username || user.fullName || user.email || 'Unknown User',
+        email: user.email || '',
+        role: user.role || 'student',
+        latitude: user.latitude ?? null,
+        longitude: user.longitude ?? null,
+        locationUpdatedAt: user.locationUpdatedAt?.toISOString() || null,
+        locationShared: user.locationShared ?? false,
+      };
     },
 
     /** Admin can mark a user as having denied location sharing */

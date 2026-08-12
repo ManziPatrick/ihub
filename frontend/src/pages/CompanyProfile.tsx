@@ -124,7 +124,7 @@ const servicesForOrganizations = [
     company: "FinanceHub Ltd"
   },
   {
-    quote: "From training to internship to full-time employment — Bootskills opened doors I never knew existed.",
+    quote: "From training to opportunity to full-time employment — Bootskills opened doors I never knew existed.",
     author: "Jean Paul N.",
     role: "IoT Engineer",
     company: "SmartFarm Solutions"
@@ -223,7 +223,7 @@ const CompanyProfile = () => {
     "name": "Bootskills",
     "url": "https://bootskills.com",
     "logo": "https://bootskills.com/logo.svg",
-    "description": "Your all-in-one learning hub — courses across every field. Projects. Internships.",
+    "description": "Your all-in-one learning hub — courses across every field. Projects. Opportunities.",
     "foundingDate": "2023",
     "address": {
       "@type": "PostalAddress",
@@ -237,9 +237,9 @@ const CompanyProfile = () => {
     <div className="min-h-screen bg-background">
       <Helmet>
         <title>Bootskills | Company Profile — All-in-One Learning Hub</title>
-        <meta name="description" content="Bootskills is your all-in-one learning hub serving Africa — offering courses across every field, online internships, client project management, and digital contract solutions. Learn from anywhere." />
+        <meta name="description" content="Bootskills is your all-in-one learning hub serving Africa — offering courses across every field, online opportunities, client project management, and digital contract solutions. Learn from anywhere." />
         <meta property="og:title" content="Bootskills | Company Profile — All-in-One Learning Hub" />
-        <meta property="og:description" content="Courses across every field. Online internships. Client project management. Serving urban and rural learners across Africa." />
+        <meta property="og:description" content="Courses across every field. Online opportunities. Client project management. Serving urban and rural learners across Africa." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://bootskills.com/company-profile" />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
@@ -307,7 +307,7 @@ const CompanyProfile = () => {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="text-muted-foreground text-lg lg:text-xl max-w-2xl mx-auto mb-8 leading-relaxed"
               >
-                AI-powered courses across every field. Online internships. Client project management.
+                AI-powered courses across every field. Online opportunities. Client project management.
                 <br />
                 <span className="text-foreground/80 font-medium">Serving learners in villages, rural areas, and cities — wherever there's internet.</span>
                 <br />
@@ -404,7 +404,7 @@ const CompanyProfile = () => {
                   </p>
                   <p className="text-base lg:text-lg">
                     He was later joined by <strong className="text-foreground">KALISA Jonathan</strong>, Co-Founder,
-                    who brought operational and technical leadership to scale training programs, internships, and software
+                    who brought operational and technical leadership to scale training programs, opportunities, and software
                     delivery across East Africa.
                   </p>
                   <div className="pt-4 flex items-center gap-3 text-accent font-medium">
@@ -487,7 +487,7 @@ const CompanyProfile = () => {
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {[
                 { icon: GraduationCap, title: "Training & Courses", description: "Practical, market-driven courses across every field — from tech and business to healthcare and creative arts.", color: "from-blue-500/20 to-blue-600/10" },
-                { icon: Briefcase, title: "Programs & Careers", description: "Structured online and in-person internships with real projects, mentorship, and career coaching.", color: "from-emerald-500/20 to-emerald-600/10" },
+                { icon: Briefcase, title: "Programs & Careers", description: "Structured online and in-person opportunities with real projects, mentorship, and career coaching.", color: "from-emerald-500/20 to-emerald-600/10" },
                 { icon: Laptop, title: "Tech & AI Solutions", description: "Custom software, AI, and IoT solutions for startups, enterprises, and government organizations.", color: "from-purple-500/20 to-purple-600/10" },
                 { icon: FileText, title: "Project & Contract Management", description: "End-to-end project lifecycle management with digital contract scanning and secure document storage.", color: "from-amber-500/20 to-amber-600/10" },
               ].map((pillar, index) => (
@@ -509,7 +509,7 @@ const CompanyProfile = () => {
         </section>
 
         {/* ═══════════════════════════════════════════════════════════════════ */}
-        {/* FOR INDIVIDUALS — TRAINING & INTERNSHIPS */}
+        {/* FOR INDIVIDUALS — TRAINING & OPPORTUNITIES */}
         {/* ═══════════════════════════════════════════════════════════════════ */}
         <section className="py-16 lg:py-24 bg-card">
           <div className="container mx-auto px-4 lg:px-8">

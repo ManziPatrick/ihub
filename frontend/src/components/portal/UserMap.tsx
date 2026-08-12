@@ -87,6 +87,18 @@ function FitBounds({ users }: { users: Array<{ latitude: number; longitude: numb
   return null;
 }
 
+/* ─── Fly the map to a specific user (e.g. selected from the table) ─── */
+
+function FlyToUser({ user }: { user: { latitude: number; longitude: number } | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (user && user.latitude != null && user.longitude != null) {
+      map.flyTo([user.latitude, user.longitude], Math.max(map.getZoom(), 13), { duration: 0.9 });
+    }
+  }, [map, user]);
+  return null;
+}
+
 /* ─── Types ─── */
 
 export interface UserLocation {
@@ -104,6 +116,9 @@ export interface UserLocation {
   locationShared: boolean;
   locationDenied?: boolean;
   title?: string;
+  isOnline?: boolean;
+  lastActive?: string;
+  enrolledCourses?: { id?: string; title?: string }[];
 }
 
 interface UserMapProps {
@@ -123,6 +138,8 @@ interface UserMapProps {
   onMapClick?: (lat: number, lng: number) => void;
   /** If set, renders a temporary marker at this position (for fix-location preview) */
   pendingMarker?: [number, number] | null;
+  /** When set, the map flies to this user's marker (e.g. clicked from the users table) */
+  focusUser?: { id: string; latitude: number; longitude: number } | null;
 }
 
 /* ─── Component ─── */
@@ -165,6 +182,7 @@ export function UserMap({
   editMode = false,
   onMapClick,
   pendingMarker,
+  focusUser,
 }: UserMapProps) {
   const { toast } = useToast();
   const [maximized, setMaximized] = useState(false);
@@ -429,6 +447,7 @@ export function UserMap({
           worldCopyJump={true}
         >
           <FitBounds users={usersWithLocation} />
+          <FlyToUser user={focusUser} />
           {editMode && <MapClickHandler onMapClick={onMapClick} />}
 
           <TileLayer
@@ -472,6 +491,24 @@ export function UserMap({
                       </div>
                     </div>
 
+                    {/* Online + course info */}
+                    {u.enrolledCourses && u.enrolledCourses.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {(u.enrolledCourses || []).slice(0, 3).map((c) => (
+                          <span
+                            key={c.id || c.title}
+                            className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 truncate max-w-[180px]"
+                            title={c.title}
+                          >
+                            {c.title}
+                          </span>
+                        ))}
+                        {(u.enrolledCourses?.length || 0) > 3 && (
+                          <span className="text-[9px] text-muted-foreground">+{(u.enrolledCourses?.length || 0) - 3} more</span>
+                        )}
+                      </div>
+                    )}
+
                     {/* Role badge + place name */}
                     <div className="flex flex-col gap-2 mb-3">
                       <div className="flex flex-wrap gap-1.5">
@@ -498,6 +535,14 @@ export function UserMap({
                         </div>
                       )}
                     </div>
+
+                    {/* Online status */}
+                    {u.isOnline && (
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-[10px] font-bold text-green-500 uppercase tracking-wider">Online now</span>
+                      </div>
+                    )}
 
                     {/* Location source badge */}
                     <div className="flex flex-wrap items-center gap-1.5 mb-3">

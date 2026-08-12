@@ -81,6 +81,7 @@ export const GET_USERS = gql`
         role
         permissions
         school
+        status
         createdAt
         isExternal
         isDeleted
@@ -730,6 +731,8 @@ export const GET_ME = gql`
       username
       email
       role
+      permissions
+      status
       fullName
       avatar
       title
@@ -1625,6 +1628,8 @@ export const GET_ALL_INTERNSHIPS = gql`
         user {
           id
           username
+          fullName
+          avatar
         }
         mentor {
           id
@@ -1636,6 +1641,11 @@ export const GET_ALL_INTERNSHIPS = gql`
         }
         progress
         currentStage
+        sprintReviews {
+          week
+          grade
+          feedback
+        }
         tasks {
           id
           title
@@ -1724,6 +1734,8 @@ export const GET_INTERNSHIP_PROGRAMS = gql`
       items {
         id
         title
+        organization
+        organizationLogo
         description
         duration
         startDate
@@ -1751,6 +1763,8 @@ export const GET_INTERNSHIP_PROGRAM = gql`
     internshipProgram(id: $id) {
       id
       title
+      organization
+      organizationLogo
       description
       duration
       startDate
@@ -2625,6 +2639,8 @@ export const GET_INTERNSHIP_PROGRAM_FOR_APPLY = gql`
     internshipProgram(id: $id) {
       id
       title
+      organization
+      organizationLogo
       description
       price
       currency
@@ -2770,6 +2786,12 @@ export const GET_USERS_WITH_LOCATION = gql`
       locationShared
       locationDenied
       title
+      isOnline
+      lastActive
+      enrolledCourses {
+        id
+        title
+      }
     }
   }
 `;
@@ -3708,3 +3730,79 @@ export const GET_UNIFIED_EVENTS = gql`
     }
   }
 `
+export const GET_PUBLIC_TESTIMONIALS = gql`
+  query GetPublicTestimonials {
+    publicTestimonials {
+      id
+      quote
+      authorName
+      authorRole
+      authorCompany
+      authorAvatar
+      rating
+      status
+      createdAt
+    }
+  }
+`;
+
+export const GET_MY_TESTIMONIALS = gql`
+  query GetMyTestimonials {
+    myTestimonials {
+      id
+      quote
+      authorName
+      authorRole
+      authorCompany
+      rating
+      status
+      reviewNote
+      createdAt
+      author {
+        id
+        fullName
+      }
+    }
+  }
+`;
+
+export const GET_TESTIMONIALS = gql`
+  query GetTestimonials($page: Int, $limit: Int, $status: String) {
+    testimonials(page: $page, limit: $limit, status: $status) {
+      items {
+        id
+        quote
+        authorName
+        authorRole
+        authorCompany
+        authorAvatar
+        rating
+        status
+        reviewNote
+        createdAt
+        author {
+          id
+          fullName
+          username
+          email
+          avatar
+          school
+        }
+        submittedBy {
+          id
+          fullName
+          username
+          email
+        }
+      }
+      pagination {
+        totalCount
+        totalPages
+        currentPage
+        pageSize
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+`;

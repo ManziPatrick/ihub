@@ -63,7 +63,7 @@ export default function InternshipDetail() {
     if (programData) {
       addToCart({
         id: programData.id || id,
-        title: programData.title || "Internship Program",
+        title: programData.title || "Opportunity Program",
         price: programData.price || 0,
         discountPrice: programData.discount > 0 ? programData.discount : undefined,
         type: "internship",
@@ -71,7 +71,7 @@ export default function InternshipDetail() {
       });
     }
     setAuthRedirecting(true);
-    navigate(`/auth?redirect=/internship/${id}`, { replace: true });
+    navigate(`/auth?redirect=/opportunity/${id}`, { replace: true });
   }, [authRedirecting, isLoading, isAuthenticated, id, navigate, data, loading, addToCart]);
 
   const program = (data as any)?.internshipProgram;
@@ -111,8 +111,8 @@ export default function InternshipDetail() {
         <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
           <AlertCircle className="w-12 h-12 text-muted-foreground/30" />
           <p className="text-muted-foreground font-medium">Program not found</p>
-          <Button variant="outline" onClick={() => navigate("/explore")}>
-            Browse Programs
+          <Button variant="outline" onClick={() => navigate("/opportunities")}>
+            Browse Opportunities
           </Button>
         </div>
       </div>
@@ -147,14 +147,14 @@ export default function InternshipDetail() {
       if (program) {
         addToCart({
           id: program.id || id || "",
-          title: program.title || "Internship Program",
+          title: program.title || "Opportunity Program",
           price: program.price || 0,
           discountPrice: program.discount > 0 ? program.discount : undefined,
           type: "internship",
           image: program.image || ""
         });
       }
-      navigate("/auth", { state: { from: { pathname: `/internship/${id}` } } });
+      navigate("/auth", { state: { from: { pathname: `/opportunity/${id}` } } });
     } else {
       setShowApplyDialog(true);
     }
@@ -167,9 +167,9 @@ export default function InternshipDetail() {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title={program.title || "Internship Program"}
+        title={program.title || "Opportunity Program"}
         description={stripHtml(program.description)?.substring(0, 160) || "Apply for this program at Bootskills."}
-        canonicalUrl={program.id ? `https://bootskills.com/internship/${program.id}` : "https://bootskills.com/internships"}
+        canonicalUrl={program.id ? `https://bootskills.com/opportunity/${program.id}` : "https://bootskills.com/opportunities"}
         ogImage={program.image || undefined}
         keywords={`${program.category || 'internship'}, ${program.title || 'program'}, internship Rwanda, Kigali training, practical experience, career development`}
       >
@@ -178,11 +178,11 @@ export default function InternshipDetail() {
             "@context": "https://schema.org",
             "@graph": [
               organizationLd,
-              webPageLd(program.title || "Program", stripHtml(program.description)?.substring(0, 160) || "Program at Bootskills.", `https://bootskills.com/internship/${program.id}`),
+              webPageLd(program.title || "Program", stripHtml(program.description)?.substring(0, 160) || "Program at Bootskills.", `https://bootskills.com/opportunity/${program.id}`),
               breadcrumbListLd([
                 { name: "Home", item: "/" },
-                { name: "Internships", item: "/internships" },
-                { name: program.title || "Program", item: `/internship/${program.id}` },
+                { name: "Opportunities", item: "/opportunities" },
+                { name: program.title || "Opportunity", item: `/opportunity/${program.id}` },
               ]),
             ]
           })}
@@ -202,7 +202,7 @@ export default function InternshipDetail() {
                 className="space-y-4"
               >
                 <Badge variant="secondary" className="bg-accent/10 text-accent border-0">
-                  <Briefcase className="w-3 h-3 mr-1" /> Program
+                  <Briefcase className="w-3 h-3 mr-1" /> Opportunity
                 </Badge>
                 <h1 className="text-3xl lg:text-4xl font-bold font-heading">
                   {program.title}

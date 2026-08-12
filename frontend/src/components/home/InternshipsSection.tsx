@@ -49,8 +49,8 @@ export function InternshipsSection() {
             <p className="text-accent text-sm mb-4">Bridging Education and Employment</p>
             
             <p className="text-card-foreground/80 text-sm leading-relaxed mb-6">
-              Structured online internships where learners work on real projects under 
-              professional supervision. Training and internship programs are separate — 
+              Structured online opportunities where learners work on real projects under 
+              professional supervision. Training and opportunity programs are separate — 
               apply for either or both. All programs include certification.
             </p>
 

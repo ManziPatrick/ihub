@@ -276,7 +276,7 @@ export default function StudentSupport() {
                             <option>Technical Issue</option>
                             <option>Course Content</option>
                             <option>Payment</option>
-                            <option>Internship</option>
+                            <option>Opportunity</option>
                             <option>Other</option>
                           </select>
                         </div>

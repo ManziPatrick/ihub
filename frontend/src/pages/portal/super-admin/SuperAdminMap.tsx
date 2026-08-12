@@ -25,7 +25,14 @@ import {
   AlertTriangle,
   Crosshair,
   Check,
+  BookOpen,
+  GraduationCap,
+  Users,
 } from "lucide-react";
+import { PaginationBar } from "@/components/ui/pagination-bar";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ListSkeleton } from "@/components/ui/list-skeleton";
+import { cn } from "@/lib/utils";
 import { ADMIN_UPDATE_USER_LOCATION } from "@/lib/graphql/mutations";
 import { toast } from "sonner";
 
@@ -171,6 +178,11 @@ export default function SuperAdminMap() {
   const [pendingAddress, setPendingAddress] = useState<string | null>(null);
   const [savingLocation, setSavingLocation] = useState(false);
 
+  // Users table state
+  const [tablePage, setTablePage] = useState(1);
+  const [tablePageSize, setTablePageSize] = useState(10);
+  const [activeTab, setActiveTab] = useState<"map" | "users">("map");
+
   const { data, loading, refetch } = useQuery(GET_USERS_WITH_LOCATION);
   const [adminUpdateLocation] = useMutation(ADMIN_UPDATE_USER_LOCATION);
 
@@ -178,6 +190,28 @@ export default function SuperAdminMap() {
     () => (data as any)?.usersWithLocation || [],
     [data]
   );
+
+  /* Users table — respects the same role filter + search as the map */
+  const filteredUsers = useMemo(() => {
+    let list = allUsers;
+    if (activeRole !== "all") list = list.filter((u) => u.role === activeRole);
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (u) =>
+          (u.fullName || "").toLowerCase().includes(q) ||
+          u.username.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          (u.location || "").toLowerCase().includes(q) ||
+          (u.enrolledCourses || []).some((c) => (c.title || "").toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [allUsers, activeRole, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / tablePageSize));
+  const safePage = Math.min(tablePage, totalPages);
+  const pagedUsers = filteredUsers.slice((safePage - 1) * tablePageSize, safePage * tablePageSize);
 
   /* Stats */
   const stats = useMemo(() => {
@@ -270,6 +304,24 @@ export default function SuperAdminMap() {
     setPendingAddress(null);
   };
 
+  /* ── Select a user from the table → highlight + fly on the map ── */
+  const handleSelectUser = (u: UserLocation) => {
+    setSelectedUser(u);
+    setEditMode(false);
+    setPendingCoords(null);
+    setPendingAddress(null);
+    // Switch to the Map tab so the user flies into view
+    setActiveTab("map");
+    // FlyToUser (inside UserMap) flies the map to the selection automatically
+  };
+
+  /* Role colors used in the table */
+  const roleColor = (role: string) =>
+    role === "super_admin" ? "#ef4444" :
+    role === "admin" ? "#f59e0b" :
+    role === "trainer" ? "#8b5cf6" :
+    "#3b82f6";
+
   /* ── Render ── */
   return (
     <PortalLayout>
@@ -290,7 +342,7 @@ export default function SuperAdminMap() {
                   User Location Map
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Real-time geographic presence of your platform users
+                  Real-time geographic presence of every platform user
                 </p>
               </div>
             </div>
@@ -416,7 +468,22 @@ export default function SuperAdminMap() {
           </div>
         </motion.div>
 
-        {/* ── Map + User detail sidebar ── */}
+        {/* ── Map / Users tabs ── */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "map" | "users")}>
+          <TabsList className="h-10">
+            <TabsTrigger value="map" className="gap-1.5">
+              <MapIcon className="w-4 h-4" /> Map View
+            </TabsTrigger>
+            <TabsTrigger value="users" className="gap-1.5">
+              <Users className="w-4 h-4" /> Users List
+              <span className="text-[10px] font-bold bg-foreground/10 rounded-full px-1.5 py-0.5">
+                {filteredUsers.length}
+              </span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Map View */}
+          <TabsContent value="map" className="mt-3">
         <div className="flex gap-4">
           {/* Map */}
           <motion.div
@@ -436,6 +503,7 @@ export default function SuperAdminMap() {
               editMode={editMode}
               onMapClick={handleMapClick}
               pendingMarker={pendingCoords}
+              focusUser={selectedUser}
             />
           </motion.div>
 
@@ -659,6 +727,171 @@ export default function SuperAdminMap() {
             )}
           </AnimatePresence>
         </div>
+          </TabsContent>
+
+          {/* Users List */}
+          <TabsContent value="users" className="mt-3">
+        {/* ── All Users Table — click a row to view on the map ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }}
+        >
+          <Card className="border-border/50">
+            <CardContent className="p-0">
+              <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-3 flex-wrap">
+                <div>
+                  <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-accent" />
+                    All Users
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {filteredUsers.length} user{filteredUsers.length !== 1 ? "s" : ""} — click a row to locate them on the map
+                  </p>
+                </div>
+                <Badge variant="outline" className="text-[10px] font-bold text-muted-foreground border-border/40">
+                  {filteredUsers.filter((u) => u.latitude != null).length} with coordinates
+                </Badge>
+              </div>
+
+              {loading ? (
+                <div className="p-4"><ListSkeleton count={4} className="lg:grid-cols-1" /></div>
+              ) : filteredUsers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-14 text-center">
+                  <BookOpen className="w-10 h-10 text-muted-foreground/30 mb-3" />
+                  <p className="text-muted-foreground font-bold">No users match the current filters.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-y border-border/40 bg-muted/20 text-[10px] uppercase font-black text-muted-foreground tracking-widest">
+                          <th className="px-5 py-3">User</th>
+                          <th className="px-4 py-3">Role</th>
+                          <th className="px-4 py-3">Latest Location</th>
+                          <th className="px-4 py-3">Course(s)</th>
+                          <th className="px-4 py-3">Last Updated</th>
+                          <th className="px-4 py-3 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pagedUsers.map((u) => (
+                          <tr
+                            key={u.id}
+                            onClick={() => handleSelectUser(u)}
+                            className={cn(
+                              "border-b border-border/20 last:border-0 cursor-pointer transition-colors",
+                              selectedUser?.id === u.id ? "bg-accent/5" : "hover:bg-muted/10"
+                            )}
+                          >
+                            <td className="px-5 py-3">
+                              <div className="flex items-center gap-3 min-w-[200px]">
+                                <div
+                                  className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+                                  style={{ background: roleColor(u.role) }}
+                                >
+                                  {(u.fullName || u.username || "U").charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-bold text-foreground text-xs truncate">
+                                    {u.fullName || u.username}
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground truncate">{u.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge
+                                className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5"
+                                style={{
+                                  background: `${roleColor(u.role)}20`,
+                                  color: roleColor(u.role),
+                                  border: `1px solid ${roleColor(u.role)}40`,
+                                }}
+                              >
+                                {u.role.replace("_", " ")}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 max-w-[240px]">
+                              <div className="flex items-center gap-2">
+                                <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: roleColor(u.role) }} />
+                                <div className="min-w-0">
+                                  <p className="text-xs text-foreground font-medium truncate">
+                                    {u.location || "—"}
+                                  </p>
+                                  {u.latitude != null && (
+                                    <p className="text-[9px] text-muted-foreground font-mono">
+                                      {u.latitude.toFixed(4)}, {u.longitude?.toFixed(4)}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 max-w-[200px]">
+                              {(u.enrolledCourses || []).length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {(u.enrolledCourses || []).slice(0, 2).map((c) => (
+                                    <span
+                                      key={c.id || c.title}
+                                      className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20 truncate max-w-[160px]"
+                                      title={c.title}
+                                    >
+                                      {c.title}
+                                    </span>
+                                  ))}
+                                  {(u.enrolledCourses?.length || 0) > 2 && (
+                                    <span className="text-[9px] text-muted-foreground">
+                                      +{(u.enrolledCourses?.length || 0) - 2}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground italic">No courses</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="text-xs text-muted-foreground">{timeAgo(u.locationUpdatedAt)}</span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                {u.isOnline && (
+                                  <span className="inline-flex items-center gap-1 text-[9px] font-bold text-green-500 uppercase tracking-wider">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Online
+                                  </span>
+                                )}
+                                <Navigation className="w-3.5 h-3.5 text-accent" />
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="px-4 pb-4">
+                    <PaginationBar
+                      currentPage={safePage}
+                      totalPages={totalPages}
+                      totalCount={filteredUsers.length}
+                      onPageChange={setTablePage}
+                      hasPreviousPage={safePage > 1}
+                      hasNextPage={safePage < totalPages}
+                      pageSize={tablePageSize}
+                      onPageSizeChange={(n) => {
+                        setTablePageSize(n);
+                        setTablePage(1);
+                      }}
+                      pageSizeOptions={[10, 25, 50, 100]}
+                    />
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+          </TabsContent>
+        </Tabs>
 
         {/* ── Legend footer ── */}
         <motion.div

@@ -19,7 +19,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Building2, TrendingUp, ChevronRight, User, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye, XCircle, Filter, Search, LayoutGrid, Star, MapPin, Navigation, Sparkles, GraduationCap, Globe, Mail, ExternalLink, Loader2 } from "lucide-react";
+import { Code, Database, Wifi, Clock, Users, Award, CheckCircle, BookOpen, Target, Briefcase, Calendar, ArrowRight, Brain, Building2, TrendingUp, ChevronRight, User, UserPlus, Tag, ChevronLeft, Share2, Facebook, Twitter, Linkedin, Copy, Check, Eye, XCircle, Filter, Search, LayoutGrid, Star, MapPin, Navigation, Sparkles, GraduationCap, Globe, Mail, ExternalLink, Loader2 } from "lucide-react";
 import heroImage from "@/assets/hero-training.webp";
 import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import aboutImage from "@/assets/about-training.webp";
@@ -44,6 +44,14 @@ const Explore = () => {
   const [enrollCourse, setEnrollCourse] = useState<any>(null);
   const [applyCourse, setApplyCourse] = useState<any>(null);
   const [sortBy, setSortBy] = useState<string>('latest');
+
+  // Changing sort must reset pagination — otherwise the accumulated
+  // "load more" items from the previous sort order get mixed with the
+  // new order (stale page counter skips pages of the fresh sort).
+  const handleSortChange = (next: string) => {
+    setSortBy(next);
+    setCurrentPage(1);
+  };
   const [activeTab, setActiveTab] = useState<'courses' | 'trainers'>(searchParams.get("tab") === "trainers" ? "trainers" : "courses");
   const [trainerFilter, setTrainerFilter] = useState<string>('all');
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
@@ -368,15 +376,15 @@ const Explore = () => {
                       <Users className="w-3.5 h-3.5" /> {allTrainers.length} Trainers
                     </Link>
                     <Link
-                      to={`/internships?q=${encodeURIComponent(debouncedSearch.trim())}`}
+                      to={`/opportunities?q=${encodeURIComponent(debouncedSearch.trim())}`}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-bold hover:bg-accent/20 transition-colors"
                     >
-                      <Briefcase className="w-3.5 h-3.5" /> {matchedPrograms.length} Programs
+                      <Briefcase className="w-3.5 h-3.5" /> {matchedPrograms.length} Opportunities
                     </Link>
                   </div>
                 </div>
                 <p className="text-muted-foreground max-w-2xl">
-                  Everything matching your search — courses, teachers &amp; trainers, and programs &amp; internships — all in one place.
+                  Everything matching your search — courses, teachers &amp; trainers, and opportunities — all in one place.
                 </p>
               </motion.div>
 
@@ -513,16 +521,16 @@ const Explore = () => {
                   )}
                 </div>
 
-                {/* Programs & Internships */}
+                {/* Opportunities */}
                 <div className="rounded-2xl border border-border/30 bg-card overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border/20">
                     <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                       <Briefcase className="w-4 h-4 text-accent" />
-                      Programs &amp; Internships
+                      Opportunities
                       <span className="text-[10px] font-bold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-full">{matchedPrograms.length}</span>
                     </h3>
                     <Link
-                      to={`/internships?q=${encodeURIComponent(debouncedSearch.trim())}`}
+                      to={`/opportunities?q=${encodeURIComponent(debouncedSearch.trim())}`}
                       className="text-xs font-semibold text-accent hover:underline flex items-center gap-1"
                     >
                       View all <ArrowRight className="w-3 h-3" />
@@ -545,7 +553,7 @@ const Explore = () => {
                       {matchedPrograms.map((p: any) => (
                         <Link
                           key={p.id}
-                          to={`/internship/${p.id}`}
+                          to={`/opportunity/${p.id}`}
                           className="flex items-center gap-3 px-4 py-3 hover:bg-accent/5 transition-colors group"
                         >
                           {p.image ? (
@@ -1033,7 +1041,7 @@ const Explore = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex bg-muted/40 p-1 rounded-xl border border-border/50">
                     <button
-                      onClick={() => setSortBy('latest')}
+                      onClick={() => handleSortChange('latest')}
                       className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         sortBy === 'latest'
                           ? "bg-foreground text-background shadow-sm"
@@ -1044,7 +1052,7 @@ const Explore = () => {
                       Latest
                     </button>
                     <button
-                      onClick={() => setSortBy('popular')}
+                      onClick={() => handleSortChange('popular')}
                       className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         sortBy === 'popular'
                           ? "bg-foreground text-background shadow-sm"
@@ -1055,7 +1063,7 @@ const Explore = () => {
                       Popular
                     </button>
                     <button
-                      onClick={() => setSortBy('trending')}
+                      onClick={() => handleSortChange('trending')}
                       className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         sortBy === 'trending'
                           ? "bg-foreground text-background shadow-sm"
@@ -1064,6 +1072,17 @@ const Explore = () => {
                     >
                       <TrendingUp className="w-3.5 h-3.5" />
                       Trending
+                    </button>
+                    <button
+                      onClick={() => handleSortChange('createdBy')}
+                      className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        sortBy === 'createdBy'
+                          ? "bg-foreground text-background shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      Created By
                     </button>
                   </div>
                   <button

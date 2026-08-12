@@ -151,7 +151,7 @@ export function CreateInternshipTeamDialog({ open, onOpenChange, preSelectedProg
                   <Plus className="w-5 h-5" />
                </div>
                <div>
-                  <DialogTitle className="text-xl font-black tracking-tight leading-none">New Internship Track</DialogTitle>
+                  <DialogTitle className="text-xl font-black tracking-tight leading-none">New Opportunity Track</DialogTitle>
                   <DialogDescription className="text-xs font-medium mt-1">Assign a project to a team or an individual.</DialogDescription>
                </div>
             </div>

@@ -15,6 +15,16 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     // Avoid pre-bundling lucide-react to prevent barrel export conflicts with Star icon
     exclude: ["lucide-react"],
+    // Force the correct NODE_ENV for the dependency optimizer. Some machines/shells
+    // export NODE_ENV=production globally, which makes esbuild bundle React's
+    // PRODUCTION jsx-dev-runtime (where jsxDEV is intentionally undefined) and breaks
+    // dev mode with "jsxDEV is not a function".
+    esbuildOptions: {
+      define: {
+        "process.env.NODE_ENV":
+          mode === "development" ? '"development"' : '"production"',
+      },
+    },
     // Only scan src/ files for dependencies — avoids esbuild crashing on public/ HTML files
     entries: ["src/**/*.{tsx,ts,jsx,js}"],
   },

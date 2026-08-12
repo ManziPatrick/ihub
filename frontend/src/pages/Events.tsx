@@ -254,7 +254,7 @@ export default function Events() {
                         className="w-full rounded-xl group/btn"
                         onClick={() => {
                           if (item.source === "event") navigate(`/events/${item.id}`);
-                          else navigate(`/internship/${item.id}`);
+                          else navigate(`/opportunity/${item.id}`);
                         }}
                       >
                         {item.source === "event" ? "View Event" : "View Program"}

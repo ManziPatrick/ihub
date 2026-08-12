@@ -1071,7 +1071,7 @@ export default function TrainerProfile() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.04 }}
                       >
-                        <Link to={`/internship/${program.id}`} className="block group">
+                        <Link to={`/opportunity/${program.id}`} className="block group">
                           <Card className="border border-border bg-card rounded-lg hover:border-accent/40 transition-all duration-200 group-hover:border-accent/40 cursor-pointer">
                             <CardContent className="p-3.5 flex items-start gap-3">
                               {program.image ? (

@@ -35,6 +35,7 @@ import diagnosticsRoutes from './routes/DiagnosticsRoutes';
 import exportRoutes from './routes/ExportRoutes';
 import { Course } from './models/Course';
 import Blog from './models/Blog';
+import { User } from './models/User';
 import { authMiddleware } from './middleware/auth';
 import { maintenanceMiddleware } from './middleware/maintenance';
 import { compileCode } from './services/compiler.service';
@@ -188,10 +189,25 @@ const startServer = async () => {
 
             if (token) {
                 try {
-                    user = jwt.verify(
+                    const decoded: any = jwt.verify(
                         token.replace('Bearer ', ''),
                         process.env.JWT_SECRET || 'secret'
                     );
+                    const userId = decoded?.id || decoded?._id || decoded?.userId;
+                    if (userId) {
+                        // Re-validate status so suspended/deactivated accounts can't subscribe.
+                        // Fail OPEN on DB lookup errors so a DB blip doesn't break
+                        // real-time subscriptions for everyone.
+                        try {
+                            const dbUser = await User.findById(userId).select('status isDeleted permissions').lean();
+                            if (dbUser && !dbUser.isDeleted && (dbUser.status || 'active') === 'active') {
+                                user = { ...decoded, role: dbUser.role, permissions: dbUser.permissions || [] };
+                            }
+                        } catch (e) {
+                            console.warn('[WS] DB lookup failed, proceeding with token claims:', (e as Error).message);
+                            user = { ...decoded, role: decoded.role, permissions: decoded.permissions || [] };
+                        }
+                    }
                 } catch (e) {
                     console.warn('Invalid WS Token');
                 }
@@ -210,6 +226,42 @@ const startServer = async () => {
         plugins: [
             ApolloServerPluginDrainHttpServer({ httpServer }),
             ApolloServerPluginLandingPageLocalDefault({ footer: false }),
+            {
+                // Every resolver that guards with `throw new Error('Not authenticated')`
+                // (140+ sites) or `throw new Error('Not authorized'/'Unauthorized')`
+                // (250+ sites) would otherwise surface to clients as
+                // INTERNAL_SERVER_ERROR (HTTP 500). Classify them centrally on the
+                // raw GraphQLErrors so auth failures return proper 401/403 codes
+                // AND real HTTP statuses, and never appear as 500s in error
+                // reports / monitoring. Apollo picks `extensions.http` up from the
+                // raw error before formatting, which formatError alone cannot do.
+                async requestDidStart() {
+                    return {
+                        async didEncounterErrors(requestContext: any) {
+                            for (const err of requestContext.errors || []) {
+                                if (!err?.message) continue;
+                                // Never clobber an explicit GraphQL error code
+                                // (e.g. ACCOUNT_SUSPENDED, GRAPHQL_VALIDATION_FAILED).
+                                const existingCode = err.extensions?.code;
+                                if (existingCode && existingCode !== 'INTERNAL_SERVER_ERROR') continue;
+                                if (/not authenticated/i.test(err.message)) {
+                                    err.extensions = {
+                                        ...err.extensions,
+                                        code: 'UNAUTHENTICATED',
+                                        http: { status: 401 },
+                                    };
+                                } else if (/unauthorized|not authorized|access denied|forbidden/i.test(err.message)) {
+                                    err.extensions = {
+                                        ...err.extensions,
+                                        code: 'FORBIDDEN',
+                                        http: { status: 403 },
+                                    };
+                                }
+                            }
+                        },
+                    };
+                },
+            },
             {
                 async serverWillStart() {
                     return {
@@ -239,7 +291,9 @@ const startServer = async () => {
         expressMiddleware(server, {
             context: async ({ req }: any) => ({
                 user: req.user,
-                req
+                req,
+                // Populated by authMiddleware when the token belongs to a blocked account
+                accountBlockedReason: (req as any).accountBlockedReason,
             }),
         }) as unknown as express.RequestHandler
     );

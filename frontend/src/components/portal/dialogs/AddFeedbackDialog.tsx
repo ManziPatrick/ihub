@@ -39,7 +39,7 @@ export function AddFeedbackDialog({ open, onOpenChange, studentName, type }: Add
           <div className="space-y-4 py-4">
             <div className="p-3 bg-background/50 rounded-lg text-center">
               <p className="text-sm text-card-foreground/70 mb-2">
-                {type === "mentorship" ? "Mentorship Progress" : "Internship Performance"}
+                {type === "mentorship" ? "Mentorship Progress" : "Program Performance"}
               </p>
             </div>
 

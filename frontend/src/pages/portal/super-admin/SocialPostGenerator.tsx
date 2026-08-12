@@ -594,7 +594,7 @@ function InternshipMinimalTemplate({ config }: { config: TemplateConfig }) {
       <div className="flex flex-col h-full p-8 md:p-10">
         <div className="flex-1">
           {config.customImage && <CustomImageDisplay src={config.customImage} />}
-          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400 mb-3">Internship Opportunity</div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400 mb-3">Opportunity</div>
           <h2 className="text-xl md:text-2xl font-light text-neutral-900 leading-tight mb-2 tracking-tight">
             {config.headline || intern.role}
           </h2>
@@ -1298,7 +1298,7 @@ export default function SocialPostGenerator() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Briefcase className="w-4 h-4" />
-                  Internship Details
+                  Opportunity Details
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">

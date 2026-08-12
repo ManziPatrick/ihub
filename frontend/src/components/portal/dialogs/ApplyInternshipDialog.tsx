@@ -215,7 +215,7 @@ export function ApplyInternshipDialog({
             <div className="space-y-1">
               <DialogTitle className="flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-accent" />
-                <span>Apply for Internship</span>
+                <span>Apply for Opportunity</span>
               </DialogTitle>
               <DialogDescription className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60">
                 {program?.title || "Loading..."}
@@ -244,7 +244,7 @@ export function ApplyInternshipDialog({
                     <div className="space-y-1">
                       <p className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Application Submitted</p>
                       <p className="text-[11px] text-blue-700 dark:text-blue-300 leading-relaxed">
-                        You have already submitted an application for this internship program. 
+                        You have already submitted an application for this opportunity program. 
                         You can view your submitted details below, but editing is disabled while pending.
                       </p>
                     </div>

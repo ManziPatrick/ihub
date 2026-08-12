@@ -25,6 +25,7 @@ import {
   Download,
   RefreshCw,
   Star,
+  ArrowUpDown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,6 +47,8 @@ import { Switch } from "@/components/ui/switch";
 export default function AdminCourses() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState<"course" | "instructor" | "students">("course");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -208,10 +211,36 @@ export default function AdminCourses() {
       });
   };
 
-  const filteredCourses = (courses || []).filter((course: any) =>
-    course.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.instructor?.username?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCourses = (courses || [])
+    .filter((course: any) =>
+      course.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.instructor?.username?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a: any, b: any) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      if (sortField === "instructor") {
+        const nameA = (a.instructor?.username || "").toLowerCase();
+        const nameB = (b.instructor?.username || "").toLowerCase();
+        if (!nameA && !nameB) return 0;
+        if (!nameA) return 1;
+        if (!nameB) return -1;
+        return nameA.localeCompare(nameB) * dir;
+      }
+      if (sortField === "students") {
+        return ((b.studentsEnrolledCount || 0) - (a.studentsEnrolledCount || 0)) * dir;
+      }
+      return a.title.localeCompare(b.title) * dir;
+    });
+
+  const handleSortToggle = (field: "course" | "instructor" | "students") => {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir(field === "course" ? "asc" : "desc");
+    }
+    setCurrentPage(1);
+  };
 
   return (
     <PortalLayout>
@@ -318,9 +347,30 @@ export default function AdminCourses() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border/50">
-                        <th className="text-left p-4 text-sm font-medium text-card-foreground/70">Course</th>
-                        <th className="text-left p-4 text-sm font-medium text-card-foreground/70">Instructor</th>
-                        <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Students</th>
+                        <th
+                          className="text-left p-4 text-sm font-medium text-card-foreground/70 cursor-pointer select-none hover:text-accent transition-colors"
+                          onClick={() => handleSortToggle("course")}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            Course {sortField === "course" && <ArrowUpDown className="w-3 h-3" />}
+                          </span>
+                        </th>
+                        <th
+                          className="text-left p-4 text-sm font-medium text-card-foreground/70 cursor-pointer select-none hover:text-accent transition-colors"
+                          onClick={() => handleSortToggle("instructor")}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            Created By {sortField === "instructor" && <ArrowUpDown className="w-3 h-3" />}
+                          </span>
+                        </th>
+                        <th
+                          className="text-center p-4 text-sm font-medium text-card-foreground/70 cursor-pointer select-none hover:text-accent transition-colors"
+                          onClick={() => handleSortToggle("students")}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            Students {sortField === "students" && <ArrowUpDown className="w-3 h-3" />}
+                          </span>
+                        </th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Price</th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Mode</th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Status</th>

@@ -100,7 +100,9 @@ const userSchema = new mongoose.Schema({
   latitude: { type: Number },
   longitude: { type: Number },
   locationUpdatedAt: { type: Date },
-  locationShared: { type: Boolean, default: false },
+  // Tracking is ON by default — "yes is yes". Users are tracked unless they
+  // explicitly opt out (locationDenied) or an admin overrides it.
+  locationShared: { type: Boolean, default: true },
   locationDenied: { type: Boolean, default: false },
   title: { type: String },
 

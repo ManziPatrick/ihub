@@ -62,11 +62,7 @@ import {
   Tag,
   DollarSign,
   AlertTriangle,
-  Code,
-  Database,
-  PlayCircle,
-  Search
-} from "lucide-react";
+  Code,  Database,  PlayCircle,  Search,  MessageCircleHeart,  MessageSquareHeart} from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePusher } from "@/hooks/use-pusher";
 import { toast } from "sonner";
@@ -78,10 +74,7 @@ interface NavItem {
   href?: string;
   icon: React.ElementType;
   children?: NavItem[];
-}
-
-const studentNavItems: NavItem[] = [
-  { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },
+}const studentNavItems: NavItem[] = [  { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },  { label: "Share Story", href: "/portal/student/testimonial", icon: MessageCircleHeart },
   { label: "Projects", href: "/portal/student/projects", icon: FolderOpen },
   { label: "My Tasks", href: "/portal/student/my-tasks", icon: ClipboardList },
   { 
@@ -94,7 +87,7 @@ const studentNavItems: NavItem[] = [
     ]
   },
   { 
-    label: "Program", 
+    label: "Opportunities", 
     href: "/portal/student/internship", 
     icon: Briefcase 
   },
@@ -121,7 +114,7 @@ const trainerNavItems: NavItem[] = [
     icon: Briefcase,
     children: [
       { label: "Mentorship", href: "/portal/trainer/mentorship", icon: GraduationCap },
-      { label: "Programs", href: "/portal/trainer/programs", icon: Briefcase },
+      { label: "Opportunities", href: "/portal/trainer/programs", icon: Briefcase },
       { label: "Scholarships", href: "/portal/trainer/scholarships", icon: Award },
       { label: "Applicants", href: "/portal/trainer/applicants", icon: Users },
       { label: "Create Course", href: "/portal/admin/courses/create", icon: BookOpen },
@@ -136,14 +129,13 @@ const adminNavItems: NavItem[] = [
   { 
     label: "Management", 
     icon: Cog,
-    children: [
-      { label: "Users", href: "/portal/admin/users", icon: Users },
-      { label: "Completed Users", href: "/portal/admin/completed-users", icon: GraduationCap },
+    children: [      { label: "Users", href: "/portal/admin/users", icon: Users },      { label: "Testimonials", href: "/portal/admin/testimonials", icon: MessageSquareHeart },      { label: "Completed Users", href: "/portal/admin/completed-users", icon: GraduationCap },
       { label: "Courses", href: "/portal/admin/courses", icon: BookOpen },
       { label: "Course Preview", href: "/portal/admin/course-preview", icon: Eye },
+      { label: "User Map", href: "/portal/super-admin/user-map", icon: MapPin },
       { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
       { label: "Applicant Hub", href: "/portal/admin/applicants", icon: Users },
-      { label: "Programs", href: "/portal/admin/internships", icon: Briefcase },
+      { label: "Opportunities", href: "/portal/admin/internships", icon: Briefcase },
       { label: "Scholarships", href: "/portal/admin/scholarships", icon: Award },
       { label: "Discount Codes", href: "/portal/super-admin/discount-codes", icon: Tag },
       { label: "Code Answers", href: "/portal/super-admin/code-answers", icon: Code },
@@ -189,8 +181,8 @@ const superAdminNavItems: NavItem[] = [
   { 
     label: "System", 
     icon: Shield,
-    children: [
-      { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },
+    children: [      { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },      { label: "Testimonials", href: "/portal/admin/testimonials", icon: MessageSquareHeart },      { label: "Courses Manager", href: "/portal/super-admin/courses", icon: BookOpen },
+      { label: "User Management", href: "/portal/admin/users", icon: UserCog },
       { label: "All Users", href: "/portal/super-admin/users", icon: Users },
       { label: "Completed Users", href: "/portal/super-admin/completed-users", icon: GraduationCap },
       { label: "Configuration", href: "/portal/super-admin/config", icon: Cog },
@@ -245,6 +237,59 @@ const clientNavItems: NavItem[] = [
   { label: "Messages", href: "/chat", icon: MessageSquare },
 ];
 
+/* Admin module permissions — matches the keys saved when a super admin
+   creates an admin account (SuperAdminAdmins.tsx). Admins only see the
+   nav sections they have been granted; super admins see everything. */
+const ADMIN_NAV_PERMISSIONS: Record<string, string> = {
+  "/portal/admin/users": "users",
+  "/portal/admin/completed-users": "users",
+  "/portal/super-admin/user-map": "users",
+  "/portal/admin/courses": "courses",
+  "/portal/admin/course-preview": "courses",
+  "/portal/admin/assignment-reviews": "courses",
+  "/portal/super-admin/code-answers": "courses",
+  "/portal/admin/payments": "payments",
+  "/portal/admin/commissions": "payments",
+  "/portal/admin/refunds": "payments",
+  "/portal/super-admin/discount-codes": "payments",
+  "/portal/admin/applications": "internships",
+  "/portal/admin/applicants": "internships",
+  "/portal/admin/internships": "internships",
+  "/portal/admin/scholarships": "internships",
+  "/portal/admin/projects": "students",
+  "/portal/admin/project-applications": "students",
+  "/portal/admin/project-onboarding": "students",
+  "/portal/admin/analytics": "analytics",
+};
+
+function hasNavPermission(href: string | undefined, permissions: string[]): boolean {
+  if (!href) return true;
+  const required = ADMIN_NAV_PERMISSIONS[href];
+  if (!required) return true; // un-gated links (Schedule, Messages) stay visible
+  return permissions.includes(required);
+}
+
+function filterNavByPermissions(items: NavItem[], permissions: string[]): NavItem[] {
+  const filtered: NavItem[] = [];
+  for (const item of items) {
+    if (item.children) {
+      const children = item.children
+        .map((child): NavItem | null => {
+          if (child.children) {
+            const nested = child.children.filter((gc) => hasNavPermission(gc.href, permissions));
+            return nested.length > 0 ? { ...child, children: nested } : null;
+          }
+          return hasNavPermission(child.href, permissions) ? child : null;
+        })
+        .filter((c): c is NavItem => c !== null);
+      if (children.length > 0) filtered.push({ ...item, children });
+    } else if (hasNavPermission(item.href, permissions)) {
+      filtered.push(item);
+    }
+  }
+  return filtered;
+}
+
 const navItemsByRole: Record<UserRole, NavItem[]> = {
   student: studentNavItems,
   trainer: trainerNavItems,
@@ -283,6 +328,7 @@ const GET_ERROR_REPORT_STATS = gql`
 import { formatDistanceToNow } from "date-fns";
 import { usePresence } from "@/hooks/use-presence";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
+import { useAutoLocation } from "@/lib/hooks/useAutoLocation";
 import { Switch } from "@/components/ui/switch";
 import { 
   Collapsible, 
@@ -305,6 +351,10 @@ export function PortalLayout({ children }: PortalLayoutProps) {
   // Start presence tracking
   usePresence();
 
+  // Silently track real GPS location (refreshed periodically) so admins can
+  // see every user's latest location on the User Location Map.
+  useAutoLocation();
+
   // Offline sync
   const { isOffline, isManualOffline, isSyncing, queue, queueCount, toggleOffline, syncQueue } = useOfflineSync();
 
@@ -313,7 +363,6 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
   const { data: notifData } = useQuery<{ notifications: any[] }>(GET_NOTIFICATIONS, {
     skip: !user,
-    pollInterval: 60000,
   });
 
   const { data: meData } = useQuery(GET_ME, {
@@ -322,17 +371,14 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
   const { data: trainerStatsData } = useQuery(GET_TRAINER_STATS, {
     skip: !user || (user.role !== 'trainer' && user.role !== 'mentor'),
-    pollInterval: 60000,
   });
 
   const { data: adminDashboardData } = useQuery(GET_ADMIN_DASHBOARD_DATA, {
     skip: !user || user.role !== 'admin',
-    pollInterval: 60000,
   });
 
   const { data: globalStatsData } = useQuery(GET_STATS, {
     skip: !user || user.role !== 'super_admin',
-    pollInterval: 60000,
   });
 
   const { data: allTrainersData } = useQuery(GET_ALL_TRAINERS, {
@@ -341,7 +387,6 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
   const { data: errorStatsData } = useQuery(GET_ERROR_REPORT_STATS, {
     skip: !user || user.role !== 'super_admin',
-    pollInterval: 60000,
     fetchPolicy: "network-only",
   });
 
@@ -497,7 +542,10 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
   if (!user) return null;
 
-  const navItems = navItemsByRole[user.role] || studentNavItems;
+  const navItems =
+    user.role === "admin"
+      ? filterNavByPermissions(adminNavItems, user.permissions || [])
+      : navItemsByRole[user.role] || studentNavItems;
   const roleLabel = roleLabels[user.role];
 
   const handleLogout = () => {
@@ -942,23 +990,33 @@ export function PortalLayout({ children }: PortalLayoutProps) {
 
           {user.role === 'admin' && (
             <div className="hidden lg:flex items-center gap-3 px-3 h-10 bg-background/50 border border-border/50 rounded-xl">
-              <Link to="/portal/admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
-                <Users className="w-3.5 h-3.5 text-primary" />
-                <span className="text-xs font-bold text-foreground">{adminStats?.totalUsers || 0}</span>
-                <span className="text-[10px] text-muted-foreground hidden xl:inline">Users</span>
-              </Link>
-              <div className="w-px h-4 bg-border/50" />
-              <Link to="/portal/admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
-                <GraduationCap className="w-3.5 h-3.5 text-blue-400" />
-                <span className="text-xs font-bold text-foreground">{adminStats?.totalStudents || 0}</span>
-                <span className="text-[10px] text-muted-foreground hidden xl:inline">Students</span>
-              </Link>
-              <div className="w-px h-4 bg-border/50" />
-              <Link to="/portal/admin/courses" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
-                <BookOpen className="w-3.5 h-3.5 text-green-400" />
-                <span className="text-xs font-bold text-foreground">{adminStats?.totalCourses || 0}</span>
-                <span className="text-[10px] text-muted-foreground hidden xl:inline">Courses</span>
-              </Link>
+              {hasNavPermission("/portal/admin/users", user.permissions || []) && (
+                <Link to="/portal/admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                  <Users className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-xs font-bold text-foreground">{adminStats?.totalUsers || 0}</span>
+                  <span className="text-[10px] text-muted-foreground hidden xl:inline">Users</span>
+                </Link>
+              )}
+              {hasNavPermission("/portal/admin/users", user.permissions || []) && (
+                <>
+                  <div className="w-px h-4 bg-border/50" />
+                  <Link to="/portal/admin/users" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                    <GraduationCap className="w-3.5 h-3.5 text-blue-400" />
+                    <span className="text-xs font-bold text-foreground">{adminStats?.totalStudents || 0}</span>
+                    <span className="text-[10px] text-muted-foreground hidden xl:inline">Students</span>
+                  </Link>
+                </>
+              )}
+              {hasNavPermission("/portal/admin/courses", user.permissions || []) && (
+                <>
+                  <div className="w-px h-4 bg-border/50" />
+                  <Link to="/portal/admin/courses" className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors">
+                    <BookOpen className="w-3.5 h-3.5 text-green-400" />
+                    <span className="text-xs font-bold text-foreground">{adminStats?.totalCourses || 0}</span>
+                    <span className="text-[10px] text-muted-foreground hidden xl:inline">Courses</span>
+                  </Link>
+                </>
+              )}
             </div>
           )}
 

@@ -74,6 +74,7 @@ export default function CreateInternship() {
 
   const [formData, setFormData] = useState({
     title: "",
+    organization: "",
     description: "",
     duration: "3 Months",
     startDate: "",
@@ -98,7 +99,7 @@ export default function CreateInternship() {
       { query: GET_ADMIN_DASHBOARD_DATA },
     ],
     onCompleted: () => {
-      toast.success("Internship program launched successfully!");
+      toast.success("Opportunity program launched successfully!");
       navigate("/portal/admin/internships");
     },
     onError: (err) => {
@@ -129,6 +130,7 @@ export default function CreateInternship() {
       await createProgram({
         variables: {
           title: formData.title,
+          organization: formData.organization.trim() || undefined,
           description: formData.description,
           duration: formData.duration,
           startDate: formData.startDate,
@@ -301,6 +303,21 @@ export default function CreateInternship() {
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         className="h-16 text-xl font-heading bg-muted/20 border-border/40 transition-all focus:border-accent/60 rounded-2xl px-6"
                       />
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                        Organization / Company / School
+                      </label>
+                      <Input
+                        placeholder="e.g. Google, University of Rwanda, Bank of Kigali"
+                        value={formData.organization}
+                        onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+                        className="h-14 text-base bg-muted/20 border-border/40 transition-all focus:border-accent/60 rounded-2xl px-6"
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Opportunities from the same organization are grouped together on the Opportunities page.
+                      </p>
                     </div>
 
                     <div className="space-y-3">
@@ -750,7 +767,7 @@ export default function CreateInternship() {
                         </div>
                         <h2 className="text-4xl font-heading font-black">Ready for Launch</h2>
                         <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-                          Your internship program is fully configured. Review the summary below and launch when ready.
+                          Your program is fully configured. Review the summary below and launch when ready.
                         </p>
                       </div>
 
@@ -873,7 +890,7 @@ export default function CreateInternship() {
 
                 <div className="flex-1 p-8 flex flex-col justify-between">
                   <div className="space-y-3">
-                    <p className="text-[10px] font-black uppercase text-accent tracking-widest">Internship Program</p>
+                    <p className="text-[10px] font-black uppercase text-accent tracking-widest">Opportunity Program</p>
                     <h3 className="text-2xl font-heading font-black tracking-tight leading-none line-clamp-2 italic">
                       {formData.title || "Untitled Program"}
                     </h3>
