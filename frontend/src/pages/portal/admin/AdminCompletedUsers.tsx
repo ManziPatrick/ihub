@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { PortalLayout } from "@/components/portal/PortalLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,7 +43,19 @@ export default function AdminCompletedUsers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState<string>("all");
+
+  // Debounce the search box and reset to page 1 — the search itself runs
+  // server-side (completedUsers resolver supports `search`) so it stays
+  // correct across all pages.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   const { data: coursesData } = useQuery(GET_COURSES, {
     variables: { limit: 200 },
@@ -56,6 +68,7 @@ export default function AdminCompletedUsers() {
       limit: pageSize,
       createdBy: user?.role === "admin" ? user.id : undefined,
       courseId: courseFilter !== "all" ? courseFilter : undefined,
+      search: debouncedSearch || undefined,
     },
     fetchPolicy: "network-only",
     notifyOnNetworkStatusChange: true,
@@ -64,13 +77,8 @@ export default function AdminCompletedUsers() {
   const completedUsers = (data as any)?.completedUsers?.items || [];
   const pagination = (data as any)?.completedUsers?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
 
-  const filteredUsers = completedUsers.filter((u: any) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    const userName = u.user?.fullName || u.user?.username || "";
-    const email = u.user?.email || "";
-    return userName.toLowerCase().includes(q) || email.toLowerCase().includes(q);
-  });
+  // The server already applies the search filter — no client-side pass needed.
+  const filteredUsers = completedUsers;
 
   const stats = {
     total: pagination?.totalCount || 0,

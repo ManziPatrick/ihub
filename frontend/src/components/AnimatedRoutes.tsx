@@ -232,7 +232,7 @@ export function AnimatedRoutes() {
           <Route path="/portal/admin/project-applications" element={<ProtectedRoute allowedRoles={["admin"]} requiredPermission="students"><AdminProjectApplications /></ProtectedRoute>} />
           <Route path="/portal/admin/project-onboarding" element={<ProtectedRoute allowedRoles={["admin", "trainer"]} requiredPermission="students"><AdminProjectOnboarding /></ProtectedRoute>} />
           <Route path="/portal/admin/assignment-reviews" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]} requiredPermission="courses"><TrainerProjects /></ProtectedRoute>} />
-          <Route path="/portal/admin/payments" element={<ProtectedRoute allowedRoles={["admin"]} requiredPermission="payments"><AdminPayments /></ProtectedRoute>} />
+          <Route path="/portal/admin/payments" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]} requiredPermission="payments"><AdminPayments /></ProtectedRoute>} />
           <Route path="/portal/admin/completed-users" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]} requiredPermission="users"><AdminCompletedUsers /></ProtectedRoute>} />
           {/* <Route path="/portal/admin/badges" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBadges /></ProtectedRoute>} /> */}
           <Route path="/portal/admin/analytics" element={<ProtectedRoute allowedRoles={["admin"]} requiredPermission="analytics"><AdminAnalytics /></ProtectedRoute>} />          <Route path="/portal/admin/testimonials" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]}><AdminTestimonials /></ProtectedRoute>} />

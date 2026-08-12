@@ -176,6 +176,14 @@ export const typeDefs = `#graphql
     pagination: PaginationInfo
   }
 
+  type PaymentStats {
+    totalRevenue: Float!
+    thisMonthRevenue: Float!
+    pendingValue: Float!
+    pendingCount: Int!
+    internshipRevenue: Float!
+  }
+
   type ProjectResponse {
     items: [Project]
     pagination: PaginationInfo
@@ -977,7 +985,8 @@ export const typeDefs = `#graphql
     recentActivity(createdBy: ID): [ActivityLogEntry]
     questions(courseId: ID!, lessonId: ID, moduleNumber: String, lessonNumber: String): [Question]
     bookings(page: Int, limit: Int): BookingResponse
-    payments(page: Int, limit: Int, createdBy: ID): PaymentResponse
+    payments(page: Int, limit: Int, createdBy: ID, search: String, status: String): PaymentResponse
+    paymentStats: PaymentStats
     analytics(createdBy: ID): AnalyticsData
     branding: BrandingConfig
     configs: [Config]
@@ -1034,7 +1043,7 @@ export const typeDefs = `#graphql
     myCodeExerciseAnswers(courseId: ID!, lessonId: ID!): [SavedCodeExerciseAnswer!]!
     
     # Completed Users
-    completedUsers(page: Int, limit: Int, createdBy: ID, courseId: ID, dateFrom: String, dateTo: String): CompletedUserResponse
+    completedUsers(page: Int, limit: Int, createdBy: ID, courseId: ID, dateFrom: String, dateTo: String, search: String): CompletedUserResponse
     
     # Course Applications
     courseApplications(courseId: ID, status: String, page: Int, limit: Int): CourseApplicationResponse

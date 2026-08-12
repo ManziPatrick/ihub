@@ -109,7 +109,7 @@ export default function CourseApplicationReview() {
               key={s}
               size="sm"
               variant={filter === s ? 'gold' : 'ghost'}
-              onClick={() => { setFilter(s); setExpandedId(null); }}
+              onClick={() => { setFilter(s); setExpandedId(null); setCurrentPage(1); }}
               className="capitalize text-[11px] font-black tracking-wider h-8 rounded-lg"
             >
               {s}

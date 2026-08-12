@@ -495,7 +495,7 @@ export const resolvers = {
       };
     },
 
-    completedUsers: async (_: any, { page = 1, limit = 10, createdBy, courseId, dateFrom, dateTo }: any, context: any) => {
+    completedUsers: async (_: any, { page = 1, limit = 10, createdBy, courseId, dateFrom, dateTo, search }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
@@ -710,6 +710,17 @@ export const resolvers = {
         items = items.filter(item =>
           item.completedCourseIds.some((cid: string) => adminCourseIds.includes(cid))
         );
+      }
+
+      // Server-side search (name / email / username) across ALL pages
+      if (search && search.trim()) {
+        const q = search.trim().toLowerCase();
+        items = items.filter((item: any) => {
+          const u = item.user || {};
+          const name = (u.fullName || u.username || '').toLowerCase();
+          const email = (u.email || '').toLowerCase();
+          return name.includes(q) || email.includes(q);
+        });
       }
 
       // Sort by completedAt descending
@@ -1985,7 +1996,7 @@ export const resolvers = {
     },
 
 
-    payments: async (_: any, { page = 1, limit = 10, createdBy }: any, context: any) => {
+    payments: async (_: any, { page = 1, limit = 10, createdBy, search, status }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
@@ -2054,9 +2065,24 @@ export const resolvers = {
       ]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-      const totalCount = standardPayments.length + internshipPayments.length;
+      // Server-side search + status filtering (on the combined list, after
+      // normalizing statuses) so admin filters work across ALL pages — not
+      // just the currently loaded page.
+      let filtered = combined;
+      if (search && search.trim()) {
+        const q = search.trim().toLowerCase();
+        filtered = filtered.filter((p: any) =>
+          (p.studentName || '').toLowerCase().includes(q) ||
+          (p.itemTitle || '').toLowerCase().includes(q)
+        );
+      }
+      if (status && status !== 'all') {
+        filtered = filtered.filter((p: any) => p.status === status);
+      }
+
+      const totalCount = filtered.length;
       const totalPages = Math.ceil(totalCount / limit);
-      const items = combined.slice(skip, skip + limit);
+      const items = filtered.slice(skip, skip + limit);
 
       return {
         items,
@@ -2068,6 +2094,70 @@ export const resolvers = {
           hasNextPage: page < totalPages,
           hasPreviousPage: page > 1
         }
+      };
+    },
+
+    // Aggregate payment stats for the Payments page header cards. Kept as a
+    // dedicated query so the cards stay accurate even when the list is
+    // filtered by search/status (they must not reflect only the current page).
+    paymentStats: async (_: any, __: any, context: any) => {
+      if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
+        throw new Error('Not authorized');
+      }
+      if (context.user.role === 'admin') requirePermission(context, 'payments');
+
+      const isSuperAdmin = context.user.role === 'super_admin';
+      let adminCourseIds: any[] = [];
+      if (!isSuperAdmin) {
+        const adminCourses = await Course.find({
+          $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
+        });
+        adminCourseIds = adminCourses.map(c => c._id);
+      }
+
+      let filter: any = {};
+      if (!isSuperAdmin) {
+        filter = {
+          $or: [
+            { courseIds: { $in: adminCourseIds } },
+            { internshipIds: { $in: adminCourseIds } }
+          ]
+        };
+      }
+
+      const [standardPayments, internshipPayments] = await Promise.all([
+        Payment.find(filter),
+        InternshipPayment.find({ ...filter, isDeleted: false }),
+      ]);
+
+      const now = new Date();
+      const completed = (p: any) => ['completed', 'paid', 'successful'].includes(p.status);
+      const inThisMonth = (p: any) => {
+        const d = new Date(p.createdAt || p.date || Date.now());
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      };
+
+      const standard = standardPayments as any[];
+      const internships = internshipPayments as any[];
+      const pendingStandard = standard.filter((p) => p.status === 'pending');
+      const pendingInternships = internships.filter((p) => p.status === 'pending' || p.status === 'unpaid');
+      const pending = [...pendingStandard, ...pendingInternships];
+
+      const internshipRevenue = internships
+        .filter((p) => p.status === 'paid')
+        .reduce((acc, p) => acc + (p.amount || 0), 0);
+      const totalRevenue =
+        standard.filter(completed).reduce((acc, p) => acc + (p.amount || 0), 0) + internshipRevenue;
+      const thisMonthRevenue =
+        standard.filter((p) => completed(p) && inThisMonth(p)).reduce((acc, p) => acc + (p.amount || 0), 0) +
+        internships.filter((p) => p.status === 'paid' && inThisMonth(p)).reduce((acc, p) => acc + (p.amount || 0), 0);
+
+      return {
+        totalRevenue,
+        thisMonthRevenue,
+        pendingValue: pending.reduce((acc, p) => acc + (p.amount || 0), 0),
+        pendingCount: pending.length,
+        internshipRevenue,
       };
     },
 
@@ -9701,7 +9791,7 @@ export const resolvers = {
     },
     ...applicationPhaseResolvers.Mutation,
     ...projectTaskResolvers.Mutation,    ...locationResolvers.Mutation,
-    ...eventApplicationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,    ...trainerResolvers.Mutation,    ...testimonialResolvers.Mutation,
+    ...eventApplicationResolvers.Mutation,    ...commissionResolvers.Mutation,    ...disbursementResolvers.Mutation,    ...scholarshipResolvers.Mutation,    ...broadcastResolvers.Mutation,    ...uploadLogResolvers.Mutation,    ...scheduledBroadcastResolvers.Mutation,    ...refundResolvers.Mutation,    ...trainerResolvers.Mutation,    ...testimonialResolvers.Mutation,
 
     assignDeveloperToProject: async (_: any, { projectId, developerId, role, checklistTasks }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
