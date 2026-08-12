@@ -1,0 +1,50 @@
+name: Deploy to Dokploy (main only)
+
+# Only runs on pushes to `main` — pushes to develop/feature branches
+# never hit the deploy webhook, so Dokploy stops recording "cancelled"
+# deployments from branch mismatches.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Trigger Dokploy deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Call Dokploy deploy webhook
+        env:
+          DOKPLOY_WEBHOOK_URL: ${{ secrets.DOKPLOY_DEPLOY_WEBHOOK_URL || 'https://server.bootskills.com/api/deploy/djL59W-mv5dWhu7nY0SpW' }}
+        run: |
+          # GitHub Actions doesn't guarantee a git checkout here; pass the real
+          # commit SHA from the workflow context so Dokploy deploys this exact push.
+          payload=$(jq -nc \
+            --arg ref "refs/heads/main" \
+            --arg sha "${{ github.sha }}" \
+            --arg repo "${{ github.repository }}" \
+            '{ref: $ref, after: $sha, before: $sha, repository: {full_name: $repo, name: ($repo | split("/") | .[1])}, head_commit: {id: $sha}, pusher: {name: "github-actions"}}')
+
+          echo "Triggering deploy for ${{ github.sha }} on main"
+          response=$(curl -sS -w '\n%{http_code}' --max-time 60 -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: push" \
+            -H "X-GitHub-Delivery: ${{ github.run_id }}" \
+            -d "$payload" \
+            "$DOKPLOY_WEBHOOK_URL")
+
+          body=$(echo "$response" | head -n -1)
+          code=$(echo "$response" | tail -n 1)
+          echo "HTTP $code — $body"
+
+          # Dokploy returns 3xx + {"message":"..."} for branch mismatches; fail loudly.
+          if ! echo "$code" | grep -qE '^2'; then
+            echo "::error::Dokploy deploy webhook returned HTTP $code: $body"
+            exit 1
+          fi
+          if echo "$body" | grep -qi '"message":"[^"]*not match'; then
+            echo "::error::Dokploy rejected the deploy: $body"
+            exit 1
+          fi
