@@ -262,7 +262,7 @@ export function AnimatedRoutes() {
           <Route path="/portal/super-admin/undo-metrics" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminUndoMetrics /></ProtectedRoute>} />
           <Route path="/portal/super-admin/branding" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminBranding /></ProtectedRoute>} />
           <Route path="/portal/super-admin/tools" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminTools /></ProtectedRoute>} />
-          <Route path="/portal/super-admin/user-map" element={<ProtectedRoute allowedRoles={["admin", "super_admin"]} requiredPermission="users"><SuperAdminMap /></ProtectedRoute>} />
+          <Route path="/portal/super-admin/user-map" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminMap /></ProtectedRoute>} />
           <Route path="/portal/super-admin/user-report/:userId" element={<ProtectedRoute allowedRoles={["super_admin"]}><UserReportPage /></ProtectedRoute>} />
           <Route path="/portal/super-admin/commissions" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminCommissionConfig /></ProtectedRoute>} />
           <Route path="/portal/super-admin/disbursements" element={<ProtectedRoute allowedRoles={["super_admin"]}><SuperAdminDisbursements /></ProtectedRoute>} />

@@ -32,11 +32,12 @@ export const locationResolvers = {
       };
     },
     usersWithLocation: async (_: any, { role }: { role?: string }, context: any) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+      // The live location map is a platform-wide view — super admin only.
+      if (!context.user || context.user.role !== 'super_admin') {
         throw new Error('Not authorized');
       }
-      // Return ALL platform users (not just those with coordinates) — both
-      // admins and super admins see every user on the map.
+      // Return ALL platform users (not just those with coordinates) so the
+      // super admin sees every user on the map.
       const filter: any = {
         isDeleted: { $ne: true },
       };
@@ -102,7 +103,7 @@ export const locationResolvers = {
       };
     },
     adminUpdateUserLocation: async (_: any, { userId, latitude, longitude }: any, context: any) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+      if (!context.user || context.user.role !== 'super_admin') {
         throw new Error('Not authorized');
       }
       const user = await User.findByIdAndUpdate(
@@ -134,7 +135,7 @@ export const locationResolvers = {
       { userId, denied }: { userId: string; denied: boolean },
       context: any
     ) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+      if (!context.user || context.user.role !== 'super_admin') {
         throw new Error('Not authorized');
       }
       const user = await User.findByIdAndUpdate(
@@ -160,7 +161,7 @@ export const locationResolvers = {
       { userId, forceAllowed }: { userId: string; forceAllowed: boolean },
       context: any
     ) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+      if (!context.user || context.user.role !== 'super_admin') {
         throw new Error('Not authorized');
       }
       // Force allow: set locationShared to true, locationDenied to false
@@ -188,7 +189,7 @@ export const locationResolvers = {
       { userIds }: { userIds: string[] },
       context: any
     ) => {
-      if (!context.user || !['admin', 'super_admin'].includes(context.user.role)) {
+      if (!context.user || context.user.role !== 'super_admin') {
         throw new Error('Not authorized');
       }
       if (!userIds || userIds.length === 0) {

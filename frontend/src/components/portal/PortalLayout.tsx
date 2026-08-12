@@ -139,7 +139,6 @@ const adminNavItems: NavItem[] = [
     children: [      { label: "Users", href: "/portal/admin/users", icon: Users },      { label: "Testimonials", href: "/portal/admin/testimonials", icon: MessageSquareHeart },      { label: "Completed Users", href: "/portal/admin/completed-users", icon: GraduationCap },
       { label: "Courses", href: "/portal/admin/courses", icon: BookOpen },
       { label: "Course Preview", href: "/portal/admin/course-preview", icon: Eye },
-      { label: "User Map", href: "/portal/super-admin/user-map", icon: MapPin },
       { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
       { label: "Applicant Hub", href: "/portal/admin/applicants", icon: Users },
       { label: "Opportunities", href: "/portal/admin/internships", icon: Briefcase },
@@ -250,7 +249,6 @@ const clientNavItems: NavItem[] = [
 const ADMIN_NAV_PERMISSIONS: Record<string, string> = {
   "/portal/admin/users": "users",
   "/portal/admin/completed-users": "users",
-  "/portal/super-admin/user-map": "users",
   "/portal/admin/courses": "courses",
   "/portal/admin/course-preview": "courses",
   "/portal/admin/assignment-reviews": "courses",
