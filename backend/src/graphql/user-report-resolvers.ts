@@ -48,7 +48,9 @@ export const userReportResolvers = {
         user = await User.findById(userId)
           // ensure we have course metadata for the report "Courses" section
           .populate('enrolledCourses', 'title level category thumbnail modules')
-          .populate('badges.badge');
+          // User model stores badge refs under badges.badgeId (badges.badge would
+          // throw for users without that path and silently skip the whole populate)
+          .populate('badges.badgeId');
       } catch (err: any) {
         console.error(`[UserReport] populate error fetching user ${userId}:`, err?.message || err);
         user = await User.findById(userId);
