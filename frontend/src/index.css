@@ -743,6 +743,66 @@ body > iframe[src*="accounts.google.com/gsi/"] {
   display: none;
 }
 /* ═══════════════════════════════════════════════════
+   PRINT / PDF EXPORT — clean light-on-white A4 output
+   Used by the Full User Report (and any print:hidden pages).
+   ═══════════════════════════════════════════════════ */
+
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #111827 !important;
+    width: 100%;
+  }
+
+  /* Neutralise dark-mode surfaces so tables/text print black on white.
+     Only the app shell is targeted — the print document (ReportPrintDocument)
+     keeps its own light fills (e.g. table header shading). */
+  body, #root, main {
+    background-color: #ffffff !important;
+  }
+
+  /* Keep text legible and consistent regardless of theme */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Never split table rows or headings across pages */
+  tr, h1, h2, h3, h4 {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Keep table headers on each page */
+  thead {
+    display: table-header-group;
+  }
+
+  /* Avoid orphaned rows */
+  tbody {
+    display: table-row-group;
+  }
+
+  /* Prevent anchors/links from printing their URLs */
+  a[href]::after {
+    content: none !important;
+  }
+
+  /* Hide decorative/utility elements that shouldn't print */
+  .animate-pulse, .animate-spin, .animate-bounce {
+    animation: none !important;
+  }
+
+  /* Tailwind's `hidden print:block` already handles print-only visibility;
+     nothing extra needed here. */
+}
+
+/* ═══════════════════════════════════════════════════
    MOBILE PERFORMANCE OPTIMIZATIONS
    ═══════════════════════════════════════════════════ */
 

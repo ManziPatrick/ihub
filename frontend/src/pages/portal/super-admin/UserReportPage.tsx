@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@apollo/client/react";
 import { GET_USER_FULL_REPORT } from "@/lib/graphql/queries";
+import ReportPrintDocument from "./ReportPrintDocument";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -481,7 +482,13 @@ export default function UserReportPage() {
 
   return (
     <PortalLayout>
-      <div className="space-y-5 print:space-y-4">
+      {/* Print-only document — all role-specific sections laid out for A4 PDF export */}
+      <div className="hidden print:block">
+        <ReportPrintDocument report={report} />
+      </div>
+
+      {/* Interactive view (hidden when printing) */}
+      <div className="space-y-5 print:hidden">
         {/* ── Header ── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}

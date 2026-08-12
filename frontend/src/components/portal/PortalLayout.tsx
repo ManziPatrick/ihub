@@ -552,7 +552,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
   return (
     <div className="min-h-screen bg-background flex w-full">
       {/* Sidebar - Desktop */}
-      <aside className={`hidden lg:flex lg:flex-col ${isSidebarMinimized ? 'lg:w-20' : 'lg:w-64'} bg-card border-r border-border/50 fixed h-full transition-all duration-300 z-40`}>
+      <aside className={`hidden lg:flex lg:flex-col ${isSidebarMinimized ? 'lg:w-20' : 'lg:w-64'} bg-card border-r border-border/50 fixed h-full transition-all duration-300 z-40 print:hidden`}>
         {/* Sidebar Header & Search */}
         <div className="flex flex-col border-b border-border/50 shrink-0">
           <div className="h-16 flex items-center justify-between px-4">
@@ -736,7 +736,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: "tween", duration: 0.3 }}
-              className="fixed left-0 top-0 bottom-0 w-64 bg-card z-50 lg:hidden flex flex-col"
+              className="fixed left-0 top-0 bottom-0 w-64 bg-card z-50 lg:hidden flex flex-col print:hidden"
             >
               {/* Close button */}
               <button
@@ -913,9 +913,9 @@ export function PortalLayout({ children }: PortalLayoutProps) {
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col h-dvh overflow-hidden transition-all duration-300 ${isSidebarMinimized ? 'lg:pl-20' : 'lg:pl-64'}`}>
+      <div className={`flex-1 flex flex-col h-dvh overflow-hidden transition-all duration-300 ${isSidebarMinimized ? 'lg:pl-20' : 'lg:pl-64'} print:h-auto print:overflow-visible print:pl-0`}>
         {/* Top Header */}
-        <header className="h-16 bg-card border-b border-border/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
+        <header className="h-16 bg-card border-b border-border/50 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 print:hidden">
           {/* Mobile Menu Button */}
           <button
             onClick={() => setSidebarOpen(true)}
@@ -1249,13 +1249,13 @@ export function PortalLayout({ children }: PortalLayoutProps) {
         <PlatformTour />
 
         {/* Page Content */}
-        <main className="flex-1 p-3 sm:p-4 lg:p-6 pb-28 overflow-y-auto custom-scrollbar">
+        <main className="flex-1 p-3 sm:p-4 lg:p-6 pb-28 overflow-y-auto custom-scrollbar print:overflow-visible print:p-0 print:pb-0">
           <ProfileCompletionGuard>
             {children}
           </ProfileCompletionGuard>
         </main>
       </div>
-      {!location.pathname.startsWith('/chat') && <FloatingChat />}
+      {!location.pathname.startsWith('/chat') && <div className="print:hidden"><FloatingChat /></div>}
     </div>
   );
 }
