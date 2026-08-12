@@ -58,7 +58,7 @@ import {
 } from "@/components/ui/sheet";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
-import { GET_USERS, GET_ANALYTICS, GET_AVAILABLE_ADMINS, GET_ALL_TRAINERS, GET_ALL_STUDENTS } from "@/lib/graphql/queries";
+import { GET_USERS, GET_ANALYTICS, GET_AVAILABLE_ADMINS } from "@/lib/graphql/queries";
 
 const navigate = (to: string) => {
   window.location.href = to;
@@ -112,8 +112,21 @@ export default function SuperAdminUsers() {
   });
   const { data: analyticsData } = useQuery(GET_ANALYTICS);
   const { data: availableAdminsData } = useQuery(GET_AVAILABLE_ADMINS);
-  const { data: allTrainersData } = useQuery(GET_ALL_TRAINERS);
-  const { data: allStudentsData } = useQuery(GET_ALL_STUDENTS);
+  // Precise per-role totals from the paginated users resolver — using
+  // getAllTrainers/getAllStudents here would double-count (getAllTrainers
+  // includes admins/super_admins) and inflate the dashboard stats.
+  const { data: trainersCountData } = useQuery(GET_USERS, {
+    variables: { page: 1, limit: 1, role: "trainer" },
+  });
+  const { data: studentsCountData } = useQuery(GET_USERS, {
+    variables: { page: 1, limit: 1, role: "student" },
+  });
+  const { data: adminsCountData } = useQuery(GET_USERS, {
+    variables: { page: 1, limit: 1, role: "admin" },
+  });
+  const { data: superAdminsCountData } = useQuery(GET_USERS, {
+    variables: { page: 1, limit: 1, role: "super_admin" },
+  });
   const { data: clientUsersData } = useQuery(GET_USERS, {
     variables: { page: 1, limit: 1, role: "client" },
   });
@@ -280,13 +293,12 @@ export default function SuperAdminUsers() {
 
   // Accurate counts from backend, not paginated
   const totalUsers = pagination?.totalCount ?? allUsers.length;
-  // Use dedicated API calls for accurate role counts (bypasses analytics.roleDistribution bugs)
-  const allTrainers = (allTrainersData as any)?.getAllTrainers || [];
-  const allStudents = (allStudentsData as any)?.getAllStudents || [];
   const clientCount = (clientUsersData as any)?.users?.pagination?.totalCount ?? 0;
-  const studentCount = allStudents.length || 0;
-  const trainerCount = allTrainers.length || 0;
-  const adminCount = adminOptions.length || 0;
+  const studentCount = (studentsCountData as any)?.users?.pagination?.totalCount ?? 0;
+  const trainerCount = (trainersCountData as any)?.users?.pagination?.totalCount ?? 0;
+  const adminCount =
+    ((adminsCountData as any)?.users?.pagination?.totalCount ?? 0) +
+    ((superAdminsCountData as any)?.users?.pagination?.totalCount ?? 0);
 
   const userStats = [
     { label: "Total Users", value: totalUsers.toString(), icon: Users },

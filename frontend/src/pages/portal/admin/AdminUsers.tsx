@@ -99,6 +99,11 @@ export default function AdminUsers() {
   // resolver scopes only trainers. (A `createdBy` filter here would hide users
   // the admin didn't personally create, which breaks the User Management page.)
   const queryVariables: any = { page: currentPage, limit: pageSize };
+  // Role filtering happens server-side (not on the current page) so selecting
+  // e.g. "admin" or "client" returns ALL matching users across pages.
+  if (filterRole !== "all") {
+    queryVariables.role = filterRole;
+  }
   const { data, loading, refetch } = usePaginatedQuery(GET_USERS, {
     variables: queryVariables,
   });
@@ -122,13 +127,13 @@ export default function AdminUsers() {
   const pagination = (data as any)?.users?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
 
   const filteredUsers = users.filter((u: any) => {
+    // Non-super admins never see super_admin accounts in the list.
     if (currentUser?.role !== "super_admin" && u.role === "super_admin") {
       return false;
     }
     const matchesSearch = (u.username?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
       (u.email?.toLowerCase() || "").includes(searchQuery.toLowerCase());
-    const matchesRole = filterRole === "all" || u.role === filterRole;
-    return matchesSearch && matchesRole;
+    return matchesSearch;
   });
 
   const handleAddUser = async (newUser: any) => {
@@ -375,7 +380,10 @@ export default function AdminUsers() {
                 key={role}
                 variant={filterRole === role ? "gold" : "outline"}
                 size="sm"
-                onClick={() => setFilterRole(role)}
+                onClick={() => {
+                  setFilterRole(role);
+                  setCurrentPage(1);
+                }}
                 className="capitalize whitespace-nowrap"
               >
                 {role.replace("_", " ")}
