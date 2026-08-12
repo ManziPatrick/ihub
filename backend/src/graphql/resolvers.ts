@@ -5039,8 +5039,11 @@ export const resolvers = {
         });
       }
 
-      // Restrict financial and identity updates to admins/super_admins only
-      if (context.user.role !== 'super_admin' && context.user.role !== 'admin') {
+      // Restrict financial/identity updates to admins/super_admins, EXCEPT the
+      // owning instructor: trainers must be able to edit their own courses'
+      // content and pricing (the gate above already ensures any trainer reaching
+      // this point IS the owner instructor).
+      if (context.user.role !== 'super_admin' && context.user.role !== 'admin' && !isOwnerInstructor) {
         const restrictedFields = [
           'price', 'discountPrice', 'title', 'description',
           'thumbnail', 'level', 'category', 'instructor'
@@ -5048,6 +5051,12 @@ export const resolvers = {
         restrictedFields.forEach(field => {
           delete updateData[field];
         });
+      }
+      // Belt-and-suspenders: never let a trainer reassign the instructor via a
+      // raw `instructor` field (the schema exposes instructorId, but keep the
+      // invariant explicit rather than relying on schema shape).
+      if (context.user.role !== 'admin' && context.user.role !== 'super_admin') {
+        delete updateData.instructor;
       }
 
       console.log(`[UpdateCourse] SANITIZING AND SAVING VIA NUCLEAR UPDATE for course ${id}`);
