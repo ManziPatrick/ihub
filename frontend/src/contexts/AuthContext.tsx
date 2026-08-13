@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useMutation } from "@apollo/client/react";
 import { LOGIN_USER, REGISTER_USER } from "@/lib/graphql/mutations";
+import { resetWsConnection } from "@/lib/apolloClient";
 
 export type UserRole =
   | "student"
@@ -265,6 +266,9 @@ export function AuthProvider({
         );
 
         setUser(appUser);
+        // Reconnect WS with the fresh token so subscriptions opened after
+        // login aren't served by the stale pre-login (no-token) connection.
+        resetWsConnection();
       }
 
       return { token, user: appUser };
@@ -352,6 +356,9 @@ export function AuthProvider({
         );
 
         setUser(appUser);
+        // Reconnect WS with the fresh token so subscriptions opened after
+        // login aren't served by the stale pre-login (no-token) connection.
+        resetWsConnection();
       }
 
       return { token, user: appUser };
@@ -469,6 +476,10 @@ export function AuthProvider({
       "ihub_user",
       JSON.stringify(appUser)
     );
+
+    // Reconnect WS with the fresh token so subscriptions opened after
+    // login aren't served by the stale pre-login (no-token) connection.
+    resetWsConnection();
   };
 
   return (

@@ -10,6 +10,7 @@ import { MY_COURSE_APPLICATIONS } from "@/lib/graphql/queries";
 import { toast } from "sonner";
 import { Loader2, HelpCircle, CheckCircle, Clock, XCircle, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 
 interface ApplyCourseDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface ApplyCourseDialogProps {
 
 export function ApplyCourseDialog({ open, onOpenChange, course, onSuccess }: ApplyCourseDialogProps) {
   const { user } = useAuth();
+  const { addToCart } = useCart();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [selectedDeliveryMode, setSelectedDeliveryMode] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +32,18 @@ export function ApplyCourseDialog({ open, onOpenChange, course, onSuccess }: App
 
   const [applyToCourse] = useMutation(APPLY_TO_COURSE, {
     onCompleted: () => {
+      // Auto-add paid courses to the cart so the user doesn't have to
+      // navigate back to the single-course page to start payment.
+      if (course && Number(course.price) > 0) {
+        addToCart({
+          id: course.id || course._id,
+          title: course.title,
+          price: course.price,
+          discountPrice: course.discountPrice,
+          type: "course",
+          image: course.thumbnail || course.image,
+        });
+      }
       onSuccess?.();
     }
   });

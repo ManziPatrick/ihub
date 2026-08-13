@@ -580,6 +580,24 @@ export function FeaturedCourses() {
     });
   }, [internships]);
 
+  // Group internships by company/school into container cards, mirroring the
+  // Opportunities page layout. Programs with no organization fall back to
+  // "Bootskills Academy" so they always belong to a container.
+  const groupedInternships = useMemo(() => {
+    const groups = new Map<string, any[]>();
+    for (const intern of filteredInternships) {
+      const org = intern.organization?.trim() || "Bootskills Academy";
+      const list = groups.get(org) || [];
+      list.push(intern);
+      groups.set(org, list);
+    }
+    return Array.from(groups.entries()).map(([name, items]) => ({
+      name,
+      items,
+      orgLogo: items.find((i: any) => i.organizationLogo)?.organizationLogo || null,
+    }));
+  }, [filteredInternships]);
+
   const scrollTabs = (dir: "left" | "right") => {
     tabScrollRef.current?.scrollBy({ left: dir === "left" ? -220 : 220, behavior: "smooth" });
   };
@@ -1425,98 +1443,121 @@ export function FeaturedCourses() {
                   </div>
                 ) : (
                   <>
-                    {/* Opportunities as cards — same style as the Opportunities page */}
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {filteredInternships.map((intern: any, idx: number) => {
-                        const orgName = intern.organization?.trim() || "Bootskills Academy";
+                    {/* Opportunities grouped into company/school container cards */}
+                    <div className="space-y-6">
+                      {groupedInternships.map((group, groupIdx) => {
+                        const orgName = group.name;
                         const orgInitials = orgName
                           .split(/\s+/).filter(Boolean).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
-                        const logo = intern.organizationLogo || null;
-                        const isFree = intern.price === 0 || intern.price == null;
-                        const application = myInternApplications.find(
-                          (app: any) =>
-                            app.internshipProgram?.id === (intern.id || intern._id) ||
-                            app.internshipProgramId === (intern.id || intern._id)
-                        );
-                        const appStatus = application?.status;
                         return (
                           <motion.div
-                            key={intern.id || intern._id}
-                            initial={{ opacity: 0, y: 10 }}
+                            key={orgName}
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: Math.min(idx * 0.03, 0.3) }}
-                            className="group bg-card rounded-2xl border border-border/30 shadow-card overflow-hidden hover:shadow-card-hover hover:border-accent/30 hover:-translate-y-1 transition-all flex flex-col"
+                            transition={{ delay: Math.min(groupIdx * 0.05, 0.3) }}
+                            className="bg-card rounded-2xl border border-border/30 shadow-card overflow-hidden"
                           >
-                            {/* Banner — program image or organization gradient */}
-                            <Link
-                              to={`/opportunity/${intern.id || intern._id}`}
-                              className="relative block aspect-[16/9]"
-                            >
-                              {intern.image ? (
-                                <img
-                                  src={intern.image}
-                                  alt={intern.title}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-accent via-accent/80 to-accent/40 flex items-center justify-center">
-                                  <span className="font-heading text-4xl font-black text-white/90">{orgInitials}</span>
-                                </div>
-                              )}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-                              <span className={`absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full shadow ${isFree ? "bg-green-500 text-white" : "bg-gold text-black"}`}>
-                                {isFree ? "FREE" : `${intern.price?.toLocaleString()} ${intern.currency || "RWF"}`}
-                              </span>
-                            </Link>
-                            {/* Organization logo badge */}
-                            <div className="relative -mt-5 ml-4 w-12 h-12 rounded-xl bg-card p-1 shadow-lg ring-1 ring-border/40 overflow-hidden z-10">
-                              {logo ? (
-                                <img src={logo} alt={orgName} className="w-full h-full object-contain rounded-[9px]" />
-                              ) : (
-                                <div className="w-full h-full rounded-[9px] bg-accent/10 flex items-center justify-center">
-                                  <Building2 className="w-6 h-6 text-accent" />
-                                </div>
-                              )}
-                            </div>
-                            {/* Card body */}
-                            <div className="flex-1 flex flex-col p-4 pt-2 gap-2">
-                              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-accent min-w-0">
-                                <Building2 className="w-3.5 h-3.5 shrink-0" />
-                                <span className="truncate">{orgName}</span>
+                            {/* Company/school header */}
+                            <div className="flex items-center gap-4 p-5 border-b border-border/20 bg-background/40">
+                              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg shrink-0 overflow-hidden">
+                                {group.orgLogo ? (
+                                  <img src={group.orgLogo} alt={orgName} className="w-full h-full object-contain p-1 bg-white" />
+                                ) : (
+                                  <Building2 className="w-7 h-7 text-white" strokeWidth={1.75} />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-heading font-semibold text-lg text-foreground truncate">{orgName}</h3>
+                                <p className="text-xs text-muted-foreground mt-0.5 inline-flex items-center gap-1.5">
+                                  <Briefcase className="w-3.5 h-3.5 text-accent" />
+                                  {group.items.length} open {group.items.length === 1 ? "program" : "programs"}
+                                </p>
                               </div>
                               <Link
-                                to={`/opportunity/${intern.id || intern._id}`}
-                                className="font-heading font-semibold text-foreground leading-snug line-clamp-2 hover:text-accent transition-colors"
+                                to={`/opportunities`}
+                                className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-accent hover:text-accent/80 transition-colors shrink-0"
                               >
-                                {intern.title}
+                                View all <ChevronRight className="w-4 h-4" />
                               </Link>
-                              <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
-                                {intern.duration && (
-                                  <span className="text-[10px] bg-background px-2 py-0.5 rounded text-muted-foreground border border-border/50">{intern.duration}</span>
-                                )}
-                                <span className="text-[10px] bg-background px-2 py-0.5 rounded text-muted-foreground border border-border/50 capitalize">{intern.type || "Remote"}</span>
-                                {intern.maxSpots > 0 && (
-                                  <span className="text-[10px] bg-background px-2 py-0.5 rounded text-muted-foreground border border-border/50">{intern.maxSpots} spots</span>
-                                )}
-                              </div>
-                              <div className="pt-3">
-                                {appStatus === "approved" ? (
-                                  <Button variant="outline" size="sm" className="w-full rounded-xl font-bold h-9 border-green-500 text-green-500 hover:bg-green-50" onClick={() => navigate(`/portal/student/internship`)}>
-                                    Continue <ArrowRight className="w-4 h-4 ml-1.5" />
-                                  </Button>
-                                ) : appStatus === "pending" ? (
-                                  <Button disabled className="w-full bg-amber-500 rounded-xl font-bold text-sm h-9">
-                                    Pending <Clock className="w-4 h-4 ml-1.5" />
-                                  </Button>
-                                ) : appStatus === "rejected" ? (
-                                  <Button disabled className="w-full bg-red-500 rounded-xl font-bold text-sm h-9">Rejected</Button>
-                                ) : (
-                                  <Button variant="gold" className="w-full rounded-xl h-9" onClick={() => navigate(`/opportunity/${intern.id || intern._id}`)}>
-                                    Apply Now <ArrowRight className="w-4 h-4 ml-1.5" />
-                                  </Button>
-                                )}
-                              </div>
+                            </div>
+                            {/* Programs inside the container */}
+                            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+                              {group.items.map((intern: any, idx: number) => {
+                                const isFree = intern.price === 0 || intern.price == null;
+                                const application = myInternApplications.find(
+                                  (app: any) =>
+                                    app.internshipProgram?.id === (intern.id || intern._id) ||
+                                    app.internshipProgramId === (intern.id || intern._id)
+                                );
+                                const appStatus = application?.status;
+                                return (
+                                  <motion.div
+                                    key={intern.id || intern._id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: Math.min(idx * 0.03, 0.3) }}
+                                    className="group bg-background rounded-xl border border-border/30 shadow-sm overflow-hidden hover:shadow-card-hover hover:border-accent/30 hover:-translate-y-1 transition-all flex flex-col"
+                                  >
+                                    {/* Banner — program image or organization gradient */}
+                                    <Link
+                                      to={`/opportunity/${intern.id || intern._id}`}
+                                      className="relative block aspect-[16/9]"
+                                    >
+                                      {intern.image ? (
+                                        <img
+                                          src={intern.image}
+                                          alt={intern.title}
+                                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                          loading="lazy"
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full bg-gradient-to-br from-accent via-accent/80 to-accent/40 flex items-center justify-center">
+                                          <span className="font-heading text-4xl font-black text-white/90">{orgInitials}</span>
+                                        </div>
+                                      )}
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+                                      <span className={`absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full shadow ${isFree ? "bg-green-500 text-white" : "bg-gold text-black"}`}>
+                                        {isFree ? "FREE" : `${intern.price?.toLocaleString()} ${intern.currency || "RWF"}`}
+                                      </span>
+                                    </Link>
+                                    {/* Card body */}
+                                    <div className="flex-1 flex flex-col p-4 gap-2">
+                                      <Link
+                                        to={`/opportunity/${intern.id || intern._id}`}
+                                        className="font-heading font-semibold text-foreground leading-snug line-clamp-2 hover:text-accent transition-colors"
+                                      >
+                                        {intern.title}
+                                      </Link>
+                                      <div className="flex flex-wrap gap-1.5 mt-auto pt-2">
+                                        {intern.duration && (
+                                          <span className="text-[10px] bg-background px-2 py-0.5 rounded text-muted-foreground border border-border/50">{intern.duration}</span>
+                                        )}
+                                        <span className="text-[10px] bg-background px-2 py-0.5 rounded text-muted-foreground border border-border/50 capitalize">{intern.type || "Remote"}</span>
+                                        {intern.maxSpots > 0 && (
+                                          <span className="text-[10px] bg-background px-2 py-0.5 rounded text-muted-foreground border border-border/50">{intern.maxSpots} spots</span>
+                                        )}
+                                      </div>
+                                      <div className="pt-3">
+                                        {appStatus === "approved" ? (
+                                          <Button variant="outline" size="sm" className="w-full rounded-xl font-bold h-9 border-green-500 text-green-500 hover:bg-green-50" onClick={() => navigate(`/portal/student/internship`)}>
+                                            Continue <ArrowRight className="w-4 h-4 ml-1.5" />
+                                          </Button>
+                                        ) : appStatus === "pending" ? (
+                                          <Button disabled className="w-full bg-amber-500 rounded-xl font-bold text-sm h-9">
+                                            Pending <Clock className="w-4 h-4 ml-1.5" />
+                                          </Button>
+                                        ) : appStatus === "rejected" ? (
+                                          <Button disabled className="w-full bg-red-500 rounded-xl font-bold text-sm h-9">Rejected</Button>
+                                        ) : (
+                                          <Button variant="gold" className="w-full rounded-xl h-9" onClick={() => navigate(`/opportunity/${intern.id || intern._id}`)}>
+                                            Apply Now <ArrowRight className="w-4 h-4 ml-1.5" />
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                );
+                              })}
                             </div>
                           </motion.div>
                         );
