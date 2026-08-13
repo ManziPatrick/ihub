@@ -10,6 +10,7 @@
     "start": "vite",
     "dev": "vite",
     "build": "rm -rf dist && tsc -b && vite build && node scripts/generate-version.js",
+    "build:docker": "rm -rf dist && vite build && node scripts/generate-version.js",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "typecheck": "tsc -b",

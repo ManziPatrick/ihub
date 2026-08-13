@@ -9,9 +9,42 @@ on:
       - main
   workflow_dispatch:
 
+# Only one deploy at a time: rapid pushes to main must not fire overlapping
+# webhook calls that make Dokploy cancel/queue the previous deployment.
+concurrency:
+  group: deploy-dokploy
+  cancel-in-progress: false
+
 jobs:
+  typecheck:
+    name: Frontend typecheck
+    # `tsc -b` no longer runs inside the Docker build (it's a pure type-check,
+    # noEmit, and added ~15 min per deploy). Type-checking still happens here
+    # in CI so type errors can't reach production.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --legacy-peer-deps --no-audit --no-fund
+
+      - name: Typecheck frontend
+        working-directory: frontend
+        run: npm run typecheck
+
   deploy:
     name: Trigger Dokploy deploy
+    needs: typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

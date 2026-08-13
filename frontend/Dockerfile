@@ -10,10 +10,16 @@ ARG CACHE_BUST=1
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --legacy-peer-deps --no-audit --no-fund
+# Cache the npm tarball cache across builds so `npm ci` stays fast even
+# when package-lock.json changes (BuildKit cache mount, requires BuildKit).
+RUN --mount=type=cache,target=/root/.npm npm ci --legacy-peer-deps --no-audit --no-fund
 
 COPY . ./
-RUN echo "build: $CACHE_BUST" && npm run build
+# build:docker = vite build + version file, WITHOUT `tsc -b`. tsc is a pure
+# type-check (noEmit) and adds ~15 min to every deploy; type-checking belongs
+# in CI/local (`npm run typecheck`), not in the deploy image.
+RUN --mount=type=cache,target=/app/node_modules/.vite \
+  echo "build: $CACHE_BUST" && npm run build:docker
 
 # ─── Runtime ──────────────────────────────────────────────────────
 FROM node:22-alpine
