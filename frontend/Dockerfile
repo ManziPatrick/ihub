@@ -33,6 +33,14 @@ ENV UV_THREADPOOL_SIZE=2
 RUN --mount=type=cache,target=/app/node_modules/.vite \
   echo "build: $CACHE_BUST" && npm run build:docker
 
+# Generate env-config.js at build time too, so /env-config.js ALWAYS exists in
+# the image. If it's missing, `serve -s` returns index.html (HTML) for that
+# request and the browser throws "Unexpected token '<'" on env-config.js — the
+# app then silently falls back to stale build-time env. The runtime CMD
+# regenerates this file from container env vars, so this is just a safe
+# placeholder in case startup env injection is ever skipped.
+RUN node generate-env-config.js
+
 # ─── Runtime ──────────────────────────────────────────────────────
 FROM node:22-alpine
 
