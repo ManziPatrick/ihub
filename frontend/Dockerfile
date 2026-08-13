@@ -27,6 +27,9 @@ COPY . ./
 # NODE_OPTIONS caps the heap so the build can't balloon RAM and get OOM-killed
 # mid-deploy (which Dokploy shows as "cancelled"). Adjust to your VPS RAM.
 ENV NODE_OPTIONS="--max-old-space-size=2048"
+# UV_THREADPOOL_SIZE limits libuv (sharp image work, zlib) to 2 threads
+# instead of 4 — cuts peak native memory on the 4-core VPS.
+ENV UV_THREADPOOL_SIZE=2
 RUN --mount=type=cache,target=/app/node_modules/.vite \
   echo "build: $CACHE_BUST" && npm run build:docker
 

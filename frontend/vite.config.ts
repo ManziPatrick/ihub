@@ -239,7 +239,7 @@ export default defineConfig(({ mode }) => ({
         console.log("\n🖼️  Converting images to WebP...");
         let converted = 0;
         let skipped = 0;
-        const tasks: Promise<void>[] = [];
+        const pending: string[] = [];
 
         function walk(dir: string): void {
           for (const entry of fs.readdirSync(dir)) {
@@ -258,20 +258,30 @@ export default defineConfig(({ mode }) => ({
               skipped++;
               continue;
             }
-            tasks.push(
-              sharp(fullPath)
-                .webp({ quality: 75 })
-                .toFile(webpPath)
-                .then(() => { converted++; })
-                .catch((err: unknown) => {
-                  console.warn(`  ⚠️  Failed to convert ${entry}:`, err);
-                })
-            );
+            pending.push(fullPath);
           }
         }
 
         walk(distDir);
-        await Promise.all(tasks);
+
+        // Convert with bounded concurrency (2 at a time) so sharp doesn't
+        // spawn a worker per image and spike memory on the deploy VPS.
+        const CONCURRENCY = 2;
+        const workers: Promise<void>[] = [];
+        const next = async () => {
+          while (pending.length > 0) {
+            const fullPath = pending.shift()!;
+            const webpPath = path.join(path.dirname(fullPath), path.parse(fullPath).name + ".webp");
+            try {
+              await sharp(fullPath).webp({ quality: 75 }).toFile(webpPath);
+              converted++;
+            } catch (err: unknown) {
+              console.warn(`  ⚠️  Failed to convert ${path.basename(fullPath)}:`, err);
+            }
+          }
+        };
+        for (let i = 0; i < CONCURRENCY; i++) workers.push(next());
+        await Promise.all(workers);
         console.log(`  ✅ ${converted} images converted, ${skipped} already had WebP versions\n`);
       },
     },
