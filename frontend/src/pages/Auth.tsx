@@ -68,19 +68,9 @@ export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determine where to redirect after login — check location.state first, then ?redirect= query param (for mobile OAuth)
-  const redirectParam = new URLSearchParams(location.search).get("redirect");
+  // Determine where to redirect after login — check location.state first, then ?redirect= query param (for mobile OAuth)
+  const redirectParam = new URLSearchParams(location.search).get("redirect");
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || redirectParam || "/portal/student";
-
-  // Session expired while using the app — tell the user why they are back at the login screen.
-  const sessionExpired = new URLSearchParams(location.search).get("session") === "expired";
-  const [sessionNoticeShown, setSessionNoticeShown] = useState(false);
-  useEffect(() => {
-    if (sessionExpired && !sessionNoticeShown) {
-      setSessionNoticeShown(true);
-      toast.info("Your session expired. Please sign in again to continue.");
-    }
-  }, [sessionExpired, sessionNoticeShown]);
 
   const [googleLoginMutation] = useMutation(GOOGLE_LOGIN);
   const [verify2FAMutation] = useMutation(VERIFY_2FA);
