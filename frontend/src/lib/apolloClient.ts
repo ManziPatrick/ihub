@@ -8,6 +8,7 @@ import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { createClient } from 'graphql-ws';
 import { env } from './env';
 import { createMonitoringLink, trackTimingGlobally } from './graphql/monitoringLink';
+import { globalNavigate } from './navigate';
 
 const httpLink = new UploadHttpLink({
   uri: env.API_URL || 'http://localhost:4000/graphql',
@@ -93,29 +94,20 @@ const blockedAccountLink = new ErrorLink(({ operation, error }) => {
   }
 
   let codes: string[] = [];
-  let messages: string[] = [];
   if (CombinedGraphQLErrors.is(error)) {
     codes = error.errors
       .map((e) => (e as any)?.extensions?.code)
       .filter(Boolean);
-    messages = error.errors.map((e) => e.message).filter(Boolean);
   }
   const isSuspended = codes.includes('ACCOUNT_SUSPENDED');
   const isDeactivated =
     codes.includes('ACCOUNT_DEACTIVATED') || codes.includes('ACCOUNT_BLOCKED');
 
-  // Generic session expiry: the stored token is invalid, expired, or the
-  // account no longer resolves (deleted). Rely on the explicit
-  // UNAUTHENTICATED code (the backend reclassifies "Not authenticated"
-  // messages into this code) rather than a loose message regex so we don't
-  // accidentally log the user out on unrelated errors.
-  const isSessionExpired =
-    !isSuspended &&
-    !isDeactivated &&
-    (codes.includes('UNAUTHENTICATED') ||
-      messages.some((m) => /not authenticated/i.test(m)));
-
-  if (!isSuspended && !isDeactivated && !isSessionExpired) return;
+  // Note: generic session expiry (UNAUTHENTICATED) is intentionally NOT
+  // handled here — a plain token refresh / transient auth error must never
+  // wipe the session or force a redirect to /auth (which can 404 on hosts
+  // without an SPA fallback). Only blocked accounts trigger a redirect.
+  if (!isSuspended && !isDeactivated) return;
 
   blockedAccountRedirectInFlight = true;
   localStorage.removeItem('ihub_token');
@@ -123,10 +115,10 @@ const blockedAccountLink = new ErrorLink(({ operation, error }) => {
 
   if (isSuspended) {
     if (window.location.pathname !== '/account-suspended' && window.location.pathname !== '/auth') {
-      window.location.assign('/account-suspended');
+      globalNavigate('/account-suspended');
     }
   } else if (window.location.pathname !== '/auth') {
-    window.location.assign('/auth?session=expired');
+    globalNavigate('/account-suspended');
   }
 });
 

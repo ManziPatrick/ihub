@@ -1,12 +1,13 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { PageTransition } from "./PageTransition";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Chat } from "@/components/chat/Chat";
 import { useBranding } from "./BrandingProvider";
 import { useAuth } from "@/contexts/AuthContext";
+import { setGlobalNavigate } from "@/lib/navigate";
 
 // Public Pages
 const Index = lazy(() => import("@/pages/Index"));
@@ -133,8 +134,16 @@ const PageLoader = () => (
 
 export function AnimatedRoutes() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { branding, loading: brandingLoading } = useBranding();
   const { user, isLoading: authLoading } = useAuth();
+
+  // Expose router navigation to non-React modules (e.g. the Apollo error link
+  // that redirects on session expiry). Prevents a full page load to a bare
+  // path, which can 404 on hosts without an SPA fallback.
+  useEffect(() => {
+    setGlobalNavigate((to) => navigate(to, { replace: true }));
+  }, [navigate]);
 
   const isMaintenanceMode = branding.maintenanceMode;
   const isAdmin = user && (user.role === "admin" || user.role === "super_admin");
