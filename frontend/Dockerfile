@@ -14,6 +14,12 @@ COPY package.json package-lock.json ./
 # when package-lock.json changes (BuildKit cache mount, requires BuildKit).
 RUN --mount=type=cache,target=/root/.npm npm ci --legacy-peer-deps --no-audit --no-fund
 
+# Install the static-server binary HERE (in the cached build stage) instead of
+# in the runtime stage. The runtime stage's RUN layers are never layer-cached
+# in Dokploy, so `npm install --global serve` re-downloaded on every deploy
+# (~90s). In this stage it's cheap (npm cache mount) and layer-cached.
+RUN --mount=type=cache,target=/root/.npm npm install --global serve --silent
+
 COPY . ./
 # build:docker = vite build + version file, WITHOUT `tsc -b`. tsc is a pure
 # type-check (noEmit) and adds ~15 min to every deploy; type-checking belongs
@@ -24,10 +30,16 @@ RUN --mount=type=cache,target=/app/node_modules/.vite \
 # ─── Runtime ──────────────────────────────────────────────────────
 FROM node:22-alpine
 
-# Install wget for healthcheck + serve for static SPA hosting
-RUN apk add --no-cache wget && npm install --global serve --silent
+# wget only — serve is copied from the build stage (no npm in the runtime)
+RUN apk add --no-cache wget
 
 WORKDIR /app
+
+# Copy the serve module from the build stage and recreate its bin symlink.
+# (Docker COPY resolves symlinks into regular files, which would break Node's
+# module resolution — serve would look for its deps relative to /usr/local/bin.)
+COPY --from=build /usr/local/lib/node_modules/serve /usr/local/lib/node_modules/serve
+RUN ln -s /usr/local/lib/node_modules/serve/build/main.js /usr/local/bin/serve
 
 # Copy only the built assets + env injector script
 COPY --from=build /app/dist ./dist
