@@ -4,37 +4,6 @@ import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import { useQuery } from "@apollo/client/react";
 import { GET_PUBLIC_TESTIMONIALS } from "@/lib/graphql/queries";
-import testimonialEmmanuel from "@/assets/testimonial-emmanuel.webp";
-import testimonialMarie from "@/assets/testimonial-marie.webp";
-import testimonialJean from "@/assets/testimonial-jean.webp";
-
-// Static fallback used while loading or when no approved testimonials exist yet.
-const FALLBACK_TESTIMONIALS = [
-  {
-    id: "static-1",
-    quote: "Bootskills helped me transition from learning to real-world development. The mentorship prepared me for industry work.",
-    authorName: "Emmanuel R.",
-    authorRole: "Software Developer",
-    authorCompany: "TechCorp Rwanda",
-    authorAvatar: testimonialEmmanuel,
-  },
-  {
-    id: "static-2",
-    quote: "The Data Science program gave me practical skills I use every day. Online classes were flexible with world-class instructors.",
-    authorName: "Marie Claire M.",
-    authorRole: "Data Analyst",
-    authorCompany: "FinanceHub Ltd",
-    authorAvatar: testimonialMarie,
-  },
-  {
-    id: "static-3",
-    quote: "From training to program to full-time employment, Bootskills's network opened doors I never knew existed.",
-    authorName: "Jean Paul N.",
-    authorRole: "IoT Engineer",
-    authorCompany: "SmartFarm Solutions",
-    authorAvatar: testimonialJean,
-  },
-];
 
 type TestimonialItem = {
   id: string;
@@ -95,8 +64,11 @@ export function TestimonialsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
+  // Success Stories come exclusively from the backend (approved testimonials).
+  // No hardcoded fallback entries — if none exist yet, the section shows a
+  // subtle empty state instead of fake stories.
   const testimonials = useMemo<TestimonialItem[]>(() => {
-    const apiItems: TestimonialItem[] = ((data as any)?.publicTestimonials || [])
+    return ((data as any)?.publicTestimonials || [])
       .filter((t: any) => t && t.quote)
       .map((t: any) => ({
         id: t.id,
@@ -107,23 +79,15 @@ export function TestimonialsSection() {
         authorAvatar: t.authorAvatar || null,
         rating: t.rating,
       }));
-    // Always keep at least 2 entries so the carousel auto-slides even when few
-    // (or zero) approved testimonials exist yet — approved ones come first.
-    const merged = [...apiItems];
-    if (merged.length < 2) {
-      for (const fb of FALLBACK_TESTIMONIALS) {
-        if (!merged.some((m) => m.id === fb.id)) merged.push(fb);
-        if (merged.length >= 3) break;
-      }
-    }
-    return merged;
   }, [data]);
 
   const isLoading = loading && testimonials.length === 0;
 
   const next = () => setCurrentIndex((prev) => (prev + 1) % testimonials.length);
   const prev = () => setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-  const currentTestimonial = testimonials[currentIndex % testimonials.length];
+  const currentTestimonial = testimonials.length > 0
+    ? testimonials[currentIndex % testimonials.length]
+    : null;
 
   // Auto-slide every 5s, paused while the user hovers the carousel
   useEffect(() => {
@@ -153,14 +117,16 @@ export function TestimonialsSection() {
           onMouseLeave={() => setPaused(false)}
         >
           <div className="flex items-center gap-3 lg:gap-5">
-            {/* Prev Button */}
-            <button
-              onClick={prev}
-              className="w-8 h-8 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/60 hover:text-accent hover:border-accent transition-all duration-300 flex-shrink-0"
-              aria-label="Previous testimonial"
-            >
-              <ChevronLeft size={16} />
-            </button>
+            {/* Prev Button — hidden when there are no backend testimonials yet */}
+            {currentTestimonial && (
+              <button
+                onClick={prev}
+                className="w-8 h-8 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/60 hover:text-accent hover:border-accent transition-all duration-300 flex-shrink-0"
+                aria-label="Previous testimonial"
+              >
+                <ChevronLeft size={16} />
+              </button>
+            )}
 
             {/* Testimonial Content */}
             <div className="flex-1 relative min-h-[120px]">
@@ -181,6 +147,18 @@ export function TestimonialsSection() {
                         <div className="h-2 bg-muted animate-pulse rounded w-1/3" />
                       </div>
                     </div>
+                  </motion.div>
+                ) : !currentTestimonial ? (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="bg-background rounded-xl p-4 lg:p-5 shadow-sm border border-border/30 text-center"
+                  >
+                    <p className="text-sm text-muted-foreground italic">
+                      No success stories yet — be the first to share yours!
+                    </p>
                   </motion.div>
                 ) : (
                   <motion.div
@@ -232,17 +210,20 @@ export function TestimonialsSection() {
               </AnimatePresence>
             </div>
 
-            {/* Next Button */}
-            <button
-              onClick={next}
-              className="w-8 h-8 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/60 hover:text-accent hover:border-accent transition-all duration-300 flex-shrink-0"
-              aria-label="Next testimonial"
-            >
-              <ChevronRight size={16} />
-            </button>
+            {/* Next Button — hidden when there are no backend testimonials yet */}
+            {currentTestimonial && (
+              <button
+                onClick={next}
+                className="w-8 h-8 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/60 hover:text-accent hover:border-accent transition-all duration-300 flex-shrink-0"
+                aria-label="Next testimonial"
+              >
+                <ChevronRight size={16} />
+              </button>
+            )}
           </div>
 
-          {/* Dots Indicator */}
+          {/* Dots Indicator — only when backend testimonials exist */}
+          {currentTestimonial && testimonials.length > 1 && (
           <div className="flex items-center justify-center gap-2 mt-4">
             {testimonials.map((_, index) => (
               <button
@@ -256,6 +237,7 @@ export function TestimonialsSection() {
               />
             ))}
           </div>
+          )}
         </div>
       </div>
     </section>
