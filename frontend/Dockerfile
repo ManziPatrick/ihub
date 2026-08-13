@@ -24,6 +24,9 @@ COPY . ./
 # build:docker = vite build + version file, WITHOUT `tsc -b`. tsc is a pure
 # type-check (noEmit) and adds ~15 min to every deploy; type-checking belongs
 # in CI/local (`npm run typecheck`), not in the deploy image.
+# NODE_OPTIONS caps the heap so the build can't balloon RAM and get OOM-killed
+# mid-deploy (which Dokploy shows as "cancelled"). Adjust to your VPS RAM.
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 RUN --mount=type=cache,target=/app/node_modules/.vite \
   echo "build: $CACHE_BUST" && npm run build:docker
 
