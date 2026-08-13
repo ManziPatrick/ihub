@@ -197,10 +197,12 @@ export default function SuperAdminAdmins() {
     role: "admin",
     permissions: [] as string[]
   });
-  // Fetch every platform user so admins show up regardless of who created them.
-  // (The `users` resolver returns all users for super admins — no createdBy scoping.)
+  // Fetch only admins/super admins server-side (roleIn) instead of pulling up
+  // to 1000 of every platform user and filtering in the browser — the old
+  // approach returned a huge nested payload per user (enrollments, progress,
+  // activity logs…) that could stall or reset on refresh (ERR_FAILED).
   const { data, loading, refetch } = useQuery(GET_USERS, {
-    variables: { page: 1, limit: 1000 },
+    variables: { page: 1, limit: 100, roleIn: ["admin", "super_admin"] },
     fetchPolicy: "network-only",
   });
   const [createUserMutation] = useMutation(CREATE_USER);
