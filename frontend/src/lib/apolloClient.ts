@@ -16,15 +16,29 @@ const httpLink = new UploadHttpLink({
   }
 });
 
-const wsLink = new GraphQLWsLink(createClient({
+// Keep a handle on the ws client so we can force a reconnect with a fresh
+// token right after login (the connection is established lazily and only reads
+// connectionParams at connect time — without this, subscriptions opened with
+// the pre-login (no-token) connection keep failing as "not authenticated"
+// after login, which the guard below wrongly treated as a session expiry).
+const wsClient = createClient({
   url: env.WS_URL || 'ws://localhost:4000/graphql',
+  lazy: true,
   connectionParams: () => {
     const token = localStorage.getItem('ihub_token');
     return {
       authorization: token ? `Bearer ${token}` : "",
     };
   },
-}));
+});
+export function resetWsConnection() {
+  try {
+    (wsClient as any).dispose();
+  } catch {
+    // ignore — a fresh connection will be created on demand (lazy)
+  }
+}
+const wsLink = new GraphQLWsLink(wsClient);
 
 const authLink = setContext((_, { headers }) => {
   const token = localStorage.getItem('ihub_token');
@@ -64,6 +78,20 @@ const blockedAccountLink = new ErrorLink(({ operation, error }) => {
   const opName = operation?.operationName || '';
   if (opName === 'Login' || opName === 'Register') return;
 
+  // Subscription (WebSocket) errors must NOT trigger a logout: the WS
+  // connection can momentarily carry the pre-login (no-token) session and
+  // emit transient "not authenticated" errors. We reconnect the WS with a
+  // fresh token after login (resetWsConnection), so a stale subscription
+  // error here is benign and must not nuke a valid session.
+  try {
+    const def = getMainDefinition(operation.query);
+    if (def?.kind === 'OperationDefinition' && def?.operation === 'subscription') {
+      return;
+    }
+  } catch {
+    // fall through — treat as a normal operation
+  }
+
   let codes: string[] = [];
   let messages: string[] = [];
   if (CombinedGraphQLErrors.is(error)) {
@@ -77,9 +105,10 @@ const blockedAccountLink = new ErrorLink(({ operation, error }) => {
     codes.includes('ACCOUNT_DEACTIVATED') || codes.includes('ACCOUNT_BLOCKED');
 
   // Generic session expiry: the stored token is invalid, expired, or the
-  // account no longer resolves (deleted). Previously this surfaced as raw
-  // "Not authenticated" errors on every page — now it cleanly logs the user
-  // out and sends them to the login screen.
+  // account no longer resolves (deleted). Rely on the explicit
+  // UNAUTHENTICATED code (the backend reclassifies "Not authenticated"
+  // messages into this code) rather than a loose message regex so we don't
+  // accidentally log the user out on unrelated errors.
   const isSessionExpired =
     !isSuspended &&
     !isDeactivated &&

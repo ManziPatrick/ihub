@@ -29,6 +29,7 @@ import {
   FileText,
   DollarSign,
   Sparkles,
+  ShoppingCart,
 } from "lucide-react";
 
 export default function InternshipDetail() {
@@ -48,11 +49,15 @@ export default function InternshipDetail() {
     skip: !isAuthenticated,
   });
 
-  // If user visits a direct link (email, share) while not logged in:
-  // wait for program data to load, add to cart, then redirect to auth
+  // If user visits a direct purchase link (email, share) with ?cart=1 while
+  // not logged in: wait for program data to load, add to cart, then redirect
+  // to auth. Plain browsing without that flag shows the single page freely —
+  // the on-page buttons handle add-to-cart and gate login at checkout only.
   const [authRedirecting, setAuthRedirecting] = useState(false);
+  const wantsImmediateCart = new URLSearchParams(window.location.search).get("cart") === "1";
   useEffect(() => {
     if (authRedirecting) return;
+    if (!wantsImmediateCart) return;
     if (isLoading) return; // auth still loading
     if (isAuthenticated) return; // already logged in
     if (!id) return;
@@ -72,7 +77,7 @@ export default function InternshipDetail() {
     }
     setAuthRedirecting(true);
     navigate(`/auth?redirect=/opportunity/${id}`, { replace: true });
-  }, [authRedirecting, isLoading, isAuthenticated, id, navigate, data, loading, addToCart]);
+  }, [authRedirecting, wantsImmediateCart, isLoading, isAuthenticated, id, navigate, data, loading, addToCart]);
 
   const program = (data as any)?.internshipProgram;
   const myApplications = (appsData as any)?.myInternshipApplications || [];
@@ -399,7 +404,24 @@ export default function InternshipDetail() {
                     </div>
 
                     {/* Apply Button */}
-                    {appStatus === "approved" ? (
+                    {appStatus === "approved" && program.price > 0 ? (
+                      <Button
+                        variant="gold"
+                        className="w-full h-12 text-sm font-bold shadow-lg shadow-gold/20"
+                        onClick={() => {
+                          addToCart({
+                            id: program.id || id || "",
+                            title: program.title || "Opportunity Program",
+                            price: program.price || 0,
+                            discountPrice: program.discount > 0 ? program.discount : undefined,
+                            type: "internship",
+                            image: program.image || ""
+                          });
+                        }}
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-2" /> Pay Now to Enroll
+                      </Button>
+                    ) : appStatus === "approved" ? (
                       <Button
                         className="w-full h-12 text-sm font-bold bg-green-600 hover:bg-green-700"
                         onClick={() => navigate("/portal/student/internship")}
