@@ -1227,7 +1227,7 @@ export const resolvers = {
       return questions;
     },
 
-    users: async (_: any, { page = 1, limit = 10, createdBy, role, sortBy = 'activity' }: any, context: any) => {
+    users: async (_: any, { page = 1, limit = 10, createdBy, role, roleIn, sortBy = 'activity' }: any, context: any) => {
       if (!context.user || !['admin', 'super_admin', 'trainer'].includes(context.user.role)) {
         throw new Error('Unauthorized');
       }
@@ -1303,6 +1303,7 @@ export const resolvers = {
 
         query.$and = [{ _id: { $in: visibleObjectIds } }];
         if (role) query.$and.push({ role });
+        if (roleIn?.length) query.$and.push({ role: { $in: roleIn } });
       } else if (context.user.role === 'trainer') {
         const courses = await Course.find({
           $or: [{ instructor: context.user.id }, { createdBy: context.user.id }]
@@ -1343,6 +1344,11 @@ export const resolvers = {
             ...orConditions.filter((c) => !c.role || c.role === role),
             { role },
           ];
+        } else if (roleIn?.length) {
+          query.$or = [
+            ...orConditions.filter((c) => !c.role || roleIn.includes(c.role)),
+            { role: { $in: roleIn } },
+          ];
         } else {
           query.$or = orConditions;
         }
@@ -1351,6 +1357,7 @@ export const resolvers = {
         // createdBy filter when the UI asks for it (e.g. the "Filter by
         // creator" dropdown on the Super Admin Users page).
         if (role) query.role = role;
+        if (roleIn?.length) query.role = { $in: roleIn };
         if (createdBy) query.createdBy = createdBy;
       }
 

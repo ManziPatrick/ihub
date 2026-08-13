@@ -969,7 +969,7 @@ export const typeDefs = `#graphql
     getResources(linkedTo: ID, onModel: String): [Resource!]!
     getResource(id: ID!): Resource!
     hello: String
-    users(page: Int, limit: Int, createdBy: ID, role: String, sortBy: String): UserResponse
+    users(page: Int, limit: Int, createdBy: ID, role: String, roleIn: [String], sortBy: String): UserResponse
     trainers(page: Int, limit: Int, search: String): UserResponse
     trainerPublicProfile(id: ID!): User
     conversations: [Conversation]

@@ -72,8 +72,8 @@ export const GET_STATS = gql`
 
 
 export const GET_USERS = gql`
-  query GetUsers($page: Int, $limit: Int, $createdBy: ID, $role: String, $sortBy: String) {
-    users(page: $page, limit: $limit, createdBy: $createdBy, role: $role, sortBy: $sortBy) {
+  query GetUsers($page: Int, $limit: Int, $createdBy: ID, $role: String, $roleIn: [String], $sortBy: String) {
+    users(page: $page, limit: $limit, createdBy: $createdBy, role: $role, roleIn: $roleIn, sortBy: $sortBy) {
       items {
         id
         username
