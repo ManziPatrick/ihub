@@ -40,11 +40,15 @@ export default function CoursePage() {
     skip: !id
   });
 
-  // If user visits a direct link (email, share) while not logged in:
-  // wait for course data to load, add to cart, then redirect to auth
+  // If user visits a direct purchase link (email, share) with ?cart=1 while
+  // not logged in: wait for course data to load, add to cart, then redirect
+  // to auth. Plain browsing without that flag shows the single page freely —
+  // the on-page buttons handle add-to-cart and gate login at checkout only.
   const [authRedirecting, setAuthRedirecting] = useState(false);
+  const wantsImmediateCart = new URLSearchParams(window.location.search).get("cart") === "1";
   useEffect(() => {
     if (authRedirecting) return;
+    if (!wantsImmediateCart) return;
     if (isLoading) return; // auth still loading
     if (isAuthenticated) return; // already logged in
     if (!id) return;
@@ -64,7 +68,7 @@ export default function CoursePage() {
     }
     setAuthRedirecting(true);
     navigate(`/auth?redirect=/courses/${id}`, { replace: true });
-  }, [authRedirecting, isLoading, isAuthenticated, id, navigate, data, loading, addToCart]);
+  }, [authRedirecting, wantsImmediateCart, isLoading, isAuthenticated, id, navigate, data, loading, addToCart]);
 
   const [fetchLessonContent] = useLazyQuery(GET_LESSON_CONTENT, {
     fetchPolicy: 'no-cache',
