@@ -78,20 +78,25 @@ export default defineConfig(({ mode }) => ({
       },
     }),
     // Pre-compress assets with gzip & brotli for faster downloads
-    // Brotli typically yields 20-30% better compression than gzip
+    // Brotli typically yields 20-30% better compression than gzip.
+    // level 5 instead of the default 11: ~5-10x less CPU on the build
+    // server for only ~5% larger output (the Dokploy VPS is CPU-bound
+    // and deployments were timing out at 100% CPU).
     // sw.js is excluded — nginx serves it raw (no gzip) so the browser
     // can verify its integrity and detect updates reliably.
     viteCompression({
       algorithm: "brotliCompress",
       ext: ".br",
-      threshold: 1024, // only compress files > 1KB
+      compressionOptions: { level: 5 },
+      threshold: 2048, // only compress files > 2KB
       deleteOriginFile: false,
       filter: (file) => !file.endsWith("sw.js"),
     }),
     viteCompression({
       algorithm: "gzip",
       ext: ".gz",
-      threshold: 1024,
+      compressionOptions: { level: 6 },
+      threshold: 2048,
       deleteOriginFile: false,
       filter: (file) => !file.endsWith("sw.js"),
     }),
