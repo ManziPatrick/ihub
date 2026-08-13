@@ -36,9 +36,23 @@ function getEnv(key: string): string {
   return import.meta.env[key] || '';
 }
 
+/**
+ * Upgrade ws:// → wss:// when the page is served over https.
+ * Browsers block mixed-content WebSockets, so a ws:// value in config (e.g.
+ * VITE_WS_URL) silently kills all realtime/subscription connections on an
+ * https site. Applies to both runtime (window._env_) and build-time values.
+ */
+function secureWsUrl(url: string): string {
+  if (!url) return url;
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('ws://')) {
+    return `wss://${url.slice(5)}`;
+  }
+  return url;
+}
+
 export const env = {
   API_URL: getEnv('VITE_API_URL'),
-  WS_URL: getEnv('VITE_WS_URL'),
+  WS_URL: secureWsUrl(getEnv('VITE_WS_URL')),
   SUPABASE_URL: getEnv('VITE_SUPABASE_URL'),
   SUPABASE_PUBLISHABLE_KEY: getEnv('VITE_SUPABASE_PUBLISHABLE_KEY'),
   PUSHER_KEY: getEnv('VITE_PUSHER_KEY'),
