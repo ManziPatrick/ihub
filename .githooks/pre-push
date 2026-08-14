@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+#  Pre-push guard: `main` only receives merges.
+#
+#  Rejects accidental direct pushes to `main` (the branch that auto-deploys
+#  to production via .github/workflows/deploy-dokploy.yml). The intended
+#  workflow is:
+#      git checkout develop      # commit your work here
+#      git push origin develop
+#      git checkout main
+#      git merge develop         # main only ever gets a merge commit
+#      git push origin main
+#
+#  This hook rejects, for `refs/heads/main`:
+#    • deletion of main
+#    • force pushes (history rewrites)
+#    • pushes whose tip is a DIRECT commit (not a merge commit) — e.g. an
+#      accidental `git push origin main` from a feature branch
+#
+#  All other branches (develop, feature/*, …) pass through untouched.
+#
+#  Bypass (not recommended): `git push --no-verify`. Server-side enforcement
+#  (GitHub branch protection) is the only thing that can't be bypassed.
+#
+#  Install once per clone:
+#      scripts/install-hooks.sh
+# ─────────────────────────────────────────────────────────────────────────────
+
+set -euo pipefail
+
+protected="refs/heads/main"
+zeros="0000000000000000000000000000000000000000"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # Only guard main — everything else is fair game.
+  if [ "$remote_ref" != "$protected" ]; then
+    continue
+  fi
+
+  # Deleting main? Never.
+  if [ "$local_sha" = "$zeros" ]; then
+    echo "❌ Refusing to delete $protected (production branch)." >&2
+    exit 1
+  fi
+
+  # First creation of main (new repo) — allow.
+  if [ "$remote_sha" = "$zeros" ]; then
+    continue
+  fi
+
+  # Force push (remote history is not an ancestor of what we're pushing) — reject.
+  if ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+    echo "❌ Force push to $protected is not allowed (history rewrite on the production branch)." >&2
+    exit 1
+  fi
+
+  # The pushed tip must be a merge commit — main only accepts merges
+  # (e.g. "Merge develop: …"). A direct commit means someone pushed
+  # straight to production by accident.
+  parents=$(git rev-list --parents -n 1 "$local_sha")
+  # shellcheck disable=SC2086
+  set -- $parents
+  parent_count=$(( $# - 1 ))
+  if [ "$parent_count" -lt 2 ]; then
+    echo "❌ Direct push to $protected rejected: main only receives merges." >&2
+    echo "   Workflow: commit on develop → push develop → 'git merge develop' on main → push main." >&2
+    echo "   (Override with: git push --no-verify)" >&2
+    exit 1
+  fi
+done
+
+exit 0
