@@ -102,11 +102,24 @@ export default defineConfig(({ mode }) => ({
     }),
     // Service worker with offline caching for the app shell and course content
     // Enables students to continue learning even with intermittent connectivity.
-    // Uses generateSW strategy — Workbox auto-generates the SW with precaching
-    // and runtime caching rules configured below.
+    // Uses injectManifest with a custom worker (public/sw.js): the default
+    // generateSW output serves navigations from the precached index.html
+    // (cache-first), so a stale SW from an old build can keep serving a dead
+    // shell whose chunks no longer exist — refreshes/deep links then fail in
+    // the browser (ERR_FAILED) and the app can never boot to clean itself up.
+    // Our custom worker is network-first for navigations: every refresh fetches
+    // the fresh index.html, and only falls back to a cached shell offline.
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["pwa-icon.svg"],
+      strategies: "injectManifest",
+      injectManifest: {
+        // Source worker at public/sw.js (plugin default layout); swDest
+        // defaults to "sw.js" in dist root.
+        swSrc: "public/sw.js",
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,webp}"],
+        globIgnores: ["**/*.br", "**/*.gz", "**/workbox-*.js", "sw.js"],
+      },
       manifest: {
         name: "Bootskills — Learn. Build. Grow.",
         short_name: "Bootskills",
@@ -120,105 +133,6 @@ export default defineConfig(({ mode }) => ({
         icons: [
           { src: "/pwa-icon.svg", sizes: "192x192", type: "image/svg+xml" },
           { src: "/pwa-icon.svg", sizes: "512x512", type: "image/svg+xml" },
-        ],
-      },
-      workbox: {
-        // Precache all built JS/CSS/HTML and public assets
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,webp}"],
-        globIgnores: ["**/*.br", "**/*.gz", "**/workbox-*.js"],
-        // SPA fallback: serve cached index.html for any navigation request
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api\//, /^\/graphql/],
-        cleanupOutdatedCaches: true,
-        sourcemap: false,
-        runtimeCaching: [
-          {
-            // GraphQL API: offline-only caching.
-            // While ONLINE we always hit the network — no stale, laggy course data
-            // from previous sessions (Apollo also sends POST, which we never cache).
-            // Cached responses are only served when the network is actually down.
-            urlPattern: ({ url }) => url.pathname === "/graphql",
-            handler: async ({ request }) => {
-              const cacheName = "graphql-cache";
-              const offlineResponse = () =>
-                new Response(JSON.stringify({ errors: [{ message: "You are offline" }] }), {
-                  status: 503,
-                  headers: { "Content-Type": "application/json" },
-                });
-              // POST (Apollo's default): never cache; fail fast when offline.
-              if (request.method !== "GET") {
-                return fetch(request).catch(offlineResponse);
-              }
-              let response;
-              try {
-                response = await fetch(request);
-              } catch {
-                // Offline / network failure — fall back to the last known good response.
-                const cache = await caches.open(cacheName);
-                const cached = await cache.match(request);
-                return cached || offlineResponse();
-              }
-              // Best-effort offline backup only — never let cache failures (e.g. quota
-              // exceeded) block or replace the fresh network response.
-              if (response && (response.status === 200 || response.type === "basic" || response.type === "cors")) {
-                try {
-                  const cache = await caches.open(cacheName);
-                  const keys = await cache.keys();
-                  if (keys.length >= 40) await cache.delete(keys[0]);
-                  cache.put(request, response.clone());
-                } catch {
-                  // ignore cache errors — the network response still wins
-                }
-              }
-              return response;
-            },
-          },
-          {
-            // Other API endpoints: same offline-only policy — fresh data while
-            // online, cached fallback only when the network is unavailable.
-            urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
-            handler: async ({ request }) => {
-              const cacheName = "api-cache";
-              if (request.method !== "GET") {
-                return fetch(request).catch(() => new Response("", { status: 503 }));
-              }
-              let response;
-              try {
-                response = await fetch(request);
-              } catch {
-                // Offline / network failure — fall back to the last known good response.
-                const cache = await caches.open(cacheName);
-                const cached = await cache.match(request);
-                return cached || new Response("", { status: 503 });
-              }
-              // Best-effort offline backup only.
-              if (response && response.ok) {
-                try {
-                  const cache = await caches.open(cacheName);
-                  const keys = await cache.keys();
-                  if (keys.length >= 30) await cache.delete(keys[0]);
-                  cache.put(request, response.clone());
-                } catch {
-                  // ignore cache errors — the network response still wins
-                }
-              }
-              return response;
-            },
-          },
-          {
-            // Images: stale-while-revalidate — course thumbnails show instantly
-            // from cache but refresh in the background, so updated images appear
-            // without waiting for a long-lived cache to expire.
-            urlPattern: /(?:\.(?:png|jpg|jpeg|svg|gif|webp|avif))$|\/images\//,
-            handler: "StaleWhileRevalidate",
-            options: {
-              cacheName: "image-cache",
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-              },
-            },
-          },
         ],
       },
       devOptions: {
