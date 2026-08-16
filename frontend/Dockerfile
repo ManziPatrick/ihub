@@ -55,9 +55,10 @@ WORKDIR /app
 COPY --from=build /usr/local/lib/node_modules/serve /usr/local/lib/node_modules/serve
 RUN ln -s /usr/local/lib/node_modules/serve/build/main.js /usr/local/bin/serve
 
-# Copy only the built assets + env injector script
+# Copy only the built assets + env injector script + serve cache-header config
 COPY --from=build /app/dist ./dist
 COPY generate-env-config.js ./
+COPY serve.json ./
 
 # Inject runtime VITE_* env vars into dist/env-config.js at startup
 ENV PORT=8080
@@ -66,4 +67,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost:${PORT} || exit 1
 
 EXPOSE ${PORT}
-CMD node generate-env-config.js && exec serve -s dist -l tcp://0.0.0.0:${PORT}
+CMD node generate-env-config.js && exec serve -s dist -l tcp://0.0.0.0:${PORT} --config serve.json
