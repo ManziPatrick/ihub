@@ -103,11 +103,11 @@ const blockedAccountLink = new ErrorLink(({ operation, error }) => {
   const isDeactivated =
     codes.includes('ACCOUNT_DEACTIVATED') || codes.includes('ACCOUNT_BLOCKED');
 
-  // Handle generic session expiry (UNAUTHENTICATED) — if we have a token
-  // in localStorage but the server rejects it, the token is expired or
-  // revoked. Clear the stale session and redirect to login.
+  // Handle generic session expiry (UNAUTHENTICATED) — only trigger on the
+  // GetMe query (session validation) to avoid login loops from transient
+  // errors on other mutations/queries.
   const isUnauthenticated = codes.includes('UNAUTHENTICATED');
-  if (isUnauthenticated && !isSuspended && !isDeactivated) {
+  if (isUnauthenticated && opName === 'GetMe' && !isSuspended && !isDeactivated) {
     blockedAccountRedirectInFlight = true;
     localStorage.removeItem('ihub_token');
     localStorage.removeItem('ihub_user');
