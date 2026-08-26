@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { ApplicationPhaseService } from '../services/application-phase.service';
 import { ApplicationWorkflowService } from '../services/application-workflow.service';
 import { MeetingBookingService } from '../services/meeting-booking.service';

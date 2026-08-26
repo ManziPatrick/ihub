@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { InternshipMeeting } from '../models/internship/InternshipMeeting';
 import { logActivity } from '../services/audit.service';
 import mongoose from 'mongoose';

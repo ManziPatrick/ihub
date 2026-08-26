@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import UserErrorReport from '../models/UserErrorReport';
 import { logActivity } from '../services/audit.service';
 

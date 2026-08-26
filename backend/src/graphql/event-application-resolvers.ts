@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { EventApplication } from '../models/EventApplication';
 import { Event } from '../models/Event';
 import { logActivity } from '../services/audit.service';

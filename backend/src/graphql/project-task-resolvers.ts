@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { ProjectTask } from '../models/ProjectTask';
 import { Project } from '../models/Project';
 import { User } from '../models/User';

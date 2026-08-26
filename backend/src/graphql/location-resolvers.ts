@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { User } from '../models/User';
 import { lookupRequestGeoLocation } from '../services/geoip.service';
 

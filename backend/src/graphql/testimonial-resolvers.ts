@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { Testimonial } from '../models/Testimonial';
 import { User } from '../models/User';
 

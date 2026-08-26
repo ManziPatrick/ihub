@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import mongoose from 'mongoose';
 import RefundRequest from '../models/RefundRequest';
 import { CommissionDisbursement } from '../models/CommissionDisbursement';
