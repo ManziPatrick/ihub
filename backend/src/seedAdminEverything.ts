@@ -68,12 +68,16 @@ async function seedAdminEverything() {
         const role = email === 'superadmin@bootskills.com' ? 'super_admin' : 'admin';
         const username = email === 'superadmin@bootskills.com' ? 'super_admin' : 'admin';
         const fullName = email === 'superadmin@bootskills.com' ? 'System Super Admin' : 'Bootskills Admin';
+        const adminPermissions = role === 'admin'
+          ? ['users', 'courses', 'payments', 'internships', 'analytics', 'students']
+          : [];
         adminUser = await new User({
           username,
           fullName,
           email,
           password: hashedPassword,
           role,
+          permissions: adminPermissions,
           title: 'Head of Operations',
           bio: 'Platform administrator and operations lead for Bootskills.',
           location: 'Kigali, Rwanda',
@@ -87,6 +91,10 @@ async function seedAdminEverything() {
       } else {
         // Update password to match
         adminUser.password = hashedPassword;
+        // Ensure admin has all permissions
+        if (role === 'admin') {
+          adminUser.permissions = ['users', 'courses', 'payments', 'internships', 'analytics', 'students'];
+        }
         await adminUser.save();
         console.log(`✅ Updated password for: ${email}`);
       }

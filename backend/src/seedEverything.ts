@@ -128,10 +128,12 @@ async function seedEverything() {
     const admin = await upsertUser({
       username: 'admin_user', email: 'admin@bootskills.com', role: 'admin',
       fullName: 'Platform Administrator', password: hashedPw,
+      permissions: ['users', 'courses', 'payments', 'internships', 'analytics', 'students'],
     });
     const admin2 = await upsertUser({
       username: 'second_admin', email: 'admin2@bootskills.com', role: 'admin',
       fullName: 'Second Admin', password: hashedPw,
+      permissions: ['users', 'courses', 'payments', 'internships', 'analytics', 'students'],
     });
     const trainer = await upsertUser({
       username: 'trainer_john', email: 'trainer@bootskills.com', role: 'trainer',

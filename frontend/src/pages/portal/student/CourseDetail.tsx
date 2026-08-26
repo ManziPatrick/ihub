@@ -108,8 +108,8 @@ export default function CourseDetail() {
   const [completedCodeExerciseIds, setCompletedCodeExerciseIds] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Queries
-  const { data: userData, refetch: refetchUser } = useQuery(GET_ME);
+  // Queries — always fetch fresh user data so completedLessons is never stale
+  const { data: userData, refetch: refetchUser } = useQuery(GET_ME, { fetchPolicy: 'network-only' });
   const { data, loading, error } = useQuery(GET_COURSE, {
     variables: { id: courseId }
   });
@@ -249,7 +249,7 @@ export default function CourseDetail() {
   const currentLesson = allLessons.find(l => (l.id || l._id) === activeLessonId) || allLessons[0];
   const currentIndex = allLessons.findIndex(l => (l.id || l._id) === activeLessonId);
 
-  const totalSatisfied = allLessons.filter(l => completedLessons.some((cl: any) => cl.courseId === courseId && cl.lessonId === (l.id || l._id)) || forcedProgressLessonIds.includes(l.id || l._id)).length;
+  const totalSatisfied = allLessons.filter(l => completedLessons.some((cl: any) => String(cl.courseId) === String(courseId) && String(cl.lessonId) === String(l.id || l._id)) || forcedProgressLessonIds.includes(l.id || l._id)).length;
   const progressPercent = Math.round((totalSatisfied / allLessons.length) * 100) || 0;
 
   const isCourseCompleted = me?.completedCourses?.some((cc: any) => cc.id === courseId);
@@ -259,7 +259,7 @@ export default function CourseDetail() {
     if (modLessons.length === 0) return false;
     return modLessons.every((l: any) => {
       const lid = l.id || l._id;
-      return completedLessons.some((cl: any) => cl.lessonId === lid) || forcedProgressLessonIds.includes(lid);
+      return completedLessons.some((cl: any) => String(cl.lessonId) === String(lid)) || forcedProgressLessonIds.includes(lid);
     });
   };
 
@@ -308,7 +308,7 @@ export default function CourseDetail() {
   const currentLessonRequiresAssignment = !!(currentLesson?.type === 'assignment' && currentLesson?.isAssignment);
   const currentLessonSubmission = submissionsData?.getAssignmentSubmissions?.items?.find((submission) => !me?.id || submission.userId === me.id);
   const currentLessonSubmissionStatus = currentLessonSubmission?.status;
-  const currentLessonCompleted = completedLessons.some((cl: any) => cl.lessonId === (currentLesson?.id || currentLesson?._id));
+  const currentLessonCompleted = completedLessons.some((cl: any) => String(cl.lessonId) === String(currentLesson?.id || currentLesson?._id));
   const isPassed = currentLessonSubmissionStatus === 'approved' || (currentLessonSubmissionStatus === 'reviewed' && (currentLessonSubmission?.grade || 0) >= 70);
   // Code exercises with tests must be completed to mark lesson done
   const hasCodeExercisesWithTests = currentLesson?.codeExercises?.some((ex: any) => ex.testCode || ex.expectedOutput);
@@ -341,7 +341,7 @@ export default function CourseDetail() {
     const lessonId = lesson?.id || lesson?._id;
     if (!lessonId) return false;
 
-    return completedLessons.some((cl: any) => cl.courseId === courseId && cl.lessonId === lessonId)
+    return completedLessons.some((cl: any) => String(cl.courseId) === String(courseId) && String(cl.lessonId) === String(lessonId))
       || forcedProgressLessonIds.includes(lessonId);
   };
 
@@ -349,38 +349,28 @@ export default function CourseDetail() {
   const isModuleLocked = (lessonId: string) => {
     if (!course?.modules) return false;
     const modules = course.modules as any[];
-
-    // Find which module this lesson belongs to
     const modIndex = modules.findIndex((m: any) =>
       m.lessons?.some((l: any) => (l.id || l._id) === lessonId)
     );
-    if (modIndex <= 0) return false; // first module is always unlocked
-
-    // Check if every lesson in the previous module is satisfied
+    if (modIndex <= 0) return false;
     const prevModule = modules[modIndex - 1];
     return !prevModule.lessons?.every((l: any) => isLessonSatisfied(l));
   };
 
-  // Returns true if the lesson is blocked because a previous lesson in the same module
-  // has code exercises that haven't been completed.
   const isLessonCodeExerciseLocked = (lessonId: string) => {
     if (!course?.modules) return false;
     const modules = course.modules as any[];
-
     for (const mod of modules) {
       const lessons = mod.lessons || [];
       for (let i = 0; i < lessons.length; i++) {
         const l = lessons[i];
         if ((l.id || l._id) !== lessonId) continue;
-        if (i === 0) return false; // first lesson in module is always accessible
-
-        // Check if the previous lesson has code exercises that aren't completed
+        if (i === 0) return false;
         const prevLesson = lessons[i - 1];
         const prevHasCode = prevLesson?.codeExercises?.length > 0;
         const prevExercisesWithTests = prevLesson?.codeExercises?.filter((ex: any) => ex.testCode || ex.expectedOutput) || [];
         const prevAllPassed = !prevHasCode ||
           prevExercisesWithTests.every((ex: any) => completedCodeExerciseIds.includes(ex.id));
-
         if (prevHasCode && !prevAllPassed) return true;
         return false;
       }
@@ -392,14 +382,10 @@ export default function CourseDetail() {
     if (currentIndex < allLessons.length - 1) {
       const nextLesson = allLessons[currentIndex + 1];
       const nextId = nextLesson.id || nextLesson._id;
-
-      // Block if the next lesson's module is locked (prev module incomplete)
       if (isModuleLocked(nextId)) {
         toast.error('Complete all lessons in the current module first to unlock the next one.');
         return;
       }
-
-      // Block if current lesson has code exercises that haven't all passed
       const currentHasCodeExercises = currentLesson?.codeExercises?.length > 0;
       const currentExercisesWithTests = currentLesson?.codeExercises?.filter((ex: any) => ex.testCode || ex.expectedOutput) || [];
       const currentAllPassed = !currentHasCodeExercises ||
@@ -408,8 +394,6 @@ export default function CourseDetail() {
         toast.error('Complete all code exercises and pass all tests before moving to the next lesson.');
         return;
       }
-
-      // Block if a required assignment (non-quiz) in previous lessons isn't satisfied
       const nextIndex = currentIndex + 1;
       const hardGate = allLessons.slice(0, nextIndex).find(l =>
         (l.requiredAssignment || l.type === 'assignment') && l.type !== 'quiz' && !isLessonSatisfied(l)
@@ -418,7 +402,6 @@ export default function CourseDetail() {
         toast.error(`Unit Locked: Submit and pass "${hardGate.title}" first.`);
         return;
       }
-
       setActiveLessonId(nextId);
     }
   };
@@ -968,7 +951,7 @@ export default function CourseDetail() {
                                 {mod.lessons?.map((les: any) => {
                                   const lesId = les.id || les._id;
                                   const isActive = lesId === activeLessonId;
-                                  const isComp = completedLessons.some((cl: any) => cl.lessonId === lesId) || forcedProgressLessonIds.includes(lesId);
+                                  const isComp = completedLessons.some((cl: any) => String(cl.lessonId) === String(lesId)) || forcedProgressLessonIds.includes(lesId);
                                   const isLock = isModuleLocked(lesId) || isLessonCodeExerciseLocked(lesId);
                                   return (
                                     <button

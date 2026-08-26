@@ -30,6 +30,7 @@ const users = [
         email: 'admin@bootskills.com',
         password: 'Password@123',
         role: 'admin',
+        permissions: ['users', 'courses', 'payments', 'internships', 'analytics', 'students'],
         title: 'Head of Operations',
         bio: 'Platform administrator and operations lead for Bootskills.',
         avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=250',

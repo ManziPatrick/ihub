@@ -46,10 +46,17 @@ const seedEverything = async () => {
           email: 'admin@bootskills.com',
           password,
           role: 'admin',
-          fullName: 'System Administrator'
+          fullName: 'System Administrator',
+          permissions: ['users', 'courses', 'payments', 'internships', 'analytics', 'students'],
         },
         { upsert: true, new: true }
       );
+    }
+
+    // Ensure existing admin has all permissions
+    if (admin && admin.role === 'admin' && (!admin.permissions || admin.permissions.length === 0)) {
+      admin.permissions = ['users', 'courses', 'payments', 'internships', 'analytics', 'students'];
+      await admin.save();
     }
 
     if (!admin) {
