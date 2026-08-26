@@ -437,7 +437,7 @@ export default function CourseDetail() {
     }
 
     try {
-      const { data: mutationData } = await completeLessonMutation({
+      const { data: mutationData } = await completeLessonMutation<{ completeLesson: { completedLessons: { courseId: string; lessonId: string }[] } }>({
         variables: {
           courseId,
           lessonId: activeLessonId
