@@ -437,7 +437,7 @@ export default function CourseDetail() {
     }
 
     try {
-      const { data: mutationData } = await completeLessonMutation<{ completeLesson: { completedLessons: { courseId: string; lessonId: string }[] } }>({
+      const { data: mutationData } = await completeLessonMutation({
         variables: {
           courseId,
           lessonId: activeLessonId
@@ -445,7 +445,7 @@ export default function CourseDetail() {
       });
       toast.success("Lesson marked as complete!");
       // Write the updated completedLessons directly into Apollo cache so the UI re-renders immediately
-      const updatedCompletedLessons = mutationData?.completeLesson?.completedLessons;
+      const updatedCompletedLessons = (mutationData as any)?.completeLesson?.completedLessons;
       if (updatedCompletedLessons) {
         const prev = client.cache.readQuery<any>({ query: GET_ME });
         if (prev?.me) {
