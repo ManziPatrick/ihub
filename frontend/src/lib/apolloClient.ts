@@ -107,6 +107,11 @@ const blockedAccountLink = new ErrorLink(({ operation, error }) => {
   // handled here — a plain token refresh / transient auth error must never
   // wipe the session or force a redirect to /auth (which can 404 on hosts
   // without an SPA fallback). Only blocked accounts trigger a redirect.
+  //
+  // HOWEVER: if the error message is literally "Not authenticated" and we
+  // have a token in localStorage, the token is expired or revoked. Clear
+  // the stale session and redirect to login so the student isn't stuck on
+  // a dead-end error page.
   if (!isSuspended && !isDeactivated) return;
 
   blockedAccountRedirectInFlight = true;
