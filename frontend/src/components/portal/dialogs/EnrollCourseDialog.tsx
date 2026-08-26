@@ -9,7 +9,7 @@ import { BookOpen, Clock, Star, CheckCircle, CreditCard, Smartphone, Check, File
 
 import { useMutation } from "@apollo/client/react";
 import { ENROLL_COURSE, PAY_FOR_COURSE, SUBMIT_PAYMENT_PROOF } from "@/lib/graphql/mutations";
-import { GET_ME, GET_COURSES_SUMMARY } from "@/lib/graphql/queries";
+import { GET_ME, GET_COURSES_SUMMARY, GET_COURSES_LITE_SUMMARY } from "@/lib/graphql/queries";
 import { FileUpload } from "@/components/FileUpload";
 import { PaymentForm } from "@/components/PaymentForm";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,12 +26,12 @@ export function EnrollCourseDialog({ open, onOpenChange, course }: any) {
 
 
   const [enrollMutation] = useMutation(ENROLL_COURSE, {
-    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES_SUMMARY }]
+    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES_SUMMARY }, { query: GET_COURSES_LITE_SUMMARY }]
   });
 
   const [payForCourseMutation] = useMutation(PAY_FOR_COURSE);
   const [submitProofMutation] = useMutation(SUBMIT_PAYMENT_PROOF, {
-    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES_SUMMARY }]
+    refetchQueries: [{ query: GET_ME }, { query: GET_COURSES_SUMMARY }, { query: GET_COURSES_LITE_SUMMARY }]
   });
 
 

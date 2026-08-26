@@ -207,7 +207,7 @@ export default function StudentCourses() {
   const allCoursesData = (coursesData as any)?.courses;
   const allCourses = allCoursesData?.items || [];
   const availableCourses = allCourses.filter((c: any) => 
-    !enrolledCoursesRaw.some((ec: any) => ec.id === c.id)
+    !enrolledCoursesRaw.some((ec: any) => String(ec.id || ec._id) === String(c.id || c._id))
   );
 
   const getCourseProgress = (courseId: string, totalLessons: number) => {
