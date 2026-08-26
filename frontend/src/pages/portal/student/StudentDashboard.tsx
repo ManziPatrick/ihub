@@ -131,7 +131,7 @@ export default function StudentDashboard() {
   const getCourseProgress = (course: any) => {
     const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
     if (totalLessons === 0) return 0;
-    const completed = completedLessons.filter((l: any) => l.courseId === (course.id || course._id)).length;
+    const completed = completedLessons.filter((l: any) => String(l.courseId) === String(course.id || course._id)).length;
     return Math.round((completed / totalLessons) * 100);
   };
 
@@ -663,7 +663,7 @@ export default function StudentDashboard() {
                   const courseId = course.id || course._id;
                   const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
                   const progress = getCourseProgress(course);
-                  const lastCompletedLesson = completedLessons.filter((l: any) => l.courseId === courseId).pop();
+                  const lastCompletedLesson = completedLessons.filter((l: any) => String(l.courseId) === String(courseId)).pop();
 
                   return (
                     <div

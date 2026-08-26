@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import mongoose from 'mongoose';
 import RefundRequest from '../models/RefundRequest';
 import { CommissionDisbursement } from '../models/CommissionDisbursement';
@@ -135,7 +136,7 @@ export const refundResolvers = {
 
     getMyRefundRequests: async (_: any, __: any, context: any) => {
       if (!context.user) {
-        throw new Error('Not authenticated');
+        throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       }
 
       const refunds = await RefundRequest.find({ userId: new mongoose.Types.ObjectId(context.user.id) })
@@ -212,7 +213,7 @@ export const refundResolvers = {
       { paymentId, reason }: { paymentId: string; reason: string },
       context: any
     ) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
 
       // Find the payment
       const payment = await Payment.findById(paymentId);

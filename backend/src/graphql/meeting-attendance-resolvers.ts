@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { InternshipMeeting } from '../models/internship/InternshipMeeting';
 import { logActivity } from '../services/audit.service';
 import mongoose from 'mongoose';
@@ -5,7 +6,7 @@ import mongoose from 'mongoose';
 export const meetingAttendanceResolvers = {
   Query: {
     getMeetingAttendance: async (_: any, { meetingId }: { meetingId: string }, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       const meeting = await InternshipMeeting.findById(meetingId).populate('attendees.userId');
       if (!meeting) throw new Error('Meeting not found');
       return meeting.attendees || [];
@@ -19,7 +20,7 @@ export const meetingAttendanceResolvers = {
       { meetingId, userId, attended }: { meetingId: string; userId: string; attended: boolean },
       context: any
     ) => {
-      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new GraphQLError('Unauthorized', { extensions: { code: 'UNAUTHENTICATED' } });
 
       const meeting = await InternshipMeeting.findById(meetingId);
       if (!meeting) throw new Error('Meeting not found');
@@ -57,7 +58,7 @@ export const meetingAttendanceResolvers = {
       },
       context: any
     ) => {
-      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new Error('Unauthorized');
+      if (!['admin', 'super_admin', 'trainer'].includes(context.user?.role)) throw new GraphQLError('Unauthorized', { extensions: { code: 'UNAUTHENTICATED' } });
 
       const meeting = await InternshipMeeting.findById(meetingId);
       if (!meeting) throw new Error('Meeting not found');

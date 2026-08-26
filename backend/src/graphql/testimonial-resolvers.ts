@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { Testimonial } from '../models/Testimonial';
 import { User } from '../models/User';
 
@@ -58,7 +59,7 @@ export const testimonialResolvers = {
 
     // A student's own submissions - any authenticated user.
     myTestimonials: async (_: any, __: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       const items = await Testimonial.find({ author: context.user.id })
         .populate('author', 'fullName username email avatar title school')
         .sort({ createdAt: -1 })
@@ -103,7 +104,7 @@ export const testimonialResolvers = {
   Mutation: {
     // A student submits their own success story → status pending.
     submitTestimonial: async (_: any, { quote, authorRole, authorCompany, rating }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       if (!quote || !quote.trim()) throw new Error('Quote is required');
 
       const author = await User.findById(context.user.id);

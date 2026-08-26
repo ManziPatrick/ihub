@@ -110,6 +110,14 @@ export default function StudentTasks() {
   const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   if (error) {
+    const isAuthError = error.message?.toLowerCase().includes('not authenticated');
+    if (isAuthError) {
+      // Token expired or invalid — clear session and redirect to login
+      localStorage.removeItem('ihub_token');
+      localStorage.removeItem('ihub_user');
+      window.location.href = '/auth';
+      return null;
+    }
     return (
       <PortalLayout>
         <div className="flex items-center justify-center h-64">

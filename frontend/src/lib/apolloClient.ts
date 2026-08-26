@@ -103,10 +103,20 @@ const blockedAccountLink = new ErrorLink(({ operation, error }) => {
   const isDeactivated =
     codes.includes('ACCOUNT_DEACTIVATED') || codes.includes('ACCOUNT_BLOCKED');
 
-  // Note: generic session expiry (UNAUTHENTICATED) is intentionally NOT
-  // handled here — a plain token refresh / transient auth error must never
-  // wipe the session or force a redirect to /auth (which can 404 on hosts
-  // without an SPA fallback). Only blocked accounts trigger a redirect.
+  // Handle generic session expiry (UNAUTHENTICATED) — only trigger on the
+  // GetMe query (session validation) to avoid login loops from transient
+  // errors on other mutations/queries.
+  const isUnauthenticated = codes.includes('UNAUTHENTICATED');
+  if (isUnauthenticated && opName === 'GetMe' && !isSuspended && !isDeactivated) {
+    blockedAccountRedirectInFlight = true;
+    localStorage.removeItem('ihub_token');
+    localStorage.removeItem('ihub_user');
+    if (window.location.pathname !== '/auth') {
+      globalNavigate('/auth');
+    }
+    return;
+  }
+
   if (!isSuspended && !isDeactivated) return;
 
   blockedAccountRedirectInFlight = true;

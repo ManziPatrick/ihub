@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { ProjectTask } from '../models/ProjectTask';
 import { Project } from '../models/Project';
 import { User } from '../models/User';
@@ -5,7 +6,7 @@ import { sendNotification } from '../services/notification.service';
 import { sendTaskFeedbackEmail } from '../services/email.service';
 
 const checkProjectAuthorization = async (projectId: string, context: any) => {
-  if (!context.user) throw new Error('Not authenticated');
+  if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
   const isStaff = ['admin', 'super_admin', 'trainer'].includes(context.user.role);
   if (isStaff) return true;
 
@@ -29,7 +30,7 @@ const checkProjectAuthorization = async (projectId: string, context: any) => {
 export const projectTaskResolvers = {
   Query: {
     projectTasks: async (_: any, { projectId }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await ProjectTask.find({ projectId, isDeleted: false })
         .populate('assigneeId')
         .populate('projectId')
@@ -37,14 +38,14 @@ export const projectTaskResolvers = {
     },
 
     projectTask: async (_: any, { id }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       const task = await ProjectTask.findById(id).populate('assigneeId');
       if (!task || task.isDeleted) throw new Error('Task not found');
       return task;
     },
 
     myProjectTasks: async (_: any, { status }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
 
       // Only fetch *string* project ids; avoid passing full docs/objects into Mongoose casting.
       const userProjectIds = (await Project.find({
@@ -78,7 +79,7 @@ export const projectTaskResolvers = {
     },
 
     projectBoardStats: async (_: any, { projectId }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       const allTasks = await ProjectTask.find({ projectId, isDeleted: false });
       const now = new Date();
       return {
@@ -97,7 +98,7 @@ export const projectTaskResolvers = {
     },
 
     projectDeveloperTaskSummary: async (_: any, { projectId }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
 
       const tasks = await ProjectTask.find({ projectId, isDeleted: false })
         .populate('assigneeId')
@@ -403,7 +404,7 @@ export const projectTaskResolvers = {
     },
 
     sendTaskFeedback: async (_: any, { taskId, message, resources }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
 
       const task = await ProjectTask.findById(taskId);
       if (!task || task.isDeleted) throw new Error('Task not found');

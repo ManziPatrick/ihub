@@ -1938,7 +1938,9 @@ export const resolvers = {
           { extensions: { code } }
         );
       }
-      if (!context.user) return null;
+      if (!context.user) {
+        throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
+      }
       return await User.findById(context.user.id)
         .populate({ path: 'enrolledCourses', select: 'id title thumbnail price discountPrice level category school modulesCount totalLessonsCount status isFeatured' })
         .populate({ path: 'completedCourses', select: 'id title' })
@@ -10383,15 +10385,19 @@ export const resolvers = {
       return await Booking.find({ userId: parent.id || parent._id }).populate('mentorId').sort({ createdAt: -1 });
     },
     completedLessons: async (parent: any) => {
-      // Fetch progress from CourseProgress model for accuracy
+      // Merge data from both CourseProgress AND User.completedLessons to ensure
+      // nothing is lost regardless of which source was updated.
       const progressDocs = await CourseProgress.find({ userId: parent.id || parent._id });
 
-      const completed: any[] = [];
+      const completedMap = new Map<string, { courseId: string; lessonId: string }>();
+
+      // 1. Collect from CourseProgress (primary source)
       progressDocs.forEach((doc: any) => {
         if (doc.lessons) {
           doc.lessons.forEach((lesson: any) => {
             if (lesson.completed) {
-              completed.push({
+              const key = `${doc.courseId.toString()}:${lesson.lessonId}`;
+              completedMap.set(key, {
                 courseId: doc.courseId.toString(),
                 lessonId: lesson.lessonId
               });
@@ -10399,12 +10405,20 @@ export const resolvers = {
           });
         }
       });
-      // Fallback to User model's completedLessons if CourseProgress is empty but User has data
-      if (completed.length === 0 && parent.completedLessons && parent.completedLessons.length > 0) {
-        return parent.completedLessons;
+
+      // 2. Merge from User.completedLessons (secondary — catches VPS syncs or edge cases)
+      if (parent.completedLessons && parent.completedLessons.length > 0) {
+        parent.completedLessons.forEach((cl: any) => {
+          const cid = cl.courseId?.toString ? cl.courseId.toString() : String(cl.courseId);
+          const lid = String(cl.lessonId);
+          const key = `${cid}:${lid}`;
+          if (!completedMap.has(key)) {
+            completedMap.set(key, { courseId: cid, lessonId: lid });
+          }
+        });
       }
 
-      return completed;
+      return Array.from(completedMap.values());
     },
     certificates: async (parent: any) => {
       return await Certificate.find({ userId: parent.id || parent._id }).populate('courseId');

@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { EventApplication } from '../models/EventApplication';
 import { Event } from '../models/Event';
 import { logActivity } from '../services/audit.service';
@@ -48,13 +49,13 @@ export const eventApplicationResolvers = {
     },
 
     myEventApplications: async (_: any, __: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await EventApplication.find({ userId: context.user.id, isDeleted: false }).sort({ createdAt: -1 });
     },
   },
   Mutation: {
     applyToEvent: async (_: any, { eventId, applicationAnswers, selectedDeliveryMode }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
 
       const event = await Event.findById(eventId);
       if (!event) throw new Error('Event not found');

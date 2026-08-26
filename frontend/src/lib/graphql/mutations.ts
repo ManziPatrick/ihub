@@ -60,6 +60,8 @@ export const GOOGLE_LOGIN = gql`
   mutation GoogleLogin($token: String!) {
     googleLogin(token: $token) {
       token
+      requires2FA
+      requires2FASetup
       user {
         id
         username

@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import { ApplicationPhaseService } from '../services/application-phase.service';
 import { ApplicationWorkflowService } from '../services/application-workflow.service';
 import { MeetingBookingService } from '../services/meeting-booking.service';
@@ -9,7 +10,7 @@ export const applicationPhaseResolvers = {
   Query: {
     // Application Phase Queries
     getApplicationPhases: async (_: any, { programId }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await ApplicationPhaseService.getPhasesByProgram(programId);
     },
 
@@ -18,7 +19,7 @@ export const applicationPhaseResolvers = {
     },
 
     getApplicationPhaseSubmissions: async (_: any, { applicationId }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       const { ApplicationPhaseSubmission } = await import('../models/ApplicationPhaseSubmission.js');
       return await ApplicationPhaseSubmission.find({ applicationId }).sort({ submittedAt: -1 });
     },
@@ -31,7 +32,7 @@ export const applicationPhaseResolvers = {
     },
 
     getApplicationMeetings: async (_: any, { applicationId }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await MeetingBookingService.getMeetingsByApplication(applicationId);
     },
 
@@ -43,7 +44,7 @@ export const applicationPhaseResolvers = {
     },
 
     getUserAssignedTasks: async (_: any, { userId, status }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       if (context.user.id !== userId && !['admin', 'super_admin'].includes(context.user.role)) {
         throw new Error('Not authorized');
       }
@@ -58,12 +59,12 @@ export const applicationPhaseResolvers = {
     },
 
     getTaskWithTracking: async (_: any, { taskId }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await TaskManagementService.getTaskWithTracking(taskId);
     },
 
     getApplicationProgress: async (_: any, { applicationId }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await ApplicationWorkflowService.getApplicationProgress(applicationId);
     },
 
@@ -167,7 +168,7 @@ export const applicationPhaseResolvers = {
       { applicationId, phaseId, submissionData }: any,
       context: any
     ) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await ApplicationWorkflowService.submitPhaseDeliverable(
         applicationId,
         phaseId,
@@ -294,7 +295,7 @@ export const applicationPhaseResolvers = {
       { meetingId, cancelledBy, reason }: any,
       context: any
     ) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await MeetingBookingService.cancelMeeting(meetingId, cancelledBy, reason);
     },
 
@@ -303,7 +304,7 @@ export const applicationPhaseResolvers = {
       { meetingId, notes, rating, performanceGrade, attendanceData }: any,
       context: any
     ) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await MeetingBookingService.completeMeeting(meetingId, {
         notes,
         rating,
@@ -313,7 +314,7 @@ export const applicationPhaseResolvers = {
     },
 
     markMeetingAsNoShow: async (_: any, { meetingId }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await MeetingBookingService.markAsNoShow(meetingId);
     },
 
@@ -354,7 +355,7 @@ export const applicationPhaseResolvers = {
       { taskId, newStatus, updatedBy, notes }: any,
       context: any
     ) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await TaskManagementService.updateTaskStatus(taskId, newStatus, updatedBy, notes);
     },
 
@@ -363,7 +364,7 @@ export const applicationPhaseResolvers = {
       { taskId, progressPercentage, updatedBy, notes }: any,
       context: any
     ) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await TaskManagementService.updateTaskProgress(
         taskId,
         progressPercentage,
@@ -377,7 +378,7 @@ export const applicationPhaseResolvers = {
       { taskId, duration, notes }: any,
       context: any
     ) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await TaskManagementService.logTimeSpent(taskId, duration, notes);
     },
 
@@ -386,7 +387,7 @@ export const applicationPhaseResolvers = {
       { taskId, itemIndex }: any,
       context: any
     ) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await TaskManagementService.completeChecklistItem(taskId, itemIndex);
     },
 
@@ -395,7 +396,7 @@ export const applicationPhaseResolvers = {
       { taskId, cancelledBy, reason }: any,
       context: any
     ) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       return await TaskManagementService.cancelTask(taskId, cancelledBy, reason);
     },
 

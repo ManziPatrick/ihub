@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import UserErrorReport from '../models/UserErrorReport';
 import { logActivity } from '../services/audit.service';
 
@@ -123,7 +124,7 @@ export const errorReportResolvers = {
 
     getErrorReport: async (_: any, { id }: { id: string }, context: any) => {
       if (!['admin', 'super_admin'].includes(context.user?.role)) {
-        throw new Error('Unauthorized');
+        throw new GraphQLError('Unauthorized', { extensions: { code: 'UNAUTHENTICATED' } });
       }
       const raw = await UserErrorReport.findById(id)
         .populate('resolvedBy', 'id username fullName')
@@ -135,7 +136,7 @@ export const errorReportResolvers = {
 
     getErrorReportStats: async (_: any, __: any, context: any) => {
       if (!['admin', 'super_admin'].includes(context.user?.role)) {
-        throw new Error('Unauthorized');
+        throw new GraphQLError('Unauthorized', { extensions: { code: 'UNAUTHENTICATED' } });
       }
 
       const [
@@ -247,7 +248,7 @@ export const errorReportResolvers = {
 
     resolveErrorReport: async (_: any, { id, resolution }: { id: string; resolution?: string }, context: any) => {
       if (!['admin', 'super_admin'].includes(context.user?.role)) {
-        throw new Error('Unauthorized');
+        throw new GraphQLError('Unauthorized', { extensions: { code: 'UNAUTHENTICATED' } });
       }
 
       const report = await UserErrorReport.findById(id);
@@ -267,7 +268,7 @@ export const errorReportResolvers = {
 
     deleteErrorReport: async (_: any, { id }: { id: string }, context: any) => {
       if (!['admin', 'super_admin'].includes(context.user?.role)) {
-        throw new Error('Unauthorized');
+        throw new GraphQLError('Unauthorized', { extensions: { code: 'UNAUTHENTICATED' } });
       }
 
       const result = await UserErrorReport.findByIdAndDelete(id);

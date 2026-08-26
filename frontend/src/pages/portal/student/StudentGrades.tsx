@@ -109,7 +109,7 @@ export default function StudentGrades() {
     // Count lessons by type
     const allLessons = course.modules?.flatMap((m: any) => m.lessons) || [];
     const totalLessons = allLessons.length;
-    const completedLessons = me?.completedLessons.filter(cl => cl.courseId === course.id).length || 0;
+    const completedLessons = me?.completedLessons.filter(cl => String(cl.courseId) === String(course.id)).length || 0;
     const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
     return {
