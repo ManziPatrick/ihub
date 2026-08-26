@@ -103,15 +103,20 @@ const blockedAccountLink = new ErrorLink(({ operation, error }) => {
   const isDeactivated =
     codes.includes('ACCOUNT_DEACTIVATED') || codes.includes('ACCOUNT_BLOCKED');
 
-  // Note: generic session expiry (UNAUTHENTICATED) is intentionally NOT
-  // handled here — a plain token refresh / transient auth error must never
-  // wipe the session or force a redirect to /auth (which can 404 on hosts
-  // without an SPA fallback). Only blocked accounts trigger a redirect.
-  //
-  // HOWEVER: if the error message is literally "Not authenticated" and we
-  // have a token in localStorage, the token is expired or revoked. Clear
-  // the stale session and redirect to login so the student isn't stuck on
-  // a dead-end error page.
+  // Handle generic session expiry (UNAUTHENTICATED) — if we have a token
+  // in localStorage but the server rejects it, the token is expired or
+  // revoked. Clear the stale session and redirect to login.
+  const isUnauthenticated = codes.includes('UNAUTHENTICATED');
+  if (isUnauthenticated && !isSuspended && !isDeactivated) {
+    blockedAccountRedirectInFlight = true;
+    localStorage.removeItem('ihub_token');
+    localStorage.removeItem('ihub_user');
+    if (window.location.pathname !== '/auth') {
+      globalNavigate('/auth');
+    }
+    return;
+  }
+
   if (!isSuspended && !isDeactivated) return;
 
   blockedAccountRedirectInFlight = true;

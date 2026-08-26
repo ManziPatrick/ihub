@@ -1938,7 +1938,9 @@ export const resolvers = {
           { extensions: { code } }
         );
       }
-      if (!context.user) return null;
+      if (!context.user) {
+        throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
+      }
       return await User.findById(context.user.id)
         .populate({ path: 'enrolledCourses', select: 'id title thumbnail price discountPrice level category school modulesCount totalLessonsCount status isFeatured' })
         .populate({ path: 'completedCourses', select: 'id title' })

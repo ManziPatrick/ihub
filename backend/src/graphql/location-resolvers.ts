@@ -4,7 +4,7 @@ import { lookupRequestGeoLocation } from '../services/geoip.service';
 export const locationResolvers = {
   Query: {
     getMyIpGeolocation: async (_: any, __: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
 
       const result = await lookupRequestGeoLocation(context?.req);
 
@@ -79,7 +79,7 @@ export const locationResolvers = {
   },
   Mutation: {
     updateUserLocation: async (_: any, { latitude, longitude }: any, context: any) => {
-      if (!context.user) throw new Error('Not authenticated');
+      if (!context.user) throw new GraphQLError('Not authenticated', { extensions: { code: 'UNAUTHENTICATED' } });
       const user = await User.findByIdAndUpdate(
         context.user.id,
         {
