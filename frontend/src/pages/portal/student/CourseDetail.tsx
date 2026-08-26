@@ -73,6 +73,7 @@ import { RequestHelpDialog, BookCallDialog } from "@/components/portal/dialogs";
 
 import { toast } from "sonner";
 import { useQuery, useMutation } from "@apollo/client/react";
+import { useApolloClient } from "@apollo/client/react";
 import { GET_COURSE, GET_ME, GET_ASSIGNMENT_SUBMISSIONS, MY_CODE_EXERCISE_ANSWERS } from "@/lib/graphql/queries";
 import { COMPLETE_LESSON, SUBMIT_ASSIGNMENT, UPDATE_COURSE_PROGRESS } from "@/lib/graphql/mutations";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
@@ -138,6 +139,7 @@ export default function CourseDetail() {
 
   const { isOffline, enqueueAction } = useOfflineSync();
 
+  const client = useApolloClient();
   const [completeLessonMutation] = useMutation(COMPLETE_LESSON);
   const [submitAssignmentMutation] = useMutation(SUBMIT_ASSIGNMENT);
   const [updateCourseProgress] = useMutation(UPDATE_COURSE_PROGRESS);
@@ -442,11 +444,23 @@ export default function CourseDetail() {
         }
       });
       toast.success("Lesson marked as complete!");
-      // Optimistically update Apollo cache with fresh completedLessons from mutation response
-      if (mutationData?.completeLesson?.completedLessons) {
-        userData.me.completedLessons = mutationData.completeLesson.completedLessons;
+      // Write the updated completedLessons directly into Apollo cache so the UI re-renders immediately
+      const updatedCompletedLessons = mutationData?.completeLesson?.completedLessons;
+      if (updatedCompletedLessons) {
+        const prev = client.cache.readQuery<any>({ query: GET_ME });
+        if (prev?.me) {
+          client.cache.writeQuery({
+            query: GET_ME,
+            data: {
+              me: {
+                ...prev.me,
+                completedLessons: updatedCompletedLessons,
+              },
+            },
+          });
+        }
       }
-      // Now await the refetch so sidebar is fresh before navigating
+      // Refetch in background to stay consistent with the server
       await refetchUser();
       handleNext();
     } catch (err: any) {
