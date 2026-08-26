@@ -5607,8 +5607,9 @@ export const resolvers = {
       const user = await User.findById(context.user.id);
       if (!user) throw new Error('User not found');
 
-      // Check if lesson is an assignment and requires approval
       if (!targetCourseId || targetCourseId === "") return null;
+
+      // Check if lesson is an assignment and requires approval
       const course = await Course.findById(targetCourseId);
       if (course) {
         const allLessons = course.modules.flatMap((m: any) => m.lessons);
@@ -5623,45 +5624,42 @@ export const resolvers = {
             courseId: targetCourseId,
             lessonId: targetLessonId
           });
-
           const isAccepted = submission && (submission.status === 'approved' || submission.status === 'reviewed' || submission.status === 'failed');
-
           if (!submission || !isAccepted) {
             throw new Error('You must submit the assignment and achieve a passing grade before completing this unit.');
           }
-
           if (submission.grade !== undefined && submission.grade < 70) {
             throw new Error(`Your assignment grade (${submission.grade}/100) is below the 70% passing threshold. Please contact your trainer.`);
           }
         }
 
-        // Prerequisite Gating: Check if any PREVIOUS required units (assignments/quizzes) are approved
+        // Prerequisite Gating: Check if any PREVIOUS required units are approved
         const currentLessonIndex = allLessons.findIndex((l: any) => (l.id || l._id).toString() === targetLessonId);
         if (currentLessonIndex > 0) {
           const previousRequiredLessons = allLessons.slice(0, currentLessonIndex).filter((l: any) =>
             (l.requiredAssignment || l.type === 'assignment') && l.type !== 'quiz'
           );
-
           for (const prevLesson of previousRequiredLessons) {
             const isPrevCompleted = user.completedLessons?.some((cl: any) =>
-              cl.courseId.toString() === targetCourseId.toString() &&
-              cl.lessonId === (prevLesson.id || prevLesson._id).toString()
+              String(cl.courseId) === String(targetCourseId) &&
+              String(cl.lessonId) === String((prevLesson.id || prevLesson._id))
             );
-
             if (!isPrevCompleted) {
-              throw new Error(`Prerequisite Block: You must complete and get approval for "${prevLesson.title}" before starting this unit.`);
+              throw new Error(`Prerequisite Block: You must complete "${prevLesson.title}" before starting this unit.`);
             }
           }
         }
       }
 
-      // Check if already completed
+      // Check if already completed (normalize both sides to string)
+      const cid = String(targetCourseId);
+      const lid = String(targetLessonId);
       const isAlreadyCompleted = user.completedLessons?.some((l: any) =>
-        l.courseId.toString() === targetCourseId && l.lessonId === targetLessonId
+        String(l.courseId) === cid && String(l.lessonId) === lid
       );
 
       if (!isAlreadyCompleted) {
-        user.completedLessons.push({ courseId: targetCourseId as any, lessonId: targetLessonId });
+        user.completedLessons.push({ courseId: cid as any, lessonId: lid });
 
         // Check if course is fully complete
         if (!targetCourseId || targetCourseId === "") return null;
@@ -5669,12 +5667,12 @@ export const resolvers = {
         if (course) {
           const allLessonIds = course.modules.flatMap((m: any) => m.lessons).map((l: any) => (l.id || l._id).toString());
           const userCompletedForThisCourse = user.completedLessons
-            .filter((cl: any) => cl.courseId.toString() === targetCourseId.toString())
+            .filter((cl: any) => String(cl.courseId) === String(targetCourseId))
             .map((cl: any) => cl.lessonId);
 
           const isFullCourseComplete = allLessonIds.every(id => userCompletedForThisCourse.includes(id));
 
-          if (isFullCourseComplete && !user.completedCourses.some(id => id.toString() === targetCourseId.toString())) {
+          if (isFullCourseComplete && !user.completedCourses.some(id => String(id) === String(targetCourseId))) {
             (user as any).completedCourses.push(targetCourseId as any);
             console.log(`🎉 Course ${targetCourseId} marked as completed for user ${user.id}`);
           }

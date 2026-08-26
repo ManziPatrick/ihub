@@ -113,7 +113,8 @@ const seedData = async () => {
         role: 'admin',
         fullName: 'System Administrator',
         title: 'Head of Academy',
-        avatar: 'https://i.pravatar.cc/150?u=admin'
+        avatar: 'https://i.pravatar.cc/150?u=admin',
+        permissions: ['users', 'courses', 'payments', 'internships', 'analytics', 'students'],
       } },
       { upsert: true, new: true }
     );

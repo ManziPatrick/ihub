@@ -30,7 +30,7 @@ const USERS = [
   { username: 'superadmin_kigali', fullName: 'Diane Uwimana', email: 'diane@bootskills.com', password: 'Password@123', role: 'super_admin', locIdx: 1, title: 'Platform Director' },
   
   // Admins
-  { username: 'admin_kigali', fullName: 'Jean Pierre Habimana', email: 'admin@bootskills.com', password: 'Password@123', role: 'admin', locIdx: 0, title: 'Head of Operations' },
+  { username: 'admin_kigali', fullName: 'Jean Pierre Habimana', email: 'admin@bootskills.com', password: 'Password@123', role: 'admin', locIdx: 0, title: 'Head of Operations', permissions: ['users', 'courses', 'payments', 'internships', 'analytics', 'students'] as string[] },
   { username: 'admin_musanze', fullName: 'Alice Mukamana', email: 'alice.admin@bootskills.com', password: 'Password@123', role: 'admin', locIdx: 1, title: 'Operations Manager' },
   { username: 'admin_butare', fullName: 'Bosco Niyonzima', email: 'bosco.admin@bootskills.com', password: 'Password@123', role: 'admin', locIdx: 2, title: 'Regional Coordinator' },
   { username: 'admin_rubavu', fullName: 'Claire Uwase', email: 'claire.admin@bootskills.com', password: 'Password@123', role: 'admin', locIdx: 5, title: 'Program Manager' },
@@ -97,6 +97,13 @@ async function seedUsersWithLocations() {
         } else {
           skipped++;
         }
+
+        // Ensure admin users have all permissions
+        if (existingUser.role === 'admin' && (!existingUser.permissions || existingUser.permissions.length === 0)) {
+          existingUser.permissions = ['users', 'courses', 'payments', 'internships', 'analytics', 'students'];
+          await existingUser.save();
+          console.log(`🔑 Granted all permissions to admin: ${existingUser.email}`);
+        }
       } else {
         // Create new user
         const newUser = new User({
@@ -105,6 +112,7 @@ async function seedUsersWithLocations() {
           email: userData.email,
           password: hashedPassword,
           role: userData.role,
+          permissions: userData.role === 'admin' ? ['users', 'courses', 'payments', 'internships', 'analytics', 'students'] : [],
           title: userData.title,
           location: loc.city,
           latitude: loc.lat,
