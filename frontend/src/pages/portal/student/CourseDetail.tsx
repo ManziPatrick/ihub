@@ -153,7 +153,7 @@ export default function CourseDetail() {
   useEffect(() => {
     if (courseId && !activeLessonId && course) {
       // 1. Try backend progress first (from me.courseProgress)
-      const backendProgress = me?.courseProgress?.find((p: any) => p.courseId === courseId);
+      const backendProgress = me?.courseProgress?.find((p: any) => String(p.courseId) === String(courseId));
       if (backendProgress) {
         setActiveLessonId(backendProgress.lessonId);
         return;
@@ -259,7 +259,7 @@ export default function CourseDetail() {
     if (modLessons.length === 0) return false;
     return modLessons.every((l: any) => {
       const lid = l.id || l._id;
-      return completedLessons.some((cl: any) => String(cl.lessonId) === String(lid)) || forcedProgressLessonIds.includes(lid);
+      return completedLessons.some((cl: any) => String(cl.courseId) === String(courseId) && String(cl.lessonId) === String(lid)) || forcedProgressLessonIds.includes(lid);
     });
   };
 
@@ -308,7 +308,7 @@ export default function CourseDetail() {
   const currentLessonRequiresAssignment = !!(currentLesson?.type === 'assignment' && currentLesson?.isAssignment);
   const currentLessonSubmission = submissionsData?.getAssignmentSubmissions?.items?.find((submission) => !me?.id || submission.userId === me.id);
   const currentLessonSubmissionStatus = currentLessonSubmission?.status;
-  const currentLessonCompleted = completedLessons.some((cl: any) => String(cl.lessonId) === String(currentLesson?.id || currentLesson?._id));
+  const currentLessonCompleted = completedLessons.some((cl: any) => String(cl.courseId) === String(courseId) && String(cl.lessonId) === String(currentLesson?.id || currentLesson?._id));
   const isPassed = currentLessonSubmissionStatus === 'approved' || (currentLessonSubmissionStatus === 'reviewed' && (currentLessonSubmission?.grade || 0) >= 70);
   // Code exercises with tests must be completed to mark lesson done
   const hasCodeExercisesWithTests = currentLesson?.codeExercises?.some((ex: any) => ex.testCode || ex.expectedOutput);
@@ -435,14 +435,19 @@ export default function CourseDetail() {
     }
 
     try {
-      await completeLessonMutation({
+      const { data: mutationData } = await completeLessonMutation({
         variables: {
           courseId,
           lessonId: activeLessonId
         }
       });
       toast.success("Lesson marked as complete!");
-      refetchUser();
+      // Optimistically update Apollo cache with fresh completedLessons from mutation response
+      if (mutationData?.completeLesson?.completedLessons) {
+        userData.me.completedLessons = mutationData.completeLesson.completedLessons;
+      }
+      // Now await the refetch so sidebar is fresh before navigating
+      await refetchUser();
       handleNext();
     } catch (err: any) {
       toast.error(err.message || "Failed to mark lesson as complete");
@@ -951,7 +956,7 @@ export default function CourseDetail() {
                                 {mod.lessons?.map((les: any) => {
                                   const lesId = les.id || les._id;
                                   const isActive = lesId === activeLessonId;
-                                  const isComp = completedLessons.some((cl: any) => String(cl.lessonId) === String(lesId)) || forcedProgressLessonIds.includes(lesId);
+                                  const isComp = completedLessons.some((cl: any) => String(cl.courseId) === String(courseId) && String(cl.lessonId) === String(lesId)) || forcedProgressLessonIds.includes(lesId);
                                   const isLock = isModuleLocked(lesId) || isLessonCodeExerciseLocked(lesId);
                                   return (
                                     <button

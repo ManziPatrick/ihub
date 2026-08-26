@@ -212,7 +212,7 @@ export default function StudentCourses() {
 
   const getCourseProgress = (courseId: string, totalLessons: number) => {
     if (totalLessons === 0) return 0;
-    const completed = completedLessons.filter((l: any) => l.courseId === courseId).length;
+    const completed = completedLessons.filter((l: any) => String(l.courseId) === String(courseId)).length;
     return Math.round((completed / totalLessons) * 100);
   };
 
@@ -393,7 +393,7 @@ export default function StudentCourses() {
                     const courseId = course.id || course._id;
                     const totalLessons = course.modules?.reduce((acc: number, m: any) => acc + (m.lessons?.length || 0), 0) || 0;
                     const progress = getCourseProgress(courseId, totalLessons);
-                    const completedCount = completedLessons.filter((l: any) => l.courseId === courseId).length;
+                    const completedCount = completedLessons.filter((l: any) => String(l.courseId) === String(courseId)).length;
 
                     return (
                       <motion.div
