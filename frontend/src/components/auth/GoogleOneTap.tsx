@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMutation } from '@apollo/client/react';
 import { gql } from "@apollo/client";
@@ -36,7 +35,6 @@ interface GoogleLoginData {
 
 export function GoogleOneTap() {
     const { user, loginWithToken, isLoading } = useAuth();
-    const navigate = useNavigate();
     const [googleLogin] = useMutation<GoogleLoginData>(GOOGLE_LOGIN);
     const isPromptActiveRef = useRef(false);
     const isInitializedRef = useRef(false);
@@ -61,7 +59,8 @@ export function GoogleOneTap() {
                 // If 2FA is required, redirect to /auth to complete the flow
                 if (result.requires2FA) {
                     toast.info("Two-Factor Authentication required — check your email for the code");
-                    navigate('/auth', { state: { email: result.user.email, from2FA: true } });
+                    sessionStorage.setItem('google2FA', JSON.stringify({ email: result.user.email }));
+                    window.location.href = '/auth';
                     return;
                 }
 
@@ -132,7 +131,7 @@ export function GoogleOneTap() {
                 }
             }
         };
-    }, [user, googleLogin, loginWithToken, navigate]);
+    }, [user, googleLogin, loginWithToken]);
 
     return null;
 }
