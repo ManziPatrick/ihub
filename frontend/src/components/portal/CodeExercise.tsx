@@ -467,6 +467,34 @@ export function CodeExercise({ exercise, onComplete, compact = false, courseId, 
 
   const [localTestCode, setLocalTestCode] = useState<string | null>(exercise.testCode || null);
 
+  // ── Auto-save code to backend (debounced) ──
+  const lastSavedCodeRef = useRef(savedCode || exercise.initialCode || "");
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!courseId || !lessonId || !exercise.id) return;
+    if (code === lastSavedCodeRef.current) return;
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      if (code !== lastSavedCodeRef.current) {
+        lastSavedCodeRef.current = code;
+        saveCodeAnswerMutation({
+          variables: { courseId, lessonId, exerciseId: exercise.id, code },
+        }).catch((err: any) => console.warn("Auto-save failed:", err?.message));
+      }
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [code, courseId, lessonId, exercise.id, saveCodeAnswerMutation]);
+
   // ── Language detection ──
   const isHtml = exercise.language === "html";
   const isCss = exercise.language === "css";
