@@ -106,25 +106,34 @@ export default function CourseDetail() {
   const [isSubmittingAssignment, setIsSubmittingAssignment] = useState(false);
   const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
   const [forcedProgressLessonIds, setForcedProgressLessonIds] = useState<string[]>([]);
-  const [completedCodeExerciseIds, setCompletedCodeExerciseIds] = useState<string[]>([]);
+  // Map of lessonId -> completed exercise IDs (persisted across all lessons)
+  const [completedCodeExerciseMap, setCompletedCodeExerciseMap] = useState<Record<string, string[]>>(() => {
+    if (!courseId) return {};
+    try {
+      const raw = localStorage.getItem(`codeExercises_${courseId}`);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Persist completedCodeExerciseIds to localStorage on change
-  useEffect(() => {
-    if (courseId && activeLessonId) {
-      localStorage.setItem(`codeExercises_${courseId}_${activeLessonId}`, JSON.stringify(completedCodeExerciseIds));
-    }
-  }, [completedCodeExerciseIds, courseId, activeLessonId]);
+  // Current lesson's completed exercise IDs (derived from map)
+  const completedCodeExerciseIds = activeLessonId ? (completedCodeExerciseMap[activeLessonId] || []) : [];
 
-  // Restore completedCodeExerciseIds from localStorage when lesson changes
+  // Persist entire map to localStorage on change
   useEffect(() => {
-    if (courseId && activeLessonId) {
-      try {
-        const saved = localStorage.getItem(`codeExercises_${courseId}_${activeLessonId}`);
-        setCompletedCodeExerciseIds(saved ? JSON.parse(saved) : []);
-      } catch { setCompletedCodeExerciseIds([]); }
+    if (courseId) {
+      localStorage.setItem(`codeExercises_${courseId}`, JSON.stringify(completedCodeExerciseMap));
     }
-  }, [activeLessonId, courseId]);
+  }, [completedCodeExerciseMap, courseId]);
+
+  // Helper to add an exercise ID for a specific lesson
+  const markCodeExerciseComplete = (lessonId: string, exerciseId: string) => {
+    setCompletedCodeExerciseMap(prev => {
+      const existing = prev[lessonId] || [];
+      if (existing.includes(exerciseId)) return prev;
+      return { ...prev, [lessonId]: [...existing, exerciseId] };
+    });
+  };
 
   // Queries — always fetch fresh user data so completedLessons is never stale
   const { data: userData, refetch: refetchUser } = useQuery(GET_ME, { fetchPolicy: 'network-only' });
@@ -386,10 +395,12 @@ export default function CourseDetail() {
         if ((l.id || l._id) !== lessonId) continue;
         if (i === 0) return false;
         const prevLesson = lessons[i - 1];
+        const prevLessonId = prevLesson?.id || prevLesson?._id;
         const prevHasCode = prevLesson?.codeExercises?.length > 0;
         const prevExercisesWithTests = prevLesson?.codeExercises?.filter((ex: any) => ex.testCode || ex.expectedOutput) || [];
+        const prevCompletedIds = prevLessonId ? (completedCodeExerciseMap[prevLessonId] || []) : [];
         const prevAllPassed = !prevHasCode ||
-          prevExercisesWithTests.every((ex: any) => completedCodeExerciseIds.includes(ex.id));
+          prevExercisesWithTests.every((ex: any) => prevCompletedIds.includes(ex.id));
         if (prevHasCode && !prevAllPassed) return true;
         return false;
       }
@@ -828,10 +839,8 @@ export default function CourseDetail() {
                               lessonId={currentLesson?.id || currentLesson?._id}
                               savedCode={savedCodeAnswers[ex.id]}
                               onComplete={(code) => {
-                                if (ex.id) {
-                                  setCompletedCodeExerciseIds((prev) =>
-                                    prev.includes(ex.id) ? prev : [...prev, ex.id]
-                                  );
+                                if (ex.id && (currentLesson?.id || currentLesson?._id)) {
+                                  markCodeExerciseComplete(currentLesson.id || currentLesson._id, ex.id);
                                 }
                               }}
                             />
