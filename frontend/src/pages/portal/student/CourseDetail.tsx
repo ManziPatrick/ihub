@@ -539,7 +539,8 @@ export default function CourseDetail() {
         description: `Submit assignment: ${currentLesson?.title || activeLessonId}`,
       });
       refetchSubmissions();
-      handleMarkComplete();
+      if (activeLessonId) setForcedProgressLessonIds(prev => prev.includes(activeLessonId) ? prev : [...prev, activeLessonId]);
+      handleNext();
       return;
     }
 
@@ -552,9 +553,10 @@ export default function CourseDetail() {
           content: submissionContent
         }
       });
-      toast.success("Assignment submitted successfully!");
+      toast.success("Assignment submitted! Waiting for trainer review. You can continue to the next lesson.");
       refetchSubmissions();
-      handleMarkComplete();
+      if (activeLessonId) setForcedProgressLessonIds(prev => prev.includes(activeLessonId) ? prev : [...prev, activeLessonId]);
+      handleNext();
     } catch (err: any) {
       toast.error(err.message || "Failed to submit assignment");
     } finally {

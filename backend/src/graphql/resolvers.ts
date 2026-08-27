@@ -4808,8 +4808,10 @@ export const resolvers = {
       submission.status = 'reviewed';
       await submission.save();
 
-      // Auto-complete the lesson for the student if grade is passing (e.g. > 70)
-      if (grade >= 70) {
+      // Auto-complete the lesson for the student if grade is passing
+      const gradingCourse = submission.courseId ? await Course.findById(submission.courseId) : null;
+      const gradingPassingScore = (gradingCourse as any)?.passingScore || 70;
+      if (grade >= gradingPassingScore) {
         const user = await User.findById(submission.userId);
         const isAlreadyCompleted = user?.completedLessons?.some((l: any) =>
           l.courseId.toString() === submission.courseId && l.lessonId === submission.lessonId
@@ -5614,8 +5616,15 @@ export const resolvers = {
       // Fetch course for validation and certificate logic
       const course = await Course.findById(targetCourseId);
 
-      // Skip all validation when forceComplete is true (admin/trainer override)
-      if (!forceComplete && course) {
+      // Check if already completed (normalize both sides to string) — do this early to skip validation for already-completed lessons
+      const cid = String(targetCourseId);
+      const lid = String(targetLessonId);
+      const isAlreadyCompleted = user.completedLessons?.some((l: any) =>
+        String(l.courseId) === cid && String(l.lessonId) === lid
+      );
+
+      // Skip all validation when forceComplete is true OR lesson is already completed
+      if (!forceComplete && !isAlreadyCompleted && course) {
         // Check if lesson is an assignment and requires approval
         const allLessons = course.modules.flatMap((m: any) => m.lessons);
         const lesson = allLessons.find((l: any) => (l.id || l._id).toString() === targetLessonId);
@@ -5633,8 +5642,9 @@ export const resolvers = {
           if (!submission || !isAccepted) {
             throw new Error('You must submit the assignment and achieve a passing grade before completing this unit.');
           }
-          if (submission.grade !== undefined && submission.grade < 70) {
-            throw new Error(`Your assignment grade (${submission.grade}/100) is below the 70% passing threshold. Please contact your trainer.`);
+          const passingScore = (course as any).passingScore || 70;
+          if (submission.grade !== undefined && submission.grade < passingScore) {
+            throw new Error(`Your assignment grade (${submission.grade}/100) is below the ${passingScore}% passing threshold. Please contact your trainer.`);
           }
         }
 
@@ -5655,13 +5665,6 @@ export const resolvers = {
           }
         }
       }
-
-      // Check if already completed (normalize both sides to string)
-      const cid = String(targetCourseId);
-      const lid = String(targetLessonId);
-      const isAlreadyCompleted = user.completedLessons?.some((l: any) =>
-        String(l.courseId) === cid && String(l.lessonId) === lid
-      );
 
       if (!isAlreadyCompleted) {
         user.completedLessons.push({ courseId: cid as any, lessonId: lid });
@@ -5725,6 +5728,7 @@ export const resolvers = {
         if (progress.overallProgress === 100 && progress.status !== 'completed') {
           // Check if all graded assignments have passing grades before issuing certificate
           const allLessonsForCert = course.modules.flatMap((m: any) => m.lessons);
+          const certPassingScore = (course as any).passingScore || 70;
           const requiredAssignmentLessons = allLessonsForCert.filter((l: any) =>
             l.type !== 'quiz' && (l.type === 'assignment' || l.isAssignment) && l.requiredAssignment
           );
@@ -5740,7 +5744,7 @@ export const resolvers = {
               allAssignmentsGraded = false;
               break;
             }
-            if (submission.grade !== undefined && submission.grade < 70) {
+            if (submission.grade !== undefined && submission.grade < certPassingScore) {
               allAssignmentsGraded = false;
               break;
             }
