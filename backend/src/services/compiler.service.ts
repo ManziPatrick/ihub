@@ -1,4 +1,5 @@
 import vm from 'vm';
+import { JSDOM } from 'jsdom';
 
 interface CompileRequest {
   code: string;
@@ -242,6 +243,128 @@ function executeHtml(code: string): { stdout: string; error: string | null } {
 
 function executeCss(code: string): { stdout: string; error: string | null } {
   return { stdout: code, error: null };
+}
+
+// ─── HTML/CSS Test Runner (using jsdom) ────────────────────────────────────
+
+async function runHtmlCssTests(code: string, testCode: string, language: string): Promise<TestResult[]> {
+  const testResults: TestResult[] = [];
+  const safeStr = (v: any): string => v == null ? '' : String(v);
+
+  const serializeValue = (value: any) => {
+    if (value === undefined) return 'undefined';
+    if (value === null) return 'null';
+    try {
+      const result = JSON.stringify(value);
+      return result !== undefined ? result : String(value);
+    } catch {
+      return String(value);
+    }
+  };
+
+  try {
+    // Create a jsdom instance with the user's HTML code
+    let domHtml = code;
+    if (language === 'css') {
+      // For CSS exercises, wrap in a basic HTML structure
+      domHtml = `<!DOCTYPE html><html><head><style>${code}</style></head><body></body></html>`;
+    }
+
+    const dom = new JSDOM(domHtml, { runScripts: 'dangerously', resources: 'usable', pretendToBeVisual: true });
+    const document = dom.window.document;
+
+    // Set up the test context with DOM APIs
+    let currentTestName: string | null = null;
+    let resultsAtStartOfTest: number = 0;
+
+    const addAssertionResult = (name: string | undefined, passed: boolean, expected: any, actual: any, error?: string) => {
+      const testName = name || currentTestName || 'Unnamed Test';
+      testResults.push({
+        name: testName,
+        passed,
+        expected: serializeValue(expected),
+        actual: serializeValue(actual),
+        error: error || undefined,
+      });
+    };
+
+    const testContext = vm.createContext({
+      document,
+      window: dom.window,
+      console: {
+        log: (...args: any[]) => {},
+        error: (...args: any[]) => {},
+      },
+      assert: {
+        equals: (actual: any, expected: any, name?: string) => {
+          const passed = actual === expected;
+          addAssertionResult(name, passed, expected, actual, passed ? undefined : `Expected ${serializeValue(expected)} but received ${serializeValue(actual)}`);
+        },
+        notEquals: (actual: any, expected: any, name?: string) => {
+          const passed = actual !== expected;
+          addAssertionResult(name, passed, `NOT ${serializeValue(expected)}`, actual, passed ? undefined : `Expected value to differ from ${serializeValue(expected)}`);
+        },
+        isTrue: (actual: any, name?: string) => {
+          const passed = !!actual;
+          addAssertionResult(name, passed, 'true', actual, passed ? undefined : `Expected a truthy value but received ${serializeValue(actual)}`);
+        },
+        isFalse: (actual: any, name?: string) => {
+          const passed = !actual;
+          addAssertionResult(name, passed, 'false', actual, passed ? undefined : `Expected a falsy value but received ${serializeValue(actual)}`);
+        },
+        ok: (actual: any, name?: string) => {
+          const passed = !!actual;
+          addAssertionResult(name, passed, 'truthy', actual, passed ? undefined : `Expected truthy value but received ${serializeValue(actual)}`);
+        },
+        deepEquals: (actual: any, expected: any, name?: string) => {
+          const passed = JSON.stringify(actual) === JSON.stringify(expected);
+          addAssertionResult(name, passed, expected, actual, passed ? undefined : `Expected ${serializeValue(expected)} but received ${serializeValue(actual)}`);
+        },
+      },
+      describe: (name: string, fn: Function) => {
+        try {
+          fn();
+        } catch (e: any) {
+          testResults.push({ name: 'Test Suite: ' + name, passed: false, expected: 'No errors', actual: safeStr(e?.message) || safeStr(e), error: safeStr(e?.message) || safeStr(e) });
+        }
+      },
+      it: (name: string, fn: Function) => {
+        const prevTestName = currentTestName;
+        currentTestName = name;
+        resultsAtStartOfTest = testResults.length;
+        try {
+          fn();
+        } catch (e: any) {
+          while (testResults.length > resultsAtStartOfTest) {
+            testResults.pop();
+          }
+          testResults.push({ name, passed: false, expected: 'No errors', actual: safeStr(e?.message) || safeStr(e), error: safeStr(e?.message) || safeStr(e) });
+        }
+        if (testResults.length === resultsAtStartOfTest) {
+          testResults.push({ name, passed: true, expected: '', actual: '', error: undefined });
+        }
+        currentTestName = prevTestName;
+      },
+      Math, JSON, Array, Object, String, Number, Boolean, Date, RegExp, Map, Set, Promise,
+      parseInt, parseFloat, isNaN, isFinite, Error, TypeError, RangeError, ReferenceError, SyntaxError,
+    });
+
+    const wrappedTestCode = `(async () => {\n${testCode}\n})();`;
+    const testScript = new vm.Script(wrappedTestCode, { filename: 'test-code.js' });
+    testScript.runInContext(testContext, { timeout: 5000 });
+
+    dom.window.close();
+  } catch (err: any) {
+    testResults.push({
+      name: 'Test Execution Error',
+      passed: false,
+      expected: 'Tests to run successfully',
+      actual: safeStr(err?.message) || safeStr(err),
+      error: safeStr(err?.message) || safeStr(err),
+    });
+  }
+
+  return testResults;
 }
 
 // ─── JavaScript Test Runner ────────────────────────────────────────────────
@@ -577,21 +700,73 @@ export async function compileCode(request: CompileRequest): Promise<CompileResul
         break;
       }
 
-      // ── HTML: Return as-is for iframe rendering ──
+      // ── HTML: Execute with jsdom and run tests ──
       case 'html': {
         const htmlResult = executeHtml(code);
         output = htmlResult.stdout;
         error = htmlResult.error;
-        passed = error === null;
+
+        let htmlResolvedTestCode = testCode;
+        if (!htmlResolvedTestCode && request.exerciseTitle) {
+          try {
+            let aiTestCode = await generateCodeTestsService(
+              request.exerciseTitle,
+              request.exerciseDescription || '',
+              'html',
+              request.setupCode || '',
+              request.expectedOutput
+            );
+            if (aiTestCode && aiTestCode.trim()) {
+              aiTestCode = aiTestCode.replace(/```[a-zA-Z]*\n?/g, '').replace(/```\n?/g, '').trim();
+              htmlResolvedTestCode = aiTestCode;
+              generatedTestCode = aiTestCode;
+            }
+          } catch (aiErr: any) {
+            console.warn('AI test generation failed for HTML:', aiErr?.message);
+          }
+        }
+
+        if (htmlResolvedTestCode) {
+          testResults = await runHtmlCssTests(code, htmlResolvedTestCode, 'html');
+          passed = error === null && (testResults.length === 0 || testResults.every(t => t.passed));
+        } else {
+          passed = error === null;
+        }
         break;
       }
 
-      // ── CSS: Return as-is for styling ──
+      // ── CSS: Execute with jsdom and run tests ──
       case 'css': {
         const cssResult = executeCss(code);
         output = cssResult.stdout;
         error = cssResult.error;
-        passed = error === null;
+
+        let cssResolvedTestCode = testCode;
+        if (!cssResolvedTestCode && request.exerciseTitle) {
+          try {
+            let aiTestCode = await generateCodeTestsService(
+              request.exerciseTitle,
+              request.exerciseDescription || '',
+              'css',
+              request.setupCode || '',
+              request.expectedOutput
+            );
+            if (aiTestCode && aiTestCode.trim()) {
+              aiTestCode = aiTestCode.replace(/```[a-zA-Z]*\n?/g, '').replace(/```\n?/g, '').trim();
+              cssResolvedTestCode = aiTestCode;
+              generatedTestCode = aiTestCode;
+            }
+          } catch (aiErr: any) {
+            console.warn('AI test generation failed for CSS:', aiErr?.message);
+          }
+        }
+
+        if (cssResolvedTestCode) {
+          testResults = await runHtmlCssTests(code, cssResolvedTestCode, 'css');
+          passed = error === null && (testResults.length === 0 || testResults.every(t => t.passed));
+        } else {
+          passed = error === null;
+        }
         break;
       }
 

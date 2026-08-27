@@ -1382,7 +1382,7 @@ export const typeDefs = `#graphql
     updateLessonProgress(courseId: ID!, lessonId: String!, timeSpent: Int!, completed: Boolean): Boolean
     updateCourseProgress(courseId: ID!, lessonId: String!): User
     
-    completeLesson(courseId: ID!, lessonId: String!): User
+    completeLesson(courseId: ID!, lessonId: String!, forceComplete: Boolean): User
     rewardStudent(xp: Int!, streak: Int, courseId: ID, lessonId: ID, score: Int): User!
     trackActivity(action: String!, details: String): User
 
