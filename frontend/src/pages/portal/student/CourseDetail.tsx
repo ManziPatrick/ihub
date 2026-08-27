@@ -490,15 +490,22 @@ export default function CourseDetail() {
     }
 
     try {
-      const { data: mutationData } = await completeLessonMutation({
-        variables: {
-          courseId,
-          lessonId: activeLessonId
-        }
-      });
+      let mutationData: any = null;
+      try {
+        const result = await completeLessonMutation({
+          variables: { courseId, lessonId: activeLessonId }
+        });
+        mutationData = result.data;
+      } catch (normalErr: any) {
+        // Normal completion failed (e.g. assignment not yet approved) — force-complete so student can proceed
+        const result = await completeLessonMutation({
+          variables: { courseId, lessonId: activeLessonId, forceComplete: true }
+        });
+        mutationData = result.data;
+      }
       toast.success("Lesson marked as complete!");
       // Write the updated completedLessons directly into Apollo cache so the UI re-renders immediately
-      const updatedCompletedLessons = (mutationData as any)?.completeLesson?.completedLessons;
+      const updatedCompletedLessons = mutationData?.completeLesson?.completedLessons;
       if (updatedCompletedLessons) {
         const prev = client.cache.readQuery<any>({ query: GET_ME });
         if (prev?.me) {
@@ -539,7 +546,6 @@ export default function CourseDetail() {
         description: `Submit assignment: ${currentLesson?.title || activeLessonId}`,
       });
       refetchSubmissions();
-      if (activeLessonId) setForcedProgressLessonIds(prev => prev.includes(activeLessonId) ? prev : [...prev, activeLessonId]);
       handleNext();
       return;
     }
@@ -553,9 +559,29 @@ export default function CourseDetail() {
           content: submissionContent
         }
       });
+
+      // Mark lesson complete in DB so student can proceed
+      if (activeLessonId) {
+        try {
+          const { data: completeData } = await completeLessonMutation({
+            variables: { courseId, lessonId: activeLessonId, forceComplete: true }
+          });
+          const updatedCompletedLessons = (completeData as any)?.completeLesson?.completedLessons;
+          if (updatedCompletedLessons) {
+            const prev = client.cache.readQuery<any>({ query: GET_ME });
+            if (prev?.me) {
+              client.cache.writeQuery({
+                query: GET_ME,
+                data: { me: { ...prev.me, completedLessons: updatedCompletedLessons } },
+              });
+            }
+          }
+        } catch (_) {}
+      }
+
       toast.success("Assignment submitted! Waiting for trainer review. You can continue to the next lesson.");
       refetchSubmissions();
-      if (activeLessonId) setForcedProgressLessonIds(prev => prev.includes(activeLessonId) ? prev : [...prev, activeLessonId]);
+      await refetchUser();
       handleNext();
     } catch (err: any) {
       toast.error(err.message || "Failed to submit assignment");
