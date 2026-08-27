@@ -99,7 +99,7 @@ int main() {
               content: '<p>Test your understanding of C basics.</p>',
               duration: 15,
               quizQuestions: [
-                { questionText: 'Which header file is needed for printf()?', type: 'multiple_choice', options: ['<stdlib.h>', '<stdio.h>', '<string.h>', '<math.h>'], correctOptionIndex: 1, explanation: 'printf() is declared in <stdio.h>.' },
+                { questionText: 'Which header file is needed for printf()?', type: 'multiple_choice', options: ['&lt;stdlib.h&gt;', '&lt;stdio.h&gt;', '&lt;string.h&gt;', '&lt;math.h&gt;'], correctOptionIndex: 1, explanation: 'printf() is declared in &lt;stdio.h&gt;.' },
                 { questionText: 'What does int main() return on success?', type: 'multiple_choice', options: ['1', '0', '-1', 'void'], correctOptionIndex: 1, explanation: 'return 0; means successful execution.' },
                 { questionText: 'Which format specifier is used for integers?', type: 'multiple_choice', options: ['%f', '%d', '%c', '%s'], correctOptionIndex: 1, explanation: '%d is for integers, %f for floats.' },
                 { questionText: 'What character ends a statement in C?', type: 'multiple_choice', options: ['.', ';', ':', ','], correctOptionIndex: 1, explanation: 'Statements end with a semicolon (;).' },
@@ -309,7 +309,7 @@ int main() {
               content: '<p>Test your C++ basics knowledge.</p>',
               duration: 15,
               quizQuestions: [
-                { questionText: 'Which header is needed for cout?', type: 'multiple_choice', options: ['<stdio.h>', '<iostream>', '<console>', '<output>'], correctOptionIndex: 1, explanation: 'cout is in the <iostream> header.' },
+                { questionText: 'Which header is needed for cout?', type: 'multiple_choice', options: ['&lt;stdio.h&gt;', '&lt;iostream&gt;', '&lt;console&gt;', '&lt;output&gt;'], correctOptionIndex: 1, explanation: 'cout is in the &lt;iostream&gt; header.' },
                 { questionText: 'What does endl do?', type: 'multiple_choice', options: ['Ends the program', 'Adds a newline and flushes', 'Clears the screen', 'Adds a space'], correctOptionIndex: 1, explanation: 'endl adds a newline and flushes the output buffer.' },
                 { questionText: 'C++ was originally called...?', type: 'multiple_choice', options: ['C with Classes', 'D', 'C+', 'Objective C'], correctOptionIndex: 0, explanation: 'C++ was originally called "C with Classes".' },
                 { questionText: 'What is the C++ I/O operator for output?', type: 'multiple_choice', options: ['>>', '<<', '|>', '<|'], correctOptionIndex: 1, explanation: '<< is the stream insertion operator (output).' },
