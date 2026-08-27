@@ -408,16 +408,41 @@ export default function CourseDetail() {
     }
   };
 
-  const handleForceProceed = () => {
+  const handleForceProceed = async () => {
     const lessonId = currentLesson?.id || currentLesson?._id;
     if (!lessonId) return;
 
-    if (!forcedProgressLessonIds.includes(lessonId)) {
-      setForcedProgressLessonIds((prev) => [...prev, lessonId]);
+    try {
+      // Call backend with forceComplete to mark lesson complete
+      const { data } = await completeLessonMutation({
+        variables: {
+          courseId,
+          lessonId,
+          forceComplete: true
+        }
+      });
+      // Update local state
+      const updatedCompletedLessons = (data as any)?.completeLesson?.completedLessons;
+      if (updatedCompletedLessons) {
+        const prev = client.cache.readQuery<any>({ query: GET_ME });
+        if (prev?.me) {
+          client.cache.writeQuery({
+            query: GET_ME,
+            data: {
+              me: {
+                ...prev.me,
+                completedLessons: updatedCompletedLessons,
+              },
+            },
+          });
+        }
+      }
+      refetchUser();
+      toast.warning("Force completed. Please still submit this assignment for grading.");
+      handleNext();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to force complete lesson");
     }
-
-    toast.warning("You forced progress. Please still submit this assignment later.");
-    handleNext();
   };
 
   const handleMarkComplete = async () => {

@@ -306,8 +306,8 @@ export const DELETE_USER = gql`
 `;
 
 export const COMPLETE_LESSON = gql`
-  mutation CompleteLesson($courseId: ID!, $lessonId: String!) {
-    completeLesson(courseId: $courseId, lessonId: $lessonId) {
+  mutation CompleteLesson($courseId: ID!, $lessonId: String!, $forceComplete: Boolean) {
+    completeLesson(courseId: $courseId, lessonId: $lessonId, forceComplete: $forceComplete) {
       id
       completedLessons {
         courseId

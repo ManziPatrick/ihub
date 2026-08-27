@@ -5600,7 +5600,7 @@ export const resolvers = {
       return true;
     },
 
-    completeLesson: async (_: any, { courseId, lessonId }: { courseId: string, lessonId: string }, context: any) => {
+    completeLesson: async (_: any, { courseId, lessonId, forceComplete }: { courseId: string, lessonId: string, forceComplete?: boolean }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
       const targetCourseId = typeof courseId === 'object' ? ((courseId as any).id || (courseId as any)._id) : courseId;
@@ -5611,9 +5611,12 @@ export const resolvers = {
 
       if (!targetCourseId || targetCourseId === "") return null;
 
-      // Check if lesson is an assignment and requires approval
+      // Fetch course for validation and certificate logic
       const course = await Course.findById(targetCourseId);
-      if (course) {
+
+      // Skip all validation when forceComplete is true (admin/trainer override)
+      if (!forceComplete && course) {
+        // Check if lesson is an assignment and requires approval
         const allLessons = course.modules.flatMap((m: any) => m.lessons);
         const lesson = allLessons.find((l: any) => (l.id || l._id).toString() === targetLessonId);
 
@@ -5720,25 +5723,51 @@ export const resolvers = {
         progress.overallProgress = Math.round((completedCount / allLessons.length) * 100);
 
         if (progress.overallProgress === 100 && progress.status !== 'completed') {
-          progress.status = 'completed';
-          progress.completionDate = new Date();
+          // Check if all graded assignments have passing grades before issuing certificate
+          const allLessonsForCert = course.modules.flatMap((m: any) => m.lessons);
+          const requiredAssignmentLessons = allLessonsForCert.filter((l: any) =>
+            l.type !== 'quiz' && (l.type === 'assignment' || l.isAssignment) && l.requiredAssignment
+          );
 
-          // Auto-generate Certificate
-          const existingCert = await Certificate.findOne({ userId: context.user.id, courseId: targetCourseId });
-          if (!existingCert) {
-            await new Certificate({
+          let allAssignmentsGraded = true;
+          for (const assignLesson of requiredAssignmentLessons) {
+            const submission = await AssignmentSubmission.findOne({
               userId: context.user.id,
               courseId: targetCourseId,
-              courseTitle: course.title,
-              issueDate: new Date(),
-              credentialId: `CERT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-              status: 'issued',
-              progress: 100,
-              signerName: course.signerName || 'Academic Director',
-              signerSignature: course.signerSignature,
-              recipientName: (user as any).certificateName || (user as any).fullName || user.username
-            }).save();
+              lessonId: (assignLesson.id || assignLesson._id).toString()
+            });
+            if (!submission || (submission.status !== 'approved' && submission.status !== 'reviewed')) {
+              allAssignmentsGraded = false;
+              break;
+            }
+            if (submission.grade !== undefined && submission.grade < 70) {
+              allAssignmentsGraded = false;
+              break;
+            }
           }
+
+          if (allAssignmentsGraded) {
+            progress.status = 'completed';
+            progress.completionDate = new Date();
+
+            // Auto-generate Certificate
+            const existingCert = await Certificate.findOne({ userId: context.user.id, courseId: targetCourseId });
+            if (!existingCert) {
+              await new Certificate({
+                userId: context.user.id,
+                courseId: targetCourseId,
+                courseTitle: course.title,
+                issueDate: new Date(),
+                credentialId: `CERT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+                status: 'issued',
+                progress: 100,
+                signerName: course.signerName || 'Academic Director',
+                signerSignature: course.signerSignature,
+                recipientName: (user as any).certificateName || (user as any).fullName || user.username
+              }).save();
+            }
+          }
+          // If not all graded, status stays 'in_progress' — certificate waits
         }
       }
 
