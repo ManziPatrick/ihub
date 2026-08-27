@@ -76,7 +76,22 @@ export default function Auth() {
   const [verify2FAMutation] = useMutation(VERIFY_2FA);
   const [setup2FAMutation] = useMutation(SETUP_2FA);
   const [requestEmailOTPMutation] = useMutation(REQUEST_EMAIL_OTP);
-  const [verifyEmailOTPMutation] = useMutation(VERIFY_EMAIL_OTP);
+  const [verifyEmailOTPMutation] = useMutation(VERIFY_EMAIL_OTP);
+
+  // If redirected from GoogleOneTap with 2FA required, auto-trigger the 2FA flow
+  useEffect(() => {
+    const stored = sessionStorage.getItem('google2FA');
+    if (stored) {
+      sessionStorage.removeItem('google2FA');
+      const { email } = JSON.parse(stored);
+      if (email) {
+        setFormData(prev => ({ ...prev, email }));
+        setRequires2FA(true);
+        setUseEmailOTP(true);
+        toast.info("Two-Factor Authentication Required — check your email for the verification code");
+      }
+    }
+  }, []);
 
   if (user && !needsLocation) {
     // Already logged in and landed on /auth — redirect back (login handlers call their own navigate)

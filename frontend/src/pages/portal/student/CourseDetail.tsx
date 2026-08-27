@@ -307,7 +307,7 @@ export default function CourseDetail() {
       setTimeout(() => win.print(), 500);
     }
   };
-  const currentLessonRequiresAssignment = !!(currentLesson?.type === 'assignment' && currentLesson?.isAssignment);
+  const currentLessonRequiresAssignment = !!(currentLesson?.isAssignment);
   const currentLessonSubmission = submissionsData?.getAssignmentSubmissions?.items?.find((submission) => !me?.id || submission.userId === me.id);
   const currentLessonSubmissionStatus = currentLessonSubmission?.status;
   const currentLessonCompleted = completedLessons.some((cl: any) => String(cl.courseId) === String(courseId) && String(cl.lessonId) === String(currentLesson?.id || currentLesson?._id));
@@ -398,7 +398,7 @@ export default function CourseDetail() {
       }
       const nextIndex = currentIndex + 1;
       const hardGate = allLessons.slice(0, nextIndex).find(l =>
-        (l.requiredAssignment || l.type === 'assignment') && l.type !== 'quiz' && !isLessonSatisfied(l)
+        (l.requiredAssignment || l.isAssignment || l.type === 'assignment') && l.type !== 'quiz' && !isLessonSatisfied(l)
       );
       if (hardGate) {
         toast.error(`Unit Locked: Submit and pass "${hardGate.title}" first.`);

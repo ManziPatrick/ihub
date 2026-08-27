@@ -488,9 +488,9 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
             {/* Question Text */}
             <div className="flex flex-col gap-4">
               <div className="flex items-start justify-between gap-4">
-                <div className="text-xl font-bold leading-tight text-foreground flex-1 prose dark:prose-invert max-w-none" 
-                     dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }} 
-                />
+                <div className="text-xl font-bold leading-tight text-foreground flex-1 prose dark:prose-invert max-w-none">
+                     {currentQuestion.questionText}
+                </div>
                 <div className="flex items-center gap-1 bg-secondary/50 p-1.5 rounded-full border border-border/50 transition-all duration-300">
                   {speechStatus === "idle" ? (
                     <Button
@@ -623,7 +623,7 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
                       disabled={isAnswered}
                       className={`w-full text-left p-4 sm:p-6 rounded-xl sm:rounded-3xl border-2 transition-all flex items-center justify-between font-bold text-base sm:text-xl ${stateClass}`}
                     >
-                      <span dangerouslySetInnerHTML={{ __html: option }} />
+                      <span>{option}</span>
                       {isAnswered && isCorrectOption && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 fill-current shrink-0" />}
                     </motion.button>
                   );
@@ -772,9 +772,9 @@ export function LessonQuiz({ courseId, lessonId, onComplete, fallbackQuestions, 
                     : '💡 Answer Logic'}
                 </p>
                 {currentQuestion.type !== 'matching' && selectedOption !== currentQuestion.correctOptionIndex && (
-                  <p className="text-sm font-black text-green-400 mb-2"
-                     dangerouslySetInnerHTML={{ __html: `✓ ${currentQuestion.options?.[currentQuestion.correctOptionIndex] || ''}` }} 
-                  />
+                  <p className="text-sm font-black text-green-400 mb-2">
+                     {`✓ ${currentQuestion.options?.[currentQuestion.correctOptionIndex] || ''}`}
+                  </p>
                 )}
 
                 {showGetExplanationBtn ? (
