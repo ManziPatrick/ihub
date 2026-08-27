@@ -499,16 +499,30 @@ const isCorrectOption = isMcq
                           <FileCode className="w-4 h-4 text-muted-foreground" />
                           <p className="text-sm font-medium text-muted-foreground">Code Exercise Answers</p>
                         </div>
-                        <div className="space-y-3">
-                          {Object.entries(codeExercises).map(([exId, data]: [string, any]) => (
-                            <div key={exId} className="rounded-lg border border-border/30 overflow-hidden">
-                              <div className="bg-muted/50 px-3 py-1.5 text-xs font-bold text-muted-foreground border-b border-border/20 flex items-center justify-between">
-                                <span>{exId}</span>
-                                {data.updatedAt && <span className="font-normal opacity-60">{new Date(data.updatedAt).toLocaleString()}</span>}
+                        <div className="space-y-4">
+                          {Object.entries(codeExercises).map(([exId, data]: [string, any]) => {
+                            const code = data.code || '';
+                            const isHtml = /<html|<body|<div|<form|<head/i.test(code);
+                            const isCss = !isHtml && /[\.\#\@][\w\-]+\s*\{|:\s*(flex|grid|block|none|relative|absolute)/i.test(code);
+                            return (
+                              <div key={exId} className="rounded-lg border border-border/30 overflow-hidden">
+                                <div className="bg-muted/50 px-3 py-1.5 text-xs font-bold text-muted-foreground border-b border-border/20 flex items-center justify-between">
+                                  <span>{exId}</span>
+                                  {data.updatedAt && <span className="font-normal opacity-60">{new Date(data.updatedAt).toLocaleString()}</span>}
+                                </div>
+                                {(isHtml || isCss) ? (
+                                  <iframe
+                                    srcDoc={isCss ? `<!DOCTYPE html><html><head><style>${code}</style></head><body><h1>Heading</h1><p>Paragraph</p><a href="#">Link</a><ul><li>Item</li></ul><button>Button</button><div class="card">Card</div></body></html>` : code}
+                                    title={exId}
+                                    className="w-full h-48 bg-white border-0"
+                                    sandbox="allow-scripts"
+                                  />
+                                ) : (
+                                  <pre className="p-3 text-xs overflow-x-auto bg-background/80 text-foreground max-h-48 overflow-y-auto">{code}</pre>
+                                )}
                               </div>
-                              <pre className="p-3 text-xs overflow-x-auto bg-background/80 text-foreground max-h-64 overflow-y-auto">{data.code || ''}</pre>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     );

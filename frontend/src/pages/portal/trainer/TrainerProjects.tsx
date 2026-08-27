@@ -582,15 +582,30 @@ export default function TrainerProjects() {
                                                                                     const isCodeExercises = entries.length > 0 && entries.every(([_, v]: [string, any]) => v && typeof v === 'object' && 'code' in v);
                                                                                     if (isCodeExercises) {
                                                                                         return (
-                                                                                            <div className="space-y-3">
-                                                                                                {entries.map(([exId, data]: [string, any]) => (
-                                                                                                    <div key={exId} className="rounded-lg border border-border/30 overflow-hidden">
-                                                                                                        <div className="bg-muted/50 px-3 py-1.5 text-xs font-bold text-muted-foreground border-b border-border/20">
-                                                                                                            {exId}
+                                                                                            <div className="space-y-4">
+                                                                                                {entries.map(([exId, data]: [string, any]) => {
+                                                                                                    const code = data.code || '';
+                                                                                                    const isHtml = /<html|<body|<div|<form|<head/i.test(code);
+                                                                                                    const isCss = !isHtml && /[\.\#\@][\w\-]+\s*\{|:\s*(flex|grid|block|none|relative|absolute)/i.test(code);
+                                                                                                    return (
+                                                                                                        <div key={exId} className="rounded-lg border border-border/30 overflow-hidden">
+                                                                                                            <div className="bg-muted/50 px-3 py-1.5 text-xs font-bold text-muted-foreground border-b border-border/20 flex items-center justify-between">
+                                                                                                                <span>{exId}</span>
+                                                                                                                {(isHtml || isCss) && <Badge variant="outline" className="text-[10px]">Preview</Badge>}
+                                                                                                            </div>
+                                                                                                            {(isHtml || isCss) ? (
+                                                                                                                <iframe
+                                                                                                                    srcDoc={isCss ? `<!DOCTYPE html><html><head><style>${code}</style></head><body><h1>Heading</h1><p>Paragraph</p><a href="#">Link</a><ul><li>Item</li></ul><button>Button</button><div class="card">Card</div></body></html>` : code}
+                                                                                                                    title={exId}
+                                                                                                                    className="w-full h-48 bg-white border-0"
+                                                                                                                    sandbox="allow-scripts"
+                                                                                                                                    />
+                                                                                                            ) : (
+                                                                                                                <pre className="p-3 text-xs overflow-x-auto bg-background/80 text-foreground max-h-48 overflow-y-auto">{code}</pre>
+                                                                                                            )}
                                                                                                         </div>
-                                                                                                        <pre className="p-3 text-xs overflow-x-auto bg-background/80 text-foreground">{data.code || ''}</pre>
-                                                                                                    </div>
-                                                                                                ))}
+                                                                                                    );
+                                                                                                })}
                                                                                             </div>
                                                                                         );
                                                                                     }
