@@ -14,6 +14,22 @@ export const typeDefs = `#graphql
     lessonId: String!
   }
 
+  type ModuleProgressType {
+    id: ID!
+    studentId: ID!
+    courseId: ID!
+    currentModuleIndex: Int!
+    completedLessons: [String!]
+    unlockedModules: [Int!]
+    overrideUnlockedModules: [Int!]
+    lessonCompletionDates: JSON
+    assignmentSubmissionDates: JSON
+    approvalDates: JSON
+    approvedByMap: JSON
+    createdAt: String
+    updatedAt: String
+  }
+
   type LessonProgress {
     lessonId: String!
     completed: Boolean!
@@ -992,6 +1008,7 @@ export const typeDefs = `#graphql
     configs: [Config]
     myPayments: [PaymentTransaction]
     myCourseProgress(courseId: ID!): CourseProgress
+    myModuleProgress(courseId: ID!): ModuleProgressType
     badges(page: Int, limit: Int, createdBy: ID): BadgeResponse
     chatBotGreeting: ChatResponse
     

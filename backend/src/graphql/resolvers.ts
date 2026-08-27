@@ -2961,6 +2961,22 @@ export const resolvers = {
       return progress;
     },
 
+    myModuleProgress: async (_: any, { courseId }: any, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      if (!courseId || courseId === "" || courseId === "undefined" || courseId === "null") return null;
+      const { ModuleProgress } = await import('../models/ModuleProgress.js');
+      let progress = await ModuleProgress.findOne({ studentId: context.user.id, courseId });
+      if (!progress) {
+        progress = await ModuleProgress.create({
+          studentId: context.user.id,
+          courseId,
+          unlockedModules: [0],
+          overrideUnlockedModules: []
+        });
+      }
+      return progress;
+    },
+
     // Internships
     internships: async (_: any, { page = 1, limit = 10 }: any, context: any) => {
       if (!context.user || !['super_admin', 'admin', 'trainer'].includes(context.user.role)) {
@@ -4420,6 +4436,55 @@ export const resolvers = {
         }
       }
 
+      // ── Update ModuleProgress and CourseProgress for non-exam submissions ──
+      try {
+        const { ModuleProgress } = await import('../models/ModuleProgress.js');
+        let moduleProgress = await ModuleProgress.findOne({ studentId: context.user.id, courseId });
+        if (!moduleProgress) {
+          moduleProgress = await ModuleProgress.create({
+            studentId: context.user.id,
+            courseId,
+            unlockedModules: [0],
+            overrideUnlockedModules: []
+          });
+        }
+        // Record the submission date so progress tracking knows about it
+        moduleProgress.assignmentSubmissionDates = {
+          ...(moduleProgress.assignmentSubmissionDates || {}),
+          [lessonId]: new Date()
+        };
+        // Mark lesson as completed in ModuleProgress (student has engaged with the assignment)        if (!moduleProgress.completedLessons.includes(lessonId)) {
+          moduleProgress.completedLessons.push(lessonId);
+        }
+        moduleProgress.lessonCompletionDates = {
+          ...(moduleProgress.lessonCompletionDates || {}),
+          [lessonId]: new Date()
+        };
+        await moduleProgress.save();
+
+        // Also update CourseProgress.lessons[] so the tick shows in the frontend
+        let courseProgress = await CourseProgress.findOne({ userId: context.user.id, courseId });
+        if (!courseProgress) {
+          courseProgress = new CourseProgress({ userId: context.user.id, courseId, lessons: [] });
+        }
+        const lessonIdx = courseProgress.lessons.findIndex((l: any) => l.lessonId === lessonId);
+        if (lessonIdx > -1) {
+          courseProgress.lessons[lessonIdx].completed = true;
+        } else {
+          courseProgress.lessons.push({
+            lessonId,
+            completed: true,
+            timeSpent: 0,
+            lastAccessed: new Date(),
+            visits: 1
+          });
+        }
+        courseProgress.lastAccessed = new Date();
+        await courseProgress.save();
+      } catch (progressErr) {
+        console.error('Non-critical: failed to update progress for non-exam submission:', progressErr);
+      }
+
       const populated = await submission.populate(['userId', 'courseId']);
       return {
         ...populated.toObject(),
@@ -4563,8 +4628,10 @@ export const resolvers = {
         try {
           const userDoc = await User.findById(context.user.id);
           if (userDoc) {
+            const cid = String(courseId);
+            const lid = String(lessonId);
             const alreadyComplete = (userDoc as any).completedLessons?.some(
-              (cl: any) => cl.lessonId === lessonId && cl.courseId?.toString() === courseId
+              (cl: any) => String(cl.courseId) === cid && String(cl.lessonId) === lid
             );
             if (!alreadyComplete) {
               if (!(userDoc as any).completedLessons) (userDoc as any).completedLessons = [];
@@ -4572,6 +4639,24 @@ export const resolvers = {
               await userDoc.save();
             }
           }
+          // Also update CourseProgress.lessons[] so the tick shows
+          let courseProgress = await CourseProgress.findOne({ userId: context.user.id, courseId });
+          if (!courseProgress) {
+            courseProgress = new CourseProgress({ userId: context.user.id, courseId, lessons: [] });
+          }
+          const lIdx = courseProgress.lessons.findIndex((l: any) => l.lessonId === lessonId);
+          if (lIdx > -1) {
+            courseProgress.lessons[lIdx].completed = true;
+          } else {
+            courseProgress.lessons.push({
+              lessonId,
+              completed: true,
+              timeSpent: 0,
+              lastAccessed: new Date(),
+              visits: 1
+            });
+          }
+          await courseProgress.save();
         } catch (e) {
           // Non-critical — lesson completion failure shouldn't block exam result
         }
@@ -4808,8 +4893,10 @@ export const resolvers = {
       submission.status = 'reviewed';
       await submission.save();
 
-      // Auto-complete the lesson for the student if grade is passing (e.g. > 70)
-      if (grade >= 70) {
+      // Auto-complete the lesson for the student if grade is passing
+      const gradingCourse = submission.courseId ? await Course.findById(submission.courseId) : null;
+      const gradingPassingScore = (gradingCourse as any)?.passingScore || 70;
+      if (grade >= gradingPassingScore) {
         const user = await User.findById(submission.userId);
         const isAlreadyCompleted = user?.completedLessons?.some((l: any) =>
           l.courseId.toString() === submission.courseId && l.lessonId === submission.lessonId
@@ -4922,7 +5009,7 @@ export const resolvers = {
     },
 
     // Code Execution
-    runCode: async (_: any, { code, language, testCode, exerciseType, setupCode, exerciseTitle, exerciseDescription, expectedOutput, exerciseId, courseId }: any) => {
+    runCode: async (_: any, { code, language, testCode, exerciseType, setupCode, exerciseTitle, exerciseDescription, expectedOutput, exerciseId, courseId }: any, context: any) => {
       const result = await compileCode({
         code,
         language,
@@ -4947,6 +5034,62 @@ export const resolvers = {
           console.log(`💾 Saved AI-generated testCode to exercise ${exerciseId}`);
         } catch (dbErr: any) {
           console.warn('Failed to persist generated testCode to DB:', dbErr?.message);
+        }
+      }
+
+      // ── Auto-complete lesson when all tests pass and context.user is available ──
+      if (result.passed && context.user && courseId) {
+        try {
+          const cid = String(courseId);
+          // Find the lesson that contains this exercise
+          const courseDoc = await Course.findById(courseId);
+          if (courseDoc) {
+            let targetLessonId: string | null = null;
+            for (const mod of courseDoc.modules) {
+              for (const les of mod.lessons) {
+                if (les.codeExercises?.some((ex: any) => (ex._id?.toString() || (ex as any).id) === exerciseId)) {
+                  targetLessonId = les._id?.toString() || (les as any)._id?.toString();
+                  break;
+                }
+              }
+              if (targetLessonId) break;
+            }
+            if (targetLessonId) {
+              const lid = String(targetLessonId);
+              const userDoc = await User.findById(context.user.id);
+              if (userDoc) {
+                const alreadyComplete = (userDoc as any).completedLessons?.some(
+                  (cl: any) => String(cl.courseId) === cid && String(cl.lessonId) === lid
+                );
+                if (!alreadyComplete) {
+                  if (!(userDoc as any).completedLessons) (userDoc as any).completedLessons = [];
+                  (userDoc as any).completedLessons.push({ courseId, lessonId: targetLessonId, completedAt: new Date() });
+                  await userDoc.save();
+                }
+              }
+              // Update CourseProgress              let courseProgress = await CourseProgress.findOne({ userId: context.user.id, courseId });
+              if (!courseProgress) {
+                courseProgress = new CourseProgress({ userId: context.user.id, courseId, lessons: [] });
+              }
+              const lIdx = courseProgress.lessons.findIndex((l: any) => l.lessonId === targetLessonId);
+              if (lIdx > -1) {
+                courseProgress.lessons[lIdx].completed = true;
+              } else {
+                courseProgress.lessons.push({
+                  lessonId: targetLessonId,
+                  completed: true,
+                  timeSpent: 0,
+                  lastAccessed: new Date(),
+                  visits: 1
+                });
+              }
+              courseProgress.lastAccessed = new Date();
+              await courseProgress.save();
+              console.log(`✅ Auto-completed lesson ${targetLessonId} via runCode (all tests passed)`);
+            }
+          }
+        } catch (autoErr) {
+          console.error('Non-critical: auto-complete lesson on runCode failed:', autoErr);
         }
       }
 
@@ -5015,6 +5158,65 @@ export const resolvers = {
           },
           { upsert: true, new: true }
         );
+
+        // ── Auto-complete the lesson if all code exercises have been answered ──
+        try {
+          const course = await Course.findById(courseId);
+          if (course) {
+            let targetLesson: any = null;
+            for (const mod of course.modules) {
+              const found = mod.lessons.find((l: any) => (l._id?.toString() || l.id) === lessonId);
+              if (found) { targetLesson = found; break; }
+            }
+            if (targetLesson?.codeExercises && targetLesson.codeExercises.length > 0) {
+              const totalExercises = targetLesson.codeExercises.length;
+              const answeredExercises = Object.keys(codeAnswers).length;
+              // Auto-complete when all exercises have been saved (even if not all tests pass yet —
+              // the student has engaged with every exercise)
+              if (answeredExercises >= totalExercises) {
+                const userDoc = await User.findById(context.user.id);
+                if (userDoc) {
+                  const cid = String(courseId);
+                  const lid = String(lessonId);
+                  const alreadyComplete = (userDoc as any).completedLessons?.some(
+                    (cl: any) => String(cl.courseId) === cid && String(cl.lessonId) === lid
+                  );
+                  if (!alreadyComplete) {
+                    if (!(userDoc as any).completedLessons) (userDoc as any).completedLessons = [];
+                    (userDoc as any).completedLessons.push({ courseId, lessonId, completedAt: new Date() });
+                    await userDoc.save();
+                  }
+
+                  // Also update CourseProgress
+                  let courseProgress = await CourseProgress.findOne({ userId: context.user.id, courseId });
+                  if (courseProgress) {
+                    const lIdx = courseProgress.lessons.findIndex((l: any) => l.lessonId === lessonId);
+                    if (lIdx > -1) {
+                      courseProgress.lessons[lIdx].completed = true;
+                    } else {
+                      courseProgress.lessons.push({
+                        lessonId,
+                        completed: true,
+                        timeSpent: 0,
+                        lastAccessed: new Date(),
+                        visits: 1
+                      });
+                    }
+                    // Recalculate progress
+                    const allLessons = course.modules.flatMap((m: any) => m.lessons);
+                    const completedCount = courseProgress.lessons.filter((l: any) => l.completed).length;
+                    courseProgress.overallProgress = Math.round((completedCount / allLessons.length) * 100);
+                    courseProgress.lastAccessed = new Date();
+                    await courseProgress.save();
+                  }
+                  console.log(`✅ Auto-completed lesson ${lessonId} for user ${context.user.id} (all code exercises answered)`);
+                }
+              }
+            }
+          }
+        } catch (autoCompleteErr) {
+          console.error('Non-critical: auto-complete lesson after code exercise failed:', autoCompleteErr);
+        }
         
         return true;
       } catch (err: any) {
@@ -5614,8 +5816,15 @@ export const resolvers = {
       // Fetch course for validation and certificate logic
       const course = await Course.findById(targetCourseId);
 
-      // Skip all validation when forceComplete is true (admin/trainer override)
-      if (!forceComplete && course) {
+      // Check if already completed (normalize both sides to string) — do this early to skip validation for already-completed lessons
+      const cid = String(targetCourseId);
+      const lid = String(targetLessonId);
+      const isAlreadyCompleted = user.completedLessons?.some((l: any) =>
+        String(l.courseId) === cid && String(l.lessonId) === lid
+      );
+
+      // Skip all validation when forceComplete is true OR lesson is already completed
+      if (!forceComplete && !isAlreadyCompleted && course) {
         // Check if lesson is an assignment and requires approval
         const allLessons = course.modules.flatMap((m: any) => m.lessons);
         const lesson = allLessons.find((l: any) => (l.id || l._id).toString() === targetLessonId);
@@ -5633,8 +5842,9 @@ export const resolvers = {
           if (!submission || !isAccepted) {
             throw new Error('You must submit the assignment and achieve a passing grade before completing this unit.');
           }
-          if (submission.grade !== undefined && submission.grade < 70) {
-            throw new Error(`Your assignment grade (${submission.grade}/100) is below the 70% passing threshold. Please contact your trainer.`);
+          const passingScore = (course as any).passingScore || 70;
+          if (submission.grade !== undefined && submission.grade < passingScore) {
+            throw new Error(`Your assignment grade (${submission.grade}/100) is below the ${passingScore}% passing threshold. Please contact your trainer.`);
           }
         }
 
@@ -5655,13 +5865,6 @@ export const resolvers = {
           }
         }
       }
-
-      // Check if already completed (normalize both sides to string)
-      const cid = String(targetCourseId);
-      const lid = String(targetLessonId);
-      const isAlreadyCompleted = user.completedLessons?.some((l: any) =>
-        String(l.courseId) === cid && String(l.lessonId) === lid
-      );
 
       if (!isAlreadyCompleted) {
         user.completedLessons.push({ courseId: cid as any, lessonId: lid });
@@ -5725,6 +5928,7 @@ export const resolvers = {
         if (progress.overallProgress === 100 && progress.status !== 'completed') {
           // Check if all graded assignments have passing grades before issuing certificate
           const allLessonsForCert = course.modules.flatMap((m: any) => m.lessons);
+          const certPassingScore = (course as any).passingScore || 70;
           const requiredAssignmentLessons = allLessonsForCert.filter((l: any) =>
             l.type !== 'quiz' && (l.type === 'assignment' || l.isAssignment) && l.requiredAssignment
           );
@@ -5740,7 +5944,7 @@ export const resolvers = {
               allAssignmentsGraded = false;
               break;
             }
-            if (submission.grade !== undefined && submission.grade < 70) {
+            if (submission.grade !== undefined && submission.grade < certPassingScore) {
               allAssignmentsGraded = false;
               break;
             }
@@ -5772,6 +5976,30 @@ export const resolvers = {
       }
 
       await progress.save();
+
+      // Also update ModuleProgress.completedLessons (REST module access system)
+      try {
+        const { ModuleProgress } = await import('../models/ModuleProgress.js');
+        let moduleProgress = await ModuleProgress.findOne({ studentId: context.user.id, courseId: targetCourseId });
+        if (!moduleProgress) {
+          moduleProgress = await ModuleProgress.create({
+            studentId: context.user.id,
+            courseId: targetCourseId,
+            unlockedModules: [0],
+            overrideUnlockedModules: []
+          });
+        }
+        if (!moduleProgress.completedLessons.includes(targetLessonId)) {
+          moduleProgress.completedLessons.push(targetLessonId);
+        }
+        moduleProgress.lessonCompletionDates = {
+          ...(moduleProgress.lessonCompletionDates || {}),
+          [targetLessonId]: new Date()
+        };
+        await moduleProgress.save();
+      } catch (mpErr) {
+        console.error('Non-critical: failed to update ModuleProgress in completeLesson:', mpErr);
+      }
 
       return await user.populate('enrolledCourses');
     },
