@@ -966,11 +966,34 @@ export default function AdminProjects() {
                                       );
                                     })}
                                   </div>
-                                ) : (
-                                  <p className="text-sm font-mono whitespace-pre-wrap break-all">
-                                    {selectedSubmission.content || 'No content submitted'}
-                                  </p>
-                                )}
+                                  ) : (
+                                    <div className="text-sm font-mono whitespace-pre-wrap break-all">
+                                      {(() => {
+                                        try {
+                                          const parsed = JSON.parse(selectedSubmission.content || '{}');
+                                          if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                                            const entries = Object.entries(parsed);
+                                            const isCodeExercises = entries.length > 0 && entries.every(([_, v]: [string, any]) => v && typeof v === 'object' && 'code' in v);
+                                            if (isCodeExercises) {
+                                              return (
+                                                <div className="space-y-3">
+                                                  {entries.map(([exId, data]: [string, any]) => (
+                                                    <div key={exId} className="rounded-lg border border-border/30 overflow-hidden">
+                                                      <div className="bg-muted/50 px-3 py-1.5 text-xs font-bold text-muted-foreground border-b border-border/20">
+                                                        {exId}
+                                                      </div>
+                                                      <pre className="p-3 text-xs overflow-x-auto bg-background/80 text-foreground">{data.code || ''}</pre>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              );
+                                            }
+                                          }
+                                        } catch {}
+                                        return selectedSubmission.content || 'No content submitted';
+                                      })()}
+                                    </div>
+                                  )}
                               </div>
                             </div>
                             <div className="space-y-2">

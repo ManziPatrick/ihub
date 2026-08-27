@@ -13,6 +13,7 @@ import {
   Download,
   ExternalLink,
   FileText,
+  FileCode,
   Clock,
   User,
   Link as LinkIcon,
@@ -479,18 +480,53 @@ const isCorrectOption = isMcq
                   </div>
                 )}
 
-                {submission.content && !submission.submissionUrl && (
-                  <div className="p-4 border border-border/50 rounded-2xl">
-                    <div className="flex items-center gap-2 mb-2">
-                      <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                      <p className="text-sm font-medium text-muted-foreground">Submission Content</p>
+                {submission.content && !submission.submissionUrl && (() => {
+                  let codeExercises: Record<string, { code: string; updatedAt?: string }> | null = null;
+                  try {
+                    const parsed = JSON.parse(submission.content);
+                    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                      const entries = Object.entries(parsed);
+                      if (entries.length > 0 && entries.every(([_, v]: [string, any]) => v && typeof v === 'object' && 'code' in v)) {
+                        codeExercises = parsed;
+                      }
+                    }
+                  } catch {}
+
+                  if (codeExercises) {
+                    return (
+                      <div className="p-4 border border-border/50 rounded-2xl">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileCode className="w-4 h-4 text-muted-foreground" />
+                          <p className="text-sm font-medium text-muted-foreground">Code Exercise Answers</p>
+                        </div>
+                        <div className="space-y-3">
+                          {Object.entries(codeExercises).map(([exId, data]: [string, any]) => (
+                            <div key={exId} className="rounded-lg border border-border/30 overflow-hidden">
+                              <div className="bg-muted/50 px-3 py-1.5 text-xs font-bold text-muted-foreground border-b border-border/20 flex items-center justify-between">
+                                <span>{exId}</span>
+                                {data.updatedAt && <span className="font-normal opacity-60">{new Date(data.updatedAt).toLocaleString()}</span>}
+                              </div>
+                              <pre className="p-3 text-xs overflow-x-auto bg-background/80 text-foreground max-h-64 overflow-y-auto">{data.code || ''}</pre>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="p-4 border border-border/50 rounded-2xl">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm font-medium text-muted-foreground">Submission Content</p>
+                      </div>
+                      <div
+                        className="text-sm prose prose-sm dark:prose-invert max-w-none"
+                        dangerouslySetInnerHTML={{ __html: submission.content }}
+                      />
                     </div>
-                    <div
-                      className="text-sm prose prose-sm dark:prose-invert max-w-none"
-                      dangerouslySetInnerHTML={{ __html: submission.content }}
-                    />
-                  </div>
-                )}
+                  );
+                })()}
 
                 <div className="p-4 border border-border/50 rounded-2xl">
                   <p className="text-sm text-muted-foreground mb-3">Submitted File / URL:</p>
