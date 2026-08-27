@@ -186,7 +186,37 @@ export const reviewAssignment = async (req: Request, res: Response) => {
         ...(progress.approvedByMap || {}),
         [assignment.moduleId.toString()]: reviewer.id
       };
+
+      // Mark all lessons in this module as complete
+      const moduleObj = course.modules[moduleIndex];
+      if (moduleObj?.lessons) {
+        for (const lesson of moduleObj.lessons) {
+          const lessonId = (lesson as any)._id?.toString() || (lesson as any).id?.toString() || lesson.toString();
+          if (!progress.completedLessons.includes(lessonId)) {
+            progress.completedLessons.push(lessonId);
+          }
+          progress.lessonCompletionDates = {
+            ...(progress.lessonCompletionDates || {}),
+            [lessonId]: new Date()
+          };
+        }
+      }
       await progress.save();
+
+      // Also update User.completedLessons for the main completion check
+      const studentUser = await User.findById(assignment.studentId);
+      if (studentUser && moduleObj?.lessons) {
+        for (const lesson of moduleObj.lessons) {
+          const lessonId = (lesson as any)._id?.toString() || (lesson as any).id?.toString() || lesson.toString();
+          const alreadyDone = studentUser.completedLessons?.some(
+            (cl: any) => cl.courseId.toString() === assignment.courseId.toString() && cl.lessonId === lessonId
+          );
+          if (!alreadyDone) {
+            studentUser.completedLessons.push({ courseId: assignment.courseId, lessonId });
+          }
+        }
+        await studentUser.save();
+      }
 
       // Check for Course Completion
       if (progress.unlockedModules.length >= course.modules.length) {

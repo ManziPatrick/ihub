@@ -13,6 +13,7 @@ import {
   Download,
   ExternalLink,
   FileText,
+  FileCode,
   Clock,
   User,
   Link as LinkIcon,
@@ -479,18 +480,67 @@ const isCorrectOption = isMcq
                   </div>
                 )}
 
-                {submission.content && !submission.submissionUrl && (
-                  <div className="p-4 border border-border/50 rounded-2xl">
-                    <div className="flex items-center gap-2 mb-2">
-                      <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                      <p className="text-sm font-medium text-muted-foreground">Submission Content</p>
+                {submission.content && !submission.submissionUrl && (() => {
+                  let codeExercises: Record<string, { code: string; updatedAt?: string }> | null = null;
+                  try {
+                    const parsed = JSON.parse(submission.content);
+                    if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                      const entries = Object.entries(parsed);
+                      if (entries.length > 0 && entries.every(([_, v]: [string, any]) => v && typeof v === 'object' && 'code' in v)) {
+                        codeExercises = parsed;
+                      }
+                    }
+                  } catch {}
+
+                  if (codeExercises) {
+                    return (
+                      <div className="p-4 border border-border/50 rounded-2xl">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileCode className="w-4 h-4 text-muted-foreground" />
+                          <p className="text-sm font-medium text-muted-foreground">Code Exercise Answers</p>
+                        </div>
+                        <div className="space-y-4">
+                          {Object.entries(codeExercises).map(([exId, data]: [string, any]) => {
+                            const code = data.code || '';
+                            const isHtml = /<html|<body|<div|<form|<head/i.test(code);
+                            const isCss = !isHtml && /[\.\#\@][\w\-]+\s*\{|:\s*(flex|grid|block|none|relative|absolute)/i.test(code);
+                            return (
+                              <div key={exId} className="rounded-lg border border-border/30 overflow-hidden">
+                                <div className="bg-muted/50 px-3 py-1.5 text-xs font-bold text-muted-foreground border-b border-border/20 flex items-center justify-between">
+                                  <span>{exId}</span>
+                                  {data.updatedAt && <span className="font-normal opacity-60">{new Date(data.updatedAt).toLocaleString()}</span>}
+                                </div>
+                                {(isHtml || isCss) ? (
+                                  <iframe
+                                    srcDoc={isCss ? `<!DOCTYPE html><html><head><style>${code}</style></head><body><h1>Heading</h1><p>Paragraph</p><a href="#">Link</a><ul><li>Item</li></ul><button>Button</button><div class="card">Card</div></body></html>` : code}
+                                    title={exId}
+                                    className="w-full h-48 bg-white border-0"
+                                    sandbox="allow-scripts"
+                                  />
+                                ) : (
+                                  <pre className="p-3 text-xs overflow-x-auto bg-background/80 text-foreground max-h-48 overflow-y-auto">{code}</pre>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="p-4 border border-border/50 rounded-2xl">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm font-medium text-muted-foreground">Submission Content</p>
+                      </div>
+                      <div
+                        className="text-sm prose prose-sm dark:prose-invert max-w-none"
+                        dangerouslySetInnerHTML={{ __html: submission.content }}
+                      />
                     </div>
-                    <div
-                      className="text-sm prose prose-sm dark:prose-invert max-w-none"
-                      dangerouslySetInnerHTML={{ __html: submission.content }}
-                    />
-                  </div>
-                )}
+                  );
+                })()}
 
                 <div className="p-4 border border-border/50 rounded-2xl">
                   <p className="text-sm text-muted-foreground mb-3">Submitted File / URL:</p>
