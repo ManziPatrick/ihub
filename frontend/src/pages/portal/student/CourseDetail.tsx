@@ -109,6 +109,23 @@ export default function CourseDetail() {
   const [completedCodeExerciseIds, setCompletedCodeExerciseIds] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // Persist completedCodeExerciseIds to localStorage on change
+  useEffect(() => {
+    if (courseId && activeLessonId) {
+      localStorage.setItem(`codeExercises_${courseId}_${activeLessonId}`, JSON.stringify(completedCodeExerciseIds));
+    }
+  }, [completedCodeExerciseIds, courseId, activeLessonId]);
+
+  // Restore completedCodeExerciseIds from localStorage when lesson changes
+  useEffect(() => {
+    if (courseId && activeLessonId) {
+      try {
+        const saved = localStorage.getItem(`codeExercises_${courseId}_${activeLessonId}`);
+        setCompletedCodeExerciseIds(saved ? JSON.parse(saved) : []);
+      } catch { setCompletedCodeExerciseIds([]); }
+    }
+  }, [activeLessonId, courseId]);
+
   // Queries — always fetch fresh user data so completedLessons is never stale
   const { data: userData, refetch: refetchUser } = useQuery(GET_ME, { fetchPolicy: 'network-only' });
   const { data, loading, error } = useQuery(GET_COURSE, {
@@ -119,7 +136,7 @@ export default function CourseDetail() {
   const { data: savedCodeData } = useQuery(MY_CODE_EXERCISE_ANSWERS, {
     variables: { courseId: courseId || '', lessonId: activeLessonId || '' },
     skip: !courseId || !activeLessonId,
-    fetchPolicy: 'cache-first',
+    fetchPolicy: 'network-only',
   });
 
   // Build a map of exerciseId -> savedCode for quick lookup

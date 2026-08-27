@@ -507,6 +507,17 @@ export function CodeExercise({ exercise, onComplete, compact = false, courseId, 
     };
   }, [code, courseId, lessonId, exercise.id, saveCodeAnswerMutation]);
 
+  // Save immediately on unmount (e.g. page refresh or navigation)
+  useEffect(() => {
+    return () => {
+      if (courseId && lessonId && exercise.id && codeRef.current !== lastSavedCodeRef.current) {
+        saveCodeAnswerMutation({
+          variables: { courseId, lessonId, exerciseId: exercise.id, code: codeRef.current },
+        }).catch(() => {});
+      }
+    };
+  }, [courseId, lessonId, exercise.id, saveCodeAnswerMutation]);
+
   // ── Language detection ──
   const isHtml = exercise.language === "html";
   const isCss = exercise.language === "css";
