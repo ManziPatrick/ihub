@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMutation } from '@apollo/client/react';
 import { gql } from "@apollo/client";
@@ -9,6 +10,7 @@ const GOOGLE_LOGIN = gql`
   mutation GoogleLogin($token: String!) {
     googleLogin(token: $token) {
       token
+      requires2FA
       user {
         id
         username
@@ -21,7 +23,8 @@ const GOOGLE_LOGIN = gql`
 
 interface GoogleLoginData {
     googleLogin: {
-        token: string;
+        token: string | null;
+        requires2FA: boolean;
         user: {
             id: string;
             username: string;
@@ -33,6 +36,7 @@ interface GoogleLoginData {
 
 export function GoogleOneTap() {
     const { user, loginWithToken, isLoading } = useAuth();
+    const navigate = useNavigate();
     const [googleLogin] = useMutation<GoogleLoginData>(GOOGLE_LOGIN);
     const isPromptActiveRef = useRef(false);
     const isInitializedRef = useRef(false);
@@ -49,8 +53,20 @@ export function GoogleOneTap() {
                     variables: { token: response.credential }
                 });
 
-                if (data?.googleLogin) {
-                    loginWithToken(data.googleLogin.token, data.googleLogin.user);
+                const result = data?.googleLogin;
+                if (!result) {
+                    throw new Error("No response from server");
+                }
+
+                // If 2FA is required, redirect to /auth to complete the flow
+                if (result.requires2FA) {
+                    toast.info("Two-Factor Authentication required — check your email for the code");
+                    navigate('/auth', { state: { email: result.user.email, from2FA: true } });
+                    return;
+                }
+
+                if (result.token) {
+                    loginWithToken(result.token, result.user);
                     toast.success('Successfully logged in with Google');
                 }
             } catch (error: any) {
@@ -116,7 +132,7 @@ export function GoogleOneTap() {
                 }
             }
         };
-    }, [user, googleLogin, loginWithToken]);
+    }, [user, googleLogin, loginWithToken, navigate]);
 
     return null;
 }
