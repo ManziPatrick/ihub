@@ -472,16 +472,14 @@ export function CodeExercise({ exercise, onComplete, compact = false, courseId, 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync savedCode from backend into editor when it loads (after mount)
-  const [initialized, setInitialized] = useState(false);
+  const prevSavedCodeRef = useRef(savedCode);
   useEffect(() => {
-    if (!initialized && savedCode) {
+    if (savedCode && savedCode !== prevSavedCodeRef.current) {
       setCode(savedCode);
       lastSavedCodeRef.current = savedCode;
-      setInitialized(true);
-    } else if (!initialized) {
-      setInitialized(true);
+      prevSavedCodeRef.current = savedCode;
     }
-  }, [savedCode, initialized]);
+  }, [savedCode]);
 
   useEffect(() => {
     if (!courseId || !lessonId || !exercise.id) return;
