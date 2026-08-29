@@ -107,6 +107,7 @@ import {
 } from '../services/email.service';
 import { generateCertificatePDF, generateInvoicePDF } from '../services/pdf.service';
 import { autoGenerateCertificate } from '../controllers/CertificateController';
+import { markLessonCompleteAllStores } from '../services/lesson-completion.service';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { chatWithAIService, explainTaskService, reviewSubmissionService, batchReviewOpenQuestionsService, generateAIQuizService, hintForQuestionService, generateQuestionExplanationService, getChatGreeting, generateCodeTestsService } from '../services/ai.service';
@@ -4434,53 +4435,20 @@ export const resolvers = {
             });
           }
         }
-      }
-
-      // ── Update ModuleProgress and CourseProgress for non-exam submissions ──
+      }      // ── Update all 3 stores for non-exam submissions via shared helper ──
       try {
-        const { ModuleProgress } = await import('../models/ModuleProgress.js');
-        let moduleProgress = await ModuleProgress.findOne({ studentId: context.user.id, courseId });
-        if (!moduleProgress) {
-          moduleProgress = await ModuleProgress.create({
-            studentId: context.user.id,
-            courseId,
-            unlockedModules: [0],
-            overrideUnlockedModules: []
-          });
-        }
-        // Record the submission date so progress tracking knows about it
-        moduleProgress.assignmentSubmissionDates = {
-          ...(moduleProgress.assignmentSubmissionDates || {}),
-          [lessonId]: new Date()
-        };
-        // Mark lesson as completed in ModuleProgress (student has engaged with the assignment)        if (!moduleProgress.completedLessons.includes(lessonId)) {
-          moduleProgress.completedLessons.push(lessonId);
-        }
-        moduleProgress.lessonCompletionDates = {
-          ...(moduleProgress.lessonCompletionDates || {}),
-          [lessonId]: new Date()
-        };
-        await moduleProgress.save();
+        await markLessonCompleteAllStores(context.user.id, courseId, lessonId);
 
-        // Also update CourseProgress.lessons[] so the tick shows in the frontend
-        let courseProgress = await CourseProgress.findOne({ userId: context.user.id, courseId });
-        if (!courseProgress) {
-          courseProgress = new CourseProgress({ userId: context.user.id, courseId, lessons: [] });
+        // Also update ModuleProgress.assignmentSubmissionDates
+        const { ModuleProgress } = await import('../models/ModuleProgress.js');
+        const moduleProgress = await ModuleProgress.findOne({ studentId: context.user.id, courseId });
+        if (moduleProgress) {
+          moduleProgress.assignmentSubmissionDates = {
+            ...(moduleProgress.assignmentSubmissionDates || {}),
+            [lessonId]: new Date()
+          };
+          await moduleProgress.save();
         }
-        const lessonIdx = courseProgress.lessons.findIndex((l: any) => l.lessonId === lessonId);
-        if (lessonIdx > -1) {
-          courseProgress.lessons[lessonIdx].completed = true;
-        } else {
-          courseProgress.lessons.push({
-            lessonId,
-            completed: true,
-            timeSpent: 0,
-            lastAccessed: new Date(),
-            visits: 1
-          });
-        }
-        courseProgress.lastAccessed = new Date();
-        await courseProgress.save();
       } catch (progressErr) {
         console.error('Non-critical: failed to update progress for non-exam submission:', progressErr);
       }
@@ -4623,40 +4591,10 @@ export const resolvers = {
         await user.save();
       }
 
-      // Auto-complete the lesson if passing grade
+      // Auto-complete the lesson if passing grade — use shared helper for all 3 stores
       if (gradePercent >= passingThreshold) {
         try {
-          const userDoc = await User.findById(context.user.id);
-          if (userDoc) {
-            const cid = String(courseId);
-            const lid = String(lessonId);
-            const alreadyComplete = (userDoc as any).completedLessons?.some(
-              (cl: any) => String(cl.courseId) === cid && String(cl.lessonId) === lid
-            );
-            if (!alreadyComplete) {
-              if (!(userDoc as any).completedLessons) (userDoc as any).completedLessons = [];
-              (userDoc as any).completedLessons.push({ courseId, lessonId, completedAt: new Date() });
-              await userDoc.save();
-            }
-          }
-          // Also update CourseProgress.lessons[] so the tick shows
-          let courseProgress = await CourseProgress.findOne({ userId: context.user.id, courseId });
-          if (!courseProgress) {
-            courseProgress = new CourseProgress({ userId: context.user.id, courseId, lessons: [] });
-          }
-          const lIdx = courseProgress.lessons.findIndex((l: any) => l.lessonId === lessonId);
-          if (lIdx > -1) {
-            courseProgress.lessons[lIdx].completed = true;
-          } else {
-            courseProgress.lessons.push({
-              lessonId,
-              completed: true,
-              timeSpent: 0,
-              lastAccessed: new Date(),
-              visits: 1
-            });
-          }
-          await courseProgress.save();
+          await markLessonCompleteAllStores(context.user.id, String(courseId), String(lessonId));
         } catch (e) {
           // Non-critical — lesson completion failure shouldn't block exam result
         }
@@ -4665,34 +4603,47 @@ export const resolvers = {
       await logActivity(context.user.id, 'SUBMIT_ASSIGNMENT_EXAM', 'AssignmentSubmission', submission.id, `Submitted exam for lesson ${lessonId} — Score: ${gradePercent}%`);
 
       // ── Certificate auto-issuance on exam pass ──
+      // Only issue certificate when ALL lessons are completed
       if (gradePercent >= passingThreshold) {
         try {
-          // Update CourseProgress to 100%
-          await CourseProgress.findOneAndUpdate(
-            { userId: context.user.id, courseId },
-            {
-              userId: context.user.id,
-              courseId,
-              overallProgress: 100,
-              status: 'completed',
-              completionDate: new Date(),
-              lastAccessed: new Date()
-            },
-            { upsert: true, new: true }
-          );
+          const examCourse = await Course.findById(courseId);
+          const freshUser = await User.findById(context.user.id);
+          if (examCourse && freshUser) {
+            const allLessonIds = examCourse.modules.flatMap((m: any) => m.lessons).map((l: any) => (l.id || l._id).toString());
+            const userCompleted = freshUser.completedLessons
+              ?.filter((cl: any) => String(cl.courseId) === String(courseId))
+              .map((cl: any) => String(cl.lessonId)) || [];
+            const allDone = allLessonIds.every((id: string) => userCompleted.includes(id));
 
-          // Generate the certificate
-          const cert = await autoGenerateCertificate(context.user.id, courseId, 'course');
-          if (cert) {
-            console.log(`🎓 Certificate auto-issued for user ${context.user.id} in course ${courseId} (exam pass: ${gradePercent}%)`);
+            if (allDone) {
+              // All lessons done — update CourseProgress to 100%
+              await CourseProgress.findOneAndUpdate(
+                { userId: context.user.id, courseId },
+                {
+                  userId: context.user.id,
+                  courseId,
+                  overallProgress: 100,
+                  status: 'completed',
+                  completionDate: new Date(),
+                  lastAccessed: new Date()
+                },
+                { upsert: true, new: true }
+              );
 
-            // Send in-app notification
-            await sendNotification(context.user.id, {
-              type: 'certificate_issued',
-              title: '🎉 Certificate Issued!',
-              message: `Congratulations! You've earned a certificate for "${course.title}" with a score of ${gradePercent}%.`,
-              link: '/portal/student/certificates'
-            });
+              // Generate the certificate
+              const cert = await autoGenerateCertificate(context.user.id, courseId, 'course');
+              if (cert) {
+                console.log(`🎓 Certificate auto-issued for user ${context.user.id} in course ${courseId} (exam pass: ${gradePercent}%)`);
+                await sendNotification(context.user.id, {
+                  type: 'certificate_issued',
+                  title: '🎉 Certificate Issued!',
+                  message: `Congratulations! You've earned a certificate for "${course.title}" with a score of ${gradePercent}%.`,
+                  link: '/portal/student/certificates'
+                });
+              }
+            } else {
+              console.log(`⏳ Exam passed for user ${context.user.id} in course ${courseId} but not all lessons done yet — certificate deferred`);
+            }
           }
         } catch (certError) {
           // Non-critical — certificate generation failure shouldn't block exam result
@@ -4903,62 +4854,43 @@ export const resolvers = {
         );
 
         if (user && !isAlreadyCompleted) {
-          user.completedLessons.push({ courseId: submission.courseId, lessonId: submission.lessonId });
-          await user.save();
+          // Use shared helper to update ALL 3 stores
+          await markLessonCompleteAllStores(submission.userId.toString(), String(submission.courseId), String(submission.lessonId));
 
-          const progress = await CourseProgress.findOne({ userId: submission.userId, courseId: submission.courseId });
-          if (progress) {
-            const lIdx = progress.lessons.findIndex((l: any) => l.lessonId === submission.lessonId);
-            if (lIdx > -1) {
-              progress.lessons[lIdx].completed = true;
-            } else {
-              progress.lessons.push({
-                lessonId: submission.lessonId,
-                completed: true,
-                timeSpent: 0,
-                lastAccessed: new Date(),
-                visits: 1
-              });
-            }
+          // Check for certificate — require ALL lessons done
+          const gradingCourse = await Course.findById(submission.courseId);
+          if (gradingCourse) {
+            const allLessonIds = gradingCourse.modules.flatMap((m: any) => m.lessons).map((l: any) => (l.id || l._id).toString());
+            const freshUser = await User.findById(submission.userId);
+            const userCompleted = freshUser?.completedLessons
+              ?.filter((cl: any) => String(cl.courseId) === String(submission.courseId))
+              .map((cl: any) => String(cl.lessonId)) || [];
+            const allDone = allLessonIds.every((id: string) => userCompleted.includes(id));
 
-            // Recalculate overall progress and check for certificate
-            const course = await Course.findById(submission.courseId);
-            if (course) {
-              const allLessons = course.modules.flatMap((m: any) => m.lessons);
-              const completedCount = progress.lessons.filter((l: any) => l.completed).length;
-              progress.overallProgress = Math.round((completedCount / allLessons.length) * 100);
+            if (allDone) {
+              const existingCert = await Certificate.findOne({ userId: submission.userId, courseId: submission.courseId });
+              if (!existingCert) {
+                const submissions = await AssignmentSubmission.find({ userId: submission.userId, courseId: submission.courseId });
+                const totalGrade = submissions.reduce((acc, s) => acc + (s.grade || 0), 0);
+                const avgGrade = submissions.length > 0 ? Math.round(totalGrade / submissions.length) : 100;
 
-              if (progress.overallProgress === 100 && progress.status !== 'completed') {
-                progress.status = 'completed';
-                progress.completionDate = new Date();
+                await new Certificate({
+                  userId: submission.userId,
+                  courseId: submission.courseId,
+                  courseTitle: gradingCourse.title,
+                  issueDate: new Date(),
+                  credentialId: `CERT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+                  status: 'issued',
+                  progress: 100,
+                  grade: avgGrade,
+                  signerName: (gradingCourse as any).signerName || 'Academic Director',
+                  signerSignature: (gradingCourse as any).signerSignature,
+                  recipientName: (freshUser as any)?.certificateName || (freshUser as any)?.fullName || (freshUser as any)?.username
+                }).save();
 
-                // Auto-generate Certificate
-                const existingCert = await Certificate.findOne({ userId: submission.userId, courseId: submission.courseId });
-                if (!existingCert) {
-                  // Calculate average grade
-                  const submissions = await AssignmentSubmission.find({ userId: submission.userId, courseId: submission.courseId });
-                  const totalGrade = submissions.reduce((acc, s) => acc + (s.grade || 0), 0);
-                  const avgGrade = submissions.length > 0 ? Math.round(totalGrade / submissions.length) : 100;
-
-                  await new Certificate({
-                    userId: submission.userId,
-                    courseId: submission.courseId,
-                    courseTitle: course.title,
-                    issueDate: new Date(),
-                    credentialId: `CERT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-                    status: 'issued',
-                    progress: 100,
-                    grade: avgGrade,
-                    signerName: course.signerName || 'Academic Director',
-                    signerSignature: course.signerSignature,
-                    recipientName: (user as any).certificateName || (user as any).fullName || user.username
-                  }).save();
-
-                  console.log(`🎓 Certificate issued to ${user.username} for ${course.title} with average grade ${avgGrade}`);
-                }
+                console.log(`🎓 Certificate issued to ${freshUser?.username} for ${gradingCourse.title} with average grade ${avgGrade}`);
               }
             }
-            await progress.save();
           }
         }
       }
@@ -5053,38 +4985,9 @@ export const resolvers = {
                 }
               }
               if (targetLessonId) break;
-            }
-            if (targetLessonId) {
-              const lid = String(targetLessonId);
-              const userDoc = await User.findById(context.user.id);
-              if (userDoc) {
-                const alreadyComplete = (userDoc as any).completedLessons?.some(
-                  (cl: any) => String(cl.courseId) === cid && String(cl.lessonId) === lid
-                );
-                if (!alreadyComplete) {
-                  if (!(userDoc as any).completedLessons) (userDoc as any).completedLessons = [];
-                  (userDoc as any).completedLessons.push({ courseId, lessonId: targetLessonId, completedAt: new Date() });
-                  await userDoc.save();
-                }
-              }
-              // Update CourseProgress              let courseProgress = await CourseProgress.findOne({ userId: context.user.id, courseId });
-              if (!courseProgress) {
-                courseProgress = new CourseProgress({ userId: context.user.id, courseId, lessons: [] });
-              }
-              const lIdx = courseProgress.lessons.findIndex((l: any) => l.lessonId === targetLessonId);
-              if (lIdx > -1) {
-                courseProgress.lessons[lIdx].completed = true;
-              } else {
-                courseProgress.lessons.push({
-                  lessonId: targetLessonId,
-                  completed: true,
-                  timeSpent: 0,
-                  lastAccessed: new Date(),
-                  visits: 1
-                });
-              }
-              courseProgress.lastAccessed = new Date();
-              await courseProgress.save();
+            }            if (targetLessonId) {
+              // Use shared helper to update ALL 3 stores
+              await markLessonCompleteAllStores(context.user.id, cid, String(targetLessonId));
               console.log(`✅ Auto-completed lesson ${targetLessonId} via runCode (all tests passed)`);
             }
           }
@@ -5174,43 +5077,9 @@ export const resolvers = {
               // Auto-complete when all exercises have been saved (even if not all tests pass yet —
               // the student has engaged with every exercise)
               if (answeredExercises >= totalExercises) {
-                const userDoc = await User.findById(context.user.id);
-                if (userDoc) {
-                  const cid = String(courseId);
-                  const lid = String(lessonId);
-                  const alreadyComplete = (userDoc as any).completedLessons?.some(
-                    (cl: any) => String(cl.courseId) === cid && String(cl.lessonId) === lid
-                  );
-                  if (!alreadyComplete) {
-                    if (!(userDoc as any).completedLessons) (userDoc as any).completedLessons = [];
-                    (userDoc as any).completedLessons.push({ courseId, lessonId, completedAt: new Date() });
-                    await userDoc.save();
-                  }
-
-                  // Also update CourseProgress
-                  let courseProgress = await CourseProgress.findOne({ userId: context.user.id, courseId });
-                  if (courseProgress) {
-                    const lIdx = courseProgress.lessons.findIndex((l: any) => l.lessonId === lessonId);
-                    if (lIdx > -1) {
-                      courseProgress.lessons[lIdx].completed = true;
-                    } else {
-                      courseProgress.lessons.push({
-                        lessonId,
-                        completed: true,
-                        timeSpent: 0,
-                        lastAccessed: new Date(),
-                        visits: 1
-                      });
-                    }
-                    // Recalculate progress
-                    const allLessons = course.modules.flatMap((m: any) => m.lessons);
-                    const completedCount = courseProgress.lessons.filter((l: any) => l.completed).length;
-                    courseProgress.overallProgress = Math.round((completedCount / allLessons.length) * 100);
-                    courseProgress.lastAccessed = new Date();
-                    await courseProgress.save();
-                  }
-                  console.log(`✅ Auto-completed lesson ${lessonId} for user ${context.user.id} (all code exercises answered)`);
-                }
+                // Use shared helper to update ALL 3 stores
+                await markLessonCompleteAllStores(context.user.id, String(courseId), String(lessonId));
+                console.log(`✅ Auto-completed lesson ${lessonId} for user ${context.user.id} (all code exercises answered)`);
               }
             }
           }
@@ -5710,6 +5579,49 @@ export const resolvers = {
       return updatedCourse;
     },
 
+    toggleSequentialLock: async (_: any, { courseId, enabled }: { courseId: string, enabled: boolean }, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+
+      const course = await Course.findById(courseId);
+      if (!course) throw new Error('Course not found');
+
+      // Only the course owner (instructor) or admin/super_admin can toggle this
+      const isOwner = course.instructor?.toString() === context.user.id;
+      if (!isOwner && context.user.role !== 'admin' && context.user.role !== 'super_admin') {
+        throw new Error('Only the course owner can change sequential lock settings');
+      }
+
+      (course as any).sequentialLock = enabled;
+      await course.save();
+
+      // When enabling sequential lock, reset all students to module 0 unlocks
+      if (enabled) {
+        const { ModuleProgress } = await import('../models/ModuleProgress.js');
+        const studentIds = (course.studentsEnrolled || []).map((s: any) => s.toString());
+        if (studentIds.length > 0) {
+          // Only reset students who haven't progressed past module 0
+          await ModuleProgress.updateMany(
+            { studentId: { $in: studentIds }, courseId },
+            { $set: { unlockedModules: [0] } }
+          );
+        }
+      } else {
+        // When disabling lock, unlock ALL modules for all students
+        const { ModuleProgress } = await import('../models/ModuleProgress.js');
+        const totalModules = course.modules?.length || 0;
+        const allModules = Array.from({ length: totalModules }, (_, i) => i);
+        const studentIds = (course.studentsEnrolled || []).map((s: any) => s.toString());
+        if (studentIds.length > 0) {
+          await ModuleProgress.updateMany(
+            { studentId: { $in: studentIds }, courseId },
+            { $set: { unlockedModules: allModules } }
+          );
+        }
+      }
+
+      return course.populate('instructor');
+    },
+
     deleteCourse: async (_: any, { id }: { id: string }, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
       if (context.user.role === 'admin') requirePermission(context, 'courses');
@@ -5825,6 +5737,25 @@ export const resolvers = {
 
       // Skip all validation when forceComplete is true OR lesson is already completed
       if (!forceComplete && !isAlreadyCompleted && course) {
+        // Sequential Lock Enforcement: when enabled, students must complete lessons in order
+        if ((course as any).sequentialLock) {
+          const allLessons = course.modules.flatMap((m: any) => m.lessons);
+          const currentIdx = allLessons.findIndex((l: any) => (l.id || l._id).toString() === targetLessonId);
+          if (currentIdx > 0) {
+            // All lessons before this one must be completed
+            const previousLessons = allLessons.slice(0, currentIdx);
+            for (const prevLesson of previousLessons) {
+              const prevId = (prevLesson.id || prevLesson._id).toString();
+              const prevDone = user.completedLessons?.some((cl: any) =>
+                String(cl.courseId) === cid && String(cl.lessonId) === prevId
+              );
+              if (!prevDone) {
+                throw new Error(`Sequential Lock: You must complete "${prevLesson.title}" (lesson ${currentIdx} of ${allLessons.length}) before moving on.`);
+              }
+            }
+          }
+        }
+
         // Check if lesson is an assignment and requires approval
         const allLessons = course.modules.flatMap((m: any) => m.lessons);
         const lesson = allLessons.find((l: any) => (l.id || l._id).toString() === targetLessonId);
@@ -5866,70 +5797,38 @@ export const resolvers = {
         }
       }
 
+      // Use the shared helper to update ALL 3 completion stores consistently
       if (!isAlreadyCompleted) {
-        user.completedLessons.push({ courseId: cid as any, lessonId: lid });
+        await markLessonCompleteAllStores(context.user.id, targetCourseId, targetLessonId);
+      }
 
-        // Check if course is fully complete
-        if (!targetCourseId || targetCourseId === "") return null;
+      // Re-fetch user to check course completion
+      const freshUser = await User.findById(context.user.id);
+      if (freshUser && targetCourseId) {
         const course = await Course.findById(targetCourseId);
         if (course) {
           const allLessonIds = course.modules.flatMap((m: any) => m.lessons).map((l: any) => (l.id || l._id).toString());
-          const userCompletedForThisCourse = user.completedLessons
+          const userCompletedForThisCourse = freshUser.completedLessons
             .filter((cl: any) => String(cl.courseId) === String(targetCourseId))
-            .map((cl: any) => cl.lessonId);
+            .map((cl: any) => String(cl.lessonId));
 
           const isFullCourseComplete = allLessonIds.every(id => userCompletedForThisCourse.includes(id));
 
-          if (isFullCourseComplete && !user.completedCourses.some(id => String(id) === String(targetCourseId))) {
-            (user as any).completedCourses.push(targetCourseId as any);
-            console.log(`🎉 Course ${targetCourseId} marked as completed for user ${user.id}`);
+          if (isFullCourseComplete && !freshUser.completedCourses.some(id => String(id) === String(targetCourseId))) {
+            (freshUser as any).completedCourses.push(targetCourseId as any);
+            await freshUser.save();
+            console.log(`🎉 Course ${targetCourseId} marked as completed for user ${freshUser.id}`);
           }
         }
-
-        await user.save();
       }
 
-      // Also update detailed progress
+      // Re-fetch CourseProgress for certificate logic
       let progress = await CourseProgress.findOne({ userId: context.user.id, courseId: targetCourseId });
-      if (progress) {
-        const lIdx = progress.lessons.findIndex((l: any) => l.lessonId === targetLessonId);
-        if (lIdx > -1) {
-          progress.lessons[lIdx].completed = true;
-        } else {
-          progress.lessons.push({
-            lessonId: targetLessonId,
-            completed: true,
-            timeSpent: 0,
-            lastAccessed: new Date(),
-            visits: 1
-          });
-        }
-      } else {
-        // Create progress if not exists
-        progress = new CourseProgress({
-          userId: context.user.id,
-          courseId: targetCourseId,
-          lessons: [{
-            lessonId: targetLessonId,
-            completed: true,
-            timeSpent: 0,
-            lastAccessed: new Date(),
-            visits: 1
-          }]
-        });
-      }
-
-      // Calculate overall progress
-      if (course) {
-        const allLessons = course.modules.flatMap((m: any) => m.lessons);
-        const completedCount = progress.lessons.filter((l: any) => l.completed).length;
-        progress.overallProgress = Math.round((completedCount / allLessons.length) * 100);
-
-        if (progress.overallProgress === 100 && progress.status !== 'completed') {
-          // Check if all graded assignments have passing grades before issuing certificate
-          const allLessonsForCert = course.modules.flatMap((m: any) => m.lessons);
-          const certPassingScore = (course as any).passingScore || 70;
-          const requiredAssignmentLessons = allLessonsForCert.filter((l: any) =>
+      if (progress && progress.overallProgress === 100 && progress.status !== 'completed') {
+        const certCourse = await Course.findById(targetCourseId);
+        if (certCourse) {
+          const certPassingScore = (certCourse as any).passingScore || 70;
+          const requiredAssignmentLessons = certCourse.modules.flatMap((m: any) => m.lessons).filter((l: any) =>
             l.type !== 'quiz' && (l.type === 'assignment' || l.isAssignment) && l.requiredAssignment
           );
 
@@ -5953,6 +5852,7 @@ export const resolvers = {
           if (allAssignmentsGraded) {
             progress.status = 'completed';
             progress.completionDate = new Date();
+            await progress.save();
 
             // Auto-generate Certificate
             const existingCert = await Certificate.findOne({ userId: context.user.id, courseId: targetCourseId });
@@ -5960,48 +5860,23 @@ export const resolvers = {
               await new Certificate({
                 userId: context.user.id,
                 courseId: targetCourseId,
-                courseTitle: course.title,
+                courseTitle: certCourse.title,
                 issueDate: new Date(),
                 credentialId: `CERT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
                 status: 'issued',
                 progress: 100,
-                signerName: course.signerName || 'Academic Director',
-                signerSignature: course.signerSignature,
-                recipientName: (user as any).certificateName || (user as any).fullName || user.username
+                signerName: (certCourse as any).signerName || 'Academic Director',
+                signerSignature: (certCourse as any).signerSignature,
+                recipientName: (freshUser as any)?.certificateName || (freshUser as any)?.fullName || (freshUser as any)?.username
               }).save();
             }
           }
-          // If not all graded, status stays 'in_progress' — certificate waits
         }
       }
 
-      await progress.save();
-
-      // Also update ModuleProgress.completedLessons (REST module access system)
-      try {
-        const { ModuleProgress } = await import('../models/ModuleProgress.js');
-        let moduleProgress = await ModuleProgress.findOne({ studentId: context.user.id, courseId: targetCourseId });
-        if (!moduleProgress) {
-          moduleProgress = await ModuleProgress.create({
-            studentId: context.user.id,
-            courseId: targetCourseId,
-            unlockedModules: [0],
-            overrideUnlockedModules: []
-          });
-        }
-        if (!moduleProgress.completedLessons.includes(targetLessonId)) {
-          moduleProgress.completedLessons.push(targetLessonId);
-        }
-        moduleProgress.lessonCompletionDates = {
-          ...(moduleProgress.lessonCompletionDates || {}),
-          [targetLessonId]: new Date()
-        };
-        await moduleProgress.save();
-      } catch (mpErr) {
-        console.error('Non-critical: failed to update ModuleProgress in completeLesson:', mpErr);
-      }
-
-      return await user.populate('enrolledCourses');
+      // Re-fetch the user for return
+      const returnUser = await User.findById(context.user.id);
+      return await returnUser?.populate('enrolledCourses') || user;
     },
 
     rewardStudent: async (_: any, { xp, streak, courseId, lessonId, score }: any, context: any) => {

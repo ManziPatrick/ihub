@@ -7,6 +7,7 @@ import { ModuleProgress } from '../models/ModuleProgress';
 import { ModuleAccessConfig } from '../models/ModuleAccessConfig';
 import { sendNotification } from '../services/notification.service';
 import { autoGenerateCertificate } from './CertificateController';
+import { markLessonCompleteAllStores } from '../services/lesson-completion.service';
 
 const TRAINER_OR_ADMIN = ['trainer', 'admin', 'super_admin'];
 
@@ -54,9 +55,14 @@ export const markLessonComplete = async (req: Request, res: Response) => {
 
     const progress = await ensureProgress(studentId, courseId);
 
-    const unlocked = new Set([...(progress.unlockedModules || []), ...(progress.overrideUnlockedModules || [])]);
-    if (!unlocked.has(moduleIndex)) {
-      return res.status(403).json({ message: 'Complete your assignment to unlock this module.' });
+    // When sequentialLock is OFF, all modules are accessible
+    if (!(course as any).sequentialLock) {
+      // No unlock check needed — student can access any module
+    } else {
+      const unlocked = new Set([...(progress.unlockedModules || []), ...(progress.overrideUnlockedModules || [])]);
+      if (!unlocked.has(moduleIndex)) {
+        return res.status(403).json({ message: 'Complete your assignment to unlock this module.' });
+      }
     }
 
     if (!progress.completedLessons.includes(lessonId)) {
@@ -69,7 +75,10 @@ export const markLessonComplete = async (req: Request, res: Response) => {
 
     await progress.save();
 
-    return res.json({ message: 'Lesson marked complete', progress });
+    // Update ALL 3 completion stores so the tick shows consistently
+    await markLessonCompleteAllStores(studentId, courseId, lessonId);
+
+    return res.json({ message: 'Lesson marked complete ✅', progress });
   } catch (error: any) {
     return res.status(500).json({ message: error.message });
   }
@@ -172,10 +181,18 @@ export const reviewAssignment = async (req: Request, res: Response) => {
     const scorePasses = typeof assignment.score === 'number' ? assignment.score >= threshold : false;
 
     if (status === 'approved') {
-      const shouldUnlock = !autoUnlockEnabled || scorePasses;
-      if (shouldUnlock) {
-        progress.unlockedModules = Array.from(new Set([...(progress.unlockedModules || []), moduleIndex + 1]));
+      // When sequentialLock is OFF, all modules are always unlocked
+      if (!(course as any).sequentialLock) {
+        const totalModules = course.modules?.length || 0;
+        progress.unlockedModules = Array.from({ length: totalModules }, (_, i) => i);
         progress.currentModuleIndex = Math.max(progress.currentModuleIndex || 0, moduleIndex + 1);
+      } else {
+        // Sequential lock ON: unlock next module based on assignment approval
+        const shouldUnlock = !autoUnlockEnabled || scorePasses;
+        if (shouldUnlock) {
+          progress.unlockedModules = Array.from(new Set([...(progress.unlockedModules || []), moduleIndex + 1]));
+          progress.currentModuleIndex = Math.max(progress.currentModuleIndex || 0, moduleIndex + 1);
+        }
       }
 
       progress.approvalDates = {
@@ -203,23 +220,26 @@ export const reviewAssignment = async (req: Request, res: Response) => {
       }
       await progress.save();
 
-      // Also update User.completedLessons for the main completion check
+      // Mark all lessons in this module as complete in ALL stores (User, CourseProgress, ModuleProgress)
       const studentUser = await User.findById(assignment.studentId);
-      if (studentUser && moduleObj?.lessons) {
+      if (moduleObj?.lessons) {
         for (const lesson of moduleObj.lessons) {
           const lessonId = (lesson as any)._id?.toString() || (lesson as any).id?.toString() || lesson.toString();
-          const alreadyDone = studentUser.completedLessons?.some(
-            (cl: any) => cl.courseId.toString() === assignment.courseId.toString() && cl.lessonId === lessonId
-          );
-          if (!alreadyDone) {
-            studentUser.completedLessons.push({ courseId: assignment.courseId, lessonId });
-          }
+          await markLessonCompleteAllStores(assignment.studentId.toString(), assignment.courseId.toString(), lessonId);
         }
-        await studentUser.save();
       }
 
-      // Check for Course Completion
-      if (progress.unlockedModules.length >= course.modules.length) {
+      // Re-fetch studentUser after updates to get fresh completedLessons
+      const freshStudentUser = await User.findById(assignment.studentId);
+
+      // Check for Course Completion — require ALL lessons to be completed
+      const allLessonIds = course.modules.flatMap((m: any) => m.lessons).map((l: any) => (l.id || l._id).toString());
+      const userCompletedForCourse = freshStudentUser?.completedLessons
+        ?.filter((cl: any) => cl.courseId.toString() === assignment.courseId.toString())
+        .map((cl: any) => cl.lessonId) || [];
+      const allLessonsDone = allLessonIds.every((id: string) => userCompletedForCourse.includes(id));
+
+      if (allLessonsDone) {
           // Check if all assignments are approved
           const allAssignments = await ModuleAssignment.find({ 
               studentId: assignment.studentId, 
@@ -233,12 +253,13 @@ export const reviewAssignment = async (req: Request, res: Response) => {
           }
       }
 
+      const unlockMsg = !(course as any).sequentialLock
+        ? 'Your assignment has been approved. All modules are accessible.'
+        : 'Your assignment has been approved and next module is unlocked.';
       await sendNotification(assignment.studentId.toString(), {
         type: 'assignment_approved',
         title: 'Assignment Approved',
-        message: shouldUnlock
-          ? 'Your assignment has been approved and next module is unlocked.'
-          : 'Your assignment has been approved. Module unlock requires score threshold in auto-unlock mode.',
+        message: unlockMsg,
       });
     }
 
@@ -388,6 +409,13 @@ export const canAccessModule = async (req: Request, res: Response) => {
 
     const progress = await ensureProgress(studentId, courseIdValue);
     const requestedIndex = Number(moduleIndex ?? 0);
+
+    // When sequentialLock is OFF on the course, all modules are accessible
+    const course = await Course.findById(courseIdValue);
+    if (course && !(course as any).sequentialLock) {
+      return res.json({ allowed: true, progress });
+    }
+
     const unlocked = new Set([...(progress.unlockedModules || []), ...(progress.overrideUnlockedModules || [])]);
 
     if (!unlocked.has(requestedIndex)) {

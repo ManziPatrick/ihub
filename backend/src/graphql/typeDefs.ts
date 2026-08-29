@@ -515,6 +515,7 @@ export const typeDefs = `#graphql
     signerSignature: String
     school: String
     isFeatured: Boolean
+    sequentialLock: Boolean
     createdAt: String!
     updatedAt: String!
   }
@@ -1348,6 +1349,7 @@ export const typeDefs = `#graphql
       signerName: String
       signerSignature: String
       school: String
+      sequentialLock: Boolean
       applicationQuestions: [ApplicationQuestionInput]
       modules: [ModuleInput!]!
     ): Course
@@ -1368,9 +1370,11 @@ export const typeDefs = `#graphql
       signerSignature: String
       school: String
       isFeatured: Boolean
+      sequentialLock: Boolean
       applicationQuestions: [ApplicationQuestionInput]
       modules: [ModuleInput!]
     ): Course
+    toggleSequentialLock(courseId: ID!, enabled: Boolean!): Course
     deleteCourse(id: ID!): Boolean
     createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, coverImage: String, phone: String, location: String, title: String, school: String): User
     updateUser(id: ID!, username: String, email: String, password: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, coverImage: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String, status: String): User

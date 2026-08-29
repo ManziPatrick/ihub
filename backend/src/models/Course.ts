@@ -142,6 +142,7 @@ const courseSchema = new mongoose.Schema({
   signerSignature: { type: String },
   school: { type: String, trim: true },
   isFeatured: { type: Boolean, default: false },
+  sequentialLock: { type: Boolean, default: false }, // When true, students must complete lessons in order; when false, they can learn freely
 
   // Pre-computed counts for performance (avoids expensive populate on list queries)
   studentsEnrolledCount: { type: Number, default: 0 },
