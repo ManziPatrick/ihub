@@ -506,6 +506,7 @@ export function EditCourseDialog({
     allowedDeliveryModes: ["online"],
     enrollmentMode: "direct",
     submissionRequired: true,
+    sequentialLock: false,
     signerName: "",
     signerSignature: "",
     applicationQuestions: [],
@@ -554,6 +555,7 @@ export function EditCourseDialog({
             allowedDeliveryModes: course.allowedDeliveryModes || ["online"],
             enrollmentMode: course.enrollmentMode || "direct",
             submissionRequired: course.submissionRequired !== false,
+            sequentialLock: !!course.sequentialLock,
             signerName: course.signerName || "",
             signerSignature: course.signerSignature || "",
             applicationQuestions: course.applicationQuestions?.map((q: any) => ({
@@ -799,6 +801,7 @@ export function EditCourseDialog({
       allowedDeliveryModes: formData.allowedDeliveryModes,
       enrollmentMode: formData.enrollmentMode,
       submissionRequired: formData.submissionRequired,
+      sequentialLock: formData.sequentialLock,
       signerName: formData.signerName,
       signerSignature: formData.signerSignature,
       applicationQuestions: formData.applicationQuestions.map((q: any) => ({
@@ -1056,6 +1059,23 @@ export function EditCourseDialog({
                             checked={formData.submissionRequired}
                             onCheckedChange={(checked) => setFormData({ ...formData, submissionRequired: checked })}
                             className="data-[state=checked]:bg-amber-500"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-orange-500/5 border border-orange-500/10 rounded-2xl shadow-sm">
+                          <div className="space-y-1 pr-4">
+                            <label className="text-sm font-bold flex items-center gap-2">
+                              Sequential Lock
+                              <Lock className="w-3.5 h-3.5 text-orange-400" />
+                            </label>
+                            <p className="text-[10px] text-muted-foreground leading-relaxed">
+                              When enabled, students must complete modules <b>in order</b> and cannot skip ahead.
+                            </p>
+                          </div>
+                          <Switch
+                            checked={formData.sequentialLock}
+                            onCheckedChange={(checked) => setFormData({ ...formData, sequentialLock: checked })}
+                            className="data-[state=checked]:bg-orange-500"
                           />
                         </div>
 

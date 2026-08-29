@@ -163,8 +163,8 @@ export const CREATE_COURSE = gql`
 `;
 
 export const UPDATE_COURSE = gql`
-  mutation UpdateCourse($id: ID!, $title: String, $description: String, $thumbnail: String, $price: Float, $discountPrice: Float, $level: String, $category: String, $instructorId: ID, $status: String, $enrollmentMode: String, $submissionRequired: Boolean, $modules: [ModuleInput!], $signerName: String, $signerSignature: String, $applicationQuestions: [ApplicationQuestionInput], $school: String, $isFeatured: Boolean) {
-    updateCourse(id: $id, title: $title, description: $description, thumbnail: $thumbnail, price: $price, discountPrice: $discountPrice, level: $level, category: $category, instructorId: $instructorId, status: $status, enrollmentMode: $enrollmentMode, submissionRequired: $submissionRequired, modules: $modules, signerName: $signerName, signerSignature: $signerSignature, applicationQuestions: $applicationQuestions, school: $school, isFeatured: $isFeatured) {
+  mutation UpdateCourse($id: ID!, $title: String, $description: String, $thumbnail: String, $price: Float, $discountPrice: Float, $level: String, $category: String, $instructorId: ID, $status: String, $enrollmentMode: String, $submissionRequired: Boolean, $modules: [ModuleInput!], $signerName: String, $signerSignature: String, $applicationQuestions: [ApplicationQuestionInput], $school: String, $isFeatured: Boolean, $sequentialLock: Boolean) {
+    updateCourse(id: $id, title: $title, description: $description, thumbnail: $thumbnail, price: $price, discountPrice: $discountPrice, level: $level, category: $category, instructorId: $instructorId, status: $status, enrollmentMode: $enrollmentMode, submissionRequired: $submissionRequired, modules: $modules, signerName: $signerName, signerSignature: $signerSignature, applicationQuestions: $applicationQuestions, school: $school, isFeatured: $isFeatured, sequentialLock: $sequentialLock) {
       id
       title
       status
@@ -1816,6 +1816,15 @@ export const MARK_TOUR_COMPLETED = gql`
     markTourCompleted {
       id
       isFirst
+    }
+  }
+`;
+
+export const TOGGLE_SEQUENTIAL_LOCK = gql`
+  mutation ToggleSequentialLock($courseId: ID!, $enabled: Boolean!) {
+    toggleSequentialLock(courseId: $courseId, enabled: $enabled) {
+      id
+      sequentialLock
     }
   }
 `;
