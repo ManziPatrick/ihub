@@ -26,6 +26,7 @@ import {
   RefreshCw,
   Star,
   ArrowUpDown,
+  Lock,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -41,7 +42,7 @@ import { PaginationBar } from "@/components/ui/pagination-bar";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
 import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
 import { GET_COURSES_LITE_SUMMARY, GET_STATS, GET_USERS, GET_COURSE, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
-import { UPDATE_COURSE, DELETE_COURSE, RESTORE_COURSE } from "@/lib/graphql/mutations";
+import { UPDATE_COURSE, DELETE_COURSE, RESTORE_COURSE, TOGGLE_SEQUENTIAL_LOCK } from "@/lib/graphql/mutations";
 import { Switch } from "@/components/ui/switch";
 
 export default function AdminCourses() {
@@ -73,6 +74,9 @@ export default function AdminCourses() {
     refetchQueries: [{ query: GET_COURSES_LITE_SUMMARY }, { query: GET_STATS }, { query: GET_ADMIN_DASHBOARD_DATA }]
   });
   const [restoreCourseMutation] = useMutation(RESTORE_COURSE);
+  const [toggleSequentialLockMutation] = useMutation(TOGGLE_SEQUENTIAL_LOCK, {
+    refetchQueries: [{ query: GET_COURSES_LITE_SUMMARY }]
+  });
 
   useEffect(() => {
     const fullData = fullCourseData as any;
@@ -137,6 +141,7 @@ export default function AdminCourses() {
           status: updatedCourse.status,
           enrollmentMode: updatedCourse.enrollmentMode || 'direct',
           submissionRequired: updatedCourse.submissionRequired,
+          sequentialLock: updatedCourse.sequentialLock,
           signerName: updatedCourse.signerName,
           signerSignature: updatedCourse.signerSignature,
           modules: updatedCourse.modules
@@ -175,13 +180,14 @@ export default function AdminCourses() {
           instructorId: updatedCourse.instructorId,
           thumbnail: updatedCourse.thumbnail,
           status: updatedCourse.status,
-          enrollmentMode: updatedCourse.enrollmentMode || 'direct',
-          submissionRequired: updatedCourse.submissionRequired,
+          enrollmentMode: updatedCourse.enrollmentMode || 'direct',          submissionRequired: updatedCourse.submissionRequired,
+          sequentialLock: updatedCourse.sequentialLock,
           signerName: updatedCourse.signerName,
           signerSignature: updatedCourse.signerSignature,
           modules: updatedCourse.modules
         }
-      });
+
+        });
       toast.success("Quiz synced to course draft!");
       refetch();
     } catch (err: any) {
@@ -375,6 +381,11 @@ export default function AdminCourses() {
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Mode</th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Status</th>
                         <th className="text-center p-4 text-sm font-medium text-card-foreground/70">Featured</th>
+                        <th className="text-center p-4 text-sm font-medium text-card-foreground/70">
+                          <span className="flex items-center justify-center gap-1">
+                            <Lock className="w-3 h-3" /> Lock
+                          </span>
+                        </th>
                         <th className="text-right p-4 text-sm font-medium text-card-foreground/70">Actions</th>
                       </tr>
                     </thead>
@@ -463,6 +474,28 @@ export default function AdminCourses() {
                                 />
                               </div>
                             </td>
+                            <td className="p-4 text-center">
+                              <div className="flex items-center justify-center">
+                                <Switch
+                                  checked={!!course.sequentialLock}
+                                  onCheckedChange={async (checked) => {
+                                    try {
+                                      await toggleSequentialLockMutation({
+                                        variables: {
+                                          courseId: course.id,
+                                          enabled: checked,
+                                        },
+                                      });
+                                      toast.success(checked ? '🔒 Sequential lock enabled' : '🔓 Sequential lock disabled');
+                                      refetch();
+                                    } catch (err: any) {
+                                      toast.error(err.message);
+                                    }
+                                  }}
+                                  className={course.sequentialLock ? 'bg-orange-500' : ''}
+                                />
+                              </div>
+                            </td>
                             <td className="p-4 text-right">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -528,7 +561,7 @@ export default function AdminCourses() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={7} className="p-12 text-center">
+                          <td colSpan={8} className="p-12 text-center">
                             <div className="flex flex-col items-center justify-center space-y-3">
                               <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
                                 <BookOpen className="w-8 h-8 text-accent/40" />

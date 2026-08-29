@@ -505,6 +505,7 @@ export const GET_COURSES_LITE_SUMMARY = gql`
         school
         isFeatured
         status
+        sequentialLock
         modulesCount
         totalLessonsCount
         studentsEnrolledCount
@@ -539,6 +540,7 @@ export const GET_COURSE = gql`
       enrollmentMode
       allowedDeliveryModes
       submissionRequired
+      sequentialLock
       instructor {
         id
         username
