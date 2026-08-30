@@ -374,8 +374,11 @@ export default function CourseDetail() {
   };
 
   // Returns true if the lesson's module is locked (previous module not fully done)
+  // When sequentialLock is disabled on the course, nothing is ever locked.
   const isModuleLocked = (lessonId: string) => {
     if (!course?.modules) return false;
+    // If sequential lock is OFF (or unset), all modules are accessible
+    if (!(course as any).sequentialLock) return false;
     const modules = course.modules as any[];
     const modIndex = modules.findIndex((m: any) =>
       m.lessons?.some((l: any) => (l.id || l._id) === lessonId)
@@ -387,6 +390,8 @@ export default function CourseDetail() {
 
   const isLessonCodeExerciseLocked = (lessonId: string) => {
     if (!course?.modules) return false;
+    // If sequential lock is OFF, no intra-lesson locking either
+    if (!(course as any).sequentialLock) return false;
     const modules = course.modules as any[];
     for (const mod of modules) {
       const lessons = mod.lessons || [];
