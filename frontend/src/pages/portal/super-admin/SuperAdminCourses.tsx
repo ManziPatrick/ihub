@@ -280,7 +280,7 @@ export default function SuperAdminCourses() {
                               <img
                                 src={c.thumbnail || FALLBACK_IMG}
                                 onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
-                                alt=""
+                                alt={c.title}
                                 className="w-full h-full object-cover"
                                 loading="lazy"
                               />

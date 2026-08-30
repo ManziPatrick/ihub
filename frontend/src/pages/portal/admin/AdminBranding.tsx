@@ -181,7 +181,7 @@ export default function AdminBranding() {
                         className="bg-muted/30"
                       />
                       <div className="p-2 border border-border rounded-md bg-white dark:bg-black/20 flex items-center justify-center w-12 shrink-0">
-                        {formData.logoUrl ? <img src={formData.logoUrl} className="max-h-6 w-auto" /> : <ImageIcon className="w-4 h-4 text-muted-foreground" />}
+                        {formData.logoUrl ? <img src={formData.logoUrl} alt="Logo preview" className="max-h-6 w-auto" /> : <ImageIcon className="w-4 h-4 text-muted-foreground" />}
                       </div>
                     </div>
                   </div>
@@ -318,7 +318,7 @@ export default function AdminBranding() {
                           className="bg-muted/30"
                         />
                         <div className="p-2 border border-border rounded-md bg-white flex items-center justify-center w-12 shrink-0">
-                          {formData.signerSignature ? <img src={formData.signerSignature} className="max-h-6 w-auto" /> : <Palette className="w-4 h-4 text-muted-foreground" />}
+                          {formData.signerSignature ? <img src={formData.signerSignature} alt="Signature preview" className="max-h-6 w-auto" /> : <Palette className="w-4 h-4 text-muted-foreground" />}
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground">Transparent PNG recommended for signatures.</p>

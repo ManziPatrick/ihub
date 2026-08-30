@@ -165,7 +165,7 @@ export default function TrainerCourses() {
                 >
                   <CardContent className="p-0">
                     <div className="h-24 w-full relative overflow-hidden">
-                      <img src={course.thumbnail} className="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-500" />
+                      <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-500" />
                       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
                       <Badge className="absolute top-2 right-2 bg-background/80 backdrop-blur text-accent border-accent/20">
                         {course.level}

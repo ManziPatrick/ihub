@@ -270,7 +270,7 @@ export default function StudentGrades() {
                         <div className="relative">
                           <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center overflow-hidden border border-border/50 shadow-inner">
                             {course.thumbnail ? (
-                              <img src={course.thumbnail} className="w-full h-full object-cover" />
+                              <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
                             ) : (
                               <GraduationCap className="w-8 h-8 text-muted-foreground/40" />
                             )}

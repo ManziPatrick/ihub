@@ -109,7 +109,7 @@ const Blog = () => {
         {/* Hero */}
         <section className="py-20 lg:py-32 bg-card relative overflow-hidden border-b border-border/30">
           <div className="absolute inset-0 opacity-5">
-            <img src={heroImage} alt="" className="w-full h-full object-cover grayscale" />
+            <img src={heroImage} alt="" role="presentation" className="w-full h-full object-cover grayscale" />
           </div>
           <div className="container mx-auto px-4 lg:px-8 relative z-10">
             <motion.div

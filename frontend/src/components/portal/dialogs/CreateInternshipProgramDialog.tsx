@@ -81,7 +81,7 @@ export function CreateInternshipProgramDialog({ open, onOpenChange }: CreateInte
             <Label>Program Image</Label>
             {formData.image ? (
               <div className="relative aspect-video rounded-lg overflow-hidden border">
-                <img src={formData.image} alt="" className="w-full h-full object-cover" />
+                <img src={formData.image} alt="Program image preview" className="w-full h-full object-cover" />
                 <Button
                   type="button"
                   variant="destructive"
