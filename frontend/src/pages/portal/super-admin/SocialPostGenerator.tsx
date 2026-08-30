@@ -686,7 +686,7 @@ function GreetingFlameTemplate({ config }: { config: TemplateConfig }) {
           </Badge>
           {config.customImage && (
             <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-orange-500/30 mb-4">
-              <img src={config.customImage} alt="" className="w-full h-full object-cover" />
+              <img src={config.customImage} alt="Custom brand image" className="w-full h-full object-cover" />
             </div>
           )}
           <h2 className="text-2xl md:text-3xl font-black text-white leading-tight mb-2">
@@ -717,7 +717,7 @@ function GreetingProfessionalTemplate({ config }: { config: TemplateConfig }) {
           </div>
           {config.customImage && (
             <div className="w-28 h-28 mx-auto rounded-full overflow-hidden border-4 border-[#1e3a5f]/20 mb-4 shadow-lg">
-              <img src={config.customImage} alt="" className="w-full h-full object-cover" />
+              <img src={config.customImage} alt="Custom brand image" className="w-full h-full object-cover" />
             </div>
           )}
           <h2 className="text-2xl md:text-3xl font-bold text-[#1e3a5f] leading-tight mb-3">
@@ -754,7 +754,7 @@ function GreetingModernTemplate({ config }: { config: TemplateConfig }) {
           </div>
           {config.customImage && (
             <div className="w-32 h-32 mx-auto rounded-2xl overflow-hidden border-2 border-purple-500/30 mb-4 shadow-2xl">
-              <img src={config.customImage} alt="" className="w-full h-full object-cover" />
+              <img src={config.customImage} alt="Custom brand image" className="w-full h-full object-cover" />
             </div>
           )}
           <h2 className="text-xl md:text-2xl font-extrabold text-white leading-tight mb-3">
@@ -781,7 +781,7 @@ function GreetingMinimalTemplate({ config }: { config: TemplateConfig }) {
           <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400 mb-4">{config.brandName}</div>
           {config.customImage && (
             <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-neutral-200 mb-4">
-              <img src={config.customImage} alt="" className="w-full h-full object-cover" />
+              <img src={config.customImage} alt="Custom brand image" className="w-full h-full object-cover" />
             </div>
           )}
           <h2 className="text-2xl md:text-3xl font-light text-neutral-900 leading-tight mb-4 tracking-tight">
@@ -823,7 +823,7 @@ function GreetingCelebrationTemplate({ config }: { config: TemplateConfig }) {
           </div>
           {config.customImage && (
             <div className="w-36 h-36 mx-auto rounded-full overflow-hidden border-4 border-amber-200/60 mb-4 shadow-xl">
-              <img src={config.customImage} alt="" className="w-full h-full object-cover" />
+              <img src={config.customImage} alt="Custom brand image" className="w-full h-full object-cover" />
             </div>
           )}
           <h2 className="text-2xl md:text-3xl font-extrabold text-emerald-900 leading-tight mb-3">

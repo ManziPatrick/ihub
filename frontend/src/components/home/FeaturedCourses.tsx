@@ -677,8 +677,10 @@ export function FeaturedCourses() {
             <div className="absolute inset-0 w-full h-full overflow-hidden rounded-3xl">
               <img 
                 src={topImage} 
-                alt="Hero Background" 
+                alt="Bootskills Academy hero background" 
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                fetchPriority="high"
+                loading="eager"
               />
               {/* Theme-aware overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/50 to-transparent dark:from-black/90 dark:via-black/70" />
@@ -1122,7 +1124,7 @@ export function FeaturedCourses() {
                     className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                       isActive
                         ? "bg-white text-black shadow-lg scale-105"
-                        : "bg-[#1a1a1a] text-white/70 border border-white/5 hover:border-white/20 hover:text-white"
+                        : "bg-[#1a1a1a] text-white/80 border border-white/5 hover:border-white/20 hover:text-white"
                     }`}
                   >
                     {cat !== "All" && (
@@ -1135,7 +1137,7 @@ export function FeaturedCourses() {
               
               <button
                 onClick={() => { setIsInterestsOpen(true); setCurrentPage(1); }}
-                className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-[#1a1a1a] text-white/70 border border-white/5 hover:border-white/20 hover:text-white transition-all"
+                className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-[#1a1a1a] text-white/80 border border-white/5 hover:border-white/20 hover:text-white transition-all"
               >
                 <MoreHorizontal className="w-4 h-4" />
                 More

@@ -262,7 +262,7 @@ const AdminBlogManager = () => {
                                         <label className="text-sm font-medium">Featured Image</label>
                                         {currentBlog?.image ? (
                                             <div className="relative aspect-video rounded-lg overflow-hidden border">
-                                                <img src={currentBlog.image} alt="" className="w-full h-full object-cover" />
+                                                <img src={currentBlog.image} alt="Blog featured image" className="w-full h-full object-cover" />
                                                 <Button
                                                     type="button"
                                                     variant="destructive"
@@ -350,7 +350,7 @@ const AdminBlogManager = () => {
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded bg-muted flex-shrink-0 overflow-hidden">
                                                     {blog.image ? (
-                                                        <img src={blog.image} alt="" className="w-full h-full object-cover" />
+                                                        <img src={blog.image} alt={blog.title} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <ImageIcon className="w-full h-full p-2 text-muted-foreground" />
                                                     )}

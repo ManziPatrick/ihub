@@ -133,7 +133,7 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
               >
                 <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-muted">
                   {c.thumbnail ? (
-                    <img src={c.thumbnail} alt="" className="w-full h-full object-cover" />
+                    <img src={c.thumbnail} alt={c.title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <BookOpen className="w-4 h-4 text-muted-foreground/50" />
@@ -189,7 +189,7 @@ export function GlobalSearchDialog({ open, onOpenChange }: GlobalSearchDialogPro
               >
                 <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-muted">
                   {p.image ? (
-                    <img src={p.image} alt="" className="w-full h-full object-cover" />
+                    <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <Briefcase className="w-4 h-4 text-muted-foreground/50" />

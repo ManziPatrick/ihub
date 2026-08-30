@@ -190,7 +190,7 @@ const AdminTeamManager = () => {
                                         <label className="text-sm font-medium">Photo</label>
                                         {currentMember?.image ? (
                                             <div className="relative w-32 h-32 rounded-lg overflow-hidden border">
-                                                <img src={currentMember.image} alt="" className="w-full h-full object-cover" />
+                                                <img src={currentMember.image} alt="Member photo" className="w-full h-full object-cover" />
                                                 <Button
                                                     type="button"
                                                     variant="destructive"
@@ -294,7 +294,7 @@ const AdminTeamManager = () => {
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0 overflow-hidden">
                                                     {member.image ? (
-                                                        <img src={member.image} alt="" className="w-full h-full object-cover" />
+                                                        <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <User className="w-full h-full p-2 text-muted-foreground" />
                                                     )}

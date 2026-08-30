@@ -1100,7 +1100,7 @@ export function EditCourseDialog({
                           <div className="group relative aspect-[21/9] rounded-2xl overflow-hidden border-2 border-dashed border-accent/10 bg-muted/5 hover:border-accent/30 transition-all flex items-center justify-center">
                             {formData.thumbnail ? (
                               <>
-                                <img src={formData.thumbnail} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                <img src={formData.thumbnail} alt="Course thumbnail preview" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                   <Button
                                     type="button"
@@ -1146,7 +1146,7 @@ export function EditCourseDialog({
                               <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Official Signature (Stamp/Sign)</label>
                               {formData.signerSignature ? (
                                 <div className="relative h-24 rounded-xl overflow-hidden border border-border/40 bg-muted/30 p-2 flex items-center justify-center group/sig">
-                                  <img src={formData.signerSignature} className="h-full object-contain brightness-110 contrast-125" />
+                                  <img src={formData.signerSignature} alt="Official signature preview" className="h-full object-contain brightness-110 contrast-125" />
                                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/sig:opacity-100 transition-opacity flex items-center justify-center">
                                     <Button
                                       variant="destructive"

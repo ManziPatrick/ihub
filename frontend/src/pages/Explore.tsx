@@ -426,7 +426,7 @@ const Explore = () => {
                         >
                           <div className="w-14 h-14 rounded-xl overflow-hidden bg-muted shrink-0">
                             {c.thumbnail ? (
-                              <img src={c.thumbnail} alt="" className="w-full h-full object-cover" />
+                              <img src={c.thumbnail} alt={c.title} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
                                 <BookOpen className="w-5 h-5 text-muted-foreground/40" />
@@ -1171,7 +1171,7 @@ const Explore = () => {
                         >
                           <div className="w-5 h-5 rounded-full overflow-hidden bg-muted shrink-0 ring-1 ring-border/30">
                             {t.avatar ? (
-                              <img src={t.avatar} alt="" className="w-full h-full object-cover" />
+                              <img src={t.avatar} alt={`${t.fullName || t.username} avatar`} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-[8px] font-bold bg-gradient-to-br from-accent/30 to-accent/10 text-accent">
                                 {(t.fullName || t.username || 'T').slice(0, 2).toUpperCase()}
@@ -1276,7 +1276,7 @@ const Explore = () => {
                           >
                             <div className="w-4 h-4 rounded-full overflow-hidden bg-white/20 shrink-0">
                               {course.instructor.avatar ? (
-                                <img src={course.instructor.avatar} alt="" className="w-full h-full object-cover" />
+                                <img src={course.instructor.avatar} alt={`${course.instructor.username} avatar`} className="w-full h-full object-cover" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-[6px] font-bold text-white">
                                   {(course.instructor.username || 'T').slice(0, 1).toUpperCase()}
@@ -1332,7 +1332,7 @@ const Explore = () => {
                       >
                         <div className="w-6 h-6 rounded-full overflow-hidden bg-accent/10 shrink-0 ring-1 ring-border/30 group-hover/instructor:ring-accent/50 transition-all">
                           {course.instructor?.avatar ? (
-                            <img src={course.instructor.avatar} alt="" className="w-full h-full object-cover" />
+                            <img src={course.instructor.avatar} alt={`${course.instructor.username} avatar`} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-[8px] font-bold text-accent bg-accent/10">
                               {(course.instructor?.username || 'E').slice(0, 2).toUpperCase()}

@@ -783,7 +783,7 @@ export default function CreateCourse() {
                                 <div className="glass-card rounded-[2.5rem] p-1 overflow-hidden border-2 border-dashed border-accent/20">
                                     {formData.thumbnail ? (
                                         <div className="relative aspect-video rounded-[2.3rem] overflow-hidden group">
-                                            <img src={formData.thumbnail} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                            <img src={formData.thumbnail} alt="Course thumbnail preview" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                                             <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-between opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <div className="text-white">
                                                     <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Visual Asset</p>
@@ -979,7 +979,7 @@ export default function CreateCourse() {
                                                 )}
                                             >
                                                 <div className="w-12 h-12 rounded-2xl bg-muted overflow-hidden shrink-0 border border-white/10">
-                                                    {t.avatar ? <img src={t.avatar} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold">{t.username?.[0]}</div>}
+                                                    {t.avatar ? <img src={t.avatar} alt={t.fullName || t.username} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold">{t.username?.[0]}</div>}
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="font-bold truncate text-sm">{t.fullName || t.username}</p>
@@ -1021,7 +1021,7 @@ export default function CreateCourse() {
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Signer Signature Image</label>
                                                 {formData.signerSignature ? (
                                                     <div className="relative h-24 rounded-2xl overflow-hidden border border-border/40 bg-muted/30 p-2 flex items-center justify-center group/sig">
-                                                        <img src={formData.signerSignature} className="h-full object-contain brightness-110 contrast-125" />
+                                                        <img src={formData.signerSignature} alt="Signer signature preview" className="h-full object-contain brightness-110 contrast-125" />
                                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/sig:opacity-100 transition-opacity flex items-center justify-center">
                                                             <Button 
                                                                 variant="destructive" 
@@ -1221,8 +1221,7 @@ export default function CreateCourse() {
                     >
                         {/* Card Image */}
                         <div className="relative h-[55%]">
-                            {formData.thumbnail ? (
-                                <img src={formData.thumbnail} className="w-full h-full object-cover" />
+                            {formData.thumbnail ? (                                    <img src={formData.thumbnail} alt="Course preview card" className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full bg-muted flex flex-col items-center justify-center gap-3">
                                     <ImageIcon className="w-12 h-12 text-muted-foreground/20" />

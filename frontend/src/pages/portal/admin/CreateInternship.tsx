@@ -273,7 +273,7 @@ export default function CreateInternship() {
                       </label>
                       {formData.image ? (
                         <div className="relative aspect-video rounded-[2.5rem] overflow-hidden border-2 border-accent/20 group">
-                          <img src={formData.image} className="w-full h-full object-cover" />
+                          <img src={formData.image} alt="Program preview" className="w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <Button
                               variant="destructive"
@@ -693,7 +693,7 @@ export default function CreateInternship() {
                           </label>
                           {formData.signerSignature ? (
                             <div className="relative h-24 rounded-2xl overflow-hidden border border-border/40 bg-muted/30 p-2 flex items-center justify-center group/sig">
-                              <img src={formData.signerSignature} className="h-full object-contain" />
+                              <img src={formData.signerSignature} alt="Signer signature preview" className="h-full object-contain" />
                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/sig:opacity-100 transition-opacity flex items-center justify-center">
                                 <Button
                                   variant="destructive"
@@ -867,7 +867,7 @@ export default function CreateInternship() {
               >
                 <div className="relative h-[55%]">
                   {formData.image ? (
-                    <img src={formData.image} className="w-full h-full object-cover" />
+                    <img src={formData.image} alt="Program preview" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-muted flex flex-col items-center justify-center gap-3">
                       <ImageIcon className="w-12 h-12 text-muted-foreground/20" />
