@@ -63,9 +63,9 @@ async function seedAdminEverything() {
     // ── 1. Find/Create Admin & Super Admin Users ───────────────────────
     const admins: any[] = [];
     for (const email of ADMIN_EMAILS) {
+      const role = email === 'superadmin@bootskills.com' ? 'super_admin' : 'admin';
       let adminUser = await User.findOne({ email });
       if (!adminUser) {
-        const role = email === 'superadmin@bootskills.com' ? 'super_admin' : 'admin';
         const username = email === 'superadmin@bootskills.com' ? 'super_admin' : 'admin';
         const fullName = email === 'superadmin@bootskills.com' ? 'System Super Admin' : 'Bootskills Admin';
         const adminPermissions = role === 'admin'
