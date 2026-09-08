@@ -76,6 +76,20 @@ const startServer = async () => {
         .map(o => o.trim())
         .filter(Boolean);
 
+    // Always ensure production domains are allowed even if ALLOWED_ORIGINS env var
+    // is set without them — prevents the exact CORS outage we saw in prod.
+    const essentialOrigins = [
+        'https://bootskills.com',
+        'https://www.bootskills.com',
+        'https://dev.bootskills.com',
+        'https://*.bootskills.com',
+    ];
+    for (const origin of essentialOrigins) {
+        if (!allowedOrigins.includes(origin)) {
+            allowedOrigins.push(origin);
+        }
+    }
+
     if (process.env.NODE_ENV !== 'production') {
         const localDevOrigins = [
             'http://127.0.0.1:8080',
@@ -124,10 +138,11 @@ const startServer = async () => {
             return callback(new Error('Not allowed by CORS'));
         },
         credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         allowedHeaders: [
             'Content-Type',
             'Authorization',
+            'X-Requested-With',
             'x-apollo-operation-name',
             'apollo-query-plan-experimental',
             'apollo-require-preflight'
@@ -136,9 +151,10 @@ const startServer = async () => {
 
     app.use(cors(corsOptions));
 
-    // Enable preflight globally. In newer path-to-regexp versions, "*" is invalid
-    // and throws `Missing parameter name` during startup, so use a regex matcher.
-    app.options(/.*/, cors(corsOptions));
+    // Enable preflight globally for ALL routes.
+    // Express 5 changed path-to-regexp; use a catch-all route string instead of regex
+    // to avoid edge-case matching issues that can silently drop OPTIONS responses.
+    app.options('{*path}', cors(corsOptions));
 
     // =============================
     // ✅ GRAPHQL UPLOAD MIDDLEWARE (Must be before body-parser)
