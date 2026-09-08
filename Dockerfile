@@ -21,7 +21,7 @@ RUN npm install --legacy-peer-deps --no-audit --no-fund
 RUN echo "build: $CACHE_BUST" && npm run build
 RUN mkdir -p /app/uploads
 
-ENV PORT=10000
+ENV PORT=4000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=5 \
   CMD wget --quiet --tries=1 --spider http://localhost:${PORT}/health || exit 1
