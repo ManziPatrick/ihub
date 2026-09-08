@@ -1,6 +1,9 @@
-# ─── Root Dockerfile for Dokploy / simple compose ────────────────
-# Builds the backend from the project root context (build: .).
-# Copies backend/ subdirectory into the image.
+# ─── Root Dockerfile — BACKEND (Dokploy / simple compose) ─────────
+# IMPORTANT: Dokploy builds with the REPO ROOT as the build context.
+# All COPY paths must therefore be relative to the repo root, with the
+# backend sources under ./backend/. (Previously this file assumed the
+# backend/ dir as context, which broke Dokploy builds with
+# "/package.json": not found.)
 # ──────────────────────────────────────────────────────────────────
 
 FROM node:22-alpine
@@ -13,11 +16,11 @@ WORKDIR /app
 RUN apk add --no-cache wget
 
 # Copy backend package files and install dependencies
-COPY package.json package-lock.json ./
+COPY backend/package.json backend/package-lock.json ./
 RUN npm install --legacy-peer-deps --no-audit --no-fund
 
 # Copy backend source code
-COPY . ./
+COPY backend/ ./
 
 RUN echo "build: $CACHE_BUST" && npm run build
 

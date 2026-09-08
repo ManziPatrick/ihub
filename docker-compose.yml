@@ -8,6 +8,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    # NOTE: If you build with Dokploy (repo-root context), the root `Dockerfile`
+    # is used instead and expects paths relative to the repo root.
     container_name: ihub_backend
     restart: unless-stopped
     ports:
