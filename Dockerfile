@@ -10,20 +10,15 @@ FROM node:22-alpine
 
 ARG CACHE_BUST=1
 
-WORKDIR /app
+WORKDIR /app/backend
 
 # Install wget for healthcheck
 RUN apk add --no-cache wget
 
-# Copy backend package files and install dependencies
-COPY backend/package.json backend/package-lock.json ./
-RUN npm install --legacy-peer-deps --no-audit --no-fund
-
-# Copy backend source code
+# Copy backend source code and install dependencies
 COPY backend/ ./
-
+RUN npm install --legacy-peer-deps --no-audit --no-fund
 RUN echo "build: $CACHE_BUST" && npm run build
-
 RUN mkdir -p /app/uploads
 
 ENV PORT=4000
