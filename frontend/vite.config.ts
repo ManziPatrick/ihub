@@ -110,7 +110,9 @@ export default defineConfig(({ mode }) => ({
     // Our custom worker is network-first for navigations: every refresh fetches
     // the fresh index.html, and only falls back to a cached shell offline.
     VitePWA({
-      registerType: "autoUpdate",
+      // main.tsx registers /sw.js manually, so the plugin's auto-registration
+      // is unused; "prompt" is the valid non-autoUpdate value ("none" is not).
+      registerType: "prompt",
       includeAssets: ["pwa-icon.svg"],
       strategies: "injectManifest",
       injectManifest: {

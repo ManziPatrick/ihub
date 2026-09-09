@@ -11,7 +11,7 @@ import { createMonitoringLink, trackTimingGlobally } from './graphql/monitoringL
 import { globalNavigate } from './navigate';
 
 const httpLink = new UploadHttpLink({
-  uri: env.API_URL || 'http://localhost:4000/graphql',
+  uri: env.API_URL || 'https://api.bootskills.com/graphql',
   headers: {
     'apollo-require-preflight': 'true',
   }
@@ -23,7 +23,7 @@ const httpLink = new UploadHttpLink({
 // the pre-login (no-token) connection keep failing as "not authenticated"
 // after login, which the guard below wrongly treated as a session expiry).
 const wsClient = createClient({
-  url: env.WS_URL || 'ws://localhost:4000/graphql',
+  url: env.WS_URL || 'wss://api.bootskills.com/graphql',
   lazy: true,
   connectionParams: () => {
     const token = localStorage.getItem('ihub_token');
