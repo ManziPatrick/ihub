@@ -66,14 +66,14 @@ export const env = {
  * Get the base API URL (without /graphql) for REST API calls
  */
 export const getApiBaseUrl = (): string => {
-  return env.API_URL?.replace('/graphql', '') || 'http://localhost:4000';
+  return env.API_URL?.replace('/graphql', '') || 'https://api.bootskills.com';
 };
 
 /**
  * Get the GraphQL API URL
  */
 export const getGraphqlUrl = (): string => {
-  return env.API_URL || 'http://localhost:4000/graphql';
+  return env.API_URL || 'https://api.bootskills.com/graphql';
 };
 
 // Log environment status in development
