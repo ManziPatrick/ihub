@@ -5,6 +5,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- ─── Runtime environment configuration (MUST load before the app) ─── -->
+  <!-- Vite injects the built app bundle (deferred module) into <head> at build -->
+  <!-- time. Deferred scripts execute in document order, so this tag MUST come -->
+  <!-- before that injected bundle — i.e. as early in <head> as possible — or -->
+  <!-- window._env_ would still be undefined when the app reads it (which made -->
+  <!-- Google login fail with "Missing required parameter: client_id"). The ?v= -->
+  <!-- value is rewritten by generate-env-config.js at every build/container -->
+  <!-- start to bust browser/CDN caches of this per-deploy file. -->
+  <script defer src="/env-config.js?v=1"></script>
+
   <!-- ─── Primary Meta Tags ────────────────────────────────────────────── -->    <title>Bootskills | Your All-in-One Learning Hub — Courses Across Every Field. Projects. Internships.</title>
   <meta name="description" content="Bootskills is Rwanda's leading practical training platform in Kigali — offering tech, business & financial literacy courses, AI development, and real-world internships. Learn skills that land jobs." />
   <meta name="keywords" content="Bootskills, training Kigali, Rwanda tech courses, software development Rwanda, AI training Kigali, internships Kigali, practical skills Rwanda, business training Rwanda, coding bootcamp Kigali, digital skills Rwanda, professional training East Africa, tech academy Rwanda, Manzi Alain Patrick, learn to code Rwanda, IT training Kigali" />
@@ -379,11 +389,6 @@
   <!-- End Google Tag Manager (noscript) -->
 
   <div id="root"></div>
-
-<!-- Runtime environment configuration (loaded before app) -->
-    <!-- generate-env-config.js rewrites the ?v= value at every build/container -->
-    <!-- start so browsers/CDNs never reuse a stale env-config.js -->
-    <script defer src="/env-config.js?v=1"></script>
     <script type="module" src="/src/main.tsx"></script>
 </body>
 
