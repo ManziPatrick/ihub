@@ -6,6 +6,8 @@
  * into the built SPA so they can be read at runtime via window._env_
  */
 
+/* eslint-disable no-console */
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -74,6 +76,37 @@ if (!fs.existsSync(distPath)) {
 
 // Write the config file
 fs.writeFileSync(configPath, configContent);
+
+// ─── Cache-bust the runtime config in index.html ───
+// index.html references `/env-config.js?v=...`. Rewriting the query value at
+// every run (build stage AND every container start) means each container start
+// serves a unique URL, so browsers AND Cloudflare can never reuse a stale
+// env-config.js from a previous deploy (a stale one can have an empty
+// GOOGLE_CLIENT_ID → Google login fails with "Error 400: Missing required
+// parameter: client_id"). serve-handler already marks /env-config.js no-cache,
+// but the query param guarantees a cache miss even behind misconfigured CDNs.
+// Regex form is idempotent and also upgrades old index.html files that had no
+// query at all (those simply won't match and behave exactly as before).
+try {
+  const indexPath = path.join(distPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    let html = fs.readFileSync(indexPath, 'utf8');
+    const cacheBust = `/env-config.js?v=${Date.now()}`;
+    const withQuery = /\/env-config\.js\?v=[^"']*/;
+    if (withQuery.test(html)) {
+      html = html.replace(withQuery, cacheBust);
+      fs.writeFileSync(indexPath, html);
+      console.log('✅ env-config.js cache-buster refreshed in index.html');
+    } else if (html.includes('/env-config.js')) {
+      // Very old index.html without any ?v= — add one.
+      html = html.replace('/env-config.js', cacheBust);
+      fs.writeFileSync(indexPath, html);
+      console.log('✅ env-config.js cache-buster added to index.html');
+    }
+  }
+} catch (err) {
+  console.warn('⚠️  Could not inject env-config cache-buster:', err.message);
+}
 
 const loaded = Object.values(envConfig).filter(Boolean).length;
 const total  = Object.keys(envConfig).length;
