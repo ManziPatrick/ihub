@@ -381,7 +381,9 @@
   <div id="root"></div>
 
 <!-- Runtime environment configuration (loaded before app) -->
-    <script defer src="/env-config.js"></script>
+    <!-- generate-env-config.js rewrites the ?v= value at every build/container -->
+    <!-- start so browsers/CDNs never reuse a stale env-config.js -->
+    <script defer src="/env-config.js?v=1"></script>
     <script type="module" src="/src/main.tsx"></script>
 </body>
 
