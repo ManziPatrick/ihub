@@ -3,6 +3,7 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
@@ -51,6 +52,26 @@ const startServer = async () => {
 
     // Trust the first proxy (nginx, Coolify reverse proxy) for correct req.ip
     app.set('trust proxy', 1);
+
+    // Security headers
+    app.use(helmet());
+    app.use(helmet.contentSecurityPolicy({
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://www.googletagmanager.com", "https://www.google-analytics.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "https://bootskills.com", "https://*.cloudinary.com"],
+            connectSrc: ["'self'", "https://api.bootskills.com", "wss://api.bootskills.com", "https://www.googletagmanager.com"],
+            frameSrc: ["'self'", "https://www.google.com"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+        },
+    }));
+    app.use(helmet.hsts({ maxAge: 31536000, includeSubDomains: true, preload: true }));
+    app.use(helmet.frameguard({ action: 'deny' }));
+    app.use(helmet.crossOriginResourcePolicy({ policy: 'same-origin' }));
+    app.use(helmet.crossOriginOpenerPolicy());
 
     // Redirect www.bootskills.com to bootskills.com
     app.use((req, res, next) => {
