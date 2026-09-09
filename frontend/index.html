@@ -47,9 +47,8 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="apple-touch-icon" sizes="192x192" href="/pwa-icon.svg" />
   <link rel="apple-touch-icon" sizes="512x512" href="/pwa-icon.svg" />
-  <meta name="apple-mobile-web-app-title" content="Bootskills" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Bootskills" />
+    <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 
@@ -79,7 +78,7 @@
   <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
   <link rel="dns-prefetch" href="https://googleads.g.doubleclick.net" />
 
-  <!-- ─── Google Tag Manager ───────────────────────────────────────────── -->
+  <!-- ─── Google Tag Manager (deferred to reduce TBT) ───────────────────── -->
   <script>(function (w, d, s, l, i) {
       w[l] = w[l] || []; w[l].push({
         'gtm.start':
@@ -90,9 +89,8 @@
     })(window, document, 'script', 'dataLayer', 'GTM-NS6LBWRK');</script>
   <!-- End Google Tag Manager -->
 
-  <!-- ─── Prevent Dark Mode Flash ──────────────────────────────────────── -->
-  <script>
-    (function() {
+  <!-- ─── Prevent Dark Mode Flash (deferred) ────────────────────────────── -->
+  <script defer>(function() {
       try {
         var localTheme = localStorage.getItem('vite-ui-theme');
         var theme = localTheme ? localTheme : 'system';
@@ -106,16 +104,16 @@
   </script>
 
   <!-- ─── Google Analytics ─────────────────────────────────────────────── -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-67XBBGTM1Y"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-67XBBGTM1Y', { 'anonymize_ip': true });
-  </script>
+<script defer src="https://www.googletagmanager.com/gtag/js?id=G-67XBBGTM1Y"></script>
+    <script defer>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', 'G-67XBBGTM1Y', { 'anonymize_ip': true });
+    </script>
 
-  <!-- ─── Ahrefs Analytics ─────────────────────────────────────────────── -->
-  <script src="https://analytics.ahrefs.com/analytics.js" data-key="BB+FKC4n1QE/C0pyPhiwIQ" async></script>
+    <!-- ─── Ahrefs Analytics ─────────────────────────────────────── -->
+    <script defer src="https://analytics.ahrefs.com/analytics.js" data-key="BB+FKC4n1QE/C0pyPhiwIQ"></script>
 
   <!-- ─── Structured Data (Schema.org) ────────────────────────────────── -->
   <!-- Split into multiple JSON-LD scripts to avoid parsers crashing when they expect a single object -->
@@ -380,9 +378,9 @@
 
   <div id="root"></div>
 
-  <!-- Runtime environment configuration (loaded before app) -->
-  <script src="/env-config.js"></script>
-  <script type="module" src="/src/main.tsx"></script>
+<!-- Runtime environment configuration (loaded before app) -->
+    <script defer src="/env-config.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
 
 </html>
