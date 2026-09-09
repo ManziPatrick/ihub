@@ -212,6 +212,7 @@ export default defineConfig(({ mode }) => ({
     drop: mode === "production" ? ["console", "debugger"] : [],
   },
   build: {
+    sourcemap: true,
     // Target modern browsers for smaller, more efficient output
     target: "es2020",
     // Enable CSS code splitting for per-page CSS instead of one monolithic file
