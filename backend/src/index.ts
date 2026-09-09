@@ -61,11 +61,13 @@ const startServer = async () => {
             scriptSrc: ["'self'", "'unsafe-inline'", "https://www.googletagmanager.com", "https://www.google-analytics.com"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            imgSrc: ["'self'", "data:", "https://bootskills.com", "https://*.cloudinary.com"],
+            imgSrc: ["'self'", "data:", "https://bootskills.com", "https://*.cloudinary.com", "https://accounts.google.com"],
             connectSrc: ["'self'", "https://api.bootskills.com", "wss://api.bootskills.com", "https://www.googletagmanager.com"],
-            frameSrc: ["'self'", "https://www.google.com"],
+            frameSrc: ["'self'", "https://www.google.com", "https://accounts.google.com"],
             objectSrc: ["'none'"],
             upgradeInsecureRequests: [],
+            "require-trusted-types-for": ["'script'"],
+            trustedTypes: ["'unsafe-inline'", "'unsafe-eval'"],
         },
     }));
     app.use(helmet.hsts({ maxAge: 31536000, includeSubDomains: true, preload: true }));
