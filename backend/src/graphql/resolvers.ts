@@ -5995,11 +5995,28 @@ export const resolvers = {
       return user;
     },
 
+    updateMyPhone: async (_: any, { phone }: { phone: string }, context: any) => {
+      if (!context.user) throw new Error('Not authenticated');
+      const userId = context.user.id || context.user._id || context.user.userId;
+      if (!userId) throw new Error('Not authenticated');
+      const trimmed = String(phone || '').trim();
+      if (trimmed.replace(/\D/g, '').length < 9) {
+        throw new Error('Enter a valid phone number');
+      }
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { $set: { phone: trimmed } },
+        { new: true, runValidators: true }
+      );
+      if (!user) throw new Error('User not found');
+      return user;
+    },
+
     updateUser: async (_: any, { id, ...args }: any, context: any) => {
       if (!context.user) throw new Error('Not authenticated');
 
       // Check if user is updating themselves OR is an admin
-      const isSelf = context.user.id === id;
+      const isSelf = String(context.user.id || context.user._id) === String(id);
       const isAdmin = context.user.role === 'super_admin' || context.user.role === 'admin';
 
       if (!isSelf && !isAdmin) {

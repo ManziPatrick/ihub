@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { useMutation } from "@apollo/client/react";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery } from "@apollo/client/react";
 import { Phone, Loader2, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { UPDATE_USER } from "@/lib/graphql/mutations";
+import { GET_ME } from "@/lib/graphql/queries";
+import { UPDATE_MY_PHONE } from "@/lib/graphql/mutations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -18,16 +19,38 @@ export function needsPhoneHold(role?: string, phone?: string | null) {
 }
 
 /**
- * Blocks commission-eligible staff (trainer / admin / super_admin) from using
- * the portal until they save a phone number for payouts. Courses can still
- * be published without a phone; payouts stay on hold until this is filled in.
+ * Blocks commission-eligible staff until a phone number is stored on the user
+ * record. The number is saved on the logged-in account in the database so the
+ * hold does not return on the next login.
  */
 export function PhoneHoldGate() {
   const { user, updateUser, logout } = useAuth();
-  const [phone, setPhone] = useState(user?.phone || "");
-  const [updateUserMutation, { loading }] = useMutation(UPDATE_USER);
+  const isCommissionRole = !!user?.role && COMMISSION_ROLES.has(user.role);
+  const { data, loading: meLoading, error: meError } = useQuery(GET_ME, {
+    skip: !isCommissionRole,
+    fetchPolicy: "network-only",
+  });
+  const dbPhone = (data as any)?.me?.phone as string | undefined;
+  const resolvedPhone = meError ? user?.phone : (dbPhone ?? user?.phone);
+  const [phone, setPhone] = useState("");
+  const [updateMyPhone, { loading }] = useMutation(UPDATE_MY_PHONE, {
+    refetchQueries: [{ query: GET_ME }],
+    awaitRefetchQueries: true,
+  });
 
-  if (!needsPhoneHold(user?.role, user?.phone)) return null;
+  useEffect(() => {
+    if (hasPhone(dbPhone) && dbPhone !== user?.phone) {
+      updateUser({ phone: dbPhone });
+    }
+  }, [dbPhone]);
+
+  useEffect(() => {
+    if (resolvedPhone) setPhone(resolvedPhone);
+  }, [resolvedPhone]);
+
+  if (!isCommissionRole) return null;
+  if (meLoading) return null;
+  if (!needsPhoneHold(user?.role, resolvedPhone)) return null;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,10 +59,13 @@ export function PhoneHoldGate() {
       toast.error("Enter a valid phone number so commission payouts can be sent.");
       return;
     }
-    if (!user?.id) return;
     try {
-      await updateUserMutation({ variables: { id: user.id, phone: trimmed } });
-      updateUser({ phone: trimmed });
+      const result = await updateMyPhone({ variables: { phone: trimmed } });
+      const saved = (result.data as any)?.updateMyPhone?.phone;
+      if (!hasPhone(saved)) {
+        throw new Error("Phone number was not saved. Try again.");
+      }
+      updateUser({ phone: saved });
       toast.success("Phone saved. You can continue.");
     } catch (err: any) {
       toast.error(err?.graphQLErrors?.[0]?.message || err?.message || "Could not save phone number");
