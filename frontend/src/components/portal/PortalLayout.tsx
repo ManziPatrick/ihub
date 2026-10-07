@@ -371,6 +371,7 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { ProfileCompletionGuard } from "./ProfileCompletionGuard";
+import { PhoneHoldGate } from "./PhoneHoldGate";
 import { PlatformTour, restartTour } from "./onboarding/PlatformTour";
 import { Logo } from "@/components/Logo";
 
@@ -1343,6 +1344,7 @@ export function PortalLayout({ children }: PortalLayoutProps) {
         </main>
       </div>
       {!location.pathname.startsWith('/chat') && <div className="print:hidden"><FloatingChat /></div>}
+      <PhoneHoldGate />
     </div>
   );
 }
