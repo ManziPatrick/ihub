@@ -5273,15 +5273,6 @@ export const resolvers = {
       }
       if (context.user.role === 'admin') requirePermission(context, 'courses');
 
-      // Phone validation: if publishing, instructor must have a valid phone number for commission payouts
-      if ((args.status || 'published') === 'published') {
-        const instructorIdToCheck = instructorId || context.user.id;
-        const instructor = await User.findById(instructorIdToCheck).select('phone').lean();
-        if (!instructor || !instructor.phone || instructor.phone.trim() === '') {
-          throw new Error('Cannot publish course: Instructor must have a valid phone number registered for commission payouts. Please set a phone number in your profile first.');
-        }
-      }
-
       const course = new Course({
         ...args,
         instructor: instructorId || context.user.id,
@@ -5331,15 +5322,6 @@ export const resolvers = {
             throw new Error('Trainers cannot reassign courses to other instructors');
           }
           updateData.instructor = context.user.id;
-        }
-      }
-
-      // Phone validation: if publishing, instructor must have a valid phone number for commission payouts
-      if (args.status === 'published') {
-        const instructorIdToCheck = updateData.instructor || course.instructor.toString();
-        const instructor = await User.findById(instructorIdToCheck).select('phone').lean();
-        if (!instructor || !instructor.phone || instructor.phone.trim() === '') {
-          throw new Error('Cannot publish course: Instructor must have a valid phone number registered for commission payouts. Please set a phone number in your profile first.');
         }
       }
 

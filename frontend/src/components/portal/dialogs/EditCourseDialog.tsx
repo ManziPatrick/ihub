@@ -835,17 +835,10 @@ export function EditCourseDialog({
     return list;
   }, [trainers, formData.instructorId, course]);
 
-  const selectedInstructor = instructorOptions.find((t: any) => t.id === formData.instructorId);
-  const selectedInstructorHasPhone = !!(selectedInstructor?.phone && String(selectedInstructor.phone).trim());
-
   const handleSave = () => {
     if (!course) return;
     if (!formData.instructorId) {
       toast.error("Choose an instructor before saving.");
-      return;
-    }
-    if (formData.status === "published" && selectedInstructor && !selectedInstructorHasPhone) {
-      toast.error("That instructor has no phone number. Pick someone with a phone, or add a phone on their profile, before going live.");
       return;
     }
     onSave?.(buildUpdatedCourse());
@@ -1020,17 +1013,12 @@ export function EditCourseDialog({
                               <option value="">Choose an instructor...</option>
                               {instructorOptions.map((t: any) => (
                                 <option key={t.id} value={t.id}>
-                                  {t.fullName || t.username} ({t.role}){t.phone ? "" : " — no phone"}
+                                  {t.fullName || t.username} ({t.role})
                                 </option>
                               ))}
                             </select>
                             {instructorOptions.length === 0 && (
                               <p className="text-[10px] text-destructive mt-1.5">No instructors loaded. Refresh the page and try again.</p>
-                            )}
-                            {formData.status === "published" && formData.instructorId && !selectedInstructorHasPhone && (
-                              <p className="text-[10px] text-amber-600 mt-1.5">
-                                Going live requires an instructor with a phone number for commission payouts.
-                              </p>
                             )}
                           </div>
                         )}
