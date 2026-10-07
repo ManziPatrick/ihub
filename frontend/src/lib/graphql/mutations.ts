@@ -265,6 +265,15 @@ export const CREATE_USER = gql`
   }
 `;
 
+export const UPDATE_MY_PHONE = gql`
+  mutation UpdateMyPhone($phone: String!) {
+    updateMyPhone(phone: $phone) {
+      id
+      phone
+    }
+  }
+`;
+
 export const UPDATE_USER = gql`
   mutation UpdateUser($id: ID!, $username: String, $email: String, $password: String, $role: String, $permissions: [String], $fullName: String, $bio: String, $avatar: String, $coverImage: String, $phone: String, $location: String, $title: String, $certificateName: String, $isFirst: Boolean, $school: String, $status: String, $isProfilePublic: Boolean, $specialties: [String], $qualifications: [String], $linkedinProfile: String, $githubProfile: String, $websiteUrl: String, $rateHourly: Int, $experienceYears: Int, $teachingPhilosophy: String) {
     updateUser(id: $id, username: $username, email: $email, password: $password, role: $role, permissions: $permissions, fullName: $fullName, bio: $bio, avatar: $avatar, coverImage: $coverImage, phone: $phone, location: $location, title: $title, certificateName: $certificateName, isFirst: $isFirst, school: $school, status: $status, isProfilePublic: $isProfilePublic, specialties: $specialties, qualifications: $qualifications, linkedinProfile: $linkedinProfile, githubProfile: $githubProfile, websiteUrl: $websiteUrl, rateHourly: $rateHourly, experienceYears: $experienceYears, teachingPhilosophy: $teachingPhilosophy) {
