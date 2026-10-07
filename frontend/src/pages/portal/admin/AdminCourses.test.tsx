@@ -152,6 +152,10 @@ vi.mock("@/hooks/usePaginatedQuery", () => ({
 vi.mock("@apollo/client/react", () => ({
   useQuery: () => ({
     data: {
+      getAllTrainers: [
+        { id: "t1", username: "trainer1", role: "trainer", phone: "0780000000" },
+        { id: "a1", username: "admin1", role: "admin", phone: "0780000001" },
+      ],
       users: {
         items: [
           { id: "t1", username: "trainer1", role: "trainer" },
