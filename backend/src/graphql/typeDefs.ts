@@ -1377,7 +1377,7 @@ export const typeDefs = `#graphql
     toggleSequentialLock(courseId: ID!, enabled: Boolean!): Course
     deleteCourse(id: ID!): Boolean
     createUser(username: String!, email: String!, password: String!, role: String, permissions: [String], fullName: String, bio: String, avatar: String, coverImage: String, phone: String, location: String, title: String, school: String): User
-    updateUser(id: ID!, username: String, email: String, password: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, coverImage: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String, status: String): User
+    updateUser(id: ID!, username: String, email: String, password: String, role: String, permissions: [String], fullName: String, bio: String, avatar: String, coverImage: String, phone: String, location: String, title: String, school: String, isFirst: Boolean, certificateName: String, status: String, isProfilePublic: Boolean, specialties: [String], qualifications: [String], linkedinProfile: String, githubProfile: String, websiteUrl: String, rateHourly: Int, experienceYears: Int, teachingPhilosophy: String): User
     updateMyPhone(phone: String!): User
     markTourCompleted: User
     becomeTrainer(

@@ -6072,6 +6072,15 @@ export const resolvers = {
         }
       }
 
+      delete args.specialties;
+      delete args.qualifications;
+      delete args.linkedinProfile;
+      delete args.githubProfile;
+      delete args.websiteUrl;
+      delete args.rateHourly;
+      delete args.experienceYears;
+      delete args.teachingPhilosophy;
+
       Object.assign(user, args);
       await user.save();
 
