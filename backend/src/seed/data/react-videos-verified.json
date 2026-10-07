@@ -1,0 +1,551 @@
+{
+ "_meta": {
+  "verifiedOn": "2026-10-07",
+  "method": "Every URL was checked with YouTube oEmbed. Title and channel below come from YouTube itself, not from Perplexity. A successful oEmbed lookup normally means the video exists and allows embedding.",
+  "notVerified": "durationSeconds is null on purpose (oEmbed does not return it). Language and teaching quality still need a quick human look.",
+  "fit": "strong = title matches the topic. partial = covers the topic inside a bigger video. weak = related only."
+ },
+ "topics": [
+  {
+   "topic": "How React works / thinking in components",
+   "moduleSlug": "how-react-works",
+   "videos": [
+    {
+     "kind": "short-clip",
+     "title": "React - Short Overview [Dev Concepts #17]",
+     "channel": "Code with Nakov | SoftUni Global",
+     "youtubeUrl": "https://www.youtube.com/watch?v=gEbHl9EhwoI",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "React JS Crash Course",
+     "channel": "Traversy Media",
+     "youtubeUrl": "https://www.youtube.com/watch?v=w7ejDZ8SWv8",
+     "durationSeconds": null,
+     "fit": "partial",
+     "embed": "likely yes",
+     "note": "Long crash course. Use the first part for the big picture."
+    }
+   ],
+   "searchQueryIfMissing": "React components explained for beginners shorts"
+  },
+  {
+   "topic": "Setup with Node, VS Code and Vite",
+   "moduleSlug": "setup-vite",
+   "videos": [
+    {
+     "kind": "short",
+     "title": "Vite with React | Frontend development #shorts #software #malayalamtutorials #coding",
+     "channel": "Debug Media",
+     "youtubeUrl": "https://www.youtube.com/shorts/UK4j4bYJDv4",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes",
+     "note": "Hashtag suggests the voice may be Malayalam. Check the language before using."
+    },
+    {
+     "kind": "full",
+     "title": "React Installation using Vite | Install React Step by Step | React Tutorial for Beginners",
+     "channel": "Programming with Harsh",
+     "youtubeUrl": "https://www.youtube.com/watch?v=d_CYjSvdVaQ",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    }
+   ],
+   "searchQueryIfMissing": null
+  },
+  {
+   "topic": "JSX",
+   "moduleSlug": "jsx-components-props",
+   "videos": [
+    {
+     "kind": "short",
+     "title": "How JSX Really Works in React | Core React Concepts Explained #shorts",
+     "channel": "Code with Ahsan",
+     "youtubeUrl": "https://www.youtube.com/shorts/Shree4nVeCQ",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "React JS Tutorial for Beginners | JSX",
+     "channel": "Web Tech Talk",
+     "youtubeUrl": "https://www.youtube.com/watch?v=hUi5Mp-CR2o",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    }
+   ],
+   "searchQueryIfMissing": null
+  },
+  {
+   "topic": "Components and props",
+   "moduleSlug": "jsx-components-props",
+   "videos": [
+    {
+     "kind": "short",
+     "title": "props in react.js full explanation with examples #shorts #reactjs @CodeWithHarry",
+     "channel": "codebypc",
+     "youtubeUrl": "https://www.youtube.com/shorts/4mnRWymMP2g",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes",
+     "note": "May be in Hindi. Check the language."
+    },
+    {
+     "kind": "short",
+     "title": "What is Props in React? #coding #programming #webdevelopment",
+     "channel": "easy, honestly",
+     "youtubeUrl": "https://www.youtube.com/shorts/kVuOAqyZqFA",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "React.js for beginners - Learn React and Redux [2024]",
+     "channel": "Viducation 101",
+     "youtubeUrl": "https://www.youtube.com/watch?v=J69bfV38Fh8",
+     "durationSeconds": null,
+     "fit": "partial",
+     "embed": "likely yes",
+     "note": "Very long course (about 2.3 hours). Chapter list comes from Perplexity and is not verified. Link to a start time."
+    }
+   ],
+   "searchQueryIfMissing": null
+  },
+  {
+   "topic": "useState and events",
+   "moduleSlug": "state-and-events",
+   "videos": [
+    {
+     "kind": "short",
+     "title": "useState | Simple React Hooks #shorts",
+     "channel": "Cosden Solutions",
+     "youtubeUrl": "https://www.youtube.com/shorts/F_OT4Y4eIjw",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "Learn useState in 10 Minutes | Beginners React Hooks Tutorial",
+     "channel": "Code Complete",
+     "youtubeUrl": "https://www.youtube.com/watch?v=2wKS55_rkqI",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "Beginner React Tutorial #6 - Manage State (useState hook)",
+     "channel": "Code With Hichem",
+     "youtubeUrl": "https://www.youtube.com/watch?v=WK95CVKXiFw",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    }
+   ],
+   "searchQueryIfMissing": null
+  },
+  {
+   "topic": "Rendering lists, keys, conditional rendering",
+   "moduleSlug": "lists-and-conditions",
+   "videos": [],
+   "searchQueryIfMissing": "React map list keys conditional rendering beginner short"
+  },
+  {
+   "topic": "Forms and controlled inputs",
+   "moduleSlug": "forms",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "Full React Tutorial #27 - Controlled Inputs (forms)",
+     "channel": "Net Ninja",
+     "youtubeUrl": "https://www.youtube.com/watch?v=IkMND33x0qQ",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "ReactJS Tutorial - 21 - Basics of Form Handling",
+     "channel": "Codevolution",
+     "youtubeUrl": "https://www.youtube.com/watch?v=7Vo_VCcWupQ",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    }
+   ],
+   "searchQueryIfMissing": "React controlled input form beginner short"
+  },
+  {
+   "topic": "useEffect and fetching data (loading, error)",
+   "moduleSlug": "effects-and-fetching",
+   "videos": [
+    {
+     "kind": "short",
+     "title": "useEffect Explained in 20 Seconds ✨ | React useEffect for Beginners #shorts #react",
+     "channel": "CodeBoss",
+     "youtubeUrl": "https://www.youtube.com/shorts/8GM_3eWA2_I",
+     "durationSeconds": 20,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "Fetching Data in React - Complete Tutorial",
+     "channel": "Cosden Solutions",
+     "youtubeUrl": "https://www.youtube.com/watch?v=00lxm_doFYw",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    }
+   ],
+   "searchQueryIfMissing": null
+  },
+  {
+   "topic": "useRef",
+   "moduleSlug": "more-hooks",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "useRef, useReducer, useCallback",
+     "channel": "Eulier Gonzalez",
+     "youtubeUrl": "https://www.youtube.com/watch?v=H6X16-LOD_U",
+     "durationSeconds": null,
+     "fit": "partial",
+     "embed": "likely yes",
+     "note": "Covers three hooks. Shared with useReducer and useCallback."
+    }
+   ],
+   "searchQueryIfMissing": "React useRef explained beginner short"
+  },
+  {
+   "topic": "useReducer",
+   "moduleSlug": "more-hooks",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "Learn useReducer In 20 Minutes",
+     "channel": "Web Dev Simplified",
+     "youtubeUrl": "https://www.youtube.com/watch?v=kK_Wqx3RnHk",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "short-clip",
+     "title": "Why I Love useReducer",
+     "channel": "Harry Wolff",
+     "youtubeUrl": "https://www.youtube.com/watch?v=o-nCM1857AQ",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    }
+   ],
+   "searchQueryIfMissing": null
+  },
+  {
+   "topic": "useMemo and useCallback",
+   "moduleSlug": "more-hooks",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "React Performance : useMemo & useCallback vs useReducer & Dispatch",
+     "channel": "Eulier Gonzalez",
+     "youtubeUrl": "https://www.youtube.com/watch?v=q8YRXThYOlY",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "useRef, useReducer, useCallback",
+     "channel": "Eulier Gonzalez",
+     "youtubeUrl": "https://www.youtube.com/watch?v=H6X16-LOD_U",
+     "durationSeconds": null,
+     "fit": "partial",
+     "embed": "likely yes"
+    }
+   ],
+   "searchQueryIfMissing": "React useMemo useCallback explained short"
+  },
+  {
+   "topic": "Custom hooks",
+   "moduleSlug": "reusable-components-custom-hooks",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "Learn Custom Hooks In 10 Minutes",
+     "channel": "Web Dev Simplified",
+     "youtubeUrl": "https://www.youtube.com/watch?v=6ThXsUwLWvc",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "5 Custom React Hooks You Need In Every Project",
+     "channel": "Web Dev Simplified",
+     "youtubeUrl": "https://www.youtube.com/watch?v=0c6znExIqRw",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes",
+     "note": "Good for the logic challenges."
+    }
+   ],
+   "searchQueryIfMissing": "React custom hook explained short"
+  },
+  {
+   "topic": "Reusable components: children, composition, compound components",
+   "moduleSlug": "reusable-components-custom-hooks",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "Using Composition in React to Avoid \"Prop Drilling\"",
+     "channel": "React Training",
+     "youtubeUrl": "https://www.youtube.com/watch?v=3XaXKiXtNjw",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "Un-Suck Your React Components - Composable & Compound Components",
+     "channel": "Vincas Stonys",
+     "youtubeUrl": "https://www.youtube.com/watch?v=vPRdY87_SH0",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    }
+   ],
+   "searchQueryIfMissing": null
+  },
+  {
+   "topic": "Context API",
+   "moduleSlug": "context-and-patterns",
+   "videos": [
+    {
+     "kind": "short",
+     "title": "React Prop Drilling Explained (And How Context API Solves It) #shorts",
+     "channel": "Code with Ahsan",
+     "youtubeUrl": "https://www.youtube.com/shorts/3-Z0SHJG0d8",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "Learn React Hooks: useContext - Simply Explained!",
+     "channel": "Cosden Solutions",
+     "youtubeUrl": "https://www.youtube.com/watch?v=HYKDUF8X3qI",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    }
+   ],
+   "searchQueryIfMissing": null
+  },
+  {
+   "topic": "Redux Toolkit (slices, store, createAsyncThunk)",
+   "moduleSlug": "redux-toolkit",
+   "videos": [
+    {
+     "kind": "short-clip",
+     "title": "Redux in 100 Seconds",
+     "channel": "Fireship",
+     "youtubeUrl": "https://www.youtube.com/watch?v=_shA5Xwe8_4",
+     "durationSeconds": 100,
+     "fit": "partial",
+     "embed": "likely yes",
+     "note": "Explains Redux ideas, not Redux Toolkit code."
+    },
+    {
+     "kind": "full",
+     "title": "React with Redux Toolkit 🔥 | Complete Tutorial with Project | CodeWithAswin | Tamil",
+     "channel": "CodeWithAswin",
+     "youtubeUrl": "https://www.youtube.com/watch?v=bQVWrIlxPf0",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes",
+     "note": "Tamil language. Use only if you want it, or find an English one."
+    }
+   ],
+   "searchQueryIfMissing": "Redux Toolkit createSlice createAsyncThunk English tutorial under 10 minutes"
+  },
+  {
+   "topic": "React Router (routes, params, nested routes, protected routes)",
+   "moduleSlug": "react-router",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "Learn React Router v6 In 45 Minutes",
+     "channel": "Web Dev Simplified",
+     "youtubeUrl": "https://www.youtube.com/watch?v=Ul3y1LXxzdU",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "React Router V6 Tutorial - Routes, Redirecting, UseNavigate, UseParams...",
+     "channel": "PedroTech",
+     "youtubeUrl": "https://www.youtube.com/watch?v=UjHT_NKR_gU",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    }
+   ],
+   "searchQueryIfMissing": "React Router protected routes short"
+  },
+  {
+   "topic": "Performance: React.memo, lazy loading, Suspense, avoiding re-renders",
+   "moduleSlug": "performance",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "Speed Up Your React Apps With Code Splitting",
+     "channel": "Web Dev Simplified",
+     "youtubeUrl": "https://www.youtube.com/watch?v=JU6sl_yyZqs",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes"
+    },
+    {
+     "kind": "full",
+     "title": "React Performance : useMemo & useCallback vs useReducer & Dispatch",
+     "channel": "Eulier Gonzalez",
+     "youtubeUrl": "https://www.youtube.com/watch?v=q8YRXThYOlY",
+     "durationSeconds": null,
+     "fit": "partial",
+     "embed": "likely yes"
+    }
+   ],
+   "searchQueryIfMissing": "React.memo avoid re-renders explained short"
+  },
+  {
+   "topic": "Next.js App Router basics",
+   "moduleSlug": "nextjs",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "Next.js App Router: Routing, Data Fetching, Caching",
+     "channel": "Vercel",
+     "youtubeUrl": "https://www.youtube.com/watch?v=gSSsZReIFRk",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes",
+     "note": "Official channel."
+    },
+    {
+     "kind": "full",
+     "title": "Next js Tutorial for Beginners | Nextjs 13 (App Router) with TypeScript",
+     "channel": "Programming with Mosh",
+     "youtubeUrl": "https://www.youtube.com/watch?v=ZVnjOPwW4ZA",
+     "durationSeconds": null,
+     "fit": "strong",
+     "embed": "likely yes",
+     "note": "Long course."
+    }
+   ],
+   "searchQueryIfMissing": "Next.js App Router basics short"
+  },
+  {
+   "topic": "Next.js server components vs client components",
+   "moduleSlug": "nextjs",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "Incrementally adopt the Next.js App Router",
+     "channel": "leerob",
+     "youtubeUrl": "https://www.youtube.com/watch?v=YQMSietiFm0",
+     "durationSeconds": null,
+     "fit": "partial",
+     "embed": "likely yes",
+     "note": "Shows server and client components together. Made by a Vercel developer."
+    }
+   ],
+   "searchQueryIfMissing": "Next.js server components vs client components use client short"
+  },
+  {
+   "topic": "Next.js data fetching and deployment",
+   "moduleSlug": "nextjs",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "Next.js App Router Caching: Explained!",
+     "channel": "Vercel",
+     "youtubeUrl": "https://www.youtube.com/watch?v=VBlSe8tvg4U",
+     "durationSeconds": null,
+     "fit": "partial",
+     "embed": "likely yes",
+     "note": "Fetching and caching only. No deployment."
+    },
+    {
+     "kind": "full",
+     "title": "Next.js Full Course 2024 | Build and Deploy a Full Stack App Using the Official React Framework",
+     "channel": "JavaScript Mastery",
+     "youtubeUrl": "https://www.youtube.com/watch?v=wm5gMKuwSYk",
+     "durationSeconds": null,
+     "fit": "partial",
+     "embed": "likely yes",
+     "note": "Very long. Link to the deploy part."
+    }
+   ],
+   "searchQueryIfMissing": "deploy Next.js app to Vercel beginner"
+  },
+  {
+   "topic": "Error boundaries",
+   "moduleSlug": "professional-practices",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "Master ErrorBoundary Tests in React #ReactTesting",
+     "channel": "Borstch",
+     "youtubeUrl": "https://www.youtube.com/watch?v=HzLERBs8wGs",
+     "durationSeconds": null,
+     "fit": "weak",
+     "embed": "likely yes",
+     "note": "About testing error boundaries, not an introduction."
+    }
+   ],
+   "searchQueryIfMissing": "React error boundary explained beginner"
+  },
+  {
+   "topic": "Testing React components (basics)",
+   "moduleSlug": "professional-practices",
+   "videos": [
+    {
+     "kind": "full",
+     "title": "Testing a Next.js App with React Testing Library & Jest",
+     "channel": "Dave Gray",
+     "youtubeUrl": "https://www.youtube.com/watch?v=XTNqyEBPAFw",
+     "durationSeconds": null,
+     "fit": "partial",
+     "embed": "likely yes"
+    }
+   ],
+   "searchQueryIfMissing": "React Testing Library basics beginner"
+  }
+ ],
+ "removedBecauseNotFound": [
+  "g1KeL_u3Dts",
+  "vpE9I_11E4g",
+  "THL1OPbo70I",
+  "7O2p_y8_I0E",
+  "h0Z1v_7Q0sA",
+  "p13d9sY3yR0",
+  "6h649f2fA9Q",
+  "DNYXgtZbrPE",
+  "01x9UXMIsX0",
+  "7dTTFWT6y4U",
+  "GLS18I4mIQA",
+  "t2ypzz6gJDA"
+ ]
+}

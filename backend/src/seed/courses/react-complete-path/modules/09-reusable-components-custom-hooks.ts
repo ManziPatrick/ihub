@@ -1,0 +1,165 @@
+import type { SeedModuleInput } from '../../../types';
+
+const mod: SeedModuleInput = {
+  order: 9,
+  slug: 'reusable-components-custom-hooks',
+  title: 'Reusable Components and Custom Hooks',
+  goal: 'Share UI with composition and share logic with your own custom hooks.',
+  estimatedMinutes: 130,
+  projectSlug: 'movie-search',
+  videos: [
+    {
+      kind: 'full',
+      title: 'Learn Custom Hooks In 10 Minutes',
+      channel: 'Web Dev Simplified',
+      youtubeUrl: 'https://www.youtube.com/watch?v=6ThXsUwLWvc',
+      durationSeconds: null,
+      fit: 'strong',
+      note: null,
+    },
+    {
+      kind: 'full',
+      title: '5 Custom React Hooks You Need In Every Project',
+      channel: 'Web Dev Simplified',
+      youtubeUrl: 'https://www.youtube.com/watch?v=0c6znExIqRw',
+      durationSeconds: null,
+      fit: 'strong',
+      note: 'Good for the logic challenges.',
+    },
+    {
+      kind: 'full',
+      title: 'Using Composition in React to Avoid "Prop Drilling"',
+      channel: 'React Training',
+      youtubeUrl: 'https://www.youtube.com/watch?v=3XaXKiXtNjw',
+      durationSeconds: null,
+      fit: 'strong',
+      note: null,
+    },
+    {
+      kind: 'full',
+      title: 'Un-Suck Your React Components - Composable & Compound Components',
+      channel: 'Vincas Stonys',
+      youtubeUrl: 'https://www.youtube.com/watch?v=vPRdY87_SH0',
+      durationSeconds: null,
+      fit: 'strong',
+      note: null,
+    },
+    {
+      kind: 'short',
+      title: null,
+      channel: null,
+      youtubeUrl: null,
+      searchQuery: 'React custom hook explained short',
+      durationSeconds: null,
+      fit: null,
+      note: 'Topic has full videos but no Short yet.',
+    },
+  ],
+  scriptFallback: [
+    { onScreen: 'A gift box (Card) with different toys placed inside it.', voiceover: 'Children is a magic prop. Whatever you put between the tags appears inside.' },
+    { onScreen: 'Same fetch code copied in two components, then folded into one hook.', voiceover: 'Copied logic is a smell. A custom hook folds it into one reusable function.' },
+    { onScreen: 'A hook named useMovies returning movies, loading, error.', voiceover: 'Custom hooks return data, not screen. Components decide how it looks.' },
+    { onScreen: 'Three components sharing one useMovies hook.', voiceover: 'Write the hard logic once. Share it everywhere with one line.' },
+  ],
+  learn: [
+    'Think of a gift box. The box is the same, but each gift inside is different. In React, children is the gift: whatever you write between <Card> and </Card> appears inside the Card. This is called composition — building screens by placing components inside each other instead of drilling props through five floors.',
+    'Prop drilling is passing a prop through components that do not need it, just to reach a deep child. It is like carrying a suitcase through rooms you never enter. Composition fixes it: the parent puts the finished content directly inside, so middle rooms carry nothing.',
+    'A custom hook shares LOGIC, not screen. It is a normal function whose name starts with "use" and that can call other hooks inside. useMovies fetches movies and returns { movies, loading, error }. Two pages can call it and each keeps its own separate data.',
+    'Compound components are families that work as a team: <Menu>, <Menu.Button>, <Menu.List>. Each piece is simple alone, but together they share hidden state. You have used this pattern in HTML: <select> with <option> inside.',
+  ],
+  codeExample: {
+    title: 'A Card using children, plus a useToggle custom hook',
+    language: 'jsx',
+    code: 'import { useState } from "react";\n\nfunction useToggle(start = false) {\n  const [on, setOn] = useState(start);\n  return [on, () => setOn(!on)];\n}\n\nfunction Card({ children }) {\n  return <div className="card">{children}</div>;\n}\n\nfunction App() {\n  const [open, toggle] = useToggle(false);\n  return (\n    <Card>\n      <h2>Movie night</h2>\n      <button onClick={toggle}>{open ? "Hide" : "Show"}</button>\n      {open && <p>Starts at 7pm.</p>}\n    </Card>\n  );\n}',
+    note: 'Card shares the look (composition), useToggle shares the logic (hook).',
+  },
+  realExample:
+    'Design systems ship Card, Modal, and Button shells that teams fill with their own children. Data hooks like useMovies or useCart power many pages from one logic file. Fewer copies means fewer bugs when rules change.',
+  logicTraining: {
+    thinkFirst: [
+      'Is this repeated LOOK (composition) or repeated LOGIC (custom hook)?',
+      'What should this hook return — and what must stay inside the component?',
+      'Which props can disappear if I use children instead?',
+      'Does each caller of my hook need its own separate state?',
+      'What is the smallest API: one prop, one return value?',
+    ],
+    predictTheOutput: [
+      {
+        code: 'function Card({ children }) {\n  return <div>{children}</div>;\n}\nfunction App() {\n  return <Card><p>A</p><p>B</p></Card>;\n}',
+        question: 'What shows inside the div?',
+        answer: 'Two paragraphs: A and B.',
+        explanation: 'Children passes everything between the tags straight through.',
+      },
+      {
+        code: 'function useDouble(n) {\n  return n * 2;\n}\nfunction A() {\n  const x = useDouble(4);\n  return <p>{x}</p>;\n}',
+        question: 'What shows on the screen?',
+        answer: '8.',
+        explanation: 'The hook runs like a normal function and returns its answer.',
+      },
+    ],
+    findTheBug: {
+      code: 'function useMovies(query) {\n  const [movies, setMovies] = useState([]);\n  if (query) {\n    useEffect(() => {\n      fetch("/api?q=" + query).then((r) => r.json()).then(setMovies);\n    }, [query]);\n  }\n  return movies;\n}',
+      hint: 'Sometimes it works, sometimes React throws a hooks error. The hook call hides behind a condition.',
+      fixedCode: 'function useMovies(query) {\n  const [movies, setMovies] = useState([]);\n  useEffect(() => {\n    if (!query) return;\n    fetch("/api?q=" + query).then((r) => r.json()).then(setMovies);\n  }, [query]);\n  return movies;\n}',
+      explanation: 'Hooks must run in the same order every render — move the condition inside the effect.',
+    },
+    challenges: [
+      {
+        level: 'easy',
+        title: 'Card shell',
+        brief: 'Build a Card that wraps any children with a title, and use it twice with different content.',
+        acceptanceCriteria: ['Both cards share the same frame style', 'Each card shows different children'],
+        hints: ['Accept { title, children } as props.', 'Render children inside the frame.', 'Use Card twice in App.'],
+        solutionOutline: ['Create Card with title and children', 'Style the frame once', 'Reuse it with different content'],
+      },
+      {
+        level: 'medium',
+        title: 'Movie search project',
+        brief: 'Build a useMovies(query) hook plus a search page with loading, error, and results.',
+        acceptanceCriteria: ['Hook returns movies, loading, and error', 'Page shows all three states', 'Empty query shows a hint, not an error'],
+        hints: ['Fetch inside useEffect on query.', 'Return one object with three fields.', 'The page only renders; the hook thinks.'],
+        solutionOutline: ['Write useMovies with three states', 'Build the search input page', 'Render loading, error, and list'],
+      },
+      {
+        level: 'hard',
+        title: 'Compound tabs',
+        brief: 'Build Tabs, Tabs.Buttons, and Tabs.Panel pieces that share which tab is open.',
+        acceptanceCriteria: ['Clicking a button shows its panel only', 'No prop drilling between buttons and panels', 'Adding a third tab needs no logic change'],
+        hints: ['Tabs holds active state.', 'Share it with context or cloneElement.', 'Each Button only knows its own id.'],
+        solutionOutline: ['Create Tabs holding active id', 'Build Buttons and Panel reading it', 'Add a third tab to prove reuse'],
+      },
+    ],
+  },
+  practiceLinks: [
+    { label: 'React docs: reusing logic with custom hooks', url: 'https://react.dev/learn/reusing-logic-with-custom-hooks' },
+    { label: 'React docs: passing JSX as children', url: 'https://react.dev/learn/passing-props-to-a-component#passing-jsx-as-children' },
+  ],
+  quiz: [
+    {
+      question: 'What is the children prop?',
+      options: ['Whatever you place between a component’s opening and closing tags', 'The youngest user of the app', 'A folder for pictures', 'A backup copy of the code'],
+      correctIndex: 0,
+      explanation: 'Children lets a parent inject content into a shared shell.',
+    },
+    {
+      question: 'What is prop drilling?',
+      options: ['Passing props through components that do not need them to reach a deep child', 'Digging holes for cables', 'Deleting props to save memory', 'Sorting props by name'],
+      correctIndex: 0,
+      explanation: 'Middle components become couriers for data they never use.',
+    },
+    {
+      question: 'What does a custom hook share?',
+      options: ['Logic (behavior and data), not screen design', 'Free movies every Friday', 'The Wi-Fi password', 'Only CSS colors'],
+      correctIndex: 0,
+      explanation: 'Hooks return data and functions; components decide the look.',
+    },
+    {
+      question: 'What rule must every hook follow?',
+      options: ['Always run in the same order — never inside conditions', 'Never use state inside', 'Only run on Sundays', 'Start with a capital letter'],
+      correctIndex: 0,
+      explanation: 'React matches hooks by order, so conditions break the matching.',
+    },
+  ],
+};
+
+export default mod;
