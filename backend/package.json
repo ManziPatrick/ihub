@@ -23,6 +23,9 @@
     "seed:admin-everything": "ts-node src/seedAdminEverything.ts",
     "seed:teachers": "ts-node src/seedRealTeachers.ts",
     "seed:teacher-programs": "ts-node src/seedTeacherPrograms.ts",
+    "seed:courses": "ts-node src/seed/seed-courses.ts",
+    "seed:course": "ts-node src/seed/seed-courses.ts",
+    "seed:react-path": "ts-node src/seed/seed-courses.ts react-complete-path",
     "check:config-sync": "node ../scripts/check-language-config-sync.js"
   },
   "keywords": [],
@@ -74,7 +77,8 @@
     "stripe": "^20.3.0",
     "tesseract.js": "^7.0.0",
     "tmp-promise": "^3.0.3",
-    "ws": "^8.19.0"
+    "ws": "^8.19.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.10",
