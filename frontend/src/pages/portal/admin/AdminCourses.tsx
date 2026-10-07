@@ -41,7 +41,7 @@ import { toast } from "sonner";
 import { PaginationBar } from "@/components/ui/pagination-bar";
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client/react";
 import { usePaginatedQuery } from "@/hooks/usePaginatedQuery";
-import { GET_COURSES_LITE_SUMMARY, GET_STATS, GET_USERS, GET_COURSE, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
+import { GET_COURSES_LITE_SUMMARY, GET_STATS, GET_ALL_TRAINERS, GET_COURSE, GET_ADMIN_DASHBOARD_DATA } from "@/lib/graphql/queries";
 import { UPDATE_COURSE, DELETE_COURSE, RESTORE_COURSE, TOGGLE_SEQUENTIAL_LOCK } from "@/lib/graphql/mutations";
 import { Switch } from "@/components/ui/switch";
 
@@ -88,10 +88,11 @@ export default function AdminCourses() {
   const courses = (data as any)?.courses?.items || [];
   const pagination = (data as any)?.courses?.pagination || { totalPages: 0, totalCount: 0, hasPreviousPage: false, hasNextPage: false };
 
-  const { data: usersData } = useQuery(GET_USERS);
-  const trainers = (usersData as any)?.users?.items?.filter((u: any) =>
-    u.role === 'trainer' || u.role === 'admin' || u.role === 'super_admin'
-  ) || [];
+  const { data: trainersData } = useQuery(GET_ALL_TRAINERS);
+  const trainers = (trainersData as any)?.getAllTrainers || [];
+
+  const mutationErrorMessage = (err: any) =>
+    err?.graphQLErrors?.[0]?.message || err?.message || "Request failed";
 
   const { data: statsData, refetch: refetchStats } = useQuery(GET_STATS);
   const liveStats = (statsData as any)?.stats || { totalUsers: 0, totalCourses: 0, totalStudents: 0, totalRevenue: 0 };
@@ -126,6 +127,10 @@ export default function AdminCourses() {
   };
 
   const handleSaveCourse = async (updatedCourse: any) => {
+    const instructorId =
+      typeof updatedCourse.instructorId === "string" && updatedCourse.instructorId
+        ? updatedCourse.instructorId
+        : undefined;
     try {
       await updateCourseMutation({
         variables: {
@@ -136,7 +141,8 @@ export default function AdminCourses() {
           discountPrice: Number(updatedCourse.discountPrice),
           level: updatedCourse.level,
           category: updatedCourse.category,
-          instructorId: updatedCourse.instructorId,
+          school: updatedCourse.school,
+          instructorId,
           thumbnail: updatedCourse.thumbnail,
           status: updatedCourse.status,
           enrollmentMode: updatedCourse.enrollmentMode || 'direct',
@@ -152,7 +158,7 @@ export default function AdminCourses() {
       setEditCourse(null);
       setEditPricingCourse(null);
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(mutationErrorMessage(err));
     }
   };
 
@@ -177,7 +183,9 @@ export default function AdminCourses() {
           discountPrice: Number(updatedCourse.discountPrice),
           level: updatedCourse.level,
           category: updatedCourse.category,
-          instructorId: updatedCourse.instructorId,
+          instructorId: typeof updatedCourse.instructorId === "string" && updatedCourse.instructorId
+            ? updatedCourse.instructorId
+            : undefined,
           thumbnail: updatedCourse.thumbnail,
           status: updatedCourse.status,
           enrollmentMode: updatedCourse.enrollmentMode || 'direct',          submissionRequired: updatedCourse.submissionRequired,
@@ -192,7 +200,7 @@ export default function AdminCourses() {
       refetch();
     } catch (err: any) {
       console.error("[AdminCourses] Sync failed:", err);
-      toast.error("Sync failed: " + err.message);
+      toast.error("Sync failed: " + mutationErrorMessage(err));
     }
   };
 
@@ -202,7 +210,7 @@ export default function AdminCourses() {
       toast.success(`Course status updated to ${newStatus}`);
       refetch();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(mutationErrorMessage(err));
     }
   };
 

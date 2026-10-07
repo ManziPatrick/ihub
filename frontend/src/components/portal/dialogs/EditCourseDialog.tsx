@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,12 @@ interface EditCourseDialogProps {
   onSave?: (course: any) => void;
   onQuizSave?: (course: any) => void;
   isLoading?: boolean;
+}
+
+function resolveInstructorId(instructor: any): string {
+  if (!instructor) return "";
+  if (typeof instructor === "string") return instructor;
+  return instructor.id || instructor._id || "";
 }
 
 import { useQuery } from "@apollo/client/react";
@@ -550,7 +556,7 @@ export function EditCourseDialog({
             level: course.level || "Beginner",
             category: course.category || "Development",
             school: course.school || "",
-            instructorId: course.instructor?.id || course.instructor || "",
+            instructorId: resolveInstructorId(course.instructor),
             status: course.status || "draft",
             allowedDeliveryModes: course.allowedDeliveryModes || ["online"],
             enrollmentMode: course.enrollmentMode || "direct",
@@ -796,7 +802,7 @@ export function EditCourseDialog({
       level: formData.level,
       category: formData.category,
       school: formData.school,
-      instructorId: formData.instructorId,
+      instructorId: typeof formData.instructorId === "string" ? formData.instructorId : resolveInstructorId(formData.instructorId),
       status: formData.status,
       allowedDeliveryModes: formData.allowedDeliveryModes,
       enrollmentMode: formData.enrollmentMode,
@@ -814,10 +820,35 @@ export function EditCourseDialog({
     };
   };
 
+  const instructorOptions = useMemo(() => {
+    const list = [...(trainers || [])];
+    const currentId = resolveInstructorId(formData.instructorId || course?.instructor);
+    if (currentId && !list.some((t: any) => t.id === currentId)) {
+      list.unshift({
+        id: currentId,
+        username: course?.instructor?.username || "Current instructor",
+        fullName: course?.instructor?.fullName,
+        role: course?.instructor?.role || "trainer",
+        phone: course?.instructor?.phone,
+      });
+    }
+    return list;
+  }, [trainers, formData.instructorId, course]);
+
+  const selectedInstructor = instructorOptions.find((t: any) => t.id === formData.instructorId);
+  const selectedInstructorHasPhone = !!(selectedInstructor?.phone && String(selectedInstructor.phone).trim());
+
   const handleSave = () => {
     if (!course) return;
+    if (!formData.instructorId) {
+      toast.error("Choose an instructor before saving.");
+      return;
+    }
+    if (formData.status === "published" && selectedInstructor && !selectedInstructorHasPhone) {
+      toast.error("That instructor has no phone number. Pick someone with a phone, or add a phone on their profile, before going live.");
+      return;
+    }
     onSave?.(buildUpdatedCourse());
-    onOpenChange(false);
   };
 
   if (!course) return null;
@@ -978,6 +1009,32 @@ export function EditCourseDialog({
                           </div>
                         </div>
 
+                        {isAdmin && (
+                          <div>
+                            <label className="text-xs font-bold mb-1.5 block text-muted-foreground">Primary Instructor (Lead Trainer)</label>
+                            <select
+                              className="w-full h-11 px-3 rounded-xl border border-accent/10 bg-background text-sm font-medium focus:ring-2 focus:ring-accent/20 outline-none transition-all"
+                              value={formData.instructorId || ""}
+                              onChange={(e) => setFormData({ ...formData, instructorId: e.target.value })}
+                            >
+                              <option value="">Choose an instructor...</option>
+                              {instructorOptions.map((t: any) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.fullName || t.username} ({t.role}){t.phone ? "" : " — no phone"}
+                                </option>
+                              ))}
+                            </select>
+                            {instructorOptions.length === 0 && (
+                              <p className="text-[10px] text-destructive mt-1.5">No instructors loaded. Refresh the page and try again.</p>
+                            )}
+                            {formData.status === "published" && formData.instructorId && !selectedInstructorHasPhone && (
+                              <p className="text-[10px] text-amber-600 mt-1.5">
+                                Going live requires an instructor with a phone number for commission payouts.
+                              </p>
+                            )}
+                          </div>
+                        )}
+
                         <div>
                           <label className="text-xs font-bold mb-3 block text-muted-foreground">Course Status</label>
                           <div className="flex gap-2 p-1 bg-muted/30 rounded-xl border border-border/50">
@@ -1078,22 +1135,6 @@ export function EditCourseDialog({
                             className="data-[state=checked]:bg-orange-500"
                           />
                         </div>
-
-                        {isAdmin && (
-                          <div>
-                            <label className="text-xs font-bold mb-1.5 block text-muted-foreground">Primary Instructor (Lead Trainer)</label>
-                            <select
-                              className="w-full h-11 px-3 rounded-xl border border-accent/10 bg-background text-sm font-medium focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-                              value={formData.instructorId}
-                              onChange={(e) => setFormData({ ...formData, instructorId: e.target.value })}
-                            >
-                              <option value="">Choose an instructor...</option>
-                              {trainers.map((t: any) => (
-                                <option key={t.id} value={t.id}>{t.username} ({t.role})</option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
 
                         <div>
                           <label className="text-xs font-bold mb-1.5 block text-muted-foreground">Cover Thumbnail</label>

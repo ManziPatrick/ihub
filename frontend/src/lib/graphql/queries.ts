@@ -78,6 +78,8 @@ export const GET_USERS = gql`
         id
         username
         email
+        fullName
+        phone
         role
         permissions
         school
@@ -312,6 +314,7 @@ export const GET_ALL_TRAINERS = gql`
       fullName
       email
       avatar
+      phone
       role
     }
   }
@@ -544,6 +547,8 @@ export const GET_COURSE = gql`
       instructor {
         id
         username
+        phone
+        role
       }
       applicationQuestions {
         label
