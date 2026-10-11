@@ -126,14 +126,13 @@ const Projects = () => {
               animate={{ opacity: 1, y: 0 }}
             >
               <span className="inline-block px-4 py-1 bg-accent/20 text-accent text-sm font-medium rounded-full mb-4">
-                Our Work
+                Our work
               </span>
-              <h1 className="font-heading text-3xl lg:text-5xl font-medium text-card-foreground mb-6">
-                Projects & Portfolio
+              <h1 className="font-heading text-3xl lg:text-4xl font-medium text-card-foreground mb-3">
+                Built with real clients
               </h1>
-              <p className="text-card-foreground/80 max-w-2xl mx-auto text-lg">
-                Real solutions developed by our teams for clients across software development,
-                data science, AI, and IoT. Each project showcases our commitment to quality and innovation.
+              <p className="text-card-foreground/80 max-w-lg mx-auto">
+                Shops, farms, banks, factories — things people actually use.
               </p>
             </motion.div>
           </div>

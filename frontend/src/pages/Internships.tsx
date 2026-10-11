@@ -174,10 +174,10 @@ const Opportunities = () => {
               animate={{ opacity: 1, y: 0 }}
             >
               <h1 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground">
-                Opportunities
+                Open seats
               </h1>
               <p className="text-card-foreground/70 text-sm mt-1">
-                Browse open programs at companies &amp; schools — apply in one click.
+                Internships and programs. Apply in one tap.
               </p>
             </motion.div>
           </div>

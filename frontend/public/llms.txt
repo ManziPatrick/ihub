@@ -98,6 +98,7 @@ Africa-wide Online Training
 - Team: https://bootskills.com/team
 - Blog: https://bootskills.com/blog
 - Contact: https://bootskills.com/contact
+- Book a public meeting (shareable, no login): https://bootskills.com/book
 
 ## Course Data (JSON-LD)
 All 68+ courses with full metadata (title, description, price, level, category, instructor) are available at:

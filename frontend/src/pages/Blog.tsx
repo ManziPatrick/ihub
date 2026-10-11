@@ -107,22 +107,18 @@ const Blog = () => {
       <Header />
       <main className="pt-20">
         {/* Hero */}
-        <section className="py-20 lg:py-32 bg-card relative overflow-hidden border-b border-border/30">
+        <section className="py-12 lg:py-16 bg-card relative overflow-hidden border-b border-border/30">
           <div className="absolute inset-0 opacity-5">
             <img src={heroImage} alt="" role="presentation" className="w-full h-full object-cover grayscale" />
           </div>
           <div className="container mx-auto px-4 lg:px-8 relative z-10">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              className="max-w-4xl mx-auto text-center"
+              className="max-w-xl mx-auto text-center"
             >
-              <h1 className="font-heading text-4xl lg:text-7xl font-bold mb-8 leading-tight tracking-tighter">
-                Architecture of the <span className="text-accent">African Digital Future</span>
-              </h1>
-              <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-sans font-medium">
-                Professional insights into software engineering, emerging tech, and digital business transformation across the Rwandan ecosystem.
-              </p>
+              <h1 className="font-heading text-3xl lg:text-4xl font-medium mb-3">Stories from the work</h1>
+              <p className="text-muted-foreground">Short notes on building, teaching, and shipping in Africa.</p>
             </motion.div>
           </div>
         </section>

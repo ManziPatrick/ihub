@@ -182,6 +182,7 @@ export function AnimatedRoutes() {
           <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
           <Route path="/blog/:slug" element={<PageTransition><BlogDetail /></PageTransition>} />
           <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+          <Route path="/book" element={<Navigate to="/contact?book=1" replace />} />
           <Route path="/events" element={<PageTransition><Events /></PageTransition>} />
           <Route path="/events/:id" element={<PageTransition><EventDetail /></PageTransition>} />
           <Route path="/auth" element={<Auth />} />

@@ -1,340 +1,199 @@
-import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { motion } from "framer-motion";
+import { PublicHero } from "@/components/layout/PublicHero";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, MapPin, Phone, Clock, MessageSquare, Users, Briefcase, GraduationCap, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Mail, Phone, Calendar, Copy, Check, Loader2, Share2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import heroImage from "@/assets/hero-training.webp";
-import heroImageMobile from "@/assets/hero-training-mobile.webp";
-import { supabase } from "@/integrations/supabase/client";
 import { SEOHead } from "@/components/SEOHead";
 import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
+import { getApiBaseUrl } from "@/lib/env";
 
 const Contact = () => {
-  const { t } = useTranslation();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    subject: "",
-    inquiryType: "",
-    message: "",
-  });
+  const [params, setParams] = useSearchParams();
+  const tab = params.get("book") === "1" ? "book" : "write";
+  const [sending, setSending] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [message, setMessage] = useState({ name: "", email: "", phone: "", subject: "", note: "" });
+  const [meet, setMeet] = useState({ name: "", email: "", phone: "", date: "", time: "", topic: "Intro call", notes: "" });
 
-  const contactInfo = [
-    { icon: MapPin, labelKey: "contact.address" as const, value: t("contact.kigaliRwanda") },
-    { icon: Mail, labelKey: "contact.email" as const, value: "info@bootskills.com" },
-    { icon: Phone, labelKey: "contact.phone" as const, value: "+250 790 706 170" },
-    { icon: Clock, labelKey: "contact.officeHours" as const, value: t("contact.hours") },
-  ];
+  const shareUrl = useMemo(() => {
+    if (typeof window === "undefined") return "https://bootskills.com/contact?book=1";
+    return `${window.location.origin}/contact?book=1`;
+  }, []);
 
-  const inquiryTypes = [
-    { icon: GraduationCap, titleKey: "contact.trainingPrograms" as const, descKey: "contact.trainingProgramsDesc" as const },
-    { icon: Briefcase, titleKey: "contact.programs" as const, descKey: "contact.programsDesc" as const },
-    { icon: Users, titleKey: "contact.corporateSolutions" as const, descKey: "contact.corporateSolutionsDesc" as const },
-    { icon: MessageSquare, titleKey: "contact.generalInquiry" as const, descKey: "contact.generalInquiryDesc" as const },
-  ];
+  const setTab = (next: "write" | "book") => {
+    const nextParams = new URLSearchParams(params);
+    if (next === "book") nextParams.set("book", "1");
+    else nextParams.delete("book");
+    setParams(nextParams, { replace: true });
+  };
 
-  const faqs = [
-    { qKey: "contact.faq1q" as const, aKey: "contact.faq1a" as const },
-    { qKey: "contact.faq2q" as const, aKey: "contact.faq2a" as const },
-    { qKey: "contact.faq3q" as const, aKey: "contact.faq3a" as const },
-    { qKey: "contact.faq4q" as const, aKey: "contact.faq4a" as const },
-  ];
+  const post = async (path: string, body: Record<string, string>) => {
+    const res = await fetch(`${getApiBaseUrl()}/api/public${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Could not send.");
+    return data;
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-
+    setSending(true);
     try {
-      const { error } = await supabase.from("leads").insert({
-        full_name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || null,
-        interest: formData.inquiryType || null,
-        message: `${formData.subject}\n\n${formData.message}`.trim(),
-        source_page: "contact",
+      await post("/inquiry", {
+        name: message.name,
+        email: message.email,
+        phone: message.phone,
+        subject: message.subject,
+        message: message.note,
+        inquiryType: "general",
       });
-
-      if (error) throw error;
-
-      toast.success(t("contact.thanksMessage"));
-      setFormData({ name: "", email: "", phone: "", subject: "", inquiryType: "", message: "" });
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      toast.error(t("contact.errorMessage"));
+      toast.success("Sent. Check your inbox — we reply from info@bootskills.com.");
+      setMessage({ name: "", email: "", phone: "", subject: "", note: "" });
+    } catch (err: any) {
+      toast.error(err.message || "Could not send. Try emailing info@bootskills.com.");
     } finally {
-      setIsSubmitting(false);
+      setSending(false);
+    }
+  };
+
+  const bookMeeting = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSending(true);
+    try {
+      await post("/meeting", meet);
+      toast.success("Request sent. We'll email you the meeting link.");
+    } catch (err: any) {
+      toast.error(err.message || "Could not book that slot.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const copyShare = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast.success("Booking link copied — send it to anyone.");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Copy failed. Use the WhatsApp or email share instead.");
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title={t("contact.getInTouch")}
-        description={t("contact.heroDesc")}
+        title="Contact & book a meeting"
+        description="Write Bootskills or book a public intro call. Share the booking link with anyone — we follow up by email."
         canonicalUrl="https://bootskills.com/contact"
-        ogImageAlt="Bootskills — Get in touch with us in Kigali, Rwanda"
-        keywords="contact Bootskills, Kigali Rwanda, tech training inquiries, program applications, corporate training"
+        keywords="contact Bootskills, book a meeting Kigali, Bootskills email, intro call"
       >
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@graph": [
               organizationLd,
-              webPageLd(t("contact.getInTouch"), t("contact.heroDesc"), "https://bootskills.com/contact"),
+              webPageLd(
+                "Contact & book a meeting",
+                "Write Bootskills or book a public intro call. Share the booking link with anyone.",
+                "https://bootskills.com/contact"
+              ),
               breadcrumbListLd([
                 { name: "Home", item: "/" },
                 { name: "Contact", item: "/contact" },
               ]),
-            ]
+            ],
           })}
         </script>
       </SEOHead>
       <Header />
       <main className="pt-20">
-        {/* Hero */}
-        <section className="py-16 lg:py-24 bg-card relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10">
-            <img
-              src={heroImage}
-              srcSet={`${heroImageMobile} 600w, ${heroImage} 1280w`}
-              sizes="100vw"
-              alt=""
-              className="w-full h-full object-cover"
-              loading="eager"
-            />
-          </div>
-          <div className="container mx-auto px-4 lg:px-8 relative z-10 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <span className="inline-block px-4 py-1 bg-accent/20 text-accent text-sm font-medium rounded-full mb-4">
-                {t("contact.getInTouch")}
-              </span>
-              <h1 className="font-heading text-3xl lg:text-5xl font-medium text-card-foreground mb-6">
-                {t("contact.wedLoveToHear")}
-              </h1>
-              <p className="text-card-foreground/80 max-w-2xl mx-auto text-lg">
-                {t("contact.heroDesc")}
-              </p>
-            </motion.div>
-          </div>
-        </section>
+        <PublicHero
+          eyebrow="Say hello"
+          title="We’re easy to reach."
+          line="Send a note, or pick a time. You can share the booking link with a friend, a school, or a company."
+          compact
+        />
 
-        {/* Inquiry Types */}
-        <section className="py-12 bg-background">
-          <div className="container mx-auto px-4 lg:px-8">
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
-              {inquiryTypes.map((type, index) => (
-                <motion.div
-                  key={type.titleKey}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-card p-5 rounded-xl shadow-card border border-border/30 text-center group hover:shadow-card-hover hover:border-accent/30 transition-all cursor-pointer"
-                >
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-background flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                    <type.icon className="w-6 h-6 text-accent" strokeWidth={1.5} />
-                  </div>
-                  <h3 className="font-heading font-semibold text-card-foreground text-sm mb-1">{t(type.titleKey)}</h3>
-                  <p className="text-xs text-card-foreground/60">{t(type.descKey)}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Contact Section */}
-        <section className="py-16 lg:py-20 bg-background">
-          <div className="container mx-auto px-4 lg:px-8">
-            <div className="grid lg:grid-cols-5 gap-12 max-w-6xl mx-auto">
-              {/* Contact Info */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="lg:col-span-2"
+        <section className="py-10 lg:py-14">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <div className="flex gap-2 p-1 rounded-2xl bg-muted/50 border border-border/40 mb-8 w-fit mx-auto">
+              <button
+                type="button"
+                onClick={() => setTab("write")}
+                className={`px-5 py-2 rounded-xl text-sm font-semibold ${tab === "write" ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`}
               >
-                <h2 className="font-heading text-2xl font-semibold text-foreground mb-2">
-                  {t("contact.contactInfo")}
-                </h2>
-                <p className="text-muted-foreground mb-8">
-                  {t("contact.contactInfoDesc")}
-                </p>
-
-                <div className="space-y-6 mb-8">
-                  {contactInfo.map((item) => (
-                    <div key={item.labelKey} className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-full bg-card flex items-center justify-center flex-shrink-0 shadow-card">
-                        <item.icon className="w-5 h-5 text-accent" strokeWidth={1.5} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{t(item.labelKey)}</p>
-                        <p className="text-sm text-muted-foreground">{item.value}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Map placeholder */}
-                <div className="aspect-video rounded-xl overflow-hidden bg-card shadow-card border border-border/30">
-                  <div className="w-full h-full bg-gradient-to-br from-card to-accent/10 flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPin className="w-10 h-10 text-accent mx-auto mb-2" />
-                      <p className="text-sm text-card-foreground/70">{t("contact.kigaliRwanda")}</p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Contact Form */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="lg:col-span-3"
+                Write us
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab("book")}
+                className={`px-5 py-2 rounded-xl text-sm font-semibold ${tab === "book" ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`}
               >
-                <form onSubmit={handleSubmit} className="bg-card p-6 lg:p-8 rounded-xl shadow-card border border-border/30">
-                  <h2 className="font-heading text-xl font-semibold text-card-foreground mb-2">
-                    {t("contact.sendMessage")}
-                  </h2>
-                  <p className="text-sm text-card-foreground/70 mb-6">
-                    {t("contact.sendMessageDesc")}
-                  </p>
-
-                  <div className="space-y-5">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm text-card-foreground/70 mb-1.5 block">{t("contact.fullName")}</label>
-                        <Input
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          required
-                          placeholder={t("contact.namePlaceholder")}
-                          className="bg-background"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm text-card-foreground/70 mb-1.5 block">{t("contact.emailAddress")}</label>
-                        <Input
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          required
-                          placeholder={t("contact.emailPlaceholder")}
-                          className="bg-background"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm text-card-foreground/70 mb-1.5 block">{t("contact.phoneNumber")}</label>
-                        <Input
-                          type="tel"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          placeholder={t("contact.phonePlaceholder")}
-                          className="bg-background"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm text-card-foreground/70 mb-1.5 block">{t("contact.inquiryType")}</label>
-                        <select
-                          value={formData.inquiryType}
-                          onChange={(e) => setFormData({ ...formData, inquiryType: e.target.value })}
-                          className="w-full px-3 py-2 rounded-md bg-background border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-                        >
-                          <option value="">{t("contact.selectType")}</option>
-                          <option value="training">{t("contact.optionTraining")}</option>
-                          <option value="program">{t("contact.optionProgram")}</option>
-                          <option value="corporate">{t("contact.optionCorporate")}</option>
-                          <option value="partnership">{t("contact.optionPartnership")}</option>
-                          <option value="general">{t("contact.optionGeneral")}</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-sm text-card-foreground/70 mb-1.5 block">{t("contact.subject")}</label>
-                      <Input
-                        value={formData.subject}
-                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                        required
-                        placeholder={t("contact.subjectPlaceholder")}
-                        className="bg-background"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-sm text-card-foreground/70 mb-1.5 block">{t("contact.message")}</label>
-                      <Textarea
-                        value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        required
-                        rows={5}
-                        placeholder={t("contact.messagePlaceholder")}
-                        className="bg-background"
-                      />
-                    </div>
-
-                    <Button type="submit" variant="gold" size="lg" className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {t("contact.sending")}
-                        </>
-                      ) : (
-                        t("contact.sendMessageBtn")
-                      )}
-                    </Button>
-
-                    <p className="text-xs text-card-foreground/50 text-center">
-                      {t("contact.privacyNotice")}
-                    </p>
-                  </div>
-                </form>
-              </motion.div>
+                Book a meeting
+              </button>
             </div>
-          </div>
-        </section>
 
-        {/* FAQ */}
-        <section className="py-16 lg:py-20 bg-card">
-          <div className="container mx-auto px-4 lg:px-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
-              <span className="text-accent text-sm font-medium uppercase tracking-wider">{t("contact.quickAnswers")}</span>
-              <h2 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mt-2">
-                {t("contact.faqTitle")}
-              </h2>
-            </motion.div>
-            <div className="max-w-3xl mx-auto space-y-4">
-              {faqs.map((faq, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-background p-6 rounded-xl shadow-card border border-border/30"
-                >
-                  <h4 className="font-heading font-semibold text-foreground mb-2">{t(faq.qKey)}</h4>
-                  <p className="text-sm text-muted-foreground">{t(faq.aKey)}</p>
-                </motion.div>
-              ))}
+            {tab === "write" ? (
+              <form onSubmit={sendMessage} className="bg-card rounded-2xl border border-border/40 p-6 lg:p-8 space-y-4 shadow-card">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Input required placeholder="Your name" value={message.name} onChange={(e) => setMessage({ ...message, name: e.target.value })} />
+                  <Input required type="email" placeholder="Email" value={message.email} onChange={(e) => setMessage({ ...message, email: e.target.value })} />
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Input type="tel" placeholder="Phone (optional)" value={message.phone} onChange={(e) => setMessage({ ...message, phone: e.target.value })} />
+                  <Input placeholder="What’s this about?" value={message.subject} onChange={(e) => setMessage({ ...message, subject: e.target.value })} />
+                </div>
+                <Textarea required rows={5} placeholder="Tell us in a few lines." value={message.note} onChange={(e) => setMessage({ ...message, note: e.target.value })} />
+                <Button type="submit" variant="gold" className="w-full h-11" disabled={sending}>
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send to our inbox"}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">Goes to info@bootskills.com. We reply to your email.</p>
+              </form>
+            ) : (
+              <form onSubmit={bookMeeting} className="bg-card rounded-2xl border border-border/40 p-6 lg:p-8 space-y-4 shadow-card">
+                <p className="text-sm text-muted-foreground">Anyone can book — no login. We email you a meet link.</p>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Input required placeholder="Your name" value={meet.name} onChange={(e) => setMeet({ ...meet, name: e.target.value })} />
+                  <Input required type="email" placeholder="Email" value={meet.email} onChange={(e) => setMeet({ ...meet, email: e.target.value })} />
+                </div>
+                <Input type="tel" placeholder="Phone (optional)" value={meet.phone} onChange={(e) => setMeet({ ...meet, phone: e.target.value })} />
+                <Input placeholder="Topic — e.g. training for our team" value={meet.topic} onChange={(e) => setMeet({ ...meet, topic: e.target.value })} />
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Input required type="date" value={meet.date} onChange={(e) => setMeet({ ...meet, date: e.target.value })} />
+                  <Input required type="time" value={meet.time} onChange={(e) => setMeet({ ...meet, time: e.target.value })} />
+                </div>
+                <Textarea rows={3} placeholder="Anything we should know?" value={meet.notes} onChange={(e) => setMeet({ ...meet, notes: e.target.value })} />
+                <Button type="submit" variant="gold" className="w-full h-11" disabled={sending}>
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Request this time"}
+                </Button>
+                <div className="flex flex-wrap gap-2 justify-center pt-2">
+                  <Button type="button" variant="outline" size="sm" onClick={copyShare}>
+                    {copied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
+                    Copy booking link
+                  </Button>
+                  <a href={`https://wa.me/?text=${encodeURIComponent(`Book a Bootskills meeting: ${shareUrl}`)}`} target="_blank" rel="noreferrer">
+                    <Button type="button" variant="outline" size="sm"><Share2 className="h-3.5 w-3.5 mr-1" /> WhatsApp</Button>
+                  </a>
+                  <a href={`mailto:?subject=${encodeURIComponent("Book a Bootskills meeting")}&body=${encodeURIComponent(`Pick a time here (no login):\n${shareUrl}`)}`}>
+                    <Button type="button" variant="outline" size="sm"><Mail className="h-3.5 w-3.5 mr-1" /> Email this link</Button>
+                  </a>
+                </div>
+              </form>
+            )}
+
+            <div className="flex flex-wrap justify-center gap-6 mt-10 text-sm text-muted-foreground">
+              <a className="inline-flex items-center gap-2 hover:text-foreground" href="mailto:info@bootskills.com"><Mail className="h-4 w-4 text-accent" /> info@bootskills.com</a>
+              <a className="inline-flex items-center gap-2 hover:text-foreground" href="tel:+250790706170"><Phone className="h-4 w-4 text-accent" /> +250 790 706 170</a>
+              <span className="inline-flex items-center gap-2"><Calendar className="h-4 w-4 text-accent" /> Kigali · online worldwide</span>
             </div>
           </div>
         </section>

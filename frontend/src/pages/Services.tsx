@@ -1,5 +1,6 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { PublicHero } from "@/components/layout/PublicHero";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,8 +8,6 @@ import { AuthAwareLink } from "@/components/AuthAwareLink";
 import { Code, Database, Wifi, Briefcase, BookOpen, Building2, CheckCircle, Users, Award, Zap, ArrowRight, Globe, Cpu, BarChart3 } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
-import heroImage from "@/assets/hero-training.webp";
-import heroImageMobile from "@/assets/hero-training-mobile.webp";
 import internshipImage from "@/assets/internship-work.webp";
 import internshipImageMobile from "@/assets/internship-work-mobile.webp";
 
@@ -190,44 +189,15 @@ const Services = () => {
       </SEOHead>
       <Header />
       <main className="pt-20">
-        {/* Hero */}
-        <section className="py-16 lg:py-24 bg-card relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10">
-            <img
-              src={heroImage}
-              srcSet={`${heroImageMobile} 600w, ${heroImage} 1280w`}
-              sizes="100vw"
-              alt=""
-              className="w-full h-full object-cover"
-              loading="eager"
-            />
-          </div>
-          <div className="container mx-auto px-4 lg:px-8 relative z-10 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <span className="inline-block px-4 py-1 bg-accent/20 text-accent text-sm font-medium rounded-full mb-4">
-                Our Services
-              </span>
-              <h1 className="font-heading text-3xl lg:text-5xl font-medium text-card-foreground mb-6">
-                Practical Courses, Programs & Project-Based Learning
-              </h1>
-              <p className="text-card-foreground/80 max-w-3xl mx-auto text-lg leading-relaxed">
-                Bootskills offers career-focused training across tech, business, creative, and leadership areas with programs,
-                real client projects, and local delivery from Kigali, Rwanda to East Africa.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4 mt-8">
-                <Link to="/explore">
-                  <Button variant="gold" size="lg">View Training Programs</Button>
-                </Link>
-                <Link to="/contact">
-                  <Button variant="outline" size="lg">Request Consultation</Button>
-                </Link>
-              </div>
-            </motion.div>
-          </div>
-        </section>
+        <PublicHero
+          eyebrow="What we do"
+          title="Train. Place. Build."
+          line="Courses, internships, and client work — from Kigali, for Africa and beyond."
+          actions={[
+            { to: "/explore", label: "Browse courses", gold: true },
+            { to: "/contact?book=1", label: "Book a consult" },
+          ]}
+        />
 
         {/* Training Services */}
         <section className="py-16 lg:py-20 bg-background">
@@ -238,14 +208,8 @@ const Services = () => {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <span className="text-accent text-sm font-medium uppercase tracking-wider">For Individuals</span>
-              <h2 className="font-heading text-2xl lg:text-3xl font-medium text-foreground mt-2 mb-4">
-                Training, Programs & Project Pathways
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Practical learning designed to make learners industry-ready through hands-on courses,
-                opportunity placements, and live project experience across multiple sectors.
-              </p>
+              <h2 className="font-heading text-2xl font-medium text-foreground mb-2">For you</h2>
+              <p className="text-muted-foreground max-w-xl mx-auto text-sm">Pick a path. We’ll keep it practical.</p>
             </motion.div>
             <div className="grid md:grid-cols-2 gap-8">
               {trainingServices.map((service, index) => (
@@ -267,7 +231,7 @@ const Services = () => {
                     </div>
                   </div>
                   <ul className="space-y-2 mb-4">
-                    {service.details.map((detail, i) => (
+                    {service.details.slice(0, 3).map((detail, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-card-foreground/80">
                         <CheckCircle className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                         {detail}
