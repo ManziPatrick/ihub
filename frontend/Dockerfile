@@ -22,8 +22,9 @@ RUN ln -s /usr/local/lib/node_modules/serve/build/main.js /usr/local/bin/serve
 COPY --from=build /app/frontend/dist ./dist
 COPY --from=build /app/frontend/generate-env-config.js ./generate-env-config.js
 COPY --from=build /app/frontend/serve.json ./serve.json
+COPY --from=build /app/frontend/seo-server.cjs ./seo-server.cjs
 ENV PORT=8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost:${PORT} || exit 1
 EXPOSE ${PORT}
-CMD node generate-env-config.js && exec serve -s dist -l tcp://0.0.0.0:${PORT} --config serve.json
+CMD node generate-env-config.js && exec node seo-server.cjs

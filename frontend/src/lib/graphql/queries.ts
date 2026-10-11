@@ -645,7 +645,9 @@ export const GET_COURSE_LITE = gql`
       instructor {
         id
         username
+        fullName
       }
+      updatedAt
       applicationQuestions {
         label
         type

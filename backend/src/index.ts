@@ -35,6 +35,7 @@ import ttsRoutes from './routes/TTSRoutes';
 import diagnosticsRoutes from './routes/DiagnosticsRoutes';
 import exportRoutes from './routes/ExportRoutes';
 import { Course } from './models/Course';
+import { loadPublishedCourse, loadPublishedCourses, courseSeoHtml, courseJsonLd, llmsTxt } from './services/course-seo.service';
 import Blog from './models/Blog';
 import { User } from './models/User';
 import { authMiddleware } from './middleware/auth';
@@ -378,7 +379,7 @@ const startServer = async () => {
         const courses = await Course.find({
           isDeleted: { $ne: true },
           status: { $in: ['published'] }
-        }).select('title description updatedAt').lean();
+        }).select('title description thumbnail updatedAt').lean();
 
         const baseUrl = process.env.FRONTEND_URL || 'https://bootskills.com';
         const urls = courses.map((c: any) => `
@@ -388,7 +389,7 @@ const startServer = async () => {
       <changefreq>weekly</changefreq>
       <priority>0.9</priority>
       <image:image>
-        <image:loc>${baseUrl}/og-course.jpg</image:loc>
+        <image:loc>${(c.thumbnail && String(c.thumbnail).startsWith('http')) ? c.thumbnail : (c.thumbnail ? baseUrl + (String(c.thumbnail).startsWith('/') ? '' : '/') + c.thumbnail : baseUrl + '/og-image.png')}</image:loc>
         <image:title>${c.title?.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</image:title>
       </image:image>
     </url>`).join('');
@@ -441,27 +442,51 @@ const startServer = async () => {
     // AI crawler / GEO optimized endpoint — returns course listing as structured JSON
     app.get('/api/seo/courses', async (_req, res) => {
       try {
-        const courses = await Course.find({
-          isDeleted: { $ne: true },
-          status: { $in: ['published'] }
-        }).select('title description price level category school instructor createdAt').populate('instructor', 'username').limit(100).lean();
-
-        const baseUrl = process.env.FRONTEND_URL || 'https://bootskills.com';
-        const data = (courses as any[]).map(c => ({
-          '@type': 'Course',
-          name: c.title,
-          description: c.description?.substring(0, 300),
-          url: `${baseUrl}/courses/${c._id}`,
-          provider: { '@type': 'Organization', name: c.school || 'Bootskills', sameAs: baseUrl },
-          offers: { '@type': 'Offer', price: c.price || 0, priceCurrency: 'USD', availability: 'https://schema.org/InStock' },
-          educationalLevel: c.level || 'Beginner',
-          category: c.category
-        }));
-
+        const listed = await loadPublishedCourses(200);
+        const data = listed.map((c) => courseJsonLd(c)['@graph'][0]);
+        res.setHeader('Access-Control-Allow-Origin', '*');
         res.json({ '@context': 'https://schema.org', '@graph': data });
       } catch (err) {
         console.error('❌ Failed to fetch SEO courses:', err);
         res.status(500).json({ error: 'Failed to fetch courses' });
+      }
+    });
+
+    app.get('/api/seo/courses/:id', async (req, res) => {
+      try {
+        const course = await loadPublishedCourse(req.params.id);
+        if (!course) return res.status(404).json({ error: 'Course not found' });
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.json(courseJsonLd(course));
+      } catch (err) {
+        console.error('❌ Failed to fetch SEO course:', err);
+        res.status(500).json({ error: 'Failed to fetch course' });
+      }
+    });
+
+    app.get('/seo/course/:id', async (req, res) => {
+      try {
+        const course = await loadPublishedCourse(req.params.id);
+        if (!course) return res.status(404).type('html').send('<!doctype html><title>Course not found</title><h1>Course not found</h1>');
+        res.removeHeader('Content-Security-Policy');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=300');
+        res.send(courseSeoHtml(course));
+      } catch (err) {
+        console.error('❌ Failed to render SEO course HTML:', err);
+        res.status(500).type('html').send('<!doctype html><title>Error</title><h1>Could not load course</h1>');
+      }
+    });
+
+    app.get('/llms.txt', async (_req, res) => {
+      try {
+        const listed = await loadPublishedCourses(200);
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.send(llmsTxt(listed));
+      } catch (err) {
+        console.error('❌ Failed to generate llms.txt:', err);
+        res.status(500).send('Failed to generate llms.txt');
       }
     });
 
