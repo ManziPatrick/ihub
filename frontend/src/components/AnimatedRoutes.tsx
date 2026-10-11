@@ -23,6 +23,7 @@ const Team = lazy(() => import("@/pages/Team"));
 const CompanyProfile = lazy(() => import("@/pages/CompanyProfile"));
 const CompanyProfileFR = lazy(() => import("@/pages/CompanyProfileFR"));
 const Contact = lazy(() => import("@/pages/Contact"));
+const PlatformPolicy = lazy(() => import("@/pages/PlatformPolicy"));
 const InternshipDetail = lazy(() => import("@/pages/InternshipDetail"));
 const Events = lazy(() => import("@/pages/Events"));
 const EventDetail = lazy(() => import("@/pages/EventDetail"));
@@ -183,6 +184,9 @@ export function AnimatedRoutes() {
           <Route path="/blog/:slug" element={<PageTransition><BlogDetail /></PageTransition>} />
           <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
           <Route path="/book" element={<Navigate to="/contact?book=1" replace />} />
+          <Route path="/policy" element={<PageTransition><PlatformPolicy /></PageTransition>} />
+          <Route path="/privacy" element={<Navigate to="/policy" replace />} />
+          <Route path="/terms" element={<Navigate to="/policy" replace />} />
           <Route path="/events" element={<PageTransition><Events /></PageTransition>} />
           <Route path="/events/:id" element={<PageTransition><EventDetail /></PageTransition>} />
           <Route path="/auth" element={<Auth />} />
