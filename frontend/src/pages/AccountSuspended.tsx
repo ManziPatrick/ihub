@@ -13,7 +13,7 @@ const AccountSuspended = () => {
   const email = (location.state as { email?: string })?.email || "";
 
   const supportEmail = t("portal.supportEmail") || "support@bootskills.com";
-  const supportPhone = t("portal.supportPhone") || "+250 790 706 170";
+  const supportPhone = t("portal.supportPhone") || "+250 784 086 021";
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
@@ -95,6 +95,9 @@ const AccountSuspended = () => {
                 <div className="flex items-center gap-2.5 text-muted-foreground">
                   <Phone className="w-4 h-4 shrink-0 text-primary" />
                   <a href={`tel:${supportPhone.replace(/[^+\d]/g, "")}`} className="hover:text-foreground transition-colors">{supportPhone}</a>
+                </div>
+                <div className="flex items-center gap-2.5 text-muted-foreground">
+                  <a href="https://wa.me/250784086021" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">WhatsApp {supportPhone}</a>
                 </div>
               </div>
               <Button variant="outline" className="w-full border-primary/20" asChild>

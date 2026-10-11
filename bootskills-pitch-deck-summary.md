@@ -1,7 +1,7 @@
 # Bootskills — Investor Pitch Summary
 
 > **Kigali, Rwanda | Serving All of Africa**  
-> info@bootskills.com | +250 790 706 170
+> info@bootskills.com | +250 784 086 021 (WhatsApp)
 
 ---
 

@@ -368,7 +368,7 @@ Dedicated kids and junior programs prepare the next generation:
 | **Client Portal** | https://bootskills.com/portal/client |
 | **Contact** | https://bootskills.com/contact |
 | **Email** | info@bootskills.com |
-| **Phone** | +250 790 706 170 |
+| **Phone / WhatsApp** | +250 784 086 021 |
 | **Location** | Kigali, Rwanda |
 
 ---

@@ -49,7 +49,7 @@ export const organizationLd: OrganizationLD = {
   ],
   contactPoint: {
     "@type": "ContactPoint",
-    telephone: "+250-790-706-170",
+    telephone: "+250-784-086-021",
     contactType: "customer support",
     email: "info@bootskills.com",
   },

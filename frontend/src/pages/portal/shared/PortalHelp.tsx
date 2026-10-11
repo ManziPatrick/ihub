@@ -195,8 +195,9 @@ export default function PortalHelp() {
                       <Phone className="w-5 h-5 text-accent" />
                     </div>
                     <div>
-                      <p className="text-sm text-card-foreground/60">Phone</p>
-                      <p className="text-card-foreground">+250 790 706 170</p>
+                      <p className="text-sm text-card-foreground/60">Phone / WhatsApp</p>
+                      <a href="tel:+250784086021" className="text-card-foreground hover:underline">+250 784 086 021</a>
+                      <a href="https://wa.me/250784086021" target="_blank" rel="noreferrer" className="text-sm text-accent hover:underline block">Open WhatsApp</a>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
