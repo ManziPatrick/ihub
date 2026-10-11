@@ -34,6 +34,7 @@ import certificateRoutes from './routes/CertificateRoutes';
 import ttsRoutes from './routes/TTSRoutes';
 import diagnosticsRoutes from './routes/DiagnosticsRoutes';
 import exportRoutes from './routes/ExportRoutes';
+import publicContactRoutes from './routes/PublicContactRoutes';
 import { Course } from './models/Course';
 import { loadPublishedCourse, loadPublishedCourses, courseSeoHtml, courseJsonLd, llmsTxt } from './services/course-seo.service';
 import Blog from './models/Blog';
@@ -498,6 +499,7 @@ const startServer = async () => {
     app.use('/api/blog-categories', blogCategoryRoutes);
     app.use('/api/upload', uploadRoutes);
     app.use('/api/export', exportRoutes);
+    app.use('/api/public', publicContactRoutes);
 
     // =============================
     // COURSE DOCUMENT TEMPLATE DOWNLOAD

@@ -54,6 +54,7 @@ interface EmailOptions {
   subject: string;
   html: string;
   text?: string;
+  replyTo?: string;
 }
 
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
@@ -82,6 +83,7 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
     await transporter.sendMail({
       from: config.from,
       to: options.to,
+      replyTo: options.replyTo,
       subject: options.subject,
       html: options.html,
       text: options.text || options.html.replace(/<[^>]*>/g, '')

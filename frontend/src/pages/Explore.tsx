@@ -280,11 +280,11 @@ const Explore = () => {
               <span className="inline-block px-4 py-1 bg-accent/20 text-accent text-sm font-medium rounded-full mb-3">
                 {t("explore.title")}
               </span>
-              <h1 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mb-3">
-                {t("explore.heroTitle")}
+              <h1 className="font-heading text-2xl lg:text-3xl font-medium text-card-foreground mb-2">
+                Find something to learn
               </h1>
-              <p className="text-card-foreground/80 max-w-2xl mx-auto text-base mb-5">
-                {t("explore.heroDesc")}
+              <p className="text-card-foreground/70 max-w-lg mx-auto text-sm mb-5">
+                Free and paid. Titles and syllabi are public — pick what fits.
               </p>
 
               {/* Tab Switcher */}

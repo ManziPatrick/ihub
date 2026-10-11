@@ -128,14 +128,13 @@ const Partners = () => {
               animate={{ opacity: 1, y: 0 }}
             >
               <span className="inline-block px-4 py-1 bg-accent/20 text-accent text-sm font-medium rounded-full mb-4">
-                Partnerships
+                Together
               </span>
-              <h1 className="font-heading text-3xl lg:text-5xl font-medium text-card-foreground mb-6">
-                Partners & Clients
+              <h1 className="font-heading text-3xl lg:text-4xl font-medium text-card-foreground mb-3">
+                Let’s build with you
               </h1>
-              <p className="text-card-foreground/80 max-w-2xl mx-auto text-lg">
-                Collaboration for impact. We work with institutions, businesses, and organizations
-                to deliver quality training and technology solutions that drive Africa's digital transformation.
+              <p className="text-card-foreground/80 max-w-lg mx-auto">
+                Schools, companies, NGOs, government — one honest conversation to start.
               </p>
               <div className="flex flex-wrap justify-center gap-4 mt-8">
                 <Link to="/contact">
@@ -334,17 +333,12 @@ const Partners = () => {
               viewport={{ once: true }}
               className="max-w-2xl mx-auto"
             >
-              <h2 className="font-heading text-2xl lg:text-3xl font-medium text-foreground mb-4">
-                Ready to Partner With Us?
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Join us in building Africa's digital future. Whether you're looking for talent,
-                training, or technology solutions, we'd love to explore how we can work together.
-              </p>
+              <h2 className="font-heading text-2xl font-medium text-foreground mb-3">Want in?</h2>
+              <p className="text-muted-foreground mb-6">One call. No pitch deck required.</p>
               <div className="flex flex-wrap justify-center gap-4">
-                <Link to="/contact">
+                <Link to="/contact?book=1">
                   <Button variant="gold" size="lg">
-                    Start a Conversation <ArrowRight className="w-4 h-4 ml-2" />
+                    Book a meeting <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </Link>
                 <Link to="/projects">

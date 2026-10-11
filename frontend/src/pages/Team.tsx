@@ -97,11 +97,11 @@ export default function Team() {
                                         </span>
                                     </motion.div>
 
-                                    <h1 className="text-4xl lg:text-5xl font-heading font-bold mb-4 bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 bg-clip-text text-transparent">
-                                        {t("team.meetInnovators")}
+                                    <h1 className="text-3xl lg:text-4xl font-heading font-medium mb-3">
+                                        The humans behind it
                                     </h1>
-                                    <p className="text-base lg:text-lg text-muted-foreground leading-relaxed">
-                                        {t("team.heroDesc")}
+                                    <p className="text-muted-foreground">
+                                        Small team. Real names. Happy to hop on a call.
                                     </p>
                                 </motion.div>
                             </div>
