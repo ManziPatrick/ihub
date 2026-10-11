@@ -265,7 +265,7 @@ export function ViewReceiptDialog({
                     <Phone className="w-3.5 h-3.5" />
                     <span className="text-[10px] font-black uppercase tracking-tighter">Contact</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground font-medium">+250 790 706 170</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">+250 784 086 021</p>
                 </div>
               </div>
 

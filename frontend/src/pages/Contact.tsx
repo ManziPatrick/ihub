@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
 import { organizationLd, webPageLd, breadcrumbListLd } from "@/lib/jsonld";
 import { getApiBaseUrl } from "@/lib/env";
+import { SUPPORT_PHONE_DISPLAY, SUPPORT_PHONE_TEL, SUPPORT_WHATSAPP_URL } from "@/lib/publicContact";
 
 const Contact = () => {
   const [params, setParams] = useSearchParams();
@@ -180,7 +181,7 @@ const Contact = () => {
                     {copied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
                     Copy booking link
                   </Button>
-                  <a href={`https://wa.me/?text=${encodeURIComponent(`Book a Bootskills meeting: ${shareUrl}`)}`} target="_blank" rel="noreferrer">
+                  <a href={`${SUPPORT_WHATSAPP_URL}?text=${encodeURIComponent(`Book a Bootskills meeting: ${shareUrl}`)}`} target="_blank" rel="noreferrer">
                     <Button type="button" variant="outline" size="sm"><Share2 className="h-3.5 w-3.5 mr-1" /> WhatsApp</Button>
                   </a>
                   <a href={`mailto:?subject=${encodeURIComponent("Book a Bootskills meeting")}&body=${encodeURIComponent(`Pick a time here (no login):\n${shareUrl}`)}`}>
@@ -192,7 +193,8 @@ const Contact = () => {
 
             <div className="flex flex-wrap justify-center gap-6 mt-10 text-sm text-muted-foreground">
               <a className="inline-flex items-center gap-2 hover:text-foreground" href="mailto:info@bootskills.com"><Mail className="h-4 w-4 text-accent" /> info@bootskills.com</a>
-              <a className="inline-flex items-center gap-2 hover:text-foreground" href="tel:+250790706170"><Phone className="h-4 w-4 text-accent" /> +250 790 706 170</a>
+              <a className="inline-flex items-center gap-2 hover:text-foreground" href={`tel:${SUPPORT_PHONE_TEL}`}><Phone className="h-4 w-4 text-accent" /> {SUPPORT_PHONE_DISPLAY}</a>
+              <a className="inline-flex items-center gap-2 hover:text-foreground" href={SUPPORT_WHATSAPP_URL} target="_blank" rel="noreferrer">WhatsApp {SUPPORT_PHONE_DISPLAY}</a>
               <span className="inline-flex items-center gap-2"><Calendar className="h-4 w-4 text-accent" /> Kigali · online worldwide</span>
             </div>
           </div>

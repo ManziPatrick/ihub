@@ -18,7 +18,8 @@ const sections = [
           internships, client projects, and business services for people in Rwanda, across Africa, and worldwide.
         </p>
         <p>
-          Questions: <a href="mailto:info@bootskills.com">info@bootskills.com</a> or{" "}
+          Questions: <a href="mailto:info@bootskills.com">info@bootskills.com</a>, WhatsApp{" "}
+          <a href="https://wa.me/250784086021">+250 784 086 021</a>, or{" "}
           <Link to="/contact">contact us</Link>.
         </p>
       </>

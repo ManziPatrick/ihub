@@ -31,7 +31,7 @@
     },
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": "+250-XXX-XXX-XXX",
+      "telephone": "+250-784-086-021",
       "contactType": "customer service",
       "availableLanguage": ["English", "French", "Kinyarwanda"]
     },
@@ -131,7 +131,7 @@
     "name": "Bootskills",
     "image": "https://bootskills.com/logo.svg",
     "url": "https://bootskills.com",
-    "telephone": "+250-XXX-XXX-XXX",
+    "telephone": "+250-784-086-021",
     "priceRange": "$$",
     "address": {
       "@type": "PostalAddress",

@@ -1204,7 +1204,7 @@ export function PaymentForm({
                   </div>
                   <span className="text-xs font-bold">MTN MoMo</span>
                 </div>
-                <span className="font-mono text-xs font-bold select-all">0790706170</span>
+                <span className="font-mono text-xs font-bold select-all">0784086021</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-background rounded-xl border border-border/50">
                 <div className="flex items-center gap-2">

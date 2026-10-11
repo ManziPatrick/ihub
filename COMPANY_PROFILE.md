@@ -224,7 +224,7 @@ Learners gain marketable skills leading to employment, entrepreneurship support 
 |----------|---------|
 | **Website** | [bootskills.com](https://bootskills.com) |
 | **Email** | info@bootskills.com |
-| **Phone** | +250 790 706 170 |
+| **Phone / WhatsApp** | +250 784 086 021 |
 | **Location** | Kigali, Rwanda |
 | **Hours** | Monday – Friday, 8:00 AM – 5:00 PM |
 
