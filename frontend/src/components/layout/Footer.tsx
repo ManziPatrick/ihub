@@ -28,6 +28,9 @@ export function Footer() {
             <Link to="/contact" className="hover:text-foreground transition-colors">
               {t("footer.accessibility")}
             </Link>
+            <Link to="/policy" className="hover:text-foreground transition-colors">
+              Policy
+            </Link>
           </div>
         </div>
 

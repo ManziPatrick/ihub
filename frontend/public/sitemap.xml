@@ -104,6 +104,17 @@
   </url>
 
   <url>
+    <loc>https://bootskills.com/policy</loc>
+    <lastmod>2026-10-11</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://bootskills.com/policy" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://bootskills.com/policy" />
+    <xhtml:link rel="alternate" hreflang="rw" href="https://bootskills.com/policy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://bootskills.com/policy" />
+  </url>
+
+  <url>
     <loc>https://bootskills.com/blog</loc>
     <lastmod>2026-07-05</lastmod>
     <changefreq>weekly</changefreq>
