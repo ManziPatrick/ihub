@@ -120,3 +120,6 @@ Disallow: /
 Sitemap: https://bootskills.com/sitemap.xml
 Sitemap: https://bootskills.com/course-sitemap.xml
 Sitemap: https://bootskills.com/blog-sitemap.xml
+
+# Machine-readable course list for AI assistants
+# https://bootskills.com/llms.txt

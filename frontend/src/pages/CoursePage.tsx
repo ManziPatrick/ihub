@@ -10,7 +10,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SEOHead } from "@/components/SEOHead";
-import { CheckCircle, Clock, BookOpen, User, PlayCircle, Lock, Award, ShoppingCart, ArrowRight, XCircle, ChevronDown, ChevronUp, FileText, Youtube, Loader2, ScrollText } from "lucide-react";
+import { courseLd, breadcrumbListLd } from "@/lib/jsonld";
+import { CheckCircle, Clock, BookOpen, User, PlayCircle, Lock, Award, ShoppingCart, ArrowRight, XCircle, ChevronDown, FileText, Youtube, Loader2, ScrollText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
 import { ApplyCourseDialog } from "@/components/portal/dialogs";
@@ -21,8 +22,6 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 
-const MODULES_PER_PAGE = 5;
-
 export default function CoursePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -30,7 +29,6 @@ export default function CoursePage() {
   const { toast } = useToast();
   const { addToCart, cartItems } = useCart();
   const [applyCourse, setApplyCourse] = useState<any>(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
   const [loadingLesson, setLoadingLesson] = useState<string | null>(null);
   const [lessonCache, setLessonCache] = useState<Record<string, any>>({});
@@ -159,62 +157,64 @@ export default function CoursePage() {
   const statusLower = course.status?.toLowerCase();
   const isOpen = !course.status || statusLower === "published" || statusLower === "active" || statusLower === "open";
 
-  // Module pagination
   const modules = course.modules || [];
-  const totalPages = Math.ceil(modules.length / MODULES_PER_PAGE);
-  const paginatedModules = modules.slice((currentPage - 1) * MODULES_PER_PAGE, currentPage * MODULES_PER_PAGE);
-
   const totalLessons = modules.reduce((sum: number, m: any) => sum + (m.lessons?.length || 0), 0);
-
-  // Compute starting lesson index for free preview tracking (first 2 lessons are free)
-  const lessonsBeforeCurrentPage = modules.slice(0, (currentPage - 1) * MODULES_PER_PAGE)
-    .reduce((sum: number, m: any) => sum + (m.lessons?.length || 0), 0);
-  let globalLessonIndex = lessonsBeforeCurrentPage;
+  const effectivePrice = course.discountPrice != null ? course.discountPrice : course.price;
+  const isFree = !effectivePrice;
+  const plainDescription = stripHtml(course?.description)?.substring(0, 160) || "Explore this course from Bootskills. Practical, project-based training in Kigali, Rwanda.";
+  const courseUrl = course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore";
+  const ogImage = course?.thumbnail?.startsWith("http")
+    ? course.thumbnail
+    : course?.thumbnail
+      ? `https://bootskills.com${course.thumbnail.startsWith("/") ? "" : "/"}${course.thumbnail}`
+      : undefined;
+  let globalLessonIndex = 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
         title={course?.title || "Course Details"}
-        description={stripHtml(course?.description)?.substring(0, 160) || "Explore this course from Bootskills. Practical, project-based training in Kigali, Rwanda."}
-        canonicalUrl={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"}
-        ogImage={course?.thumbnail || undefined}
-        keywords={`${course?.category || 'course'}, ${course?.title || 'training'}, ${course?.level || 'beginner'} course, online learning, Kigali, Rwanda, tech training, Bootskills`}
-        author={course?.instructor?.username || 'Bootskills'}
+        description={plainDescription}
+        canonicalUrl={courseUrl}
+        ogImage={ogImage}
+        ogImageAlt={`${course?.title} — Bootskills course in Kigali, Rwanda`}
+        keywords={`${course?.category || 'course'}, ${course?.title || 'training'}, ${course?.level || 'beginner'} course, ${isFree ? 'free course' : 'online course'}, syllabus, Kigali, Rwanda, Africa, e-learning, Bootskills`}
+        author={course?.instructor?.fullName || course?.instructor?.username || 'Bootskills'}
+        updatedTime={course?.updatedAt}
       >
-        <link rel="alternate" hrefLang="en" href={course?.id ? `https://bootskills.com/courses/${course.id}` : "https://bootskills.com/explore"} />
+        <link rel="alternate" hrefLang="en" href={courseUrl} />
       </SEOHead>
 
-      {/* JSON-LD structured data for search engines & AI crawlers */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Course',
-            name: course?.title,
-            description: stripHtml(course?.description)?.substring(0, 300) || course?.description?.substring(0, 300),
-            url: course?.id ? `https://bootskills.com/courses/${course.id}` : 'https://bootskills.com/explore',
-            image: course?.thumbnail,
-            provider: {
-              '@type': 'Organization',
-              name: course?.school || 'Bootskills Academy',
-              sameAs: 'https://bootskills.com'
-            },
-            offers: {
-              '@type': 'Offer',
-              price: course?.price || 0,
-              priceCurrency: 'USD',
-              availability: course?.price === 0 ? 'https://schema.org/Free' : 'https://schema.org/InStock',
-              url: course?.id ? `https://bootskills.com/courses/${course.id}` : 'https://bootskills.com/explore'
-            },
-            educationalLevel: course?.level || 'Beginner',
-            author: {
-              '@type': 'Person',
-              name: course?.instructor?.username || 'Bootskills Instructor'
-            },
-            inLanguage: 'en-RW',
-            coursePrerequisites: course?.level === 'Advanced' ? 'Intermediate level knowledge recommended' : 'No prerequisites required'
-          })
+            "@graph": [
+              courseLd(
+                course.title,
+                stripHtml(course.description || "") || course.title,
+                courseUrl,
+                {
+                  image: ogImage,
+                  price: effectivePrice || 0,
+                  isFree,
+                  level: course.level,
+                  instructorName: course.instructor?.fullName || course.instructor?.username,
+                  school: course.school,
+                  category: course.category,
+                  syllabus: modules.map((m: any) => ({
+                    name: m.title,
+                    description: (m.lessons || []).map((l: any) => l.title).join(", "),
+                  })),
+                }
+              ),
+              breadcrumbListLd([
+                { name: "Home", item: "/" },
+                { name: "Courses", item: "/explore" },
+                { name: course.title, item: `/courses/${course.id}` },
+              ]),
+            ],
+          }),
         }}
       />
 
@@ -223,8 +223,7 @@ export default function CoursePage() {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="grid lg:grid-cols-3 gap-6 lg:gap-8 w-full min-w-0">
 
-            {/* Left Rail: Course Info */}
-            <div className="lg:col-span-2 space-y-8 w-full min-w-0">
+            <article className="lg:col-span-2 space-y-8 w-full min-w-0">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -234,6 +233,11 @@ export default function CoursePage() {
                   {course.category}
                 </Badge>
                 <h1 className="text-4xl font-bold font-heading">{course.title}</h1>
+                <p className="text-sm font-medium text-green-700">
+                  {isFree
+                    ? "Free course — title, description, and syllabus are public so learners and AI assistants can recommend it."
+                    : "Paid course — the description and full syllabus below are public so people and AI can recommend it. Videos unlock after enrollment."}
+                </p>
 <div className="text-xl text-muted-foreground leading-relaxed prose prose-sm max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>{normalizeContent(course.description || "")}</ReactMarkdown>
                 </div>
@@ -254,34 +258,35 @@ export default function CoursePage() {
                 </div>
               </motion.div>
 
-              {/* Course Curriculum with Pagination & Lazy Loading */}
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">Course Curriculum</h2>
-                  {totalPages > 1 && (
-                    <span className="text-sm text-muted-foreground">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                  )}
+              <div className="space-y-6" id="syllabus">
+                <div>
+                  <h2 className="text-2xl font-bold">Course syllabus</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Full outline of {modules.length} modules and {totalLessons} lessons
+                    {isFree ? " — available to browse on this page." : ". Lesson videos unlock after enrollment; titles are public."}
+                  </p>
                 </div>
-                <div className="space-y-4">
+                <ol className="space-y-4">
                   <AnimatePresence mode="wait">
-                    {paginatedModules.map((module: any, idx: number) => (
-                      <motion.div
+                    {modules.map((module: any, idx: number) => (
+                      <motion.li
                         key={module.id || module._id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2, delay: idx * 0.05 }}
+                        transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.4) }}
                       >
                         <Card className="border-border/50 shadow-sm overflow-hidden">
                           <CardHeader className="bg-slate-50/50 py-3">
                             <CardTitle className="text-sm font-bold flex items-center gap-2">
                               <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-[10px]">
-                                {(currentPage - 1) * MODULES_PER_PAGE + idx + 1}
+                                {idx + 1}
                               </span>
                               {module.title}
                             </CardTitle>
+                            {module.description && (
+                              <p className="text-xs text-muted-foreground pt-1">{stripHtml(module.description).slice(0, 240)}</p>
+                            )}
                           </CardHeader>
                           <CardContent className="p-0">
                             {module.lessons?.map((lesson: any) => {
@@ -305,7 +310,7 @@ export default function CoursePage() {
                                       ) : (
                                         <Lock className="w-4 h-4 text-gray-300 shrink-0" />
                                       )}
-                                      <span className={`text-sm truncate ${!isEnrolled && !isFreePreview && 'text-muted-foreground'}`}>
+                                      <span className={`text-sm ${!isEnrolled && !isFreePreview && 'text-muted-foreground'}`}>
                                         {lesson.title}
                                       </span>
                                       {isFreePreview && (
@@ -427,51 +432,12 @@ export default function CoursePage() {
                             })}
                           </CardContent>
                         </Card>
-                      </motion.div>
+                      </motion.li>
                     ))}
                   </AnimatePresence>
-                </div>
-
-                {/* Module Pagination Controls */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-3 pt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={currentPage <= 1}
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      className="text-xs"
-                    >
-                      ← Previous
-                    </Button>
-                    <div className="flex items-center gap-1.5">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`w-7 h-7 rounded-full text-xs font-medium transition-all ${
-                            page === currentPage
-                              ? 'bg-accent text-white shadow-sm'
-                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      ))}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={currentPage >= totalPages}
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      className="text-xs"
-                    >
-                      Next →
-                    </Button>
-                  </div>
-                )}
+                </ol>
               </div>
-            </div>
+            </article>
 
             {/* Right Rail: Enrollment Sidebar */}
             <div className="lg:col-span-1 w-full">
@@ -479,7 +445,7 @@ export default function CoursePage() {
                 <Card className="border-0 shadow-xl bg-card overflow-hidden ring-1 ring-border/50">
                   <div className="aspect-video relative overflow-hidden">
                     <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
-                    {!isEnrolled && (
+                    {!isEnrolled && !isFree && (
                       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
                         <Lock className="w-12 h-12 text-white/50" />
                       </div>

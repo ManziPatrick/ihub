@@ -108,7 +108,7 @@ export function breadcrumbListLd(items: BreadcrumbItem[]): BreadcrumbListLD {
       "@type": "ListItem",
       position: index + 1,
       name: item.name,
-      item: `${BASE_URL}${item.item}`,
+      item: item.item.startsWith("http") ? item.item : `${BASE_URL}${item.item.startsWith("/") ? "" : "/"}${item.item}`,
     })),
   };
 }
@@ -210,11 +210,15 @@ export interface CourseLD {
   description: string;
   url: string;
   image?: string;
-  provider: { "@type": "Organization"; name: string; sameAs: string };
+  provider: { "@type": "Organization"; name: string; sameAs: string; address?: { "@type": "PostalAddress"; addressLocality: string; addressCountry: string } };
   offers: { "@type": "Offer"; price: number; priceCurrency: string; availability: string; url: string };
   educationalLevel?: string;
   author?: { "@type": "Person"; name: string };
   inLanguage?: string;
+  isAccessibleForFree?: boolean;
+  teaches?: string;
+  hasCourseInstance?: { "@type": "CourseInstance"; courseMode: string[]; location: { "@type": "Place"; name: string } };
+  syllabusSections?: Array<{ "@type": "Syllabus"; name: string; position: number; description?: string }>;
 }
 
 export function courseLd(
@@ -229,8 +233,12 @@ export function courseLd(
     level?: string;
     instructorName?: string;
     school?: string;
+    isFree?: boolean;
+    category?: string;
+    syllabus?: Array<{ name: string; description?: string }>;
   }
 ): CourseLD {
+  const isFree = options.isFree ?? options.price === 0;
   return {
     "@context": "https://schema.org",
     "@type": "Course",
@@ -242,12 +250,13 @@ export function courseLd(
       "@type": "Organization",
       name: options.providerName || options.school || "Bootskills Academy",
       sameAs: BASE_URL,
+      address: { "@type": "PostalAddress", addressLocality: "Kigali", addressCountry: "RW" },
     },
     offers: {
       "@type": "Offer",
       price: options.price ?? 0,
       priceCurrency: options.priceCurrency || "USD",
-      availability: options.price === 0 ? "https://schema.org/Free" : "https://schema.org/InStock",
+      availability: isFree ? "https://schema.org/Free" : "https://schema.org/InStock",
       url,
     },
     educationalLevel: options.level || "Beginner",
@@ -256,5 +265,18 @@ export function courseLd(
       name: options.instructorName || "Bootskills Instructor",
     },
     inLanguage: "en-RW",
+    isAccessibleForFree: isFree,
+    teaches: options.category,
+    hasCourseInstance: {
+      "@type": "CourseInstance",
+      courseMode: ["online", "distance learning"],
+      location: { "@type": "Place", name: "Kigali, Rwanda" },
+    },
+    syllabusSections: (options.syllabus || []).map((section, index) => ({
+      "@type": "Syllabus",
+      position: index + 1,
+      name: section.name,
+      description: section.description,
+    })),
   };
 }
