@@ -1,7 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Linkedin, Mail, Github, Twitter } from "lucide-react";
+import { Linkedin, Mail, Github, Twitter, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { PageTransition } from "@/components/PageTransition";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -29,6 +33,17 @@ export default function Team() {
     const { t } = useTranslation();
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [loading, setLoading] = useState(true);
+    const [sending, setSending] = useState(false);
+    const [form, setForm] = useState({
+        name: "",
+        email: "",
+        phone: "",
+        city: "",
+        wantedRole: "volunteer",
+        skills: "",
+        about: "",
+        linkedin: "",
+    });
 
     useEffect(() => {
         const fetchTeam = async () => {
@@ -36,7 +51,17 @@ export default function Team() {
                 const response = await fetch(`${API_BASE_URL}/api/team`);
                 if (response.ok) {
                     const data = await response.json();
-                    setTeamMembers(data);
+                    const list = Array.isArray(data) ? data : data.members || [];
+                    setTeamMembers(
+                        list.map((m: any) => ({
+                            ...m,
+                            socialLinks: m.socialLinks || {
+                                linkedin: m.linkedin,
+                                twitter: m.twitter,
+                                github: m.github,
+                            },
+                        }))
+                    );
                 }
             } catch (error) {
                 console.error("Error fetching team:", error);
@@ -47,6 +72,26 @@ export default function Team() {
 
         fetchTeam();
     }, []);
+
+    const apply = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSending(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/public/volunteer`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(form),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || "Could not send.");
+            toast.success("Application sent. We will email you if a super admin approves it.");
+            setForm({ name: "", email: "", phone: "", city: "", wantedRole: "volunteer", skills: "", about: "", linkedin: "" });
+        } catch (err: any) {
+            toast.error(err.message || "Could not send. Email info@bootskills.com.");
+        } finally {
+            setSending(false);
+        }
+    };
 
     return (
         <PageTransition>
@@ -101,7 +146,7 @@ export default function Team() {
                                         The humans behind it
                                     </h1>
                                     <p className="text-muted-foreground">
-                                        Small team. Real names. Happy to hop on a call.
+                                        Small team. Real names. You can volunteer and, if a super admin approves, get a trainer or admin login.
                                     </p>
                                 </motion.div>
                             </div>
@@ -231,6 +276,40 @@ export default function Team() {
                                         ))}
                                     </div>
                                 )}
+                            </div>
+                        </section>
+
+                        <section id="volunteer" className="pb-20">
+                            <div className="container mx-auto px-4 max-w-2xl">
+                                <h2 className="font-heading text-xl font-semibold text-center mb-2">Join as a volunteer</h2>
+                                <p className="text-sm text-muted-foreground text-center mb-6">
+                                    Apply here. Super admin reviews, then can make you a trainer or admin, public on this page or private.
+                                </p>
+                                <form onSubmit={apply} className="bg-card rounded-2xl border border-border/40 p-6 space-y-3 shadow-card">
+                                    <div className="grid sm:grid-cols-2 gap-3">
+                                        <Input required placeholder="Your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                                        <Input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                                    </div>
+                                    <div className="grid sm:grid-cols-2 gap-3">
+                                        <Input placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                                        <Input placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+                                    </div>
+                                    <select
+                                        className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                                        value={form.wantedRole}
+                                        onChange={(e) => setForm({ ...form, wantedRole: e.target.value })}
+                                    >
+                                        <option value="volunteer">Volunteer (trainer after approval)</option>
+                                        <option value="trainer">Trainer</option>
+                                        <option value="admin">Admin (super admin still decides)</option>
+                                    </select>
+                                    <Input placeholder="Skills (teaching, video, support…)" value={form.skills} onChange={(e) => setForm({ ...form, skills: e.target.value })} />
+                                    <Input placeholder="LinkedIn (optional)" value={form.linkedin} onChange={(e) => setForm({ ...form, linkedin: e.target.value })} />
+                                    <Textarea required rows={4} placeholder="Why do you want to help Bootskills?" value={form.about} onChange={(e) => setForm({ ...form, about: e.target.value })} />
+                                    <Button type="submit" variant="gold" className="w-full" disabled={sending}>
+                                        {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send volunteer application"}
+                                    </Button>
+                                </form>
                             </div>
                         </section>
                     </div>

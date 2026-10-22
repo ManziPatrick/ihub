@@ -988,6 +988,7 @@ export const typeDefs = `#graphql
     hello: String
     users(page: Int, limit: Int, createdBy: ID, role: String, roleIn: [String], sortBy: String): UserResponse
     trainers(page: Int, limit: Int, search: String): UserResponse
+    volunteerApplications(status: String, page: Int, limit: Int): VolunteerApplicationResponse
     trainerPublicProfile(id: ID!): User
     conversations: [Conversation]
     messages(conversationId: ID!): [Message]
@@ -1265,6 +1266,35 @@ export const typeDefs = `#graphql
     secret: String!
   }
 
+  type VolunteerApplication {
+    id: ID!
+    name: String!
+    email: String!
+    phone: String
+    city: String
+    wantedRole: String
+    skills: String
+    about: String
+    linkedin: String
+    status: String
+    isProfilePublic: Boolean
+    assignedRole: String
+    reviewNote: String
+    createdAt: String
+    reviewedAt: String
+  }
+
+  type VolunteerApplicationResponse {
+    items: [VolunteerApplication!]!
+    pagination: PaginationInfo
+  }
+
+  type VolunteerReviewResult {
+    application: VolunteerApplication!
+    loginEmail: String
+    temporaryPassword: String
+  }
+
   type Mutation {
     # Resources
     createResource(input: ResourceInput!): Resource!
@@ -1393,6 +1423,7 @@ export const typeDefs = `#graphql
       websiteUrl: String
     ): User
     approveTrainer(userId: ID!, approved: Boolean!, reviewNote: String): User
+    reviewVolunteerApplication(id: ID!, approved: Boolean!, assignedRole: String, isProfilePublic: Boolean, reviewNote: String): VolunteerReviewResult
         updateUserLocation(latitude: Float!, longitude: Float!): User
     adminUpdateUserLocation(userId: ID!, latitude: Float!, longitude: Float!): User
     setUserLocationDenied(userId: ID!, denied: Boolean!): LocationForceResult!
@@ -4195,7 +4226,13 @@ export const typeDefs = `#graphql
     pagination: PaginationInfo
   }
 
-  extend type Query {    # Approved testimonials only - shown on the public site, no auth required.    publicTestimonials: [Testimonial!]!    # All testimonials with moderation status - admin / super admin only.    testimonials(page: Int, limit: Int, status: String): TestimonialResponse    # A student's own testimonial submissions.    myTestimonials: [Testimonial!]!  }
+  extend type Query {    # Approved testimonials only - shown on the public site, no auth required.
+    publicTestimonials: [Testimonial!]!
+    # All testimonials with moderation status - admin / super admin only.
+    testimonials(page: Int, limit: Int, status: String): TestimonialResponse
+    # A student's own testimonial submissions.
+    myTestimonials: [Testimonial!]!
+  }
 
   extend type Mutation {
     # A student submits their own success story (goes to pending).

@@ -35,6 +35,7 @@ import ttsRoutes from './routes/TTSRoutes';
 import diagnosticsRoutes from './routes/DiagnosticsRoutes';
 import exportRoutes from './routes/ExportRoutes';
 import publicContactRoutes from './routes/PublicContactRoutes';
+import { ensureSafetyCourses } from './seedSafetyCourses';
 import { Course } from './models/Course';
 import { loadPublishedCourse, loadPublishedCourses, courseSeoHtml, courseJsonLd, llmsTxt } from './services/course-seo.service';
 import Blog from './models/Blog';
@@ -88,6 +89,7 @@ const startServer = async () => {
     const httpServer = http.createServer(app);
 
     await connectDB();
+    ensureSafetyCourses().catch((err) => console.error('[SafetyCourses] Startup sync failed:', err));
 
     // =============================
     // ✅ PRODUCTION SAFE CORS
@@ -150,8 +152,18 @@ const startServer = async () => {
         origin: (origin, callback) => {
             if (!origin) return callback(null, true); // allow server-to-server
 
-            // Always allow local dev to avoid the CORS retry loop.
-            if (origin === 'http://localhost:4000' || origin === 'http://127.0.0.1:4000') {
+            // Always allow local frontend/API hosts so Vite on 8080/5173 works
+            // even when NODE_ENV=production or ALLOWED_ORIGINS omits 127.0.0.1.
+            if (
+                origin === 'http://localhost:4000' ||
+                origin === 'http://127.0.0.1:4000' ||
+                origin === 'http://localhost:8080' ||
+                origin === 'http://127.0.0.1:8080' ||
+                origin === 'http://localhost:8081' ||
+                origin === 'http://127.0.0.1:8081' ||
+                origin === 'http://localhost:5173' ||
+                origin === 'http://127.0.0.1:5173'
+            ) {
                 return callback(null, true);
             }
 
