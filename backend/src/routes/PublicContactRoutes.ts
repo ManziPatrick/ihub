@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { sendEmail } from '../services/email.service';
+import { VolunteerApplication } from '../models/VolunteerApplication';
 
 const router = Router();
 
@@ -132,6 +133,65 @@ router.post('/meeting', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('[PublicContact] meeting failed', err);
     res.status(500).json({ error: 'Could not book that time. Email us at info@bootskills.com.' });
+  }
+});
+
+router.post('/volunteer', async (req: Request, res: Response) => {
+  try {
+    const ip = req.ip || 'unknown';
+    if (!rateOk(ip)) return res.status(429).json({ error: 'Please wait a bit, then try again.' });
+
+    const name = clean(req.body?.name, 120);
+    const email = clean(req.body?.email, 160).toLowerCase();
+    const phone = clean(req.body?.phone, 40);
+    const city = clean(req.body?.city, 80);
+    const wantedRole = clean(req.body?.wantedRole, 20);
+    const skills = clean(req.body?.skills, 400);
+    const about = clean(req.body?.about, 2000);
+    const linkedin = clean(req.body?.linkedin, 200);
+
+    if (!name || !validEmail(email) || !about) {
+      return res.status(400).json({ error: 'Name, email, and a short note about you are required.' });
+    }
+
+    const role = ['volunteer', 'trainer', 'admin'].includes(wantedRole) ? wantedRole : 'volunteer';
+    const pending = await VolunteerApplication.findOne({ email, status: 'pending' });
+    if (pending) {
+      return res.status(409).json({ error: 'You already have an open volunteer application. We will email you.' });
+    }
+
+    await VolunteerApplication.create({
+      name,
+      email,
+      phone,
+      city,
+      wantedRole: role,
+      skills,
+      about,
+      linkedin,
+      status: 'pending',
+      isProfilePublic: false,
+    });
+
+    await sendEmail({
+      to: INBOX,
+      replyTo: email,
+      subject: `[Volunteer] ${name} wants to join as ${role}`,
+      html: `<p><strong>${name}</strong> applied to volunteer.</p>
+        <p>Email: ${email}<br/>Phone: ${phone || '—'}<br/>City: ${city || '—'}<br/>Role asked: ${role}</p>
+        <p>${about.replace(/</g, '&lt;')}</p>
+        <p>Review in Super Admin → Volunteers.</p>`,
+    });
+    await sendEmail({
+      to: email,
+      subject: 'We received your Bootskills volunteer application',
+      html: `<p>Hi ${name},</p><p>Thanks for offering to help. A super admin will review this. If approved, we email you a login (trainer or admin) and choose whether your profile is public on the team page.</p><p>— Bootskills</p>`,
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[PublicContact] volunteer failed', err);
+    res.status(500).json({ error: 'Could not send the application. Email info@bootskills.com.' });
   }
 });
 

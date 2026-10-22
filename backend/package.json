@@ -26,6 +26,7 @@
     "seed:courses": "ts-node src/seed/seed-courses.ts",
     "seed:course": "ts-node src/seed/seed-courses.ts",
     "seed:react-path": "ts-node src/seed/seed-courses.ts react-complete-path",
+    "seed:safety": "ts-node src/seedSafetyCourses.ts",
     "check:config-sync": "node ../scripts/check-language-config-sync.js"
   },
   "keywords": [],

@@ -66,7 +66,8 @@ import {
   Flame,
   Trophy,
   MessageCircleHeart,
-  MessageSquareHeart
+  MessageSquareHeart,
+  Handshake,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { usePusher } from "@/hooks/use-pusher";
@@ -80,7 +81,8 @@ interface NavItem {
   href?: string;
   icon: React.ElementType;
   children?: NavItem[];
-}const studentNavItems: NavItem[] = [  { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },
+}const studentNavItems: NavItem[] = [
+  { label: "Dashboard", href: "/portal/student", icon: LayoutDashboard },
   { label: "Projects", href: "/portal/student/projects", icon: FolderOpen },
   { label: "My Tasks", href: "/portal/student/my-tasks", icon: ClipboardList },
   { 
@@ -136,7 +138,10 @@ const adminNavItems: NavItem[] = [
   { 
     label: "Management", 
     icon: Cog,
-    children: [      { label: "Users", href: "/portal/admin/users", icon: Users },      { label: "Testimonials", href: "/portal/admin/testimonials", icon: MessageSquareHeart },      { label: "Completed Users", href: "/portal/admin/completed-users", icon: GraduationCap },
+    children: [      { label: "Users", href: "/portal/admin/users", icon: Users },
+      { label: "Volunteers", href: "/portal/super-admin/volunteers", icon: Handshake },
+      { label: "Testimonials", href: "/portal/admin/testimonials", icon: MessageSquareHeart },
+      { label: "Completed Users", href: "/portal/admin/completed-users", icon: GraduationCap },
       { label: "Courses", href: "/portal/admin/courses", icon: BookOpen },
       { label: "Course Preview", href: "/portal/admin/course-preview", icon: Eye },
       { label: "Applications", href: "/portal/admin/applications", icon: ClipboardList },
@@ -187,9 +192,12 @@ const superAdminNavItems: NavItem[] = [
   { 
     label: "System", 
     icon: Shield,
-    children: [      { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },      { label: "Testimonials", href: "/portal/admin/testimonials", icon: MessageSquareHeart },      { label: "Courses Manager", href: "/portal/super-admin/courses", icon: BookOpen },
+    children: [      { label: "Admins", href: "/portal/super-admin/admins", icon: Shield },
+      { label: "Testimonials", href: "/portal/admin/testimonials", icon: MessageSquareHeart },
+      { label: "Courses Manager", href: "/portal/super-admin/courses", icon: BookOpen },
       { label: "User Management", href: "/portal/admin/users", icon: UserCog },
       { label: "All Users", href: "/portal/super-admin/users", icon: Users },
+      { label: "Volunteers", href: "/portal/super-admin/volunteers", icon: Handshake },
       { label: "Completed Users", href: "/portal/super-admin/completed-users", icon: GraduationCap },
       { label: "Configuration", href: "/portal/super-admin/config", icon: Cog },
       { label: "Commissions Config", href: "/portal/super-admin/commissions", icon: Percent },
@@ -248,6 +256,7 @@ const clientNavItems: NavItem[] = [
    nav sections they have been granted; super admins see everything. */
 const ADMIN_NAV_PERMISSIONS: Record<string, string> = {
   "/portal/admin/users": "users",
+  "/portal/super-admin/volunteers": "users",
   "/portal/admin/completed-users": "users",
   "/portal/admin/courses": "courses",
   "/portal/admin/course-preview": "courses",
