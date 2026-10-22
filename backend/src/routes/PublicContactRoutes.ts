@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { sendEmail } from '../services/email.service';
-import { VolunteerApplication } from '../models/VolunteerApplication';
+import { VolunteerApplication, VolunteerWantedRole } from '../models/VolunteerApplication';
 
 const router = Router();
 
@@ -154,7 +154,10 @@ router.post('/volunteer', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Name, email, and a short note about you are required.' });
     }
 
-    const role = ['volunteer', 'trainer', 'admin'].includes(wantedRole) ? wantedRole : 'volunteer';
+    const allowedRoles: VolunteerWantedRole[] = ['volunteer', 'trainer', 'admin'];
+    const role: VolunteerWantedRole = allowedRoles.includes(wantedRole as VolunteerWantedRole)
+      ? (wantedRole as VolunteerWantedRole)
+      : 'volunteer';
     const pending = await VolunteerApplication.findOne({ email, status: 'pending' });
     if (pending) {
       return res.status(409).json({ error: 'You already have an open volunteer application. We will email you.' });
