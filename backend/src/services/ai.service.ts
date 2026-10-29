@@ -83,7 +83,7 @@ const isKinyarwanda = (text: string): boolean => {
 
 /**
  * Attempts inference with Ollama first (if enabled), then falls back through
- * the AI Router (Gemini → Cloudflare → Groq → Cerebras).
+ * the AI Router (Groq → Gemini → Cloudflare → Cerebras).
  * Returns the first successful response, or throws if all providers fail.
  */
 const tryInference = async (messages: { role: string; content: string }[], maxTokens: number = 1024) => {
@@ -107,7 +107,7 @@ const tryInference = async (messages: { role: string; content: string }[], maxTo
     }
   }
 
-  // ── AI Router: Gemini → Cloudflare → Groq → Cerebras ───────────
+  // ── AI Router: Groq → Gemini → Cloudflare → Cerebras ───────────
   try {
     const result = await tryAIRouterInference(messages, maxTokens);
     console.log(`✅ AI Router (${result.provider}) responded in ${result.latencyMs}ms`);

@@ -146,6 +146,28 @@ describe("AI Router", () => {
   // 1. BASIC FALLBACK CHAIN
   // ═════════════════════════════════════════════════════════════════
 
+  it("tries Groq first when all providers are healthy", async () => {
+    mockFetch.mockImplementation(async (url: string) => {
+      if (url.includes("api.groq.com")) {
+        return standardResponse("Groq first");
+      }
+      if (url.includes("generativelanguage.googleapis.com")) {
+        return geminiResponse("Gemini");
+      }
+      return standardResponse("other");
+    });
+
+    const { tryAIRouterInference } = await loadRouter();
+    const result = await tryAIRouterInference(
+      [{ role: "user", content: "Hi" }],
+      100,
+    );
+
+    expect(result.provider).toBe("Groq");
+    expect(result.choices[0].message.content).toBe("Groq first");
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
   it("returns response from the first successful provider", async () => {
     mockFetch.mockImplementation(async (url: string) => {
       if (url.includes("api.cloudflare.com")) {
@@ -189,14 +211,15 @@ describe("AI Router", () => {
   });
 
   it("falls back through multiple providers until one works", async () => {
-    let callCount = 0;
     mockFetch.mockImplementation(async (url: string) => {
-      callCount++;
-      if (callCount <= 2) {
+      if (url.includes("api.groq.com")) {
         return makeErrorResponse(500, "fail");
       }
-      if (url.includes("api.groq.com")) {
-        return standardResponse("Groq to the rescue!");
+      if (url.includes("generativelanguage.googleapis.com")) {
+        return makeErrorResponse(500, "fail");
+      }
+      if (url.includes("api.cloudflare.com")) {
+        return standardResponse("Cloudflare to the rescue!");
       }
       return makeErrorResponse(500);
     });
@@ -207,8 +230,8 @@ describe("AI Router", () => {
       100,
     );
 
-    expect(result.choices[0].message.content).toBe("Groq to the rescue!");
-    expect(result.provider).toBe("Groq");
+    expect(result.choices[0].message.content).toBe("Cloudflare to the rescue!");
+    expect(result.provider).toBe("Cloudflare");
   });
 
   // ═════════════════════════════════════════════════════════════════
@@ -252,14 +275,12 @@ describe("AI Router", () => {
   });
 
   it("skips rate-limited providers and tries the next one", async () => {
-    let callCount = 0;
     mockFetch.mockImplementation(async (url: string) => {
-      callCount++;
-      if (callCount === 1) {
+      if (url.includes("api.groq.com")) {
         return makeErrorResponse(429, "Rate limited");
       }
-      if (url.includes("api.cloudflare.com")) {
-        return standardResponse("Cloudflare after Gemini rate-limit!");
+      if (url.includes("generativelanguage.googleapis.com")) {
+        return geminiResponse("Gemini after Groq rate-limit!");
       }
       return makeErrorResponse(500);
     });
@@ -270,20 +291,17 @@ describe("AI Router", () => {
       100,
     );
 
-    expect(result.choices[0].message.content).toBe("Cloudflare after Gemini rate-limit!");
-    expect(result.provider).toBe("Cloudflare");
-    expect(callCount).toBe(2);
+    expect(result.choices[0].message.content).toBe("Gemini after Groq rate-limit!");
+    expect(result.provider).toBe("Gemini");
   });
 
   it("keeps rate-limited provider skipped during cooldown window", async () => {
-    let callCount = 0;
     mockFetch.mockImplementation(async (url: string) => {
-      callCount++;
-      if (callCount === 1) {
+      if (url.includes("api.groq.com")) {
         return makeErrorResponse(429, "Rate limited");
       }
-      if (url.includes("api.cloudflare.com")) {
-        return standardResponse("Cloudflare success");
+      if (url.includes("generativelanguage.googleapis.com")) {
+        return geminiResponse("Gemini success");
       }
       return makeErrorResponse(500);
     });
@@ -294,15 +312,15 @@ describe("AI Router", () => {
       [{ role: "user", content: "Hi" }],
       100,
     );
-    expect(result1.provider).toBe("Cloudflare");
+    expect(result1.provider).toBe("Gemini");
 
     // Advance 1s (well within 60s cooldown)
     vi.advanceTimersByTime(1000);
 
     mockFetch.mockReset();
     mockFetch.mockImplementation(async (url: string) => {
-      if (url.includes("api.cloudflare.com")) {
-        return standardResponse("Cloudflare again");
+      if (url.includes("generativelanguage.googleapis.com")) {
+        return geminiResponse("Gemini again");
       }
       return makeErrorResponse(500);
     });
@@ -312,9 +330,11 @@ describe("AI Router", () => {
       100,
     );
 
-    expect(result2.provider).toBe("Cloudflare");
-    // Should NOT have called Gemini API (it's in cooldown)
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(result2.provider).toBe("Gemini");
+    const groqCalls = mockFetch.mock.calls.filter(([url]) =>
+      String(url).includes("api.groq.com"),
+    );
+    expect(groqCalls).toHaveLength(0);
   });
 
   it("re-enables a provider after cooldown expires", async () => {
@@ -523,9 +543,9 @@ describe("AI Router", () => {
     expect(status.cloudflare.successRate).toBe(100);
     expect(status.cloudflare.avgLatencyMs).toBeGreaterThanOrEqual(0);
 
-    // Gemini should have 1 failed call
-    expect(status.gemini.totalCalls).toBe(1);
-    expect(status.gemini.successRate).toBe(0);
+    // Groq is first and should have 1 failed call
+    expect(status.groq.totalCalls).toBe(1);
+    expect(status.groq.successRate).toBe(0);
   });
 
   it("getProviderStatus reflects failed calls", async () => {

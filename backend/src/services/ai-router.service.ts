@@ -4,10 +4,10 @@
  * latency-based prioritization, and seamless failover.
  *
  * Providers (in dynamic priority order):
- *   1. Google Gemini 3.5 Flash-Lite — free tier, fast
- *   2. Cloudflare Workers AI (GLM-4.7 Flash) — free Workers plan
- *   3. Groq (openai/gpt-oss-120b) — high throughput, low latency
- *   4. Cerebras (GPT-OSS 120B) — high quality, competitive speed
+ *   1. Groq (openai/gpt-oss-120b) — fastest free model, tried first
+ *   2. Google Gemini 3.5 Flash-Lite — free tier
+ *   3. Cloudflare Workers AI (GLM-4.7 Flash) — free Workers plan
+ *   4. Cerebras (GPT-OSS 120B) — last resort (paid/quota)
  *
  * The router tracks per-provider latency and error rates, and dynamically
  * re-orders or temporarily skips providers that are rate-limited or slow.
@@ -72,9 +72,9 @@ interface ProviderImpl {
 // ─── Provider Metrics Registry ──────────────────────────────────────────
 
 const metrics: Record<string, ProviderMetrics> = {
+  groq:      { name: 'Groq',      enabled: !!GROQ_API_KEY,     latencies: [], consecutiveErrors: 0, rateLimitedUntil: 0, totalCalls: 0, successfulCalls: 0 },
   gemini:    { name: 'Gemini',    enabled: !!GEMINI_API_KEY,    latencies: [], consecutiveErrors: 0, rateLimitedUntil: 0, totalCalls: 0, successfulCalls: 0 },
   cloudflare:{ name: 'Cloudflare',enabled: !!(CF_API_TOKEN && CF_ACCOUNT_ID), latencies: [], consecutiveErrors: 0, rateLimitedUntil: 0, totalCalls: 0, successfulCalls: 0 },
-  groq:      { name: 'Groq',      enabled: !!GROQ_API_KEY,     latencies: [], consecutiveErrors: 0, rateLimitedUntil: 0, totalCalls: 0, successfulCalls: 0 },
   cerebras:  { name: 'Cerebras',  enabled: !!CEREBRAS_API_KEY, latencies: [], consecutiveErrors: 0, rateLimitedUntil: 0, totalCalls: 0, successfulCalls: 0 },
 };
 
@@ -243,13 +243,15 @@ const cerebrasProvider: ProviderImpl = {
   },
 };
 
-// Map of provider implementations
+// Map of provider implementations — Groq first (fastest free model)
 const providers: Record<string, ProviderImpl> = {
+  groq: groqProvider,
   gemini: geminiProvider,
   cloudflare: cloudflareProvider,
-  groq: groqProvider,
   cerebras: cerebrasProvider,
 };
+
+const PROVIDER_ORDER = ['groq', 'gemini', 'cloudflare', 'cerebras'] as const;
 
 // ─── Rate Limit Error ───────────────────────────────────────────────────
 
@@ -307,19 +309,21 @@ function providerScore(providerKey: string): number {
   // High consecutive errors: add penalty
   const errorPenalty = m.consecutiveErrors * 5000;
 
-  // Average latency (default to 1000ms if no data)
+  // Unmeasured providers score worse than a proven fast one, so Groq
+  // stays first after it succeeds instead of being overtaken by unused fallbacks.
   const avgLatency = m.latencies.length > 0
     ? m.latencies.reduce((a, b) => a + b, 0) / m.latencies.length
-    : 500; // optimistic initial estimate
+    : 10000;
 
   return avgLatency + errorPenalty;
 }
 
 /**
  * Get providers sorted by priority (best first).
+ * Equal scores keep Groq → Gemini → Cloudflare → Cerebras.
  */
 function getPriorityList(): string[] {
-  return Object.keys(providers)
+  return PROVIDER_ORDER
     .map(key => ({ key, score: providerScore(key) }))
     .filter(p => p.score < Infinity)
     .sort((a, b) => a.score - b.score)
