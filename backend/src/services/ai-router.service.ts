@@ -4,9 +4,9 @@
  * latency-based prioritization, and seamless failover.
  *
  * Providers (in dynamic priority order):
- *   1. Google Gemini 2.0 Flash  — fastest, lowest token cost
- *   2. Cloudflare Workers AI    — primary cloud provider
- *   3. Groq (Llama 3.3 70B)    — high throughput, low latency
+ *   1. Google Gemini 3.5 Flash-Lite — free tier, fast
+ *   2. Cloudflare Workers AI (GLM-4.7 Flash) — free Workers plan
+ *   3. Groq (openai/gpt-oss-120b) — high throughput, low latency
  *   4. Cerebras (GPT-OSS 120B) — high quality, competitive speed
  *
  * The router tracks per-provider latency and error rates, and dynamically
@@ -19,7 +19,7 @@
 // Cloudflare
 const CF_API_TOKEN = process.env.CF_API_TOKEN || '';
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID || '';
-const CF_MODEL = process.env.CF_MODEL || '@cf/meta/llama-3.1-8b-instruct';
+const CF_MODEL = process.env.CF_MODEL || '@cf/zai-org/glm-4.7-flash';
 const CF_BASE_URL = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/v1/chat/completions`;
 
 // Cerebras
@@ -29,12 +29,12 @@ const CEREBRAS_BASE_URL = 'https://api.cerebras.ai/v1/chat/completions';
 
 // Groq
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 const GROQ_BASE_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 // Google Gemini (using the simpler API key auth directly, not an SDK)
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 const GEMINI_BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // Master toggle — set AI_ROUTER_ENABLED=false to fall back to the old system
