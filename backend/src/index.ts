@@ -36,6 +36,7 @@ import diagnosticsRoutes from './routes/DiagnosticsRoutes';
 import exportRoutes from './routes/ExportRoutes';
 import publicContactRoutes from './routes/PublicContactRoutes';
 import { ensureSafetyCourses } from './seedSafetyCourses';
+import { ensureDesklistMarqueeCourse } from './seedDesklistMarqueeCourse';
 import { Course } from './models/Course';
 import { loadPublishedCourse, loadPublishedCourses, courseSeoHtml, courseJsonLd, llmsTxt } from './services/course-seo.service';
 import Blog from './models/Blog';
@@ -90,6 +91,7 @@ const startServer = async () => {
 
     await connectDB();
     ensureSafetyCourses().catch((err) => console.error('[SafetyCourses] Startup sync failed:', err));
+    ensureDesklistMarqueeCourse().catch((err) => console.error('[LabsCourse] Startup sync failed:', err));
 
     // =============================
     // ✅ PRODUCTION SAFE CORS

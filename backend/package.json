@@ -27,6 +27,7 @@
     "seed:course": "ts-node src/seed/seed-courses.ts",
     "seed:react-path": "ts-node src/seed/seed-courses.ts react-complete-path",
     "seed:safety": "ts-node src/seedSafetyCourses.ts",
+    "seed:labs": "ts-node src/seedDesklistMarqueeCourse.ts",
     "check:config-sync": "node ../scripts/check-language-config-sync.js"
   },
   "keywords": [],
